@@ -162,7 +162,6 @@ class Reader
                 $e
             );
         }
-
     }
 
     /**

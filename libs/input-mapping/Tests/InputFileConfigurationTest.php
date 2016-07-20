@@ -22,7 +22,6 @@ class InputFileConfigurationTest extends \PHPUnit_Framework_TestCase
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(array("config" => $config));
         $this->assertEquals($expectedResponse, $processedConfiguration);
-
     }
 
     /**

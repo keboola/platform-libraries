@@ -24,7 +24,6 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         );
         $processedConfiguration = (new Table())->parse(array("config" => $config));
         $this->assertEquals($expectedArray, $processedConfiguration);
-
     }
 
     /**

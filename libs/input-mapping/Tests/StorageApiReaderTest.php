@@ -206,7 +206,6 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-
     public function testReadFilesErrors()
     {
         $root = $this->tmpDir;
@@ -245,10 +244,40 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $reader->downloadFiles($configuration, $root . "/download");
     }
 
+    public function testReadInvalidConfigurations()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
 
-    /**
-     *
-     */
+        // empty configuration, ignored
+        $reader = new Reader($this->client);
+        $configuration = null;
+        $reader->downloadFiles($configuration, $root . "/download");
+
+        // empty configuration, ignored
+        $reader = new Reader($this->client);
+        $configuration = 'foobar';
+        try {
+            $reader->downloadFiles($configuration, $root . "/download");
+            $this->fail("Invalid configuration should fail.");
+        } catch (InvalidInputException $e) {
+        }
+
+        // empty configuration, ignored
+        $reader = new Reader($this->client);
+        $configuration = null;
+        $reader->downloadTables($configuration, $root . "/download");
+
+        // empty configuration, ignored
+        $reader = new Reader($this->client);
+        $configuration = 'foobar';
+        try {
+            $reader->downloadTables($configuration, $root . "/download");
+            $this->fail("Invalid configuration should fail.");
+        } catch (InvalidInputException $e) {
+        }
+    }
+
     public function testReadTablesDefaultBackend()
     {
         // Create bucket

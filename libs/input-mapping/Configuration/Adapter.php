@@ -23,7 +23,7 @@ class Adapter
     /**
      * @var string data format, 'yaml' or 'json'
      */
-    protected $format = 'yaml';
+    protected $format = 'json';
 
     /**
      * Constructor.

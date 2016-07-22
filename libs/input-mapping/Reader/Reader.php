@@ -78,6 +78,11 @@ class Reader
      */
     public function downloadFiles($configuration, $destination)
     {
+        if (!$configuration) {
+            return;
+        } elseif (!is_array($configuration)) {
+            throw new InvalidInputException("File download configuration is not an array.");
+        }
         foreach ($configuration as $fileConfiguration) {
             $files = $this->getFiles($fileConfiguration);
             foreach ($files as $file) {
@@ -203,6 +208,11 @@ class Reader
      */
     public function downloadTables($configuration, $destination)
     {
+        if (!$configuration) {
+            return;
+        } elseif (!is_array($configuration)) {
+            throw new InvalidInputException("Table export configuration is not an array.");
+        }
         $tableExporter = new TableExporter($this->getClient());
         foreach ($configuration as $table) {
             if (!isset($table["destination"])) {

@@ -23,14 +23,14 @@ class Adapter
     /**
      * @var string data format, 'yaml' or 'json'
      */
-    protected $format = 'json';
+    protected $format;
 
     /**
      * Constructor.
      *
      * @param string $format Configuration file format ('yaml', 'json')
      */
-    public function __construct($format = 'yaml')
+    public function __construct($format = 'json')
     {
         $this->setFormat($format);
     }

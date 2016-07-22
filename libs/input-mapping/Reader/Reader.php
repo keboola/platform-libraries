@@ -26,7 +26,7 @@ class Reader
     /**
      * @var
      */
-    protected $format = 'yaml';
+    protected $format = 'json';
 
     /**
      * @return mixed

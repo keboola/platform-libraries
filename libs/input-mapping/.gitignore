@@ -2,3 +2,5 @@
 /config.php
 /.idea
 /composer.lock
+.kdev4
+*.kdev4

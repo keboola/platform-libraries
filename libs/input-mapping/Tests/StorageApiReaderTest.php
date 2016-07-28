@@ -199,11 +199,18 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $reader = new Reader($this->client);
         $configuration = [['query' => 'id: ' . $fileId]];
-        try {
-            $reader->downloadFiles($configuration, $this->tmpDir . "/download");
-            $this->fail("Downloading a sliced files should fail.");
-        } catch (InvalidInputException $e) {
-        }
+
+        $dlDir = $this->tmpDir . "/download";
+        $reader->downloadFiles($configuration, $dlDir);
+
+        $this->assertEquals(
+            "",
+            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
+        );
+        $this->assertEquals(
+            '"test","test"' . PHP_EOL,
+            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
+        );
     }
 
     public function testReadFilesErrors()

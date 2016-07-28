@@ -204,12 +204,9 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $reader->downloadFiles($configuration, $dlDir);
 
         $this->assertEquals(
-            "",
-            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
-        );
-        $this->assertEquals(
             '"test","test"' . PHP_EOL,
-            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
+            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
+            . file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
         );
 
         $this->assertFileExists($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest");

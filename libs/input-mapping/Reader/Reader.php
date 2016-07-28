@@ -91,6 +91,10 @@ class Reader
                 $fileInfo = $this->getClient()->getFile($file["id"], (new GetFileOptions())->setFederationToken(true));
                 if ($fileInfo['isSliced']) {
                     $this->downloadSlicedFile($fileInfo, $destination);
+                    $this->writeFileManifest(
+                        $fileInfo,
+                        $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . ".manifest"
+                    );
                     return;
                 }
                 try {
@@ -218,16 +222,12 @@ class Reader
 
         $part = 0;
         $files = [];
-        foreach($manifest->entries as $slice) {
+        foreach ($manifest->entries as $slice) {
             $sliceInfo = $fileInfo;
             $sliceDestination = $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . "." . $part++;
 
             $sliceInfo["s3Path"]["key"] = str_replace("s3://" . $fileInfo["s3Path"]["bucket"] . "/", "", $slice->url);
             $this->downloadFile($sliceInfo, $sliceDestination);
-            $this->writeFileManifest(
-                $sliceInfo,
-                $sliceDestination . ".manifest"
-            );
         }
     }
 

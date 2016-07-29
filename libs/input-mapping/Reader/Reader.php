@@ -89,20 +89,20 @@ class Reader
             $files = $this->getFiles($fileConfiguration);
             foreach ($files as $file) {
                 $fileInfo = $this->getClient()->getFile($file["id"], (new GetFileOptions())->setFederationToken(true));
-                if ($fileInfo['isSliced']) {
-                    $this->downloadSlicedFile($fileInfo, $destination);
-                    $this->writeFileManifest(
-                        $fileInfo,
-                        $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . ".manifest"
-                    );
-                    return;
-                }
                 try {
-                    $this->downloadFile($fileInfo, $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"]);
-                    $this->writeFileManifest(
-                        $fileInfo,
-                        $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . ".manifest"
-                    );
+                    if ($fileInfo['isSliced']) {
+                        $this->downloadSlicedFile($fileInfo, $destination);
+                        $this->writeFileManifest(
+                            $fileInfo,
+                            $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . ".manifest"
+                        );
+                    } else {
+                        $this->downloadFile($fileInfo, $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"]);
+                        $this->writeFileManifest(
+                            $fileInfo,
+                            $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . ".manifest"
+                        );
+                    }
                 } catch (\Exception $e) {
                     throw new InputOperationException(
                         "Failed to download file " . $fileInfo['name'] . $fileInfo['id'],

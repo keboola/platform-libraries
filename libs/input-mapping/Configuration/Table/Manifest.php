@@ -37,6 +37,18 @@ class Manifest extends Configuration
                     ->scalarNode("value")->end()
                     ->booleanNode("protected")->end()
                 ->end()->end()->end()
-            ;
+                ->arrayNode("s3")->children()
+                    ->booleanNode("isSliced")->end()
+                    ->scalarNode("region")->end()
+                    ->scalarNode("bucket")->end()
+                    ->scalarNode("key")->end()
+                    ->arrayNode("credentials")->children()
+                        ->scalarNode("access_key_id")->end()
+                        ->scalarNode("secret_access_key")->end()
+                        ->scalarNode("session_token")->end()
+                    ->end()->end()
+                ->end()->end()
+            ->end()
+        ;
     }
 }

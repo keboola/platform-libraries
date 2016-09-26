@@ -321,6 +321,42 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
     }
 
+    public function testReadTablesAsS3DefaultBackend()
+    {
+        // Create bucket
+        if (!$this->client->bucketExists("in.c-docker-test")) {
+            $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
+        }
+
+        // Create table
+        if (!$this->client->tableExists("in.c-docker-test.test")) {
+            $csv = new CsvFile($this->tmpDir . "/upload.csv");
+            $csv->writeRow(["Id", "Name"]);
+            $csv->writeRow(["test", "test"]);
+            $this->client->createTableAsync("in.c-docker-test", "test", $csv);
+            $this->client->setTableAttribute("in.c-docker-test.test", "attr1", "val1");
+        }
+
+        $root = $this->tmpDir;
+
+        $reader = new Reader($this->client);
+        $configuration = [
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+            ]
+        ];
+
+        $reader->downloadTables($configuration, $root . "/download", "s3");
+
+        $adapter = new TableManifestAdapter();
+
+        $manifest = $adapter->readFromFile($root . "/download/test.csv.manifest");
+        $this->assertEquals("in.c-docker-test.test", $manifest["id"]);
+        $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
+        $this->assertS3info($manifest);
+    }
+
     /**
      *
      */
@@ -362,5 +398,54 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $manifest = $adapter->readFromFile($root . "/download/test-redshift.csv.manifest");
         $this->assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
         $this->assertEquals("val2", $manifest["attributes"][0]["value"]);
+    }
+
+    public function testReadTablesAsS3Redshift()
+    {
+        // Create bucket
+        if (!$this->client->bucketExists("in.c-docker-test-redshift")) {
+            $this->client->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");
+        }
+
+        // Create table
+        if (!$this->client->tableExists("in.c-docker-test-redshift.test")) {
+            $csv = new CsvFile($this->tmpDir . "/upload.csv");
+            $csv->writeRow(["Id", "Name"]);
+            $csv->writeRow(["test", "test"]);
+            $this->client->createTableAsync("in.c-docker-test-redshift", "test", $csv);
+            $this->client->setTableAttribute("in.c-docker-test-redshift.test", "attr1", "val2");
+        }
+
+        $root = $this->tmpDir;
+
+        $reader = new Reader($this->client);
+        $configuration = [
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+            ]
+        ];
+
+        $reader->downloadTables($configuration, $root . "/download", "s3");
+
+        $adapter = new TableManifestAdapter();
+
+        $manifest = $adapter->readFromFile($root . "/download/test.csv.manifest");
+        $this->assertEquals("in.c-docker-test.test", $manifest["id"]);
+        $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
+        $this->assertS3info($manifest);
+    }
+
+    private function assertS3info($manifest)
+    {
+        $this->assertArrayHasKey("s3", $manifest);
+        $this->assertArrayHasKey("isSliced", $manifest["s3"]);
+        $this->assertArrayHasKey("region", $manifest["s3"]);
+        $this->assertArrayHasKey("bucket", $manifest["s3"]);
+        $this->assertArrayHasKey("key", $manifest["s3"]);
+        $this->assertArrayHasKey("credentials", $manifest["s3"]);
+        $this->assertArrayHasKey("access_key_id", $manifest["s3"]["credentials"]);
+        $this->assertArrayHasKey("secret_access_key", $manifest["s3"]["credentials"]);
+        $this->assertArrayHasKey("session_token", $manifest["s3"]["credentials"]);
     }
 }

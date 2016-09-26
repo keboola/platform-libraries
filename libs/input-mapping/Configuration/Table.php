@@ -33,10 +33,6 @@ class Table extends Configuration
                         ->thenInvalid("Invalid operator in where_operator %s.")
                     ->end()
                 ->end()
-                ->enumNode('downloadAs')
-                    ->values(array('csv', 's3'))
-                    ->defaultValue('csv')
-                ->end()
             ->end()
             ;
     }

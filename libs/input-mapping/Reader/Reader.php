@@ -266,10 +266,25 @@ class Reader
             if (isset($table['limit'])) {
                 $exportOptions['limit'] = $table['limit'];
             }
+            if (isset($table['downloadAs']) && $table['downloadAs'] == 's3') {
+                $job = $this->getClient()->exportTableAsync($table["source"], $exportOptions);
+                $fileInfo = $this->getClient()->getFile(
+                    $job["file"]["id"],
+                    (new GetFileOptions())->setFederationToken(true)
+                );
+                $this->writeS3Manifest($fileInfo, $file . ".manifest");
+                continue;
+            }
+
             $tableExporter->exportTable($table["source"], $file, $exportOptions);
             $tableInfo = $this->getClient()->getTable($table["source"]);
             $this->writeTableManifest($tableInfo, $file . ".manifest");
         }
+    }
+
+    protected function writeS3Manifest($fileInfo, $destination)
+    {
+        var_dump($fileInfo);
     }
 
     /**

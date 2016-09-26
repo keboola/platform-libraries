@@ -20,7 +20,8 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "source" => "in.c-main.test",
             "columns" => array(),
             "where_values" => array(),
-            "where_operator" => "eq"
+            "where_operator" => "eq",
+            "downloadAs" => "csv"
         );
         $processedConfiguration = (new Table())->parse(array("config" => $config));
         $this->assertEquals($expectedArray, $processedConfiguration);
@@ -42,6 +43,7 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         );
 
         $expectedArray = $config;
+        $expectedArray["downloadAs"] = "csv";
 
         $processedConfiguration = (new Table())->parse(array("config" => $config));
         $this->assertEquals($expectedArray, $processedConfiguration);
@@ -68,5 +70,23 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testEmptyConfiguration()
     {
         (new Table())->parse(array("config" => array()));
+    }
+
+    public function testDownloadAsS3Configuration()
+    {
+        $config = array(
+            "source" => "in.c-main.test",
+            "downloadAs" => "s3"
+        );
+
+        $expectedArray = array(
+            "source" => "in.c-main.test",
+            "columns" => array(),
+            "where_values" => array(),
+            "where_operator" => "eq",
+            "downloadAs" => "s3"
+        );
+        $processedConfiguration = (new Table())->parse(array("config" => $config));
+        $this->assertEquals($expectedArray, $processedConfiguration);
     }
 }

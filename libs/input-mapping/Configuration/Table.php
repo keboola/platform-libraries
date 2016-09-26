@@ -31,9 +31,13 @@ class Table extends Configuration
                     ->validate()
                     ->ifNotInArray(array("eq", "ne"))
                         ->thenInvalid("Invalid operator in where_operator %s.")
+                    ->end()
+                ->end()
+                ->enumNode('downloadAs')
+                    ->values(array('csv', 's3'))
+                    ->defaultValue('csv')
                 ->end()
             ->end()
-
             ;
     }
 }

@@ -275,8 +275,10 @@ class Reader
                     (new GetFileOptions())->setFederationToken(true)
                 );
                 $tableInfo["s3"] = $this->getS3Info($fileInfo);
-            } else {
+            } elseif ($downloadAs == "csv") {
                 $tableExporter->exportTable($table["source"], $file, $exportOptions);
+            } else {
+                throw new InvalidInputException("DownloadAs must be either 'csv' or 's3'.");
             }
 
             $this->writeTableManifest($tableInfo, $file . ".manifest");

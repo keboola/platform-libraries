@@ -421,8 +421,8 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $reader = new Reader($this->client);
         $configuration = [
             [
-                "source" => "in.c-docker-test.test",
-                "destination" => "test.csv",
+                "source" => "in.c-docker-test-redshift.test",
+                "destination" => "test-redshift.csv"
             ]
         ];
 
@@ -430,9 +430,9 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $adapter = new TableManifestAdapter();
 
-        $manifest = $adapter->readFromFile($root . "/download/test.csv.manifest");
-        $this->assertEquals("in.c-docker-test.test", $manifest["id"]);
-        $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
+        $manifest = $adapter->readFromFile($root . "/download/test-redshift.csv.manifest");
+        $this->assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
+        $this->assertEquals("val2", $manifest["attributes"][0]["value"]);
         $this->assertS3info($manifest);
     }
 

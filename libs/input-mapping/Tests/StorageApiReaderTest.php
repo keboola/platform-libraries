@@ -449,7 +449,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey("session_token", $manifest["s3"]["credentials"]);
 
         if ($manifest["s3"]["isSliced"]) {
-            $this->assertContains(".manifest", $manifest["s3"]["key"]);
+            $this->assertContains("manifest", $manifest["s3"]["key"]);
         }
     }
 }

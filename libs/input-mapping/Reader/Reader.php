@@ -234,9 +234,9 @@ class Reader
     /**
      * @param $configuration array list of input mappings
      * @param $destination string destination folder
-     * @param string $downloadAs
+     * @param string $storage
      */
-    public function downloadTables($configuration, $destination, $downloadAs = 'csv')
+    public function downloadTables($configuration, $destination, $storage = 'local')
     {
         if (!$configuration) {
             return;
@@ -268,17 +268,17 @@ class Reader
                 $exportOptions['limit'] = $table['limit'];
             }
             $tableInfo = $this->getClient()->getTable($table["source"]);
-            if ($downloadAs == "s3") {
+            if ($storage == "s3") {
                 $job = $this->getClient()->exportTableAsync($table["source"], $exportOptions);
                 $fileInfo = $this->getClient()->getFile(
                     $job["file"]["id"],
                     (new GetFileOptions())->setFederationToken(true)
                 );
                 $tableInfo["s3"] = $this->getS3Info($fileInfo);
-            } elseif ($downloadAs == "csv") {
+            } elseif ($storage == "local") {
                 $tableExporter->exportTable($table["source"], $file, $exportOptions);
             } else {
-                throw new InvalidInputException("DownloadAs must be either 'csv' or 's3'.");
+                throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }
 
             $this->writeTableManifest($tableInfo, $file . ".manifest");

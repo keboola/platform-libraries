@@ -321,7 +321,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
     }
 
-    public function testReadTablesAsS3DefaultBackend()
+    public function testReadTablesS3DefaultBackend()
     {
         // Create bucket
         if (!$this->client->bucketExists("in.c-docker-test")) {
@@ -400,7 +400,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("val2", $manifest["attributes"][0]["value"]);
     }
 
-    public function testReadTablesAsS3Redshift()
+    public function testReadTablesS3Redshift()
     {
         // Create bucket
         if (!$this->client->bucketExists("in.c-docker-test-redshift")) {

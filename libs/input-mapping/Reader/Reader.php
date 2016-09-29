@@ -291,7 +291,7 @@ class Reader
             "isSliced" => $fileInfo["isSliced"],
             "region" => $fileInfo["region"],
             "bucket" => $fileInfo["s3Path"]["bucket"],
-            "key" => $fileInfo["isSliced"]?$fileInfo["s3Path"]["key"] . ".manifest":$fileInfo["s3Path"]["key"],
+            "key" => $fileInfo["isSliced"]?$fileInfo["s3Path"]["key"] . "manifest":$fileInfo["s3Path"]["key"],
             "credentials" => [
                 "access_key_id" => $fileInfo["credentials"]["AccessKeyId"],
                 "secret_access_key" => $fileInfo["credentials"]["SecretAccessKey"],

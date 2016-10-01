@@ -269,6 +269,7 @@ class Reader
             }
             $tableInfo = $this->getClient()->getTable($table["source"]);
             if ($storage == "s3") {
+                $exportOptions['gzip'] = true;
                 $job = $this->getClient()->exportTableAsync($table["source"], $exportOptions);
                 $fileInfo = $this->getClient()->getFile(
                     $job["file"]["id"],

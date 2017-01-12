@@ -12,6 +12,7 @@ use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApi\HandlerStack;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 use GuzzleHttp\Client as HttpClient;
@@ -24,11 +25,15 @@ class Reader
      */
     protected $client;
 
-
     /**
      * @var
      */
     protected $format = 'json';
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * @return mixed
@@ -68,9 +73,11 @@ class Reader
 
     /**
      * @param Client $client
+     * @param LoggerInterface $logger
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client, LoggerInterface $logger)
     {
+        $this->logger = $logger;
         $this->setClient($client);
     }
 
@@ -89,6 +96,7 @@ class Reader
             $files = $this->getFiles($fileConfiguration);
             foreach ($files as $file) {
                 $fileInfo = $this->getClient()->getFile($file["id"], (new GetFileOptions())->setFederationToken(true));
+                $this->logger->info("Fetching file " . $fileInfo['name'] . "(" . $file["id"] . ").");
                 try {
                     if ($fileInfo['isSliced']) {
                         $this->downloadSlicedFile($fileInfo, $destination);
@@ -105,13 +113,15 @@ class Reader
                     }
                 } catch (\Exception $e) {
                     throw new InputOperationException(
-                        "Failed to download file " . $fileInfo['name'] . $fileInfo['id'],
+                        "Failed to download file " . $fileInfo['name'] . ' ' . $fileInfo['id'],
                         0,
                         $e
                     );
                 }
+                $this->logger->info("Fetched file " . $fileInfo['name'] . "(" . $file["id"] . ").");
             }
         }
+        $this->logger->info("All files were fetched.");
     }
 
     /**
@@ -267,6 +277,7 @@ class Reader
             if (isset($table['limit'])) {
                 $exportOptions['limit'] = $table['limit'];
             }
+            $this->logger->info("Fetching table " . $table["source"] . ".");
             $tableInfo = $this->getClient()->getTable($table["source"]);
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
@@ -281,9 +292,11 @@ class Reader
             } else {
                 throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }
+            $this->logger->info("Fetched table " . $table["source"] . ".");
 
             $this->writeTableManifest($tableInfo, $file . ".manifest");
         }
+        $this->logger->info("All tables were fetched.");
     }
 
     protected function getS3Info($fileInfo)

@@ -11,6 +11,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\Temp\Temp;
+use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
@@ -91,7 +92,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [["tags" => ["docker-bundle-test"]]];
         $reader->downloadFiles($configuration, $root . "/download");
 
@@ -109,7 +110,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
     public function testParentId()
     {
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $this->client->setRunId('123456789');
         $this->assertEquals('123456789', $reader->getParentRunId());
         $this->client->setRunId('123456789.98765432');
@@ -125,7 +126,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $fo = new FileUploadOptions();
         $fo->setTags(["docker-bundle-test"]);
 
@@ -155,7 +156,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $fo = new FileUploadOptions();
         $fo->setTags(["docker-bundle-test"]);
 
@@ -197,7 +198,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $table = $this->client->exportTableAsync('in.c-docker-test-redshift.test_file');
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
@@ -223,12 +224,12 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         }
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [];
         $reader->downloadFiles($configuration, $root . "/download");
 
         // invalid configuration
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [[]];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
@@ -236,7 +237,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
@@ -245,7 +246,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
             $this->assertContains('File input mapping downloads more than', $e->getMessage());
         }
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 12]];
         $reader->downloadFiles($configuration, $root . "/download");
     }
@@ -256,32 +257,24 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload", "test");
 
         // empty configuration, ignored
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = null;
         $reader->downloadFiles($configuration, $root . "/download");
 
         // empty configuration, ignored
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = 'foobar';
         try {
+            /** @noinspection PhpParamsInspection */
             $reader->downloadFiles($configuration, $root . "/download");
             $this->fail("Invalid configuration should fail.");
         } catch (InvalidInputException $e) {
         }
 
         // empty configuration, ignored
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = null;
         $reader->downloadTables($configuration, $root . "/download");
-
-        // empty configuration, ignored
-        $reader = new Reader($this->client);
-        $configuration = 'foobar';
-        try {
-            $reader->downloadTables($configuration, $root . "/download");
-            $this->fail("Invalid configuration should fail.");
-        } catch (InvalidInputException $e) {
-        }
     }
 
     public function testReadTablesDefaultBackend()
@@ -302,7 +295,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $root = $this->tmpDir;
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [
             [
                 "source" => "in.c-docker-test.test",
@@ -339,7 +332,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $root = $this->tmpDir;
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [
             [
                 "source" => "in.c-docker-test.test",
@@ -378,7 +371,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $root = $this->tmpDir;
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -418,7 +411,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $root = $this->tmpDir;
 
-        $reader = new Reader($this->client);
+        $reader = new Reader($this->client, new NullLogger());
         $configuration = [
             [
                 "source" => "in.c-docker-test-redshift.test",

@@ -96,7 +96,7 @@ class Reader
             $files = $this->getFiles($fileConfiguration);
             foreach ($files as $file) {
                 $fileInfo = $this->getClient()->getFile($file["id"], (new GetFileOptions())->setFederationToken(true));
-                $this->logger->info("Fetching file " . $fileInfo['name'] . "(" . $file["id"] . ").");
+                $this->logger->info("Fetching file " . $fileInfo['name'] . " (" . $file["id"] . ").");
                 try {
                     if ($fileInfo['isSliced']) {
                         $this->downloadSlicedFile($fileInfo, $destination);
@@ -118,7 +118,7 @@ class Reader
                         $e
                     );
                 }
-                $this->logger->info("Fetched file " . $fileInfo['name'] . "(" . $file["id"] . ").");
+                $this->logger->info("Fetched file " . $fileInfo['name'] . " (" . $file["id"] . ").");
             }
         }
         $this->logger->info("All files were fetched.");

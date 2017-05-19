@@ -266,7 +266,7 @@ class Reader
             if (isset($table["columns"]) && count($table["columns"])) {
                 $exportOptions["columns"] = $table["columns"];
             }
-            if (isset($table["days"])) {
+            if (!empty($table["days"])) {
                 $exportOptions["changedSince"] = "-{$table["days"]} days";
             }
             if (isset($table["where_column"]) && count($table["where_values"])) {

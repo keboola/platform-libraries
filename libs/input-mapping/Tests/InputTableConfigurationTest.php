@@ -6,10 +6,6 @@ use Keboola\InputMapping\Configuration\Table;
 
 class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
 {
-
-    /**
-     *
-     */
     public function testBasicConfiguration()
     {
         $config = array(
@@ -26,9 +22,6 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedArray, $processedConfiguration);
     }
 
-    /**
-     *
-     */
     public function testComplexConfiguration()
     {
         $config = array(
@@ -42,7 +35,23 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         );
 
         $expectedArray = $config;
+        $processedConfiguration = (new Table())->parse(array("config" => $config));
+        $this->assertEquals($expectedArray, $processedConfiguration);
+    }
 
+    public function testDaysConfiguration()
+    {
+        $config = array(
+            "source" => "in.c-main.test",
+            "destination" => "test",
+            "days" => null,
+            "columns" => array("Id", "Name"),
+            "where_column" => "status",
+            "where_values" => array("val1", "val2"),
+            "where_operator" => "ne"
+        );
+
+        $expectedArray = $config;
         $processedConfiguration = (new Table())->parse(array("config" => $config));
         $this->assertEquals($expectedArray, $processedConfiguration);
     }

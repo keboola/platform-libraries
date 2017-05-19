@@ -314,6 +314,38 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
     }
 
+    public function testReadTablesEmptyDaysFilter()
+    {
+        // Create bucket
+        if (!$this->client->bucketExists("in.c-docker-test")) {
+            $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
+        }
+
+        // Create table
+        if (!$this->client->tableExists("in.c-docker-test.test")) {
+            $csv = new CsvFile($this->tmpDir . "/upload.csv");
+            $csv->writeRow(["Id", "Name"]);
+            $csv->writeRow(["test", "test"]);
+            $this->client->createTableAsync("in.c-docker-test", "test", $csv);
+            $this->client->setTableAttribute("in.c-docker-test.test", "attr1", "val1");
+        }
+
+        $root = $this->tmpDir;
+
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+                "days" => 0
+            ]
+        ];
+
+        $reader->downloadTables($configuration, $root . "/download");
+
+        $this->assertEquals("\"Id\",\"Name\"\n\"test\",\"test\"\n", file_get_contents($root . "/download/test.csv"));
+    }
+
     public function testReadTablesS3DefaultBackend()
     {
         // Create bucket

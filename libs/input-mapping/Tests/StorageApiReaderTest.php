@@ -96,15 +96,15 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = [["tags" => ["docker-bundle-test"]]];
         $reader->downloadFiles($configuration, $root . "/download");
 
-        $this->assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
-        $this->assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
+        self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
+        self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
 
         $adapter = new FileManifestAdapter();
         $manifest1 = $adapter->readFromFile($root . "/download/" . $id1 . "_upload.manifest");
         $manifest2 = $adapter->readFromFile($root . "/download/" . $id2 . "_upload.manifest");
 
-        $this->assertEquals($id1, $manifest1["id"]);
-        $this->assertEquals($id2, $manifest2["id"]);
+        self::assertEquals($id1, $manifest1["id"]);
+        self::assertEquals($id2, $manifest2["id"]);
     }
 
 
@@ -112,13 +112,13 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
     {
         $reader = new Reader($this->client, new NullLogger());
         $this->client->setRunId('123456789');
-        $this->assertEquals('123456789', $reader->getParentRunId());
+        self::assertEquals('123456789', $reader->getParentRunId());
         $this->client->setRunId('123456789.98765432');
-        $this->assertEquals('123456789', $reader->getParentRunId());
+        self::assertEquals('123456789', $reader->getParentRunId());
         $this->client->setRunId('123456789.98765432.4563456');
-        $this->assertEquals('123456789.98765432', $reader->getParentRunId());
+        self::assertEquals('123456789.98765432', $reader->getParentRunId());
         $this->client->setRunId(null);
-        $this->assertEquals('', $reader->getParentRunId());
+        self::assertEquals('', $reader->getParentRunId());
     }
 
 
@@ -143,12 +143,12 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = [["tags" => ["docker-bundle-test"], "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
 
-        $this->assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
-        $this->assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
+        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
+        self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
     }
 
 
@@ -173,12 +173,12 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = [["query" => "tags: docker-bundle-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
 
-        $this->assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
-        $this->assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
-        $this->assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
+        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
+        self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
     }
 
     public function testReadSlicedFile()
@@ -204,13 +204,13 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $dlDir = $this->tmpDir . "/download";
         $reader->downloadFiles($configuration, $dlDir);
 
-        $this->assertEquals(
+        self::assertEquals(
             '"test","test"' . PHP_EOL,
             file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
             . file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
         );
 
-        $this->assertFileExists($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest");
+        self::assertFileExists($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest");
     }
 
     public function testReadFilesErrors()
@@ -233,7 +233,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = [[]];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
-            $this->fail("Invalid configuration should fail.");
+            self::fail("Invalid configuration should fail.");
         } catch (InvalidInputException $e) {
         }
 
@@ -241,9 +241,9 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
-            $this->fail("Too broad query should fail.");
+            self::fail("Too broad query should fail.");
         } catch (InvalidInputException $e) {
-            $this->assertContains('File input mapping downloads more than', $e->getMessage());
+            self::assertContains('File input mapping downloads more than', $e->getMessage());
         }
 
         $reader = new Reader($this->client, new NullLogger());
@@ -267,7 +267,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         try {
             /** @noinspection PhpParamsInspection */
             $reader->downloadFiles($configuration, $root . "/download");
-            $this->fail("Invalid configuration should fail.");
+            self::fail("Invalid configuration should fail.");
         } catch (InvalidInputException $e) {
         }
 
@@ -305,13 +305,13 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $reader->downloadTables($configuration, $root . "/download");
 
-        $this->assertEquals("\"Id\",\"Name\"\n\"test\",\"test\"\n", file_get_contents($root . "/download/test.csv"));
+        self::assertEquals("\"Id\",\"Name\"\n\"test\",\"test\"\n", file_get_contents($root . "/download/test.csv"));
 
         $adapter = new TableManifestAdapter();
 
         $manifest = $adapter->readFromFile($root . "/download/test.csv.manifest");
-        $this->assertEquals("in.c-docker-test.test", $manifest["id"]);
-        $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
+        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
     }
 
     public function testReadTablesEmptyDaysFilter()
@@ -343,7 +343,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $reader->downloadTables($configuration, $root . "/download");
 
-        $this->assertEquals("\"Id\",\"Name\"\n\"test\",\"test\"\n", file_get_contents($root . "/download/test.csv"));
+        self::assertEquals("\"Id\",\"Name\"\n\"test\",\"test\"\n", file_get_contents($root . "/download/test.csv"));
     }
 
     public function testReadTablesS3DefaultBackend()
@@ -377,8 +377,8 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $adapter = new TableManifestAdapter();
 
         $manifest = $adapter->readFromFile($root . "/download/test.csv.manifest");
-        $this->assertEquals("in.c-docker-test.test", $manifest["id"]);
-        $this->assertEquals("val1", $manifest["attributes"][0]["value"]);
+        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
         $this->assertS3info($manifest);
     }
 
@@ -413,7 +413,7 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
 
         $reader->downloadTables($configuration, $root . "/download");
 
-        $this->assertEquals(
+        self::assertEquals(
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
             file_get_contents($root . "/download/test-redshift.csv")
         );
@@ -421,8 +421,8 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $adapter = new TableManifestAdapter();
 
         $manifest = $adapter->readFromFile($root . "/download/test-redshift.csv.manifest");
-        $this->assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
-        $this->assertEquals("val2", $manifest["attributes"][0]["value"]);
+        self::assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
+        self::assertEquals("val2", $manifest["attributes"][0]["value"]);
     }
 
     public function testReadTablesS3Redshift()
@@ -456,26 +456,26 @@ class StorageApiReaderTest extends \PHPUnit_Framework_TestCase
         $adapter = new TableManifestAdapter();
 
         $manifest = $adapter->readFromFile($root . "/download/test-redshift.csv.manifest");
-        $this->assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
-        $this->assertEquals("val2", $manifest["attributes"][0]["value"]);
+        self::assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
+        self::assertEquals("val2", $manifest["attributes"][0]["value"]);
         $this->assertS3info($manifest);
     }
 
     private function assertS3info($manifest)
     {
-        $this->assertArrayHasKey("s3", $manifest);
-        $this->assertArrayHasKey("isSliced", $manifest["s3"]);
-        $this->assertArrayHasKey("region", $manifest["s3"]);
-        $this->assertArrayHasKey("bucket", $manifest["s3"]);
-        $this->assertArrayHasKey("key", $manifest["s3"]);
-        $this->assertArrayHasKey("credentials", $manifest["s3"]);
-        $this->assertArrayHasKey("access_key_id", $manifest["s3"]["credentials"]);
-        $this->assertArrayHasKey("secret_access_key", $manifest["s3"]["credentials"]);
-        $this->assertArrayHasKey("session_token", $manifest["s3"]["credentials"]);
-        $this->assertContains("gz", $manifest["s3"]["key"]);
+        self::assertArrayHasKey("s3", $manifest);
+        self::assertArrayHasKey("isSliced", $manifest["s3"]);
+        self::assertArrayHasKey("region", $manifest["s3"]);
+        self::assertArrayHasKey("bucket", $manifest["s3"]);
+        self::assertArrayHasKey("key", $manifest["s3"]);
+        self::assertArrayHasKey("credentials", $manifest["s3"]);
+        self::assertArrayHasKey("access_key_id", $manifest["s3"]["credentials"]);
+        self::assertArrayHasKey("secret_access_key", $manifest["s3"]["credentials"]);
+        self::assertArrayHasKey("session_token", $manifest["s3"]["credentials"]);
+        self::assertContains("gz", $manifest["s3"]["key"]);
 
         if ($manifest["s3"]["isSliced"]) {
-            $this->assertContains("manifest", $manifest["s3"]["key"]);
+            self::assertContains("manifest", $manifest["s3"]["key"]);
         }
     }
 }

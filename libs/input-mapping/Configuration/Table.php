@@ -31,7 +31,7 @@ class Table extends Configuration
                 ->scalarNode("where_operator")
                     ->defaultValue("eq")
                     ->validate()
-                    ->ifNotInArray(array("eq", "ne"))
+                    ->ifNotInArray(["eq", "ne"])
                         ->thenInvalid("Invalid operator in where_operator %s.")
                     ->end()
                 ->end()

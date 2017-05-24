@@ -6,25 +6,21 @@ use Keboola\InputMapping\Configuration\File\Manifest;
 
 class InputFileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
 {
-
-    /**
-     *
-     */
     public function testConfiguration()
     {
-        $config = array(
+        $config = [
             "id" => 1,
             "name" => "test",
             "created" => "2015-01-23T04:11:18+0100",
             "is_public" => false,
             "is_encrypted" => false,
-            "tags" => array("tag1", "tag2"),
+            "tags" => ["tag1", "tag2"],
             "max_age_days" => 180,
             "size_bytes" => 4
-        );
+        ];
         $expectedResponse = $config;
-        $processedConfiguration = (new Manifest())->parse(array("config" => $config));
-        $this->assertEquals($expectedResponse, $processedConfiguration);
+        $processedConfiguration = (new Manifest())->parse(["config" => $config]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
     /**
@@ -33,6 +29,6 @@ class InputFileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
-        (new Manifest())->parse(array("config" => array()));
+        (new Manifest())->parse(["config" => []]);
     }
 }

@@ -8,52 +8,52 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     public function testBasicConfiguration()
     {
-        $config = array(
+        $config = [
             "source" => "in.c-main.test"
-        );
+        ];
 
-        $expectedArray = array(
+        $expectedArray = [
             "source" => "in.c-main.test",
-            "columns" => array(),
-            "where_values" => array(),
+            "columns" => [],
+            "where_values" => [],
             "where_operator" => "eq"
-        );
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        ];
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
     public function testComplexConfiguration()
     {
-        $config = array(
+        $config = [
             "source" => "in.c-main.test",
             "destination" => "test",
             "days" => 1,
-            "columns" => array("Id", "Name"),
+            "columns" => ["Id", "Name"],
             "where_column" => "status",
-            "where_values" => array("val1", "val2"),
+            "where_values" => ["val1", "val2"],
             "where_operator" => "ne"
-        );
+        ];
 
         $expectedArray = $config;
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
     public function testDaysConfiguration()
     {
-        $config = array(
+        $config = [
             "source" => "in.c-main.test",
             "destination" => "test",
             "days" => null,
-            "columns" => array("Id", "Name"),
+            "columns" => ["Id", "Name"],
             "where_column" => "status",
-            "where_values" => array("val1", "val2"),
+            "where_values" => ["val1", "val2"],
             "where_operator" => "ne"
-        );
+        ];
 
         $expectedArray = $config;
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
     /**
@@ -62,12 +62,12 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testInvalidWhereOperator()
     {
-        $config = array(
+        $config = [
             "source" => "in.c-main.test",
             "where_operator" => 'abc'
-        );
+        ];
 
-        (new Table())->parse(array("config" => $config));
+        (new Table())->parse(["config" => $config]);
     }
 
     /**
@@ -76,6 +76,6 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
-        (new Table())->parse(array("config" => array()));
+        (new Table())->parse(["config" => []]);
     }
 }

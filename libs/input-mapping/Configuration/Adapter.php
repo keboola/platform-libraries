@@ -77,7 +77,7 @@ class Adapter
      */
     public function setFormat($format)
     {
-        if (!in_array($format, array('yaml', 'json'))) {
+        if (!in_array($format, ['yaml', 'json'])) {
             throw new InputOperationException("Configuration format '{$format}' not supported");
         }
         $this->format = $format;
@@ -92,7 +92,7 @@ class Adapter
     public function setConfig($config)
     {
         $className = $this->configClass;
-        $this->config = (new $className())->parse(array("config" => $config));
+        $this->config = (new $className())->parse(["config" => $config]);
         return $this;
     }
 
@@ -114,8 +114,7 @@ class Adapter
         $serialized = $this->getContents($file);
 
         if ($this->getFormat() == 'yaml') {
-            $yaml = new Yaml();
-            $data = $yaml->parse($serialized);
+            $data = Yaml::parse($serialized);
         } elseif ($this->getFormat() == 'json') {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
@@ -135,14 +134,17 @@ class Adapter
     public function writeToFile($file)
     {
         if ($this->getFormat() == 'yaml') {
-            $yaml = new Yaml();
-            $serialized = $yaml->dump($this->getConfig(), 10);
+            $serialized = Yaml::dump($this->getConfig(), 10);
             if ($serialized == 'null') {
                 $serialized = '{}';
             }
         } elseif ($this->getFormat() == 'json') {
             $encoder = new JsonEncoder();
-            $serialized = $encoder->encode($this->getConfig(), $encoder::FORMAT, ['json_encode_options' => JSON_PRETTY_PRINT]);
+            $serialized = $encoder->encode(
+                $this->getConfig(),
+                $encoder::FORMAT,
+                ['json_encode_options' => JSON_PRETTY_PRINT]
+            );
         } else {
             throw new InputOperationException("Invalid configuration format {$this->format}.");
         }

@@ -19,7 +19,6 @@ use GuzzleHttp\Client as HttpClient;
 
 class Reader
 {
-
     /**
      * @var Client
      */
@@ -164,7 +163,7 @@ class Reader
      */
     protected function writeFileManifest($fileInfo, $destination)
     {
-        $manifest = array(
+        $manifest = [
             "id" => $fileInfo["id"],
             "name" => $fileInfo["name"],
             "created" => $fileInfo["created"],
@@ -173,7 +172,7 @@ class Reader
             "tags" => $fileInfo["tags"],
             "max_age_days" => $fileInfo["maxAgeDays"],
             "size_bytes" => $fileInfo["sizeBytes"]
-        );
+        ];
 
         $adapter = new FileAdapter($this->getFormat());
         try {
@@ -194,7 +193,7 @@ class Reader
     protected function downloadFile($fileInfo, $destination)
     {
         // Initialize S3Client with credentials from Storage API
-        $s3Client = new S3Client(array(
+        $s3Client = new S3Client([
             "credentials" => [
                 "key" => $fileInfo["credentials"]["AccessKeyId"],
                 "secret" => $fileInfo["credentials"]["SecretAccessKey"],
@@ -203,21 +202,19 @@ class Reader
             "region" => 'us-east-1',
             'version' => 'latest',
 
-        ));
+        ]);
 
         $fs = new Filesystem();
         if (!$fs->exists(dirname($destination))) {
             $fs->mkdir($destination);
         }
 
-        /**
-         * NonSliced file, just move from temp to destination file
-         */
-        $s3Client->getObject(array(
+        // NonSliced file, just move from temp to destination file
+        $s3Client->getObject([
             'Bucket' => $fileInfo["s3Path"]["bucket"],
             'Key'    => $fileInfo["s3Path"]["key"],
             'SaveAs' => $destination
-        ));
+        ]);
     }
 
     protected function downloadSlicedFile($fileInfo, $destination)
@@ -231,7 +228,6 @@ class Reader
         $manifest = json_decode($client->get($fileInfo['url'])->getBody());
 
         $part = 0;
-        $files = [];
         foreach ($manifest->entries as $slice) {
             $sliceInfo = $fileInfo;
             $sliceDestination = $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"] . "." . $part++;
@@ -260,9 +256,7 @@ class Reader
             } else {
                 $file = $destination . "/" . $table["destination"];
             }
-            $exportOptions = array(
-                "format" => "rfc"
-            );
+            $exportOptions = ["format" => "rfc"];
             if (isset($table["columns"]) && count($table["columns"])) {
                 $exportOptions["columns"] = $table["columns"];
             }
@@ -321,7 +315,7 @@ class Reader
      */
     protected function writeTableManifest($tableInfo, $destination)
     {
-        $manifest = array(
+        $manifest = [
             "id" => $tableInfo["id"],
             "uri" => $tableInfo["uri"],
             "name" => $tableInfo["name"],
@@ -334,14 +328,14 @@ class Reader
             "data_size_bytes" => $tableInfo["dataSizeBytes"],
             "is_alias" => $tableInfo["isAlias"],
             "columns" => $tableInfo["columns"],
-            "attributes" => array()
-        );
+            "attributes" => []
+        ];
         foreach ($tableInfo["attributes"] as $attribute) {
-            $manifest["attributes"][] = array(
+            $manifest["attributes"][] = [
                 "name" => $attribute["name"],
                 "value" => $attribute["value"],
                 "protected" => $attribute["protected"]
-            );
+            ];
         }
         if (isset($tableInfo["s3"])) {
             $manifest["s3"] = $tableInfo["s3"];

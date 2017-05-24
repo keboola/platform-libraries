@@ -6,22 +6,18 @@ use Keboola\InputMapping\Configuration\File;
 
 class InputFileConfigurationTest extends \PHPUnit_Framework_TestCase
 {
-
-    /**
-     *
-     */
     public function testConfiguration()
     {
-        $config = array(
-                "tags" => array("tag1", "tag2"),
-                "query" => "esquery",
-                "processed_tags" => array("tag3"),
-                "filter_by_run_id" => true,
-                "limit" => 1000
-            );
+        $config = [
+            "tags" => ["tag1", "tag2"],
+            "query" => "esquery",
+            "processed_tags" => ["tag3"],
+            "filter_by_run_id" => true,
+            "limit" => 1000
+        ];
         $expectedResponse = $config;
-        $processedConfiguration = (new File())->parse(array("config" => $config));
-        $this->assertEquals($expectedResponse, $processedConfiguration);
+        $processedConfiguration = (new File())->parse(["config" => $config]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
     /**
@@ -30,6 +26,6 @@ class InputFileConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
-        (new File())->parse(array("config" => array()));
+        (new File())->parse(["config" => []]);
     }
 }

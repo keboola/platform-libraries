@@ -21,16 +21,21 @@ class InputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "data_size_bytes" => 32768,
             "is_alias" => false,
             "columns" => ["col1", "col2", "col3", "col4"],
-            "attributes" => [["name" => "test", "value" => "test", "protected" => false]]
+            "attributes" => [["name" => "test", "value" => "test", "protected" => false]],
+            "metadata" => [[
+                "key" => "foo",
+                "value" => "bar",
+                "id" => 1234,
+                "provider" => "dummy-component",
+                "timestamp" => "2017-05-25T16:12:02+0200"
+            ]],
+            "column_metadata" => ["col1" => [["key" => "bar", "value" => "baz"]]]
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new Manifest())->parse(["config" => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    /**
-     *
-     */
     public function testConfigurationAlias()
     {
         $config = [
@@ -42,13 +47,15 @@ class InputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "created" => "2015-01-23T04:11:18+0100",
             "last_import_date" => "2015-01-23T04:11:18+0100",
             "last_change_date" => "2015-01-23T04:11:18+0100",
-            "rows_count" => null,
-            "data_size_bytes" => null,
+            "rows_count" => 0,
+            "data_size_bytes" => 0,
             "is_alias" => true,
             "columns" => ["col1", "col2", "col3", "col4"],
             "attributes" => [["name" => "test", "value" => "test", "protected" => false]]
         ];
         $expectedResponse = $config;
+        $expectedResponse["metadata"] = [];
+        $expectedResponse["column_metadata"] = [];
         $processedConfiguration = (new Manifest())->parse(["config" => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }

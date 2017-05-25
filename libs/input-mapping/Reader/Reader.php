@@ -8,6 +8,7 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
@@ -341,6 +342,12 @@ class Reader
             $manifest["s3"] = $tableInfo["s3"];
         }
 
+        $metadata = new Metadata($this->getClient());
+        $manifest['metadata'] = $metadata->listTableMetadata($tableInfo['id']);
+        $manifest['column_metadata'] = [];
+        foreach ($tableInfo['columns'] as $column) {
+            $manifest['column_metadata'][$column] = $metadata->listColumnMetadata($tableInfo['id'] . '.' . $column);
+        }
         $adapter = new TableAdapter($this->getFormat());
         try {
             $adapter->setConfig($manifest);

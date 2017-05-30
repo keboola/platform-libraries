@@ -1,0 +1,20 @@
+sudo: required
+
+language: php
+php:
+  - '5.6'
+  - '7.0'
+
+install:
+  - composer install --no-scripts
+
+script:
+  - ./vendor/bin/phpcs --standard=psr2 --ignore=vendor -n .
+  - ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+
+after_success:
+  - ./vendor/bin/test-reporter
+
+notifications:
+  email: false
+  slack: keboola:fym2t4112jahUATYBYFS3oBS

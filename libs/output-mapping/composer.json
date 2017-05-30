@@ -1,0 +1,33 @@
+{
+    "name": "keboola/output-mapping",
+    "description": "Shared component for processing SAPI outpu mapping and importing data to KBC",
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ondrej Popelka",
+            "email": "ondrej.popelka@keboola.com"
+        }
+    ],
+    "require": {
+        "symfony/config": "^2.8",
+        "symfony/yaml": "^2.8",
+        "symfony/finder": "^2.8",
+        "symfony/serializer": "^2.8",
+        "keboola/storage-api-client": "^6.3",
+        "keboola/input-mapping": "^2.0",
+        "guzzlehttp/guzzle": "^6.2"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^2.6",
+        "keboola/php-temp": "^0.1",
+        "phpunit/phpunit": "^5.4",
+        "codeclimate/php-test-reporter": "^0.3"
+    },
+    "autoload": {
+        "psr-0": {
+            "Keboola\\OutputMapping": ""
+        }
+    },
+    "target-dir": "Keboola/OutputMapping"
+}

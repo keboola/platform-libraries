@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Exception;
 
-class InvalidOutputException extends \RuntimeException
+class OutputOperationException extends \RuntimeException
 {
     public function __construct($message, $previous = null)
     {

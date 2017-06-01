@@ -4,11 +4,16 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
+use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
+use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
+use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\Syrup\Exception\ApplicationException;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -165,14 +170,14 @@ class Writer
         /** @var SplFileInfo[] $files */
         $files = $finder->files()->notName("*.manifest")->in($source)->depth(0);
 
-        $outputMappingFiles = array();
+        $outputMappingFiles = [];
         if (isset($configuration["mapping"])) {
             foreach ($configuration["mapping"] as $mapping) {
                 $outputMappingFiles[] = $mapping["source"];
             }
         }
         $outputMappingFiles = array_unique($outputMappingFiles);
-        $processedOutputMappingFiles = array();
+        $processedOutputMappingFiles = [];
 
         $fileNames = [];
         foreach ($files as $file) {
@@ -183,7 +188,7 @@ class Writer
         if (isset($configuration["mapping"])) {
             foreach ($configuration["mapping"] as $mapping) {
                 if (!in_array($mapping["source"], $fileNames)) {
-                    throw new MissingFileException("File '{$mapping["source"]}' not found.");
+                    throw new InvalidOutputException("File '{$mapping["source"]}' not found.");
                 }
             }
         }
@@ -191,13 +196,13 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new ManifestMismatchException("Found orphaned file manifest: '" . basename($manifest) . "'");
+                throw new InvalidOutputException("Found orphaned file manifest: '" . basename($manifest) . "'");
             }
         }
 
         foreach ($files as $file) {
-            $configFromMapping = array();
-            $configFromManifest = array();
+            $configFromMapping = [];
+            $configFromManifest = [];
             if (isset($configuration["mapping"])) {
                 foreach ($configuration["mapping"] as $mapping) {
                     if (isset($mapping["source"]) && $mapping["source"] == $file->getFilename()) {
@@ -215,17 +220,17 @@ class Writer
             try {
                 // Mapping with higher priority
                 if ($configFromMapping || !$configFromManifest) {
-                    $storageConfig = (new File\Manifest())->parse(array($configFromMapping));
+                    $storageConfig = (new FileManifest())->parse([$configFromMapping]);
                 } else {
-                    $storageConfig = (new File\Manifest())->parse(array($configFromManifest));
+                    $storageConfig = (new FileManifest())->parse([$configFromManifest]);
                 }
             } catch (InvalidConfigurationException $e) {
-                throw new UserException("Failed to write manifest for table {$file->getFilename()}.", $e);
+                throw new InvalidOutputException("Failed to write manifest for table {$file->getFilename()}.", $e);
             }
             try {
                 $this->uploadFile($file->getPathname(), $storageConfig);
             } catch (ClientException $e) {
-                throw new UserException(
+                throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to Storage API: " . $e->getMessage(),
                     $e
                 );
@@ -238,7 +243,9 @@ class Writer
             $processedOutputMappingFiles
         );
         if (count($diff)) {
-            throw new UserException("Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'.");
+            throw new InvalidOutputException(
+                "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
+            );
         }
     }
 
@@ -248,11 +255,11 @@ class Writer
      */
     protected function readFileManifest($source)
     {
-        $adapter = new File\Manifest\Adapter($this->getFormat());
+        $adapter = new FileAdapter($this->getFormat());
         try {
             return $adapter->readFromFile($source);
         } catch (\Exception $e) {
-            throw new ManifestMismatchException(
+            throw new InvalidOutputException(
                 "Failed to parse manifest file $source as " . $this->getFormat() . " " . $e->getMessage(),
                 $e
             );
@@ -264,7 +271,7 @@ class Writer
      * @param array $config
      * @throws \Keboola\StorageApi\ClientException
      */
-    protected function uploadFile($source, $config = array())
+    protected function uploadFile($source, array $config = [])
     {
         $options = new FileUploadOptions();
         $options
@@ -284,7 +291,7 @@ class Writer
     public function uploadTables($source, array $configuration, array $systemMetadata)
     {
         if (empty($systemMetadata['componentId'])) {
-            throw new ApplicationException("Component Id must be set");
+            throw new OutputOperationException("Component Id must be set");
         }
         $manifestNames = $this->getManifestFiles($source);
 
@@ -293,14 +300,14 @@ class Writer
         /** @var SplFileInfo[] $files */
         $files = $finder->notName("*.manifest")->in($source)->depth(0);
 
-        $outputMappingTables = array();
+        $outputMappingTables = [];
         if (isset($configuration["mapping"])) {
             foreach ($configuration["mapping"] as $mapping) {
                 $outputMappingTables[] = $mapping["source"];
             }
         }
         $outputMappingTables = array_unique($outputMappingTables);
-        $processedOutputMappingTables = array();
+        $processedOutputMappingTables = [];
 
         $fileNames = [];
         foreach ($files as $file) {
@@ -311,7 +318,7 @@ class Writer
         if (isset($configuration["mapping"])) {
             foreach ($configuration["mapping"] as $mapping) {
                 if (!in_array($mapping["source"], $fileNames)) {
-                    throw new MissingFileException("Table source '{$mapping["source"]}' not found.");
+                    throw new InvalidOutputException("Table source '{$mapping["source"]}' not found.");
                 }
             }
         }
@@ -319,13 +326,13 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new ManifestMismatchException("Found orphaned table manifest: '" . basename($manifest) . "'");
+                throw new InvalidOutputException("Found orphaned table manifest: '" . basename($manifest) . "'");
             }
         }
 
         foreach ($files as $file) {
-            $configFromMapping = array();
-            $configFromManifest = array();
+            $configFromMapping = [];
+            $configFromManifest = [];
             if (isset($configuration["mapping"])) {
                 foreach ($configuration["mapping"] as $mapping) {
                     if (isset($mapping["source"]) && $mapping["source"] == $file->getFilename()) {
@@ -342,29 +349,35 @@ class Writer
             if ($manifestKey !== false) {
                 $configFromManifest = $this->readTableManifest($file->getPathname() . ".manifest");
                 if (empty($configFromManifest["destination"]) || isset($configuration['bucket'])) {
-                    $configFromManifest['destination'] = $this->createDestinationConfigParam($prefix, $file->getFilename());
+                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
+                        $prefix,
+                        $file->getFilename()
+                    );
                 }
                 unset($manifestNames[$manifestKey]);
             } else {
                 // If no manifest found and no output mapping, use filename (without .csv if present) as table id
                 if (empty($configFromMapping["destination"]) || isset($configuration['bucket'])) {
-                    $configFromMapping["destination"] = $this->createDestinationConfigParam($prefix, $file->getFilename());
+                    $configFromMapping["destination"] = $this->createDestinationConfigParam(
+                        $prefix,
+                        $file->getFilename()
+                    );
                 }
             }
 
             try {
                 // Mapping with higher priority
                 if ($configFromMapping || !$configFromManifest) {
-                    $config = (new Table\Manifest())->parse(array($configFromMapping));
+                    $config = (new TableManifest())->parse([$configFromMapping]);
                 } else {
-                    $config = (new Table\Manifest())->parse(array($configFromManifest));
+                    $config = (new TableManifest())->parse([$configFromManifest]);
                 }
             } catch (InvalidConfigurationException $e) {
-                throw new UserException("Failed to write manifest for table {$file->getFilename()}.", $e);
+                throw new InvalidOutputException("Failed to write manifest for table {$file->getFilename()}.", $e);
             }
 
             if (count(explode(".", $config["destination"])) != 3) {
-                throw new UserException(
+                throw new InvalidOutputException(
                     "CSV file '{$config["destination"]}' file name is not a valid table identifier, " .
                     "either set output mapping for '{$file->getRelativePathname()}' or make sure " .
                     "that the file name is a valid Storage table identifier."
@@ -380,7 +393,7 @@ class Writer
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"]);
                 $this->uploadTable($file->getPathname(), $config, $systemMetadata);
             } catch (ClientException $e) {
-                throw new UserException(
+                throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
                     . $e->getMessage(),
                     $e
@@ -389,10 +402,18 @@ class Writer
 
             // After the file has been written, we can write metadata
             if (!empty($config['metadata'])) {
-                $this->metadataClient->postTableMetadata($config["destination"], $systemMetadata['componentId'], $config["metadata"]);
+                $this->metadataClient->postTableMetadata(
+                    $config["destination"],
+                    $systemMetadata['componentId'],
+                    $config["metadata"]
+                );
             }
             if (!empty($config['column_metadata'])) {
-                $this->writeColumnMetadata($config["destination"], $systemMetadata['componentId'], $config["column_metadata"]);
+                $this->writeColumnMetadata(
+                    $config["destination"],
+                    $systemMetadata['componentId'],
+                    $config["column_metadata"]
+                );
             }
         }
 
@@ -402,7 +423,9 @@ class Writer
             $processedOutputMappingTables
         );
         if (count($diff)) {
-            throw new UserException("Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'.");
+            throw new InvalidOutputException(
+                "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
+            );
         }
     }
 
@@ -428,11 +451,11 @@ class Writer
      */
     protected function readTableManifest($source)
     {
-        $adapter = new Table\Manifest\Adapter($this->getFormat());
+        $adapter = new TableAdapter($this->getFormat());
         try {
             return $adapter->readFromFile($source);
         } catch (InvalidConfigurationException $e) {
-            throw new UserException(
+            throw new InvalidOutputException(
                 "Failed to read table manifest from file " . basename($source) . ' ' . $e->getMessage(),
                 $e
             );
@@ -491,20 +514,27 @@ class Writer
         $tableName = $tableIdParts[2];
 
         if (is_dir($source) && empty($config["columns"])) {
-            throw new UserException("Sliced file '" . basename($source) . "': columns specification missing.");
+            throw new InvalidOutputException("Sliced file '" . basename($source) . "': columns specification missing.");
         }
 
         // Create bucket if not exists
         if (!$this->client->bucketExists($bucketId)) {
             $this->client->createBucket($bucketName, $tableIdParts[0]);
-            $this->metadataClient->postBucketMetadata($bucketId, self::SYSTEM_METADATA_PROVIDER, $this->getCreatedMetadata($systemMetadata));
+            $this->metadataClient->postBucketMetadata(
+                $bucketId,
+                self::SYSTEM_METADATA_PROVIDER,
+                $this->getCreatedMetadata($systemMetadata)
+            );
         }
 
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->getClient()->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
             if (self::modifyPrimaryKeyDecider($tableInfo, $config)) {
-                $this->getLogger()->warning("Modifying primary key of table {$tableInfo["id"]} from [" . join(", ", $tableInfo["primaryKey"]) . "] to [" . join(", ", $config["primary_key"]) . "].");
+                $this->getLogger()->warning(
+                    "Modifying primary key of table {$tableInfo["id"]} from [" .
+                    join(", ", $tableInfo["primaryKey"]) . "] to [" . join(", ", $config["primary_key"]) . "]."
+                );
                 $failed = false;
                 // modify primary key
                 if (count($tableInfo["primaryKey"]) > 0) {
@@ -545,16 +575,16 @@ class Writer
                 }
 
                 // Delete rows
-                $deleteOptions = array(
+                $deleteOptions = [
                     "whereColumn" => $config["delete_where_column"],
                     "whereOperator" => $config["delete_where_operator"],
                     "whereValues" => $config["delete_where_values"]
-                );
+                ];
                 $this->getClient()->deleteTableRows($config["destination"], $deleteOptions);
             }
-            $options = array(
+            $options = [
                 "incremental" => $config["incremental"]
-            );
+            ];
             // headless csv file
             if (!empty($config["columns"])) {
                 $options["columns"] = $config["columns"];
@@ -569,11 +599,15 @@ class Writer
                 $this->client->writeTableAsync($config["destination"], $csvFile, $options);
             }
 
-            $this->metadataClient->postTableMetadata($config['destination'], self::SYSTEM_METADATA_PROVIDER, $this->getUpdatedMetadata($systemMetadata));
-        } else {
-            $options = array(
-                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"]))
+            $this->metadataClient->postTableMetadata(
+                $config['destination'],
+                self::SYSTEM_METADATA_PROVIDER,
+                $this->getUpdatedMetadata($systemMetadata)
             );
+        } else {
+            $options = [
+                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"]))
+            ];
             $tableId = $config['destination'];
             // headless csv file
             if (!empty($config["columns"])) {
@@ -581,6 +615,7 @@ class Writer
                 $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
                 $headerCsvFile->writeRow($config["columns"]);
                 $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
+                unset($headerCsvFile);
                 $options["columns"] = $config["columns"];
                 $options["withoutHeaders"] = true;
                 if (is_dir($source)) {
@@ -590,12 +625,18 @@ class Writer
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $this->client->writeTableAsync($config["destination"], $csvFile, $options);
+                    unset($csvFile);
                 }
             } else {
                 $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                 $tableId = $this->client->createTableAsync($bucketId, $tableName, $csvFile, $options);
+                unset($csvFile);
             }
-            $this->metadataClient->postTableMetadata($tableId, self::SYSTEM_METADATA_PROVIDER, $this->getCreatedMetadata($systemMetadata));
+            $this->metadataClient->postTableMetadata(
+                $tableId,
+                self::SYSTEM_METADATA_PROVIDER,
+                $this->getCreatedMetadata($systemMetadata)
+            );
         }
     }
 
@@ -626,6 +667,7 @@ class Writer
         $finder = new Finder();
         $slices = $finder->files()->in($source)->depth(0);
         $sliceFiles = [];
+        /** @var SplFileInfo $slice */
         foreach ($slices as $slice) {
             $sliceFiles[] = $slice->getPathname();
         }
@@ -696,7 +738,7 @@ class Writer
                 $pkMapping = join(", ", $configPK);
                 $pkTable = join(", ", $tableInfo["primaryKey"]);
                 $message = "Output mapping does not match destination table: primary key '{$pkMapping}' does not match '{$pkTable}' in '{$config["destination"]}'.";
-                throw new UserException($message);
+                throw new InvalidOutputException($message);
             }
         }
     }

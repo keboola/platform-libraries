@@ -2,12 +2,15 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\OutputMapping\Writer;
+use Keboola\OutputMapping\Writer\Writer;
 
 class StorageApiWriterStaticTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider modifyPrimaryKeyDeciderOptionsProvider
+     * @param array $tableInfo
+     * @param array $config
+     * @param $result
      */
     public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, $result)
     {
@@ -16,8 +19,9 @@ class StorageApiWriterStaticTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider normalizePrimaryKeyProvider
+     * @param array $pkey
+     * @param array $result
      */
-
     public function testNormalizePrimaryKey(array $pkey, array $result)
     {
         $this->assertEquals($result, Writer::normalizePrimaryKey($pkey));

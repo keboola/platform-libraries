@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Configuration;
 
-use Keboola\OutputMapping\Exception\InputOperationException;
+use Keboola\OutputMapping\Exception\OutputOperationException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -66,19 +66,19 @@ class Adapter
             case 'json':
                 return '.json';
             default:
-                throw new InputOperationException("Invalid configuration format {$this->format}.");
+                throw new OutputOperationException("Invalid configuration format {$this->format}.");
         }
     }
 
     /**
      * @param $format
      * @return $this
-     * @throws InputOperationException
+     * @throws OutputOperationException
      */
     public function setFormat($format)
     {
         if (!in_array($format, ['yaml', 'json'])) {
-            throw new InputOperationException("Configuration format '{$format}' not supported");
+            throw new OutputOperationException("Configuration format '{$format}' not supported");
         }
         $this->format = $format;
         return $this;
@@ -102,13 +102,13 @@ class Adapter
      *
      * @param $file
      * @return array
-     * @throws InputOperationException
+     * @throws OutputOperationException
      */
     public function readFromFile($file)
     {
         $fs = new Filesystem();
         if (!$fs->exists($file)) {
-            throw new InputOperationException("File '$file' not found.");
+            throw new OutputOperationException("File '$file' not found.");
         }
 
         $serialized = $this->getContents($file);
@@ -119,7 +119,7 @@ class Adapter
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
-            throw new InputOperationException("Invalid configuration format {$this->format}.");
+            throw new OutputOperationException("Invalid configuration format {$this->format}.");
         }
         $this->setConfig($data);
         return $this->getConfig();
@@ -146,7 +146,7 @@ class Adapter
                 ['json_encode_options' => JSON_PRETTY_PRINT]
             );
         } else {
-            throw new InputOperationException("Invalid configuration format {$this->format}.");
+            throw new OutputOperationException("Invalid configuration format {$this->format}.");
         }
         $fs = new Filesystem();
         $fs->dumpFile($file, $serialized);
@@ -155,18 +155,18 @@ class Adapter
     /**
      * @param $file
      * @return mixed
-     * @throws InputOperationException
+     * @throws OutputOperationException
      */
     public function getContents($file)
     {
         if (!(new Filesystem())->exists($file)) {
-            throw new InputOperationException("File" . $file . " not found.");
+            throw new OutputOperationException("File" . $file . " not found.");
         }
         $fileHandler = new SplFileInfo($file, "", basename($file));
         if ($fileHandler) {
             return $fileHandler->getContents();
         } else {
-            throw new InputOperationException("File" . $file . " not found.");
+            throw new OutputOperationException("File" . $file . " not found.");
         }
     }
 }

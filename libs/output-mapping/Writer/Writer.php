@@ -9,6 +9,7 @@ use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Exception\ManifestMismatchException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -196,7 +197,7 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new InvalidOutputException("Found orphaned file manifest: '" . basename($manifest) . "'");
+                throw new ManifestMismatchException("Found orphaned file manifest: '" . basename($manifest) . "'");
             }
         }
 
@@ -326,7 +327,7 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new InvalidOutputException("Found orphaned table manifest: '" . basename($manifest) . "'");
+                throw new ManifestMismatchException("Found orphaned table manifest: '" . basename($manifest) . "'");
             }
         }
 

@@ -1,6 +1,6 @@
 {
     "name": "keboola/output-mapping",
-    "description": "Shared component for processing SAPI outpu mapping and importing data to KBC",
+    "description": "Shared component for processing SAPI output mapping and importing data to KBC",
     "minimum-stability": "stable",
     "license": "MIT",
     "authors": [

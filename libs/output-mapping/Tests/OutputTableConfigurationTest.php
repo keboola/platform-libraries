@@ -2,31 +2,31 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\OutputMapping\Configuration\Output\Table;
+use Keboola\OutputMapping\Configuration\Table;
 
 class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     public function testBasicConfiguration()
     {
-        $config = array(
+        $config = [
             "source" => "data.csv",
             "destination" => "in.c-main.test"
-        );
+        ];
 
-        $expectedArray = array(
+        $expectedArray = [
             "source" => "data.csv",
             "destination" => "in.c-main.test",
-            "primary_key" => array(),
-            "columns" => array(),
+            "primary_key" => [],
+            "columns" => [],
             "incremental" => false,
-            "delete_where_values" => array(),
+            "delete_where_values" => [],
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
             "escaped_by" => "",
             "metadata" => [],
             "column_metadata" => []
-        );
+        ];
 
         $processedConfiguration = (new Table())->parse(array("config" => $config));
         $this->assertEquals($expectedArray, $processedConfiguration);
@@ -34,25 +34,25 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function testComplexConfiguration()
     {
-        $config = array(
+        $config = [
             "source" => "test",
             "destination" => "in.c-main.test",
             "incremental" => true,
-            "primary_key" => array("Id", "Name"),
-            "columns" => array("Id", "Name", "status"),
+            "primary_key" => ["Id", "Name"],
+            "columns" => ["Id", "Name", "status"],
             "delete_where_column" => "status",
-            "delete_where_values" => array("val1", "val2"),
+            "delete_where_values" => ["val1", "val2"],
             "delete_where_operator" => "ne",
             "delimiter" => "\t",
             "enclosure" => "'",
             "escaped_by" => "\\",
             "metadata" => [],
             "column_metadata" => []
-        );
+        ];
 
         $expectedArray = $config;
 
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
     }
 
@@ -62,12 +62,12 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testInvalidWhereOperator()
     {
-        $config = array(
+        $config = [
             "destination" => "in.c-main.test",
             "delete_where_operator" => 'abc'
-        );
+        ];
 
-        (new Table())->parse(array("config" => $config));
+        (new Table())->parse(["config" => $config]);
     }
 
     /**
@@ -76,32 +76,32 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
-        (new Table())->parse(array("config" => array()));
+        (new Table())->parse(["config" => []]);
     }
 
     public function testPrimaryKeyEmptyString()
     {
-        $config = array(
+        $config = [
             "source" => "test",
             "destination" => "in.c-main.test",
-            "primary_key" => array(""),
-        );
+            "primary_key" => [""],
+        ];
 
-        $expectedArray = array(
+        $expectedArray = [
             "source" => "test",
             "destination" => "in.c-main.test",
-            "primary_key" => array(""),
-            "columns" => array(),
+            "primary_key" => [""],
+            "columns" => [],
             "incremental" => false,
-            "delete_where_values" => array(),
+            "delete_where_values" => [],
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
             "escaped_by" => "",
             "metadata" => [],
             "column_metadata" => []
-        );
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
+        ];
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
     }
 }

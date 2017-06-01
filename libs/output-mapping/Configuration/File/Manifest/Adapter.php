@@ -2,7 +2,9 @@
 
 namespace Keboola\OutputMapping\Configuration\File\Manifest;
 
-class Adapter extends Configuration\Adapter
+use Keboola\OutputMapping\Configuration\File\Manifest;
+
+class Adapter extends \Keboola\OutputMapping\Configuration\Adapter
 {
-    protected $configClass = Configuration\Output\File\Manifest::class;
+    protected $configClass = Manifest::class;
 }

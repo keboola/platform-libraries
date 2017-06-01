@@ -2,26 +2,26 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\OutputMapping\Configuration\Output\File;
+use Keboola\OutputMapping\Configuration\File;
 
 class OutputFileConfigurationTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testConfiguration()
     {
-        $config = array(
+        $config = [
                 "source" => "file",
-                "tags" => array("tag1", "tag2")
-            );
-        $expectedResponse = array(
+                "tags" => ["tag1", "tag2"]
+        ];
+        $expectedResponse = [
             "source" => "file",
             "is_public" => false,
             "is_permanent" => false,
             "is_encrypted" => true,
             "notify" => false,
-            "tags" => array("tag1", "tag2")
-        );
-        $processedConfiguration = (new File())->parse(array("config" => $config));
+            "tags" => ["tag1", "tag2"]
+        ];
+        $processedConfiguration = (new File())->parse(["config" => $config]);
         $this->assertEquals($expectedResponse, $processedConfiguration);
     }
 }

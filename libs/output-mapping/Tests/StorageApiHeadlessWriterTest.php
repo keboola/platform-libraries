@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\OutputMapping\Writer;
+use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -50,7 +50,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        // Create folders
+        parent::setUp();
         $this->tmp = new Temp();
         $this->tmp->initRunFolder();
         $root = $this->tmp->getTmpFolder();
@@ -69,9 +69,6 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        // Delete local files
-        $this->tmp = null;
-
         $this->clearBucket();
         $this->clearFileUploads();
     }
@@ -81,13 +78,13 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table.csv", "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 
@@ -99,7 +96,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
         $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
@@ -112,13 +109,13 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table", "");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
@@ -145,13 +142,13 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             "{\"destination\": \"out.c-docker-test.table2\",\"primary_key\":[\"Id\"],\"columns\":[\"a\",\"b\"]}"
         );
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table2.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id", "Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 
@@ -161,7 +158,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-docker-test.table', $tables[0]["id"]);
         $table = $this->client->getTable("out.c-docker-test.table");
-        $this->assertEquals(array(), $table["primaryKey"]);
+        $this->assertEquals([], $table["primaryKey"]);
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
@@ -192,8 +189,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-docker-test.table', $tables[0]["id"]);
         $table = $this->client->getTable("out.c-docker-test.table");
-        $this->assertEquals(array("Id", "Name"), $table["primaryKey"]);
-        $this->assertEquals(array("Id", "Name"), $table["columns"]);
+        $this->assertEquals(["Id", "Name"], $table["primaryKey"]);
+        $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
@@ -216,13 +213,13 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table.csv", "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 

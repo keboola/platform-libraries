@@ -2,7 +2,7 @@
 
 namespace Keboola\DockerBundle\Tests;
 
-use Keboola\OutputMapping\Writer;
+use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;

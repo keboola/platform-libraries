@@ -3,13 +3,13 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\OutputMapping\Writer;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
-use Keboola\Syrup\Exception\UserException;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -70,9 +70,6 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        // Delete local files
-        $this->tmp = null;
-
         $this->clearBucket();
         $this->clearFileUploads();
     }
@@ -84,16 +81,15 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
-
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -115,13 +111,13 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
@@ -141,18 +137,18 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table",
                 "destination" => "out.c-docker-test.table"
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
         try {
             $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
             $this->fail("Exception not caught");
-        } catch (UserException $e) {
+        } catch (InvalidOutputException $e) {
             $this->assertEquals("Sliced file 'table': columns specification missing.", $e->getMessage());
         }
     }
@@ -172,13 +168,13 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 
@@ -206,15 +202,15 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload/table.csv/part1", "'test'|'test'\n");
         file_put_contents($root . "/upload/table.csv/part2", "'aabb'|'ccdd'\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"],
                 "delimiter" => "|",
                 "enclosure" => "'"
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 
@@ -243,18 +239,18 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
         file_put_contents($root . "/upload/table2.csv", "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            ),
-            array(
+            ],
+            [
                 "source" => "table2.csv",
                 "destination" => "out.c-docker-test.table2",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
@@ -292,13 +288,13 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         exec("gzip " . $root . "/upload/table.csv/part1");
         exec("gzip " . $root . "/upload/table.csv/part2");
 
-        $configs = array(
-            array(
+        $configs = [
+            [
                 "source" => "table.csv",
                 "destination" => "out.c-docker-test.table",
                 "columns" => ["Id","Name"]
-            )
-        );
+            ]
+        ];
 
         $writer = new Writer($this->client, new NullLogger());
 

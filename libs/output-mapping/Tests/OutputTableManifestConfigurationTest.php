@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\OutputMapping\Configuration\Output\Table;
+use Keboola\OutputMapping\Configuration\Table;
 
 class OutputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
 {

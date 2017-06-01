@@ -2,9 +2,9 @@
 
 namespace Keboola\OutputMapping\Configuration\Table\Manifest;
 
-use Keboola\DockerBundle\Docker\Configuration;
+use Keboola\OutputMapping\Configuration\Table\Manifest;
 
-class Adapter extends Configuration\Adapter
+class Adapter extends \Keboola\OutputMapping\Configuration\Adapter
 {
-    protected $configClass = Configuration\Output\Table\Manifest::class;
+    protected $configClass = Manifest::class;
 }

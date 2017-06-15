@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Exception\ManifestMismatchException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -197,7 +196,7 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new ManifestMismatchException("Found orphaned file manifest: '" . basename($manifest) . "'");
+                throw new InvalidOutputException("Found orphaned file manifest: '" . basename($manifest) . "'");
             }
         }
 
@@ -327,7 +326,7 @@ class Writer
         // Check for manifest orphans
         foreach ($manifestNames as $manifest) {
             if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new ManifestMismatchException("Found orphaned table manifest: '" . basename($manifest) . "'");
+                throw new InvalidOutputException("Found orphaned table manifest: '" . basename($manifest) . "'");
             }
         }
 
@@ -390,6 +389,9 @@ class Writer
                     support both, so we remove escaped_by, this should be removed from file manifest, but cannot
                     be done until all images are updated not to use the parameter.
                 The following unset should be removed once the 'escaped_by' parameter is removed from table manifest. */
+                if (isset($config['escaped_by'])) {
+                    $this->logger->warning("Using ignored escaped_by");
+                }
                 unset($config['escaped_by']);
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"]);
                 $this->uploadTable($file->getPathname(), $config, $systemMetadata);

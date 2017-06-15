@@ -3,7 +3,6 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Exception\ManifestMismatchException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
@@ -297,7 +296,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         try {
             $writer->uploadFiles($root . "/upload");
             $this->fail("Orphaned manifest must cause exception.");
-        } catch (ManifestMismatchException $e) {
+        } catch (InvalidOutputException $e) {
             $this->assertContains("Found orphaned file manifest: 'file1.manifest'", $e->getMessage());
         }
     }
@@ -535,7 +534,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         try {
             $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
             $this->fail("Orphaned manifest must fail");
-        } catch (ManifestMismatchException $e) {
+        } catch (InvalidOutputException $e) {
             $this->assertContains("Found orphaned table manifest: 'table.csv.manifest'", $e->getMessage());
         }
     }

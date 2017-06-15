@@ -393,7 +393,7 @@ class Writer
                     $this->logger->warning("Using ignored escaped_by");
                 }
                 unset($config['escaped_by']);
-                $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"]);
+                $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"], $this->logger);
                 $this->uploadTable($file->getPathname(), $config, $systemMetadata);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -533,7 +533,7 @@ class Writer
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->getClient()->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
-            if (self::modifyPrimaryKeyDecider($tableInfo, $config)) {
+            if (self::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
                 $this->getLogger()->warning(
                     "Modifying primary key of table {$tableInfo["id"]} from [" .
                     join(", ", $tableInfo["primaryKey"]) . "] to [" . join(", ", $config["primary_key"]) . "]."
@@ -609,7 +609,7 @@ class Writer
             );
         } else {
             $options = [
-                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"]))
+                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger))
             ];
             $tableId = $config['destination'];
             // headless csv file
@@ -733,7 +733,7 @@ class Writer
     public function validateAgainstTable($tableInfo = [], $config = [])
     {
         // primary key
-        $configPK = self::normalizePrimaryKey($config["primary_key"]);
+        $configPK = self::normalizePrimaryKey($config["primary_key"], $this->logger);
         if (count($configPK) > 0 || count($tableInfo["primaryKey"]) > 0) {
             if (count(array_diff($tableInfo["primaryKey"], $configPK)) > 0 ||
                 count(array_diff($configPK, $tableInfo["primaryKey"])) > 0
@@ -748,19 +748,21 @@ class Writer
 
     /**
      * @param array $pKey
+     * @param LoggerInterface $logger
      * @return array
      */
-    public static function normalizePrimaryKey(array $pKey)
+    public static function normalizePrimaryKey(array $pKey, $logger)
     {
         return array_map(
             function ($pKey) {
                 return trim($pKey);
             },
             array_unique(
-                array_filter($pKey, function ($col) {
+                array_filter($pKey, function ($col) use ($logger) {
                     if ($col != '') {
                         return true;
                     }
+                    $logger->warning("Empty primary key found");
                     return false;
                 })
             )
@@ -770,11 +772,12 @@ class Writer
     /**
      * @param array $tableInfo
      * @param array $config
+     * @param LoggerInterface $logger
      * @return bool
      */
-    public static function modifyPrimaryKeyDecider(array $tableInfo, array $config)
+    public static function modifyPrimaryKeyDecider(array $tableInfo, array $config, LoggerInterface $logger)
     {
-        $configPK = self::normalizePrimaryKey($config["primary_key"]);
+        $configPK = self::normalizePrimaryKey($config["primary_key"], $logger);
         if (count($tableInfo["primaryKey"]) != count($configPK)) {
             return true;
         }

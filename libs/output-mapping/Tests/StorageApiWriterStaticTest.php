@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Writer\Writer;
+use Psr\Log\NullLogger;
 
 class StorageApiWriterStaticTest extends \PHPUnit_Framework_TestCase
 {
@@ -14,7 +15,7 @@ class StorageApiWriterStaticTest extends \PHPUnit_Framework_TestCase
      */
     public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, $result)
     {
-        $this->assertEquals($result, Writer::modifyPrimaryKeyDecider($tableInfo, $config));
+        $this->assertEquals($result, Writer::modifyPrimaryKeyDecider($tableInfo, $config, new NullLogger()));
     }
 
     /**
@@ -24,7 +25,7 @@ class StorageApiWriterStaticTest extends \PHPUnit_Framework_TestCase
      */
     public function testNormalizePrimaryKey(array $pkey, array $result)
     {
-        $this->assertEquals($result, Writer::normalizePrimaryKey($pkey));
+        $this->assertEquals($result, Writer::normalizePrimaryKey($pkey, new NullLogger()));
     }
 
     /**

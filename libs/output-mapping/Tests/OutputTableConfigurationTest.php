@@ -23,7 +23,6 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
-            "escaped_by" => "",
             "metadata" => [],
             "column_metadata" => []
         ];
@@ -97,7 +96,6 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
-            "escaped_by" => "",
             "metadata" => [],
             "column_metadata" => []
         ];

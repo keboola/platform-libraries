@@ -21,7 +21,6 @@ class OutputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
-            "escaped_by" => "",
             "metadata" => [],
             "column_metadata" => []
         ];
@@ -45,7 +44,6 @@ class OutputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "ne",
             "delimiter" => "\t",
             "enclosure" => "'",
-            "escaped_by" => "\\",
             "metadata" => [],
             "column_metadata" => []
         ];
@@ -95,7 +93,6 @@ class OutputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
-            "escaped_by" => "",
             "column_metadata" => []
         ];
         $expectedArray['metadata'] = $config['metadata'];
@@ -141,7 +138,6 @@ class OutputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "eq",
             "delimiter" => ",",
             "enclosure" => "\"",
-            "escaped_by" => "",
             "metadata" => []
         ];
 

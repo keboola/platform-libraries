@@ -43,7 +43,7 @@ class Manifest extends Configuration
                 ->end()
                 ->scalarNode("delimiter")->defaultValue(",")->end()
                 ->scalarNode("enclosure")->defaultValue("\"")->end()
-                ->scalarNode("escaped_by")->defaultValue("")->end() //TODO: escaped_by is deprecated and should not be used any more
+                ->scalarNode("escaped_by")->end() //TODO: escaped_by is deprecated and should not be used any more
                 ->arrayNode("metadata")
                     ->prototype('array')
                         ->children()

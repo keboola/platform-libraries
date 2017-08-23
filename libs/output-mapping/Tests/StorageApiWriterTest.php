@@ -627,7 +627,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         // And again, check first incremental table
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $this->client->exportTable("out.c-docker-default-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv");
+        $exporter = new TableExporter($this->client);
+        $exporter->exportTable("out.c-docker-default-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv", []);
         $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
@@ -666,7 +667,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         // And again, check first incremental table
         $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $this->client->exportTable("out.c-docker-redshift-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv");
+        $exporter = new TableExporter($this->client);
+        $exporter->exportTable("out.c-docker-redshift-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv", []);
         $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);

@@ -15,7 +15,7 @@
         "symfony/finder": "^2.8",
         "symfony/serializer": "^2.8",
         "monolog/monolog": "^1.22",
-        "keboola/storage-api-client": "^6.3",
+        "keboola/storage-api-client": "^7.0",
         "keboola/input-mapping": "^2.0",
         "guzzlehttp/guzzle": "^6.2"
     },

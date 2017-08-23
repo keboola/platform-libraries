@@ -16,7 +16,7 @@
         "symfony/serializer": "^2.8",
         "monolog/monolog": "^1.22",
         "keboola/storage-api-client": "^7.0",
-        "keboola/input-mapping": "^2.0",
+        "keboola/input-mapping": "^3.0",
         "guzzlehttp/guzzle": "^6.2"
     },
     "require-dev": {

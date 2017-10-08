@@ -157,4 +157,91 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
+    
+    public function testConfigRowMetadataWritingTest()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table1.csv",
+                    "destination" => "in.c-docker-test.table1",
+                    "metadata" => [
+                        [
+                            "key" => "table.key.one",
+                            "value" => "table value one"
+                        ],
+                        [
+                            "key" => "table.key.two",
+                            "value" => "table value two"
+                        ]
+                    ],
+                    "column_metadata" => [
+                        "Id" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one id"
+                            ],
+                            [
+                                "key" => "column.key.two",
+                                "value" => "column value two id"
+                            ]
+                        ],
+                        "Name" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one text"
+                            ],
+                            [
+                                "key" => "column.key.two",
+                                "value" => "column value two text"
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+        ];
+        $systemMetadata = [
+            "componentId" => "testComponent",
+            "configurationId" => "metadata-write-test",
+            "configurationRowId" => "row-1"
+        ];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $metadataApi = new Metadata($this->client);
+
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $expectedTableMetadata = [
+            'system' => [
+                'KBC.createdBy.component.id' => 'testComponent',
+                'KBC.createdBy.configuration.id' => 'metadata-write-test',
+                'KBC.createdBy.configurationRow.id' => 'row-1',
+            ],
+            'testComponent' => [
+                'table.key.one' => 'table value one',
+                'table.key.two' => 'table value two'
+            ]
+        ];
+        self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
+
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table1.Id');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.one' => 'column value one id',
+                'column.key.two' => 'column value two id',
+            ]
+        ];
+        self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
+
+        // check metadata update
+        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';
+        $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
+        $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
+        self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
+    }
 }

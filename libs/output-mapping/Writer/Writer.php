@@ -481,6 +481,12 @@ class Writer
                 'value' => $systemMetadata['configurationId']
             ];
         }
+        if (!empty($systemMetadata['configurationRowId'])) {
+            $metadata[] = [
+                'key' => 'KBC.createdBy.configurationRow.id',
+                'value' => $systemMetadata['configurationRowId']
+            ];
+        }
         return $metadata;
     }
 
@@ -498,6 +504,12 @@ class Writer
             $metadata[] = [
                 'key' => 'KBC.lastUpdatedBy.configuration.id',
                 'value' => $systemMetadata['configurationId']
+            ];
+        }
+        if (!empty($systemMetadata['configurationRowId'])) {
+            $metadata[] = [
+                'key' => 'KBC.lastUpdatedBy.configurationRow.id',
+                'value' => $systemMetadata['configurationRowId']
             ];
         }
         return $metadata;

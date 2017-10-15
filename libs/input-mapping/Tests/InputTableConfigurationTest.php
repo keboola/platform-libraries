@@ -27,7 +27,24 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         $config = [
             "source" => "in.c-main.test",
             "destination" => "test",
-            "days" => 1,
+            "changed_since" => "-1 days",
+            "columns" => ["Id", "Name"],
+            "where_column" => "status",
+            "where_values" => ["val1", "val2"],
+            "where_operator" => "ne"
+        ];
+
+        $expectedArray = $config;
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
+    }
+
+    public function testDaysNullConfiguration()
+    {
+        $config = [
+            "source" => "in.c-main.test",
+            "destination" => "test",
+            "days" => null,
             "columns" => ["Id", "Name"],
             "where_column" => "status",
             "where_values" => ["val1", "val2"],
@@ -44,7 +61,7 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         $config = [
             "source" => "in.c-main.test",
             "destination" => "test",
-            "days" => null,
+            "days" => 1,
             "columns" => ["Id", "Name"],
             "where_column" => "status",
             "where_values" => ["val1", "val2"],
@@ -54,6 +71,57 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         $expectedArray = $config;
         $processedConfiguration = (new Table())->parse(["config" => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
+    }
+
+    public function testChangedSinceNullConfiguration()
+    {
+        $config = [
+            "source" => "in.c-main.test",
+            "destination" => "test",
+            "changed_since" => null,
+            "columns" => ["Id", "Name"],
+            "where_column" => "status",
+            "where_values" => ["val1", "val2"],
+            "where_operator" => "ne"
+        ];
+
+        $expectedArray = $config;
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
+    }
+
+    public function testChangedSinceConfiguration()
+    {
+        $config = [
+            "source" => "in.c-main.test",
+            "destination" => "test",
+            "changed_since" => "-1 days",
+            "columns" => ["Id", "Name"],
+            "where_column" => "status",
+            "where_values" => ["val1", "val2"],
+            "where_operator" => "ne"
+        ];
+
+        $expectedArray = $config;
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
+    }
+
+
+    public function testChangedSinceAndDaysConfiguration()
+    {
+        $config = [
+            "source" => "in.c-main.test",
+            "destination" => "test",
+            "changed_since" => "-1 days",
+            "days" => 1,
+            "columns" => ["Id", "Name"],
+            "where_column" => "status",
+            "where_values" => ["val1", "val2"],
+            "where_operator" => "ne"
+        ];
+        (new Table())->parse(["config" => $config]);
+        $this->fail("Exception not caught");
     }
 
     /**

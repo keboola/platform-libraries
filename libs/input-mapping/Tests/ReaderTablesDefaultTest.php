@@ -73,6 +73,24 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         );
     }
 
+    public function testReadTablesEmptyChangedSinceFilter()
+    {
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+                "changed_since" => ""
+            ]
+        ];
+
+        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        self::assertEquals(
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n",
+            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv")
+        );
+    }
+
     public function testReadTablesS3DefaultBackend()
     {
         $reader = new Reader($this->client, new NullLogger());

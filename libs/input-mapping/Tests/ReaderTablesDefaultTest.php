@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -177,5 +178,26 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         self::assertArrayHasKey('timestamp', $manifest['column_metadata']['Name'][0]);
         self::assertEquals('someKey', $manifest['column_metadata']['Name'][0]['key']);
         self::assertEquals('someValue', $manifest['column_metadata']['Name'][0]['value']);
+    }
+
+    public function testChangedSinceAndDaysConfiguration()
+    {
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+                "changed_since" => "-1 days",
+                "days" => 1
+            ]
+        ];
+
+        try {
+            $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+            $this->fail("Exception not caught");
+        } catch (InvalidInputException $e) {
+            $this->assertEquals("Cannot set both parameters 'days' and 'changed_since'.", $e->getMessage());
+        }
+
     }
 }

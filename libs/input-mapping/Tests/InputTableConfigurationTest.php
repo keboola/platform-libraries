@@ -107,23 +107,6 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-
-    public function testChangedSinceAndDaysConfiguration()
-    {
-        $config = [
-            "source" => "in.c-main.test",
-            "destination" => "test",
-            "changed_since" => "-1 days",
-            "days" => 1,
-            "columns" => ["Id", "Name"],
-            "where_column" => "status",
-            "where_values" => ["val1", "val2"],
-            "where_operator" => "ne"
-        ];
-        (new Table())->parse(["config" => $config]);
-        $this->fail("Exception not caught");
-    }
-
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
      * @expectedExceptionMessage Invalid configuration for path "table.where_operator": Invalid operator in where_operator "abc"

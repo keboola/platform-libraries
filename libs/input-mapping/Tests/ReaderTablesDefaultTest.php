@@ -198,6 +198,5 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         } catch (InvalidInputException $e) {
             $this->assertEquals("Cannot set both parameters 'days' and 'changed_since'.", $e->getMessage());
         }
-
     }
 }

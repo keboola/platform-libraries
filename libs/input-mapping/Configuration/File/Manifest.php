@@ -25,6 +25,7 @@ class Manifest extends Configuration
                 ->scalarNode("created")->end()
                 ->booleanNode("is_public")->defaultValue(false)->end()
                 ->booleanNode("is_encrypted")->defaultValue(false)->end()
+                ->booleanNode("is_sliced")->defaultValue(false)->end()
                 ->arrayNode("tags")->prototype("scalar")->end()->end()
                 ->integerNode("max_age_days")->treatNullLike(0)->end()
                 ->integerNode("size_bytes")->end()

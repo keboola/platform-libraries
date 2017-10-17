@@ -16,7 +16,8 @@ class InputFileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "is_encrypted" => false,
             "tags" => ["tag1", "tag2"],
             "max_age_days" => 180,
-            "size_bytes" => 4
+            "size_bytes" => 4,
+            'is_sliced' => false,
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new Manifest())->parse(["config" => $config]);

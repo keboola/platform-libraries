@@ -170,6 +170,7 @@ class Reader
             "created" => $fileInfo["created"],
             "is_public" => $fileInfo["isPublic"],
             "is_encrypted" => $fileInfo["isEncrypted"],
+            "is_sliced" => $fileInfo["isSliced"],
             "tags" => $fileInfo["tags"],
             "max_age_days" => $fileInfo["maxAgeDays"],
             "size_bytes" => $fileInfo["sizeBytes"]

@@ -40,7 +40,7 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $this->tmpDir = $temp->getTmpFolder();
         $fs = new Filesystem();
         $fs->mkdir($this->tmpDir . "/download");
-        $this->client = new Client(["token" => STORAGE_API_TOKEN]);
+        $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
     }
 
     public function tearDown()
@@ -81,6 +81,16 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $manifest1 = $adapter->readFromFile($root . "/download/" . $id1 . "_upload.manifest");
         $manifest2 = $adapter->readFromFile($root . "/download/" . $id2 . "_upload.manifest");
 
+        self::assertArrayHasKey('id', $manifest1);
+        self::assertArrayHasKey('name', $manifest1);
+        self::assertArrayHasKey('created', $manifest1);
+        self::assertArrayHasKey('is_public', $manifest1);
+        self::assertArrayHasKey('is_encrypted', $manifest1);
+        self::assertArrayHasKey('tags', $manifest1);
+        self::assertArrayHasKey('max_age_days', $manifest1);
+        self::assertArrayHasKey('size_bytes', $manifest1);
+        self::assertArrayHasKey('is_sliced', $manifest1);
+        self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1["id"]);
         self::assertEquals($id2, $manifest2["id"]);
     }
@@ -167,12 +177,17 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $reader->downloadFiles($configuration, $dlDir);
 
         self::assertEquals(
-            '"test","test"' . PHP_EOL,
+            '"test","test"' . "\n",
             file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
             . file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
         );
 
-        self::assertFileExists($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest");
+        $manifestFile = $dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest";
+        self::assertFileExists($manifestFile);
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile($manifestFile);
+        self::assertArrayHasKey('is_sliced', $manifest);
+        self::assertTrue($manifest['is_sliced']);
     }
 
     public function testReadFilesErrors()

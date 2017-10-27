@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
@@ -93,6 +94,45 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1["id"]);
         self::assertEquals($id2, $manifest2["id"]);
+    }
+
+    public function testReadFilesRegion()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+        $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
+
+        $client = $this->client;
+        $mockClient = $this->getMockBuilder(Client::class)
+            ->setConstructorArgs([["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]])
+            ->getMock();
+
+        $mockClient->method('listFiles')
+            ->willReturnCallback(
+                function ($fileConfiguration) use ($client) {
+                    return $client->listFiles($fileConfiguration);
+                }
+            );
+        // check that region from file info is not ignored
+        $mockClient->method('getFile')
+            ->willReturnCallback(
+                function ($fileId, $fileOptions) use ($client) {
+                    var_export($fileId);
+                    var_export($fileOptions);
+                    $fileInfo = $client->getFile($fileId, $fileOptions);
+                    $fileInfo['region'] = 'invalid-region';
+                    return $fileInfo;
+                }
+            );
+        /** @var Client $mockClient */
+        $reader = new Reader($mockClient, new NullLogger());
+        $configuration = [["tags" => ["docker-bundle-test"]]];
+        try {
+            $reader->downloadFiles($configuration, $root . "/download");
+            self::fail('must raise exception');
+        } catch (InputOperationException $e) {
+            self::assertContains('Failed to download file upload', $e->getMessage());
+        }
     }
 
     public function testReadFilesTagsFilterRunId()

@@ -195,7 +195,7 @@ class Reader
                 "secret" => $fileInfo["credentials"]["SecretAccessKey"],
                 "token" => $fileInfo["credentials"]["SessionToken"]
             ],
-            "region" => 'us-east-1',
+            "region" => $fileInfo['region'],
             'version' => 'latest',
 
         ]);

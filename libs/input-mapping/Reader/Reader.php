@@ -141,19 +141,13 @@ class Reader
             $options->setTags($fileConfiguration["tags"]);
         }
         if (isset($fileConfiguration["query"])) {
-               $options->setQuery($fileConfiguration["query"]);
+            $options->setQuery($fileConfiguration["query"]);
         }
-        $files = $this->getClient()->listFiles($options);
-
-        // a little sanity check, otherwise it may easily happen that a wrong ES query would fill up the server
         if (empty($fileConfiguration["limit"])) {
             $fileConfiguration["limit"] = 10;
         }
-        if (count($files) > $fileConfiguration["limit"]) {
-            throw new InvalidInputException(
-                "File input mapping downloads more than $fileConfiguration[limit] files, this seems like a mistake."
-            );
-        }
+        $options->setLimit($fileConfiguration["limit"]);
+        $files = $this->getClient()->listFiles($options);
         return $files;
     }
 

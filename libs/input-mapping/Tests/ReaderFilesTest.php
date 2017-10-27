@@ -190,7 +190,7 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         self::assertTrue($manifest['is_sliced']);
     }
 
-    public function testReadFilesErrors()
+    public function testReadFilesLimit()
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
@@ -216,15 +216,16 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
 
         $reader = new Reader($this->client, new NullLogger());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
-        try {
-            $reader->downloadFiles($configuration, $root . "/download");
-            self::fail("Too broad query should fail.");
-        } catch (InvalidInputException $e) {
-            self::assertContains('File input mapping downloads more than', $e->getMessage());
-        }
+        $reader->downloadFiles($configuration, $root . "/download");
+        $finder = new Finder();
+        $finder->files()->in($root . "/download")->notName('*.manifest');
+        self::assertEquals(10, $finder->count());
 
         $reader = new Reader($this->client, new NullLogger());
         $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 12]];
         $reader->downloadFiles($configuration, $root . "/download");
+        $finder = new Finder();
+        $finder->files()->in($root . "/download")->notName('*.manifest');
+        self::assertEquals(12, $finder->count());
     }
 }

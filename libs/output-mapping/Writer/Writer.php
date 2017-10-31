@@ -385,14 +385,6 @@ class Writer
             }
 
             try {
-                /* TODO: because Redshift does not support both enclosure and escaped_by parameters, we cannot
-                    support both, so we remove escaped_by, this should be removed from file manifest, but cannot
-                    be done until all images are updated not to use the parameter.
-                The following unset should be removed once the 'escaped_by' parameter is removed from table manifest. */
-                if (isset($config['escaped_by'])) {
-                    $this->logger->warning("Using ignored escaped_by");
-                }
-                unset($config['escaped_by']);
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"], $this->logger);
                 $this->uploadTable($file->getPathname(), $config, $systemMetadata);
             } catch (ClientException $e) {

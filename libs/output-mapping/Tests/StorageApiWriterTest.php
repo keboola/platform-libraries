@@ -498,10 +498,9 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-redshift-test.table3.csv",
             "'Id'\t'Name'\n'test'\t'test''s'\n"
         );
-        // TODO: remove the escaped_by parameter as soon as it is removed from manifest
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-redshift-test.table3.csv.manifest",
-            "{\"destination\": \"out.c-docker-redshift-test.table3\",\"delimiter\": \"\\t\",\"enclosure\": \"'\",\"escaped_by\": \"\\\\\"}"
+            "{\"destination\": \"out.c-docker-redshift-test.table3\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
         $writer = new Writer($this->client, new NullLogger());

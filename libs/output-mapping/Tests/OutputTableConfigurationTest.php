@@ -44,7 +44,6 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "delete_where_operator" => "ne",
             "delimiter" => "\t",
             "enclosure" => "'",
-            "escaped_by" => "\\",
             "metadata" => [],
             "column_metadata" => []
         ];

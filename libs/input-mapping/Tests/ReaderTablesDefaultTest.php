@@ -146,14 +146,12 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
             ]
         ];
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
         $adapter = new Adapter();
-
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
         self::assertEquals("val1", $manifest["attributes"][0]["value"]);
-        $this->assertS3info($manifest);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -197,31 +195,51 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
                 'value' => 'baz'
             ]
         ];
-        $columnMetadata = [
-            [
-                'key' => 'someKey',
-                'value' => 'someValue'
-            ]
-        ];
         $metadata = new Metadata($this->client);
         $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
-        $metadata->postColumnMetadata('in.c-docker-test.test.Name', 'dataLoaderTest', $columnMetadata);
+        $metadata->postColumnMetadata(
+            'in.c-docker-test.test.Name',
+            'dataLoaderTest',
+            [
+                [
+                    'key' => 'someKey',
+                    'value' => 'someValue'
+                ]
+            ]
+        );
+        $metadata->postColumnMetadata(
+            'in.c-docker-test.test.bar',
+            'dataLoaderTest',
+            [
+                [
+                    'key' => 'someBarKey',
+                    'value' => 'someBarValue'
+                ]
+            ]
+        );
         $reader = new Reader($this->client, new NullLogger());
         $configuration = [
             [
                 "source" => "in.c-docker-test.test",
+                "columns" => ["bar", "foo", "Id"],
                 "destination" => "test.csv",
             ]
         ];
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+
+        self::assertEquals(
+            "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .
+            "\n\"bar2\",\"foo2\",\"id2\"\n\"bar3\",\"foo3\",\"id3\"\n",
+            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv")
+        );
 
         $adapter = new Adapter();
-
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
         self::assertEquals("val1", $manifest["attributes"][0]["value"]);
-        $this->assertS3info($manifest);
+        self::assertArrayHasKey('columns', $manifest);
+        self::assertEquals(['bar', 'foo', "Id"], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -239,9 +257,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         self::assertEquals('bar', $manifest['metadata'][0]['value']);
         self::assertEquals('fooBar', $manifest['metadata'][1]['key']);
         self::assertEquals('baz', $manifest['metadata'][1]['value']);
-        self::assertCount(4, $manifest['column_metadata']);
+        self::assertCount(3, $manifest['column_metadata']);
         self::assertArrayHasKey('Id', $manifest['column_metadata']);
-        self::assertArrayHasKey('Name', $manifest['column_metadata']);
+        self::assertArrayHasKey('foo', $manifest['column_metadata']);
+        self::assertArrayHasKey('bar', $manifest['column_metadata']);
         self::assertCount(0, $manifest['column_metadata']['Id']);
         self::assertCount(1, $manifest['column_metadata']['Name']);
         self::assertArrayHasKey('id', $manifest['column_metadata']['Name'][0]);

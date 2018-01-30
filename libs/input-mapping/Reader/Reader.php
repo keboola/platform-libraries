@@ -255,6 +255,8 @@ class Reader
             $exportOptions = ["format" => "rfc"];
             if (isset($table["columns"]) && count($table["columns"])) {
                 $exportOptions["columns"] = $table["columns"];
+            } else {
+                $table["columns"] = [];
             }
             if (!empty($table["changed_since"]) && !empty($table["days"])) {
                 throw new InvalidInputException("Cannot set both parameters 'days' and 'changed_since'.");
@@ -290,7 +292,7 @@ class Reader
             }
             $this->logger->info("Fetched table " . $table["source"] . ".");
 
-            $this->writeTableManifest($tableInfo, $file . ".manifest");
+            $this->writeTableManifest($tableInfo, $file . ".manifest", $table["columns"]);
         }
         $this->logger->info("All tables were fetched.");
     }
@@ -311,11 +313,11 @@ class Reader
     }
 
     /**
-     * @param $tableInfo
-     * @param $destination
-     * @throws \Exception
+     * @param array $tableInfo
+     * @param string $destination
+     * @param array $columns
      */
-    protected function writeTableManifest($tableInfo, $destination)
+    protected function writeTableManifest($tableInfo, $destination, $columns)
     {
         $manifest = [
             "id" => $tableInfo["id"],
@@ -329,7 +331,6 @@ class Reader
             "rows_count" => $tableInfo["rowsCount"],
             "data_size_bytes" => $tableInfo["dataSizeBytes"],
             "is_alias" => $tableInfo["isAlias"],
-            "columns" => $tableInfo["columns"],
             "attributes" => []
         ];
         foreach ($tableInfo["attributes"] as $attribute) {
@@ -342,11 +343,15 @@ class Reader
         if (isset($tableInfo["s3"])) {
             $manifest["s3"] = $tableInfo["s3"];
         }
+        if (!$columns) {
+            $columns = $tableInfo["columns"];
+        }
+        $manifest["columns"] = $columns;
 
         $metadata = new Metadata($this->getClient());
         $manifest['metadata'] = $metadata->listTableMetadata($tableInfo['id']);
         $manifest['column_metadata'] = [];
-        foreach ($tableInfo['columns'] as $column) {
+        foreach ($columns as $column) {
             $manifest['column_metadata'][$column] = $metadata->listColumnMetadata($tableInfo['id'] . '.' . $column);
         }
         $adapter = new TableAdapter($this->getFormat());

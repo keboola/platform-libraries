@@ -262,14 +262,15 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         self::assertArrayHasKey('foo', $manifest['column_metadata']);
         self::assertArrayHasKey('bar', $manifest['column_metadata']);
         self::assertCount(0, $manifest['column_metadata']['Id']);
-        self::assertCount(1, $manifest['column_metadata']['Name']);
-        self::assertArrayHasKey('id', $manifest['column_metadata']['Name'][0]);
-        self::assertArrayHasKey('key', $manifest['column_metadata']['Name'][0]);
-        self::assertArrayHasKey('value', $manifest['column_metadata']['Name'][0]);
-        self::assertArrayHasKey('provider', $manifest['column_metadata']['Name'][0]);
-        self::assertArrayHasKey('timestamp', $manifest['column_metadata']['Name'][0]);
-        self::assertEquals('someKey', $manifest['column_metadata']['Name'][0]['key']);
-        self::assertEquals('someValue', $manifest['column_metadata']['Name'][0]['value']);
+        self::assertCount(0, $manifest['column_metadata']['foo']);
+        self::assertCount(1, $manifest['column_metadata']['bar']);
+        self::assertArrayHasKey('id', $manifest['column_metadata']['bar'][0]);
+        self::assertArrayHasKey('key', $manifest['column_metadata']['bar'][0]);
+        self::assertArrayHasKey('value', $manifest['column_metadata']['bar'][0]);
+        self::assertArrayHasKey('provider', $manifest['column_metadata']['bar'][0]);
+        self::assertArrayHasKey('timestamp', $manifest['column_metadata']['bar'][0]);
+        self::assertEquals('someBarKey', $manifest['column_metadata']['bar'][0]['key']);
+        self::assertEquals('someBarValue', $manifest['column_metadata']['bar'][0]['value']);
     }
 
 

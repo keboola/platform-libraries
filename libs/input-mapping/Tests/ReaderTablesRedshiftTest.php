@@ -28,7 +28,6 @@ class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
         $csv->writeRow(["Id", "Name"]);
         $csv->writeRow(["test", "test"]);
         $this->client->createTableAsync("in.c-docker-test-redshift", "test", $csv);
-        $this->client->setTableAttribute("in.c-docker-test-redshift.test", "attr1", "val2");
     }
 
     public function testReadTablesRedshift()
@@ -52,7 +51,6 @@ class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-redshift.csv.manifest");
         self::assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
-        self::assertEquals("val2", $manifest["attributes"][0]["value"]);
     }
 
     public function testReadTablesS3Redshift()
@@ -70,7 +68,6 @@ class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-redshift.csv.manifest");
         self::assertEquals("in.c-docker-test-redshift.test", $manifest["id"]);
-        self::assertEquals("val2", $manifest["attributes"][0]["value"]);
         $this->assertS3info($manifest);
     }
 }

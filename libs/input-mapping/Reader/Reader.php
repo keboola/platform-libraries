@@ -184,8 +184,8 @@ class Reader
     }
 
     /**
-     * @param $fileInfo array file info from Storage API
-     * @param $destination string Destination file path
+     * @param array $fileInfo array file info from Storage API
+     * @param string $destination string Destination file path
      */
     protected function downloadFile($fileInfo, $destination)
     {
@@ -325,22 +325,10 @@ class Reader
             "uri" => $tableInfo["uri"],
             "name" => $tableInfo["name"],
             "primary_key" => $tableInfo["primaryKey"],
-            "indexed_columns" => $tableInfo["indexedColumns"],
             "created" => $tableInfo["created"],
             "last_change_date" => $tableInfo["lastChangeDate"],
             "last_import_date" => $tableInfo["lastImportDate"],
-            "rows_count" => $tableInfo["rowsCount"],
-            "data_size_bytes" => $tableInfo["dataSizeBytes"],
-            "is_alias" => $tableInfo["isAlias"],
-            "attributes" => []
         ];
-        foreach ($tableInfo["attributes"] as $attribute) {
-            $manifest["attributes"][] = [
-                "name" => $attribute["name"],
-                "value" => $attribute["value"],
-                "protected" => $attribute["protected"]
-            ];
-        }
         if (isset($tableInfo["s3"])) {
             $manifest["s3"] = $tableInfo["s3"];
         }

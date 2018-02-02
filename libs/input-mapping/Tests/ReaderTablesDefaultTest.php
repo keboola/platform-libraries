@@ -32,7 +32,6 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
-        $this->client->setTableAttribute("in.c-docker-test.test", "attr1", "val1");
     }
 
     public function testReadTablesDefaultBackend()
@@ -56,7 +55,6 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
-        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
     }
 
     public function testReadTablesEmptyDaysFilter()
@@ -113,7 +111,6 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
-        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
         $this->assertS3info($manifest);
     }
 
@@ -151,7 +148,6 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
-        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -237,7 +233,6 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
-        self::assertEquals("val1", $manifest["attributes"][0]["value"]);
         self::assertArrayHasKey('columns', $manifest);
         self::assertEquals(['bar', 'foo', "Id"], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);

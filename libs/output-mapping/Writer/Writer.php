@@ -572,15 +572,6 @@ class Writer
                 }
             }
             if (!empty($config["delete_where_column"])) {
-                // Index columns
-                $tableInfo = $this->getClient()->getTable($config["destination"]);
-                if (!in_array($config["delete_where_column"], $tableInfo["indexedColumns"])) {
-                    $this->getClient()->markTableColumnAsIndexed(
-                        $config["destination"],
-                        $config["delete_where_column"]
-                    );
-                }
-
                 // Delete rows
                 $deleteOptions = [
                     "whereColumn" => $config["delete_where_column"],

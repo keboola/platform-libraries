@@ -1100,4 +1100,30 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $tableInfo = $this->client->getTable("out.c-docker-test.table9");
         $this->assertEquals([], $tableInfo["primaryKey"]);
     }
+
+    public function testWriteTableColumnsOverwrite()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/out.c-docker-test.table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        $writer = new Writer($this->client, new NullLogger());
+        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/out.c-docker-test.table9.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+
+        $tables = $this->client->listTables("out.c-docker-test");
+        $this->assertCount(1, $tables);
+
+        $this->assertEquals('out.c-docker-test.table9', $tables[0]["id"]);
+        $tableInfo = $this->client->getTable('out.c-docker-test.table9');
+        $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
+
+        $writer = new Writer($this->client, new NullLogger());
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage("Some columns are missing in the csv file. Missing columns: id,name.");
+        $writer->uploadTables(
+            $root . "/upload",
+            ["mapping" => [["source" => "out.c-docker-test.table9.csv", "columns" => ["Boing", "Tschak"]]]],
+            ['componentId' => 'foo']
+        );
+    }
 }

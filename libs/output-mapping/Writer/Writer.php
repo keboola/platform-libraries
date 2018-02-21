@@ -586,7 +586,6 @@ class Writer
             // headless csv file
             if (!empty($config["columns"])) {
                 $options["columns"] = $config["columns"];
-                $options["withoutHeaders"] = true;
             }
             if (is_dir($source)) {
                 $options["delimiter"] = $config["delimiter"];

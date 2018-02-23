@@ -614,7 +614,6 @@ class Writer
                 $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
                 unset($headerCsvFile);
                 $options["columns"] = $config["columns"];
-                $options["withoutHeaders"] = true;
                 if (is_dir($source)) {
                     $options["delimiter"] = $config["delimiter"];
                     $options["enclosure"] = $config["enclosure"];

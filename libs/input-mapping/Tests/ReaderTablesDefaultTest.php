@@ -47,10 +47,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        self::assertEquals(
+        self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
-             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            file_get_contents($this->temp->getTmpFolder() . "/download/test.csv")
+            "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
+            $this->temp->getTmpFolder() . "/download/test.csv"
         );
 
         $adapter = new Adapter();
@@ -71,10 +71,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         ];
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        self::assertEquals(
+        self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv")
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
     }
 
@@ -90,10 +90,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         ];
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        self::assertEquals(
+        self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv")
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
     }
 
@@ -228,10 +228,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        self::assertEquals(
+        self::assertCSVEquals(
             "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .
             "\n\"bar2\",\"foo2\",\"id2\"\n\"bar3\",\"foo3\",\"id3\"\n",
-            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv")
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
 
         $adapter = new Adapter();

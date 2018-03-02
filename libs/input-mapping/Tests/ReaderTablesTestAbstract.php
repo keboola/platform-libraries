@@ -39,6 +39,27 @@ class ReaderTablesTestAbstract extends \PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @param $expectedString
+     * @param $path
+     */
+    public static function assertCSVEquals($expectedString, $path)
+    {
+        $expectedArray = explode("\n", $expectedString);
+        $actualArray = explode("\n", file_get_contents($path));
+
+        // compare length
+        self::assertEquals(count($expectedArray), count($actualArray));
+        // compare headers
+        self::assertEquals($expectedArray[0], $actualArray[0]);
+
+        $actualArrayWithoutHeader = array_slice($actualArray, 1);
+        // compare each line
+        for ($i = 1; $i < count($expectedArray); $i++) {
+            self::assertTrue(in_array($expectedArray[$i], $actualArrayWithoutHeader));
+        }
+    }
+
     public function setUp()
     {
         parent::setUp();

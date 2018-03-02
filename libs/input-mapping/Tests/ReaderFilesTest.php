@@ -117,8 +117,6 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $mockClient->method('getFile')
             ->willReturnCallback(
                 function ($fileId, $fileOptions) use ($client) {
-                    var_export($fileId);
-                    var_export($fileOptions);
                     $fileInfo = $client->getFile($fileId, $fileOptions);
                     $fileInfo['region'] = 'invalid-region';
                     return $fileInfo;

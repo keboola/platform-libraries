@@ -177,6 +177,7 @@ class Reader
         } catch (InvalidConfigurationException $e) {
             throw new InputOperationException(
                 "Failed to write manifest for file {$fileInfo['id']} - {$fileInfo['name']}.",
+                0,
                 $e
             );
         }

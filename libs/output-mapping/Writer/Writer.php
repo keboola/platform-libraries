@@ -26,7 +26,6 @@ use Symfony\Component\Finder\SplFileInfo;
  */
 class Writer
 {
-
     const SYSTEM_METADATA_PROVIDER = 'system';
 
     /**
@@ -45,22 +44,9 @@ class Writer
     protected $logger;
 
     /**
-     * @var
+     * @var string
      */
     protected $format = 'json';
-
-    /**
-     * @var array
-     */
-    protected $features = [];
-
-    /**
-     * @return mixed
-     */
-    public function getFormat()
-    {
-        return $this->format;
-    }
 
     /**
      * @param mixed $format
@@ -69,77 +55,7 @@ class Writer
     public function setFormat($format)
     {
         $this->format = $format;
-
         return $this;
-    }
-
-    /**
-     * @return Client
-     */
-    public function getClient()
-    {
-        return $this->client;
-    }
-
-    /**
-     * @param Client $client
-     * @return $this
-     */
-    public function setClient(Client $client)
-    {
-        $this->client = $client;
-
-        return $this;
-    }
-
-    /**
-     * @param Metadata $metadataClient
-     * @return $this
-     */
-    public function setMetadataClient(Metadata $metadataClient)
-    {
-        $this->metadataClient = $metadataClient;
-
-        return $this;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     * @return $this
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-
-        return $this;
-    }
-
-    /**
-     * @param array $features
-     * @return $this
-     */
-    public function setFeatures($features)
-    {
-        $this->features = $features;
-
-        return $this;
-    }
-
-    /**
-     * @param $feature
-     * @return bool
-     */
-    public function hasFeature($feature)
-    {
-        return in_array($feature, $this->features);
     }
 
     /**
@@ -150,9 +66,9 @@ class Writer
      */
     public function __construct(Client $client, LoggerInterface $logger)
     {
-        $this->setClient($client);
-        $this->setMetadataClient(new Metadata($client));
-        $this->setLogger($logger);
+        $this->client = $client;
+        $this->metadataClient = new Metadata($client);
+        $this->logger = $logger;
     }
 
     /**
@@ -255,12 +171,12 @@ class Writer
      */
     protected function readFileManifest($source)
     {
-        $adapter = new FileAdapter($this->getFormat());
+        $adapter = new FileAdapter($this->format);
         try {
             return $adapter->readFromFile($source);
         } catch (\Exception $e) {
             throw new InvalidOutputException(
-                "Failed to parse manifest file $source as " . $this->getFormat() . " " . $e->getMessage(),
+                "Failed to parse manifest file $source as " . $this->format . " " . $e->getMessage(),
                 $e
             );
         }
@@ -280,7 +196,7 @@ class Writer
             ->setIsEncrypted($config["is_encrypted"])
             ->setIsPublic($config["is_public"])
             ->setNotify($config["notify"]);
-        $this->getClient()->uploadFile($source, $options);
+        $this->client->uploadFile($source, $options);
     }
 
     /**
@@ -446,7 +362,7 @@ class Writer
      */
     protected function readTableManifest($source)
     {
-        $adapter = new TableAdapter($this->getFormat());
+        $adapter = new TableAdapter($this->format);
         try {
             return $adapter->readFromFile($source);
         } catch (InvalidConfigurationException $e) {
@@ -535,10 +451,10 @@ class Writer
         }
 
         if ($this->client->tableExists($config["destination"])) {
-            $tableInfo = $this->getClient()->getTable($config["destination"]);
+            $tableInfo = $this->client->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
             if (self::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
-                $this->getLogger()->warning(
+                $this->logger->warning(
                     "Modifying primary key of table {$tableInfo["id"]} from [" .
                     join(", ", $tableInfo["primaryKey"]) . "] to [" . join(", ", $config["primary_key"]) . "]."
                 );
@@ -549,7 +465,7 @@ class Writer
                         $this->client->removeTablePrimaryKey($tableInfo["id"]);
                     } catch (\Exception $e) {
                         // warn and go on
-                        $this->getLogger()->warning(
+                        $this->logger->warning(
                             "Error deleting primary key of table {$tableInfo["id"]}: " . $e->getMessage()
                         );
                         $failed = true;
@@ -562,7 +478,7 @@ class Writer
                         }
                     } catch (\Exception $e) {
                         // warn and try to rollback to original state
-                        $this->getLogger()->warning(
+                        $this->logger->warning(
                             "Error changing primary key of table {$tableInfo["id"]}: " . $e->getMessage()
                         );
                         if (count($tableInfo["primaryKey"]) > 0) {
@@ -578,7 +494,7 @@ class Writer
                     "whereOperator" => $config["delete_where_operator"],
                     "whereValues" => $config["delete_where_values"]
                 ];
-                $this->getClient()->deleteTableRows($config["destination"], $deleteOptions);
+                $this->client->deleteTableRows($config["destination"], $deleteOptions);
             }
             $options = [
                 "incremental" => $config["incremental"]
@@ -712,7 +628,7 @@ class Writer
                 $files = $reader->getFiles($fileConfiguration);
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
-                        $this->getClient()->addFileTag($file["id"], $tag);
+                        $this->client->addFileTag($file["id"], $tag);
                     }
                 }
             }

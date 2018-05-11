@@ -44,7 +44,7 @@ class Writer
     protected $logger;
 
     /**
-     * @var
+     * @var string
      */
     protected $format = 'json';
 

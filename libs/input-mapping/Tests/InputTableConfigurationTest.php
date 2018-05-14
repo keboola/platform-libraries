@@ -121,6 +121,21 @@ class InputTableConfigurationTest extends \PHPUnit_Framework_TestCase
         (new Table())->parse(["config" => $config]);
     }
 
+    public function testEmptyWhereOperator()
+    {
+        $config = [
+            "source" => "in.c-main.test",
+            "where_operator" => "",
+        ];
+
+        $expectedArray = $config;
+        $expectedArray["where_operator"] = "eq";
+        $expectedArray["columns"] = [];
+        $expectedArray["where_values"] = [];
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expectedArray, $processedConfiguration);
+    }
+
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
      * @expectedExceptionMessage The child node "source" at path "table" must be configured

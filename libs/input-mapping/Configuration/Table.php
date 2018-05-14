@@ -33,8 +33,14 @@ class Table extends Configuration
                 ->arrayNode("where_values")->prototype("scalar")->end()->end()
                 ->scalarNode("where_operator")
                     ->defaultValue("eq")
+                    ->beforeNormalization()
+                        ->ifInArray(["", null])
+                        ->then(function () {
+                            return "eq";
+                        })
+                    ->end()
                     ->validate()
-                    ->ifNotInArray(["eq", "ne"])
+                        ->ifNotInArray(["eq", "ne"])
                         ->thenInvalid("Invalid operator in where_operator %s.")
                     ->end()
                 ->end()

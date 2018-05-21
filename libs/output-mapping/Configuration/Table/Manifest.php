@@ -36,8 +36,14 @@ class Manifest extends Configuration
                 ->arrayNode("delete_where_values")->prototype("scalar")->end()->end()
                 ->scalarNode("delete_where_operator")
                     ->defaultValue("eq")
+                    ->beforeNormalization()
+                        ->ifInArray(["", null])
+                        ->then(function () {
+                            return "eq";
+                        })
+                    ->end()
                     ->validate()
-                    ->ifNotInArray(array("eq", "ne"))
+                    ->ifNotInArray(["eq", "ne"])
                         ->thenInvalid("Invalid operator in delete_where_operator %s.")
                     ->end()
                 ->end()

@@ -27,7 +27,7 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "column_metadata" => []
         ];
 
-        $processedConfiguration = (new Table())->parse(array("config" => $config));
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
     }
 
@@ -98,6 +98,32 @@ class OutputTableConfigurationTest extends \PHPUnit_Framework_TestCase
             "metadata" => [],
             "column_metadata" => []
         ];
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        $this->assertEquals($expectedArray, $processedConfiguration);
+    }
+
+    public function testEmptyDeleteWhereOp()
+    {
+        $config = [
+            "source" => "data.csv",
+            "destination" => "in.c-main.test",
+            "delete_where_operator" => "",
+        ];
+
+        $expectedArray = [
+            "source" => "data.csv",
+            "destination" => "in.c-main.test",
+            "primary_key" => [],
+            "columns" => [],
+            "incremental" => false,
+            "delete_where_values" => [],
+            "delete_where_operator" => "eq",
+            "delimiter" => ",",
+            "enclosure" => "\"",
+            "metadata" => [],
+            "column_metadata" => []
+        ];
+
         $processedConfiguration = (new Table())->parse(["config" => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
     }

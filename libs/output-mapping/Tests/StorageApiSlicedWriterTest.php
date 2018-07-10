@@ -106,8 +106,96 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
     }
 
-    public function testWriteTableOutputMappingEmptyFile()
+    public function testWriteTableOutputMappingEmptySlice()
     {
+        $root = $this->tmp->getTmpFolder();
+        mkdir($root . "/upload/table");
+        file_put_contents($root . "/upload/table/part1", "");
+        $configs = [
+            [
+                "source" => "table",
+                "destination" => "out.c-docker-test.table",
+                "columns" => ["Id","Name"]
+            ]
+        ];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+
+        $table = $this->client->getTable("out.c-docker-test.table");
+        $this->assertEquals(["Id", "Name"], $table["columns"]);
+
+        $exporter = new TableExporter($this->client);
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $table = $this->client->parseCsv(file_get_contents($downloadedFile));
+        $this->assertCount(0, $table);
+    }
+
+    public function testWriteTableOutputMappingEmptySliceExistingTable()
+    {
+        $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
+        file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
+        $csv = new CsvFile($fileName);
+        $this->client->createTable('out.c-docker-test', 'table', $csv);
+
+        $root = $this->tmp->getTmpFolder();
+        mkdir($root . "/upload/table");
+        file_put_contents($root . "/upload/table/part1", "");
+        $configs = [
+            [
+                "source" => "table",
+                "destination" => "out.c-docker-test.table",
+                "columns" => ["Id","Name"]
+            ]
+        ];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+
+        $table = $this->client->getTable("out.c-docker-test.table");
+        $this->assertEquals(["Id", "Name"], $table["columns"]);
+
+        $exporter = new TableExporter($this->client);
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $table = $this->client->parseCsv(file_get_contents($downloadedFile));
+        $this->assertCount(0, $table);
+    }
+
+    public function testWriteTableOutputMappingEmptyDir()
+    {
+        $root = $this->tmp->getTmpFolder();
+        mkdir($root . "/upload/table");
+
+        $configs = [
+            [
+                "source" => "table",
+                "destination" => "out.c-docker-test.table",
+                "columns" => ["Id","Name"]
+            ]
+        ];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+
+        $table = $this->client->getTable("out.c-docker-test.table");
+        $this->assertEquals(["Id", "Name"], $table["columns"]);
+
+        $exporter = new TableExporter($this->client);
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $table = $this->client->parseCsv(file_get_contents($downloadedFile));
+        $this->assertCount(0, $table);
+    }
+
+    public function testWriteTableOutputMappingEmptyDirExistingTable()
+    {
+        $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
+        file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
+        $csv = new CsvFile($fileName);
+        $this->client->createTable('out.c-docker-test', 'table', $csv);
+
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 

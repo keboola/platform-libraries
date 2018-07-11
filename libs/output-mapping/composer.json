@@ -10,15 +10,21 @@
         }
     ],
     "require": {
-        "symfony/config": "^2.8",
-        "symfony/yaml": "^2.8",
-        "symfony/finder": "^2.8",
-        "symfony/serializer": "^2.8",
+        "symfony/config": "^2.8|^4.1",
+        "symfony/yaml": "^2.8|^4.1",
+        "symfony/finder": "^2.8|^4.1",
+        "symfony/serializer": "^2.8|^4.1",
         "monolog/monolog": "^1.22",
         "keboola/storage-api-client": "^10.0",
-        "keboola/input-mapping": "^5.0",
+        "keboola/input-mapping": "dev-odin-symfony-forward",
         "guzzlehttp/guzzle": "^6.2"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "D:\\wwwroot\\input-mapping\\"
+        }
+    ],
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.2",
         "keboola/php-temp": "^1.0",

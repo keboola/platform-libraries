@@ -583,16 +583,12 @@ class Writer
         foreach ($slices as $slice) {
             $sliceFiles[] = $slice->getPathname();
         }
-        if (count($sliceFiles) === 0) {
-            return;
-        }
 
         // upload slices
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
                 ->setIsSliced(true)
-                ->setFileName(basename($source))
-        ;
+                ->setFileName(basename($source));
         $uploadFileId = $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
 
         // write table

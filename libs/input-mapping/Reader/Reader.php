@@ -87,6 +87,8 @@ class Reader
      */
     public function downloadFiles($configuration, $destination)
     {
+        $fs = new Filesystem();
+        $fs->mkdir($destination);
         if (!$configuration) {
             return;
         } elseif (!is_array($configuration)) {
@@ -167,7 +169,7 @@ class Reader
             "is_sliced" => $fileInfo["isSliced"],
             "tags" => $fileInfo["tags"],
             "max_age_days" => $fileInfo["maxAgeDays"],
-            "size_bytes" => $fileInfo["sizeBytes"]
+            "size_bytes" => intval($fileInfo["sizeBytes"])
         ];
 
         $adapter = new FileAdapter($this->getFormat());
@@ -201,11 +203,6 @@ class Reader
 
         ]);
 
-        $fs = new Filesystem();
-        if (!$fs->exists(dirname($destination))) {
-            $fs->mkdir($destination);
-        }
-
         // NonSliced file, just move from temp to destination file
         $s3Client->getObject([
             'Bucket' => $fileInfo["s3Path"]["bucket"],
@@ -216,6 +213,9 @@ class Reader
 
     protected function downloadSlicedFile($fileInfo, $destination)
     {
+        $destination = $destination . "/" . $fileInfo["id"] . '_' . $fileInfo["name"];
+        $fs = new Filesystem();
+        $fs->mkdir($destination);
         // Download manifest with all sliced files
         $client = new HttpClient([
             'handler' => HandlerStack::create([
@@ -223,7 +223,6 @@ class Reader
             ]),
         ]);
         $manifest = json_decode($client->get($fileInfo['url'])->getBody());
-
         $part = 0;
         foreach ($manifest->entries as $slice) {
             $sliceInfo = $fileInfo;

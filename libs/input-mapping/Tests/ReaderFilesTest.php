@@ -214,18 +214,44 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $dlDir = $this->tmpDir . "/download";
         $reader->downloadFiles($configuration, $dlDir);
 
+        $fileName = $fileId . "_in.c-docker-test-redshift.test_file.csv";
         self::assertEquals(
             '"test","test"' . "\n",
-            file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.0")
-            . file_get_contents($dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.1")
+            file_get_contents($dlDir . "/" . $fileName . "/" . $fileName . ".0")
+            . file_get_contents($dlDir . "/" . $fileName . "/" . $fileName . ".1")
         );
 
-        $manifestFile = $dlDir . "/" . $fileId . "_in.c-docker-test-redshift.test_file.csv.manifest";
+        $manifestFile = $dlDir . "/" . $fileName . ".manifest";
         self::assertFileExists($manifestFile);
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($manifestFile);
         self::assertArrayHasKey('is_sliced', $manifest);
         self::assertTrue($manifest['is_sliced']);
+    }
+
+    public function testReadFilesEmptySlices()
+    {
+        $fileUploadOptions = new FileUploadOptions();
+        $fileUploadOptions
+            ->setIsSliced(true)
+            ->setFileName('empty_file');
+        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
+
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [
+            [
+                'query' => 'id:' . $uploadFileId,
+            ],
+        ];
+        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile(
+            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest'
+        );
+        self::assertEquals($uploadFileId, $manifest['id']);
+        self::assertEquals('empty_file', $manifest['name']);
+        self::assertDirectoryExists($this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file');
     }
 
     public function testReadFilesLimit()

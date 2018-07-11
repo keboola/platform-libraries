@@ -55,8 +55,8 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $configuration = [
             [
                 "source" => "in.c-docker-test.empty",
-                "destination" => "empty.csv"
-            ]
+                "destination" => "empty.csv",
+            ],
         ];
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");

@@ -10,10 +10,10 @@
         }
     ],
     "require": {
-        "symfony/config": "^2.8",
-        "symfony/yaml": "^2.8",
-        "symfony/finder": "^2.8",
-        "symfony/serializer": "^2.8",
+        "symfony/config": "^2.8|^4.1",
+        "symfony/yaml": "^2.8|^4.1",
+        "symfony/finder": "^2.8|^4.1",
+        "symfony/serializer": "^2.8|^4.1",
         "keboola/storage-api-client": "^10.0",
         "guzzlehttp/guzzle": "^6.2"
     },

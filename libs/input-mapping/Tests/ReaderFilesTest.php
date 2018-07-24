@@ -217,8 +217,8 @@ class ReaderFilesTest extends \PHPUnit_Framework_TestCase
         $fileName = $fileId . "_in.c-docker-test-redshift.test_file.csv";
         self::assertEquals(
             '"test","test"' . "\n",
-            file_get_contents($dlDir . "/" . $fileName . "/" . $fileName . ".0")
-            . file_get_contents($dlDir . "/" . $fileName . "/" . $fileName . ".1")
+            file_get_contents($dlDir . "/" . $fileName . "/part.0")
+            . file_get_contents($dlDir . "/" . $fileName . "/part.1")
         );
 
         $manifestFile = $dlDir . "/" . $fileName . ".manifest";

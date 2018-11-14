@@ -47,6 +47,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         // Delete file uploads
         $options = new ListFilesOptions();
         $options->setTags(['docker-bundle-test']);
+        sleep(1);
         $files = $this->client->listFiles($options);
         foreach ($files as $file) {
             $this->client->deleteFile($file['id']);
@@ -113,6 +114,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
+        sleep(1);
         $files = $this->client->listFiles($options);
         $this->assertCount(3, $files);
 
@@ -159,6 +161,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
+        sleep(1);
         $files = $this->client->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -196,6 +199,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
+        sleep(1);
         $files = $this->client->listFiles($options);
         $this->assertCount(1, $files);
 

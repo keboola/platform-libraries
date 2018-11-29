@@ -112,7 +112,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
         sleep(1);
-        
+
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
         $files = $this->client->listFiles($options);
@@ -158,7 +158,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $writer = new Writer($this->client, new NullLogger());
 
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
-        sleep(1);        
+        sleep(1);
 
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
@@ -197,7 +197,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
         sleep(1);
-        
+
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
         $files = $this->client->listFiles($options);

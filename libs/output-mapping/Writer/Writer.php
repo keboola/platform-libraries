@@ -195,8 +195,7 @@ class Writer
             ->setIsPermanent($config["is_permanent"])
             ->setIsEncrypted($config["is_encrypted"])
             ->setIsPublic($config["is_public"])
-            ->setNotify($config["notify"])
-            ->setCompress(true);
+            ->setNotify($config["notify"]);
         $this->client->uploadFile($source, $options);
     }
 

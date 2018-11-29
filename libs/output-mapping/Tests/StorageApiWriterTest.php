@@ -782,9 +782,9 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $root . "/upload/test",
             (new FileUploadOptions())->setTags(["docker-bundle-test"])
         );
+        sleep(1);
 
         $writer = new Writer($this->client, new NullLogger());
-        sleep(1);
         $configuration = [["tags" => ["docker-bundle-test"], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 

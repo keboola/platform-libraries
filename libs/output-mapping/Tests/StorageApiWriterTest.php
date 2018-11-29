@@ -158,10 +158,10 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $writer = new Writer($this->client, new NullLogger());
 
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        sleep(1);        
 
         $options = new ListFilesOptions();
         $options->setTags(["docker-bundle-test"]);
-        sleep(1);
         $files = $this->client->listFiles($options);
         $this->assertCount(1, $files);
 

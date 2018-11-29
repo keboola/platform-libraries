@@ -195,7 +195,8 @@ class Writer
             ->setIsPermanent($config["is_permanent"])
             ->setIsEncrypted($config["is_encrypted"])
             ->setIsPublic($config["is_public"])
-            ->setNotify($config["notify"]);
+            ->setNotify($config["notify"])
+            ->setCompress(true);
         $this->client->uploadFile($source, $options);
     }
 
@@ -662,7 +663,8 @@ class Writer
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
                 ->setIsSliced(true)
-                ->setFileName(basename($source));
+                ->setFileName(basename($source))
+                ->setCompress(true);
         $uploadFileId = $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
 
         // write table

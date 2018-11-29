@@ -4,4 +4,7 @@ services:
   dev:
     build: .
     volumes:
-        - ./:/code
+      - ./:/code
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL

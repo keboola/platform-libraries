@@ -19,8 +19,8 @@ Copy `.env.template` to `.env` and fill parameters.
 
 
 ```
-docker build . -t keboola/output-mapping
-docker run --volume $(pwd):/code keboola/output-mapping composer install
-docker run --volume $(pwd):/code --env-file .env keboola/output-mapping ./vendor/bin/phpunit 
+docker-compose build
+docker-compose run dev composer install
+docker-compose run dev composer ci
 
 ```

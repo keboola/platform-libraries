@@ -30,5 +30,15 @@
             "Keboola\\OutputMapping": ""
         }
     },
-    "target-dir": "Keboola/OutputMapping"
+    "target-dir": "Keboola/OutputMapping",
+    "scripts": {
+        "tests": "phpunit",
+        "build": [
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    }
 }

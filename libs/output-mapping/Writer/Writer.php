@@ -662,7 +662,8 @@ class Writer
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
                 ->setIsSliced(true)
-                ->setFileName(basename($source));
+                ->setFileName(basename($source))
+                ->setCompress(true);
         $uploadFileId = $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
 
         // write table

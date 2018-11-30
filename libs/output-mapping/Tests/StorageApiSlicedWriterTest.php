@@ -69,7 +69,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
 
     public function initBucket($backendType)
     {
-        $this->client->createBucket('docker-test', 'out', $backendType);
+        $this->client->createBucket('docker-test', 'out', null, $backendType);
     }
 
     public function tearDown()

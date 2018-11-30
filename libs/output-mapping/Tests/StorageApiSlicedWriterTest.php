@@ -65,7 +65,11 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         ]);
         $this->clearBucket();
         $this->clearFileUploads();
-        $this->client->createBucket('docker-test', 'out');
+    }
+
+    public function initBucket($backendType)
+    {
+        $this->client->createBucket('docker-test', 'out', $backendType);
     }
 
     public function tearDown()
@@ -74,8 +78,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->clearFileUploads();
     }
 
-    public function testWriteTableOutputMapping()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMapping($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -106,8 +114,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
     }
 
-    public function testWriteTableOutputMappingEmptySlice()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingEmptySlice($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
         file_put_contents($root . "/upload/table/part1", "");
@@ -132,8 +144,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptySliceExistingTable()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingEmptySliceExistingTable($backendType)
     {
+        $this->initBucket($backendType);
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
@@ -163,8 +179,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptyDir()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingEmptyDir($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 
@@ -189,8 +209,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptyDirExistingTable()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingEmptyDirExistingTable($backendType)
     {
+        $this->initBucket($backendType);
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
@@ -220,8 +244,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingMissingHeaders()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingMissingHeaders($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 
@@ -241,8 +269,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function testWriteTableOutputMappingExistingTable()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingExistingTable($backendType)
     {
+        $this->initBucket($backendType);
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
         $csvFile->writeRow(["Id", "Name"]);
         $this->client->createTable("out.c-docker-test", "table", $csvFile);
@@ -282,9 +314,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
     }
 
-
-    public function testWriteTableOutputMappingDifferentDelimiterEnclosure()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingDifferentDelimiterEnclosure($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "'test'|'test'\n");
@@ -318,9 +353,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
     }
 
-
-    public function testWriteTableOutputMappingCombination()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingCombination($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -367,8 +405,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
     }
 
-    public function testWriteTableOutputMappingCompression()
+    /**
+     * @dataProvider backendTypeProvider
+     */
+    public function testWriteTableOutputMappingCompression($backendType)
     {
+        $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -400,5 +442,13 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+    }
+
+    public function backendTypeProvider()
+    {
+        return [
+            ["snowflake"],
+            ["redshift"]
+        ];
     }
 }

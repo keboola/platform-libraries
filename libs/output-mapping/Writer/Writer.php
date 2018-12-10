@@ -547,7 +547,9 @@ class Writer
                     $jobId = $this->writeSlicedTable($deferred, $source, $config["destination"], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                    $jobId = $this->writeTableAsync($deferred, $config["destination"], $csvFile, $options);
+                    $fileId = $this->client->uploadFile($csvFile->getPathname(), new FileUploadOptions());
+                    $options['dataFileId'] = $fileId;
+                    $jobId = $this->client->queueTableImport($config["destination"], $options);
                     unset($csvFile);
                 }
             } else {
@@ -558,7 +560,9 @@ class Writer
                     $headerCsvFile->writeRow($csvFile->getHeader());
                     $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
                     unset($headerCsvFile);
-                    $jobId = $this->writeTableAsync($deferred, $tableId, $csvFile, $options);
+                    $fileId = $this->client->uploadFile($csvFile->getPathname(), new FileUploadOptions());
+                    $options['dataFileId'] = $fileId;
+                    $jobId = $this->client->queueTableImport($tableId, $options)['id'];
                 } else {
                     $tableId = $this->client->createTableAsync($bucketId, $tableName, $csvFile, $options);
                     $jobId = '';

@@ -15,8 +15,8 @@
         "symfony/finder": "^2.8|^4.1",
         "symfony/serializer": "^2.8|^4.1",
         "monolog/monolog": "^1.22",
-        "keboola/storage-api-client": "^10.0",
-        "keboola/input-mapping": "^6.0",
+        "keboola/storage-api-client": "dev-najlos-fire-and-forget-workspace-loads",
+        "keboola/input-mapping": "dev-odin-update@dev",
         "guzzlehttp/guzzle": "^6.2"
     },
     "require-dev": {

@@ -560,7 +560,15 @@ class Writer
                 if (is_dir($source)) {
                     $options["delimiter"] = $config["delimiter"];
                     $options["enclosure"] = $config["enclosure"];
-                    $jobId = $this->writeSlicedTable($deferred, $source, $config["destination"], $options);
+                    $fileId = $this->uploadSlicedFile($source);
+                    $options['dataFileId'] = $fileId;
+                    // write table
+                    if ($deferred) {
+                        $jobId = $this->client->queueTableImport($config['destination'], $options);
+                    } else {
+                        $this->client->writeTableAsyncDirect($config['destination'], $options);
+                        $jobId = '';
+                    }
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile($csvFile->getPathname(), new FileUploadOptions());

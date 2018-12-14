@@ -528,6 +528,8 @@ class Writer
                     $jobId = '';
                 }
             } else {
+                $options["delimiter"] = $config["delimiter"];
+                $options["enclosure"] = $config["enclosure"];
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
@@ -570,6 +572,8 @@ class Writer
                         $jobId = '';
                     }
                 } else {
+                    $options["delimiter"] = $config["delimiter"];
+                    $options["enclosure"] = $config["enclosure"];
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile($csvFile->getPathname(), new FileUploadOptions());
                     $options['dataFileId'] = $fileId;
@@ -579,6 +583,8 @@ class Writer
             } else {
                 $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                 if ($deferred) {
+                    $options["delimiter"] = $config["delimiter"];
+                    $options["enclosure"] = $config["enclosure"];
                     $tmp = new Temp();
                     $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
                     $headerCsvFile->writeRow($csvFile->getHeader());
@@ -588,6 +594,8 @@ class Writer
                     $options['dataFileId'] = $fileId;
                     $jobId = $this->client->queueTableImport($tableId, $options);
                 } else {
+                    $options["delimiter"] = $config["delimiter"];
+                    $options["enclosure"] = $config["enclosure"];
                     $fileId = $this->client->uploadFile($csvFile->getPathname(), (new FileUploadOptions())->setCompress(true));
                     $options['dataFileId'] = $fileId;
                     $options['name'] = $tableName;

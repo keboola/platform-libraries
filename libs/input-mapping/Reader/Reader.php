@@ -246,12 +246,9 @@ class Reader
             throw new InvalidInputException("Table export configuration is not an array.");
         }
         $tableExporter = new TableExporter($this->getClient());
+        $tablesToExport = [];
+        $filesToExport = [];
         foreach ($configuration as $table) {
-            if (!isset($table["destination"])) {
-                $file = $destination . "/" . $table["source"];
-            } else {
-                $file = $destination . "/" . $table["destination"];
-            }
             $exportOptions = ["format" => "rfc"];
             if (isset($table["columns"]) && count($table["columns"])) {
                 $exportOptions["columns"] = $table["columns"];
@@ -276,24 +273,58 @@ class Reader
                 $exportOptions['limit'] = $table['limit'];
             }
             $this->logger->info("Fetching table " . $table["source"] . ".");
-            $tableInfo = $this->getClient()->getTable($table["source"]);
+
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
-                $job = $this->getClient()->exportTableAsync($table["source"], $exportOptions);
-                $fileInfo = $this->getClient()->getFile(
-                    $job["file"]["id"],
-                    (new GetFileOptions())->setFederationToken(true)
-                );
-                $tableInfo["s3"] = $this->getS3Info($fileInfo);
+                $jobId = $this->getClient()->queueTableExport($table["source"], $exportOptions);
+                $filesToExport[$jobId] = $table;
             } elseif ($storage == "local") {
-                $tableExporter->exportTable($table["source"], $file, $exportOptions);
+                if (!isset($table["destination"])) {
+                    $file = $destination . "/" . $table["source"];
+                } else {
+                    $file = $destination . "/" . $table["destination"];
+                }
+                $tableInfo = $this->getClient()->getTable($table["source"]);
+                $tablesToExport[] = [
+                    "tableId" => $table["source"],
+                    "destination" => $file,
+                    "exportOptions" => $exportOptions
+                ];
+                $this->writeTableManifest($tableInfo, $file . ".manifest", $table["columns"]);
             } else {
                 throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }
             $this->logger->info("Fetched table " . $table["source"] . ".");
-
-            $this->writeTableManifest($tableInfo, $file . ".manifest", $table["columns"]);
         }
+
+        if ($filesToExport) {
+            $this->logger->info("Processing " . count($filesToExport) . " table exports.");
+            $results = $this->client->handleAsyncTasks(array_keys($filesToExport));
+            $keyedResults = [];
+            foreach ($results as $result) {
+                $keyedResults[$result["id"]] = $result;
+            }
+            foreach ($filesToExport as $jobId => $table) {
+                if (!isset($table["destination"])) {
+                    $manifestPath = $destination . "/" . $table["source"] . ".manifest";
+                } else {
+                    $manifestPath = $destination . "/" . $table["destination"] . ".manifest";
+                }
+                $tableInfo = $this->getClient()->getTable($table["source"]);
+                $fileInfo = $this->getClient()->getFile(
+                    $keyedResults[$jobId]["results"]["file"]["id"],
+                    (new GetFileOptions())->setFederationToken(true)
+                );
+                $tableInfo["s3"] = $this->getS3Info($fileInfo);
+                $this->writeTableManifest($tableInfo, $manifestPath, $table["columns"]);
+            }
+        }
+
+        if ($tablesToExport) {
+            $this->logger->info("Processing " . count($tablesToExport) . " table exports.");
+            $tableExporter->exportTables($tablesToExport);
+        }
+
         $this->logger->info("All tables were fetched.");
     }
 

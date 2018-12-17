@@ -33,6 +33,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
+        $this->client->createTableAsync("in.c-docker-test", "test2", $csv);
     }
 
     public function testReadTablesEmptySlices()
@@ -75,20 +76,33 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv"
+            ],
+            [
+                "source" => "in.c-docker-test.test2",
+                "destination" => "test2.csv"
             ]
         ];
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
+        $expectedCSVContent =  "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
+            "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n";
+
         self::assertCSVEquals(
-            "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
-            "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
+            $expectedCSVContent,
             $this->temp->getTmpFolder() . "/download/test.csv"
         );
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+
+        self::assertCSVEquals(
+            $expectedCSVContent,
+            $this->temp->getTmpFolder() . "/download/test2.csv"
+        );
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
+        self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
     }
 
     public function testReadTablesEmptyDaysFilter()
@@ -136,6 +150,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
+            ],
+            [
+                "source" => "in.c-docker-test.test2",
+                "destination" => "test2.csv",
             ]
         ];
 
@@ -145,6 +163,10 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        $this->assertS3info($manifest);
+
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
+        self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
         $this->assertS3info($manifest);
     }
 

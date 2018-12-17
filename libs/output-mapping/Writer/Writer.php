@@ -508,16 +508,15 @@ class Writer
                 $this->client->deleteTableRows($config["destination"], $deleteOptions);
             }
             $options = [
-                "incremental" => $config["incremental"]
+                "incremental" => $config["incremental"],
+                "delimiter" => $config["delimiter"],
+                "enclosure" => $config["enclosure"],
             ];
             // headless csv file
             if (!empty($config["columns"])) {
                 $options["columns"] = $config["columns"];
             }
             if (is_dir($source)) {
-                $options["delimiter"] = $config["delimiter"];
-                $options["enclosure"] = $config["enclosure"];
-
                 $fileId = $this->uploadSlicedFile($source);
                 $options['dataFileId'] = $fileId;
                 // write table
@@ -528,8 +527,6 @@ class Writer
                     $jobId = '';
                 }
             } else {
-                $options["delimiter"] = $config["delimiter"];
-                $options["enclosure"] = $config["enclosure"];
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
@@ -548,7 +545,9 @@ class Writer
             );
         } else {
             $options = [
-                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger))
+                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger)),
+                "delimiter" => $config["delimiter"],
+                "enclosure" => $config["enclosure"],
             ];
             $tableId = $config['destination'];
             // headless csv file
@@ -560,8 +559,6 @@ class Writer
                 unset($headerCsvFile);
                 $options["columns"] = $config["columns"];
                 if (is_dir($source)) {
-                    $options["delimiter"] = $config["delimiter"];
-                    $options["enclosure"] = $config["enclosure"];
                     $fileId = $this->uploadSlicedFile($source);
                     $options['dataFileId'] = $fileId;
                     // write table
@@ -572,10 +569,11 @@ class Writer
                         $jobId = '';
                     }
                 } else {
-                    $options["delimiter"] = $config["delimiter"];
-                    $options["enclosure"] = $config["enclosure"];
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                    $fileId = $this->client->uploadFile($csvFile->getPathname(), new FileUploadOptions());
+                    $fileId = $this->client->uploadFile(
+                        $csvFile->getPathname(),
+                        (new FileUploadOptions())->setCompress(true)
+                    );
                     $options['dataFileId'] = $fileId;
                     $jobId = $this->client->queueTableImport($config["destination"], $options);
                     unset($csvFile);
@@ -583,20 +581,22 @@ class Writer
             } else {
                 $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                 if ($deferred) {
-                    $options["delimiter"] = $config["delimiter"];
-                    $options["enclosure"] = $config["enclosure"];
                     $tmp = new Temp();
                     $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
                     $headerCsvFile->writeRow($csvFile->getHeader());
                     $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
                     unset($headerCsvFile);
-                    $fileId = $this->client->uploadFile($csvFile->getPathname(), (new FileUploadOptions())->setCompress(true));
+                    $fileId = $this->client->uploadFile(
+                        $csvFile->getPathname(),
+                        (new FileUploadOptions())->setCompress(true)
+                    );
                     $options['dataFileId'] = $fileId;
                     $jobId = $this->client->queueTableImport($tableId, $options);
                 } else {
-                    $options["delimiter"] = $config["delimiter"];
-                    $options["enclosure"] = $config["enclosure"];
-                    $fileId = $this->client->uploadFile($csvFile->getPathname(), (new FileUploadOptions())->setCompress(true));
+                    $fileId = $this->client->uploadFile(
+                        $csvFile->getPathname(),
+                        (new FileUploadOptions())->setCompress(true)
+                    );
                     $options['dataFileId'] = $fileId;
                     $options['name'] = $tableName;
                     $tableId = $this->client->createTableAsyncDirect($bucketId, $options);

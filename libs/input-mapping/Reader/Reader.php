@@ -246,8 +246,8 @@ class Reader
             throw new InvalidInputException("Table export configuration is not an array.");
         }
         $tableExporter = new TableExporter($this->getClient());
-        $tablesToExport = [];
-        $filesToExport = [];
+        $localExports = [];
+        $s3exports = [];
         foreach ($configuration as $table) {
             $exportOptions = ["format" => "rfc"];
             if (isset($table["columns"]) && count($table["columns"])) {
@@ -277,7 +277,7 @@ class Reader
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table["source"], $exportOptions);
-                $filesToExport[$jobId] = $table;
+                $s3exports[$jobId] = $table;
             } elseif ($storage == "local") {
                 if (!isset($table["destination"])) {
                     $file = $destination . "/" . $table["source"];
@@ -285,7 +285,7 @@ class Reader
                     $file = $destination . "/" . $table["destination"];
                 }
                 $tableInfo = $this->getClient()->getTable($table["source"]);
-                $tablesToExport[] = [
+                $localExports[] = [
                     "tableId" => $table["source"],
                     "destination" => $file,
                     "exportOptions" => $exportOptions
@@ -297,14 +297,14 @@ class Reader
             $this->logger->info("Fetched table " . $table["source"] . ".");
         }
 
-        if ($filesToExport) {
-            $this->logger->info("Processing " . count($filesToExport) . " table exports.");
-            $results = $this->client->handleAsyncTasks(array_keys($filesToExport));
+        if ($s3exports) {
+            $this->logger->info("Processing " . count($s3exports) . " table exports.");
+            $results = $this->client->handleAsyncTasks(array_keys($s3exports));
             $keyedResults = [];
             foreach ($results as $result) {
                 $keyedResults[$result["id"]] = $result;
             }
-            foreach ($filesToExport as $jobId => $table) {
+            foreach ($s3exports as $jobId => $table) {
                 if (!isset($table["destination"])) {
                     $manifestPath = $destination . "/" . $table["source"] . ".manifest";
                 } else {
@@ -320,9 +320,9 @@ class Reader
             }
         }
 
-        if ($tablesToExport) {
-            $this->logger->info("Processing " . count($tablesToExport) . " table exports.");
-            $tableExporter->exportTables($tablesToExport);
+        if ($localExports) {
+            $this->logger->info("Processing " . count($localExports) . " table exports.");
+            $tableExporter->exportTables($localExports);
         }
 
         $this->logger->info("All tables were fetched.");

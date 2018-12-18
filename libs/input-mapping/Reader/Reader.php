@@ -24,12 +24,10 @@ class Reader
      * @var Client
      */
     protected $client;
-
     /**
      * @var
      */
     protected $format = 'json';
-
     /**
      * @var LoggerInterface
      */
@@ -50,6 +48,7 @@ class Reader
     public function setFormat($format)
     {
         $this->format = $format;
+
         return $this;
     }
 
@@ -68,6 +67,7 @@ class Reader
     public function setClient(Client $client)
     {
         $this->client = $client;
+
         return $this;
     }
 
@@ -150,6 +150,7 @@ class Reader
         }
         $options->setLimit($fileConfiguration["limit"]);
         $files = $this->getClient()->listFiles($options);
+
         return $files;
     }
 
@@ -192,23 +193,27 @@ class Reader
     protected function downloadFile($fileInfo, $destination)
     {
         // Initialize S3Client with credentials from Storage API
-        $s3Client = new S3Client([
-            "credentials" => [
-                "key" => $fileInfo["credentials"]["AccessKeyId"],
-                "secret" => $fileInfo["credentials"]["SecretAccessKey"],
-                "token" => $fileInfo["credentials"]["SessionToken"]
-            ],
-            "region" => $fileInfo['region'],
-            'version' => 'latest',
+        $s3Client = new S3Client(
+            [
+                "credentials" => [
+                    "key" => $fileInfo["credentials"]["AccessKeyId"],
+                    "secret" => $fileInfo["credentials"]["SecretAccessKey"],
+                    "token" => $fileInfo["credentials"]["SessionToken"]
+                ],
+                "region" => $fileInfo['region'],
+                'version' => 'latest',
 
-        ]);
+            ]
+        );
 
         // NonSliced file, just move from temp to destination file
-        $s3Client->getObject([
-            'Bucket' => $fileInfo["s3Path"]["bucket"],
-            'Key'    => $fileInfo["s3Path"]["key"],
-            'SaveAs' => $destination
-        ]);
+        $s3Client->getObject(
+            [
+                'Bucket' => $fileInfo["s3Path"]["bucket"],
+                'Key' => $fileInfo["s3Path"]["key"],
+                'SaveAs' => $destination
+            ]
+        );
     }
 
     protected function downloadSlicedFile($fileInfo, $destination)
@@ -217,11 +222,15 @@ class Reader
         $fs = new Filesystem();
         $fs->mkdir($destination);
         // Download manifest with all sliced files
-        $client = new HttpClient([
-            'handler' => HandlerStack::create([
-                'backoffMaxTries' => 10,
-            ]),
-        ]);
+        $client = new HttpClient(
+            [
+                'handler' => HandlerStack::create(
+                    [
+                        'backoffMaxTries' => 10,
+                    ]
+                ),
+            ]
+        );
         $manifest = json_decode($client->get($fileInfo['url'])->getBody());
         $part = 0;
         foreach ($manifest->entries as $slice) {
@@ -279,11 +288,7 @@ class Reader
                 $jobId = $this->getClient()->queueTableExport($table["source"], $exportOptions);
                 $s3exports[$jobId] = $table;
             } elseif ($storage == "local") {
-                if (!isset($table["destination"])) {
-                    $file = $destination . "/" . $table["source"];
-                } else {
-                    $file = $destination . "/" . $table["destination"];
-                }
+                $file = $this->getDestinationFilePath($destination, $table);
                 $tableInfo = $this->getClient()->getTable($table["source"]);
                 $localExports[] = [
                     "tableId" => $table["source"],
@@ -305,16 +310,13 @@ class Reader
                 $keyedResults[$result["id"]] = $result;
             }
             foreach ($s3exports as $jobId => $table) {
-                if (!isset($table["destination"])) {
-                    $manifestPath = $destination . "/" . $table["source"] . ".manifest";
-                } else {
-                    $manifestPath = $destination . "/" . $table["destination"] . ".manifest";
-                }
+                $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
                 $tableInfo = $this->getClient()->getTable($table["source"]);
                 $fileInfo = $this->getClient()->getFile(
                     $keyedResults[$jobId]["results"]["file"]["id"],
                     (new GetFileOptions())->setFederationToken(true)
-                );
+                )
+                ;
                 $tableInfo["s3"] = $this->getS3Info($fileInfo);
                 $this->writeTableManifest($tableInfo, $manifestPath, $table["columns"]);
             }
@@ -326,6 +328,20 @@ class Reader
         }
 
         $this->logger->info("All tables were fetched.");
+    }
+
+    /**
+     * @param string $destination
+     * @param array $table
+     * @return string
+     */
+    private function getDestinationFilePath($destination, $table)
+    {
+        if (!isset($table["destination"])) {
+            return $destination . "/" . $table["source"];
+        } else {
+            return $destination . "/" . $table["destination"];
+        }
     }
 
     protected function getS3Info($fileInfo)

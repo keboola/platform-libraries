@@ -461,6 +461,7 @@ class Writer
             );
         }
 
+        $jobId = null;
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->client->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
@@ -524,7 +525,6 @@ class Writer
                     $jobId = $this->client->queueTableImport($config['destination'], $options);
                 } else {
                     $this->client->writeTableAsyncDirect($config['destination'], $options);
-                    $jobId = '';
                 }
             } else {
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
@@ -534,7 +534,6 @@ class Writer
                     $jobId = $this->client->queueTableImport($config['destination'], $options);
                 } else {
                     $this->client->writeTableAsyncDirect($config['destination'], $options);
-                    $jobId = '';
                 }
             }
 
@@ -566,7 +565,6 @@ class Writer
                         $jobId = $this->client->queueTableImport($config['destination'], $options);
                     } else {
                         $this->client->writeTableAsyncDirect($config['destination'], $options);
-                        $jobId = '';
                     }
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
@@ -600,7 +598,6 @@ class Writer
                     $options['dataFileId'] = $fileId;
                     $options['name'] = $tableName;
                     $tableId = $this->client->createTableAsyncDirect($bucketId, $options);
-                    $jobId = '';
                 }
                 unset($csvFile);
             }

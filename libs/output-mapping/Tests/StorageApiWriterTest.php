@@ -762,14 +762,18 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
+        $this->assertCount(1, $jobIds);
 
         $this->assertEquals('out.c-docker-test.table5', $tables[0]["id"]);
         $tableInfo = $this->client->getTable('out.c-docker-test.table5');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
+
+        // let the test fully finish before starting another one
+        $this->client->waitForJob($jobIds[0]);
     }
 
     public function testWriteTableManifestWithDefaultBucket()
@@ -861,8 +865,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $writer->validateAgainstTable(
             $tableInfo,
             [
-                "source" => "table9.csv",
-                "destination" => "out.c-docker-test.table9",
+                "source" => "table18.csv",
+                "destination" => "out.c-docker-test.table18",
                 "primary_key" => []
             ]
         );
@@ -879,14 +883,14 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $writer->validateAgainstTable(
                 $tableInfo,
                 [
-                    "source" => "table9.csv",
-                    "destination" => "out.c-docker-test.table9",
+                    "source" => "table17.csv",
+                    "destination" => "out.c-docker-test.table17",
                     "primary_key" => ["Id", "Name"]
                 ]
             );
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
-            $message = "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table9'.";
+            $message = "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table17'.";
             $this->assertEquals($message, $e->getMessage());
         }
     }
@@ -894,7 +898,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMappingWithPk()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table16.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $writer = new Writer($this->client, new NullLogger());
         $jobIds = $writer->uploadTables(
@@ -902,8 +906,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table16.csv",
+                        "destination" => "out.c-docker-test.table16",
                         "primary_key" => ["Id"]
                     ]
                 ]
@@ -911,7 +915,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ['componentId' => 'foo']
         );
         $this->assertCount(1, $jobIds);
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table16");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
         // let the test fully finish before starting another one
@@ -921,7 +925,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMappingWithPkOverwrite()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table15.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables(
@@ -929,8 +933,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table15.csv",
+                        "destination" => "out.c-docker-test.table15",
                         "primary_key" => ["Id"]
                     ]
                 ]
@@ -944,15 +948,15 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table15.csv",
+                        "destination" => "out.c-docker-test.table15",
                         "primary_key" => ["Id"]
                     ]
                 ]
             ],
             ['componentId' => 'foo']
         );
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table15");
 
         $this->assertCount(1, $jobIds);
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
@@ -964,22 +968,22 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMappingWithPkMismatch()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table14.csv",
+                        "destination" => "out.c-docker-test.table14",
                         "primary_key" => ["Id"]
                     ]
                 ]
             ],
             ['componentId' => 'foo']
         );
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
         $writer = new Writer($this->client, new NullLogger());
@@ -989,8 +993,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
                 [
                     "mapping" => [
                         [
-                            "source" => "table9.csv",
-                            "destination" => "out.c-docker-test.table9",
+                            "source" => "table14.csv",
+                            "destination" => "out.c-docker-test.table14",
                             "primary_key" => ["Id", "Name"]
                         ]
                     ]
@@ -1000,7 +1004,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals(
-                "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table9'.",
+                "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table14'.",
                 $e->getMessage()
             );
         }
@@ -1009,22 +1013,22 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMappingWithPkMismatchWhitespace()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table13.csv",
+                        "destination" => "out.c-docker-test.table13",
                         "primary_key" => ["Id "]
                     ]
                 ]
             ],
             ['componentId' => 'foo']
         );
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
         $writer = new Writer($this->client, new NullLogger());
@@ -1034,8 +1038,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
                 [
                     "mapping" => [
                         [
-                            "source" => "table9.csv",
-                            "destination" => "out.c-docker-test.table9",
+                            "source" => "table13.csv",
+                            "destination" => "out.c-docker-test.table13",
                             "primary_key" => ["Id ", "Name "]
                         ]
                     ]
@@ -1045,18 +1049,16 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals(
-                "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table9'.",
+                "Output mapping does not match destination table: primary key 'Id, Name' does not match 'Id' in 'out.c-docker-test.table13'.",
                 $e->getMessage()
             );
         }
     }
 
-
-
     public function testWriteTableOutputMappingWithEmptyStringPk()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table12.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $handler = new TestHandler();
 
@@ -1066,41 +1068,45 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table12.csv",
+                        "destination" => "out.c-docker-test.table12",
                         "primary_key" => []
                     ]
                 ]
             ],
             ['componentId' => 'foo']
         );
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
 
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
-        $writer->uploadTables(
+        $jobIds = $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "source" => "table12.csv",
+                        "destination" => "out.c-docker-test.table12",
                         "primary_key" => [""]
                     ]
                 ]
             ],
             ['componentId' => 'foo']
         );
+        $this->assertCount(1, $jobIds);
         $this->assertFalse($handler->hasWarningThatContains("Output mapping does not match destination table"));
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
+
+        // let the test fully finish before starting another one
+        $this->client->waitForJob($jobIds[0]);
     }
 
     public function testWriteTableOutputMappingWithEmptyStringPkInManifest()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table11.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $handler = new TestHandler();
 
@@ -1111,7 +1117,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
                 "mapping" => [
                     [
                         "source" => "table9.csv",
-                        "destination" => "out.c-docker-test.table9",
+                        "destination" => "out.c-docker-test.table11",
                         "primary_key" => []
                     ]
                 ]
@@ -1121,10 +1127,11 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
         file_put_contents(
-            $root . "/upload/table9.csv.manifest",
-            '{"destination": "out.c-docker-test.table9","primary_key": [""]}'
+            $root . "/upload/table11.csv.manifest",
+            '{"destination": "out.c-docker-test.table11","primary_key": [""]}'
         );
-        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
         $this->assertFalse(
             $handler->hasWarningThatContains(
                 "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-docker-test.table9'."
@@ -1132,28 +1139,31 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         );
         $tableInfo = $this->client->getTable("out.c-docker-test.table9");
         $this->assertEquals([], $tableInfo["primaryKey"]);
+
+        // let the test fully finish before starting another one
+        $this->client->waitForJob($jobIds[0]);
     }
 
     public function testWriteTableColumnsOverwrite()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-docker-test.table9.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
         $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-docker-test.table9.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+        file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
 
-        $this->assertEquals('out.c-docker-test.table9', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('out.c-docker-test.table9');
+        $this->assertEquals('out.c-docker-test.table10', $tables[0]["id"]);
+        $tableInfo = $this->client->getTable('out.c-docker-test.table10');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         $writer = new Writer($this->client, new NullLogger());
         $jobIds = $writer->uploadTables(
             $root . "/upload",
-            ["mapping" => [["source" => "out.c-docker-test.table9.csv", "columns" => ["Boing", "Tschak"]]]],
+            ["mapping" => [["source" => "out.c-docker-test.table10.csv", "columns" => ["Boing", "Tschak"]]]],
             ['componentId' => 'foo']
         );
         $this->assertCount(1, $jobIds);

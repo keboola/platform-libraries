@@ -309,11 +309,16 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table2.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
 
         $configs = [
             [
                 "source" => "table1.csv",
                 "destination" => "out.c-docker-test.table1"
+            ],
+            [
+                "source" => "table2.csv",
+                "destination" => "out.c-docker-test.table2"
             ]
         ];
 
@@ -322,9 +327,13 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
 
         $tables = $this->client->listTables("out.c-docker-test");
-        $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table1', $tables[0]["id"]);
-        $this->assertEquals([], $jobIds);
+        $this->assertCount(2, $tables);
+        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
+        sort($tableIds);
+        $this->assertEquals(['out.c-docker-test.table1', 'out.c-docker-test.table2'], $tableIds);
+        $this->assertCount(2, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertNotEmpty($jobIds[1]);
     }
 
     public function testWriteTableOutputMappingExistingTable()
@@ -344,61 +353,6 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         // And again
         $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-
-        $tables = $this->client->listTables("out.c-docker-test");
-        $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table1', $tables[0]["id"]);
-        $this->assertEquals([], $jobIds);
-    }
-
-    public function testWriteTableOutputMappingDeferred()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
-        file_put_contents($root . "/upload/table2.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
-
-        $configs = [
-            [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-test.table1"
-            ],
-            [
-                "source" => "table2.csv",
-                "destination" => "out.c-docker-test.table2"
-            ]
-        ];
-
-        $writer = new Writer($this->client, new NullLogger());
-
-        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], true);
-
-        $tables = $this->client->listTables("out.c-docker-test");
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
-        sort($tableIds);
-        $this->assertEquals(['out.c-docker-test.table1', 'out.c-docker-test.table2'], $tableIds);
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
-    }
-
-    public function testWriteTableOutputMappingExistingTableDeferred()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
-
-        $configs = [
-            [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-test.table1"
-            ]
-        ];
-
-        $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-
-        // And again
-        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], true);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -488,29 +442,6 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table3.csv.manifest",
-            "{\"destination\": \"out.c-docker-test.table3\",\"primary_key\": [\"Id\",\"Name\"]}"
-        );
-
-        $writer = new Writer($this->client, new NullLogger());
-
-        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-
-        $tables = $this->client->listTables("out.c-docker-test");
-        $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table3', $tables[0]["id"]);
-        $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
-    }
-
-    public function testWriteTableZipManifest()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table3.csv",
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
-        );
-        exec('gzip ' . $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table3.csv");
-        file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table3.csv.gz.manifest",
             "{\"destination\": \"out.c-docker-test.table3\",\"primary_key\": [\"Id\",\"Name\"]}"
         );
 
@@ -1204,12 +1135,17 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         $writer = new Writer($this->client, new NullLogger());
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage("Some columns are missing in the csv file. Missing columns: id,name.");
-        $writer->uploadTables(
+        $jobIds = $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-docker-test.table9.csv", "columns" => ["Boing", "Tschak"]]]],
             ['componentId' => 'foo']
+        );
+        $this->assertCount(1, $jobIds);
+        $job = $this->client->waitForJob($jobIds[0]);
+        $this->assertEquals('error', $job['status']);
+        $this->assertContains(
+            'Some columns are missing in the csv file. Missing columns: id,name.',
+            $job['error']['message']
         );
     }
 }

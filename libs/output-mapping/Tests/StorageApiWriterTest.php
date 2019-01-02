@@ -352,7 +352,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $this->assertCount(1, $jobIds);
         $this->client->waitForJob($jobIds[0]);
 
@@ -1040,7 +1040,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables(
+        $jobIds = $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1053,6 +1053,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
         $tableInfo = $this->client->getTable("out.c-docker-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
@@ -1135,7 +1137,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $handler = new TestHandler();
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
-        $writer->uploadTables(
+        $jobIds = $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1148,6 +1150,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
         file_put_contents(

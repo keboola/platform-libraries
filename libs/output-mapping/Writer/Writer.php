@@ -203,11 +203,10 @@ class Writer
      * @param string $source
      * @param array $configuration
      * @param array $systemMetadata
-     * @param bool $deferred
      * @return array
      * @throws ClientException
      */
-    public function uploadTables($source, array $configuration, array $systemMetadata, $deferred = false)
+    public function uploadTables($source, array $configuration, array $systemMetadata)
     {
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException("Component Id must be set");
@@ -306,10 +305,8 @@ class Writer
 
             try {
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"], $this->logger);
-                $jobId = $this->uploadTable($deferred, $file->getPathname(), $config, $systemMetadata);
-                if ($jobId) {
-                    $jobIds[] = $jobId;
-                }
+                $jobId = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
+                $jobIds[] = $jobId;
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
@@ -435,12 +432,11 @@ class Writer
      * @param string $source
      * @param array $config
      * @param array $systemMetadata
-     * @param bool $deferred
      * @return string
      * @throws ClientException
      * @throws \Keboola\Csv\Exception
      */
-    protected function uploadTable($deferred, $source, array $config, array $systemMetadata)
+    protected function uploadTable($source, array $config, array $systemMetadata)
     {
         $tableIdParts = explode(".", $config["destination"]);
         $bucketId = $tableIdParts[0] . "." . $tableIdParts[1];
@@ -461,7 +457,6 @@ class Writer
             );
         }
 
-        $jobId = null;
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->client->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
@@ -521,20 +516,12 @@ class Writer
                 $fileId = $this->uploadSlicedFile($source);
                 $options['dataFileId'] = $fileId;
                 // write table
-                if ($deferred) {
-                    $jobId = $this->client->queueTableImport($config['destination'], $options);
-                } else {
-                    $this->client->writeTableAsyncDirect($config['destination'], $options);
-                }
+                $jobId = $this->client->queueTableImport($config['destination'], $options);
             } else {
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
-                if ($deferred) {
-                    $jobId = $this->client->queueTableImport($config['destination'], $options);
-                } else {
-                    $this->client->writeTableAsyncDirect($config['destination'], $options);
-                }
+                $jobId = $this->client->queueTableImport($config['destination'], $options);
             }
 
             $this->metadataClient->postTableMetadata(
@@ -561,11 +548,7 @@ class Writer
                     $fileId = $this->uploadSlicedFile($source);
                     $options['dataFileId'] = $fileId;
                     // write table
-                    if ($deferred) {
-                        $jobId = $this->client->queueTableImport($config['destination'], $options);
-                    } else {
-                        $this->client->writeTableAsyncDirect($config['destination'], $options);
-                    }
+                    $jobId = $this->client->queueTableImport($config['destination'], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
@@ -578,27 +561,17 @@ class Writer
                 }
             } else {
                 $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                if ($deferred) {
-                    $tmp = new Temp();
-                    $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                    $headerCsvFile->writeRow($csvFile->getHeader());
-                    $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
-                    unset($headerCsvFile);
-                    $fileId = $this->client->uploadFile(
-                        $csvFile->getPathname(),
-                        (new FileUploadOptions())->setCompress(true)
-                    );
-                    $options['dataFileId'] = $fileId;
-                    $jobId = $this->client->queueTableImport($tableId, $options);
-                } else {
-                    $fileId = $this->client->uploadFile(
-                        $csvFile->getPathname(),
-                        (new FileUploadOptions())->setCompress(true)
-                    );
-                    $options['dataFileId'] = $fileId;
-                    $options['name'] = $tableName;
-                    $tableId = $this->client->createTableAsyncDirect($bucketId, $options);
-                }
+                $tmp = new Temp();
+                $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
+                $headerCsvFile->writeRow($csvFile->getHeader());
+                $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
+                unset($headerCsvFile);
+                $fileId = $this->client->uploadFile(
+                    $csvFile->getPathname(),
+                    (new FileUploadOptions())->setCompress(true)
+                );
+                $options['dataFileId'] = $fileId;
+                $jobId = $this->client->queueTableImport($tableId, $options);
                 unset($csvFile);
             }
             $this->metadataClient->postTableMetadata(

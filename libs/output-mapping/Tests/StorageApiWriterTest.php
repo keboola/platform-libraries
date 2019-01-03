@@ -308,17 +308,17 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMapping()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
-        file_put_contents($root . "/upload/table2.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
+        file_put_contents($root . "/upload/table1a.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table2a.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
 
         $configs = [
             [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-test.table1"
+                "source" => "table1a.csv",
+                "destination" => "out.c-docker-test.table1a"
             ],
             [
-                "source" => "table2.csv",
-                "destination" => "out.c-docker-test.table2"
+                "source" => "table2a.csv",
+                "destination" => "out.c-docker-test.table2a"
             ]
         ];
 
@@ -333,7 +333,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
-        $this->assertEquals(['out.c-docker-test.table1', 'out.c-docker-test.table2'], $tableIds);
+        $this->assertEquals(['out.c-docker-test.table1a', 'out.c-docker-test.table2a'], $tableIds);
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
@@ -342,12 +342,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableOutputMappingExistingTable()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table21.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-test.table1"
+                "source" => "table21.csv",
+                "destination" => "out.c-docker-test.table21"
             ]
         ];
 
@@ -363,19 +363,19 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table1', $tables[0]["id"]);
+        $this->assertEquals('out.c-docker-test.table21', $tables[0]["id"]);
         $this->assertNotEmpty($jobIds[0]);
     }
 
     public function testWriteTableOutputMappingWithoutCsv()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table31", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table1",
-                "destination" => "out.c-docker-test.table1"
+                "source" => "table31",
+                "destination" => "out.c-docker-test.table31"
             ]
         ];
 
@@ -387,18 +387,18 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table1', $tables[0]["id"]);
+        $this->assertEquals('out.c-docker-test.table31', $tables[0]["id"]);
     }
 
     public function testWriteTableOutputMappingEmptyFile()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1", "");
+        file_put_contents($root . "/upload/table41", "");
 
         $configs = [
             [
-                "source" => "table1",
-                "destination" => "out.c-docker-test.table1"
+                "source" => "table41",
+                "destination" => "out.c-docker-test.table41"
             ]
         ];
 
@@ -576,8 +576,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $configs = [
             [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-test.table1"
+                "source" => "table81.csv",
+                "destination" => "out.c-docker-test.table81"
             ]
         ];
         $writer = new Writer($this->client, new NullLogger());
@@ -585,7 +585,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains("Table source 'table1.csv' not found", $e->getMessage());
+            $this->assertContains("Table source 'table81.csv' not found", $e->getMessage());
         }
     }
 
@@ -643,12 +643,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableIncrementalWithDeleteDefault()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table51.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-default-test.table1",
+                "source" => "table51.csv",
+                "destination" => "out.c-docker-default-test.table51",
                 "delete_where_column" => "Id",
                 "delete_where_values" => ["aabb"],
                 "delete_where_operator" => "eq",
@@ -668,7 +668,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->client->waitForJob($jobIds[0]);
 
         $exporter = new TableExporter($this->client);
-        $exporter->exportTable("out.c-docker-default-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv", []);
+        $exporter->exportTable("out.c-docker-default-test.table51", $root . DIRECTORY_SEPARATOR . "download.csv", []);
         $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
@@ -688,12 +688,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableIncrementalWithDeleteRedshift()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table61.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table1.csv",
-                "destination" => "out.c-docker-redshift-test.table1",
+                "source" => "table61.csv",
+                "destination" => "out.c-docker-redshift-test.table61",
                 "delete_where_column" => "Id",
                 "delete_where_values" => ["aabb"],
                 "delete_where_operator" => "eq",
@@ -713,7 +713,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->client->waitForJob($jobIds[0]);
 
         $exporter = new TableExporter($this->client);
-        $exporter->exportTable("out.c-docker-redshift-test.table1", $root . DIRECTORY_SEPARATOR . "download.csv", []);
+        $exporter->exportTable("out.c-docker-redshift-test.table61", $root . DIRECTORY_SEPARATOR . "download.csv", []);
         $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
@@ -758,8 +758,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
     public function testWriteTableToDefaultBucket()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table2.csv", "\"Id\",\"Name2\"\n\"test2\",\"test2\"\n");
+        file_put_contents($root . "/upload/table71.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table72.csv", "\"Id\",\"Name2\"\n\"test2\",\"test2\"\n");
 
         $writer = new Writer($this->client, new NullLogger());
 
@@ -771,12 +771,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $tables = $this->client->listTables("in.c-docker-test");
         $this->assertCount(2, $tables);
 
-        $this->assertEquals('in.c-docker-test.table1', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('in.c-docker-test.table1');
+        $this->assertEquals('in.c-docker-test.table71', $tables[0]["id"]);
+        $tableInfo = $this->client->getTable('in.c-docker-test.table71');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
-        $this->assertEquals('in.c-docker-test.table2', $tables[1]["id"]);
-        $tableInfo = $this->client->getTable('in.c-docker-test.table2');
+        $this->assertEquals('in.c-docker-test.table72', $tables[1]["id"]);
+        $tableInfo = $this->client->getTable('in.c-docker-test.table72');
         $this->assertEquals(["Id", "Name2"], $tableInfo["columns"]);
     }
 
@@ -995,7 +995,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables(
+        $jobIds = $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1008,6 +1008,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
         $tableInfo = $this->client->getTable("out.c-docker-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 

@@ -497,7 +497,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-default-test.table3c.csv.manifest",
-            "{\"destination\": \"out.c-docker-default-test.table3\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
+            "{\"destination\": \"out.c-docker-default-test.table3c\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
         $writer = new Writer($this->client, new NullLogger());
@@ -1126,7 +1126,6 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($handler->hasWarningThatContains("Output mapping does not match destination table"));
         $tableInfo = $this->client->getTable("out.c-docker-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
-
     }
 
     public function testWriteTableOutputMappingWithEmptyStringPkInManifest()
@@ -1142,7 +1141,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             [
                 "mapping" => [
                     [
-                        "source" => "table9.csv",
+                        "source" => "table11.csv",
                         "destination" => "out.c-docker-test.table11",
                         "primary_key" => []
                     ]
@@ -1166,9 +1165,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
                 "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-docker-test.table9'."
             )
         );
-        $tableInfo = $this->client->getTable("out.c-docker-test.table9");
+        $tableInfo = $this->client->getTable("out.c-docker-test.table11");
         $this->assertEquals([], $tableInfo["primaryKey"]);
-
     }
 
     public function testWriteTableColumnsOverwrite()

@@ -186,9 +186,17 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $jobIds);
         $this->client->waitForJob($jobIds[0]);
 
+        $rows = [];
+        for ($i = 0; $i < 10000; $i++) {
+            $rows[] = sprintf('"%s","%s","%s"', $i, uniqid('name-'), uniqid('foo'));
+        }
+        $rows[] = '';
         file_put_contents(
             $root . "/upload/table88.csv",
-            "\"Id\",\"Name\",\"Foo\"\n\"test\",\"test\",\"bar\"\n\"aabb\",\"ccdd\",\"eeff\"\n"
+            implode(
+                "\n",
+                $rows
+            )
         );
         $config = [
             "mapping" => [

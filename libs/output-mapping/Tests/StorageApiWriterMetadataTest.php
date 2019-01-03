@@ -235,7 +235,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Name');
         $expectedColumnMetadata = [
             'testComponent' => [
-                'column.key.two' => 'column value one text2',
+                'column.key.one' => 'column value one text2',
             ]
         ];
         $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($NameColMetadata));

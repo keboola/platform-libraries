@@ -162,7 +162,92 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
-    
+
+    public function testMetadataWritingTestColumnChange()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table88.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table88.csv",
+                    "destination" => "in.c-docker-test.table88",
+                ],
+            ],
+        ];
+        $systemMetadata = [
+            "componentId" => "testComponent",
+            "configurationId" => "metadata-write-test"
+        ];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
+
+        file_put_contents(
+            $root . "/upload/table88.csv",
+            "\"Id\",\"Name\",\"Foo\"\n\"test\",\"test\",\"bar\"\n\"aabb\",\"ccdd\",\"eeff\"\n"
+        );
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table88.csv",
+                    "destination" => "in.c-docker-test.table88",
+                    "metadata" => [],
+                    "column_metadata" => [
+                        "Id" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one id2"
+                            ],
+                        ],
+                        "Name" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one text2"
+                            ],
+                        ],
+                        "Foo" => [
+                            [
+                                "key" => "foo.one",
+                                "value" => "bar one",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
+
+        $metadataApi = new Metadata($this->client);
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Id');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.one' => 'column value one id2',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
+        $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Name');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.two' => 'column value one text2',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($NameColMetadata));
+        $FooColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Foo');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'foo.one' => 'bar one',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($FooColMetadata));
+    }
+
     public function testConfigRowMetadataWritingTest()
     {
         $root = $this->tmp->getTmpFolder();

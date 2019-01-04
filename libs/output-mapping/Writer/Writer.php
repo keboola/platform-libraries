@@ -508,6 +508,9 @@ class Writer
                 "delimiter" => $config["delimiter"],
                 "enclosure" => $config["enclosure"],
             ];
+            $newColumns = $this->getNewColumns($tableInfo['columns'], $config['columns'], $this->getPhysicalColumns($source));
+            $this->addColumns($config['destination'], $newColumns);
+
             // headless csv file
             if (!empty($config["columns"])) {
                 $options["columns"] = $config["columns"];
@@ -720,5 +723,45 @@ class Writer
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param string $source Table source file
+     * @return array Columns found in the file
+     */
+    private function getPhysicalColumns($source)
+    {
+        if (!is_dir($source)) {
+            $csv = new CsvFile($source);
+            return $csv->getHeader();
+        }
+        return [];
+    }
+
+    /**
+     * @param array $currentColumns Current columns of a table.
+     * @param array $declaredColumns Declared columns of the new table.
+     * @param array $physicalColumns Physical columns of the new table.
+     * @return array Added columns
+     */
+    private function getNewColumns(array $currentColumns, array $declaredColumns, array $physicalColumns)
+    {
+        if ($declaredColumns) {
+            $newColumns = $declaredColumns;
+        } else {
+            $newColumns = $physicalColumns;
+        }
+        return array_diff($newColumns, $currentColumns);
+    }
+
+    /**
+     * @param string $destination Table ID
+     * @param array $newColumns Names of new table columns
+     */
+    private function addColumns($destination, array $newColumns)
+    {
+        foreach ($newColumns as $column) {
+            $this->client->addTableColumn($destination, $column);
+        }
     }
 }

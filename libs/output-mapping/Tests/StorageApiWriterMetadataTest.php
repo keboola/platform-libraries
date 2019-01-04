@@ -2,6 +2,7 @@
 
 namespace Keboola\DockerBundle\Tests;
 
+use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -58,7 +59,14 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 throw $e;
             }
         }
-        $this->client->createBucket('docker-test', "in");
+        try {
+            $this->client->dropBucket('in.c-docker-test-backend', ['force' => true]);
+        } catch (ClientException $e) {
+            if ($e->getCode() != 404) {
+                throw $e;
+            }
+        }
+        $this->client->createBucket('docker-test', "in", '', 'snowflake');
     }
 
     public function tearDown()
@@ -163,46 +171,32 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
 
-    public function testMetadataWritingTestColumnChange()
+    /**
+     * @dataProvider backendProvider
+     * @param string $backend
+     * @throws ClientException
+     * @throws \Keboola\Csv\Exception
+     */
+    public function testMetadataWritingTestColumnChange($backend)
     {
+        $this->client->createBucket('docker-test-backend', "in", '', $backend);
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table88.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        $csv = new CsvFile($root . "/table88a.csv");
+        $csv->writeRow(['Id', 'Name']);
+        $csv->writeRow(['test', 'test']);
+        $csv->writeRow(['aabb', 'ccdd']);
+        $this->client->createTableAsync('in.c-docker-test-backend', 'table88', $csv);
 
+        $csv = new CsvFile($root . "/upload/table88b.csv");
+        $csv->writeRow(['Id', 'Name', 'Foo']);
+        $csv->writeRow(['test', 'test', 'bar']);
+        $csv->writeRow(['aabb', 'ccdd', 'baz']);
+        unset($csv);
         $config = [
             "mapping" => [
                 [
-                    "source" => "table88.csv",
-                    "destination" => "in.c-docker-test.table88",
-                ],
-            ],
-        ];
-        $systemMetadata = [
-            "componentId" => "testComponent",
-            "configurationId" => "metadata-write-test"
-        ];
-
-        $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
-
-        $rows = [];
-        for ($i = 0; $i < 10000; $i++) {
-            $rows[] = sprintf('"%s","%s","%s"', $i, uniqid('name-'), uniqid('foo'));
-        }
-        $rows[] = '';
-        file_put_contents(
-            $root . "/upload/table88.csv",
-            implode(
-                "\n",
-                $rows
-            )
-        );
-        $config = [
-            "mapping" => [
-                [
-                    "source" => "table88.csv",
-                    "destination" => "in.c-docker-test.table88",
+                    "source" => "table88b.csv",
+                    "destination" => "in.c-docker-test-backend.table88",
                     "metadata" => [],
                     "column_metadata" => [
                         "Id" => [
@@ -227,27 +221,108 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
         ];
-
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $writer = new Writer($this->client, new NullLogger());
+        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
         $this->assertCount(1, $jobIds);
         $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
-        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Id');
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one id2',
             ]
         ];
         $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
-        $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Name');
+        $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one text2',
             ]
         ];
         $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($NameColMetadata));
-        $FooColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table88.Foo');
+        $FooColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Foo');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'foo.one' => 'bar one',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($FooColMetadata));
+    }
+
+    /**
+     * @dataProvider backendProvider
+     * @param $backend
+     * @throws ClientException
+     * @throws \Keboola\Csv\Exception
+     */
+    public function testMetadataWritingTestColumnChangeHeadless($backend)
+    {
+        $this->client->createBucket('docker-test-backend', "in", '', $backend);
+        $root = $this->tmp->getTmpFolder();
+        $csv = new CsvFile($root . "/table99a.csv");
+        $csv->writeRow(['Id', 'Name']);
+        $csv->writeRow(['test', 'test']);
+        $csv->writeRow(['aabb', 'ccdd']);
+        $this->client->createTableAsync('in.c-docker-test-backend', 'table99', $csv);
+
+        mkdir($root . "/upload/table99b", 0777, true);
+        $csv = new CsvFile($root . "/upload/table99b/slice1.csv");
+        $csv->writeRow(['test', 'test', 'bar']);
+        $csv = new CsvFile($root . "/upload/table99b/slice2.csv");
+        $csv->writeRow(['aabb', 'ccdd', 'baz']);
+        unset($csv);
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table99b",
+                    "destination" => "in.c-docker-test-backend.table99",
+                    "columns" => ["Id", "Name", "Foo"],
+                    "metadata" => [],
+                    "column_metadata" => [
+                        "Id" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one id2"
+                            ],
+                        ],
+                        "Name" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one text2"
+                            ],
+                        ],
+                        "Foo" => [
+                            [
+                                "key" => "foo.one",
+                                "value" => "bar one",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $writer = new Writer($this->client, new NullLogger());
+        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
+
+        $metadataApi = new Metadata($this->client);
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table99.Id');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.one' => 'column value one id2',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
+        $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table99.Name');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.one' => 'column value one text2',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($NameColMetadata));
+        $FooColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table99.Foo');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'foo.one' => 'bar one',
@@ -347,5 +422,10 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
+    }
+
+    public function backendProvider()
+    {
+        return [['snowflake'], ['redshift']];
     }
 }

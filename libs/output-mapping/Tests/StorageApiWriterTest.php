@@ -1191,7 +1191,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ['componentId' => 'foo']
         );
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
+        $job = $this->client->waitForJob($jobIds[0]);
         $this->assertEquals('error', $job['status']);
         $this->assertContains(
             'Some columns are missing in the csv file. Missing columns: id,name.',

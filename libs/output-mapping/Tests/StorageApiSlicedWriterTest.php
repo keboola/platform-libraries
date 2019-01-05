@@ -98,7 +98,9 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -132,7 +134,9 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $table = $this->client->getTable("out.c-docker-test.table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
@@ -153,28 +157,30 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->client->createTable('out.c-docker-test', 'table', $csv);
+        $this->client->createTable('out.c-docker-test', 'table16', $csv);
 
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table");
-        file_put_contents($root . "/upload/table/part1", "");
+        mkdir($root . "/upload/table16");
+        file_put_contents($root . "/upload/table16/part1", "");
         $configs = [
             [
-                "source" => "table",
-                "destination" => "out.c-docker-test.table",
+                "source" => "table16",
+                "destination" => "out.c-docker-test.table16",
                 "columns" => ["Id","Name"]
             ]
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-docker-test.table16");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-docker-test.table16', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -186,25 +192,27 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
     {
         $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table");
+        mkdir($root . "/upload/table15");
 
         $configs = [
             [
-                "source" => "table",
-                "destination" => "out.c-docker-test.table",
+                "source" => "table15",
+                "destination" => "out.c-docker-test.table15",
                 "columns" => ["Id","Name"]
             ]
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-docker-test.table15");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-docker-test.table15', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -218,28 +226,30 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->client->createTable('out.c-docker-test', 'table', $csv);
+        $this->client->createTable('out.c-docker-test', 'table17', $csv);
 
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table");
+        mkdir($root . "/upload/table17");
 
         $configs = [
             [
-                "source" => "table",
-                "destination" => "out.c-docker-test.table",
+                "source" => "table17",
+                "destination" => "out.c-docker-test.table17",
                 "columns" => ["Id","Name"]
             ]
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-docker-test.table17");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-docker-test.table17', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -298,7 +308,9 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -337,7 +349,9 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -379,7 +393,9 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(2, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(2, $tables);
@@ -412,32 +428,34 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
     {
         $this->initBucket($backendType);
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
-        exec("gzip " . $root . "/upload/table.csv/part1");
-        exec("gzip " . $root . "/upload/table.csv/part2");
+        mkdir($root . "/upload/table18.csv");
+        file_put_contents($root . "/upload/table18.csv/part1", "\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table18.csv/part2", "\"aabb\",\"ccdd\"\n");
+        exec("gzip " . $root . "/upload/table18.csv/part1");
+        exec("gzip " . $root . "/upload/table18.csv/part2");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => "out.c-docker-test.table",
+                "source" => "table18.csv",
+                "destination" => "out.c-docker-test.table18",
                 "columns" => ["Id","Name"]
             ]
         ];
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-docker-test.table18");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-docker-test.table18', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);

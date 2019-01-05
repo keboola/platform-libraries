@@ -203,11 +203,10 @@ class Writer
      * @param string $source
      * @param array $configuration
      * @param array $systemMetadata
-     * @param bool $deferred
      * @return array
      * @throws ClientException
      */
-    public function uploadTables($source, array $configuration, array $systemMetadata, $deferred = false)
+    public function uploadTables($source, array $configuration, array $systemMetadata)
     {
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException("Component Id must be set");
@@ -306,10 +305,8 @@ class Writer
 
             try {
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"], $this->logger);
-                $jobId = $this->uploadTable($deferred, $file->getPathname(), $config, $systemMetadata);
-                if ($jobId) {
-                    $jobIds[] = $jobId;
-                }
+                $jobId = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
+                $jobIds[] = $jobId;
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
@@ -435,12 +432,11 @@ class Writer
      * @param string $source
      * @param array $config
      * @param array $systemMetadata
-     * @param bool $deferred
      * @return string
      * @throws ClientException
      * @throws \Keboola\Csv\Exception
      */
-    protected function uploadTable($deferred, $source, array $config, array $systemMetadata)
+    protected function uploadTable($source, array $config, array $systemMetadata)
     {
         $tableIdParts = explode(".", $config["destination"]);
         $bucketId = $tableIdParts[0] . "." . $tableIdParts[1];
@@ -508,19 +504,24 @@ class Writer
                 $this->client->deleteTableRows($config["destination"], $deleteOptions);
             }
             $options = [
-                "incremental" => $config["incremental"]
+                "incremental" => $config["incremental"],
+                "delimiter" => $config["delimiter"],
+                "enclosure" => $config["enclosure"],
             ];
             // headless csv file
             if (!empty($config["columns"])) {
                 $options["columns"] = $config["columns"];
             }
             if (is_dir($source)) {
-                $options["delimiter"] = $config["delimiter"];
-                $options["enclosure"] = $config["enclosure"];
-                $jobId = $this->writeSlicedTable($deferred, $source, $config["destination"], $options);
+                $fileId = $this->uploadSlicedFile($source);
+                $options['dataFileId'] = $fileId;
+                // write table
+                $jobId = $this->client->queueTableImport($config['destination'], $options);
             } else {
-                $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                $jobId = $this->writeTableAsync($deferred, $config["destination"], $csvFile, $options);
+                $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
+                $options['dataFileId'] = $fileId;
+                $options['name'] = $tableName;
+                $jobId = $this->client->queueTableImport($config['destination'], $options);
             }
 
             $this->metadataClient->postTableMetadata(
@@ -530,7 +531,9 @@ class Writer
             );
         } else {
             $options = [
-                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger))
+                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger)),
+                "delimiter" => $config["delimiter"],
+                "enclosure" => $config["enclosure"],
             ];
             $tableId = $config['destination'];
             // headless csv file
@@ -542,27 +545,32 @@ class Writer
                 unset($headerCsvFile);
                 $options["columns"] = $config["columns"];
                 if (is_dir($source)) {
-                    $options["delimiter"] = $config["delimiter"];
-                    $options["enclosure"] = $config["enclosure"];
-                    $jobId = $this->writeSlicedTable($deferred, $source, $config["destination"], $options);
+                    $fileId = $this->uploadSlicedFile($source);
+                    $options['dataFileId'] = $fileId;
+                    $jobId = $this->client->queueTableImport($config['destination'], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                    $jobId = $this->writeTableAsync($deferred, $config["destination"], $csvFile, $options);
+                    $fileId = $this->client->uploadFile(
+                        $csvFile->getPathname(),
+                        (new FileUploadOptions())->setCompress(true)
+                    );
+                    $options['dataFileId'] = $fileId;
+                    $jobId = $this->client->queueTableImport($config["destination"], $options);
                     unset($csvFile);
                 }
             } else {
                 $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                if ($deferred) {
-                    $tmp = new Temp();
-                    $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                    $headerCsvFile->writeRow($csvFile->getHeader());
-                    $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
-                    unset($headerCsvFile);
-                    $jobId = $this->writeTableAsync($deferred, $tableId, $csvFile, $options);
-                } else {
-                    $tableId = $this->client->createTableAsync($bucketId, $tableName, $csvFile, $options);
-                    $jobId = '';
-                }
+                $tmp = new Temp();
+                $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
+                $headerCsvFile->writeRow($csvFile->getHeader());
+                $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
+                unset($headerCsvFile);
+                $fileId = $this->client->uploadFile(
+                    $csvFile->getPathname(),
+                    (new FileUploadOptions())->setCompress(true)
+                );
+                $options['dataFileId'] = $fileId;
+                $jobId = $this->client->queueTableImport($tableId, $options);
                 unset($csvFile);
             }
             $this->metadataClient->postTableMetadata(
@@ -572,55 +580,6 @@ class Writer
             );
         }
         return $jobId;
-    }
-
-    private function writeTableOptionsPrepare($options)
-    {
-        $allowedOptions = array(
-            'delimiter',
-            'enclosure',
-            'escapedBy',
-            'dataFileId',
-            'dataUrl',
-            'dataTableName',
-            'dataWorkspaceId',
-            'data',
-            'withoutHeaders',
-            'columns',
-        );
-
-        $filteredOptions = array_intersect_key($options, array_flip($allowedOptions));
-
-        return array_merge($filteredOptions, array(
-            "incremental" => isset($options['incremental']) ? (bool)$options['incremental'] : false,
-        ));
-    }
-
-    private function writeTableAsync($deferred, $tableId, CsvFile $csvFile, $options = array())
-    {
-        if ($deferred) {
-            $optionsExtended = array_merge($options, array(
-                "delimiter" => $csvFile->getDelimiter(),
-                "enclosure" => $csvFile->getEnclosure(),
-                "escapedBy" => $csvFile->getEscapedBy(),
-            ));
-
-            // upload file
-            $fileId = $this->client->uploadFile(
-                $csvFile->getPathname(),
-                (new FileUploadOptions())
-                    ->setNotify(false)
-                    ->setIsPublic(false)
-                    ->setCompress(true)
-                    ->setTags(array('table-import'))
-            );
-            $optionsExtended['dataFileId'] = $fileId;
-            $job = $this->client->apiPost("storage/tables/{$tableId}/import-async", $this->writeTableOptionsPrepare($optionsExtended), false);
-            return $job['id'];
-        } else {
-            $this->client->writeTableAsync($tableId, $csvFile, $options);
-            return '';
-        }
     }
 
     /**
@@ -648,7 +607,7 @@ class Writer
      * @return string
      * @throws ClientException
      */
-    protected function writeSlicedTable($deferred, $source, $destination, $options)
+    protected function uploadSlicedFile($source)
     {
         $finder = new Finder();
         $slices = $finder->files()->in($source)->depth(0);
@@ -664,17 +623,7 @@ class Writer
                 ->setIsSliced(true)
                 ->setFileName(basename($source))
                 ->setCompress(true);
-        $uploadFileId = $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
-
-        // write table
-        $options["dataFileId"] = $uploadFileId;
-        if ($deferred) {
-            $job = $this->client->apiPost("storage/tables/{$destination}/import-async", $this->writeTableOptionsPrepare($options), false);
-            return $job['id'];
-        } else {
-            $this->client->writeTableAsyncDirect($destination, $options);
-            return '';
-        }
+        return $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 
     /**

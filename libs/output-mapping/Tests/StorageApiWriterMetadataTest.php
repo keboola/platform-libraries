@@ -77,13 +77,13 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
     public function testMetadataWritingTest()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table55.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
             "mapping" => [
                 [
-                    "source" => "table1.csv",
-                    "destination" => "in.c-docker-test.table1",
+                    "source" => "table55.csv",
+                    "destination" => "in.c-docker-test.table55",
                     "metadata" => [
                         [
                             "key" => "table.key.one",
@@ -125,10 +125,12 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
         $metadataApi = new Metadata($this->client);
 
-        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
         $expectedTableMetadata = [
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
@@ -141,7 +143,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
-        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table1.Id');
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table55.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one id',
@@ -151,8 +153,11 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
+
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
@@ -161,13 +166,13 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
     public function testConfigRowMetadataWritingTest()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table1.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table66.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
             "mapping" => [
                 [
-                    "source" => "table1.csv",
-                    "destination" => "in.c-docker-test.table1",
+                    "source" => "table66.csv",
+                    "destination" => "in.c-docker-test.table66",
                     "metadata" => [
                         [
                             "key" => "table.key.one",
@@ -210,10 +215,13 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
+
         $metadataApi = new Metadata($this->client);
 
-        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table66');
         $expectedTableMetadata = [
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
@@ -227,7 +235,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
-        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table1.Id');
+        $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test.table66.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one id',
@@ -237,8 +245,11 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table1');
+        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->assertCount(1, $jobIds);
+        $this->client->handleAsyncTasks($jobIds);
+
+        $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table66');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';

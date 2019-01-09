@@ -15,6 +15,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
+use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\Finder;
@@ -751,6 +752,9 @@ class Writer
         } else {
             $newColumns = $physicalColumns;
         }
+        array_walk($newColumns, function (&$v) {
+            $v = ColumnNameSanitizer::sanitize($v);
+        });
         return array_diff($newColumns, $currentColumns);
     }
 

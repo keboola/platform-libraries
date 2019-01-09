@@ -252,6 +252,72 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider backendProvider
+     * @param string $backend
+     * @throws ClientException
+     * @throws \Keboola\Csv\Exception
+     */
+    public function testMetadataWritingTestColumnChangeSpecialChars($backend)
+    {
+        $this->client->createBucket('docker-test-backend', "in", '', $backend);
+        $root = $this->tmp->getTmpFolder();
+        $csv = new CsvFile($root . "/table88a.csv");
+        $csv->writeRow(['Id with special chars', 'Name']);
+        $csv->writeRow(['test', 'test']);
+        $csv->writeRow(['aabb', 'ccdd']);
+        $this->client->createTableAsync('in.c-docker-test-backend', 'table88', $csv);
+
+        $csv = new CsvFile($root . "/upload/table88b.csv");
+        $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
+        $csv->writeRow(['test', 'test', 'bar']);
+        $csv->writeRow(['aabb', 'ccdd', 'baz']);
+        unset($csv);
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table88b.csv",
+                    "destination" => "in.c-docker-test-backend.table88",
+                    "metadata" => [],
+                    "column_metadata" => [
+                        "Name" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one text2"
+                            ],
+                        ],
+                        "Foo" => [
+                            [
+                                "key" => "foo.one",
+                                "value" => "bar one",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $writer = new Writer($this->client, new NullLogger());
+        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $this->assertCount(1, $jobIds);
+        $this->client->waitForJob($jobIds[0]);
+
+        $metadataApi = new Metadata($this->client);
+        $NameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.one' => 'column value one text2',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($NameColMetadata));
+        $FooColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Foo');
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'foo.one' => 'bar one',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($FooColMetadata));
+    }
+
+    /**
+     * @dataProvider backendProvider
      * @param $backend
      * @throws ClientException
      * @throws \Keboola\Csv\Exception

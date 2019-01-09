@@ -28,12 +28,9 @@
     },
     "scripts": {
         "tests-phpunit": "phpunit  --coverage-clover ./build/logs/clover.xml",
-        "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
-        "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
         "phplint": "parallel-lint -j 10 --exclude vendor .",
         "build": [
             "@phplint",
-            "@phpcs",
             "@tests-phpunit"
         ],
         "ci": [

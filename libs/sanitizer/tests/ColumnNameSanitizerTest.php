@@ -46,14 +46,16 @@ class ColumnNameSanitizerTest extends TestCase
         return [
             [
                 "_~dlažební  %_kostky_~",
-                "dlazebni__kostky"
-            ],[
+                "dlazebni__kostky",
+            ],
+            [
                 "test-vn-đá cuội",
-                "test_vn_da_cuoi"
-            ],[
+                "test_vn_da_cuoi",
+            ],
+            [
                 "jp日本語",
-                "jp"
-            ]
+                "jp",
+            ],
         ];
     }
 }

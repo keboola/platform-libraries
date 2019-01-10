@@ -14,6 +14,7 @@
     },
     "require-dev": {
         "jakub-onderka/php-parallel-lint": "^1.0",
+        "squizlabs/php_codesniffer": "^3.4",
         "phpunit/phpunit": "^5.7"
     },
     "autoload": {
@@ -29,8 +30,10 @@
     "scripts": {
         "tests-phpunit": "phpunit  --coverage-clover ./build/logs/clover.xml",
         "phplint": "parallel-lint -j 10 --exclude vendor .",
+        "phpcs": "phpcs --standard=psr2 -n --ignore=vendor --extensions=php .",
         "build": [
             "@phplint",
+            "@phpcs",            
             "@tests-phpunit"
         ],
         "ci": [

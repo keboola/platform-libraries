@@ -5,6 +5,11 @@ php:
   - 7.1
   - 7.2
   - 7.3
+  - nightly
+
+allow_failures:
+  - php: nightly
+
 env:
   - GIT_COMMIT_SHA=$TRAVIS_COMMIT GIT_BRANCH=$TRAVIS_BRANCH
 

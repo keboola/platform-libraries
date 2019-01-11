@@ -17,14 +17,8 @@
         "monolog/monolog": "^1.22",
         "keboola/input-mapping": "^6.0",
         "guzzlehttp/guzzle": "^6.2",
-        "keboola/sanitizer": "dev-odin-init"
+        "keboola/sanitizer": "^0.1"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/keboola/sanitizer"
-        }
-    ],
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.2",
         "keboola/php-temp": "^1.0",

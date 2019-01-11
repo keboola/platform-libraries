@@ -1,0 +1,33 @@
+language: php
+php: 
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
+  - 7.3
+  - nightly
+
+allow_failures:
+  - php: nightly
+
+env:
+  - GIT_COMMIT_SHA=$TRAVIS_COMMIT GIT_BRANCH=$TRAVIS_BRANCH
+
+install:
+  - composer install --no-scripts
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+script:
+  - composer ci
+
+after_success:
+  - ./cc-test-reporter after-build --exit-code 0 --debug
+
+notifications:
+  email: false
+  slack:
+    secure: gYEE4QEyCR3VCZR5cbgcuoE3CFzQQLBm6U8q6tPjXhmXLojtmCBniWZZ8wQY9XlUrJh+4U29vTw4DjKV4Ip+1VhtcByEf8qAE8mWYX2pEBmjkGABJpqhIiTFpwNPMW7YDR/FDQJ8JFKQNi8ip5dkDHr+qXIBp9UwkD4XOfqXfDOJOCqrGP0eBD3csrX0ZUF6OcCeH2RNrCKj8e7jyM42UiKKc7+ML1G7mkL4FYChRL65alPWpGVtq751ccjGpvE5DOZjhlYk+C0b8eqGPnNhnHk2Lo0RLTzX9NkmczWKRl0SMkeqSgr1fYVWf8PAdcXZvwf8iOvdv5XD2Id9pmxCXMJZjJQJHkk2tWjmNn1WfH9KdLtz5Us51pohLyvdeVBtmt1QmTCIVRFV7dWZpXtWZ3QPImvcKn5UVsIA+TvD6Cc9wMXh0X1WFmAXaHePI0u2qQihpLUKSrOjBZmRIgBevgW7u0ANO8YSsANzEtXoTmuwcbX8dUUIdnYgVQJVXw7uM1bvzJGbdR048Ir0WlgNfAr6liYHWTk3eB36FQ4gsqyUtK/3S9dRgCkM5fpTntcz0jz54Z0W251DgEo2BJteru8KCrHYc9gxEyNpCJE8jVlk94bj/yiXvkYEnwfTweCT1JcUAxi83YvCp04HcIb8PI8mA9hvr1ugn/DbNMexk0Q=

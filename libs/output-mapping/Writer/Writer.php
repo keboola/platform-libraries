@@ -509,7 +509,11 @@ class Writer
                 "delimiter" => $config["delimiter"],
                 "enclosure" => $config["enclosure"],
             ];
-            $newColumns = $this->getNewColumns($tableInfo['columns'], $config['columns'], $this->getPhysicalColumns($source));
+            $newColumns = $this->getNewColumns(
+                $tableInfo['columns'],
+                $config['columns'],
+                $this->getPhysicalColumns($source, $config["delimiter"], $config["enclosure"])
+            );
             $this->addColumns($config['destination'], $newColumns);
 
             // headless csv file
@@ -728,12 +732,14 @@ class Writer
 
     /**
      * @param string $source Table source file
+     * @param string $delimiter CSV delimiter
+     * @param string $enclosure CSV enclosure
      * @return array Columns found in the file
      */
-    private function getPhysicalColumns($source)
+    private function getPhysicalColumns($source, $delimiter, $enclosure)
     {
         if (!is_dir($source)) {
-            $csv = new CsvFile($source);
+            $csv = new CsvFile($source, $delimiter, $enclosure);
             return $csv->getHeader();
         }
         return [];

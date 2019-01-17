@@ -133,9 +133,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
         $metadataApi = new Metadata($this->client);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
@@ -161,9 +161,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
@@ -517,9 +517,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $metadataApi = new Metadata($this->client);
 
@@ -547,9 +547,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table66');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';

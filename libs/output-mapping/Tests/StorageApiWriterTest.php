@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Jobs\ParallelJob;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -30,7 +31,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
     protected function clearBucket()
     {
-        $buckets = ['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test'];
+//        $buckets = ['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test'];
+        $buckets = ['out.c-docker-test'];
         foreach ($buckets as $bucket) {
             try {
                 $this->client->dropBucket($bucket, ['force' => true]);
@@ -69,10 +71,10 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             'token' => STORAGE_API_TOKEN,
         ]);
         $this->clearBucket();
-        $this->clearFileUploads();
-        $this->client->createBucket('docker-redshift-test', 'out', '', 'redshift');
+//        $this->clearFileUploads();
+//        $this->client->createBucket('docker-redshift-test', 'out', '', 'redshift');
 
-        $this->client->createBucket('docker-default-test', 'out');
+//        $this->client->createBucket('docker-default-test', 'out');
     }
 
     public function tearDown()
@@ -80,8 +82,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         // Delete local files
         $this->tmp = null;
 
-        $this->clearBucket();
-        $this->clearFileUploads();
+    //    $this->clearBucket();
+  //      $this->clearFileUploads();
     }
 
     public function testWriteFiles()
@@ -324,9 +326,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $jobIds = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $this->assertCount(2, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
+        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        /** @var ParallelJob $job */
+        $result = $job->waitFor();
+        var_dump($result);
+//        $this->assertCount(2, $jobIds);
+  //      $this->client->handleAsyncTasks($jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(2, $tables);

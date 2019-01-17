@@ -10,6 +10,12 @@ use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Jobs\JobInterface;
+use Keboola\OutputMapping\Jobs\LoadDataJob;
+use Keboola\OutputMapping\Jobs\ParallelJob;
+use Keboola\OutputMapping\Jobs\PostColumnMetadataJob;
+use Keboola\OutputMapping\Jobs\PostTableMetadataJob;
+use Keboola\OutputMapping\Jobs\SerialJob;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -204,8 +210,9 @@ class Writer
      * @param string $source
      * @param array $configuration
      * @param array $systemMetadata
-     * @return array
+     * @return JobInterface[]
      * @throws ClientException
+     * @throws \Keboola\Csv\Exception
      */
     public function uploadTables($source, array $configuration, array $systemMetadata)
     {
@@ -249,7 +256,7 @@ class Writer
             }
         }
 
-        $jobIds = [];
+        $jobs = [];
         foreach ($files as $file) {
             $configFromMapping = [];
             $configFromManifest = [];
@@ -306,8 +313,7 @@ class Writer
 
             try {
                 $config["primary_key"] = self::normalizePrimaryKey($config["primary_key"], $this->logger);
-                $jobId = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
-                $jobIds[] = $jobId;
+                $tableJobs = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
@@ -318,19 +324,12 @@ class Writer
 
             // After the file has been written, we can write metadata
             if (!empty($config['metadata'])) {
-                $this->metadataClient->postTableMetadata(
-                    $config["destination"],
-                    $systemMetadata['componentId'],
-                    $config["metadata"]
-                );
+                $tableJobs[] = new PostTableMetadataJob($this->client, $config['destination'], $systemMetadata['componentId'], $config['metadata']);
             }
             if (!empty($config['column_metadata'])) {
-                $this->writeColumnMetadata(
-                    $config["destination"],
-                    $systemMetadata['componentId'],
-                    $config["column_metadata"]
-                );
+                $tableJobs[] = new PostColumnMetadataJob($this->client, $config['destination'], $systemMetadata['componentId'], $config['column_metadata']);
             }
+            $jobs[] = new SerialJob($this->client, $tableJobs);
         }
 
         $processedOutputMappingTables = array_unique($processedOutputMappingTables);
@@ -343,7 +342,9 @@ class Writer
                 "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
             );
         }
-        return $jobIds;
+        $job = new ParallelJob($this->client, $jobs);
+        $job->run();
+        return $job;
     }
 
     /**
@@ -433,7 +434,7 @@ class Writer
      * @param string $source
      * @param array $config
      * @param array $systemMetadata
-     * @return string
+     * @return JobInterface[]
      * @throws ClientException
      * @throws \Keboola\Csv\Exception
      */
@@ -509,12 +510,6 @@ class Writer
                 "delimiter" => $config["delimiter"],
                 "enclosure" => $config["enclosure"],
             ];
-            $newColumns = $this->getNewColumns(
-                $tableInfo['columns'],
-                $config['columns'],
-                $this->getPhysicalColumns($source, $config["delimiter"], $config["enclosure"])
-            );
-            $this->addColumns($config['destination'], $newColumns);
 
             // headless csv file
             if (!empty($config["columns"])) {
@@ -524,15 +519,16 @@ class Writer
                 $fileId = $this->uploadSlicedFile($source);
                 $options['dataFileId'] = $fileId;
                 // write table
-                $jobId = $this->client->queueTableImport($config['destination'], $options);
+                $jobs[] = new LoadDataJob($this->client, $config['destination'], $options);
             } else {
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
-                $jobId = $this->client->queueTableImport($config['destination'], $options);
+                $jobs[] = new LoadDataJob($this->client, $config['destination'], $options);
             }
 
-            $this->metadataClient->postTableMetadata(
+            $jobs[] = new PostTableMetadataJob(
+                $this->client,
                 $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
                 $this->getUpdatedMetadata($systemMetadata)
@@ -543,7 +539,7 @@ class Writer
                 "delimiter" => $config["delimiter"],
                 "enclosure" => $config["enclosure"],
             ];
-            $tableId = $config['destination'];
+
             // headless csv file
             if (!empty($config["columns"])) {
                 $tmp = new Temp();
@@ -555,7 +551,7 @@ class Writer
                 if (is_dir($source)) {
                     $fileId = $this->uploadSlicedFile($source);
                     $options['dataFileId'] = $fileId;
-                    $jobId = $this->client->queueTableImport($config['destination'], $options);
+                    $jobs[] = new LoadDataJob($this->client, $config['destination'], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
@@ -563,7 +559,7 @@ class Writer
                         (new FileUploadOptions())->setCompress(true)
                     );
                     $options['dataFileId'] = $fileId;
-                    $jobId = $this->client->queueTableImport($config["destination"], $options);
+                    $jobs[] = new LoadDataJob($this->client, $config['destination'], $options);
                     unset($csvFile);
                 }
             } else {
@@ -578,16 +574,18 @@ class Writer
                     (new FileUploadOptions())->setCompress(true)
                 );
                 $options['dataFileId'] = $fileId;
-                $jobId = $this->client->queueTableImport($tableId, $options);
+                $jobs[] = new LoadDataJob($this->client, $tableId, $options);
                 unset($csvFile);
             }
-            $this->metadataClient->postTableMetadata(
-                $tableId,
+
+            $jobs[] = new PostTableMetadataJob(
+                $this->client,
+                $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
-                $this->getCreatedMetadata($systemMetadata)
+                $this->getUpdatedMetadata($systemMetadata)
             );
         }
-        return $jobId;
+        return $jobs;
     }
 
     /**

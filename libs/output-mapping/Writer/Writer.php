@@ -725,49 +725,4 @@ class Writer
         }
         return false;
     }
-
-    /**
-     * @param string $source Table source file
-     * @param string $delimiter CSV delimiter
-     * @param string $enclosure CSV enclosure
-     * @return array Columns found in the file
-     */
-    private function getPhysicalColumns($source, $delimiter, $enclosure)
-    {
-        if (!is_dir($source)) {
-            $csv = new CsvFile($source, $delimiter, $enclosure);
-            return $csv->getHeader();
-        }
-        return [];
-    }
-
-    /**
-     * @param array $currentColumns Current columns of a table.
-     * @param array $declaredColumns Declared columns of the new table.
-     * @param array $physicalColumns Physical columns of the new table.
-     * @return array Added columns
-     */
-    private function getNewColumns(array $currentColumns, array $declaredColumns, array $physicalColumns)
-    {
-        if ($declaredColumns) {
-            $newColumns = $declaredColumns;
-        } else {
-            $newColumns = $physicalColumns;
-        }
-        array_walk($newColumns, function (&$v) {
-            $v = ColumnNameSanitizer::sanitize($v);
-        });
-        return array_diff($newColumns, $currentColumns);
-    }
-
-    /**
-     * @param string $destination Table ID
-     * @param array $newColumns Names of new table columns
-     */
-    private function addColumns($destination, array $newColumns)
-    {
-        foreach ($newColumns as $column) {
-            $this->client->addTableColumn($destination, $column);
-        }
-    }
 }

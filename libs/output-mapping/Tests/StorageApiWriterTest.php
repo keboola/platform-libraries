@@ -672,7 +672,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $exporter->exportTable("out.c-docker-default-test.table51", $root . DIRECTORY_SEPARATOR . "download.csv", []);
         $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
-            return strcasecmp($a['TabId'], $b['Id']);
+            return strcasecmp($a['Id'], $b['Id']);
         });
         $this->assertEquals(3, count($table));
         $this->assertEquals(2, count($table[0]));

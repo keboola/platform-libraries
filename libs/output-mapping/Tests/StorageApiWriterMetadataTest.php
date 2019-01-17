@@ -222,9 +222,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Id');
@@ -266,7 +266,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $csv->writeRow(['aabb', 'ccdd']);
         $this->client->createTableAsync('in.c-docker-test-backend', 'table88', $csv);
 
-        $csv = new CsvFile($root . "/upload/table88b.csv", ';', '@');
+        $csv = new CsvFile($root . "/upload/table88b.csv", ';', '\'');
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
         $csv->writeRow(['test', 'test', 'bar']);
         $csv->writeRow(['aabb', 'ccdd', 'baz']);
@@ -277,7 +277,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                     "source" => "table88b.csv",
                     "destination" => "in.c-docker-test-backend.table88",
                     "delimiter" => ";",
-                    "enclosure" => "@",
+                    "enclosure" => "'",
                     "metadata" => [],
                     "column_metadata" => [
                         "Name" => [
@@ -297,9 +297,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
@@ -363,9 +363,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
@@ -437,9 +437,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $job->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table99.Id');

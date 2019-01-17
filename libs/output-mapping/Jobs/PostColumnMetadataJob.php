@@ -33,6 +33,9 @@ class PostColumnMetadataJob extends BaseStorageJob
     public function run()
     {
         $metadataClient = new Metadata($this->client);
-        return $metadataClient->postColumnMetadata($this->destination, $this->provider, $this->metadata);
+        foreach ( $this->metadata as $column => $metadataArray) {
+            $columnId = $this->destination . "." . $column;
+            $metadataClient->postColumnMetadata($columnId, $this->provider, $metadataArray);
+        }
     }
 }

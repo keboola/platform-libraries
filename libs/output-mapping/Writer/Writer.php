@@ -537,7 +537,7 @@ class Writer
                 "delimiter" => $config["delimiter"],
                 "enclosure" => $config["enclosure"],
             ];
-
+            $tableId = $config['destination'];
             // headless csv file
             if (!empty($config["columns"])) {
                 $tmp = new Temp();
@@ -578,9 +578,9 @@ class Writer
 
             $job->addChild(new PostTableMetadataJob(
                 $this->client,
-                $config['destination'],
+                $tableId,
                 self::SYSTEM_METADATA_PROVIDER,
-                $this->getUpdatedMetadata($systemMetadata)
+                $this->getCreatedMetadata($systemMetadata)
             ));
         }
         return $job;

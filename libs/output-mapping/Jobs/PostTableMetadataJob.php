@@ -35,9 +35,4 @@ class PostTableMetadataJob extends BaseStorageJob
         $metadataClient = new Metadata($this->client);
         return $metadataClient->postTableMetadata($this->destination, $this->provider, $this->metadata);
     }
-
-    public function isSynchronous()
-    {
-        return true;
-    }
 }

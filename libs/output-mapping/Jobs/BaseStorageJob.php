@@ -4,7 +4,7 @@ namespace Keboola\OutputMapping\Jobs;
 
 use Keboola\StorageApi\Client;
 
-abstract class BaseStorageJob implements JobInterface
+abstract class BaseStorageJob
 {
     /**
      * @var Client

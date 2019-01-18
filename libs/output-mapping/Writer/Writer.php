@@ -10,16 +10,14 @@ use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Jobs\LoadTableJob;
-use Keboola\OutputMapping\Jobs\JobRunner;
-use Keboola\OutputMapping\Jobs\PostColumnMetadataJob;
-use Keboola\OutputMapping\Jobs\PostTableMetadataJob;
+use Keboola\OutputMapping\DeferredTasks\LoadTable;
+use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
+use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\Finder;
@@ -208,7 +206,7 @@ class Writer
      * @param string $source
      * @param array $configuration
      * @param array $systemMetadata
-     * @return JobRunner
+     * @return LoadTableQueue
      * @throws ClientException
      * @throws \Keboola\Csv\Exception
      */
@@ -322,10 +320,25 @@ class Writer
 
             // After the file has been written, we can write metadata
             if (!empty($config['metadata'])) {
-                $tableJob->addChild(new PostTableMetadataJob($this->client, $config['destination'], $systemMetadata['componentId'], $config['metadata']));
+                $tableJob->addMetadata(
+                    new MetadataDefinition(
+                        $this->client,
+                        $config['destination'],
+                        $systemMetadata['componentId'],
+                        $config['metadata'],
+                        MetadataDefinition::TABLE_METADATA
+                    )
+                );
             }
             if (!empty($config['column_metadata'])) {
-                $tableJob->addChild(new PostColumnMetadataJob($this->client, $config['destination'], $systemMetadata['componentId'], $config['column_metadata']));
+                $tableJob->addMetadata(
+                    new MetadataDefinition(
+                        $this->client,
+                        $config['destination'],
+                        $systemMetadata['componentId'],
+                        $config['column_metadata'],
+                        MetadataDefinition::COLUMN_METADATA)
+                );
             }
             $jobs[] = $tableJob;
         }
@@ -340,7 +353,7 @@ class Writer
                 "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
             );
         }
-        $job = new JobRunner($this->client, $jobs);
+        $job = new LoadTableQueue($this->client, $jobs);
         $job->start();
         return $job;
     }
@@ -432,7 +445,7 @@ class Writer
      * @param string $source
      * @param array $config
      * @param array $systemMetadata
-     * @return LoadTableJob
+     * @return LoadTable
      * @throws ClientException
      * @throws \Keboola\Csv\Exception
      */
@@ -517,19 +530,20 @@ class Writer
                 $fileId = $this->uploadSlicedFile($source);
                 $options['dataFileId'] = $fileId;
                 // write table
-                $job = new LoadTableJob($this->client, $config['destination'], $options);
+                $job = new LoadTable($this->client, $config['destination'], $options);
             } else {
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
-                $job = new LoadTableJob($this->client, $config['destination'], $options);
+                $job = new LoadTable($this->client, $config['destination'], $options);
             }
 
-            $job->addChild(new PostTableMetadataJob(
+            $job->addMetadata(new MetadataDefinition(
                 $this->client,
                 $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
-                $this->getUpdatedMetadata($systemMetadata)
+                $this->getUpdatedMetadata($systemMetadata),
+                'table'
             ));
         } else {
             $options = [
@@ -549,7 +563,7 @@ class Writer
                 if (is_dir($source)) {
                     $fileId = $this->uploadSlicedFile($source);
                     $options['dataFileId'] = $fileId;
-                    $job = new LoadTableJob($this->client, $config['destination'], $options);
+                    $job = new LoadTable($this->client, $config['destination'], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
@@ -557,7 +571,7 @@ class Writer
                         (new FileUploadOptions())->setCompress(true)
                     );
                     $options['dataFileId'] = $fileId;
-                    $job = new LoadTableJob($this->client, $config['destination'], $options);
+                    $job = new LoadTable($this->client, $config['destination'], $options);
                     unset($csvFile);
                 }
             } else {
@@ -572,16 +586,15 @@ class Writer
                     (new FileUploadOptions())->setCompress(true)
                 );
                 $options['dataFileId'] = $fileId;
-                $job = new LoadTableJob($this->client, $tableId, $options);
+                $job = new LoadTable($this->client, $tableId, $options);
                 unset($csvFile);
             }
 
-            $job->addChild(new PostTableMetadataJob(
-                $this->client,
+            $this->metadataClient->postTableMetadata(
                 $tableId,
                 self::SYSTEM_METADATA_PROVIDER,
                 $this->getCreatedMetadata($systemMetadata)
-            ));
+            );
         }
         return $job;
     }

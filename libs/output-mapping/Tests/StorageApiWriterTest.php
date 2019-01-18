@@ -4,7 +4,6 @@ namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Jobs\JobRunner;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -325,7 +324,6 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $writer = new Writer($this->client, new NullLogger());
 
         $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        /** @var JobRunner $job */
         $jobIds = $job->waitForAll();
         $this->assertCount(2, $jobIds);
 

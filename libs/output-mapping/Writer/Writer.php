@@ -337,7 +337,8 @@ class Writer
                         $config['destination'],
                         $systemMetadata['componentId'],
                         $config['column_metadata'],
-                        MetadataDefinition::COLUMN_METADATA)
+                        MetadataDefinition::COLUMN_METADATA
+                    )
                 );
             }
             $jobs[] = $tableJob;

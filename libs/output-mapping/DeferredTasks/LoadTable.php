@@ -19,7 +19,7 @@ class LoadTable
     /**
      * @var MetadataDefinition[]
      */
-    private $metadataDefinitions;
+    private $metadataDefinitions = [];
 
     /**
      * @var string

@@ -88,8 +88,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -120,8 +120,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $table = $this->client->getTable("out.c-docker-test.table");
@@ -156,8 +156,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -189,8 +189,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -231,8 +231,8 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");

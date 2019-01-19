@@ -323,8 +323,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -350,13 +350,13 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         // And again
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -379,8 +379,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -431,8 +431,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -455,8 +455,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -500,8 +500,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-default-test");
@@ -532,8 +532,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         );
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-redshift-test");
@@ -606,8 +606,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -625,8 +625,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -655,14 +655,14 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->client->handleAsyncTasks($jobIds);
 
         // And again, check first incremental table
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->client->handleAsyncTasks($jobIds);
 
@@ -702,13 +702,13 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         // And again, check first incremental table
-        $job = $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $exporter = new TableExporter($this->client);
@@ -762,8 +762,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ["bucket" => "in.c-docker-test"], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["bucket" => "in.c-docker-test"], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
         $tables = $this->client->listTables("in.c-docker-test");
@@ -785,8 +785,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
         $this->assertCount(1, $jobIds);
@@ -810,8 +810,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -834,12 +834,12 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
 
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => $configs, 'bucket' => 'out.c-docker-test'],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -925,7 +925,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload/table16.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -938,7 +938,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->client->getTable("out.c-docker-test.table16");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
@@ -965,7 +965,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         );
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -978,7 +978,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tableInfo = $this->client->getTable("out.c-docker-test.table15");
@@ -990,7 +990,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1003,7 +1003,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->client->getTable("out.c-docker-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
@@ -1037,7 +1037,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1050,7 +1050,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->client->getTable("out.c-docker-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
@@ -1105,7 +1105,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1118,7 +1118,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->client->handleAsyncTasks($jobIds);
         $this->assertFalse($handler->hasWarningThatContains("Output mapping does not match destination table"));
@@ -1134,7 +1134,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $handler = new TestHandler();
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
                 "mapping" => [
@@ -1147,7 +1147,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $writer = new Writer($this->client, (new Logger("null"))->pushHandler($handler));
@@ -1155,9 +1155,9 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $root . "/upload/table11.csv.manifest",
             '{"destination": "out.c-docker-test.table11","primary_key": [""]}'
         );
-        $job = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
         $this->assertCount(1, $jobIds);
-        $jobIds = $job->waitForAll();
+        $jobIds = $tableQueue->waitForAll();
         $this->assertFalse(
             $handler->hasWarningThatContains(
                 "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-docker-test.table9'."
@@ -1184,13 +1184,54 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables(
+        $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-docker-test.table10.csv", "columns" => ["Boing", "Tschak"]]]],
             ['componentId' => 'foo']
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Some columns are missing in the csv file. Missing columns: id,name.');
-        $job->waitForAll();
+        $tableQueue->waitForAll();
+    }
+
+    public function testWriteMultipleErrors()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/out.c-docker-test.table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/out.c-docker-test.table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+        $writer = new Writer($this->client, new NullLogger());
+        $tableQueue =  $writer->uploadTables(
+            $root . "/upload",
+            ["mapping" => [["source" => "out.c-docker-test.table10a.csv"], ["source" => "out.c-docker-test.table10b.csv"]]],
+            ['componentId' => 'foo']
+        );
+
+        $tables = $this->client->listTables("out.c-docker-test");
+        $this->assertCount(2, $tables);
+        $tableInfo = $this->client->getTable('out.c-docker-test.table10a');
+        $this->assertEquals(["id", "name"], $tableInfo["columns"]);
+        $tableInfo = $this->client->getTable('out.c-docker-test.table10b');
+        $this->assertEquals(["foo", "bar"], $tableInfo["columns"]);
+
+        $writer = new Writer($this->client, new NullLogger());
+        $tableQueue =  $writer->uploadTables(
+            $root . "/upload",
+            ["mapping" =>
+                [
+                    ["source" => "out.c-docker-test.table10a.csv", "columns" => ["Boing", "Tschak"]],
+                    ["source" => "out.c-docker-test.table10b.csv", "columns" => ["bum", "tschak"]]
+                ]
+            ],
+            ['componentId' => 'foo']
+        );
+        self::expectException(InvalidOutputException::class);
+        self::expectExceptionMessage(
+            'Failed to load table "out.c-docker-test.table10a": Some columns are ' .
+            'missing in the csv file. Missing columns: id,name. Expected columns: id,name. Please check if the ' .
+            'expected delimiter "," is used in the csv file.' . "\n" . 'Failed to load table ' .
+            '"out.c-docker-test.table10b": Some columns are missing in the csv file. Missing columns: foo,bar. ' .
+            'Expected columns: foo,bar. Please check if the expected delimiter "," is used in the csv file.'
+        );
+        $tableQueue->waitForAll();
     }
 }

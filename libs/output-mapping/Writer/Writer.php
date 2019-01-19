@@ -354,9 +354,9 @@ class Writer
                 "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
             );
         }
-        $job = new LoadTableQueue($this->client, $jobs);
-        $job->start();
-        return $job;
+        $tableQueue = new LoadTableQueue($this->client, $jobs);
+        $tableQueue->start();
+        return $tableQueue;
     }
 
     /**
@@ -531,15 +531,15 @@ class Writer
                 $fileId = $this->uploadSlicedFile($source);
                 $options['dataFileId'] = $fileId;
                 // write table
-                $job = new LoadTable($this->client, $config['destination'], $options);
+                $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
             } else {
                 $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
                 $options['dataFileId'] = $fileId;
                 $options['name'] = $tableName;
-                $job = new LoadTable($this->client, $config['destination'], $options);
+                $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
             }
 
-            $job->addMetadata(new MetadataDefinition(
+            $tableQueue->addMetadata(new MetadataDefinition(
                 $this->client,
                 $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
@@ -564,7 +564,7 @@ class Writer
                 if (is_dir($source)) {
                     $fileId = $this->uploadSlicedFile($source);
                     $options['dataFileId'] = $fileId;
-                    $job = new LoadTable($this->client, $config['destination'], $options);
+                    $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
                 } else {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
@@ -572,7 +572,7 @@ class Writer
                         (new FileUploadOptions())->setCompress(true)
                     );
                     $options['dataFileId'] = $fileId;
-                    $job = new LoadTable($this->client, $config['destination'], $options);
+                    $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
                     unset($csvFile);
                 }
             } else {
@@ -587,7 +587,7 @@ class Writer
                     (new FileUploadOptions())->setCompress(true)
                 );
                 $options['dataFileId'] = $fileId;
-                $job = new LoadTable($this->client, $tableId, $options);
+                $tableQueue =  new LoadTable($this->client, $tableId, $options);
                 unset($csvFile);
             }
 
@@ -597,7 +597,7 @@ class Writer
                 $this->getCreatedMetadata($systemMetadata)
             );
         }
-        return $job;
+        return $tableQueue;
     }
 
     /**

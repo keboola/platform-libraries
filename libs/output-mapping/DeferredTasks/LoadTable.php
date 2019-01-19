@@ -52,7 +52,7 @@ class LoadTable
     public function setMetadata()
     {
         foreach ($this->metadataDefinitions as $metadataDefinition) {
-            $metadataDefinition->set();
+            $metadataDefinition->applyMetadata();
         }
     }
 

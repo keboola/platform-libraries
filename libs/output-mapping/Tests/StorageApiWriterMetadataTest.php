@@ -3,6 +3,7 @@
 namespace Keboola\DockerBundle\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -133,8 +134,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $metadataApi = new Metadata($this->client);
 
@@ -161,14 +162,46 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
+    }
+
+    public function testMetadataWritingErrorTest()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table55a.csv", "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
+
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table55a.csv",
+                    "destination" => "in.c-docker-test.table55a",
+                    "column_metadata" => [
+                        "NonExistent" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one id",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $systemMetadata = ["componentId" => "testComponent"];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to load table "in.c-docker-test.table55a": Load error: ' .
+            'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
+            'table (2), use file format option error_on_column_count_mismatch=false to ignore this error');
+        $tableQueue->waitForAll();
     }
 
     /**
@@ -222,8 +255,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
@@ -297,8 +330,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
@@ -363,8 +396,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
@@ -437,8 +470,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
@@ -517,8 +550,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
@@ -547,8 +580,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $job = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
-        $jobIds = $job->waitForAll();
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table66');

@@ -35,15 +35,16 @@ class LoadTableQueue
         $jobIds = [];
         $errors = [];
         foreach ($this->loadTableTasks as $task) {
+            $jobIds[] = $task->getStorageJobId();
             $jobResult = $this->client->waitForJob($task->getStorageJobId());
             if ($jobResult['status'] == 'error') {
-                $errors[] = $jobResult['error']['message'];
+                $errors[] = sprintf('Failed to load table "%s": %s', $jobResult['tableId'], $jobResult['error']['message']);
+            } else {
+                $task->setMetadata();
             }
-            $task->setMetadata();
-            $jobIds[] = $task->getStorageJobId();
         }
         if ($errors) {
-            throw new InvalidOutputException('Failed to load tables: ' . implode(' ', $errors), null);
+            throw new InvalidOutputException(implode("\n", $errors), null);
         }
         return $jobIds;
     }

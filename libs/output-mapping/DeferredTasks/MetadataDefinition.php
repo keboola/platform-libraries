@@ -9,6 +9,7 @@ class MetadataDefinition
 {
     const COLUMN_METADATA = 'column';
     const TABLE_METADATA = 'table';
+
     /**
      * @var string
      */
@@ -43,7 +44,7 @@ class MetadataDefinition
         $this->type = $type;
     }
 
-    public function set()
+    public function applyMetadata()
     {
         if ($this->type === self::COLUMN_METADATA) {
             $metadataClient = new Metadata($this->client);

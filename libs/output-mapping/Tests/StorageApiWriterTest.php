@@ -1224,14 +1224,22 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ],
             ['componentId' => 'foo']
         );
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
-            'Failed to load table "out.c-docker-test.table10a": Some columns are ' .
-            'missing in the csv file. Missing columns: id,name. Expected columns: id,name. Please check if the ' .
-            'expected delimiter "," is used in the csv file.' . "\n" . 'Failed to load table ' .
-            '"out.c-docker-test.table10b": Some columns are missing in the csv file. Missing columns: foo,bar. ' .
-            'Expected columns: foo,bar. Please check if the expected delimiter "," is used in the csv file.'
-        );
-        $tableQueue->waitForAll();
+        try {
+            $tableQueue->waitForAll();
+            $this->fail("Must raise exception");
+        } catch (InvalidOutputException $e) {
+            $this->assertContains(
+                'Failed to load table "out.c-docker-test.table10a": Some columns are ' .
+                'missing in the csv file. Missing columns: id,name. Expected columns: id,name. Please check if the ' .
+                'expected delimiter "," is used in the csv file.',
+                $e->getMessage()
+            );
+            $this->assertContains(
+                'Failed to load table "out.c-docker-test.table10b": Some columns are ' .
+                'missing in the csv file. Missing columns: foo,bar. Expected columns: foo,bar. Please check if the ' .
+                'expected delimiter "," is used in the csv file.',
+                $e->getMessage()
+            );
+        }
     }
 }

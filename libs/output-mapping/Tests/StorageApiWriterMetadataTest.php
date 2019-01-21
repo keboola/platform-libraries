@@ -3,6 +3,7 @@
 namespace Keboola\DockerBundle\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -133,9 +134,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
         $metadataApi = new Metadata($this->client);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
@@ -161,14 +162,46 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
+    }
+
+    public function testMetadataWritingErrorTest()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table55a.csv", "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
+
+        $config = [
+            "mapping" => [
+                [
+                    "source" => "table55a.csv",
+                    "destination" => "in.c-docker-test.table55a",
+                    "column_metadata" => [
+                        "NonExistent" => [
+                            [
+                                "key" => "column.key.one",
+                                "value" => "column value one id",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $systemMetadata = ["componentId" => "testComponent"];
+
+        $writer = new Writer($this->client, new NullLogger());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to load table "in.c-docker-test.table55a": Load error: ' .
+            'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
+            'table (2), use file format option error_on_column_count_mismatch=false to ignore this error');
+        $tableQueue->waitForAll();
     }
 
     /**
@@ -222,9 +255,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Id');
@@ -266,7 +299,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $csv->writeRow(['aabb', 'ccdd']);
         $this->client->createTableAsync('in.c-docker-test-backend', 'table88', $csv);
 
-        $csv = new CsvFile($root . "/upload/table88b.csv", ';', '@');
+        $csv = new CsvFile($root . "/upload/table88b.csv", ';', '\'');
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
         $csv->writeRow(['test', 'test', 'bar']);
         $csv->writeRow(['aabb', 'ccdd', 'baz']);
@@ -277,7 +310,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                     "source" => "table88b.csv",
                     "destination" => "in.c-docker-test-backend.table88",
                     "delimiter" => ";",
-                    "enclosure" => "@",
+                    "enclosure" => "'",
                     "metadata" => [],
                     "column_metadata" => [
                         "Name" => [
@@ -297,9 +330,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
@@ -363,9 +396,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
@@ -437,9 +470,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             ],
         ];
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->waitForJob($jobIds[0]);
 
         $metadataApi = new Metadata($this->client);
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table99.Id');
@@ -517,9 +550,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $metadataApi = new Metadata($this->client);
 
@@ -547,9 +580,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $jobIds = $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-docker-test.table66');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';

@@ -1156,8 +1156,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             '{"destination": "out.c-docker-test.table11","primary_key": [""]}'
         );
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $this->assertCount(1, $jobIds);
         $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
         $this->assertFalse(
             $handler->hasWarningThatContains(
                 "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-docker-test.table9'."
@@ -1172,9 +1172,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new Writer($this->client, new NullLogger());
-        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+        $tableQueue = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue->waitForAll();
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -1183,6 +1182,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $tableInfo = $this->client->getTable('out.c-docker-test.table10');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
+        file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
         $writer = new Writer($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
@@ -1205,6 +1205,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             ["mapping" => [["source" => "out.c-docker-test.table10a.csv"], ["source" => "out.c-docker-test.table10b.csv"]]],
             ['componentId' => 'foo']
         );
+        $tableQueue->waitForAll();
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(2, $tables);

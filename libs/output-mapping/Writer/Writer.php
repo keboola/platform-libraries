@@ -443,9 +443,109 @@ class Writer
         return $metadata;
     }
 
-    private function getBucketName()
+    private function getTableIdParts($tableId)
     {
+        return explode(".", $tableId);
+    }
 
+
+    private function getBucketName($tableId)
+    {
+        return substr($this->getTableIdParts($tableId)[1], 2);
+    }
+
+    private function getBucketId($tableId)
+    {
+        $tableIdParts = $this->getTableIdParts($tableId);
+        return $tableIdParts[0] . "." . $tableIdParts[1];
+    }
+
+    private function getBucketStage($tableId)
+    {
+        return $this->getTableIdParts($tableId)[0];
+    }
+
+    private function getTableName($tableId)
+    {
+        return $this->getTableIdParts($tableId)[2];
+    }
+
+    private function createBucket($tableId, array $systemMetadata)
+    {
+        // Create bucket if not exists
+        $this->client->createBucket($this->getBucketName($tableId), $this->getBucketStage($tableId));
+        $this->metadataClient->postBucketMetadata(
+            $this->getBucketId($tableId),
+            self::SYSTEM_METADATA_PROVIDER,
+            $this->getCreatedMetadata($systemMetadata)
+        );
+    }
+
+    private function createTable($tableId, array $header, array $options)
+    {
+        $tmp = new Temp();
+        $headerCsvFile = new CsvFile($tmp->createFile($this->getTableName($tableId) . '.header.csv'));
+        $headerCsvFile->writeRow($header);
+        $tableId = $this->client->createTableAsync(
+            $this->getBucketId($tableId),
+            $this->getTableName($tableId),
+            $headerCsvFile,
+            $options
+        );
+        return $tableId;
+    }
+
+    private function modifyPrimaryKey($tableId, array $tablePrimaryKey, array $configPrimaryKey)
+    {
+        $this->logger->warning(
+            "Modifying primary key of table {$tableId} from [" .
+            join(", ", $tablePrimaryKey) . "] to [" . join(", ", $configPrimaryKey) . "]."
+        );
+        $failed = false;
+        // modify primary key
+        if (count($tablePrimaryKey) > 0) {
+            try {
+                $this->client->removeTablePrimaryKey($tableId);
+            } catch (\Exception $e) {
+                // warn and go on
+                $this->logger->warning(
+                    "Error deleting primary key of table {$tableId}: " . $e->getMessage()
+                );
+                $failed = true;
+            }
+        }
+        if (!$failed) {
+            try {
+                if (count($configPrimaryKey)) {
+                    $this->client->createTablePrimaryKey($tableId, $configPrimaryKey);
+                }
+            } catch (\Exception $e) {
+                // warn and try to rollback to original state
+                $this->logger->warning(
+                    "Error changing primary key of table {$tableId}: " . $e->getMessage()
+                );
+                if (count($tablePrimaryKey) > 0) {
+                    $this->client->createTablePrimaryKey($tableId, $tablePrimaryKey);
+                }
+            }
+        }
+    }
+
+    private function loadData($source, $tableId, array $options)
+    {
+        if (is_dir($source)) {
+            $fileId = $this->uploadSlicedFile($source);
+            $options['dataFileId'] = $fileId;
+            $tableQueue =  new LoadTable($this->client, $tableId['destination'], $options);
+        } else {
+            $fileId = $this->client->uploadFile(
+                $source,
+                (new FileUploadOptions())->setCompress(true)
+            );
+            $options['dataFileId'] = $fileId;
+            $tableQueue =  new LoadTable($this->client, $tableId['destination'], $options);
+        }
+        return $tableQueue;
     }
 
     /**
@@ -454,65 +554,28 @@ class Writer
      * @param array $systemMetadata
      * @return LoadTable
      * @throws ClientException
-     * @throws \Keboola\Csv\Exception
      */
     protected function uploadTable($source, array $config, array $systemMetadata)
     {
-        $tableIdParts = explode(".", $config["destination"]);
-        $bucketId = $tableIdParts[0] . "." . $tableIdParts[1];
-        $bucketName = substr($tableIdParts[1], 2);
-        $tableName = $tableIdParts[2];
+        $options = [
+            "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger)),
+            "delimiter" => $config["delimiter"],
+            "enclosure" => $config["enclosure"],
+            "columns" => !empty($config["columns"]) ? $config['columns'] : [],
+        ];
 
         if (is_dir($source) && empty($config["columns"])) {
             throw new InvalidOutputException("Sliced file '" . basename($source) . "': columns specification missing.");
         }
-
-        // Create bucket if not exists
-        if (!$this->client->bucketExists($bucketId)) {
-            $this->client->createBucket($bucketName, $tableIdParts[0]);
-            $this->metadataClient->postBucketMetadata(
-                $bucketId,
-                self::SYSTEM_METADATA_PROVIDER,
-                $this->getCreatedMetadata($systemMetadata)
-            );
+        if (!$this->client->bucketExists($this->getBucketId($config['destination']))) {
+            $this->createBucket($config['destination'], $systemMetadata);
         }
 
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->client->getTable($config["destination"]);
             $this->validateAgainstTable($tableInfo, $config);
             if (self::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
-                $this->logger->warning(
-                    "Modifying primary key of table {$tableInfo["id"]} from [" .
-                    join(", ", $tableInfo["primaryKey"]) . "] to [" . join(", ", $config["primary_key"]) . "]."
-                );
-                $failed = false;
-                // modify primary key
-                if (count($tableInfo["primaryKey"]) > 0) {
-                    try {
-                        $this->client->removeTablePrimaryKey($tableInfo["id"]);
-                    } catch (\Exception $e) {
-                        // warn and go on
-                        $this->logger->warning(
-                            "Error deleting primary key of table {$tableInfo["id"]}: " . $e->getMessage()
-                        );
-                        $failed = true;
-                    }
-                }
-                if (!$failed) {
-                    try {
-                        if (count($config["primary_key"])) {
-                            $this->client->createTablePrimaryKey($tableInfo["id"], $config["primary_key"]);
-                        }
-                    } catch (\Exception $e) {
-                        // warn and try to rollback to original state
-                        $this->logger->warning(
-                            "Error changing primary key of table {$tableInfo["id"]}: " . $e->getMessage()
-                        );
-                        if (count($tableInfo["primaryKey"]) > 0) {
-                            $this->client->createTablePrimaryKey($tableInfo["id"], $tableInfo["primaryKey"]);
-                        }
-                    }
-                }
+                $this->modifyPrimaryKey($config['destination'], $tableInfo['primaryKey'], $config['primary_key']);
             }
             if (!empty($config["delete_where_column"])) {
                 // Delete rows
@@ -523,90 +586,32 @@ class Writer
                 ];
                 $this->client->deleteTableRows($config["destination"], $deleteOptions);
             }
-            $options = [
-                "incremental" => $config["incremental"],
-                "delimiter" => $config["delimiter"],
-                "enclosure" => $config["enclosure"],
-            ];
-
-            // headless csv file
-            if (!empty($config["columns"])) {
-                $options["columns"] = $config["columns"];
-            }
-            if (is_dir($source)) {
-                $fileId = $this->uploadSlicedFile($source);
-                $options['dataFileId'] = $fileId;
-                // write table
-                $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
-            } else {
-                $fileId = $this->client->uploadFile($source, (new FileUploadOptions())->setCompress(true));
-                $options['dataFileId'] = $fileId;
-                $options['name'] = $tableName;
-                $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
-            }
-
-            $tableQueue->addMetadata(new MetadataDefinition(
-                $this->client,
-                $config['destination'],
-                self::SYSTEM_METADATA_PROVIDER,
-                $this->getUpdatedMetadata($systemMetadata),
-                'table'
-            ));
         } else {
-            $options = [
-                "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger)),
-                "delimiter" => $config["delimiter"],
-                "enclosure" => $config["enclosure"],
-            ];
-            $tableId = $config['destination'];
-            // headless csv file
             if (!empty($config["columns"])) {
-                $tmp = new Temp();
-                $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                $headerCsvFile->writeRow($config["columns"]);
-                $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
-                unset($headerCsvFile);
-                $options["columns"] = $config["columns"];
-                if (is_dir($source)) {
-                    $fileId = $this->uploadSlicedFile($source);
-                    $options['dataFileId'] = $fileId;
-                    $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
-                } else {
-                    $fileId = $this->client->uploadFile(
-                        $source,
-                        (new FileUploadOptions())->setCompress(true)
-                    );
-                    $options['dataFileId'] = $fileId;
-                    $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
-                    unset($csvFile);
-                }
+                $this->createTable($config['destination'], $config['columns'], $options);
             } else {
                 try {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
-                    $header = $csvFile->getHeader();
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
                 }
-                $tmp = new Temp();
-                $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                $headerCsvFile->writeRow($header);
-                $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
-                unset($headerCsvFile);
-                $fileId = $this->client->uploadFile(
-                    $csvFile->getPathname(),
-                    (new FileUploadOptions())->setCompress(true)
-                );
-                $options['dataFileId'] = $fileId;
-                $tableQueue =  new LoadTable($this->client, $tableId, $options);
+                $this->createTable($config['destination'], $csvFile->getHeader(), $options);
                 unset($csvFile);
             }
-
             $this->metadataClient->postTableMetadata(
-                $tableId,
+                $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
                 $this->getCreatedMetadata($systemMetadata)
             );
         }
+        $tableQueue = $this->loadData($source, $config['destination'], $options);
+        $tableQueue->addMetadata(new MetadataDefinition(
+            $this->client,
+            $config['destination'],
+            self::SYSTEM_METADATA_PROVIDER,
+            $this->getUpdatedMetadata($systemMetadata),
+            'table'
+        ));
         return $tableQueue;
     }
 

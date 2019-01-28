@@ -566,9 +566,8 @@ class Writer
                     $options['dataFileId'] = $fileId;
                     $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
                 } else {
-                    $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
-                        $csvFile->getPathname(),
+                        $source,
                         (new FileUploadOptions())->setCompress(true)
                     );
                     $options['dataFileId'] = $fileId;

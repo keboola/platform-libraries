@@ -443,6 +443,11 @@ class Writer
         return $metadata;
     }
 
+    private function getBucketName()
+    {
+
+    }
+
     /**
      * @param string $source
      * @param array $config

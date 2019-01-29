@@ -592,10 +592,11 @@ class Writer
             } else {
                 try {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
+                    $header = $csvFile->getHeader();
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
                 }
-                $this->createTable($config['destination'], $csvFile->getHeader(), $options);
+                $this->createTable($config['destination'], $header, $options);
                 unset($csvFile);
             }
             $this->metadataClient->postTableMetadata(

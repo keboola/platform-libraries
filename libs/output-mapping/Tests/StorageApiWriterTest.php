@@ -1249,9 +1249,8 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
         $writer = new Writer($this->client, new NullLogger());
-        $tableQueue = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
         self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Some columns are missing in the csv file. Missing columns: id,name.');
-        $tableQueue->waitForAll();
+        self::expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
+        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
     }
 }

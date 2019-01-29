@@ -578,12 +578,13 @@ class Writer
             } else {
                 try {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
+                    $header = $csvFile->getHeader();
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
                 }
                 $tmp = new Temp();
                 $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                $headerCsvFile->writeRow($csvFile->getHeader());
+                $headerCsvFile->writeRow($header);
                 $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
                 unset($headerCsvFile);
                 $fileId = $this->client->uploadFile(

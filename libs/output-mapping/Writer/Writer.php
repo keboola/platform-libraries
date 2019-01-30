@@ -536,14 +536,14 @@ class Writer
         if (is_dir($source)) {
             $fileId = $this->uploadSlicedFile($source);
             $options['dataFileId'] = $fileId;
-            $tableQueue =  new LoadTable($this->client, $tableId['destination'], $options);
+            $tableQueue =  new LoadTable($this->client, $tableId, $options);
         } else {
             $fileId = $this->client->uploadFile(
                 $source,
                 (new FileUploadOptions())->setCompress(true)
             );
             $options['dataFileId'] = $fileId;
-            $tableQueue =  new LoadTable($this->client, $tableId['destination'], $options);
+            $tableQueue =  new LoadTable($this->client, $tableId, $options);
         }
         return $tableQueue;
     }

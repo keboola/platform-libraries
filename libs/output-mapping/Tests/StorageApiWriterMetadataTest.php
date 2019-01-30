@@ -144,6 +144,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
                 'KBC.createdBy.configuration.id' => 'metadata-write-test',
+                'KBC.lastUpdatedBy.component.id' => 'testComponent',
+                'KBC.lastUpdatedBy.configuration.id' => 'metadata-write-test',
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',
@@ -562,6 +564,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 'KBC.createdBy.component.id' => 'testComponent',
                 'KBC.createdBy.configuration.id' => 'metadata-write-test',
                 'KBC.createdBy.configurationRow.id' => 'row-1',
+                'KBC.lastUpdatedBy.component.id' => 'testComponent',
+                'KBC.lastUpdatedBy.configuration.id' => 'metadata-write-test',
+                'KBC.lastUpdatedBy.configurationRow.id' => 'row-1',
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',

@@ -562,6 +562,7 @@ class Writer
             "delimiter" => $config["delimiter"],
             "enclosure" => $config["enclosure"],
             "columns" => !empty($config["columns"]) ? $config['columns'] : [],
+            "incremental" => $config["incremental"],
         ];
 
         if (is_dir($source) && empty($config["columns"])) {

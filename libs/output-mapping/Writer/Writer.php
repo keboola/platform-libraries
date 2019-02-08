@@ -481,7 +481,7 @@ class Writer
         );
     }
 
-    private function createTable($tableId, array $header, array $options)
+    private function createTable($tableId, array $header, $primaryKey)
     {
         $tmp = new Temp();
         $headerCsvFile = new CsvFile($tmp->createFile($this->getTableName($tableId) . '.header.csv'));
@@ -490,7 +490,7 @@ class Writer
             $this->getBucketId($tableId),
             $this->getTableName($tableId),
             $headerCsvFile,
-            $options
+            ['primaryKey' => $primaryKey]
         );
         return $tableId;
     }
@@ -557,8 +557,8 @@ class Writer
      */
     protected function uploadTable($source, array $config, array $systemMetadata)
     {
-        $options = [
-            "primaryKey" => join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger)),
+        $primaryKey = join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger));
+        $loadOptions = [
             "delimiter" => $config["delimiter"],
             "enclosure" => $config["enclosure"],
             "columns" => !empty($config["columns"]) ? $config['columns'] : [],
@@ -589,7 +589,7 @@ class Writer
             }
         } else {
             if (!empty($config["columns"])) {
-                $this->createTable($config['destination'], $config['columns'], $options);
+                $this->createTable($config['destination'], $config['columns'], $primaryKey);
             } else {
                 try {
                     $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
@@ -597,7 +597,7 @@ class Writer
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
                 }
-                $this->createTable($config['destination'], $header, $options);
+                $this->createTable($config['destination'], $header, $primaryKey);
                 unset($csvFile);
             }
             $this->metadataClient->postTableMetadata(
@@ -606,7 +606,7 @@ class Writer
                 $this->getCreatedMetadata($systemMetadata)
             );
         }
-        $tableQueue = $this->loadData($source, $config['destination'], $options);
+        $tableQueue = $this->loadData($source, $config['destination'], $loadOptions);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->client,
             $config['destination'],

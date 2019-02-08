@@ -869,7 +869,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->validateAgainstTable(
+        $writer->validatePrimaryKeyAgainstTable(
             $tableInfo,
             [
                 "source" => "table9.csv",
@@ -886,7 +886,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         ];
 
         $writer = new Writer($this->client, new NullLogger());
-        $writer->validateAgainstTable(
+        $writer->validatePrimaryKeyAgainstTable(
             $tableInfo,
             [
                 "source" => "table18.csv",
@@ -904,7 +904,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
 
         $writer = new Writer($this->client, new NullLogger());
         try {
-            $writer->validateAgainstTable(
+            $writer->validatePrimaryKeyAgainstTable(
                 $tableInfo,
                 [
                     "source" => "table17.csv",

@@ -574,7 +574,7 @@ class Writer
 
         if ($this->client->tableExists($config["destination"])) {
             $tableInfo = $this->client->getTable($config["destination"]);
-            $this->validateAgainstTable($tableInfo, $config);
+            $this->validatePrimaryKeyAgainstTable($tableInfo, $config);
             if (self::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
                 $this->modifyPrimaryKey($config['destination'], $tableInfo['primaryKey'], $config['primary_key']);
             }
@@ -700,7 +700,7 @@ class Writer
      * @param array $tableInfo
      * @param array $config
      */
-    public function validateAgainstTable($tableInfo = [], $config = [])
+    public function validatePrimaryKeyAgainstTable($tableInfo = [], $config = [])
     {
         // primary key
         $configPK = self::normalizePrimaryKey($config["primary_key"], $this->logger);

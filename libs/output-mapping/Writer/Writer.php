@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Writer;
 
 use Keboola\Csv\CsvFile;
+use Keboola\Csv\Exception;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
@@ -566,9 +567,8 @@ class Writer
                     $options['dataFileId'] = $fileId;
                     $tableQueue =  new LoadTable($this->client, $config['destination'], $options);
                 } else {
-                    $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
                     $fileId = $this->client->uploadFile(
-                        $csvFile->getPathname(),
+                        $source,
                         (new FileUploadOptions())->setCompress(true)
                     );
                     $options['dataFileId'] = $fileId;
@@ -576,10 +576,15 @@ class Writer
                     unset($csvFile);
                 }
             } else {
-                $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
+                try {
+                    $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
+                    $header = $csvFile->getHeader();
+                } catch (Exception $e) {
+                    throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
+                }
                 $tmp = new Temp();
                 $headerCsvFile = new CsvFile($tmp->createFile($tableName . '.header.csv'));
-                $headerCsvFile->writeRow($csvFile->getHeader());
+                $headerCsvFile->writeRow($header);
                 $tableId = $this->client->createTableAsync($bucketId, $tableName, $headerCsvFile, $options);
                 unset($headerCsvFile);
                 $fileId = $this->client->uploadFile(

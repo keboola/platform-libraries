@@ -19,7 +19,7 @@ script:
   - ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml
 
 after_success:
-  - ./cc-test-reporter after-build --exit-code 0 --debug
+  - ./cc-test-reporter after-build --exit-code 0
 
 notifications:
   email: false

@@ -5,3 +5,4 @@
 /composer.phar
 .kdev4
 *.kdev4
+.env

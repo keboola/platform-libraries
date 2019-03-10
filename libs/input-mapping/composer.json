@@ -28,5 +28,17 @@
             "Keboola\\InputMapping": ""
         }
     },
-    "target-dir": "Keboola/InputMapping"
+    "target-dir": "Keboola/InputMapping",
+    "scripts": {
+        "tests": "phpunit",
+        "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",
+        "build": [
+            "@phpcs",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    }
 }

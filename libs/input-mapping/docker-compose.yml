@@ -1,0 +1,11 @@
+
+version: "2"
+services:
+  # for development purposes
+  php:
+    build: .
+    volumes:
+      - ./:/code
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL

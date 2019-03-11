@@ -44,7 +44,7 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
     public function testGetExportOptionsEmptyValue()
     {
         $definition = new TableDefinition(['source' => 'test']);
-        self::assertEquals(['format' => 'rfc'], $definition->getExportOptions());
+        self::assertEquals(['format' => 'rfc'], $definition->getStorageApiExportOptions());
     }
 
     public function testGetExportOptions()
@@ -67,7 +67,7 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'limit' => 100,
-        ], $definition->getExportOptions());
+        ], $definition->getStorageApiExportOptions());
     }
 
     public function testGetExportOptionsDays()
@@ -79,6 +79,6 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
         self::assertEquals([
             'format' => 'rfc',
             'changedSince' => '-2 days',
-        ], $definition->getExportOptions());
+        ], $definition->getStorageApiExportOptions());
     }
 }

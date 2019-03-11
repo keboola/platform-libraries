@@ -255,7 +255,7 @@ class Reader
         $localExports = [];
         $s3exports = [];
         foreach ($tablesDefinition->getTables() as $table) {
-            $exportOptions = $table->getExportOptions();
+            $exportOptions = $table->getStorageApiExportOptions();
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);

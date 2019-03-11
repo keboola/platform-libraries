@@ -53,7 +53,7 @@ class TableDefinition
     /**
      * @return array
      */
-    public function getExportOptions()
+    public function getStorageApiExportOptions()
     {
         $exportOptions = [
             'format' => 'rfc'

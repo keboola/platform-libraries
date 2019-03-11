@@ -29,6 +29,17 @@ class TableDefinition
     }
 
     /**
+     * @return string
+     */
+    public function getDestination()
+    {
+        if (isset($this->definition['destination'])) {
+            return $this->definition['destination'];
+        }
+        return null;
+    }
+
+    /**
      * @return array
      */
     public function getExportOptions()

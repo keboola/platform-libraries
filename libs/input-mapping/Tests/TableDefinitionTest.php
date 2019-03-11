@@ -9,10 +9,16 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 class TableDefinitionTest extends \PHPUnit_Framework_TestCase
 {
 
-    public function testConstructorEmptyValues()
+    public function testGetSource()
     {
         $definition = new TableDefinition(['source' => 'test']);
         self::assertEquals('test', $definition->getSource());
+    }
+
+    public function testGetDestination()
+    {
+        $definition = new TableDefinition(['source' => 'test', 'destination' => 'dest']);
+        self::assertEquals('dest', $definition->getDestination());
     }
 
     public function testConstructorMissingSource()
@@ -39,6 +45,7 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
     {
         $definition = new TableDefinition([
             'source' => 'test',
+            'destination' => 'dest',
             'columns' => ['col1'],
             'changed_since' => '-1 days',
             'where_column' => 'col1',

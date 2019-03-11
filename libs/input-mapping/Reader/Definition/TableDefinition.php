@@ -55,9 +55,7 @@ class TableDefinition
      */
     public function getStorageApiExportOptions()
     {
-        $exportOptions = [
-            'format' => 'rfc'
-        ];
+        $exportOptions = [];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
             $exportOptions['columns'] = $this->definition['columns'];
         }

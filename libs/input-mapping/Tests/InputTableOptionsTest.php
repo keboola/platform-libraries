@@ -3,27 +3,27 @@
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Reader\Definition\TableDefinition;
+use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class TableDefinitionTest extends \PHPUnit_Framework_TestCase
+class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testGetSource()
     {
-        $definition = new TableDefinition(['source' => 'test']);
+        $definition = new InputTableOptions(['source' => 'test']);
         self::assertEquals('test', $definition->getSource());
     }
 
     public function testGetDestination()
     {
-        $definition = new TableDefinition(['source' => 'test', 'destination' => 'dest']);
+        $definition = new InputTableOptions(['source' => 'test', 'destination' => 'dest']);
         self::assertEquals('dest', $definition->getDestination());
     }
 
     public function testGetColumns()
     {
-        $definition = new TableDefinition(['source' => 'test', 'columns' => ['col1', 'col2']]);
+        $definition = new InputTableOptions(['source' => 'test', 'columns' => ['col1', 'col2']]);
         self::assertEquals(['col1', 'col2'], $definition->getColumns());
     }
 
@@ -31,25 +31,25 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
     {
         self::expectException(InvalidConfigurationException::class);
         self::expectExceptionMessage('The child node "source" at path "table" must be configured.');
-        new TableDefinition([]);
+        new InputTableOptions([]);
     }
 
     public function testConstructorDaysAndChangedSince()
     {
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('Cannot set both parameters "days" and "changed_since".');
-        new TableDefinition(['source' => 'test', 'days' => 1, 'changed_since' => '-2 days']);
+        new InputTableOptions(['source' => 'test', 'days' => 1, 'changed_since' => '-2 days']);
     }
 
     public function testGetExportOptionsEmptyValue()
     {
-        $definition = new TableDefinition(['source' => 'test']);
+        $definition = new InputTableOptions(['source' => 'test']);
         self::assertEquals([], $definition->getStorageApiExportOptions());
     }
 
     public function testGetExportOptions()
     {
-        $definition = new TableDefinition([
+        $definition = new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
             'columns' => ['col1'],
@@ -71,7 +71,7 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
 
     public function testGetExportOptionsDays()
     {
-        $definition = new TableDefinition([
+        $definition = new InputTableOptions([
             'source' => 'test',
             'days' => 2,
         ]);

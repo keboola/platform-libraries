@@ -7,8 +7,8 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Reader\Definition\TableDefinition;
-use Keboola\InputMapping\Reader\Definition\TablesDefinition;
+use Keboola\InputMapping\Reader\Options\InputTableOptions;
+use Keboola\InputMapping\Reader\Options\InputTablesOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -245,11 +245,11 @@ class Reader
     }
 
     /**
-     * @param $tablesDefinition TablesDefinition list of input mappings
+     * @param $tablesDefinition InputTablesOptions list of input mappings
      * @param $destination string destination folder
      * @param string $storage
      */
-    public function downloadTables(TablesDefinition $tablesDefinition, $destination, $storage = 'local')
+    public function downloadTables(InputTablesOptions $tablesDefinition, $destination, $storage = 'local')
     {
         $tableExporter = new TableExporter($this->getClient());
         $localExports = [];
@@ -305,10 +305,10 @@ class Reader
 
     /**
      * @param string $destination
-     * @param TableDefinition $table
+     * @param \Keboola\InputMapping\Reader\Options\InputTableOptions $table
      * @return string
      */
-    private function getDestinationFilePath($destination, TableDefinition $table)
+    private function getDestinationFilePath($destination, InputTableOptions $table)
     {
         if (!$table->getDestination()) {
             return $destination . "/" . $table->getSource();

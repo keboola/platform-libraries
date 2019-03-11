@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Reader\Definition\TablesDefinition;
+use Keboola\InputMapping\Reader\Options\InputTablesOptions;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -54,7 +54,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
 
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.empty",
                 "destination" => "empty.csv",
@@ -73,7 +73,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesDefaultBackend()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv"
@@ -109,7 +109,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesEmptyDaysFilter()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
@@ -128,7 +128,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesEmptyChangedSinceFilter()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
@@ -147,7 +147,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesS3DefaultBackend()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
@@ -193,7 +193,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-docker-test.test.Name', 'dataLoaderTest', $columnMetadata);
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
@@ -271,7 +271,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
             ]
         );
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test.test",
                 "columns" => ["bar", "foo", "Id"],

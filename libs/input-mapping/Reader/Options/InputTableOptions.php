@@ -1,10 +1,10 @@
 <?php
 
-namespace Keboola\InputMapping\Reader\Definition;
+namespace Keboola\InputMapping\Reader\Options;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 
-class TableDefinition
+class InputTableOptions
 {
     /**
      * @var array

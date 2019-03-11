@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
-use Keboola\InputMapping\Reader\Definition\TablesDefinition;
+use Keboola\InputMapping\Reader\Options\InputTablesOptions;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -34,7 +34,7 @@ class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
     public function testReadTablesRedshift()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test-redshift.test",
                 "destination" => "test-redshift.csv"
@@ -57,7 +57,7 @@ class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
     public function testReadTablesS3Redshift()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new TablesDefinition([
+        $configuration = new InputTablesOptions([
             [
                 "source" => "in.c-docker-test-redshift.test",
                 "destination" => "test-redshift.csv"

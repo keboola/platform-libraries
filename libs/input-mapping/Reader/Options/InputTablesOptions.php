@@ -1,23 +1,25 @@
 <?php
 
-namespace Keboola\InputMapping\Reader\Definition;
+namespace Keboola\InputMapping\Reader\Options;
 
-class TablesDefinition
+use Keboola\InputMapping\Reader\Options\InputTableOptions;
+
+class InputTablesOptions
 {
     /**
-     * @var TableDefinition[]
+     * @var InputTableOptions[]
      */
     private $tables = [];
 
     public function __construct(array $configurations)
     {
         foreach ($configurations as $item) {
-            $this->tables[] = new TableDefinition($item);
+            $this->tables[] = new InputTableOptions($item);
         }
     }
 
     /**
-     * @returns TableDefinition[]
+     * @returns InputTableOptions[]
      */
     public function getTables()
     {

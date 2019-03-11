@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\Definition\TablesDefinition;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\Temp\Temp;
@@ -81,7 +82,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         // empty configuration, ignored
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = null;
+        $configuration = new TablesDefinition([]);
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');

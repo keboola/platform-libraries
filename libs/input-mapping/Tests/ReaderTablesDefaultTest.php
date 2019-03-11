@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\Definition\TablesDefinition;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -53,12 +54,12 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
 
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.empty",
                 "destination" => "empty.csv",
             ],
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
@@ -72,7 +73,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesDefaultBackend()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv"
@@ -81,7 +82,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
                 "source" => "in.c-docker-test.test2",
                 "destination" => "test2.csv"
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
@@ -108,13 +109,13 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesEmptyDaysFilter()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
                 "days" => 0
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         self::assertCSVEquals(
@@ -127,13 +128,13 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesEmptyChangedSinceFilter()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
                 "changed_since" => ""
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         self::assertCSVEquals(
@@ -146,7 +147,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
     public function testReadTablesS3DefaultBackend()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
@@ -155,7 +156,7 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
                 "source" => "in.c-docker-test.test2",
                 "destination" => "test2.csv",
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
 
@@ -192,12 +193,12 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-docker-test.test.Name', 'dataLoaderTest', $columnMetadata);
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
@@ -270,13 +271,13 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
             ]
         );
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
+        $configuration = new TablesDefinition([
             [
                 "source" => "in.c-docker-test.test",
                 "columns" => ["bar", "foo", "Id"],
                 "destination" => "test.csv",
             ]
-        ];
+        ]);
 
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
@@ -322,26 +323,5 @@ class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
         self::assertArrayHasKey('timestamp', $manifest['column_metadata']['bar'][0]);
         self::assertEquals('someBarKey', $manifest['column_metadata']['bar'][0]['key']);
         self::assertEquals('someBarValue', $manifest['column_metadata']['bar'][0]['value']);
-    }
-
-
-    public function testChangedSinceAndDaysConfiguration()
-    {
-        $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
-            [
-                "source" => "in.c-docker-test.test",
-                "destination" => "test.csv",
-                "changed_since" => "-1 days",
-                "days" => 1
-            ]
-        ];
-
-        try {
-            $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-            self::fail("Exception not caught");
-        } catch (InvalidInputException $e) {
-            self::assertEquals("Cannot set both parameters 'days' and 'changed_since'.", $e->getMessage());
-        }
     }
 }

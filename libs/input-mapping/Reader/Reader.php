@@ -7,6 +7,8 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\Definition\TableDefinition;
+use Keboola\InputMapping\Reader\Definition\TablesDefinition;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -243,63 +245,34 @@ class Reader
     }
 
     /**
-     * @param $configuration array list of input mappings
+     * @param $tablesDefinition TablesDefinition list of input mappings
      * @param $destination string destination folder
      * @param string $storage
      */
-    public function downloadTables($configuration, $destination, $storage = 'local')
+    public function downloadTables(TablesDefinition $tablesDefinition, $destination, $storage = 'local')
     {
-        if (!$configuration) {
-            return;
-        } elseif (!is_array($configuration)) {
-            throw new InvalidInputException("Table export configuration is not an array.");
-        }
         $tableExporter = new TableExporter($this->getClient());
         $localExports = [];
         $s3exports = [];
-        foreach ($configuration as $table) {
-            $exportOptions = ["format" => "rfc"];
-            if (isset($table["columns"]) && count($table["columns"])) {
-                $exportOptions["columns"] = $table["columns"];
-            } else {
-                $table["columns"] = [];
-            }
-            if (!empty($table["changed_since"]) && !empty($table["days"])) {
-                throw new InvalidInputException("Cannot set both parameters 'days' and 'changed_since'.");
-            }
-            if (!empty($table["days"])) {
-                $exportOptions["changedSince"] = "-{$table["days"]} days";
-            }
-            if (!empty($table["changed_since"])) {
-                $exportOptions["changedSince"] = $table["changed_since"];
-            }
-            if (isset($table["where_column"]) && count($table["where_values"])) {
-                $exportOptions["whereColumn"] = $table["where_column"];
-                $exportOptions["whereValues"] = $table["where_values"];
-                $exportOptions["whereOperator"] = $table["where_operator"];
-            }
-            if (isset($table['limit'])) {
-                $exportOptions['limit'] = $table['limit'];
-            }
-            $this->logger->info("Fetching table " . $table["source"] . ".");
-
+        foreach ($tablesDefinition->getTables() as $table) {
+            $exportOptions = $table->getExportOptions();
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
-                $jobId = $this->getClient()->queueTableExport($table["source"], $exportOptions);
+                $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);
                 $s3exports[$jobId] = $table;
             } elseif ($storage == "local") {
                 $file = $this->getDestinationFilePath($destination, $table);
-                $tableInfo = $this->getClient()->getTable($table["source"]);
+                $tableInfo = $this->getClient()->getTable($table->getSource());
                 $localExports[] = [
-                    "tableId" => $table["source"],
+                    "tableId" => $table->getSource(),
                     "destination" => $file,
                     "exportOptions" => $exportOptions
                 ];
-                $this->writeTableManifest($tableInfo, $file . ".manifest", $table["columns"]);
+                $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
             } else {
                 throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }
-            $this->logger->info("Fetched table " . $table["source"] . ".");
+            $this->logger->info("Fetched table " . $table->getSource() . ".");
         }
 
         if ($s3exports) {
@@ -311,14 +284,14 @@ class Reader
             }
             foreach ($s3exports as $jobId => $table) {
                 $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
-                $tableInfo = $this->getClient()->getTable($table["source"]);
+                $tableInfo = $this->getClient()->getTable($table->getSource());
                 $fileInfo = $this->getClient()->getFile(
                     $keyedResults[$jobId]["results"]["file"]["id"],
                     (new GetFileOptions())->setFederationToken(true)
                 )
                 ;
                 $tableInfo["s3"] = $this->getS3Info($fileInfo);
-                $this->writeTableManifest($tableInfo, $manifestPath, $table["columns"]);
+                $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
             }
         }
 
@@ -332,15 +305,15 @@ class Reader
 
     /**
      * @param string $destination
-     * @param array $table
+     * @param TableDefinition $table
      * @return string
      */
-    private function getDestinationFilePath($destination, $table)
+    private function getDestinationFilePath($destination, TableDefinition $table)
     {
-        if (!isset($table["destination"])) {
-            return $destination . "/" . $table["source"];
+        if (!$table->getDestination()) {
+            return $destination . "/" . $table->getSource();
         } else {
-            return $destination . "/" . $table["destination"];
+            return $destination . "/" . $table->getDestination();
         }
     }
 

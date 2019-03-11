@@ -21,6 +21,12 @@ class TableDefinitionTest extends \PHPUnit_Framework_TestCase
         self::assertEquals('dest', $definition->getDestination());
     }
 
+    public function testGetColumns()
+    {
+        $definition = new TableDefinition(['source' => 'test', 'columns' => ['col1', 'col2']]);
+        self::assertEquals(['col1', 'col2'], $definition->getColumns());
+    }
+
     public function testConstructorMissingSource()
     {
         self::expectException(InvalidConfigurationException::class);

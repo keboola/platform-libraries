@@ -40,6 +40,17 @@ class TableDefinition
     }
 
     /**
+     * @return mixed|null
+     */
+    public function getColumns()
+    {
+        if (isset($this->definition['columns'])) {
+            return $this->definition['columns'];
+        }
+        return null;
+    }
+
+    /**
      * @return array
      */
     public function getExportOptions()

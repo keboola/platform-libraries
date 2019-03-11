@@ -4,6 +4,9 @@ namespace Keboola\InputMapping\Reader\Definition;
 
 class TablesDefinition
 {
+    /**
+     * @var TableDefinition[]
+     */
     private $tables = [];
 
     public function __construct(array $configurations)

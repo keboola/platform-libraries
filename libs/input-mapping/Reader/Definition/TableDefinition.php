@@ -33,7 +33,9 @@ class TableDefinition
      */
     public function getExportOptions()
     {
-        $exportOptions = [];
+        $exportOptions = [
+            'format' => 'rfc'
+        ];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
             $exportOptions['columns'] = $this->definition['columns'];
         }

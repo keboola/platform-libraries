@@ -36,18 +36,18 @@ class TableDefinition
         if (isset($this->definition['destination'])) {
             return $this->definition['destination'];
         }
-        return null;
+        return '';
     }
 
     /**
-     * @return mixed|null
+     * @return array
      */
     public function getColumns()
     {
         if (isset($this->definition['columns'])) {
             return $this->definition['columns'];
         }
-        return null;
+        return [];
     }
 
     /**

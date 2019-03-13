@@ -6,7 +6,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Tests\Reader\DownloadTablesTestAbstract;
+use Keboola\InputMapping\Reader\State\InputTablesState;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;

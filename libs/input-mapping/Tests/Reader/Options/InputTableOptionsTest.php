@@ -109,5 +109,4 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         $tablesState = new InputTablesState([]);
         self::assertEquals([], $definition->getStorageApiExportOptions($tablesState));
     }
-
 }

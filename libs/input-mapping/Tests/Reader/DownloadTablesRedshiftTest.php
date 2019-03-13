@@ -42,7 +42,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
         self::assertEquals(
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
@@ -65,7 +65,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-redshift.csv.manifest");

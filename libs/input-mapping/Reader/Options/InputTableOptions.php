@@ -3,9 +3,14 @@
 namespace Keboola\InputMapping\Reader\Options;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
+use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\StorageApi\Client;
 
 class InputTableOptions
 {
+    const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
+
     /**
      * @var array
      */
@@ -53,7 +58,7 @@ class InputTableOptions
     /**
      * @return array
      */
-    public function getStorageApiExportOptions()
+    public function getStorageApiExportOptions(InputTablesState $states)
     {
         $exportOptions = [];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
@@ -63,7 +68,18 @@ class InputTableOptions
             $exportOptions['changedSince'] = "-{$this->definition["days"]} days";
         }
         if (!empty($this->definition['changed_since'])) {
-            $exportOptions['changedSince'] = $this->definition['changed_since'];
+            if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
+                try {
+                    $exportOptions['changedSince'] = $states
+                        ->getTable($this->getSource())
+                        ->getLastImportDate()
+                        ->format(\DateTime::ISO8601);
+                } catch (TableNotFoundException $e) {
+                    // intentionally blank
+                }
+            } else {
+                $exportOptions['changedSince'] = $this->definition['changed_since'];
+            }
         }
         if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
             $exportOptions['whereColumn'] = $this->definition['where_column'];

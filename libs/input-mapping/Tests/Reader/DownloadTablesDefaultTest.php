@@ -4,10 +4,9 @@ namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Tests\Reader\DownloadTablesTestAbstract;
+use Keboola\InputMapping\Reader\State\InputTablesState;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -62,7 +61,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ],
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);
 
@@ -85,7 +84,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
         $expectedCSVContent =  "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n";
@@ -118,7 +117,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
@@ -137,7 +136,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
@@ -159,7 +158,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
 
         $adapter = new Adapter();
 
@@ -201,7 +200,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
@@ -280,7 +279,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
         self::assertCSVEquals(
             "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .

@@ -9,6 +9,7 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
+use Keboola\InputMapping\Reader\State\InputTablesState;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -245,17 +246,20 @@ class Reader
     }
 
     /**
-     * @param $tablesDefinition InputTableOptionsList list of input mappings
-     * @param $destination string destination folder
+     * @param InputTableOptionsList $tablesDefinition
+     * @param InputTablesState $tablesState
+     * @param $destination
      * @param string $storage
+     * @throws \Keboola\StorageApi\ClientException
+     * @throws \Keboola\StorageApi\Exception
      */
-    public function downloadTables(InputTableOptionsList $tablesDefinition, $destination, $storage = 'local')
+    public function downloadTables(InputTableOptionsList $tablesDefinition, InputTablesState $tablesState, $destination, $storage = 'local')
     {
         $tableExporter = new TableExporter($this->getClient());
         $localExports = [];
         $s3exports = [];
         foreach ($tablesDefinition->getTables() as $table) {
-            $exportOptions = $table->getStorageApiExportOptions();
+            $exportOptions = $table->getStorageApiExportOptions($tablesState);
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);

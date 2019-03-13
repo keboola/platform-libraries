@@ -84,6 +84,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $reader = new Reader($this->client, new NullLogger());
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);

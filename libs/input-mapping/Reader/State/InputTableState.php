@@ -42,4 +42,12 @@ class InputTableState
     {
         return $this->lastImportDate;
     }
+
+    public function toArray()
+    {
+        return [
+            'source' => $this->getSource(),
+            'lastImportDate' => $this->getLastImportDate()->format(DATE_ISO8601)
+        ];
+    }
 }

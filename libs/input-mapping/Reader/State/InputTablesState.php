@@ -32,4 +32,14 @@ class InputTablesState
         }
         throw new TableNotFoundException('State for table "' . $tableName . '" not found.');
     }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return array_map(function(InputTableState $table) {
+            return $table->toArray();
+        }, $this->tables);
+    }
 }

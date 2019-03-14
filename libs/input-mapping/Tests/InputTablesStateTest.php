@@ -31,4 +31,20 @@ class InputTablesStateTest extends \PHPUnit_Framework_TestCase
         self::expectExceptionMessage('State for table "test" not found.');
         $states->getTable('test');
     }
+
+    public function testToArray()
+    {
+        $configuration = [
+            [
+                'source' => 'test',
+                'lastImportDate' => '2016-08-31T19:36:00+0200',
+            ],
+            [
+                'source' => 'test2',
+                'lastImportDate' => '2016-08-30T19:36:00+0200',
+            ]
+        ];
+        $states = new InputTablesState($configuration);
+        self::assertEquals($configuration, $states->toArray());
+    }
 }

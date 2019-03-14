@@ -63,5 +63,20 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test2.csv"
         );
+        self::assertCount(2, $tablesState->toArray());
+    }
+
+
+    public function testDownloadTablesReturnsASingleTimestamps()
+    {
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = new InputTablesOptions([
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+            ]
+        ]);
+        $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        self::assertCount(1, $tablesState->toArray());
     }
 }

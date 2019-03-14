@@ -32,4 +32,11 @@ class InputTableStateTest extends \PHPUnit_Framework_TestCase
         self::expectExceptionMessage('Error parsing date "invalid":');
         new InputTableState(['source' => 'test', 'lastImportDate' => 'invalid']);
     }
+
+    public function testToArray()
+    {
+        $configuration = ['source' => 'test', 'lastImportDate' => '2016-08-31T19:36:00+0200'];
+        $state = new InputTableState($configuration);
+        self::assertEquals($configuration, $state->toArray());
+    }
 }

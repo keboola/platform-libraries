@@ -32,6 +32,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
+        sleep(1);
     }
 
     public function testDownloadTablesDownloadsTheWholeTable()

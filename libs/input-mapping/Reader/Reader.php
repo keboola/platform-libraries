@@ -262,10 +262,7 @@ class Reader
         $outputStateConfiguration = [];
         foreach ($tablesDefinition->getTables() as $table) {
             $tableInfo = $this->client->getTable($table->getSource());
-            var_dump($tableInfo);
-            var_dump($tablesState->toArray());
             $exportOptions = $table->getStorageApiExportOptions($tablesState);
-            var_dump($exportOptions);
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);

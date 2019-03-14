@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 
 class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
 {
-    public function init($bucketBackend)
+    public function setUp()
     {
         parent::setUp();
         try {
@@ -23,7 +23,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
                 throw $e;
             }
         }
-        $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite", $bucketBackend);
+        $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
@@ -34,12 +34,8 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
     }
 
-    /**
-     * @dataProvider backendDataProvider
-     */
-    public function testDownloadTablesDownloadsTheWholeTable($bucketBackend)
+    public function testDownloadTablesDownloadsTheWholeTable()
     {
-        $this->init($bucketBackend);
         $reader = new Reader($this->client, new NullLogger());
         $configuration = new InputTablesOptions([
             [
@@ -60,12 +56,8 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         self::assertCount(1, $tablesState->toArray());
     }
 
-    /**
-     * @dataProvider backendDataProvider
-     */
-    public function testDownloadTablesDownloadsEmptyTable($bucketBackend)
+    public function testDownloadTablesDownloadsEmptyTable()
     {
-        $this->init($bucketBackend);
         $reader = new Reader($this->client, new NullLogger());
         $configuration = new InputTablesOptions([
             [
@@ -91,12 +83,8 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         self::assertCount(1, $tablesState->toArray());
     }
 
-    /**
-     * @dataProvider backendDataProvider
-     */
-    public function testDownloadTablesDownloadsOnlyNewRows($bucketBackend)
+    public function testDownloadTablesDownloadsOnlyNewRows()
     {
-        $this->init($bucketBackend);
         $reader = new Reader($this->client, new NullLogger());
         $configuration = new InputTablesOptions([
             [
@@ -117,7 +105,10 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
         $csv->writeRow(["Id", "Name", "foo", "bar"]);
         $csv->writeRow(["id4", "name4", "foo4", "bar4"]);
-        $this->client->writeTableAsync("in.c-docker-test.test", $csv);
+        $this->client->writeTableAsync("in.c-docker-test.test", $csv, ["incremental" => true]);
+
+        $this->client->exportTableAsync("in.c-docker-test.test");
+        $this->client->exportTableAsync("in.c-docker-test.test", ["changedSince" => $testTableInfo['lastImportDate']]);
 
         $updatedTestTableInfo = $this->client->getTable("in.c-docker-test.test");
         $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
@@ -128,13 +119,8 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
         self::assertCount(1, $tablesState->toArray());
-    }
 
-    public function backendDataProvider()
-    {
-        return [
-            ['snowflake'],
-            ['redshift']
-        ];
+        $this->client->exportTableAsync("in.c-docker-test.test");
+        $this->client->exportTableAsync("in.c-docker-test.test", ["changedSince" => $testTableInfo['lastImportDate']]);
     }
 }

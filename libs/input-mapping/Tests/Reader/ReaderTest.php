@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Reader\State\InputTablesState;
 use Keboola\StorageApi\Client;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;

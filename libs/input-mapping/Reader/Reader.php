@@ -246,10 +246,11 @@ class Reader
     }
 
     /**
-     * @param InputTableOptionsList $tablesDefinition
-     * @param InputTablesState $tablesState
-     * @param $destination
+     * @param InputTablesOptions $tablesDefinition list of input mappings
+     * @param InputTablesState $tablesState list of input mapping states
+     * @param $destination destination folder
      * @param string $storage
+     * @return InputTablesState
      * @throws \Keboola\StorageApi\ClientException
      * @throws \Keboola\StorageApi\Exception
      */

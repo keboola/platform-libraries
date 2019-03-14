@@ -38,7 +38,7 @@ class InputTablesState
      */
     public function toArray()
     {
-        return array_map(function(InputTableState $table) {
+        return array_map(function (InputTableState $table) {
             return $table->toArray();
         }, $this->tables);
     }

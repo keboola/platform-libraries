@@ -5,7 +5,6 @@ namespace Keboola\InputMapping\Reader\Options;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
 use Keboola\InputMapping\Reader\State\InputTablesState;
-use Keboola\StorageApi\Client;
 
 class InputTableOptions
 {

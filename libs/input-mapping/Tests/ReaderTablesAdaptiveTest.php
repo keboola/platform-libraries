@@ -34,28 +34,6 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
     }
 
-    public function testDownloadTablesDownloadsTheWholeTable()
-    {
-        $reader = new Reader($this->client, new NullLogger());
-        $configuration = new InputTablesOptions([
-            [
-                "source" => "in.c-docker-test.test",
-                "destination" => "test.csv",
-                "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
-            ]
-        ]);
-
-        $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        $testTableInfo = $this->client->getTable("in.c-docker-test.test");
-        self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
-        self::assertCSVEquals(
-            "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
-            "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
-        );
-        self::assertCount(1, $tablesState->toArray());
-    }
-
     public function testDownloadTablesDownloadsEmptyTable()
     {
         $reader = new Reader($this->client, new NullLogger());

@@ -269,7 +269,6 @@ class Reader
                 $s3exports[$jobId] = $table;
             } elseif ($storage == "local") {
                 $file = $this->getDestinationFilePath($destination, $table);
-                $tableInfo = $this->getClient()->getTable($table->getSource());
                 $localExports[] = [
                     "tableId" => $table->getSource(),
                     "destination" => $file,

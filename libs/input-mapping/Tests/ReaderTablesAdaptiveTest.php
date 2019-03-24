@@ -93,29 +93,23 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
                 "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ]
         ]);
-        $testTableInfo = $this->client->getTable("in.c-docker-test.test");
-        $inputTablesState = new InputTableStateList([
-            [
-                "source" => "in.c-docker-test.test",
-                "lastImportDate" => $testTableInfo['lastImportDate']
-            ]
-        ]);
+        $firstTablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        // Create table
+        // Update table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
         $csv->writeRow(["Id", "Name", "foo", "bar"]);
         $csv->writeRow(["id4", "name4", "foo4", "bar4"]);
         $this->client->writeTableAsync("in.c-docker-test.test", $csv, ["incremental" => true]);
 
         $updatedTestTableInfo = $this->client->getTable("in.c-docker-test.test");
-        $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $secondTablesState = $reader->downloadTables($configuration, $firstTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        self::assertEquals($updatedTestTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals($updatedTestTableInfo['lastImportDate'], $secondTablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
-        self::assertCount(1, $tablesState->toArray());
+        self::assertCount(1, $secondTablesState->toArray());
     }
 
     public function testDownloadTablesInvalidDate()

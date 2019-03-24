@@ -12,19 +12,14 @@ class InputTableState
     private $source;
 
     /**
-     * @var \DateTime
+     * @var string
      */
     private $lastImportDate;
 
     public function __construct(array $configuration)
     {
         $this->source = $configuration['source'];
-        try {
-            $this->lastImportDate = new \DateTime($configuration['lastImportDate']);
-        } catch (\Exception $e) {
-            $message = 'Error parsing date "' . $configuration['lastImportDate'] . '": ' . $e->getMessage();
-            throw new InvalidDateException($message, null, $e);
-        }
+        $this->lastImportDate = $configuration['lastImportDate'];
     }
 
     /**
@@ -36,7 +31,7 @@ class InputTableState
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
     public function getLastImportDate()
     {
@@ -47,7 +42,7 @@ class InputTableState
     {
         return [
             'source' => $this->getSource(),
-            'lastImportDate' => $this->getLastImportDate()->format(DATE_ISO8601)
+            'lastImportDate' => $this->getLastImportDate()
         ];
     }
 }

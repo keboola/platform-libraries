@@ -51,8 +51,8 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
         $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
         $test2TableInfo = $this->client->getTable("in.c-docker-test.test2");
-        self::assertEquals(new \DateTime($testTableInfo['lastImportDate']), $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
-        self::assertEquals(new \DateTime($test2TableInfo['lastImportDate']), $tablesState->getTable("in.c-docker-test.test2")->getLastImportDate());
+        self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals($test2TableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test2")->getLastImportDate());
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",

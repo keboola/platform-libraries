@@ -47,7 +47,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
 
         $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
-        self::assertEquals(new \DateTime($testTableInfo['lastImportDate']), $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
@@ -75,7 +75,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         ]);
         $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        self::assertEquals(new \DateTime($testTableInfo['lastImportDate']), $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
@@ -113,7 +113,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $updatedTestTableInfo = $this->client->getTable("in.c-docker-test.test");
         $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
-        self::assertEquals(new \DateTime($updatedTestTableInfo['lastImportDate']), $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals($updatedTestTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
@@ -122,5 +122,27 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
 
         $this->client->exportTableAsync("in.c-docker-test.test");
         $this->client->exportTableAsync("in.c-docker-test.test", ["changedSince" => $testTableInfo['lastImportDate']]);
+    }
+
+    public function testDownloadTablesInvalidDate()
+    {
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = new InputTablesOptions([
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+                "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
+            ]
+        ]);
+        $inputTablesState = new InputTablesState([
+            [
+                "source" => "in.c-docker-test.test",
+                "lastImportDate" => "nonsense"
+            ]
+        ]);
+
+        self::expectException(ClientException::class);
+        self::expectExceptionMessage("Invalid date format: nonsense");
+        $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
     }
 }

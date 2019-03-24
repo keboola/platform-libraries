@@ -71,8 +71,7 @@ class InputTableOptions
                 try {
                     $exportOptions['changedSince'] = $states
                         ->getTable($this->getSource())
-                        ->getLastImportDate()
-                        ->format(\DateTime::ISO8601);
+                        ->getLastImportDate();
                 } catch (TableNotFoundException $e) {
                     // intentionally blank
                 }

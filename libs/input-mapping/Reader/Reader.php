@@ -262,6 +262,10 @@ class Reader
         $outputStateConfiguration = [];
         foreach ($tablesDefinition->getTables() as $table) {
             $tableInfo = $this->client->getTable($table->getSource());
+            $outputStateConfiguration[] = [
+                'source' => $table->getSource(),
+                'lastImportDate' => $tableInfo['lastImportDate']
+            ];
             $exportOptions = $table->getStorageApiExportOptions($tablesState);
             if ($storage == "s3") {
                 $exportOptions['gzip'] = true;
@@ -278,10 +282,6 @@ class Reader
             } else {
                 throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }
-            $outputStateConfiguration[] = [
-                'source' => $table->getSource(),
-                'lastImportDate' => $tableInfo['lastImportDate']
-            ];
             $this->logger->info("Fetched table " . $table->getSource() . ".");
         }
 

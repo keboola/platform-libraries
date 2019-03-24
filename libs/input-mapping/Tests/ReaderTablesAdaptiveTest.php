@@ -107,9 +107,6 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
         $csv->writeRow(["id4", "name4", "foo4", "bar4"]);
         $this->client->writeTableAsync("in.c-docker-test.test", $csv, ["incremental" => true]);
 
-        $this->client->exportTableAsync("in.c-docker-test.test");
-        $this->client->exportTableAsync("in.c-docker-test.test", ["changedSince" => $testTableInfo['lastImportDate']]);
-
         $updatedTestTableInfo = $this->client->getTable("in.c-docker-test.test");
         $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
 
@@ -119,9 +116,6 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
         self::assertCount(1, $tablesState->toArray());
-
-        $this->client->exportTableAsync("in.c-docker-test.test");
-        $this->client->exportTableAsync("in.c-docker-test.test", ["changedSince" => $testTableInfo['lastImportDate']]);
     }
 
     public function testDownloadTablesInvalidDate()

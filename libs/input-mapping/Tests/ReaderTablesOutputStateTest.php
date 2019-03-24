@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\Options\InputTablesOptions;
 use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;
@@ -48,7 +48,7 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
             ],
         ]);
 
-        $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
         $test2TableInfo = $this->client->getTable("in.c-docker-test.test2");
         self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
@@ -76,7 +76,7 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
                 "destination" => "test.csv",
             ]
         ]);
-        $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         self::assertCount(1, $tablesState->toArray());
     }
 }

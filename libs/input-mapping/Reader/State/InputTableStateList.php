@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Reader\State;
 
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
 
-class InputTablesState
+class InputTableStateList
 {
     /**
      * @var InputTableState[]

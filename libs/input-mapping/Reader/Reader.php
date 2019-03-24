@@ -9,7 +9,7 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -246,15 +246,15 @@ class Reader
     }
 
     /**
-     * @param InputTablesOptions $tablesDefinition list of input mappings
-     * @param InputTablesState $tablesState list of input mapping states
+     * @param InputTableOptionsList $tablesDefinition list of input mappings
+     * @param InputTableStateList $tablesState list of input mapping states
      * @param $destination destination folder
      * @param string $storage
-     * @return InputTablesState
+     * @return InputTableStateList
      * @throws \Keboola\StorageApi\ClientException
      * @throws \Keboola\StorageApi\Exception
      */
-    public function downloadTables(InputTableOptionsList $tablesDefinition, InputTablesState $tablesState, $destination, $storage = 'local')
+    public function downloadTables(InputTableOptionsList $tablesDefinition, InputTableStateList $tablesState, $destination, $storage = 'local')
     {
         $tableExporter = new TableExporter($this->getClient());
         $localExports = [];
@@ -285,7 +285,7 @@ class Reader
             $this->logger->info("Fetched table " . $table->getSource() . ".");
         }
 
-        $outputState = new InputTablesState($outputStateConfiguration);
+        $outputState = new InputTableStateList($outputStateConfiguration);
 
         if ($s3exports) {
             $this->logger->info("Processing " . count($s3exports) . " table exports.");

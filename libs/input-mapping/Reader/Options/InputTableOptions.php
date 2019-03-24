@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Reader\Options;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 
 class InputTableOptions
 {
@@ -57,7 +57,7 @@ class InputTableOptions
     /**
      * @return array
      */
-    public function getStorageApiExportOptions(InputTablesState $states)
+    public function getStorageApiExportOptions(InputTableStateList $states)
     {
         $exportOptions = [];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {

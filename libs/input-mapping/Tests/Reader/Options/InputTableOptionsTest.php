@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests\Reader\Options;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
@@ -45,7 +45,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     public function testGetExportOptionsEmptyValue()
     {
         $definition = new InputTableOptions(['source' => 'test']);
-        self::assertEquals([], $definition->getStorageApiExportOptions(new InputTablesState([])));
+        self::assertEquals([], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
     public function testGetExportOptions()
@@ -67,7 +67,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'limit' => 100,
-        ], $definition->getStorageApiExportOptions(new InputTablesState([])));
+        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
     public function testGetExportOptionsDays()
@@ -78,7 +78,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ]);
         self::assertEquals([
             'changedSince' => '-2 days',
-        ], $definition->getStorageApiExportOptions(new InputTablesState([])));
+        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
 
@@ -88,7 +88,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'source' => 'test',
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
         ]);
-        $tablesState = new InputTablesState([
+        $tablesState = new InputTableStateList([
             [
                 'source' => 'test',
                 'lastImportDate' => '1989-11-17T21:00:00+0200'
@@ -106,7 +106,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'source' => 'test',
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
         ]);
-        $tablesState = new InputTablesState([]);
+        $tablesState = new InputTableStateList([]);
         self::assertEquals([], $definition->getStorageApiExportOptions($tablesState));
     }
 }

@@ -3,9 +3,9 @@
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 
-class InputTablesStateTest extends \PHPUnit_Framework_TestCase
+class InputTableStateListTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetTable()
     {
@@ -19,14 +19,14 @@ class InputTablesStateTest extends \PHPUnit_Framework_TestCase
                 'lastImportDate' => '2016-08-30T19:36:00+0200',
             ]
         ];
-        $states = new InputTablesState($configuration);
+        $states = new InputTableStateList($configuration);
         self::assertEquals('test', $states->getTable('test')->getSource());
         self::assertEquals('test2', $states->getTable('test2')->getSource());
     }
 
     public function testGetTableNotFound()
     {
-        $states = new InputTablesState([]);
+        $states = new InputTableStateList([]);
         self::expectException(TableNotFoundException::class);
         self::expectExceptionMessage('State for table "test" not found.');
         $states->getTable('test');
@@ -44,7 +44,7 @@ class InputTablesStateTest extends \PHPUnit_Framework_TestCase
                 'lastImportDate' => '2016-08-30T19:36:00+0200',
             ]
         ];
-        $states = new InputTablesState($configuration);
+        $states = new InputTableStateList($configuration);
         self::assertEquals($configuration, $states->toArray());
     }
 }

@@ -18,7 +18,7 @@ class InputTableStateTest extends \PHPUnit_Framework_TestCase
         $state = new InputTableState(['source' => 'test', 'lastImportDate' => '2016-08-31T19:36:00+0200']);
         self::assertEquals('2016-08-31T19:36:00+0200', $state->getLastImportDate());
     }
-    
+
     public function testToArray()
     {
         $configuration = ['source' => 'test', 'lastImportDate' => '2016-08-31T19:36:00+0200'];

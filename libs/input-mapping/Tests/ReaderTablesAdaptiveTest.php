@@ -6,7 +6,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTablesOptions;
 use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Reader\State\InputTablesState;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;
@@ -45,7 +45,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             ]
         ]);
 
-        $tablesState = $reader->downloadTables($configuration, new InputTablesState([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
         self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
@@ -67,7 +67,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             ]
         ]);
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
-        $inputTablesState = new InputTablesState([
+        $inputTablesState = new InputTableStateList([
             [
                 "source" => "in.c-docker-test.test",
                 "lastImportDate" => $testTableInfo['lastImportDate']
@@ -94,7 +94,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             ]
         ]);
         $testTableInfo = $this->client->getTable("in.c-docker-test.test");
-        $inputTablesState = new InputTablesState([
+        $inputTablesState = new InputTableStateList([
             [
                 "source" => "in.c-docker-test.test",
                 "lastImportDate" => $testTableInfo['lastImportDate']
@@ -134,7 +134,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
                 "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ]
         ]);
-        $inputTablesState = new InputTablesState([
+        $inputTablesState = new InputTableStateList([
             [
                 "source" => "in.c-docker-test.test",
                 "lastImportDate" => "nonsense"

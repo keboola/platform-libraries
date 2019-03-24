@@ -67,7 +67,7 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
     }
 
 
-    public function testDownloadTablesReturnsASingleTimestamps()
+    public function testDownloadTablesReturnsASingleTimestamp()
     {
         $reader = new Reader($this->client, new NullLogger());
         $configuration = new InputTablesOptions([

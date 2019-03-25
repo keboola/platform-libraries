@@ -2,8 +2,6 @@
 
 namespace Keboola\InputMapping\Reader\State;
 
-use Keboola\InputMapping\Reader\State\Exception\InvalidDateException;
-
 class InputTableState
 {
     /**

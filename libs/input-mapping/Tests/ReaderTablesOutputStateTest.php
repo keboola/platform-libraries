@@ -63,7 +63,7 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test2.csv"
         );
-        self::assertCount(2, $tablesState->toArray());
+        self::assertCount(2, $tablesState->jsonSerialize());
     }
 
 
@@ -77,6 +77,6 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
             ]
         ]);
         $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        self::assertCount(1, $tablesState->toArray());
+        self::assertCount(1, $tablesState->jsonSerialize());
     }
 }

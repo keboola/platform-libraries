@@ -58,7 +58,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             "\"Id\",\"Name\",\"foo\",\"bar\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
-        self::assertCount(1, $tablesState->toArray());
+        self::assertCount(1, $tablesState->jsonSerialize());
     }
 
     public function testDownloadTablesDownloadsOnlyNewRows()
@@ -87,7 +87,7 @@ class ReaderTablesAdaptiveTest extends ReaderTablesTestAbstract
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
-        self::assertCount(1, $secondTablesState->toArray());
+        self::assertCount(1, $secondTablesState->jsonSerialize());
     }
 
     public function testDownloadTablesInvalidDate()

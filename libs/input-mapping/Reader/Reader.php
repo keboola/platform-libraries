@@ -8,7 +8,7 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
-use Keboola\InputMapping\Reader\Options\InputTablesOptions;
+use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -245,11 +245,11 @@ class Reader
     }
 
     /**
-     * @param $tablesDefinition InputTablesOptions list of input mappings
+     * @param $tablesDefinition InputTableOptionsList list of input mappings
      * @param $destination string destination folder
      * @param string $storage
      */
-    public function downloadTables(InputTablesOptions $tablesDefinition, $destination, $storage = 'local')
+    public function downloadTables(InputTableOptionsList $tablesDefinition, $destination, $storage = 'local')
     {
         $tableExporter = new TableExporter($this->getClient());
         $localExports = [];

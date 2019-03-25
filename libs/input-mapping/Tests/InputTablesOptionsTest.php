@@ -3,13 +3,13 @@
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
-use Keboola\InputMapping\Reader\Options\InputTablesOptions;
+use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 
 class InputTablesOptionsTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetTables()
     {
-        $definitions = new InputTablesOptions([
+        $definitions = new InputTableOptionsList([
             ['source' => 'test1'],
             ['source' => 'test2']
         ]);

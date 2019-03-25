@@ -2,7 +2,7 @@
 
 namespace Keboola\InputMapping\Reader\State;
 
-class InputTableState
+class InputTableState implements \JsonSerializable
 {
     /**
      * @var string
@@ -36,7 +36,10 @@ class InputTableState
         return $this->lastImportDate;
     }
 
-    public function toArray()
+    /**
+     * @return array
+     */
+    public function jsonSerialize()
     {
         return [
             'source' => $this->getSource(),

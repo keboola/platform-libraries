@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Reader\State;
 
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
 
-class InputTableStateList
+class InputTableStateList implements \JsonSerializable
 {
     /**
      * @var InputTableState[]
@@ -36,10 +36,10 @@ class InputTableStateList
     /**
      * @return array
      */
-    public function toArray()
+    public function jsonSerialize()
     {
         return array_map(function (InputTableState $table) {
-            return $table->toArray();
+            return $table->jsonSerialize();
         }, $this->tables);
     }
 }

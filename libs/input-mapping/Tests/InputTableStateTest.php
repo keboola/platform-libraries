@@ -19,10 +19,10 @@ class InputTableStateTest extends \PHPUnit_Framework_TestCase
         self::assertEquals('2016-08-31T19:36:00+0200', $state->getLastImportDate());
     }
 
-    public function testToArray()
+    public function testJsonSerialize()
     {
         $configuration = ['source' => 'test', 'lastImportDate' => '2016-08-31T19:36:00+0200'];
         $state = new InputTableState($configuration);
-        self::assertEquals($configuration, $state->toArray());
+        self::assertEquals($configuration, $state->jsonSerialize());
     }
 }

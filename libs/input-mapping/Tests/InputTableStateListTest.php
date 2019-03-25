@@ -32,7 +32,7 @@ class InputTableStateListTest extends \PHPUnit_Framework_TestCase
         $states->getTable('test');
     }
 
-    public function testToArray()
+    public function testJsonSerialize()
     {
         $configuration = [
             [
@@ -45,6 +45,6 @@ class InputTableStateListTest extends \PHPUnit_Framework_TestCase
             ]
         ];
         $states = new InputTableStateList($configuration);
-        self::assertEquals($configuration, $states->toArray());
+        self::assertEquals($configuration, $states->jsonSerialize());
     }
 }

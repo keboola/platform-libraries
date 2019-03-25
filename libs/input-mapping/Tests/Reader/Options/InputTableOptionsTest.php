@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader\Options;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;

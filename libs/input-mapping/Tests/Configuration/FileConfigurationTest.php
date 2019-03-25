@@ -1,10 +1,10 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Configuration;
 
 use Keboola\InputMapping\Configuration\File;
 
-class InputFileConfigurationTest extends \PHPUnit_Framework_TestCase
+class FileConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     public function testConfiguration()
     {

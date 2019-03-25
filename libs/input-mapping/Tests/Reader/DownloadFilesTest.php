@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
@@ -15,7 +15,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-class ReaderFilesTest extends \PHPUnit_Framework_TestCase
+class DownloadFilesTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var Client

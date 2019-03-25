@@ -1,10 +1,10 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Configuration\Table;
 
 use Keboola\InputMapping\Configuration\Table\Manifest;
 
-class InputTableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
+class TableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     public function testConfiguration()
     {

@@ -1,16 +1,17 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Tests\Reader\DownloadTablesTestAbstract;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;
 
-class ReaderTablesRedshiftTest extends ReaderTablesTestAbstract
+class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 {
     public function setUp()
     {

@@ -1,12 +1,12 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\StorageApi\Client;
 use Keboola\Temp\Temp;
 use Symfony\Component\Filesystem\Filesystem;
 
-class ReaderTablesTestAbstract extends \PHPUnit_Framework_TestCase
+class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var Client

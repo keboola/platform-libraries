@@ -1,19 +1,20 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Tests\Reader\DownloadTablesTestAbstract;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Psr\Log\NullLogger;
 
-class ReaderTablesDefaultTest extends ReaderTablesTestAbstract
+class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 {
     public function setUp()
     {

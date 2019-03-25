@@ -1,11 +1,11 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader\Options;
 
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 
-class InputTablesOptionsTest extends \PHPUnit_Framework_TestCase
+class InputTableOptionsListTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetTables()
     {

@@ -65,18 +65,4 @@ class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
         );
         self::assertCount(2, $tablesState->jsonSerialize());
     }
-
-
-    public function testDownloadTablesReturnsASingleTimestamp()
-    {
-        $reader = new Reader($this->client, new NullLogger());
-        $configuration = new InputTablesOptions([
-            [
-                "source" => "in.c-docker-test.test",
-                "destination" => "test.csv",
-            ]
-        ]);
-        $tablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        self::assertCount(1, $tablesState->jsonSerialize());
-    }
 }

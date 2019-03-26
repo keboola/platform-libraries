@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Reader\Options\InputTablesOptions;
+use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
@@ -37,7 +37,7 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
     public function testDownloadTablesReturnsAllTablesTimestamps()
     {
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = new InputTablesOptions([
+        $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",

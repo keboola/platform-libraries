@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\InputMapping\Tests\State;
+namespace Keboola\InputMapping\Tests\Reader\State;
 
 use Keboola\InputMapping\Reader\State\Exception\TableNotFoundException;
 use Keboola\InputMapping\Reader\State\InputTableStateList;

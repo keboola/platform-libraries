@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\Options\InputTablesOptions;
@@ -10,7 +10,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;
 
-class ReaderTablesOutputStateTest extends ReaderTablesTestAbstract
+class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
 {
     public function setUp()
     {

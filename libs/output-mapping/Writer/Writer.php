@@ -481,11 +481,11 @@ class Writer
         );
     }
 
-    private function createTable($tableId, array $header, $primaryKey)
+    private function createTable($tableId, array $columns, $primaryKey)
     {
         $tmp = new Temp();
         $headerCsvFile = new CsvFile($tmp->createFile($this->getTableName($tableId) . '.header.csv'));
-        $headerCsvFile->writeRow($header);
+        $headerCsvFile->writeRow($columns);
         $tableId = $this->client->createTableAsync(
             $this->getBucketId($tableId),
             $this->getTableName($tableId),

@@ -558,12 +558,6 @@ class Writer
     protected function uploadTable($source, array $config, array $systemMetadata)
     {
         $primaryKey = join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger));
-        $loadOptions = [
-            "delimiter" => $config["delimiter"],
-            "enclosure" => $config["enclosure"],
-            "columns" => !empty($config["columns"]) ? $config['columns'] : [],
-            "incremental" => $config["incremental"],
-        ];
 
         if (is_dir($source) && empty($config["columns"])) {
             throw new InvalidOutputException("Sliced file '" . basename($source) . "': columns specification missing.");
@@ -606,6 +600,13 @@ class Writer
                 $this->getCreatedMetadata($systemMetadata)
             );
         }
+
+        $loadOptions = [
+            "delimiter" => $config["delimiter"],
+            "enclosure" => $config["enclosure"],
+            "columns" => !empty($config["columns"]) ? $config['columns'] : [],
+            "incremental" => $config["incremental"],
+        ];
         $tableQueue = $this->loadData($source, $config['destination'], $loadOptions);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->client,

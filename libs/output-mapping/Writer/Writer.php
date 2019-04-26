@@ -535,7 +535,7 @@ class Writer
         }
     }
 
-    private function loadData($source, $tableId, array $options)
+    private function loadDataIntoTable($source, $tableId, array $options)
     {
         if (is_dir($source)) {
             $fileId = $this->uploadSlicedFile($source);
@@ -611,7 +611,7 @@ class Writer
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
             'incremental' => $config['incremental'],
         ];
-        $tableQueue = $this->loadData($source, $config['destination'], $loadOptions);
+        $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->client,
             $config['destination'],
@@ -625,12 +625,12 @@ class Writer
     /**
      * @param $tableId
      * @param $provider
-     * @param $columnMetadata
+     * @param $columnsMetadata
      * @throws ClientException
      */
-    protected function writeColumnMetadata($tableId, $provider, $columnMetadata)
+    protected function writeColumnsMetadata($tableId, $provider, $columnsMetadata)
     {
-        foreach ($columnMetadata as $column => $metadataArray) {
+        foreach ($columnsMetadata as $column => $metadataArray) {
             $columnId = $tableId . "." . $column;
             $this->metadataClient->postColumnMetadata($columnId, $provider, $metadataArray);
         }

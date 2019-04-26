@@ -495,14 +495,8 @@ class Writer
         return $tableId;
     }
 
-    private function modifyPrimaryKey($tableId, array $tablePrimaryKey, array $configPrimaryKey)
+    private function removePrimaryKey($tableId, array $tablePrimaryKey)
     {
-        $this->logger->warning(
-            "Modifying primary key of table {$tableId} from [" .
-            join(", ", $tablePrimaryKey) . "] to [" . join(", ", $configPrimaryKey) . "]."
-        );
-        $failed = false;
-        // modify primary key
         if (count($tablePrimaryKey) > 0) {
             try {
                 $this->client->removeTablePrimaryKey($tableId);
@@ -511,10 +505,20 @@ class Writer
                 $this->logger->warning(
                     "Error deleting primary key of table {$tableId}: " . $e->getMessage()
                 );
-                $failed = true;
+                return false;
             }
         }
-        if (!$failed) {
+        return true;
+    }
+
+    private function modifyPrimaryKey($tableId, array $tablePrimaryKey, array $configPrimaryKey)
+    {
+        $this->logger->warning(
+            "Modifying primary key of table {$tableId} from [" .
+            join(", ", $tablePrimaryKey) . "] to [" . join(", ", $configPrimaryKey) . "]."
+        );
+        if ($this->removePrimaryKey($tableId, $tablePrimaryKey)) {
+            // modify primary key
             try {
                 if (count($configPrimaryKey)) {
                     $this->client->createTablePrimaryKey($tableId, $configPrimaryKey);

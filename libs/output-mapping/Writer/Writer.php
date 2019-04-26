@@ -557,36 +557,36 @@ class Writer
      */
     protected function uploadTable($source, array $config, array $systemMetadata)
     {
-        $primaryKey = join(",", self::normalizePrimaryKey($config["primary_key"], $this->logger));
+        $primaryKey = join(",", self::normalizePrimaryKey($config['primary_key'], $this->logger));
 
-        if (is_dir($source) && empty($config["columns"])) {
-            throw new InvalidOutputException("Sliced file '" . basename($source) . "': columns specification missing.");
+        if (is_dir($source) && empty($config['columns'])) {
+            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', basename($source)));
         }
         if (!$this->client->bucketExists($this->getBucketId($config['destination']))) {
             $this->createBucket($config['destination'], $systemMetadata);
         }
 
-        if ($this->client->tableExists($config["destination"])) {
-            $tableInfo = $this->client->getTable($config["destination"]);
+        if ($this->client->tableExists($config['destination'])) {
+            $tableInfo = $this->client->getTable($config['destination']);
             $this->validatePrimaryKeyAgainstTable($tableInfo, $config);
             if (self::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
                 $this->modifyPrimaryKey($config['destination'], $tableInfo['primaryKey'], $config['primary_key']);
             }
-            if (!empty($config["delete_where_column"])) {
+            if (!empty($config['delete_where_column'])) {
                 // Delete rows
                 $deleteOptions = [
-                    "whereColumn" => $config["delete_where_column"],
-                    "whereOperator" => $config["delete_where_operator"],
-                    "whereValues" => $config["delete_where_values"]
+                    'whereColumn' => $config['delete_where_column'],
+                    'whereOperator' => $config['delete_where_operator'],
+                    'whereValues' => $config['delete_where_values']
                 ];
-                $this->client->deleteTableRows($config["destination"], $deleteOptions);
+                $this->client->deleteTableRows($config['destination'], $deleteOptions);
             }
         } else {
             if (!empty($config["columns"])) {
                 $this->createTable($config['destination'], $config['columns'], $primaryKey);
             } else {
                 try {
-                    $csvFile = new CsvFile($source, $config["delimiter"], $config["enclosure"]);
+                    $csvFile = new CsvFile($source, $config['delimiter'], $config['enclosure']);
                     $header = $csvFile->getHeader();
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
@@ -602,10 +602,10 @@ class Writer
         }
 
         $loadOptions = [
-            "delimiter" => $config["delimiter"],
-            "enclosure" => $config["enclosure"],
-            "columns" => !empty($config["columns"]) ? $config['columns'] : [],
-            "incremental" => $config["incremental"],
+            'delimiter' => $config['delimiter'],
+            'enclosure' => $config['enclosure'],
+            'columns' => !empty($config['columns']) ? $config['columns'] : [],
+            'incremental' => $config['incremental'],
         ];
         $tableQueue = $this->loadData($source, $config['destination'], $loadOptions);
         $tableQueue->addMetadata(new MetadataDefinition(

@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\OutputMapping\Writer\Writer;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -86,7 +86,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
@@ -119,7 +119,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -154,7 +154,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
@@ -187,7 +187,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             "{\"destination\": \"out.c-docker-test.table\",\"primary_key\":[\"Id\",\"Name\"],\"columns\":[\"Id\",\"Name\"]}"
         );
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
@@ -229,7 +229,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();

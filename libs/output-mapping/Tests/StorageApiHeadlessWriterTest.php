@@ -91,6 +91,7 @@ class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
+        $this->assertEquals(1, $tableQueue->getTaskCount());
 
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);

@@ -765,6 +765,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         $tableQueue =  $writer->uploadTables($root . "/upload", ["bucket" => "in.c-docker-test"], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
+        $this->assertEquals(2, $tableQueue->getTaskCount());
 
         $tables = $this->client->listTables("in.c-docker-test");
         $this->assertCount(2, $tables);

@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
+use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class MetadataDefinition
 {
@@ -49,7 +50,7 @@ class MetadataDefinition
         if ($this->type === self::COLUMN_METADATA) {
             $metadataClient = new Metadata($this->client);
             foreach ($this->metadata as $column => $metadataArray) {
-                $columnId = $this->destination . "." . $column;
+                $columnId = $this->destination . '.' . ColumnNameSanitizer::sanitize($column);
                 $metadataClient->postColumnMetadata($columnId, $this->provider, $metadataArray);
             }
         } elseif ($this->type === self::TABLE_METADATA) {

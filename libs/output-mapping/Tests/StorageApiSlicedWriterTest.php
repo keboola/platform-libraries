@@ -4,7 +4,7 @@ namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Writer;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -97,7 +97,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -133,7 +133,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -170,7 +170,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -202,7 +202,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -239,7 +239,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -270,12 +270,12 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         try {
             $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
-            $this->assertEquals("Sliced file 'table': columns specification missing.", $e->getMessage());
+            $this->assertEquals('Sliced file "table" columns specification missing.', $e->getMessage());
         }
     }
 
@@ -306,7 +306,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
@@ -347,7 +347,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
@@ -392,7 +392,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
@@ -442,7 +442,7 @@ class StorageApiSlicedWriterTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
         $jobIds = $tableQueue->waitForAll();

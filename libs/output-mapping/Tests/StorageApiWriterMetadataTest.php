@@ -4,7 +4,7 @@ namespace Keboola\DockerBundle\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Writer;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -133,7 +133,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             "configurationId" => "metadata-write-test"
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -144,6 +144,8 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
                 'KBC.createdBy.configuration.id' => 'metadata-write-test',
+                'KBC.lastUpdatedBy.component.id' => 'testComponent',
+                'KBC.lastUpdatedBy.configuration.id' => 'metadata-write-test',
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',
@@ -195,7 +197,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         ];
         $systemMetadata = ["componentId" => "testComponent"];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table "in.c-docker-test.table55a": Load error: ' .
@@ -254,7 +256,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
         ];
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -329,7 +331,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
         ];
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -395,7 +397,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
         ];
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -469,7 +471,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
         ];
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -549,7 +551,7 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
             "configurationRowId" => "row-1"
         ];
 
-        $writer = new Writer($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -562,6 +564,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                 'KBC.createdBy.component.id' => 'testComponent',
                 'KBC.createdBy.configuration.id' => 'metadata-write-test',
                 'KBC.createdBy.configurationRow.id' => 'row-1',
+                'KBC.lastUpdatedBy.component.id' => 'testComponent',
+                'KBC.lastUpdatedBy.configuration.id' => 'metadata-write-test',
+                'KBC.lastUpdatedBy.configurationRow.id' => 'row-1',
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',

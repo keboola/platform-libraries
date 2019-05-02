@@ -381,10 +381,16 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                     "destination" => "in.c-docker-test-backend.table88",
                     "metadata" => [],
                     "column_metadata" => [
+                        "Id with special chars" => [
+                            [
+                                "key" => "column.key.zero",
+                                "value" => "column value on id",
+                            ],
+                        ],
                         "Name" => [
                             [
                                 "key" => "column.key.one",
-                                "value" => "column value one text2"
+                                "value" => "column value one text2",
                             ],
                         ],
                         "Foo" => [

@@ -48,4 +48,9 @@ class LoadTableQueue
         }
         return $jobIds;
     }
+
+    public function getTaskCount()
+    {
+        return count($this->loadTableTasks);
+    }
 }

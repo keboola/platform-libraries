@@ -381,10 +381,16 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
                     "destination" => "in.c-docker-test-backend.table88",
                     "metadata" => [],
                     "column_metadata" => [
+                        "Id with special chars" => [
+                            [
+                                "key" => "column.key.zero",
+                                "value" => "column value on id",
+                            ],
+                        ],
                         "Name" => [
                             [
                                 "key" => "column.key.one",
-                                "value" => "column value one text2"
+                                "value" => "column value one text2",
                             ],
                         ],
                         "Foo" => [
@@ -403,6 +409,15 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->client);
+        $idColMetadata = $metadataApi->listColumnMetadata(
+            'in.c-docker-test-backend.table88.Id_with_special_chars'
+        );
+        $expectedColumnMetadata = [
+            'testComponent' => [
+                'column.key.zero' => 'column value on id',
+            ]
+        ];
+        $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-docker-test-backend.table88.Name');
         $expectedColumnMetadata = [
             'testComponent' => [

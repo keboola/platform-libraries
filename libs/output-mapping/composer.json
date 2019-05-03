@@ -9,6 +9,16 @@
             "email": "devel@keboola.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\OutputMapping\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\OutputMapping\\Tests\\": "tests/"
+        }
+    },    
     "require": {
         "symfony/config": "^2.8|^4.1",
         "symfony/yaml": "^2.8|^4.1",
@@ -23,11 +33,6 @@
         "squizlabs/php_codesniffer": "^3.2",
         "keboola/php-temp": "^1.0",
         "phpunit/phpunit": "^5.4"
-    },
-    "autoload": {
-        "psr-0": {
-            "Keboola\\OutputMapping": ""
-        }
     },
     "target-dir": "Keboola/OutputMapping",
     "scripts": {

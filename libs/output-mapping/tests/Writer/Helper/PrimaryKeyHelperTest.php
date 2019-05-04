@@ -106,90 +106,109 @@ class PrimaryKeyHelperTest extends TestCase
         );
     }
 
-    public function testNormalizePrimaryKey()
+    /**
+     * @dataProvider normalizePrimaryKeyProvider
+     * @param array $pkey
+     * @param array $result
+     */
+    public function testNormalizePrimaryKey(array $pkey, array $result)
     {
-        $logger = new TestLogger();
-        $result = PrimaryKeyHelper::normalizePrimaryKey($logger, ['Name', 'Id', 'Name']);
-        self::assertEquals(['Name', 'Id'], $result);
-        self::assertFalse($logger->hasWarningThatContains('Empty primary key found.'));
+        self::assertEquals($result, PrimaryKeyHelper::normalizePrimaryKey(new NullLogger(), $pkey));
     }
 
-    public function testNormalizePrimaryKeyEmpty()
+    /**
+     * @return array
+     */
+    private function normalizePrimaryKeyProvider()
     {
-        $logger = new TestLogger();
-        $result = PrimaryKeyHelper::normalizePrimaryKey($logger, ['Name', '', 'Name']);
-        self::assertEquals(['Name'], $result);
-        self::assertTrue($logger->hasWarningThatContains('Empty primary key found.'));
-    }
-
-    public function testDeciderSame()
-    {
-        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
-            new NullLogger(),
+        return [
             [
-                'primaryKey' => ['Id', 'Name'],
+                [''],
+                [],
             ],
             [
-                'primary_key' => ['Id', 'Name'],
-            ]
-        );
-        self::assertFalse($result);
-    }
-
-    public function testDeciderMissing()
-    {
-        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
-            new NullLogger(),
-            [
-                'primaryKey' => ['Name'],
+                ['Id', 'Id'],
+                ['Id'],
             ],
             [
-                'primary_key' => ['Id', 'Name'],
-            ]
-        );
-        self::assertTrue($result);
+                ['Id ', 'Name'],
+                ['Id', 'Name'],
+            ],
+        ];
     }
 
-    public function testDeciderSurplus()
+    /**
+     * @dataProvider modifyPrimaryKeyDeciderOptionsProvider
+     * @param array $tableInfo
+     * @param array $config
+     * @param $result
+     */
+    public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, $result)
     {
-        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
-            new NullLogger(),
-            [
-                'primaryKey' => ['Id', 'Name', 'Extra'],
-            ],
-            [
-                'primary_key' => ['Id', 'Name'],
-            ]
-        );
-        self::assertTrue($result);
+        self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(new NullLogger(), $tableInfo, $config));
     }
 
-    public function testDeciderDifferent()
+    /**
+     * @return array
+     */
+    public function modifyPrimaryKeyDeciderOptionsProvider()
     {
-        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
-            new NullLogger(),
+        return [
             [
-                'primaryKey' => ['Id', 'Name'],
+                [
+                    'primaryKey' => [],
+                ],
+                [
+                    'primary_key' => [],
+                ],
+                false,
             ],
             [
-                'primary_key' => ['Id', 'Foo'],
-            ]
-        );
-        self::assertTrue($result);
-    }
-
-    public function testDeciderDifferentOrder()
-    {
-        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
-            new NullLogger(),
-            [
-                'primaryKey' => ['Name', 'Id'],
+                [
+                    'primaryKey' => [],
+                ],
+                [
+                    'primary_key' => ['Id'],
+                ],
+                true,
             ],
             [
-                'primary_key' => ['Id', 'Name'],
-            ]
-        );
-        self::assertFalse($result);
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => [],
+                ],
+                true,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Id'],
+                ],
+                false,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Name'],
+                ],
+                true,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Id', 'Name'],
+                ],
+                true,
+            ],
+        ];
     }
 
     public function testModifyPrimaryKeyChange()

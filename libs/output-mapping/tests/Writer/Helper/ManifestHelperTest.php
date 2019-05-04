@@ -16,12 +16,14 @@ class ManifestHelperTest extends TestCase
         touch($temp->getTmpFolder() . '/my.manifest');
         touch($temp->getTmpFolder() . '/my.other.file.manifest');
         touch($temp->getTmpFolder() . '/sub-dir/my.other.file.manifest');
+        $result = ManifestHelper::getManifestFiles($temp->getTmpFolder());
+        sort($result);
         self::assertEquals(
             [
                 $temp->getTmpFolder()  . DIRECTORY_SEPARATOR . 'my.manifest',
                 $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.other.file.manifest',
             ],
-            ManifestHelper::getManifestFiles($temp->getTmpFolder())
+            $result
         );
     }
 }

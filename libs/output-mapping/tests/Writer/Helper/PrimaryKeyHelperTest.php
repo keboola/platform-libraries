@@ -119,7 +119,7 @@ class PrimaryKeyHelperTest extends TestCase
     /**
      * @return array
      */
-    private function normalizePrimaryKeyProvider()
+    public function normalizePrimaryKeyProvider()
     {
         return [
             [

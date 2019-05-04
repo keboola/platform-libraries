@@ -138,10 +138,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage The child node "source" at path "table" must be configured
+     * @expectedExceptionMessage The path "table.source" cannot contain an empty value, but got "".
      */
     public function testEmptyConfiguration()
     {
-        (new Table())->parse(["config" => []]);
+        (new Table())->parse(["config" => ["source" => ""]]);
     }
+
 }

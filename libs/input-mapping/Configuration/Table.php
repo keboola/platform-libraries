@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Configuration;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
@@ -17,9 +18,10 @@ class Table extends Configuration
 
     public static function configureNode(NodeDefinition $node)
     {
+        /** @var ArrayNodeDefinition $node */
         $node
             ->children()
-                ->scalarNode("source")->isRequired()->end()
+                ->scalarNode("source")->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode("destination")->end()
                 ->integerNode("days")
                     ->treatNullLike(0)

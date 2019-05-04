@@ -164,6 +164,20 @@ class PrimaryKeyHelperTest extends TestCase
         self::assertTrue($result);
     }
 
+    public function testDeciderDifferent()
+    {
+        $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(
+            new NullLogger(),
+            [
+                'primaryKey' => ['Id', 'Name'],
+            ],
+            [
+                'primary_key' => ['Id', 'Foo'],
+            ]
+        );
+        self::assertTrue($result);
+    }
+
     public function testDeciderDifferentOrder()
     {
         $result = PrimaryKeyHelper::modifyPrimaryKeyDecider(

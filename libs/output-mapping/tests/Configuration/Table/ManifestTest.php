@@ -57,7 +57,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path 'table.delete_where_operator': Invalid operator in delete_where_operator 'abc'
+     * @expectedExceptionMessage Invalid configuration for path "table.delete_where_operator": Invalid operator in delete_where_operator "abc"
      */
     public function testInvalidWhereOperator()
     {
@@ -92,7 +92,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'delete_where_values' => [],
             'delete_where_operator' => 'eq',
             'delimiter' => ',',
-            'enclosure' => '""',
+            'enclosure' => '"',
             'column_metadata' => [],
         ];
         $expectedArray['metadata'] = $config['metadata'];

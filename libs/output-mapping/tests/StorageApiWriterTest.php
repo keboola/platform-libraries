@@ -865,63 +865,6 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function testValidateAgainstTable()
-    {
-        $tableInfo = [
-            "primaryKey" => ["Id"]
-        ];
-
-        $primaryKeyHelper = new PrimaryKeyHelper($this->client, new NullLogger());
-        $primaryKeyHelper->validatePrimaryKeyAgainstTable(
-            $tableInfo,
-            [
-                "source" => "table9.csv",
-                "destination" => "out.c-docker-test.table9",
-                "primary_key" => ["Id"]
-            ]
-        );
-    }
-
-    public function testValidateAgainstTableEmptyPK()
-    {
-        $tableInfo = [
-            "primaryKey" => []
-        ];
-
-        $primaryKeyHelper = new PrimaryKeyHelper($this->client, new NullLogger());
-        $primaryKeyHelper->validatePrimaryKeyAgainstTable(
-            $tableInfo,
-            [
-                "source" => "table18.csv",
-                "destination" => "out.c-docker-test.table18",
-                "primary_key" => []
-            ]
-        );
-    }
-
-    public function testValidateAgainstTableMismatch()
-    {
-        $tableInfo = [
-            "primaryKey" => ["Id"]
-        ];
-
-        $primaryKeyHelper = new PrimaryKeyHelper($this->client, new NullLogger());
-        try {
-            $primaryKeyHelper->validatePrimaryKeyAgainstTable(
-                $tableInfo,
-                [
-                    "source" => "table17.csv",
-                    "destination" => "out.c-docker-test.table17",
-                    "primary_key" => ["Id", "Name"]
-                ]
-            );
-            $this->fail("Exception not caught");
-        } catch (InvalidOutputException $e) {
-            $message = 'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "out.c-docker-test.table17".';
-            $this->assertEquals($message, $e->getMessage());
-        }
-    }
-
     public function testWriteTableOutputMappingWithPk()
     {
         $root = $this->tmp->getTmpFolder();

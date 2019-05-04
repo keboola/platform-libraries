@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\OutputMapping\Writer;
+namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Client;
@@ -9,29 +9,14 @@ use Psr\Log\LoggerInterface;
 class PrimaryKeyHelper
 {
     /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    public function __construct(Client $client, LoggerInterface $logger)
-    {
-        $this->client = $client;
-        $this->logger = $logger;
-    }
-
-    /**
+     * @param LoggerInterface $logger
      * @param array $tableInfo
      * @param array $config
      */
-    public function validatePrimaryKeyAgainstTable($tableInfo = [], $config = [])
+    public static function validatePrimaryKeyAgainstTable(LoggerInterface $logger, $tableInfo = [], $config = [])
     {
         // primary key
-        $configPK = self::normalizePrimaryKey($config['primary_key'], $this->logger);
+        $configPK = self::normalizePrimaryKey($logger, $config['primary_key']);
         if (count($configPK) > 0 || count($tableInfo['primaryKey']) > 0) {
             if (count(array_diff($tableInfo['primaryKey'], $configPK)) > 0 ||
                 count(array_diff($configPK, $tableInfo['primaryKey'])) > 0
@@ -47,14 +32,37 @@ class PrimaryKeyHelper
     }
 
     /**
+     * @param array $primaryKey
+     * @param LoggerInterface $logger
+     * @return array
+     */
+    public static function normalizePrimaryKey(LoggerInterface $logger, array $primaryKey)
+    {
+        return array_map(
+            function ($primaryKey) {
+                return trim($primaryKey);
+            },
+            array_unique(
+                array_filter($primaryKey, function ($col) use ($logger) {
+                    if ($col !== '') {
+                        return true;
+                    }
+                    $logger->warning('Empty primary key found.');
+                    return false;
+                })
+            )
+        );
+    }
+
+    /**
      * @param array $tableInfo
      * @param array $config
      * @param LoggerInterface $logger
      * @return bool
      */
-    public static function modifyPrimaryKeyDecider(array $tableInfo, array $config, LoggerInterface $logger)
+    public static function modifyPrimaryKeyDecider(LoggerInterface $logger, array $tableInfo, array $config)
     {
-        $configPK = self::normalizePrimaryKey($config['primary_key'], $logger);
+        $configPK = self::normalizePrimaryKey($logger, $config['primary_key']);
         if (count($tableInfo['primaryKey']) !== count($configPK)) {
             return true;
         }
@@ -69,73 +77,57 @@ class PrimaryKeyHelper
      * @param array $tablePrimaryKey
      * @param array $configPrimaryKey
      */
-    public function modifyPrimaryKey($tableId, array $tablePrimaryKey, array $configPrimaryKey)
-    {
-        $this->logger->warning(sprintf(
+    public static function modifyPrimaryKey(
+        LoggerInterface $logger,
+        Client $client,
+        $tableId,
+        array $tablePrimaryKey,
+        array $configPrimaryKey
+    ) {
+        $logger->warning(sprintf(
             'Modifying primary key of table "%s" from "%s" to "%s".',
             $tableId,
             join(', ', $tablePrimaryKey),
             join(', ', $configPrimaryKey)
         ));
-        if ($this->removePrimaryKey($tableId, $tablePrimaryKey)) {
+        if (self::removePrimaryKey($logger, $client, $tableId, $tablePrimaryKey)) {
             // modify primary key
             try {
                 if (count($configPrimaryKey)) {
-                    $this->client->createTablePrimaryKey($tableId, $configPrimaryKey);
+                    $client->createTablePrimaryKey($tableId, $configPrimaryKey);
                 }
             } catch (\Exception $e) {
                 // warn and try to rollback to original state
-                $this->logger->warning(
+                $logger->warning(
                     "Error changing primary key of table {$tableId}: " . $e->getMessage()
                 );
                 if (count($tablePrimaryKey) > 0) {
-                    $this->client->createTablePrimaryKey($tableId, $tablePrimaryKey);
+                    $client->createTablePrimaryKey($tableId, $tablePrimaryKey);
                 }
             }
         }
     }
 
     /**
+     * @param LoggerInterface $logger
+     * @param Client $client
      * @param string $tableId
      * @param array $tablePrimaryKey
      * @return bool
      */
-    private function removePrimaryKey($tableId, array $tablePrimaryKey)
+    private static function removePrimaryKey(LoggerInterface $logger, Client $client, $tableId, array $tablePrimaryKey)
     {
         if (count($tablePrimaryKey) > 0) {
             try {
-                $this->client->removeTablePrimaryKey($tableId);
+                $client->removeTablePrimaryKey($tableId);
             } catch (\Exception $e) {
                 // warn and go on
-                $this->logger->warning(
+                $logger->warning(
                     "Error deleting primary key of table {$tableId}: " . $e->getMessage()
                 );
                 return false;
             }
         }
         return true;
-    }
-
-    /**
-     * @param array $pKey
-     * @param LoggerInterface $logger
-     * @return array
-     */
-    public static function normalizePrimaryKey(array $pKey, $logger)
-    {
-        return array_map(
-            function ($pKey) {
-                return trim($pKey);
-            },
-            array_unique(
-                array_filter($pKey, function ($col) use ($logger) {
-                    if ($col !== '') {
-                        return true;
-                    }
-                    $logger->warning('Empty primary key found');
-                    return false;
-                })
-            )
-        );
     }
 }

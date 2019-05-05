@@ -34,7 +34,6 @@
         "keboola/php-temp": "^1.0",
         "phpunit/phpunit": "^5.4"
     },
-    "target-dir": "Keboola/OutputMapping",
     "scripts": {
         "tests": "phpunit",
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",

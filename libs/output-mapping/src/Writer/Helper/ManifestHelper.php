@@ -11,11 +11,11 @@ class ManifestHelper
     {
         $finder = new Finder();
         $manifests = $finder->files()->name('*.manifest')->in($dir)->depth(0);
-        $manifestNames = [];
+        $manifestFileNames = [];
         /** @var SplFileInfo $manifest */
         foreach ($manifests as $manifest) {
-            $manifestNames[] = $manifest->getPathname();
+            $manifestFileNames[] = $manifest->getPathname();
         }
-        return $manifestNames;
+        return $manifestFileNames;
     }
 }

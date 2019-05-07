@@ -47,7 +47,7 @@ class PrimaryKeyHelper
                     if ($col !== '') {
                         return true;
                     }
-                    $logger->warning('Empty primary key found.');
+                    $logger->warning('Found empty column name in primary key.');
                     return false;
                 })
             )

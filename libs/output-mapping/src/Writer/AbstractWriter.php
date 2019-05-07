@@ -4,8 +4,6 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\StorageApi\Client;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
 abstract class AbstractWriter
 {
@@ -42,21 +40,5 @@ abstract class AbstractWriter
     public function setFormat($format)
     {
         $this->format = $format;
-    }
-
-    /**
-     * @param string $dir
-     * @return array
-     */
-    protected function getManifestFiles($dir)
-    {
-        $finder = new Finder();
-        $manifests = $finder->files()->name('*.manifest')->in($dir)->depth(0);
-        $manifestNames = [];
-        /** @var SplFileInfo $manifest */
-        foreach ($manifests as $manifest) {
-            $manifestNames[] = $manifest->getPathname();
-        }
-        return $manifestNames;
     }
 }

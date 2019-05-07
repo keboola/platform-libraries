@@ -11,6 +11,8 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -55,7 +57,7 @@ class TableWriter extends AbstractWriter
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $manifestNames = $this->getManifestFiles($source);
+        $manifestNames = ManifestHelper::getManifestFiles($source);
 
         $finder = new Finder();
 
@@ -149,7 +151,7 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($config['primary_key'], $this->logger);
+                $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
                 $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -253,10 +255,15 @@ class TableWriter extends AbstractWriter
 
         if ($this->client->tableExists($config['destination'])) {
             $tableInfo = $this->client->getTable($config['destination']);
-            $primaryKeyHelper = new PrimaryKeyHelper($this->client, $this->logger);
-            $primaryKeyHelper->validatePrimaryKeyAgainstTable($tableInfo, $config);
-            if ($primaryKeyHelper::modifyPrimaryKeyDecider($tableInfo, $config, $this->logger)) {
-                $primaryKeyHelper->modifyPrimaryKey($config['destination'], $tableInfo['primaryKey'], $config['primary_key']);
+            PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $tableInfo, $config)) {
+                PrimaryKeyHelper::modifyPrimaryKey(
+                    $this->logger,
+                    $this->client,
+                    $config['destination'],
+                    $tableInfo['primaryKey'],
+                    $config['primary_key']
+                );
             }
             if (!empty($config['delete_where_column'])) {
                 // Delete rows
@@ -268,7 +275,7 @@ class TableWriter extends AbstractWriter
                 $this->client->deleteTableRows($config['destination'], $deleteOptions);
             }
         } else {
-            $primaryKey = join(",", PrimaryKeyHelper::normalizePrimaryKey($config['primary_key'], $this->logger));
+            $primaryKey = join(",", PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']));
             if (!empty($config['columns'])) {
                 $this->createTable($config['destination'], $config['columns'], $primaryKey);
             } else {

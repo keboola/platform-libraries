@@ -288,7 +288,7 @@ class Reader
         $outputState = new InputTableStateList($outputStateConfiguration);
 
         if ($s3exports) {
-            $this->logger->info("Processing " . count($s3exports) . " table exports.");
+            $this->logger->info("Processing " . count($s3exports) . " S3 table exports.");
             $results = $this->client->handleAsyncTasks(array_keys($s3exports));
             $keyedResults = [];
             foreach ($results as $result) {
@@ -308,7 +308,7 @@ class Reader
         }
 
         if ($localExports) {
-            $this->logger->info("Processing " . count($localExports) . " table exports.");
+            $this->logger->info("Processing " . count($localExports) . " local table exports.");
             $tableExporter->exportTables($localExports);
         }
 

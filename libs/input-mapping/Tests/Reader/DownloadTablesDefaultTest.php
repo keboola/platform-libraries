@@ -12,6 +12,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Psr\Log\NullLogger;
+use Psr\Log\Test\TestLogger;
 
 class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 {
@@ -72,7 +73,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesDefaultBackend()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger);
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -104,6 +106,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         );
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
         self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
+        self::assertTrue($logger->hasInfoThatContains('Processing 2 local table exports.'));
     }
 
     public function testReadTablesEmptyDaysFilter()
@@ -146,7 +149,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesS3DefaultBackend()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger);
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -158,7 +162,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            "s3"
+        );
 
         $adapter = new Adapter();
 
@@ -169,6 +178,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
         self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
         $this->assertS3info($manifest);
+        self::assertTrue($logger->hasInfoThatContains('Processing 2 S3 table exports.'));
     }
 
     public function testReadTablesMetadata()

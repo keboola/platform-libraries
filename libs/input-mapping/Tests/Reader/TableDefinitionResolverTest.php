@@ -70,8 +70,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         $this->assertSame([
             "source_search" => [
                 "key" => "bdm.scaffold.tag",
-                "value" => "test_table",
-                "search_by" => "table"
+                "value" => "test_table"
             ],
             "destination" => "test",
             'columns' => [],

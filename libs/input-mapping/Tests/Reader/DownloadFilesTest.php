@@ -70,7 +70,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
 
         $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
-        sleep(1);
+        sleep(2);
 
         $reader = new Reader($this->client, new NullLogger());
         $configuration = [["tags" => ["docker-bundle-test"]]];
@@ -102,7 +102,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
-        sleep(1);
+        sleep(2);
 
         $client = $this->client;
         $mockClient = $this->getMockBuilder(Client::class)
@@ -152,7 +152,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         $this->client->setRunId('1234567.8901234');
         $id5 = $this->client->uploadFile($root . "/upload", $fo);
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
-        sleep(1);
+        sleep(2);
 
         $configuration = [["tags" => ["docker-bundle-test"], "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
@@ -182,7 +182,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         $this->client->setRunId('1234567.8901234');
         $id5 = $this->client->uploadFile($root . "/upload", $fo);
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
-        sleep(1);
+        sleep(2);
 
         $configuration = [["query" => "tags: docker-bundle-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
@@ -240,7 +240,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
             ->setIsSliced(true)
             ->setFileName('empty_file');
         $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
-        sleep(1);
+        sleep(2);
 
         $reader = new Reader($this->client, new NullLogger());
         $configuration = [
@@ -268,7 +268,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         for ($i = 0; $i < 12; $i++) {
             $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         }
-        sleep(1);
+        sleep(2);
 
         // valid configuration, but does nothing
         $reader = new Reader($this->client, new NullLogger());

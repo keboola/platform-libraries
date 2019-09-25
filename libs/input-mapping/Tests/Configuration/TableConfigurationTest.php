@@ -71,7 +71,6 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             'SearchSourceConfiguration' => [
                 [
                     "search_source" => [
-                        "search_by" => "table",
                         "key" => "bdm.scaffold.tag",
                         "value" => "test_table",
                     ],
@@ -148,17 +147,6 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ["source" => ""],
                 InvalidConfigurationException::class,
                 'The path "table.source" cannot contain an empty value, but got "".',
-            ],
-            'InvalidSearchSourceSearchBy' => [
-                [
-                    "search_source" => [
-                        "search_by" => "invalidSearchBy",
-                        "key" => "bdm.scaffold.tag",
-                        "value" => "test_table",
-                    ],
-                ],
-                InvalidConfigurationException::class,
-                'The value "invalidSearchBy" is not allowed for path "table.search_source.search_by". Permissible values: "table"',
             ],
             'InvalidSearchSourceEmptyKey' => [
                 [

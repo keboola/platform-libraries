@@ -53,7 +53,8 @@ class TableDefinitionResolver
         if (0 === count($tables)) {
             throw new \Exception(sprintf(
                 'Table with metadata key: %s and value: %s was not found',
-                $searchSourceConfig['key'], $searchSourceConfig['value']
+                $searchSourceConfig['key'],
+                $searchSourceConfig['value']
             ));
         }
         if (1 !== count($tables)) {
@@ -62,7 +63,8 @@ class TableDefinitionResolver
             }, $tables);
             throw new \Exception(sprintf(
                 'More than one table with metadata key: %s and value: %s was not found: %s',
-                $searchSourceConfig['key'], $searchSourceConfig['value'],
+                $searchSourceConfig['key'],
+                $searchSourceConfig['value'],
                 implode(',', $tableNames)
             ));
         }

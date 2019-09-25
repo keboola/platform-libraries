@@ -22,7 +22,7 @@ class Table extends Configuration
         $node
             ->children()
                 ->scalarNode("source")->cannotBeEmpty()->end()
-                ->arrayNode("search_source")
+                ->arrayNode("source_search")
                     ->children()
                         ->scalarNode('key')->isRequired()->cannotBeEmpty()->end()
                         ->scalarNode('value')->isRequired()->cannotBeEmpty()->end()
@@ -55,9 +55,9 @@ class Table extends Configuration
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
-                return empty($v['source']) && empty($v['search_source']);
+                return empty($v['source']) && empty($v['source_search']);
             })
-            ->thenInvalid('Either "source" or "search_source" must be defined');
+            ->thenInvalid('Either "source" or "source_search" must be defined');
             ;
     }
 }

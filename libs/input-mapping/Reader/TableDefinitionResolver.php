@@ -45,7 +45,7 @@ class TableDefinitionResolver
     private function resolveSingleTable(Options\InputTableOptions $table)
     {
         $tableDefinition = $table->getDefinition();
-        $searchSourceConfig = $tableDefinition['search_source'];
+        $searchSourceConfig = $tableDefinition['source_search'];
 
         $options = SearchTablesOptions::create($searchSourceConfig['key'], $searchSourceConfig['value'], null);
         $tables = $this->storageApiClient->searchTables($options);

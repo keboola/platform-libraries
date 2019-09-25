@@ -13,7 +13,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         return new InputTableOptionsList(
             [
                 [
-                    "search_source" => [
+                    "source_search" => [
                         "key" => "bdm.scaffold.tag",
                         "value" => "test_table",
                     ],
@@ -68,7 +68,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         $result = $resolver->resolve($this->getSingleTableSearchOptionsList());
         $this->assertInstanceOf(InputTableOptionsList::class, $result);
         $this->assertSame([
-            "search_source" => [
+            "source_search" => [
                 "key" => "bdm.scaffold.tag",
                 "value" => "test_table",
                 "search_by" => "table"

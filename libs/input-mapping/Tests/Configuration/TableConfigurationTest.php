@@ -70,7 +70,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             ],
             'SearchSourceConfiguration' => [
                 [
-                    "search_source" => [
+                    "source_search" => [
                         "key" => "bdm.scaffold.tag",
                         "value" => "test_table",
                     ],
@@ -141,7 +141,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             'testEmptyConfiguration' => [
                 [],
                 InvalidConfigurationException::class,
-                'Either "source" or "search_source" must be defined',
+                'Either "source" or "source_search" must be defined',
             ],
             'EmptySourceConfiguration' => [
                 ["source" => ""],
@@ -150,23 +150,23 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             ],
             'InvalidSearchSourceEmptyKey' => [
                 [
-                    "search_source" => [
+                    "source_search" => [
                         "key" => "",
                         "value" => "test_table",
                     ],
                 ],
                 InvalidConfigurationException::class,
-                'The path "table.search_source.key" cannot contain an empty value, but got "".',
+                'The path "table.source_search.key" cannot contain an empty value, but got "".',
             ],
             'InvalidSearchSourceEmptyValue' => [
                 [
-                    "search_source" => [
+                    "source_search" => [
                         "key" => "bdm.scaffold.tag",
                         "value" => "",
                     ],
                 ],
                 InvalidConfigurationException::class,
-                'The path "table.search_source.value" cannot contain an empty value, but got "".',
+                'The path "table.source_search.value" cannot contain an empty value, but got "".',
             ],
         ];
     }

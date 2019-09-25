@@ -21,7 +21,16 @@ class Table extends Configuration
         /** @var ArrayNodeDefinition $node */
         $node
             ->children()
-                ->scalarNode("source")->isRequired()->cannotBeEmpty()->end()
+                ->scalarNode("source")->cannotBeEmpty()->end()
+                ->arrayNode("search_source")
+                    ->children()
+                        ->enumNode('search_by')
+                            ->values(['table'])->defaultValue('table')
+                        ->end()
+                        ->scalarNode('key')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('value')->isRequired()->cannotBeEmpty()->end()
+                    ->end()
+                ->end()
                 ->scalarNode("destination")->end()
                 ->integerNode("days")
                     ->treatNullLike(0)
@@ -47,6 +56,11 @@ class Table extends Configuration
                     ->end()
                 ->end()
             ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                return empty($v['source']) && empty($v['search_source']);
+            })
+            ->thenInvalid('Either "source" or "search_source" must be defined');
             ;
     }
 }

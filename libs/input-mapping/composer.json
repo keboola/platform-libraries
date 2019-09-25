@@ -14,7 +14,7 @@
         "symfony/yaml": "^2.8|^4.1",
         "symfony/finder": "^2.8|^4.1",
         "symfony/serializer": "^2.8|^4.1",
-        "keboola/storage-api-client": "^10.6",
+        "keboola/storage-api-client": "dev-zajca-search-tables",
         "guzzlehttp/guzzle": "^6.2"
     },
     "require-dev": {

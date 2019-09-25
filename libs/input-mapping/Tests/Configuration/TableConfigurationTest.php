@@ -22,7 +22,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
-                ]
+                ],
             ],
             'DaysNullConfiguration' => [
                 [
@@ -33,7 +33,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
-                ]
+                ],
             ],
             'DaysConfiguration' => [
                 [
@@ -44,7 +44,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
-                ]
+                ],
             ],
             'ChangedSinceNullConfiguration' => [
                 [
@@ -55,7 +55,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
-                ]
+                ],
             ],
             'ChangedSinceConfiguration' => [
                 [
@@ -66,7 +66,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
-                ]
+                ],
+            ],
+            'SearchSourceConfiguration' => [
+                [
+                    "search_source" => [
+                        "search_by" => "table",
+                        "key" => "bdm.scaffold.tag",
+                        "value" => "test_table",
+                    ],
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
             ],
         ];
     }
@@ -85,6 +100,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "eq",
                 ],
             ],
+
         ];
     }
 
@@ -126,18 +142,52 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             'testEmptyConfiguration' => [
                 [],
                 InvalidConfigurationException::class,
-                'The child node "source" at path "table" must be configured.',
+                'Either "source" or "search_source" must be defined',
             ],
             'EmptySourceConfiguration' => [
                 ["source" => ""],
                 InvalidConfigurationException::class,
                 'The path "table.source" cannot contain an empty value, but got "".',
             ],
+            'InvalidSearchSourceSearchBy' => [
+                [
+                    "search_source" => [
+                        "search_by" => "invalidSearchBy",
+                        "key" => "bdm.scaffold.tag",
+                        "value" => "test_table",
+                    ],
+                ],
+                InvalidConfigurationException::class,
+                'The value "invalidSearchBy" is not allowed for path "table.search_source.search_by". Permissible values: "table"',
+            ],
+            'InvalidSearchSourceEmptyKey' => [
+                [
+                    "search_source" => [
+                        "key" => "",
+                        "value" => "test_table",
+                    ],
+                ],
+                InvalidConfigurationException::class,
+                'The path "table.search_source.key" cannot contain an empty value, but got "".',
+            ],
+            'InvalidSearchSourceEmptyValue' => [
+                [
+                    "search_source" => [
+                        "key" => "bdm.scaffold.tag",
+                        "value" => "",
+                    ],
+                ],
+                InvalidConfigurationException::class,
+                'The path "table.search_source.value" cannot contain an empty value, but got "".',
+            ],
         ];
     }
 
     /**
      * @dataProvider provideInvalidConfigs
+     * @param array $config
+     * @param string $exception
+     * @param string $exceptionMessage
      */
     public function testInvalidConfigDefinition(
         array $config,

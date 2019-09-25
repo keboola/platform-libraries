@@ -257,6 +257,8 @@ class Reader
     public function downloadTables(InputTableOptionsList $tablesDefinition, InputTableStateList $tablesState, $destination, $storage = 'local')
     {
         $tableExporter = new TableExporter($this->getClient());
+        $tableResolver = new TableDefinitionResolver($this->getClient());
+        $tableResolver->resolve($tablesDefinition);
         $localExports = [];
         $s3exports = [];
         $outputStateConfiguration = [];

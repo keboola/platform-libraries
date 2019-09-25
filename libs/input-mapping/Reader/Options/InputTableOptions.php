@@ -25,6 +25,14 @@ class InputTableOptions
     }
 
     /**
+     * @return array
+     */
+    public function getDefinition()
+    {
+        return $this->definition;
+    }
+
+    /**
      * @return string
      */
     public function getSource()

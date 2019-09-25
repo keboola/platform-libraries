@@ -13,6 +13,67 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
     public function provideValidConfigs()
     {
         return [
+            'ComplexConfiguration' => [
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ]
+            ],
+            'DaysNullConfiguration' => [
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "days" => null,
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ]
+            ],
+            'DaysConfiguration' => [
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "days" => 1,
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ]
+            ],
+            'ChangedSinceNullConfiguration' => [
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => null,
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ]
+            ],
+            'ChangedSinceConfiguration' => [
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ]
+            ],
+        ];
+    }
+
+    public function provideValidConfigsChanged()
+    {
+        return [
             'BasicConfiguration' => [
                 [
                     "source" => "in.c-main.test",
@@ -24,118 +85,28 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "eq",
                 ],
             ],
-            'ComplexConfiguration' => [
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => "-1 days",
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => "-1 days",
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-            ],
-            'DaysNullConfiguration' => [
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "days" => null,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "days" => null,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-            ],
-            'DaysConfiguration' => [
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "days" => 1,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "days" => 1,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-            ],
-            'ChangedSinceNullConfiguration' => [
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => null,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => null,
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-            ],
-            'ChangedSinceConfiguration' => [
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => "-1 days",
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-                [
-                    "source" => "in.c-main.test",
-                    "destination" => "test",
-                    "changed_since" => "-1 days",
-                    "columns" => ["Id", "Name"],
-                    "where_column" => "status",
-                    "where_values" => ["val1", "val2"],
-                    "where_operator" => "ne",
-                ],
-            ],
         ];
+    }
+
+    /**
+     * @dataProvider provideValidConfigsChanged
+     */
+    public function testValidConfigDefinitionChanged(
+        array $config,
+        array $expected
+    ) {
+        $processedConfiguration = (new Table())->parse(["config" => $config]);
+        self::assertEquals($expected, $processedConfiguration);
     }
 
     /**
      * @dataProvider provideValidConfigs
      */
     public function testValidConfigDefinition(
-        array $config,
-        array $expected
+        array $config
     ) {
         $processedConfiguration = (new Table())->parse(["config" => $config]);
-        self::assertEquals($expected, $processedConfiguration);
+        self::assertEquals($config, $processedConfiguration);
     }
 
     /**

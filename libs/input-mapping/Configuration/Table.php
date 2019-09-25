@@ -57,7 +57,7 @@ class Table extends Configuration
             ->ifTrue(function ($v) {
                 return empty($v['source']) && empty($v['source_search']);
             })
-            ->thenInvalid('Either "source" or "source_search" must be defined');
+            ->thenInvalid('Either "source" or "source_search" must be configured.');
             ;
     }
 }

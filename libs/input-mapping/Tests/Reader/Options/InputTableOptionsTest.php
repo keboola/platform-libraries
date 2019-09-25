@@ -43,7 +43,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     public function testConstructorMissingSource()
     {
         self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('The child node "source" at path "table" must be configured.');
+        self::expectExceptionMessage('Either "source" or "source_search" must be configured.');
         new InputTableOptions([]);
     }
 

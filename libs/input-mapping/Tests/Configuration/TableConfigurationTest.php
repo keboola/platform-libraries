@@ -141,7 +141,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
             'testEmptyConfiguration' => [
                 [],
                 InvalidConfigurationException::class,
-                'Either "source" or "source_search" must be defined',
+                'Either "source" or "source_search" must be configured.',
             ],
             'EmptySourceConfiguration' => [
                 ["source" => ""],

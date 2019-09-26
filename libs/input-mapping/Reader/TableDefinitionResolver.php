@@ -64,7 +64,6 @@ class TableDefinitionResolver
         ));
 
         if (0 === count($tables)) {
-
             throw new \Exception(sprintf(
                 'Table with metadata key: %s and value: %s was not found',
                 $searchSourceConfig['key'],

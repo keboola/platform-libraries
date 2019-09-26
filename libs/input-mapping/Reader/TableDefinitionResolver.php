@@ -6,6 +6,7 @@ use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\SearchTablesOptions;
+use Psr\Log\LoggerInterface;
 
 class TableDefinitionResolver
 {
@@ -14,9 +15,15 @@ class TableDefinitionResolver
      */
     private $storageApiClient;
 
-    public function __construct(Client $client)
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    public function __construct(Client $client, LoggerInterface $logger)
     {
         $this->storageApiClient = $client;
+        $this->logger = $logger;
     }
 
     /**
@@ -50,7 +57,14 @@ class TableDefinitionResolver
         $options = SearchTablesOptions::create($searchSourceConfig['key'], $searchSourceConfig['value'], null);
         $tables = $this->storageApiClient->searchTables($options);
 
+        $this->logger->info(sprintf(
+            "Resolving table by metatadat %s:%s",
+            $searchSourceConfig['key'],
+            $searchSourceConfig['value']
+        ));
+
         if (0 === count($tables)) {
+
             throw new \Exception(sprintf(
                 'Table with metadata key: %s and value: %s was not found',
                 $searchSourceConfig['key'],
@@ -61,6 +75,7 @@ class TableDefinitionResolver
             $tableNames = array_map(function ($t) {
                 return $t['id'];
             }, $tables);
+
             throw new \Exception(sprintf(
                 'More than one table with metadata key: %s and value: %s was not found: %s',
                 $searchSourceConfig['key'],
@@ -68,6 +83,13 @@ class TableDefinitionResolver
                 implode(',', $tableNames)
             ));
         }
+
+        $this->logger->info(sprintf(
+            "Resolving table by metatadata key: %s and value: %s was succesfull. Table id is: %s",
+            $searchSourceConfig['key'],
+            $searchSourceConfig['value'],
+            $tables[0]['id']
+        ));
 
         $tableDefinition['source'] = $tables[0]['id'];
 

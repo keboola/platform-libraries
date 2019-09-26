@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\TableDefinitionResolver;
 use Keboola\StorageApi\Client;
+use Psr\Log\NullLogger;
 
 class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
 {
@@ -28,7 +29,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         /** @var Client|\PHPUnit_Framework_MockObject_MockObject $client */
         $client = $this->createMock(Client::class);
         $client->method('searchTables')->willReturn([]);
-        $resolver = new TableDefinitionResolver($client);
+        $resolver = new TableDefinitionResolver($client, new NullLogger);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Table with metadata key: bdm.scaffold.tag and value: test_table was not found');
@@ -47,7 +48,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
                 'id' => 'table1',
             ],
         ]);
-        $resolver = new TableDefinitionResolver($client);
+        $resolver = new TableDefinitionResolver($client, new NullLogger);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('More than one table with metadata key: bdm.scaffold.tag and value: test_table was not found: table1,table1');
@@ -63,7 +64,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
                 'id' => 'table1',
             ],
         ]);
-        $resolver = new TableDefinitionResolver($client);
+        $resolver = new TableDefinitionResolver($client, new NullLogger);
 
         $result = $resolver->resolve($this->getSingleTableSearchOptionsList());
         $this->assertInstanceOf(InputTableOptionsList::class, $result);

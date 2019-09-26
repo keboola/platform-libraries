@@ -273,17 +273,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
         self::assertEquals("in.c-docker-test.test", $manifest["id"]);
         self::assertArrayHasKey('metadata', $manifest);
-        self::assertCount(2, $manifest['metadata']);
+        self::assertCount(1, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
         self::assertArrayHasKey('key', $manifest['metadata'][0]);
         self::assertArrayHasKey('value', $manifest['metadata'][0]);
         self::assertArrayHasKey('provider', $manifest['metadata'][0]);
         self::assertArrayHasKey('timestamp', $manifest['metadata'][0]);
-        self::assertArrayHasKey('id', $manifest['metadata'][1]);
-        self::assertArrayHasKey('key', $manifest['metadata'][1]);
-        self::assertArrayHasKey('value', $manifest['metadata'][1]);
-        self::assertArrayHasKey('provider', $manifest['metadata'][1]);
-        self::assertArrayHasKey('timestamp', $manifest['metadata'][1]);
         self::assertEquals('dataLoaderTest', $manifest['metadata'][0]['provider']);
         self::assertEquals('foo', $manifest['metadata'][0]['key']);
         self::assertEquals('bar', $manifest['metadata'][0]['value']);

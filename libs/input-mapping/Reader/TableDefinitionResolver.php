@@ -2,12 +2,15 @@
 
 namespace Keboola\InputMapping\Reader;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\SearchTablesOptions;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class will resolve table 'source' id based on 'source_search' property
+ */
 class TableDefinitionResolver
 {
     /**
@@ -47,7 +50,7 @@ class TableDefinitionResolver
     /**
      * @param Options\InputTableOptions $table
      * @return array
-     * @throws ClientException
+     * @throws InvalidInputException
      */
     private function resolveSingleTable(Options\InputTableOptions $table)
     {
@@ -58,40 +61,43 @@ class TableDefinitionResolver
         $tables = $this->storageApiClient->searchTables($options);
 
         $this->logger->info(sprintf(
-            "Resolving table by metatadat %s:%s",
+            'Resolving table by metatadat  key: "%s" and value: "%s".',
             $searchSourceConfig['key'],
             $searchSourceConfig['value']
         ));
 
-        if (0 === count($tables)) {
-            throw new \Exception(sprintf(
-                'Table with metadata key: %s and value: %s was not found',
-                $searchSourceConfig['key'],
-                $searchSourceConfig['value']
-            ));
-        }
-        if (1 !== count($tables)) {
-            $tableNames = array_map(function ($t) {
-                return $t['id'];
-            }, $tables);
+        switch (count($tables)) {
+            case 0:
+                // no table found
+                throw new InvalidInputException(sprintf(
+                    'Table with metadata key: "%s" and value: "%s" was not found.',
+                    $searchSourceConfig['key'],
+                    $searchSourceConfig['value']
+                ));
+                break;
+            case 1:
+                // one table found
+                $this->logger->info(sprintf(
+                    'Table with id: "%s" was found.',
+                    $tables[0]['id']
+                ));
 
-            throw new \Exception(sprintf(
-                'More than one table with metadata key: %s and value: %s was not found: %s',
-                $searchSourceConfig['key'],
-                $searchSourceConfig['value'],
-                implode(',', $tableNames)
-            ));
+                $tableDefinition['source'] = $tables[0]['id'];
+
+                return $tableDefinition;
         }
 
-        $this->logger->info(sprintf(
-            "Resolving table by metatadata key: %s and value: %s was succesfull. Table id is: %s",
+        // more than one table found
+
+        $tableNames = array_map(function ($t) {
+            return $t['id'];
+        }, $tables);
+
+        throw new InvalidInputException(sprintf(
+            'More than one table with metadata key: "%s" and value: "%s" was found: %s.',
             $searchSourceConfig['key'],
             $searchSourceConfig['value'],
-            $tables[0]['id']
+            implode(',', $tableNames)
         ));
-
-        $tableDefinition['source'] = $tables[0]['id'];
-
-        return $tableDefinition;
     }
 }

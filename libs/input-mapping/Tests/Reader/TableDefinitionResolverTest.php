@@ -32,7 +32,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         $resolver = new TableDefinitionResolver($client, new NullLogger);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Table with metadata key: bdm.scaffold.tag and value: test_table was not found');
+        $this->expectExceptionMessage('Table with metadata key: "bdm.scaffold.tag" and value: "test_table" was not found.');
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }
 
@@ -51,7 +51,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
         $resolver = new TableDefinitionResolver($client, new NullLogger);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('More than one table with metadata key: bdm.scaffold.tag and value: test_table was not found: table1,table1');
+        $this->expectExceptionMessage('More than one table with metadata key: "bdm.scaffold.tag" and value: "test_table" was found: table1,table1.');
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }
 

@@ -57,7 +57,7 @@ class TableDefinitionResolver
         $tableDefinition = $table->getDefinition();
         $searchSourceConfig = $tableDefinition['source_search'];
 
-        $options = SearchTablesOptions::create($searchSourceConfig['key'], $searchSourceConfig['value'], null);
+        $options = new SearchTablesOptions($searchSourceConfig['key'], $searchSourceConfig['value'], null);
         $tables = $this->storageApiClient->searchTables($options);
 
         $this->logger->info(sprintf(

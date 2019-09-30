@@ -264,7 +264,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        // make at least 10 files in the project
+        // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
             $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         }

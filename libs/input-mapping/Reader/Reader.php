@@ -149,7 +149,7 @@ class Reader
             $options->setQuery($fileConfiguration["query"]);
         }
         if (empty($fileConfiguration["limit"])) {
-            $fileConfiguration["limit"] = 10;
+            $fileConfiguration["limit"] = 100;
         }
         $options->setLimit($fileConfiguration["limit"]);
         $files = $this->getClient()->listFiles($options);

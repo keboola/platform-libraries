@@ -265,7 +265,7 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         file_put_contents($root . "/upload", "test");
 
         // make at least 10 files in the project
-        for ($i = 0; $i < 12; $i++) {
+        for ($i = 0; $i < 102; $i++) {
             $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         }
         sleep(2);
@@ -289,13 +289,13 @@ class DownloadFilesTest extends \PHPUnit_Framework_TestCase
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
-        self::assertEquals(10, $finder->count());
+        self::assertEquals(100, $finder->count());
 
         $reader = new Reader($this->client, new NullLogger());
-        $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 12]];
+        $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 102]];
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
-        self::assertEquals(12, $finder->count());
+        self::assertEquals(102, $finder->count());
     }
 }

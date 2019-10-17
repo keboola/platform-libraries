@@ -61,7 +61,7 @@ class TableDefinitionResolver
         $tables = $this->storageApiClient->searchTables($options);
 
         $this->logger->info(sprintf(
-            'Resolving table by metatadata  key: "%s" and value: "%s".',
+            'Resolving table by metadata key: "%s" and value: "%s".',
             $searchSourceConfig['key'],
             $searchSourceConfig['value']
         ));

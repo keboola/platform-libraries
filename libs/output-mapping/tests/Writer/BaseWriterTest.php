@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Keboola\OutputMapping\Tests\Writer;
-
 
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;

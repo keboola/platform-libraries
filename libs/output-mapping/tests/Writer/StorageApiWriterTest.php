@@ -4,32 +4,20 @@ namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
-use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 
-class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
+class StorageApiWriterTest extends BaseWriterTest
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * @var Temp
-     */
-    private $tmp;
-
     protected function clearBucket()
     {
         $buckets = ['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test'];
@@ -44,45 +32,11 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function clearFileUploads()
-    {
-        // Delete file uploads
-        $options = new ListFilesOptions();
-        $options->setTags(['docker-bundle-test']);
-        sleep(1);
-        $files = $this->client->listFiles($options);
-        foreach ($files as $file) {
-            $this->client->deleteFile($file['id']);
-        }
-    }
-
     public function setUp()
     {
-        // Create folders
-        $this->tmp = new Temp();
-        $this->tmp->initRunFolder();
-        $root = $this->tmp->getTmpFolder();
-        $fs = new Filesystem();
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
-
-        $this->client = new Client([
-            'url' => STORAGE_API_URL,
-            'token' => STORAGE_API_TOKEN,
-        ]);
-        $this->clearBucket();
-        $this->clearFileUploads();
+        parent::setUp();
         $this->client->createBucket('docker-redshift-test', 'out', '', 'redshift');
         $this->client->createBucket('docker-default-test', 'out');
-    }
-
-    public function tearDown()
-    {
-        // Delete local files
-        $this->tmp = null;
-
-        $this->clearBucket();
-        $this->clearFileUploads();
     }
 
     public function testWriteFiles()
@@ -287,6 +241,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $this->fail("Missing file must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains("File 'file2' not found", $e->getMessage());
+            $this->assertEquals(404, $e->getCode());
         }
     }
 
@@ -585,6 +540,7 @@ class StorageApiWriterTest extends \PHPUnit_Framework_TestCase
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains("Table source 'table81.csv' not found", $e->getMessage());
+            $this->assertEquals(404, $e->getCode());
         }
     }
 

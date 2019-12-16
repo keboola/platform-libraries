@@ -30,6 +30,13 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
     {
         parent::setUp();
         try {
+            $this->client->dropBucket('in.c-docker-test', ['force' => true]);
+        } catch (ClientException $e) {
+            if ($e->getCode() != 404) {
+                throw $e;
+            }
+        }
+        try {
             $this->client->dropBucket('in.c-docker-test-backend', ['force' => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {

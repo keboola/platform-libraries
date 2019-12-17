@@ -140,7 +140,7 @@ class TableWriter extends AbstractWriter
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
                     "Failed to write manifest for table {$file->getFilename()}.",
-                    $e->getCode(),
+                    0,
                     $e
                 );
             }
@@ -220,7 +220,7 @@ class TableWriter extends AbstractWriter
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
                 'Failed to read table manifest from file ' . basename($source) . ' ' . $e->getMessage(),
-                $e->getCode(),
+                0,
                 $e
             );
         }

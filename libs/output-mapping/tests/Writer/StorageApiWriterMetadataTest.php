@@ -4,26 +4,14 @@ namespace Keboola\DockerBundle\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
-use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 
-class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
+class StorageApiWriterMetadataTest extends BaseWriterTest
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * @var Temp
-     */
-    private $tmp;
-
     /**
      * Transform metadata into a key-value array
      * @param $metadata
@@ -40,47 +28,9 @@ class StorageApiWriterMetadataTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        // Create folders
-        $this->tmp = new Temp();
-        $this->tmp->initRunFolder();
-        $root = $this->tmp->getTmpFolder();
-        $fs = new Filesystem();
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
-
-        $this->client = new Client([
-            'url' => STORAGE_API_URL,
-            'token' => STORAGE_API_TOKEN,
-        ]);
-
-        try {
-            $this->client->dropBucket('in.c-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
-                throw $e;
-            }
-        }
-        try {
-            $this->client->dropBucket('in.c-docker-test-backend', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
-                throw $e;
-            }
-        }
+        parent::setUp();
+        $this->clearBuckets(['in.c-docker-test', 'in.c-docker-test-backend']);
         $this->client->createBucket('docker-test', "in", '', 'snowflake');
-    }
-
-    public function tearDown()
-    {
-        try {
-            $this->client->dropBucket('in.c-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
-                throw $e;
-            }
-        }
-        // Delete local files
-        $this->tmp = null;
     }
 
     public function testMetadataWritingTest()

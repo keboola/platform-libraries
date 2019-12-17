@@ -44,7 +44,7 @@ class LoadTableQueue
             }
         }
         if ($errors) {
-            throw new InvalidOutputException(implode("\n", $errors), null);
+            throw new InvalidOutputException(implode("\n", $errors));
         }
         return $jobIds;
     }

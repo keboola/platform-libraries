@@ -3,74 +3,17 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
-use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 
-class StorageApiHeadlessWriterTest extends \PHPUnit_Framework_TestCase
+class StorageApiHeadlessWriterTest extends BaseWriterTest
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * @var Temp
-     */
-    private $tmp;
-
-    protected function clearBucket()
-    {
-        foreach (['out.c-docker-test'] as $bucket) {
-            try {
-                $this->client->dropBucket($bucket, ['force' => true]);
-            } catch (ClientException $e) {
-                if ($e->getCode() != 404) {
-                    throw $e;
-                }
-            }
-        }
-    }
-
-    protected function clearFileUploads()
-    {
-        // Delete file uploads
-        $options = new ListFilesOptions();
-        $options->setTags(['docker-bundle-test']);
-        $files = $this->client->listFiles($options);
-        foreach ($files as $file) {
-            $this->client->deleteFile($file['id']);
-        }
-    }
-
     public function setUp()
     {
         parent::setUp();
-        $this->tmp = new Temp();
-        $this->tmp->initRunFolder();
-        $root = $this->tmp->getTmpFolder();
-        $fs = new Filesystem();
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
-
-        $this->client = new Client([
-            'url' => STORAGE_API_URL,
-            'token' => STORAGE_API_TOKEN,
-        ]);
-        $this->clearBucket();
-        $this->clearFileUploads();
         $this->client->createBucket('docker-test', 'out');
-    }
-
-    public function tearDown()
-    {
-        $this->clearBucket();
-        $this->clearFileUploads();
     }
 
     public function testWriteTableOutputMapping()

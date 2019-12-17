@@ -48,7 +48,7 @@ class FileWriter extends AbstractWriter
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
                 if (!in_array($mapping['source'], $fileNames)) {
-                    throw new InvalidOutputException("File '{$mapping["source"]}' not found.");
+                    throw new InvalidOutputException("File '{$mapping["source"]}' not found.", 404);
                 }
             }
         }
@@ -85,13 +85,18 @@ class FileWriter extends AbstractWriter
                     $storageConfig = (new FileManifest())->parse([$configFromManifest]);
                 }
             } catch (InvalidConfigurationException $e) {
-                throw new InvalidOutputException("Failed to write manifest for table {$file->getFilename()}.", $e);
+                throw new InvalidOutputException(
+                    "Failed to write manifest for table {$file->getFilename()}.",
+                    0,
+                    $e
+                );
             }
             try {
                 $this->uploadFile($file->getPathname(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to Storage API: " . $e->getMessage(),
+                    $e->getCode(),
                     $e
                 );
             }
@@ -121,6 +126,7 @@ class FileWriter extends AbstractWriter
         } catch (\Exception $e) {
             throw new InvalidOutputException(
                 sprintf('Failed to parse manifest file "%s" as "%s": %s', $source, $this->format, $e->getMessage()),
+                $e->getCode(),
                 $e
             );
         }

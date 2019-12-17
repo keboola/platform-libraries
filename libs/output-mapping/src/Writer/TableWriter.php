@@ -82,7 +82,7 @@ class TableWriter extends AbstractWriter
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
                 if (!in_array($mapping['source'], $fileNames)) {
-                    throw new InvalidOutputException("Table source '{$mapping["source"]}' not found.");
+                    throw new InvalidOutputException("Table source '{$mapping["source"]}' not found.", 404);
                 }
             }
         }
@@ -138,7 +138,11 @@ class TableWriter extends AbstractWriter
                     $config = (new TableManifest())->parse([$configFromManifest]);
                 }
             } catch (InvalidConfigurationException $e) {
-                throw new InvalidOutputException("Failed to write manifest for table {$file->getFilename()}.", $e);
+                throw new InvalidOutputException(
+                    "Failed to write manifest for table {$file->getFilename()}.",
+                    0,
+                    $e
+                );
             }
 
             if (count(explode('.', $config['destination'])) !== 3) {
@@ -157,6 +161,7 @@ class TableWriter extends AbstractWriter
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
                     . $e->getMessage(),
+                    $e->getCode(),
                     $e
                 );
             }
@@ -215,6 +220,7 @@ class TableWriter extends AbstractWriter
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
                 'Failed to read table manifest from file ' . basename($source) . ' ' . $e->getMessage(),
+                0,
                 $e
             );
         }

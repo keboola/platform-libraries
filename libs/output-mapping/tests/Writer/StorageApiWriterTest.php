@@ -18,23 +18,10 @@ use Psr\Log\NullLogger;
 
 class StorageApiWriterTest extends BaseWriterTest
 {
-    protected function clearBucket()
-    {
-        $buckets = ['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test'];
-        foreach ($buckets as $bucket) {
-            try {
-                $this->client->dropBucket($bucket, ['force' => true]);
-            } catch (ClientException $e) {
-                if ($e->getCode() != 404) {
-                    throw $e;
-                }
-            }
-        }
-    }
-
     public function setUp()
     {
         parent::setUp();
+        $this->clearBuckets(['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test']);
         $this->client->createBucket('docker-redshift-test', 'out', '', 'redshift');
         $this->client->createBucket('docker-default-test', 'out');
     }

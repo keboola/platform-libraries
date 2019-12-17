@@ -20,9 +20,9 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
      */
     protected $tmp;
 
-    protected function clearBucket()
+    protected function clearBuckets($buckets)
     {
-        foreach (['out.c-docker-test'] as $bucket) {
+        foreach ($buckets as $bucket) {
             try {
                 $this->client->dropBucket($bucket, ['force' => true]);
             } catch (ClientException $e) {
@@ -33,11 +33,11 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function clearFileUploads()
+    protected function clearFileUploads($tags)
     {
         // Delete file uploads
         $options = new ListFilesOptions();
-        $options->setTags(['docker-bundle-test']);
+        $options->setTags($tags);
         sleep(1);
         $files = $this->client->listFiles($options);
         foreach ($files as $file) {
@@ -63,14 +63,14 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
                 return 1;
             },
         ]);
-        $this->clearBucket();
-        $this->clearFileUploads();
+        $this->clearBuckets(['out.c-docker-test']);
+        $this->clearFileUploads(['docker-bundle-test']);
     }
 
     public function tearDown()
     {
-        $this->clearBucket();
-        $this->clearFileUploads();
+        $this->clearBuckets(['out.c-docker-test']);
+        $this->clearFileUploads(['docker-bundle-test']);
         // Delete local files
         $this->tmp = null;
     }

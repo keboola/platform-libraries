@@ -29,20 +29,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
     public function setUp()
     {
         parent::setUp();
-        try {
-            $this->client->dropBucket('in.c-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
-                throw $e;
-            }
-        }
-        try {
-            $this->client->dropBucket('in.c-docker-test-backend', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
-                throw $e;
-            }
-        }
+        $this->clearBuckets(['in.c-docker-test', 'in.c-docker-test-backend']);
         $this->client->createBucket('docker-test', "in", '', 'snowflake');
     }
 

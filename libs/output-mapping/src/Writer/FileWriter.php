@@ -87,7 +87,7 @@ class FileWriter extends AbstractWriter
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
                     "Failed to write manifest for table {$file->getFilename()}.",
-                    $e->getCode(),
+                    0,
                     $e
                 );
             }

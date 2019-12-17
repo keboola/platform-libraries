@@ -138,7 +138,11 @@ class TableWriter extends AbstractWriter
                     $config = (new TableManifest())->parse([$configFromManifest]);
                 }
             } catch (InvalidConfigurationException $e) {
-                throw new InvalidOutputException("Failed to write manifest for table {$file->getFilename()}.", $e);
+                throw new InvalidOutputException(
+                    "Failed to write manifest for table {$file->getFilename()}.",
+                    $e->getCode(),
+                    $e
+                );
             }
 
             if (count(explode('.', $config['destination'])) !== 3) {

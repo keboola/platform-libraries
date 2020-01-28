@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
@@ -371,5 +372,39 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertArrayHasKey('timestamp', $manifest['column_metadata']['bar'][0]);
         self::assertEquals('someBarKey', $manifest['column_metadata']['bar'][0]['key']);
         self::assertEquals('someBarValue', $manifest['column_metadata']['bar'][0]['value']);
+    }
+
+    public function testReadTableLimitTest()
+    {
+        $tokenInfo = $this->client->verifyToken();
+        $tokenInfo['owner']['limits'][Reader::EXPORT_SIZE_LIMIT_NAME] = [
+            'name' => Reader::EXPORT_SIZE_LIMIT_NAME,
+            'value' => 10,
+        ];
+        $client = self::getMockBuilder(Client::class)
+            ->setMethods(['verifyToken'])
+            ->setConstructorArgs([['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]])
+            ->getMock();
+        $client->method('verifyToken')->willReturn($tokenInfo);
+        $logger = new TestLogger();
+        /** @var Client $client */
+        $reader = new Reader($client, $logger);
+        $configuration = new InputTableOptionsList([
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv"
+            ]
+        ]);
+
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage(
+            'Table "in.c-docker-test.test" with size 1024 bytes exceeds the input mapping limit ' .
+            'of 10 bytes. Please contact support to raise this limit'
+        );
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download"
+        );
     }
 }

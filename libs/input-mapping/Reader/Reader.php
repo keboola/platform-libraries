@@ -14,6 +14,7 @@ use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
+use Keboola\StorageApi\Workspaces;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -193,10 +194,10 @@ class Reader
             $this->getClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
         } else {
             $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
-        }
+    }
 
         $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
-    }
+        }
 
     /**
      * @param InputTableOptionsList $tablesDefinition list of input mappings
@@ -237,7 +238,7 @@ class Reader
                 if ($tableInfo['dataSizeBytes'] > $exportLimit) {
                     throw new InvalidInputException(sprintf(
                         'Table "%s" with size %s bytes exceeds the input mapping limit of %s bytes. ' .
-                            'Please contact support to raise this limit',
+                        'Please contact support to raise this limit',
                         $table->getSource(),
                         $tableInfo['dataSizeBytes'],
                         $exportLimit
@@ -249,6 +250,15 @@ class Reader
                     "exportOptions" => $exportOptions
                 ];
                 $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
+            } elseif ($storage == "workspace-snowflake") {
+                $workspaces = new Workspaces($this->getClient());
+                $workspace = $workspaces->createWorkspace(['backend' => 'snowflake']);
+                $job = $workspaces->cloneIntoWorkspace($workspace['id'], ['input' => [[
+                    'source' => $table->getSource(),
+                    'destination' => $table->getDestination()
+                ]]]);
+                $jobId = $job['id'];
+                $s3exports[$jobId] = $table;
             } else {
                 throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
             }

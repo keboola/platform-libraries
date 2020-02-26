@@ -23,6 +23,10 @@ class Reader
 {
     const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
     const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';
+    const STAGING_S3 = 's3';
+    const STAGING_LOCAL = 'local';
+    const STAGING_SNOWFLAKE = 'workspace-snowflake';
+    const STAGING_REDSHIFT = 'workspace-redshift';
 
     /**
      * @var Client
@@ -36,6 +40,11 @@ class Reader
      * @var LoggerInterface
      */
     private $logger;
+
+    /**
+     * @var WorkspaceProviderInterface
+     */
+    private $workspaceProvider;
 
     /**
      * @return mixed
@@ -79,10 +88,11 @@ class Reader
      * @param Client $client
      * @param LoggerInterface $logger
      */
-    public function __construct(Client $client, LoggerInterface $logger)
+    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
     {
         $this->logger = $logger;
         $this->setClient($client);
+        $this->workspaceProvider = $workspaceProvider;
     }
 
     /**
@@ -199,6 +209,51 @@ class Reader
         $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
         }
 
+    private function processWorkspaceTableExport(
+        array $tableInfo,
+        array $exportOptions,
+        InputTableOptions $table,
+        $workspaceType
+    ) {
+        $workspaces = new Workspaces($this->getClient());
+        if (LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions)) {
+            $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
+            // todo @queue
+            $job = $this->client->apiPost(
+                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($workspaceType) . '/load-clone',
+                [
+                    'input' => [[
+                        'source' => $table->getSource(),
+                        'destination' => $table->getDestination()
+                    ]],
+                    'preserve' => 1,
+                ],
+                false
+            );
+        } else {
+            // todo @queue
+            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+            $job = $this->client->apiPost(
+                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($workspaceType) . '/load',
+                [
+                    'input' => [
+                        array_merge(
+                            [
+                                'source' => $table->getSource(),
+                                'destination' => $table->getDestination(),
+                            ],
+                            $exportOptions
+                        )
+                    ],
+                    'preserve' => 1,
+                ],
+                false
+            );
+        }
+        $jobId = $job['id'];
+        return [$jobId => $table];
+    }
+
     /**
      * @param InputTableOptionsList $tablesDefinition list of input mappings
      * @param InputTableStateList $tablesState list of input mapping states
@@ -219,6 +274,7 @@ class Reader
         $tableResolver = new TableDefinitionResolver($this->client, $this->logger);
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $localExports = [];
+        $workspaceExports = [];
         $s3exports = [];
         $outputStateConfiguration = [];
         foreach ($tablesDefinition->getTables() as $table) {
@@ -228,11 +284,11 @@ class Reader
                 'lastImportDate' => $tableInfo['lastImportDate']
             ];
             $exportOptions = $table->getStorageApiExportOptions($tablesState);
-            if ($storage == "s3") {
+            if ($storage == self::STAGING_S3) {
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);
                 $s3exports[$jobId] = $table;
-            } elseif ($storage == "local") {
+            } elseif ($storage == self::STAGING_LOCAL) {
                 $file = $this->getDestinationFilePath($destination, $table);
                 $tableInfo = $this->client->getTable($table->getSource());
                 if ($tableInfo['dataSizeBytes'] > $exportLimit) {
@@ -250,17 +306,28 @@ class Reader
                     "exportOptions" => $exportOptions
                 ];
                 $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
-            } elseif ($storage == "workspace-snowflake") {
-                $workspaces = new Workspaces($this->getClient());
-                $workspace = $workspaces->createWorkspace(['backend' => 'snowflake']);
-                $job = $workspaces->cloneIntoWorkspace($workspace['id'], ['input' => [[
-                    'source' => $table->getSource(),
-                    'destination' => $table->getDestination()
-                ]]]);
-                $jobId = $job['id'];
-                $s3exports[$jobId] = $table;
+            } elseif ($storage == self::STAGING_SNOWFLAKE) {
+                $workspaceExports = $workspaceExports + $this->processWorkspaceTableExport(
+                    $tableInfo,
+                    $exportOptions,
+                    $table,
+                    WorkspaceProviderInterface::TYPE_SNOWFLAKE
+                );
+            } elseif ($storage == self::STAGING_REDSHIFT) {
+                $workspaceExports = $workspaceExports + $this->processWorkspaceTableExport(
+                    $tableInfo,
+                    $exportOptions,
+                    $table,
+                    WorkspaceProviderInterface::TYPE_REDSHIFT
+                );
             } else {
-                throw new InvalidInputException("Parameter 'storage' must be either 'local' or 's3'.");
+                throw new InvalidInputException(
+                    'Parameter "storage" must be one of: ' .
+                    implode(
+                        ',',
+                        [self::STAGING_LOCAL, self::STAGING_S3, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
+                    )
+                );
             }
             $this->logger->info("Fetched table " . $table->getSource() . ".");
         }
@@ -283,6 +350,15 @@ class Reader
                 )
                 ;
                 $tableInfo["s3"] = $this->getS3Info($fileInfo);
+                $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
+            }
+        }
+        if ($workspaceExports) {
+            $this->logger->info("Processing " . count($workspaceExports) . " workspace table exports.");
+            $this->client->handleAsyncTasks(array_keys($workspaceExports));
+            foreach ($workspaceExports as $jobId => $table) {
+                $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
+                $tableInfo = $this->getClient()->getTable($table->getSource());
                 $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
             }
         }

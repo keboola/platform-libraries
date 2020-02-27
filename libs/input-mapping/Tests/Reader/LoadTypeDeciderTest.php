@@ -21,7 +21,58 @@ class LoadTypeDeciderTest extends \PHPUnit_Framework_TestCase
     public function decideProvider()
     {
         return [
-            ['a' => 'b']
+            'Different Backends' => [
+                [
+                    'id' => 'foo.bar',
+                    'name' => 'bar',
+                    'bucket' => ['backend' => 'redshift'],
+                ],
+                'snowflake',
+                [],
+                false,
+            ],
+            'Different Backends 2' => [
+                [
+                    'id' => 'foo.bar',
+                    'name' => 'bar',
+                    'bucket' => ['backend' => 'snowflake'],
+                ],
+                'redshift',
+                [],
+                false,
+            ],
+            'Filtered' => [
+                [
+                    'id' => 'foo.bar',
+                    'name' => 'bar',
+                    'bucket' => ['backend' => 'snowflake'],
+                ],
+                'snowflake',
+                [
+                    'changed_since' => '-2 days',
+                ],
+                false,
+            ],
+            'cloneable snowflake' => [
+                [
+                    'id' => 'foo.bar',
+                    'name' => 'bar',
+                    'bucket' => ['backend' => 'snowflake'],
+                ],
+                'snowflake',
+                [],
+                true,
+            ],
+            'cloneable redshift' => [
+                [
+                    'id' => 'foo.bar',
+                    'name' => 'bar',
+                    'bucket' => ['backend' => 'redshift'],
+                ],
+                'redshift',
+                [],
+                true,
+            ],
         ];
     }
 }

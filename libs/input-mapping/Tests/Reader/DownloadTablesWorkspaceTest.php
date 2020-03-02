@@ -1,5 +1,7 @@
 <?php
 
+namespace Keboola\InputMapping\Tests\Reader;
+
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
@@ -7,7 +9,6 @@ use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
-use Keboola\InputMapping\Tests\Reader\DownloadTablesTestAbstract;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
@@ -23,14 +24,14 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
         try {
             $this->client->dropBucket('in.c-input-mapping-test', ['force' => true]);
         } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
+            if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
         try {
             $this->client->dropBucket('out.c-input-mapping-test', ['force' => true]);
         } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
+            if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
@@ -43,13 +44,9 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
         $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-        $this->client->createTableAsync('in.c-input-mapping-test', 'test', $csv);
+        $this->client->createTableAsync('in.c-input-mapping-test', 'test1', $csv);
         $this->client->createTableAsync('in.c-input-mapping-test', 'test2', $csv);
-        if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->client);
-            $workspaces->deleteWorkspace($this->workspaceId);
-            $this->workspaceId = null;
-        }
+        $this->client->createTableAsync('in.c-input-mapping-test', 'test3', $csv);
     }
 
     public function tearDown()
@@ -72,7 +69,6 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->client);
                     $workspace = $workspaces->createWorkspace(['backend' => $type]);
-                    var_export($workspace);
                     $this->workspaceId = $workspace['id'];
                 }
                 return $this->workspaceId;
@@ -82,21 +78,25 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
         return $mock;
     }
 
-    public function testReadTablesWorkspaceSnowflakeBackend()
+    public function testTablesSnowflakeBackend()
     {
         $logger = new TestLogger();
         $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test',
-                'destination' => 'test',
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
             ],
             [
                 'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2',
                 'where_column' => 'Id',
                 'where_values' => ['Id2', 'Id3'],
-            ]
+            ],
+            [
+                'source' => 'in.c-input-mapping-test.test3',
+                'destination' => 'test3',
+            ],
         ]);
 
         $reader->downloadTables(
@@ -108,14 +108,14 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
 
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.manifest');
-        self::assertEquals('in.c-input-mapping-test.test', $manifest['id']);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
+        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
             $this->client->createTableAsyncDirect(
                 'out.c-input-mapping-test',
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test', 'name' => 'test']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
@@ -130,12 +130,41 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
 
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test" will be cloned.'));
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
+        self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
+        /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
+            the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
+        try {
+            $this->client->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+            );
+            self::fail('Must throw exception');
+        } catch (ClientException $e) {
+            self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
+        }
+
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 workspace table exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be cloned.'));
+        self::assertTrue($logger->hasInfoThatContains('Cloning 2 tables to snowflake workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to snowflake workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Processing 2 workspace exports.'));
+        // test that the clone jobs are merged into a single one
+        $jobs = $this->client->listJobs(['limit' => 10]);
+        $params = null;
+        foreach ($jobs as $job) {
+            if ($job['operationName'] === 'workspaceLoadClone') {
+                $params = $job['operationParams'];
+            }
+        }
+        self::assertNotEmpty($params);
+        self::assertEquals(2, count($params['input']));
+        self::assertEquals('test1', $params['input'][0]['destination']);
+        self::assertEquals('test3', $params['input'][1]['destination']);
     }
 
-    public function testReadTablesWorkspaceRedshiftBackend()
+    public function testTablesRedshiftBackend()
     {
         $logger = new TestLogger();
         $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());

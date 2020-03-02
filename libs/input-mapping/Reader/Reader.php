@@ -273,7 +273,8 @@ class Reader
         $tableResolver = new TableDefinitionResolver($this->client, $this->logger);
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $localExports = [];
-        $workspaceExports = [];
+        $workspaceClones = [];
+        $workspaceCopies = [];
         $s3exports = [];
         $outputStateConfiguration = [];
         foreach ($tablesDefinition->getTables() as $table) {
@@ -305,20 +306,22 @@ class Reader
                     "exportOptions" => $exportOptions
                 ];
                 $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
-            } elseif ($storage == self::STAGING_SNOWFLAKE) {
-                $workspaceExports = $workspaceExports + $this->processWorkspaceTableExport(
-                    $tableInfo,
-                    $exportOptions,
-                    $table,
-                    WorkspaceProviderInterface::TYPE_SNOWFLAKE
-                );
-            } elseif ($storage == self::STAGING_REDSHIFT) {
-                $workspaceExports = $workspaceExports + $this->processWorkspaceTableExport(
-                    $tableInfo,
-                    $exportOptions,
-                    $table,
-                    WorkspaceProviderInterface::TYPE_REDSHIFT
-                );
+            } elseif ($storage === self::STAGING_SNOWFLAKE) {
+                if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $exportOptions)) {
+                    $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
+                    $workspaceClones['snowflake'][] = $table;
+                } else {
+                    $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+                    $workspaceCopies['snowflake'][] = [$table, $exportOptions];
+                }
+            } elseif ($storage === self::STAGING_REDSHIFT) {
+                if (LoadTypeDecider::canClone($tableInfo, 'redshift', $exportOptions)) {
+                    $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
+                    $workspaceClones['redshift'][] = $table;
+                } else {
+                    $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+                    $workspaceCopies['redshift'][] = [$table, $exportOptions];
+                }
             } else {
                 throw new InvalidInputException(
                     'Parameter "storage" must be one of: ' .
@@ -352,10 +355,64 @@ class Reader
                 $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
             }
         }
-        if ($workspaceExports) {
-            $this->logger->info("Processing " . count($workspaceExports) . " workspace table exports.");
-            $this->client->handleAsyncTasks(array_keys($workspaceExports));
-            foreach ($workspaceExports as $jobId => $table) {
+        $workspaceJobs = [];
+        $workspaceTables = [];
+        if ($workspaceClones) {
+            foreach ($workspaceClones as $storage => $tables) {
+                $this->logger->info(
+                    sprintf('Cloning %s tables to %s workspace.', count($tables), $storage)
+                );
+                $inputs = [];
+                foreach ($tables as $table) {
+                    $inputs[] = [
+                        'source' => $table->getSource(),
+                        'destination' => $table->getDestination()
+                    ];
+                    $workspaceTables[] = $table;
+                }
+                $job = $this->client->apiPost(
+                    'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($storage) . '/load-clone',
+                    [
+                        'input' => $inputs,
+                        'preserve' => 1,
+                    ],
+                    false
+                );
+                $workspaceJobs[] = $job['id'];
+            }
+        }
+        if ($workspaceCopies) {
+            foreach ($workspaceCopies as $storage => $tables) {
+                $this->logger->info(
+                    sprintf('Copying %s tables to %s workspace.', count($tables), $storage)
+                );
+                $inputs = [];
+                foreach ($tables as $tableArray) {
+                    list ($table, $exportOptions) = $tableArray;
+                    $inputs[] = array_merge(
+                        [
+                            'source' => $table->getSource(),
+                            'destination' => $table->getDestination(),
+                        ],
+                        $exportOptions
+                    );
+                    $workspaceTables[] = $table;
+                }
+                $job = $this->client->apiPost(
+                    'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($storage) . '/load',
+                    [
+                        'input' => $inputs,
+                        'preserve' => 1,
+                    ],
+                    false
+                );
+                $workspaceJobs[] = $job['id'];
+            }
+        }
+        if ($workspaceJobs) {
+            $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
+            $this->client->handleAsyncTasks($workspaceJobs);
+            foreach ($workspaceTables as $table) {
                 $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
                 $tableInfo = $this->getClient()->getTable($table->getSource());
                 $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());

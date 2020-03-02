@@ -113,10 +113,10 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
             'Parameter "storage" must be one of: local, s3, workspace-snowflake, workspace-redshift'
         );
         $reader->downloadTables(
-            $configuration, 
-            new InputTableStateList([]), 
+            $configuration,
+            new InputTableStateList([]),
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
             'invalid'
         );
-    }    
+    }
 }

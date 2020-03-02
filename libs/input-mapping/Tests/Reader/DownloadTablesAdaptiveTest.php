@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
@@ -36,7 +37,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
     public function testDownloadTablesDownloadsEmptyTable()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -63,7 +64,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
     public function testDownloadTablesDownloadsOnlyNewRows()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -92,7 +93,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
     public function testDownloadTablesInvalidDate()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",

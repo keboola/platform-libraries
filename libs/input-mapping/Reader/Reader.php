@@ -215,7 +215,6 @@ class Reader
         InputTableOptions $table,
         $workspaceType
     ) {
-        $workspaces = new Workspaces($this->getClient());
         if (LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             // todo @queue
@@ -324,7 +323,7 @@ class Reader
                 throw new InvalidInputException(
                     'Parameter "storage" must be one of: ' .
                     implode(
-                        ',',
+                        ', ',
                         [self::STAGING_LOCAL, self::STAGING_S3, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
                     )
                 );
@@ -392,7 +391,7 @@ class Reader
             "isSliced" => $fileInfo["isSliced"],
             "region" => $fileInfo["region"],
             "bucket" => $fileInfo["s3Path"]["bucket"],
-            "key" => $fileInfo["isSliced"]?$fileInfo["s3Path"]["key"] . "manifest":$fileInfo["s3Path"]["key"],
+            "key" => $fileInfo["isSliced"] ? $fileInfo["s3Path"]["key"] . "manifest" : $fileInfo["s3Path"]["key"],
             "credentials" => [
                 "access_key_id" => $fileInfo["credentials"]["AccessKeyId"],
                 "secret_access_key" => $fileInfo["credentials"]["SecretAccessKey"],

@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
@@ -35,7 +36,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
     public function testReadTablesRedshift()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -58,7 +59,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
     public function testReadTablesS3Redshift()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",

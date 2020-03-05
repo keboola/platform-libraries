@@ -209,50 +209,6 @@ class Reader
         $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
         }
 
-    private function processWorkspaceTableExport(
-        array $tableInfo,
-        array $exportOptions,
-        InputTableOptions $table,
-        $workspaceType
-    ) {
-        if (LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions)) {
-            $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-            // todo @queue
-            $job = $this->client->apiPost(
-                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($workspaceType) . '/load-clone',
-                [
-                    'input' => [[
-                        'source' => $table->getSource(),
-                        'destination' => $table->getDestination()
-                    ]],
-                    'preserve' => 1,
-                ],
-                false
-            );
-        } else {
-            // todo @queue
-            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-            $job = $this->client->apiPost(
-                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($workspaceType) . '/load',
-                [
-                    'input' => [
-                        array_merge(
-                            [
-                                'source' => $table->getSource(),
-                                'destination' => $table->getDestination(),
-                            ],
-                            $exportOptions
-                        )
-                    ],
-                    'preserve' => 1,
-                ],
-                false
-            );
-        }
-        $jobId = $job['id'];
-        return [$jobId => $table];
-    }
-
     /**
      * @param InputTableOptionsList $tablesDefinition list of input mappings
      * @param InputTableStateList $tablesState list of input mapping states

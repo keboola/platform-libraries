@@ -82,6 +82,28 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
+    public function testGetLoadOptions()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => ['col1'],
+            'changed_since' => '-1 days',
+            'where_column' => 'col1',
+            'where_operator' => 'ne',
+            'where_values' => ['1', '2'],
+            'limit' => 100,
+        ]);
+        self::assertEquals([
+            'columns' => ['col1'],
+            'seconds' => '86400',
+            'whereColumn' => 'col1',
+            'whereValues' => ['1', '2'],
+            'whereOperator' => 'ne',
+            'rows' => 100,
+        ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
+    }
+
     public function testGetExportOptionsDays()
     {
         $definition = new InputTableOptions([
@@ -92,7 +114,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'changedSince' => '-2 days',
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
-
 
     public function testGetExportOptionsAdaptiveInputMapping()
     {
@@ -111,7 +132,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ], $definition->getStorageApiExportOptions($tablesState));
     }
 
-
     public function testGetExportOptionsAdaptiveInputMappingMissingTable()
     {
         $definition = new InputTableOptions([
@@ -120,5 +140,33 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ]);
         $tablesState = new InputTableStateList([]);
         self::assertEquals([], $definition->getStorageApiExportOptions($tablesState));
+    }
+
+    public function testGetLoadOptionsAdaptiveInputMapping()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
+        ]);
+        $tablesState = new InputTableStateList([
+            [
+                'source' => 'test',
+                'lastImportDate' => '1989-11-17T21:00:00+0200'
+            ]
+        ]);
+        self::expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
+        self::expectException(InvalidInputException::class);
+        $definition->getStorageApiLoadOptions(new InputTableStateList([]));
+    }
+
+    public function testGetLoadOptionsDaysMapping()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'days' => 2,
+        ]);
+        self::expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
+        self::expectException(InvalidInputException::class);
+        $definition->getStorageApiLoadOptions(new InputTableStateList([]));
     }
 }

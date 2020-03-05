@@ -97,4 +97,43 @@ class InputTableOptions
         }
         return $exportOptions;
     }
+
+    /**
+     * @return array
+     */
+    public function getStorageApiLoadOptions(InputTableStateList $states)
+    {
+        $exportOptions = [];
+        if (isset($this->definition['columns']) && count($this->definition['columns'])) {
+            $exportOptions['columns'] = $this->definition['columns'];
+        }
+        if (!empty($this->definition['days'])) {
+            throw new InvalidInputException(
+                'Days option is not supported on workspace, use changed_since instead.'
+            );
+        }
+        if (!empty($this->definition['changed_since'])) {
+            if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
+                throw new InvalidInputException(
+                    'Adaptive input mapping is not supported on input mapping to workspace.'
+                );
+            } else {
+                if (strtotime($this->definition['changed_since']) === false) {
+                    throw new InvalidInputException(
+                        sprintf('Error parsing changed_since expression "%s".', $this->definition['changed_since'])
+                    );
+                }
+                $exportOptions['seconds'] = time() - strtotime($this->definition['changed_since']);
+            }
+        }
+        if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
+            $exportOptions['whereColumn'] = $this->definition['where_column'];
+            $exportOptions['whereValues'] = $this->definition['where_values'];
+            $exportOptions['whereOperator'] = $this->definition['where_operator'];
+        }
+        if (isset($this->definition['limit'])) {
+            $exportOptions['rows'] = $this->definition['limit'];
+        }
+        return $exportOptions;
+    }
 }

@@ -239,8 +239,8 @@ class Reader
                 'source' => $table->getSource(),
                 'lastImportDate' => $tableInfo['lastImportDate']
             ];
-            $exportOptions = $table->getStorageApiExportOptions($tablesState);
             if ($storage == self::STAGING_S3) {
+                $exportOptions = $table->getStorageApiExportOptions($tablesState);
                 $exportOptions['gzip'] = true;
                 $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);
                 $s3exports[$jobId] = $table;
@@ -259,24 +259,26 @@ class Reader
                 $localExports[] = [
                     "tableId" => $table->getSource(),
                     "destination" => $file,
-                    "exportOptions" => $exportOptions
+                    "exportOptions" => $table->getStorageApiExportOptions($tablesState),
                 ];
                 $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
             } elseif ($storage === self::STAGING_SNOWFLAKE) {
-                if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $exportOptions)) {
+                $loadOptions = $table->getStorageApiLoadOptions($tablesState);
+                if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $loadOptions)) {
                     $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
                     $workspaceClones['snowflake'][] = $table;
                 } else {
                     $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies['snowflake'][] = [$table, $exportOptions];
+                    $workspaceCopies['snowflake'][] = [$table, $loadOptions];
                 }
             } elseif ($storage === self::STAGING_REDSHIFT) {
-                if (LoadTypeDecider::canClone($tableInfo, 'redshift', $exportOptions)) {
+                $loadOptions = $table->getStorageApiLoadOptions($tablesState);
+                if (LoadTypeDecider::canClone($tableInfo, 'redshift', $loadOptions)) {
                     $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
                     $workspaceClones['redshift'][] = $table;
                 } else {
                     $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies['redshift'][] = [$table, $exportOptions];
+                    $workspaceCopies['redshift'][] = [$table, $loadOptions];
                 }
             } else {
                 throw new InvalidInputException(

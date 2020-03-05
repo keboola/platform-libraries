@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
@@ -172,7 +173,7 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
             [
                 'source' => 'in.c-input-mapping-test.test1',
                 'destination' => 'test1',
-                'changed_since' => 'adaptive',
+                'changed_since' => '-2 days',
             ],
             [
                 'source' => 'in.c-input-mapping-test.test2',
@@ -214,5 +215,31 @@ class DownloadTablesWorkspaceTest extends DownloadTablesTestAbstract
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+    }
+
+    public function testTablesInvalidMapping()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
+                'changed_since' => 'adaptive',
+            ],
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'test2',
+            ]
+        ]);
+
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'workspace-snowflake'
+        );
     }
 }

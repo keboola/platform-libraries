@@ -2,13 +2,12 @@
 
 namespace Keboola\OutputMapping\Tests;
 
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\FileWriter;
-use Keboola\OutputMapping\Writer\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
@@ -265,9 +264,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
@@ -293,13 +292,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         // And again
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -321,9 +320,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -344,10 +343,10 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
         try {
-            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Empty CSV file must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains('no data in import file', $e->getMessage());
@@ -373,9 +372,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -397,9 +396,9 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-docker-test.table3a\",\"primary_key\": [\"Id\",\"Name\"]}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -421,9 +420,9 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-docker-test.table3\",\"primary_key\": \"Id\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
             $this->fail('Invalid table manifest must cause exception');
         } catch (InvalidOutputException $e) {
             $this->assertContains('Invalid type for path', $e->getMessage());
@@ -442,9 +441,9 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-docker-default-test.table3c\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -475,8 +474,8 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-docker-redshift-test.table3d\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -502,9 +501,9 @@ class StorageApiWriterTest extends BaseWriterTest
             $root . DIRECTORY_SEPARATOR . "upload/table.csv.manifest",
             "{\"destination\": \"out.c-docker-test.table3e\",\"primary_key\": [\"Id\", \"Name\"]}"
         );
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
             $this->fail("Orphaned manifest must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains("Found orphaned table manifest: 'table.csv.manifest'", $e->getMessage());
@@ -521,9 +520,9 @@ class StorageApiWriterTest extends BaseWriterTest
                 "destination" => "out.c-docker-test.table81"
             ]
         ];
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains("Table source 'table81.csv' not found", $e->getMessage());
@@ -535,9 +534,9 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", [], []);
+            $writer->uploadTables($root . "/upload", [], [], 'local');
             self::fail("Missing metadata must fail.");
         } catch (OutputOperationException $e) {
             self::assertContains('Component Id must be set', $e->getMessage());
@@ -549,9 +548,9 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table4.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -568,9 +567,9 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table4", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -598,15 +597,15 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->client->handleAsyncTasks($jobIds);
 
         // And again, check first incremental table
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->client->handleAsyncTasks($jobIds);
@@ -645,14 +644,14 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
         // And again, check first incremental table
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -705,9 +704,9 @@ class StorageApiWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/table71.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table72.csv", "\"Id\",\"Name2\"\n\"test2\",\"test2\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["bucket" => "in.c-docker-test"], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["bucket" => "in.c-docker-test"], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
         $this->assertEquals(2, $tableQueue->getTaskCount());
@@ -729,9 +728,9 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table5.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $tables = $this->client->listTables("out.c-docker-test");
         $this->assertCount(1, $tables);
@@ -754,9 +753,9 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"primary_key\": [\"Id\", \"Name\"]}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ['bucket' => 'out.c-docker-test'], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -778,12 +777,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => $configs, 'bucket' => 'out.c-docker-test'],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -799,9 +799,9 @@ class StorageApiWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/table8.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table8.csv.manifest", "{\"primary_key\": [\"Id\", \"Name\"]}");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", ["mapping" => []], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", ["mapping" => []], ['componentId' => 'foo'], 'local');
             $this->fail("Empty destination with invalid table name must cause exception.");
         } catch (InvalidOutputException $e) {
             $this->assertContains('valid table identifier', $e->getMessage());
@@ -813,7 +813,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table16.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -825,7 +825,8 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -838,7 +839,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table15.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $writer->uploadTables(
             $root . "/upload",
             [
@@ -850,10 +851,11 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -865,7 +867,8 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -878,7 +881,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -890,14 +893,15 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->client->getTable("out.c-docker-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables(
                 $root . "/upload",
@@ -910,7 +914,8 @@ class StorageApiWriterTest extends BaseWriterTest
                         ]
                     ]
                 ],
-                ['componentId' => 'foo']
+                ['componentId' => 'foo'],
+                'local'
             );
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
@@ -925,7 +930,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -937,14 +942,15 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->client->getTable("out.c-docker-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables(
                 $root . "/upload",
@@ -957,7 +963,8 @@ class StorageApiWriterTest extends BaseWriterTest
                         ]
                     ]
                 ],
-                ['componentId' => 'foo']
+                ['componentId' => 'foo'],
+                'local'
             );
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
@@ -975,7 +982,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $handler = new TestHandler();
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler));
+        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $writer->uploadTables(
             $root . "/upload",
             [
@@ -987,13 +994,14 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $tableInfo = $this->client->getTable("out.c-docker-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
 
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler));
+        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -1005,7 +1013,8 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1022,7 +1031,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $handler = new TestHandler();
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler));
+        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -1034,17 +1043,18 @@ class StorageApiWriterTest extends BaseWriterTest
                     ]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler));
+        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         file_put_contents(
             $root . "/upload/table11.csv.manifest",
             '{"destination": "out.c-docker-test.table11","primary_key": [""]}'
         );
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->assertFalse(
@@ -1060,8 +1070,8 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $tableQueue->waitForAll();
 
         $tables = $this->client->listTables("out.c-docker-test");
@@ -1072,11 +1082,12 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-docker-test.table10.csv", "columns" => ["Boing", "Tschak"]]]],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Some columns are missing in the csv file. Missing columns: id,name.');
@@ -1088,11 +1099,12 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/out.c-docker-test.table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-docker-test.table10a.csv"], ["source" => "out.c-docker-test.table10b.csv"]]],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         $tableQueue->waitForAll();
 
@@ -1103,7 +1115,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $tableInfo = $this->client->getTable('out.c-docker-test.table10b');
         $this->assertEquals(["foo", "bar"], $tableInfo["columns"]);
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" =>
@@ -1112,7 +1124,8 @@ class StorageApiWriterTest extends BaseWriterTest
                     ["source" => "out.c-docker-test.table10b.csv", "columns" => ["bum", "tschak"]]
                 ]
             ],
-            ['componentId' => 'foo']
+            ['componentId' => 'foo'],
+            'local'
         );
         try {
             $tableQueue->waitForAll();
@@ -1137,9 +1150,9 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-docker-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
-        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo']);
+        $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
     }
 }

@@ -3,6 +3,7 @@
 namespace Keboola\DockerBundle\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -83,8 +84,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             "configurationId" => "metadata-write-test"
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $metadataApi = new Metadata($this->client);
@@ -114,7 +115,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -147,8 +148,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         ];
         $systemMetadata = ["componentId" => "testComponent"];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table "in.c-docker-test.table55a": Load error: ' .
             'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
@@ -206,8 +207,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"],'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -281,8 +282,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -353,8 +354,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -436,8 +437,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"]);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -516,8 +517,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             "configurationRowId" => "row-1"
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -550,7 +551,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata);
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

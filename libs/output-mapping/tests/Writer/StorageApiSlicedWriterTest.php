@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -35,8 +36,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -71,8 +72,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -108,8 +109,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -140,8 +141,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -177,8 +178,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -208,9 +209,9 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals('Sliced file "table" columns specification missing.', $e->getMessage());
@@ -244,9 +245,9 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -285,9 +286,9 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -330,8 +331,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
@@ -380,9 +381,9 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger());
+        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo']);
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

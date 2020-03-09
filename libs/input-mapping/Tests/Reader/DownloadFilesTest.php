@@ -47,44 +47,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals($id2, $manifest2["id"]);
     }
 
-    public function testReadFilesRegion()
-    {
-        $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
-        $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
-        sleep(2);
-
-        $client = $this->client;
-        $mockClient = $this->getMockBuilder(Client::class)
-            ->setConstructorArgs([["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]])
-            ->getMock();
-
-        $mockClient->method('listFiles')
-            ->willReturnCallback(
-                function ($fileConfiguration) use ($client) {
-                    return $client->listFiles($fileConfiguration);
-                }
-            );
-        // check that region from file info is not ignored
-        $mockClient->method('getFile')
-            ->willReturnCallback(
-                function ($fileId, $fileOptions) use ($client) {
-                    $fileInfo = $client->getFile($fileId, $fileOptions);
-                    $fileInfo['region'] = 'invalid-region';
-                    return $fileInfo;
-                }
-            );
-        /** @var Client $mockClient */
-        $reader = new Reader($mockClient, new NullLogger());
-        $configuration = [["tags" => ["docker-bundle-test"]]];
-        try {
-            $reader->downloadFiles($configuration, $root . "/download");
-            self::fail('must raise exception');
-        } catch (InputOperationException $e) {
-            self::assertContains('Failed to download file upload', $e->getMessage());
-        }
-    }
-
     public function testReadFilesTagsFilterRunId()
     {
         $root = $this->tmpDir;

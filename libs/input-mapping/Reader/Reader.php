@@ -111,8 +111,7 @@ class Reader
                 $fileDestinationPath = sprintf('%s/%s_%s', $destination, $fileInfo['id'], $fileInfo["name"]);
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
-                    $storageClient->downloadFile($file['id'], $fileDestinationPath);
-                    $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
+                    $this->downloadFile($fileInfo, $fileDestinationPath);
                 } catch (\Exception $e) {
                     throw new InputOperationException(
                         sprintf('Failed to download file %s (%s).', $fileInfo['name'], $file['id']),
@@ -184,6 +183,22 @@ class Reader
                 $e
             );
         }
+    }
+
+    /**
+     * @param array $fileInfo array file info from Storage API
+     * @param string $fileDestinationPath string Destination file path
+     * @throws \Exception
+     */
+    protected function downloadFile($fileInfo, $fileDestinationPath)
+    {
+        if ($fileInfo['isSliced']) {
+            $this->getClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
+        } else {
+            $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
+        }
+
+        $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
     }
 
     /**

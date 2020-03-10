@@ -14,4 +14,12 @@ class NullWorkspaceProviderTest extends \PHPUnit_Framework_TestCase
         self::expectExceptionMessage('Workspace "snowflake" is not available.');
         $provider->getWorkspaceId('snowflake');
     }
+
+    public function testProvideSnowflakeWorkspaceCredentials()
+    {
+        $provider = new NullWorkspaceProvider();
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage('Workspace "snowflake" is not available.');
+        $provider->getWorkspaceId('snowflake');
+    }
 }

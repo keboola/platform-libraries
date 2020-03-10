@@ -10,4 +10,13 @@ class NullWorkspaceProvider implements WorkspaceProviderInterface
     {
         throw new InvalidInputException(sprintf('Workspace "%s" is not available.', $type));
     }
+
+    public function cleanup()
+    {
+    }
+
+    public function getCredentials($type)
+    {
+        return [];
+    }
 }

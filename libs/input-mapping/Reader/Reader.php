@@ -266,19 +266,19 @@ class Reader
                 $loadOptions = $table->getStorageApiLoadOptions($tablesState);
                 if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $loadOptions)) {
                     $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-                    $workspaceClones['snowflake'][] = $table;
+                    $workspaceClones[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = $table;
                 } else {
                     $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies['snowflake'][] = [$table, $loadOptions];
+                    $workspaceCopies[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = [$table, $loadOptions];
                 }
             } elseif ($storage === self::STAGING_REDSHIFT) {
                 $loadOptions = $table->getStorageApiLoadOptions($tablesState);
                 if (LoadTypeDecider::canClone($tableInfo, 'redshift', $loadOptions)) {
                     $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-                    $workspaceClones['redshift'][] = $table;
+                    $workspaceClones[WorkspaceProviderInterface::TYPE_REDSHIFT][] = $table;
                 } else {
                     $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies['redshift'][] = [$table, $loadOptions];
+                    $workspaceCopies[WorkspaceProviderInterface::TYPE_REDSHIFT][] = [$table, $loadOptions];
                 }
             } else {
                 throw new InvalidInputException(

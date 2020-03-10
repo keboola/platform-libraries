@@ -2,14 +2,9 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
-use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\Temp\Temp;
-use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 

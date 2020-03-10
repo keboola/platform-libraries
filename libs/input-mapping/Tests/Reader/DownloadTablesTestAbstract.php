@@ -8,15 +8,20 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var Client
-     */
+    /** @var Client */
     protected $client;
 
-    /**
-     * @var Temp
-     */
+    /** @var Temp */
     protected $temp;
+
+    public function setUp()
+    {
+        parent::setUp();
+        $this->temp = new Temp('docker');
+        $fs = new Filesystem();
+        $fs->mkdir($this->temp->getTmpFolder() . "/download");
+        $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
+    }
 
     /**
      * @param array $manifest
@@ -58,14 +63,5 @@ class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
         for ($i = 1; $i < count($expectedArray); $i++) {
             self::assertTrue(in_array($expectedArray[$i], $actualArrayWithoutHeader));
         }
-    }
-
-    public function setUp()
-    {
-        parent::setUp();
-        $this->temp = new Temp('docker');
-        $fs = new Filesystem();
-        $fs->mkdir($this->temp->getTmpFolder() . "/download");
-        $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
     }
 }

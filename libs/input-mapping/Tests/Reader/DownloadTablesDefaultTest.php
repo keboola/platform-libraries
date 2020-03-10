@@ -11,7 +11,6 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Options\FileUploadOptions;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
@@ -37,39 +36,6 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
         $this->client->createTableAsync("in.c-docker-test", "test", $csv);
         $this->client->createTableAsync("in.c-docker-test", "test2", $csv);
-    }
-
-    public function testReadTablesEmptySlices()
-    {
-        $fileUploadOptions = new FileUploadOptions();
-        $fileUploadOptions
-            ->setIsSliced(true)
-            ->setFileName('emptyfile');
-        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
-        $columns = ['Id', 'Name'];
-        $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
-        $headerCsvFile->writeRow($columns);
-        $this->client->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
-
-        $options['columns'] = $columns;
-        $options['dataFileId'] = $uploadFileId;
-        $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
-
-        $reader = new Reader($this->client, new NullLogger());
-        $configuration = new InputTableOptionsList([
-            [
-                "source" => "in.c-docker-test.empty",
-                "destination" => "empty.csv",
-            ],
-        ]);
-
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
-        $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
-        self::assertEquals("\"Id\",\"Name\"\n", $file);
-
-        $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/empty.csv.manifest");
-        self::assertEquals("in.c-docker-test.empty", $manifest["id"]);
     }
 
     public function testReadTablesDefaultBackend()
@@ -146,40 +112,6 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
-    }
-
-    public function testReadTablesS3DefaultBackend()
-    {
-        $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger);
-        $configuration = new InputTableOptionsList([
-            [
-                "source" => "in.c-docker-test.test",
-                "destination" => "test.csv",
-            ],
-            [
-                "source" => "in.c-docker-test.test2",
-                "destination" => "test2.csv",
-            ]
-        ]);
-
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
-            "s3"
-        );
-
-        $adapter = new Adapter();
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
-        $this->assertS3info($manifest);
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
-        self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
-        $this->assertS3info($manifest);
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 S3 table exports.'));
     }
 
     public function testReadTablesMetadata()

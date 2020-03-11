@@ -2,7 +2,6 @@
 
 namespace Keboola\InputMapping\Reader;
 
-use Aws\S3\S3Client;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
@@ -15,11 +14,9 @@ use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
-use Keboola\StorageApi\HandlerStack;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
-use GuzzleHttp\Client as HttpClient;
 
 class Reader
 {

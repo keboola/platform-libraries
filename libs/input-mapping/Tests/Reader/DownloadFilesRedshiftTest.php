@@ -59,30 +59,4 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         self::assertArrayHasKey('is_sliced', $manifest);
         self::assertTrue($manifest['is_sliced']);
     }
-
-    public function testReadFilesEmptySlices()
-    {
-        $fileUploadOptions = new FileUploadOptions();
-        $fileUploadOptions
-            ->setIsSliced(true)
-            ->setFileName('empty_file');
-        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
-        sleep(2);
-
-        $reader = new Reader($this->client, new NullLogger());
-        $configuration = [
-            [
-                'query' => 'id:' . $uploadFileId,
-            ],
-        ];
-        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-
-        $adapter = new Adapter();
-        $manifest = $adapter->readFromFile(
-            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest'
-        );
-        self::assertEquals($uploadFileId, $manifest['id']);
-        self::assertEquals('empty_file', $manifest['name']);
-        self::assertDirectoryExists($this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file');
-    }
 }

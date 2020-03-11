@@ -2,9 +2,11 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
@@ -143,5 +145,76 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(102, $finder->count());
+    }
+
+    public function testReadSlicedFileSnowflake()
+    {
+        // Create bucket
+        $bucketId = 'in.c-docker-test-snowflake';
+        if (!$this->client->bucketExists($bucketId)) {
+            $this->client->createBucket('docker-test-snowflake', Client::STAGE_IN, "Docker Testsuite");
+        }
+
+        // Create redshift table and export it to produce a sliced file
+        $tableName = 'test_file';
+        $tableId = sprintf('%s.%s', $bucketId, $tableName);
+        if (!$this->client->tableExists($tableId)) {
+            $csv = new CsvFile($this->tmpDir . "/upload.csv");
+            $csv->writeRow(["Id", "Name"]);
+            $csv->writeRow(["test", "test"]);
+            $this->client->createTableAsync($bucketId, $tableName, $csv);
+        }
+        $table = $this->client->exportTableAsync($tableId);
+        $fileId = $table['file']['id'];
+
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [['query' => 'id: ' . $fileId]];
+
+        $dlDir = $this->tmpDir . "/download";
+        $reader->downloadFiles($configuration, $dlDir);
+        $fileName = sprintf('%s_%s.csv', $fileId, $tableId);
+
+        $resultFileContent = '';
+        $finder = new Finder();
+
+        /** @var \SplFileInfo $file */
+        foreach ($finder->files()->in($dlDir . '/' . $fileName) as $file) {
+            $resultFileContent .= file_get_contents($file->getPathname());
+        }
+
+        self::assertEquals('"test","test"' . "\n", $resultFileContent);
+
+        $manifestFile = $dlDir . "/" . $fileName . ".manifest";
+        self::assertFileExists($manifestFile);
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile($manifestFile);
+        self::assertArrayHasKey('is_sliced', $manifest);
+        self::assertTrue($manifest['is_sliced']);
+    }
+
+    public function testReadFilesEmptySlices()
+    {
+        $fileUploadOptions = new FileUploadOptions();
+        $fileUploadOptions
+            ->setIsSliced(true)
+            ->setFileName('empty_file');
+        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
+        sleep(2);
+
+        $reader = new Reader($this->client, new NullLogger());
+        $configuration = [
+            [
+                'query' => 'id:' . $uploadFileId,
+            ],
+        ];
+        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile(
+            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest'
+        );
+        self::assertEquals($uploadFileId, $manifest['id']);
+        self::assertEquals('empty_file', $manifest['name']);
+        self::assertDirectoryExists($this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file');
     }
 }

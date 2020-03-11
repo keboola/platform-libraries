@@ -57,5 +57,4 @@ class ConfigurationMerger
         }
         return $target;
     }
-
 }

@@ -208,7 +208,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             ],
         ];
         $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"],'local');
+        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

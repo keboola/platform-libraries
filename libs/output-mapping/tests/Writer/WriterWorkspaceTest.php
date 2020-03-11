@@ -278,7 +278,7 @@ class WriterWorkspaceTest extends BaseWriterTest
         );
         $writer = new TableWriter($this->client, new NullLogger(), $this->getWorkspaceProvider());
 
-        $tableQueue = $writer->uploadTables($root , ['mapping' => $configs], ['componentId' => 'foo'], 'workspace-redshift');
+        $tableQueue = $writer->uploadTables($root, ['mapping' => $configs], ['componentId' => 'foo'], 'workspace-redshift');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 

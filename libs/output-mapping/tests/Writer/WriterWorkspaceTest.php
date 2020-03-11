@@ -80,7 +80,7 @@ class WriterWorkspaceTest extends BaseWriterTest
                         'destination' => 'table2a',
                     ],
                 ],
-            ],
+            ]
         );
     }
 

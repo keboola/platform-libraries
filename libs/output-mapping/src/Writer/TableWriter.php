@@ -12,6 +12,7 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
@@ -138,16 +139,8 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config = array_merge($configFromManifest, $configFromMapping);
+                $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
                 $config = (new TableManifest())->parse([$config]);
-                // Mapping with higher priority
-                /*
-                if ($configFromMapping || !$configFromManifest) {
-                    $config = (new TableManifest())->parse([$configFromMapping]);
-                } else {
-                    $config = (new TableManifest())->parse([$configFromManifest]);
-                }
-                */
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
                     "Failed to write manifest for table {$source}." . $e->getMessage(),

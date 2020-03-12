@@ -87,7 +87,10 @@ class WriterWorkspaceTest extends BaseWriterTest
     public function testSnowflakeTableOutputMapping()
     {
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('snowflake');
+        $tokenInfo = $this->client->verifyToken();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
 
         $configs = [
             [
@@ -187,7 +190,10 @@ class WriterWorkspaceTest extends BaseWriterTest
     public function testMappingMerge()
     {
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('snowflake');
+        $tokenInfo = $this->client->verifyToken();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
 
         $configs = [
             [

@@ -44,7 +44,12 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
 
         self::assertEquals(
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
@@ -67,7 +72,12 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download", "s3");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            's3'
+        );
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-redshift.csv.manifest");
@@ -91,7 +101,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $options['dataFileId'] = $uploadFileId;
         $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.empty",
@@ -99,7 +109,11 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             ],
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download'
+        );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);
 

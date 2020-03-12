@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
@@ -41,7 +42,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger);
+        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -53,7 +54,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
 
         $expectedCSVContent =  "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n";
@@ -78,16 +84,21 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyDaysFilter()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
-                "days" => 0
+                "days" => 0,
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
@@ -97,16 +108,21 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyChangedSinceFilter()
     {
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
                 "destination" => "test.csv",
-                "changed_since" => ""
+                "changed_since" => "",
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
@@ -135,7 +151,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $metadata = new Metadata($this->client);
         $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-docker-test.test.Name', 'dataLoaderTest', $columnMetadata);
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -143,7 +159,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
@@ -189,18 +210,23 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         ];
         $metadata = new Metadata($this->client);
         $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source_search" => [
                     'key'=> 'foo',
-                    'value'=>'bar'
+                    'value'=>'bar',
                 ],
                 "destination" => "test.csv",
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
@@ -251,7 +277,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 ]
             ]
         );
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -260,7 +286,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ]);
 
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
 
         self::assertCSVEquals(
             "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .
@@ -320,7 +351,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $client->method('verifyToken')->willReturn($tokenInfo);
         $logger = new TestLogger();
         /** @var Client $client */
-        $reader = new Reader($client, $logger);
+        $reader = new Reader($client, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -336,7 +367,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
         );
     }
 }

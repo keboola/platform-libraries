@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -22,7 +23,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
         sleep(2);
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [["tags" => ["docker-bundle-test"]]];
         $reader->downloadFiles($configuration, $root . "/download");
 
@@ -51,7 +52,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["docker-bundle-test"]);
 
@@ -81,7 +82,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["docker-bundle-test"]);
 
@@ -119,12 +120,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(2);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [];
         $reader->downloadFiles($configuration, $root . "/download");
 
         // invalid configuration
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [[]];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
@@ -132,14 +133,14 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 102]];
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
@@ -153,7 +154,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $bucketId = 'in.c-docker-test-snowflake';
         if (!$this->client->bucketExists($bucketId)) {
             $this->client->createBucket('docker-test-snowflake', Client::STAGE_IN, "Docker Testsuite");
-        }
+}
 
         // Create redshift table and export it to produce a sliced file
         $tableName = 'test_file';

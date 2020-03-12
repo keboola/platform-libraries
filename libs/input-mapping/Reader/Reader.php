@@ -204,10 +204,9 @@ class Reader
             $this->getClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
         } else {
             $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
-    }
-
-        $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
         }
+        $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
+    }
 
     /**
      * @param InputTableOptionsList $tablesDefinition list of input mappings

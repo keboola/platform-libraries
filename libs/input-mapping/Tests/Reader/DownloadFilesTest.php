@@ -154,7 +154,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $bucketId = 'in.c-docker-test-snowflake';
         if (!$this->client->bucketExists($bucketId)) {
             $this->client->createBucket('docker-test-snowflake', Client::STAGE_IN, "Docker Testsuite");
-}
+        }
 
         // Create redshift table and export it to produce a sliced file
         $tableName = 'test_file';
@@ -168,7 +168,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $table = $this->client->exportTableAsync($tableId);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
@@ -202,7 +202,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
         sleep(2);
 
-        $reader = new Reader($this->client, new NullLogger());
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,

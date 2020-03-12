@@ -1090,7 +1090,7 @@ class StorageApiWriterTest extends BaseWriterTest
             'local'
         );
         self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Some columns are missing in the csv file. Missing columns: id,name.');
+        self::expectExceptionMessageRegExp('/Some columns are missing in the csv file. Missing columns: id,name./i');
         $tableQueue->waitForAll();
     }
 

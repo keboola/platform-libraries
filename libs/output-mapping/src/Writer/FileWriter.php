@@ -2,6 +2,7 @@
 
 namespace Keboola\OutputMapping\Writer;
 
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
@@ -155,7 +156,7 @@ class FileWriter extends AbstractWriter
      */
     public function tagFiles(array $configuration)
     {
-        $reader = new Reader($this->client, $this->logger);
+        $reader = new Reader($this->client, $this->logger, new NullWorkspaceProvider());
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
                 $files = $reader->getFiles($fileConfiguration);

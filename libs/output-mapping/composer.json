@@ -25,14 +25,15 @@
         "symfony/finder": "^2.8|^4.1",
         "symfony/serializer": "^2.8|^4.1",
         "monolog/monolog": "^1.22",
-        "keboola/input-mapping": "^8.0",
+        "keboola/input-mapping": "^9.0",
         "guzzlehttp/guzzle": "^6.2",
         "keboola/sanitizer": "^0.1"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.2",
         "keboola/php-temp": "^1.0",
-        "phpunit/phpunit": "^5.4"
+        "phpunit/phpunit": "^5.4",
+        "ext-json": "*"
     },
     "scripts": {
         "tests": "phpunit",

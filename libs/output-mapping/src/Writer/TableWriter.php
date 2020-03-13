@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
+use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
@@ -11,6 +12,7 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
@@ -27,32 +29,179 @@ class TableWriter extends AbstractWriter
 {
     const SYSTEM_METADATA_PROVIDER = 'system';
 
+    const STAGING_LOCAL = 'local';
+    const STAGING_SNOWFLAKE = 'workspace-snowflake';
+    const STAGING_REDSHIFT = 'workspace-redshift';
+
     /**
      * @var Metadata
      */
     private $metadataClient;
 
     /**
+     * @var WorkspaceProviderInterface
+     */
+    private $workspaceProvider;
+
+    /**
      * AbstractWriter constructor.
      *
      * @param Client $client
      * @param LoggerInterface $logger
+     * @param WorkspaceProviderInterface $workspaceProvider
      */
-    public function __construct(Client $client, LoggerInterface $logger)
+    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
     {
         parent::__construct($client, $logger);
         $this->metadataClient = new Metadata($client);
+        $this->workspaceProvider = $workspaceProvider;
     }
 
     /**
      * @param string $source
      * @param array $configuration
      * @param array $systemMetadata
+     * @param string $stagingStorageOutput
      * @return LoadTableQueue
-     * @throws ClientException
-     * @throws \Keboola\Csv\Exception
+     * @throws \Exception
      */
-    public function uploadTables($source, array $configuration, array $systemMetadata)
+    public function uploadTables($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
+    {
+        if (empty($systemMetadata['componentId'])) {
+            throw new OutputOperationException('Component Id must be set');
+        }
+        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+            return $this->uploadTablesLocal($source, $configuration, $systemMetadata, $stagingStorageOutput);
+        } else {
+            return $this->uploadTablesWorkspace($source, $configuration, $systemMetadata, $stagingStorageOutput);
+        }
+    }
+
+    /**
+     * @param string $source
+     * @param array $configuration
+     * @param array $systemMetadata
+     * @param string $stagingStorageOutput
+     * @return LoadTableQueue
+     * @throws \Exception
+     */
+    private function uploadTablesWorkspace($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
+    {
+        $finder = new Finder();
+        /** @var SplFileInfo[] $files */
+        $files = $finder->files()->name('*.manifest')->in($source)->depth(0);
+
+        $sources = [];
+        // add output mappings fom configuration
+        if (isset($configuration['mapping'])) {
+            foreach ($configuration['mapping'] as $mapping) {
+                $sources[$mapping['source']] = false;
+            }
+        }
+
+        // add manifest files
+        foreach ($files as $file) {
+            $sources[$file->getBasename('.manifest')] = $file;
+        }
+
+        $jobs = [];
+        /** @var SplFileInfo|bool $manifest */
+        foreach ($sources as $source => $manifest) {
+            $configFromMapping = [];
+            $configFromManifest = [];
+            if (isset($configuration['mapping'])) {
+                foreach ($configuration['mapping'] as $mapping) {
+                    if (isset($mapping['source']) && $mapping['source'] === $source) {
+                        $configFromMapping = $mapping;
+                        unset($configFromMapping['source']);
+                    }
+                }
+            }
+
+            $prefix = isset($configuration['bucket']) ? ($configuration['bucket'] . '.') : '';
+
+            if ($manifest !== false) {
+                $configFromManifest = $this->readTableManifest($manifest->getPathname());
+                if (empty($configFromManifest['destination']) || isset($configuration['bucket'])) {
+                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
+                        $prefix,
+                        $manifest->getBasename('.manifest')
+                    );
+                }
+            } else {
+                // If no manifest found and no output mapping, use filename (without .csv if present) as table id
+                if (empty($configFromMapping['destination']) || isset($configuration['bucket'])) {
+                    $configFromMapping['destination'] = $this->createDestinationConfigParam(
+                        $prefix,
+                        $manifest->getBasename('.manifest')
+                    );
+                }
+            }
+
+            try {
+                $mergedConfig = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
+                $parsedConfig = (new TableManifest())->parse([$mergedConfig]);
+            } catch (InvalidConfigurationException $e) {
+                throw new InvalidOutputException(
+                    "Failed to write manifest for table {$source}." . $e->getMessage(),
+                    0,
+                    $e
+                );
+            }
+
+            try {
+                $parsedConfig['primary_key'] =
+                    PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
+                $tableJob = $this->uploadTable($source, $parsedConfig, $systemMetadata, $stagingStorageOutput);
+            } catch (ClientException $e) {
+                throw new InvalidOutputException(
+                    "Cannot upload file '{$source}' to table '{$parsedConfig["destination"]}' in Storage API: "
+                    . $e->getMessage(),
+                    $e->getCode(),
+                    $e
+                );
+            }
+
+            // After the file has been written, we can write metadata
+            if (!empty($parsedConfig['metadata'])) {
+                $tableJob->addMetadata(
+                    new MetadataDefinition(
+                        $this->client,
+                        $parsedConfig['destination'],
+                        $systemMetadata['componentId'],
+                        $parsedConfig['metadata'],
+                        MetadataDefinition::TABLE_METADATA
+                    )
+                );
+            }
+            if (!empty($parsedConfig['column_metadata'])) {
+                $tableJob->addMetadata(
+                    new MetadataDefinition(
+                        $this->client,
+                        $parsedConfig['destination'],
+                        $systemMetadata['componentId'],
+                        $parsedConfig['column_metadata'],
+                        MetadataDefinition::COLUMN_METADATA
+                    )
+                );
+            }
+            $jobs[] = $tableJob;
+        }
+
+        $tableQueue = new LoadTableQueue($this->client, $jobs);
+        $tableQueue->start();
+        return $tableQueue;
+    }
+
+    /**
+     * @param string $source
+     * @param array $configuration
+     * @param array $systemMetadata
+     * @param string $stagingStorageOutput
+     * @return LoadTableQueue
+     * @throws \Exception
+     */
+    private function uploadTablesLocal($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
@@ -60,9 +209,6 @@ class TableWriter extends AbstractWriter
         $manifestNames = ManifestHelper::getManifestFiles($source);
 
         $finder = new Finder();
-
-        /** @var SplFileInfo[] $files */
-        $files = $finder->notName('*.manifest')->in($source)->depth(0);
 
         $outputMappingTables = [];
         if (isset($configuration['mapping'])) {
@@ -72,6 +218,9 @@ class TableWriter extends AbstractWriter
         }
         $outputMappingTables = array_unique($outputMappingTables);
         $processedOutputMappingTables = [];
+
+        /** @var SplFileInfo[] $files */
+        $files = $finder->notName('*.manifest')->in($source)->depth(0);
 
         $fileNames = [];
         foreach ($files as $file) {
@@ -156,7 +305,7 @@ class TableWriter extends AbstractWriter
 
             try {
                 $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
-                $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata);
+                $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
@@ -245,10 +394,11 @@ class TableWriter extends AbstractWriter
      * @param string $source
      * @param array $config
      * @param array $systemMetadata
+     * @param string $stagingStorageOutput
      * @return LoadTable
      * @throws ClientException
      */
-    private function uploadTable($source, array $config, array $systemMetadata)
+    private function uploadTable($source, array $config, array $systemMetadata, $stagingStorageOutput)
     {
         if (is_dir($source) && empty($config['columns'])) {
             throw new InvalidOutputException(
@@ -307,7 +457,7 @@ class TableWriter extends AbstractWriter
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
             'incremental' => $config['incremental'],
         ];
-        $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions);
+        $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->client,
             $config['destination'],
@@ -394,19 +544,40 @@ class TableWriter extends AbstractWriter
         return $this->getTableIdParts($tableId)[2];
     }
 
-    private function loadDataIntoTable($source, $tableId, array $options)
+    private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
-        if (is_dir($source)) {
-            $fileId = $this->uploadSlicedFile($source);
-            $options['dataFileId'] = $fileId;
+        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+            if (is_dir($sourcePath)) {
+                $fileId = $this->uploadSlicedFile($sourcePath);
+                $options['dataFileId'] = $fileId;
+                $tableQueue = new LoadTable($this->client, $tableId, $options);
+            } else {
+                $fileId = $this->client->uploadFile(
+                    $sourcePath,
+                    (new FileUploadOptions())->setCompress(true)
+                );
+                $options['dataFileId'] = $fileId;
+                $tableQueue = new LoadTable($this->client, $tableId, $options);
+            }
+        } elseif (($stagingStorageOutput === self::STAGING_REDSHIFT) || ($stagingStorageOutput === self::STAGING_SNOWFLAKE)) {
+            if ($stagingStorageOutput === self::STAGING_REDSHIFT) {
+                $type = 'redshift';
+            } else {
+                $type = 'snowflake';
+            }
+            $options = [
+                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($type),
+                'dataTableName' => $sourcePath,
+            ];
             $tableQueue = new LoadTable($this->client, $tableId, $options);
         } else {
-            $fileId = $this->client->uploadFile(
-                $source,
-                (new FileUploadOptions())->setCompress(true)
+            throw new InvalidOutputException(
+                'Parameter "storage" must be one of: ' .
+                implode(
+                    ', ',
+                    [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
+                )
             );
-            $options['dataFileId'] = $fileId;
-            $tableQueue = new LoadTable($this->client, $tableId, $options);
         }
         return $tableQueue;
     }

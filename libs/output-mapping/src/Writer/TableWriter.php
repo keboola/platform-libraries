@@ -139,8 +139,8 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
-                $config = (new TableManifest())->parse([$config]);
+                $mergedConfig = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
+                $parsedConfig = (new TableManifest())->parse([$mergedConfig]);
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
                     "Failed to write manifest for table {$source}." . $e->getMessage(),
@@ -150,11 +150,12 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
-                $tableJob = $this->uploadTable($source, $config, $systemMetadata, $stagingStorageOutput);
+                $parsedConfig['primary_key'] =
+                    PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
+                $tableJob = $this->uploadTable($source, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
-                    "Cannot upload file '{$source}' to table '{$config["destination"]}' in Storage API: "
+                    "Cannot upload file '{$source}' to table '{$parsedConfig["destination"]}' in Storage API: "
                     . $e->getMessage(),
                     $e->getCode(),
                     $e
@@ -162,24 +163,24 @@ class TableWriter extends AbstractWriter
             }
 
             // After the file has been written, we can write metadata
-            if (!empty($config['metadata'])) {
+            if (!empty($parsedConfig['metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
                         $this->client,
-                        $config['destination'],
+                        $parsedConfig['destination'],
                         $systemMetadata['componentId'],
-                        $config['metadata'],
+                        $parsedConfig['metadata'],
                         MetadataDefinition::TABLE_METADATA
                     )
                 );
             }
-            if (!empty($config['column_metadata'])) {
+            if (!empty($parsedConfig['column_metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
                         $this->client,
-                        $config['destination'],
+                        $parsedConfig['destination'],
                         $systemMetadata['componentId'],
-                        $config['column_metadata'],
+                        $parsedConfig['column_metadata'],
                         MetadataDefinition::COLUMN_METADATA
                     )
                 );

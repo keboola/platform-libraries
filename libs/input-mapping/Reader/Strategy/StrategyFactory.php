@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Keboola\InputMapping\Reader\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -58,9 +56,13 @@ class StrategyFactory
         $this->format = $format;
     }
 
-    public function getStrategy($storageType): StrategyInterface
+    /**
+     * @param string $storageType
+     * @return StrategyInterface
+     */
+    public function getStrategy($storageType)
     {
-        $className = $this->getClassName($storageType);
+        $className = $this->strategyMap[$storageType];
 
         if (!class_exists($className)) {
             throw new InvalidInputException(
@@ -80,10 +82,5 @@ class StrategyFactory
             $this->destination,
             $this->format
         );
-    }
-
-    private function getClassName($storageType)
-    {
-        return __NAMESPACE__ . '\\' . $this->strategyMap[$storageType];
     }
 }

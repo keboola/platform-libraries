@@ -2,32 +2,19 @@
 
 namespace Keboola\InputMapping\Reader;
 
-use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
-use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
+use Keboola\InputMapping\Reader\Strategy\StrategyFactory;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
-use Keboola\StorageApi\TableExporter;
-use Keboola\StorageApi\Workspaces;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 
 class Reader
 {
-    const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
-    const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';
-    const STAGING_S3 = 's3';
-    const STAGING_LOCAL = 'local';
-    const STAGING_SNOWFLAKE = 'workspace-snowflake';
-    const STAGING_REDSHIFT = 'workspace-redshift';
-
     /**
      * @var Client
      */
@@ -46,24 +33,8 @@ class Reader
      */
     private $workspaceProvider;
 
-    /**
-     * @return mixed
-     */
-    public function getFormat()
-    {
-        return $this->format;
-    }
-
-    /**
-     * @param mixed $format
-     * @return $this
-     */
-    public function setFormat($format)
-    {
-        $this->format = $format;
-
-        return $this;
-    }
+    /** @var ManifestWriter */
+    protected $manifestWriter;
 
     /**
      * @return Client
@@ -93,6 +64,7 @@ class Reader
         $this->logger = $logger;
         $this->setClient($client);
         $this->workspaceProvider = $workspaceProvider;
+        $this->manifestWriter = new ManifestWriter($client, $this->format);
     }
 
     /**
@@ -162,38 +134,6 @@ class Reader
     }
 
     /**
-     * @param $fileInfo
-     * @param $destination
-     * @throws \Exception
-     */
-    protected function writeFileManifest($fileInfo, $destination)
-    {
-        $manifest = [
-            "id" => $fileInfo["id"],
-            "name" => $fileInfo["name"],
-            "created" => $fileInfo["created"],
-            "is_public" => $fileInfo["isPublic"],
-            "is_encrypted" => $fileInfo["isEncrypted"],
-            "is_sliced" => $fileInfo["isSliced"],
-            "tags" => $fileInfo["tags"],
-            "max_age_days" => $fileInfo["maxAgeDays"],
-            "size_bytes" => intval($fileInfo["sizeBytes"])
-        ];
-
-        $adapter = new FileAdapter($this->getFormat());
-        try {
-            $adapter->setConfig($manifest);
-            $adapter->writeToFile($destination);
-        } catch (InvalidConfigurationException $e) {
-            throw new InputOperationException(
-                "Failed to write manifest for file {$fileInfo['id']} - {$fileInfo['name']}.",
-                0,
-                $e
-            );
-        }
-    }
-
-    /**
      * @param array $fileInfo array file info from Storage API
      * @param string $fileDestinationPath string Destination file path
      * @throws \Exception
@@ -205,7 +145,7 @@ class Reader
         } else {
             $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
         }
-        $this->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
+        $this->manifestWriter->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
     }
 
     /**
@@ -219,241 +159,13 @@ class Reader
      */
     public function downloadTables(InputTableOptionsList $tablesDefinition, InputTableStateList $tablesState, $destination, $storage = 'local')
     {
-        $tokenInfo = $this->client->verifyToken();
-        $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
-        if (!empty($tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME])) {
-            $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];
-        }
-        $tableExporter = new TableExporter($this->client);
         $tableResolver = new TableDefinitionResolver($this->client, $this->logger);
+        $strategyFactory = new StrategyFactory($this->client, $this->logger, $this->workspaceProvider, $tablesState, $destination);
+
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
-        $localExports = [];
-        $workspaceClones = [];
-        $workspaceCopies = [];
-        $s3exports = [];
-        $outputStateConfiguration = [];
-        foreach ($tablesDefinition->getTables() as $table) {
-            $tableInfo = $this->client->getTable($table->getSource());
-            $outputStateConfiguration[] = [
-                'source' => $table->getSource(),
-                'lastImportDate' => $tableInfo['lastImportDate']
-            ];
-            if ($storage == self::STAGING_S3) {
-                $exportOptions = $table->getStorageApiExportOptions($tablesState);
-                $exportOptions['gzip'] = true;
-                $jobId = $this->getClient()->queueTableExport($table->getSource(), $exportOptions);
-                $s3exports[$jobId] = $table;
-            } elseif ($storage == self::STAGING_LOCAL) {
-                $file = $this->getDestinationFilePath($destination, $table);
-                $tableInfo = $this->client->getTable($table->getSource());
-                if ($tableInfo['dataSizeBytes'] > $exportLimit) {
-                    throw new InvalidInputException(sprintf(
-                        'Table "%s" with size %s bytes exceeds the input mapping limit of %s bytes. ' .
-                        'Please contact support to raise this limit',
-                        $table->getSource(),
-                        $tableInfo['dataSizeBytes'],
-                        $exportLimit
-                    ));
-                }
-                $localExports[] = [
-                    "tableId" => $table->getSource(),
-                    "destination" => $file,
-                    "exportOptions" => $table->getStorageApiExportOptions($tablesState),
-                ];
-                $this->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
-            } elseif ($storage === self::STAGING_SNOWFLAKE) {
-                $loadOptions = $table->getStorageApiLoadOptions($tablesState);
-                if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $loadOptions)) {
-                    $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-                    $workspaceClones[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = $table;
-                } else {
-                    $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = [$table, $loadOptions];
-                }
-            } elseif ($storage === self::STAGING_REDSHIFT) {
-                $loadOptions = $table->getStorageApiLoadOptions($tablesState);
-                if (LoadTypeDecider::canClone($tableInfo, 'redshift', $loadOptions)) {
-                    $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-                    $workspaceClones[WorkspaceProviderInterface::TYPE_REDSHIFT][] = $table;
-                } else {
-                    $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-                    $workspaceCopies[WorkspaceProviderInterface::TYPE_REDSHIFT][] = [$table, $loadOptions];
-                }
-            } else {
-                throw new InvalidInputException(
-                    'Parameter "storage" must be one of: ' .
-                    implode(
-                        ', ',
-                        [self::STAGING_LOCAL, self::STAGING_S3, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
-                    )
-                );
-            }
-            $this->logger->info("Fetched table " . $table->getSource() . ".");
-        }
+        $strategy = $strategyFactory->getStrategy($storage);
 
-        $outputState = new InputTableStateList($outputStateConfiguration);
-
-        if ($s3exports) {
-            $this->logger->info("Processing " . count($s3exports) . " S3 table exports.");
-            $results = $this->client->handleAsyncTasks(array_keys($s3exports));
-            $keyedResults = [];
-            foreach ($results as $result) {
-                $keyedResults[$result["id"]] = $result;
-            }
-            foreach ($s3exports as $jobId => $table) {
-                $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
-                $tableInfo = $this->getClient()->getTable($table->getSource());
-                $fileInfo = $this->getClient()->getFile(
-                    $keyedResults[$jobId]["results"]["file"]["id"],
-                    (new GetFileOptions())->setFederationToken(true)
-                )
-                ;
-                $tableInfo["s3"] = $this->getS3Info($fileInfo);
-                $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
-            }
-        }
-        $workspaceJobs = [];
-        $workspaceTables = [];
-        if ($workspaceClones) {
-            foreach ($workspaceClones as $storage => $tables) {
-                $this->logger->info(
-                    sprintf('Cloning %s tables to %s workspace.', count($tables), $storage)
-                );
-                $inputs = [];
-                foreach ($tables as $table) {
-                    $inputs[] = [
-                        'source' => $table->getSource(),
-                        'destination' => $table->getDestination()
-                    ];
-                    $workspaceTables[] = $table;
-                }
-                $job = $this->client->apiPost(
-                    'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($storage) . '/load-clone',
-                    [
-                        'input' => $inputs,
-                        'preserve' => 1,
-                    ],
-                    false
-                );
-                $workspaceJobs[] = $job['id'];
-            }
-        }
-        if ($workspaceCopies) {
-            foreach ($workspaceCopies as $storage => $tables) {
-                $this->logger->info(
-                    sprintf('Copying %s tables to %s workspace.', count($tables), $storage)
-                );
-                $inputs = [];
-                foreach ($tables as $tableArray) {
-                    list ($table, $exportOptions) = $tableArray;
-                    $inputs[] = array_merge(
-                        [
-                            'source' => $table->getSource(),
-                            'destination' => $table->getDestination(),
-                        ],
-                        $exportOptions
-                    );
-                    $workspaceTables[] = $table;
-                }
-                $job = $this->client->apiPost(
-                    'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($storage) . '/load',
-                    [
-                        'input' => $inputs,
-                        'preserve' => 1,
-                    ],
-                    false
-                );
-                $workspaceJobs[] = $job['id'];
-            }
-        }
-        if ($workspaceJobs) {
-            $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-            $this->client->handleAsyncTasks($workspaceJobs);
-            foreach ($workspaceTables as $table) {
-                $manifestPath = $this->getDestinationFilePath($destination, $table) . ".manifest";
-                $tableInfo = $this->getClient()->getTable($table->getSource());
-                $this->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
-            }
-        }
-
-        if ($localExports) {
-            $this->logger->info("Processing " . count($localExports) . " local table exports.");
-            $tableExporter->exportTables($localExports);
-        }
-
-        $this->logger->info("All tables were fetched.");
-        return $outputState;
-    }
-
-    /**
-     * @param string $destination
-     * @param \Keboola\InputMapping\Reader\Options\InputTableOptions $table
-     * @return string
-     */
-    private function getDestinationFilePath($destination, InputTableOptions $table)
-    {
-        if (!$table->getDestination()) {
-            return $destination . "/" . $table->getSource();
-        } else {
-            return $destination . "/" . $table->getDestination();
-        }
-    }
-
-    protected function getS3Info($fileInfo)
-    {
-        return [
-            "isSliced" => $fileInfo["isSliced"],
-            "region" => $fileInfo["region"],
-            "bucket" => $fileInfo["s3Path"]["bucket"],
-            "key" => $fileInfo["isSliced"] ? $fileInfo["s3Path"]["key"] . "manifest" : $fileInfo["s3Path"]["key"],
-            "credentials" => [
-                "access_key_id" => $fileInfo["credentials"]["AccessKeyId"],
-                "secret_access_key" => $fileInfo["credentials"]["SecretAccessKey"],
-                "session_token" => $fileInfo["credentials"]["SessionToken"]
-            ]
-        ];
-    }
-
-    /**
-     * @param array $tableInfo
-     * @param string $destination
-     * @param array $columns
-     */
-    protected function writeTableManifest($tableInfo, $destination, $columns)
-    {
-        $manifest = [
-            "id" => $tableInfo["id"],
-            "uri" => $tableInfo["uri"],
-            "name" => $tableInfo["name"],
-            "primary_key" => $tableInfo["primaryKey"],
-            "created" => $tableInfo["created"],
-            "last_change_date" => $tableInfo["lastChangeDate"],
-            "last_import_date" => $tableInfo["lastImportDate"],
-        ];
-        if (isset($tableInfo["s3"])) {
-            $manifest["s3"] = $tableInfo["s3"];
-        }
-        if (!$columns) {
-            $columns = $tableInfo["columns"];
-        }
-        $manifest["columns"] = $columns;
-
-        $metadata = new Metadata($this->getClient());
-        $manifest['metadata'] = $metadata->listTableMetadata($tableInfo['id']);
-        $manifest['column_metadata'] = [];
-        foreach ($columns as $column) {
-            $manifest['column_metadata'][$column] = $metadata->listColumnMetadata($tableInfo['id'] . '.' . $column);
-        }
-        $adapter = new TableAdapter($this->getFormat());
-        try {
-            $adapter->setConfig($manifest);
-            $adapter->writeToFile($destination);
-        } catch (InvalidInputException $e) {
-            throw new InputOperationException(
-                "Failed to write manifest for table {$tableInfo['id']} - {$tableInfo['name']}.",
-                $e
-            );
-        }
+        return $strategy->downloadTables($tablesDefinition->getTables());
     }
 
     /**

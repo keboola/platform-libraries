@@ -2,7 +2,6 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
-use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
@@ -107,7 +106,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
                 'destination' => 'test2.csv'
             ]
         ]);
-        
+
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
             'Parameter "storage" must be one of: local, s3, workspace-snowflake, workspace-redshift'

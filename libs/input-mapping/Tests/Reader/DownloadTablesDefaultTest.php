@@ -9,6 +9,7 @@ use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
+use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -340,8 +341,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     public function testReadTableLimitTest()
     {
         $tokenInfo = $this->client->verifyToken();
-        $tokenInfo['owner']['limits'][Reader::EXPORT_SIZE_LIMIT_NAME] = [
-            'name' => Reader::EXPORT_SIZE_LIMIT_NAME,
+        $tokenInfo['owner']['limits'][LocalStrategy::EXPORT_SIZE_LIMIT_NAME] = [
+            'name' => LocalStrategy::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
         ];
         $client = self::getMockBuilder(Client::class)

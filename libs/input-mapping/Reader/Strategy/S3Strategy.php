@@ -7,7 +7,7 @@ use Keboola\StorageApi\Options\GetFileOptions;
 
 class S3Strategy extends AbstractStrategy
 {
-    public function downloadTable(InputTableOptions $table): array
+    public function downloadTable(InputTableOptions $table)
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
@@ -18,7 +18,10 @@ class S3Strategy extends AbstractStrategy
     public function handleExports($exports)
     {
         $this->logger->info("Processing " . count($exports) . " S3 table exports.");
-        $results = $this->storageClient->handleAsyncTasks(array_keys($exports));
+        $jobIds = array_map(function ($export) {
+            return $export[0];
+        }, $exports);
+        $results = $this->storageClient->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($results as $result) {
             $keyedResults[$result["id"]] = $result;

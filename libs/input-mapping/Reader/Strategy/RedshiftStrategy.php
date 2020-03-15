@@ -8,7 +8,7 @@ use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 
 class RedshiftStrategy extends AbstractStrategy
 {
-    private $workspaceProviderId = WorkspaceProviderInterface::TYPE_REDSHIFT;
+    protected $workspaceProviderId = WorkspaceProviderInterface::TYPE_REDSHIFT;
 
     public function downloadTable(InputTableOptions $table)
     {

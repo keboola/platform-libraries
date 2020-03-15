@@ -8,16 +8,23 @@ use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 
 class SnowflakeStrategy extends RedshiftStrategy
 {
+    protected $workspaceProviderId = WorkspaceProviderInterface::TYPE_SNOWFLAKE;
+
     public function downloadTable(InputTableOptions $table)
     {
         $tableInfo = $this->storageClient->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-            $workspaceClones[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = $table;
-        } else {
-            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-            $workspaceCopies[WorkspaceProviderInterface::TYPE_SNOWFLAKE][] = [$table, $loadOptions];
+            return [
+                'table' => $table,
+                'type' => 'clone'
+            ];
         }
+        $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+        return [
+            'table' => [$table, $loadOptions],
+            'type' => 'copy',
+        ];
     }
 }

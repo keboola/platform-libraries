@@ -62,9 +62,7 @@ class StrategyFactory
      */
     public function getStrategy($storageType)
     {
-        $className = $this->strategyMap[$storageType];
-
-        if (!class_exists($className)) {
+        if (!isset($this->strategyMap[$storageType])) {
             throw new InvalidInputException(
                 'Parameter "storage" must be one of: ' .
                 implode(
@@ -73,6 +71,8 @@ class StrategyFactory
                 )
             );
         }
+
+        $className = $this->strategyMap[$storageType];
 
         return new $className(
             $this->storageClient,

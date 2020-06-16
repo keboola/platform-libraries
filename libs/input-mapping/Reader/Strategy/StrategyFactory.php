@@ -67,7 +67,7 @@ class StrategyFactory
                 'Parameter "storage" must be one of: ' .
                 implode(
                     ', ',
-                    [self::STAGING_LOCAL, self::STAGING_S3, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
+                    array_keys($this->strategyMap)
                 )
             );
         }

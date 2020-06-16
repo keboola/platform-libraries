@@ -109,7 +109,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Parameter "storage" must be one of: local, s3, workspace-snowflake, workspace-redshift'
+            'Parameter "storage" must be one of: s3, local, workspace-redshift, workspace-snowflake'
         );
         $reader->downloadTables(
             $configuration,

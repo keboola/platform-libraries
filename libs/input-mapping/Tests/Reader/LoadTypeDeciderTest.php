@@ -63,7 +63,7 @@ class LoadTypeDeciderTest extends \PHPUnit_Framework_TestCase
                 [],
                 true,
             ],
-            'cloneable redshift' => [
+            'redshift' => [
                 [
                     'id' => 'foo.bar',
                     'name' => 'bar',
@@ -71,7 +71,7 @@ class LoadTypeDeciderTest extends \PHPUnit_Framework_TestCase
                 ],
                 'redshift',
                 [],
-                true,
+                false,
             ],
         ];
     }

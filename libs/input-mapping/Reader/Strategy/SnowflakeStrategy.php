@@ -57,31 +57,36 @@ class SnowflakeStrategy extends AbstractStrategy
             }
         }
 
-        $this->logger->info(
-            sprintf('Cloning %s tables to %s workspace.', count($cloneInputs), $this->workspaceProviderId)
-        );
-        $job = $this->storageClient->apiPost(
-            'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
-            [
-                'input' => $cloneInputs,
-                'preserve' => 1,
-            ],
-            false
-        );
-        $workspaceJobs[] = $job['id'];
+        $workspaceJobs = [];
+        if ($cloneInputs) {
+            $this->logger->info(
+                sprintf('Cloning %s tables to %s workspace.', count($cloneInputs), $this->workspaceProviderId)
+            );
+            $job = $this->storageClient->apiPost(
+                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
+                [
+                    'input' => $cloneInputs,
+                    'preserve' => 1,
+                ],
+                false
+            );
+            $workspaceJobs[] = $job['id'];
+        }
 
-        $this->logger->info(
-            sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
-        );
-        $job = $this->storageClient->apiPost(
-            'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
-            [
-                'input' => $copyInputs,
-                'preserve' => 1,
-            ],
-            false
-        );
-        $workspaceJobs[] = $job['id'];
+        if ($copyInputs) {
+            $this->logger->info(
+                sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
+            );
+            $job = $this->storageClient->apiPost(
+                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+                [
+                    'input' => $copyInputs,
+                    'preserve' => 1,
+                ],
+                false
+            );
+            $workspaceJobs[] = $job['id'];
+        }
 
         if ($workspaceJobs) {
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');

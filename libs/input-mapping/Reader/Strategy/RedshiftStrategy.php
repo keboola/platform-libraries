@@ -82,10 +82,6 @@ class RedshiftStrategy extends AbstractStrategy
         );
         $workspaceJobs[] = $job['id'];
 
-
-        $workspaceJobs = [];
-        $workspaceTables = [];
-
         if ($workspaceJobs) {
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
             $this->storageClient->handleAsyncTasks($workspaceJobs);

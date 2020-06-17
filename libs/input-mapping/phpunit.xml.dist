@@ -19,6 +19,9 @@
             <file>Tests/Reader/DownloadTablesAdaptiveTest.php</file>
             <file>Tests/Reader/DownloadTablesDefaultTest.php</file>
             <file>Tests/Reader/DownloadTablesOutputStateTest.php</file>
+            <file>Tests/Reader/DownloadTablesWorkspaceTest.php</file>
+            <file>Tests/Reader/LoadTypeDeciderTest.php</file>
+            <file>Tests/Reader/NullWorkspaceProviderTest.php</file>
             <file>Tests/Reader/ReaderTest.php</file>
             <file>Tests/Reader/TableDefinitionResolverTest.php</file>
         </testsuite>

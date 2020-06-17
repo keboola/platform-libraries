@@ -12,18 +12,10 @@
 
     <testsuites>
         <testsuite name="Common">
-            <directory>Tests/Configuration</directory>
-            <directory>Tests/Keboola</directory>
-            <directory>Tests/Reader/Options</directory>
-            <file>Tests/Reader/DownloadFilesTest.php</file>
-            <file>Tests/Reader/DownloadTablesAdaptiveTest.php</file>
-            <file>Tests/Reader/DownloadTablesDefaultTest.php</file>
-            <file>Tests/Reader/DownloadTablesOutputStateTest.php</file>
-            <file>Tests/Reader/DownloadTablesWorkspaceTest.php</file>
-            <file>Tests/Reader/LoadTypeDeciderTest.php</file>
-            <file>Tests/Reader/NullWorkspaceProviderTest.php</file>
-            <file>Tests/Reader/ReaderTest.php</file>
-            <file>Tests/Reader/TableDefinitionResolverTest.php</file>
+            <directory>Tests</directory>
+            <exclude>Tests/Reader/DownloadFilesRedshiftTest.php</exclude>
+            <exclude>Tests/Reader/DownloadTablesRedshiftTest.php</exclude>
+            <exclude>Tests/Reader/DownloadTablesS3DefaultTest.php</exclude>
         </testsuite>
         <testsuite name="Redshift">
             <file>Tests/Reader/DownloadFilesRedshiftTest.php</file>

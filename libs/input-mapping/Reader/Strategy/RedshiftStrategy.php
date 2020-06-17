@@ -27,5 +27,4 @@ class RedshiftStrategy extends SnowflakeStrategy
             'type' => 'copy',
         ];
     }
-
 }

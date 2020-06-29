@@ -179,6 +179,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             [
                 'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2',
+                'where_column' => 'Id',
+                'where_values' => ['id2'],
                 'columns' => [
                     [
                         'source' => 'Id',

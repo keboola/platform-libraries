@@ -96,7 +96,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
                         'type' => 'NUMERIC'
                     ],
                 ],
-            ],
+            ]
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(

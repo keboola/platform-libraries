@@ -6,7 +6,6 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
-use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
 use Keboola\InputMapping\Reader\Strategy\S3Strategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -97,7 +96,7 @@ class S3StrategyTest extends \PHPUnit_Framework_TestCase
                         'type' => 'NUMERIC'
                     ],
                 ],
-            ],
+            ]
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertArrayHasKey('jobId', $result);

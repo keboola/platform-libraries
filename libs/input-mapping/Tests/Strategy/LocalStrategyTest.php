@@ -10,9 +10,10 @@ use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\Temp\Temp;
+use PHPUnit_Framework_TestCase;
 use Psr\Log\NullLogger;
 
-class LocalStrategyTest extends \PHPUnit_Framework_TestCase
+class LocalStrategyTest extends PHPUnit_Framework_TestCase
 {
     /** @var Client */
     private $client;
@@ -51,11 +52,11 @@ class LocalStrategyTest extends \PHPUnit_Framework_TestCase
             '.'
         );
         $tableOptions = new InputTableOptions(
-           [
-               'source' => 'in.c-input-mapping-test-strategy.test1',
-               'destination' => 'some-table.csv',
-               'columns' => ['Id', 'Name']
-           ]
+            [
+                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'destination' => 'some-table.csv',
+                'columns' => ['Id', 'Name']
+            ]
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(

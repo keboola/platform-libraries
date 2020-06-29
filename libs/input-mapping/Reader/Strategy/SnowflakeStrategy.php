@@ -28,7 +28,6 @@ class SnowflakeStrategy extends AbstractStrategy
         ];
     }
 
-
     public function handleExports($exports)
     {
         $cloneInputs = [];
@@ -94,7 +93,7 @@ class SnowflakeStrategy extends AbstractStrategy
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->storageClient->getTable($table->getSource());
-                $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
+                $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }
         }
     }

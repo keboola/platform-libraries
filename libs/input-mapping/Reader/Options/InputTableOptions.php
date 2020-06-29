@@ -22,6 +22,18 @@ class InputTableOptions
         }
         $tableConfiguration = new \Keboola\InputMapping\Configuration\Table();
         $this->definition = $tableConfiguration->parse(['table' => $configuration]);
+        // column type is required either for all columns or it mustn't be present in any column
+        $typesCount = 0;
+        foreach ($this->definition['columns'] as $column) {
+            if (!empty($column['type'])) {
+                $typesCount++;
+            }
+        }
+        if (($typesCount !== 0) && ($typesCount !== count($this->definition['columns']))) {
+            throw new InvalidInputException(
+                'Columns must be either specified as array of strings or as array of objects with type, but not both.'
+            );
+        }
     }
 
     /**
@@ -54,12 +66,15 @@ class InputTableOptions
     /**
      * @return array
      */
-    public function getColumns()
+    public function getColumnNames()
     {
+        $colNames = [];
         if (isset($this->definition['columns'])) {
-            return $this->definition['columns'];
+            foreach ($this->definition['columns'] as $column) {
+                $colNames[] = $column['source'];
+            }
         }
-        return [];
+        return $colNames;
     }
 
     /**
@@ -69,7 +84,7 @@ class InputTableOptions
     {
         $exportOptions = [];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
-            $exportOptions['columns'] = $this->definition['columns'];
+            $exportOptions['columns'] = $this->getColumnNames();
         }
         if (!empty($this->definition['days'])) {
             $exportOptions['changedSince'] = "-{$this->definition["days"]} days";
@@ -105,7 +120,16 @@ class InputTableOptions
     {
         $exportOptions = [];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
-            $exportOptions['columns'] = $this->definition['columns'];
+            /** Columns are formally always specified in extended format here, if the type is specified it's either
+             *  specified for all columns (it was originally in extended format) or for no columns (it was originally
+             *  a simple list). We check the first column (because all are same) to see if the types are specified
+             * or not.
+             */
+            if (!empty($this->definition['columns'][0]['type'])) {
+                $exportOptions['columns'] = $this->definition['columns'];
+            } else {
+                $exportOptions['columns'] = $this->getColumnNames();
+            }
         }
         if (!empty($this->definition['days'])) {
             throw new InvalidInputException(

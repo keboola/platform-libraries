@@ -12,14 +12,14 @@ class S3Strategy extends AbstractStrategy
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
         $jobId = $this->storageClient->queueTableExport($table->getSource(), $exportOptions);
-        return [$jobId, $table];
+        return ['jobId' => $jobId, 'table' => $table];
     }
 
     public function handleExports($exports)
     {
         $this->logger->info("Processing " . count($exports) . " S3 table exports.");
         $jobIds = array_map(function ($export) {
-            return $export[0];
+            return $export['jobId'];
         }, $exports);
         $results = $this->storageClient->handleAsyncTasks($jobIds);
         $keyedResults = [];
@@ -29,16 +29,16 @@ class S3Strategy extends AbstractStrategy
 
         /** @var InputTableOptions $table */
         foreach ($exports as $export) {
-            list ($jobId, $table) = $export;
+            $table = $export['table'];
             $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
             $tableInfo = $this->storageClient->getTable($table->getSource());
             $fileInfo = $this->storageClient->getFile(
-                $keyedResults[$jobId]["results"]["file"]["id"],
+                $keyedResults[$export['jobId']]["results"]["file"]["id"],
                 (new GetFileOptions())->setFederationToken(true)
             )
             ;
             $tableInfo["s3"] = $this->getS3Info($fileInfo);
-            $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumns());
+            $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
         }
     }
 

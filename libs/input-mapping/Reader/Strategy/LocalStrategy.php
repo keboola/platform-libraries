@@ -31,8 +31,7 @@ class LocalStrategy extends AbstractStrategy
             ));
         }
 
-        $this->manifestWriter->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumns());
-
+        $this->manifestWriter->writeTableManifest($tableInfo, $file . ".manifest", $table->getColumnNames());
         return [
             "tableId" => $table->getSource(),
             "destination" => $file,

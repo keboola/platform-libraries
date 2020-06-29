@@ -23,6 +23,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
             ],
             'DaysNullConfiguration' => [
                 [
@@ -30,6 +46,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "destination" => "test",
                     "days" => null,
                     "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "days" => null,
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
@@ -45,6 +77,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "days" => 1,
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
             ],
             'ChangedSinceNullConfiguration' => [
                 [
@@ -56,6 +104,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => null,
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
             ],
             'ChangedSinceConfiguration' => [
                 [
@@ -63,6 +127,22 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "destination" => "test",
                     "changed_since" => "-1 days",
                     "columns" => ["Id", "Name"],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
+                [
+                    "source" => "in.c-main.test",
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
@@ -81,13 +161,96 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
+                [
+                    "source_search" => [
+                        "key" => "bdm.scaffold.tag",
+                        "value" => "test_table",
+                    ],
+                    "destination" => "test",
+                    "changed_since" => "-1 days",
+                    "columns" => [
+                        [
+                            'source' => "Id",
+                        ],
+                        [
+                            'source' => "Name",
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
             ],
-        ];
-    }
-
-    public function provideValidConfigsChanged()
-    {
-        return [
+            'DataTypesConfiguration' => [
+                [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                        ],
+                        [
+                            "source" => "Name",
+                            "type" => "VARCHAR"
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
+                [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                        ],
+                        [
+                            "source" => "Name",
+                            "type" => "VARCHAR"
+                        ],
+                    ],
+                    "where_column" => "status",
+                    "where_values" => ["val1", "val2"],
+                    "where_operator" => "ne",
+                ],
+            ],
+            'FullDataTypesConfiguration' => [
+                [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                            "destination" => "MyId",
+                            "length" => "10,2",
+                            "nullable" => true,
+                            "convertEmptyValuesToNull" => true,
+                            "compression" => "DELTA32K",
+                        ],
+                    ],
+                ],
+                [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                            "destination" => "MyId",
+                            "length" => "10,2",
+                            "nullable" => true,
+                            "convertEmptyValuesToNull" => true,
+                            "compression" => "DELTA32K",
+                        ],
+                    ],
+                    "where_values" => [],
+                    "where_operator" => "eq",
+                ],
+            ],
             'BasicConfiguration' => [
                 [
                     "source" => "in.c-main.test",
@@ -99,29 +262,18 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "eq",
                 ],
             ],
-
         ];
-    }
-
-    /**
-     * @dataProvider provideValidConfigsChanged
-     */
-    public function testValidConfigDefinitionChanged(
-        array $config,
-        array $expected
-    ) {
-        $processedConfiguration = (new Table())->parse(["config" => $config]);
-        self::assertEquals($expected, $processedConfiguration);
     }
 
     /**
      * @dataProvider provideValidConfigs
      */
     public function testValidConfigDefinition(
-        array $config
+        array $config,
+        array $expected
     ) {
         $processedConfiguration = (new Table())->parse(["config" => $config]);
-        self::assertEquals($config, $processedConfiguration);
+        self::assertEquals($expected, $processedConfiguration);
     }
 
     /**

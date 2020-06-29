@@ -37,7 +37,13 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     public function testGetColumns()
     {
         $definition = new InputTableOptions(['source' => 'test', 'columns' => ['col1', 'col2']]);
-        self::assertEquals(['col1', 'col2'], $definition->getColumns());
+        self::assertEquals(['col1', 'col2'], $definition->getColumnNames());
+    }
+
+    public function testGetColumnsExtended()
+    {
+        $definition = new InputTableOptions(['source' => 'test', 'columns' => [['source' => 'col1'], ['source' => 'col2']]]);
+        self::assertEquals(['col1', 'col2'], $definition->getColumnNames());
     }
 
     public function testConstructorMissingSource()
@@ -60,12 +66,12 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         self::assertEquals([], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
-    public function testGetExportOptions()
+    public function testGetExportOptionsSimpleColumns()
     {
         $definition = new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
-            'columns' => ['col1'],
+            'columns' => ['col1', 'col2'],
             'changed_since' => '-1 days',
             'where_column' => 'col1',
             'where_operator' => 'ne',
@@ -73,7 +79,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'limit' => 100,
         ]);
         self::assertEquals([
-            'columns' => ['col1'],
+            'columns' => ['col1', 'col2'],
             'changedSince' => '-1 days',
             'whereColumn' => 'col1',
             'whereValues' => ['1', '2'],
@@ -82,12 +88,21 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
-    public function testGetLoadOptions()
+    public function testGetExportOptionsExtendColumns()
     {
         $definition = new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
-            'columns' => ['col1'],
+            'columns' => [
+                [
+                    'source' => 'col1',
+                    'type' => 'VARCHAR',
+                ],
+                [
+                    'source' => 'col2',
+                    'type' => 'VARCHAR',
+                ],
+            ],
             'changed_since' => '-1 days',
             'where_column' => 'col1',
             'where_operator' => 'ne',
@@ -95,13 +110,99 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'limit' => 100,
         ]);
         self::assertEquals([
-            'columns' => ['col1'],
+            'columns' => ['col1', 'col2'],
+            'changedSince' => '-1 days',
+            'whereColumn' => 'col1',
+            'whereValues' => ['1', '2'],
+            'whereOperator' => 'ne',
+            'limit' => 100,
+        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
+    }
+
+    public function testGetLoadOptionsSimpleColumns()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => ['col1', 'col2'],
+            'changed_since' => '-1 days',
+            'where_column' => 'col1',
+            'where_operator' => 'ne',
+            'where_values' => ['1', '2'],
+            'limit' => 100,
+        ]);
+        self::assertEquals([
+            'columns' => ['col1', 'col2'],
             'seconds' => '86400',
             'whereColumn' => 'col1',
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'rows' => 100,
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
+    }
+
+    public function testGetLoadOptionsExtendedColumns()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => [
+                [
+                    'source' => 'col1',
+                    'type' => 'VARCHAR',
+                ],
+                [
+                    'source' => 'col2',
+                    'type' => 'VARCHAR',
+                ],
+            ],
+            'changed_since' => '-1 days',
+            'where_column' => 'col1',
+            'where_operator' => 'ne',
+            'where_values' => ['1', '2'],
+            'limit' => 100,
+        ]);
+        self::assertEquals([
+            'columns' => [
+                [
+                    'source' => 'col1',
+                    'type' => 'VARCHAR',
+                ],
+                [
+                    'source' => 'col2',
+                    'type' => 'VARCHAR',
+                ],
+            ],
+            'seconds' => '86400',
+            'whereColumn' => 'col1',
+            'whereValues' => ['1', '2'],
+            'whereOperator' => 'ne',
+            'rows' => 100,
+        ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
+    }
+
+    public function testInvalidColumns()
+    {
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage(
+            'Columns must be either specified as array of strings or as array of objects with type, but not both'
+        );
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => [
+                'col1',
+                [
+                    'source' => 'col2',
+                    'type' => 'VARCHAR',
+                ],
+            ],
+            'changed_since' => '-1 days',
+            'where_column' => 'col1',
+            'where_operator' => 'ne',
+            'where_values' => ['1', '2'],
+            'limit' => 100,
+        ]);
     }
 
     public function testGetExportOptionsDays()

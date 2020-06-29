@@ -338,6 +338,51 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertEquals('someBarValue', $manifest['column_metadata']['bar'][0]['value']);
     }
 
+    public function testReadTableColumnsDataTypes()
+    {
+        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                "source" => "in.c-docker-test.test",
+                "columns" => [
+                     [
+                         "source" => "bar",
+                         "type" => "NUMERIC",
+                     ],
+                     [
+                         "source" => "foo",
+                         "type" => "VARCHAR",
+                     ],
+                ],
+                "destination" => "test.csv",
+            ]
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
+
+        self::assertCSVEquals(
+            "\"bar\",\"foo\"\n\"bar1\",\"foo1\"" .
+            "\n\"bar2\",\"foo2\"\n\"bar3\",\"foo3\"\n",
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
+        );
+
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
+        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertArrayHasKey('columns', $manifest);
+        self::assertEquals(['bar', 'foo'], $manifest['columns']);
+        self::assertArrayHasKey('metadata', $manifest);
+        self::assertCount(0, $manifest['metadata']);
+        self::assertCount(2, $manifest['column_metadata']);
+        self::assertCount(0, $manifest['column_metadata']['bar']);
+        self::assertCount(0, $manifest['column_metadata']['foo']);
+    }
+
     public function testReadTableLimitTest()
     {
         $tokenInfo = $this->client->verifyToken();

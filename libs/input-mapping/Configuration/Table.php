@@ -35,7 +35,31 @@ class Table extends Configuration
                 ->scalarNode("changed_since")
                     ->treatNullLike("")
                 ->end()
-                ->arrayNode("columns")->prototype("scalar")->end()->end()
+                ->arrayNode("columns")
+                    ->beforeNormalization()
+                        ->always()
+                        ->then(function ($array) {
+                            foreach ($array as $index => $value) {
+                                if (is_scalar($value)) {
+                                    $array[$index] = ['source' => $value];
+                                }
+                            }
+                            return $array;
+                        })
+                    ->end()
+                    ->prototype('array')
+                        ->children()
+                            ->scalarNode('source')->isRequired()->end()
+                            ->scalarNode('type')->end()
+                            ->scalarNode('destination')->end()
+                            ->scalarNode('type')->end()
+                            ->scalarNode('length')->end()
+                            ->scalarNode('nullable')->end()
+                            ->scalarNode('convertEmptyValuesToNull')->end()
+                            ->scalarNode('compression')->end()
+                        ->end()
+                    ->end()
+                ->end()
                 ->scalarNode("where_column")->end()
                 ->integerNode("limit")->end()
                 ->arrayNode("where_values")->prototype("scalar")->end()->end()

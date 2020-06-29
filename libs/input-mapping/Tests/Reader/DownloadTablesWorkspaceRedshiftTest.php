@@ -20,11 +20,22 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
                 'source' => 'in.c-input-mapping-test.test1',
                 'destination' => 'test1',
                 'changed_since' => '-2 days',
+                'columns' => ['Id'],
             ],
             [
                 'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2',
-            ]
+                'columns' => [
+                    [
+                        'source' => 'Id',
+                        'type' => 'VARCHAR',
+                    ],
+                    [
+                        'source' => 'Name',
+                        'type' => 'VARCHAR',
+                    ],
+                ],
+            ],
         ]);
 
         $reader->downloadTables(
@@ -49,6 +60,8 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals('out.c-input-mapping-test.test1', $tableId);
+        $table = $this->client->getTable($tableId);
+        self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);

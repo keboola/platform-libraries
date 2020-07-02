@@ -15,6 +15,11 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class Reader
 {
+    const STAGING_S3 = 's3';
+    const STAGING_LOCAL = 'local';
+    const STAGING_SNOWFLAKE = 'workspace-snowflake';
+    const STAGING_REDSHIFT = 'workspace-redshift';
+
     /**
      * @var Client
      */

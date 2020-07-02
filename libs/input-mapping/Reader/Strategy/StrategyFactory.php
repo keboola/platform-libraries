@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Reader\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Client;
@@ -10,11 +11,6 @@ use Psr\Log\LoggerInterface;
 
 class StrategyFactory
 {
-    const STAGING_S3 = 's3';
-    const STAGING_LOCAL = 'local';
-    const STAGING_SNOWFLAKE = 'workspace-snowflake';
-    const STAGING_REDSHIFT = 'workspace-redshift';
-
     /** @var Client */
     private $storageClient;
 
@@ -31,10 +27,10 @@ class StrategyFactory
     protected $destination;
 
     private $strategyMap = [
-        self::STAGING_S3 => S3Strategy::class,
-        self::STAGING_LOCAL => LocalStrategy::class,
-        self::STAGING_REDSHIFT => RedshiftStrategy::class,
-        self::STAGING_SNOWFLAKE => SnowflakeStrategy::class
+        Reader::STAGING_S3 => S3Strategy::class,
+        Reader::STAGING_LOCAL => LocalStrategy::class,
+        Reader::STAGING_REDSHIFT => RedshiftStrategy::class,
+        Reader::STAGING_SNOWFLAKE => SnowflakeStrategy::class
     ];
 
     /** @var string */

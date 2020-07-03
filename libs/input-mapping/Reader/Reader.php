@@ -38,8 +38,24 @@ class Reader
      */
     private $workspaceProvider;
 
-    /** @var ManifestWriter */
-    protected $manifestWriter;
+    /**
+     * @param Client $client
+     * @param LoggerInterface $logger
+     */
+    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
+    {
+        $this->logger = $logger;
+        $this->setClient($client);
+        $this->workspaceProvider = $workspaceProvider;
+    }
+
+    /**
+     * @return ManifestWriter
+     */
+    protected function getManifestWriter()
+    {
+        return new ManifestWriter($this->getClient(), $this->getFormat());
+    }
 
     /**
      * @return Client
@@ -61,15 +77,22 @@ class Reader
     }
 
     /**
-     * @param Client $client
-     * @param LoggerInterface $logger
+     * @return string
      */
-    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
+    public function getFormat()
     {
-        $this->logger = $logger;
-        $this->setClient($client);
-        $this->workspaceProvider = $workspaceProvider;
-        $this->manifestWriter = new ManifestWriter($client, $this->format);
+        return $this->format;
+    }
+
+    /**
+     * @param string $format
+     * @return $this
+     */
+    public function setFormat($format)
+    {
+        $this->format = $format;
+
+        return $this;
     }
 
     /**
@@ -150,7 +173,7 @@ class Reader
         } else {
             $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
         }
-        $this->manifestWriter->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
+        $this->getManifestWriter()->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
     }
 
     /**

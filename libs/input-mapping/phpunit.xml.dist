@@ -16,6 +16,7 @@
             <exclude>Tests/Reader/DownloadFilesRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesS3DefaultTest.php</exclude>
+            <exclude>Tests/Reader/DownloadTablesABSDefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesWorkspaceRedshiftTest.php</exclude>
         </testsuite>
         <testsuite name="Redshift">
@@ -25,6 +26,9 @@
         </testsuite>
         <testsuite name="S3">
             <file>Tests/Reader/DownloadTablesS3DefaultTest.php</file>
+        </testsuite>
+        <testsuite name="ABS">
+            <file>Tests/Reader/DownloadTablesABSDefaultTest.php</file>
         </testsuite>
     </testsuites>
 

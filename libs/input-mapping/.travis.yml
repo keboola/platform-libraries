@@ -10,8 +10,10 @@ install:
 
 script:
   - ./vendor/bin/phpcs --standard=psr2 --ignore=vendor -n .
-  - ./vendor/bin/phpunit --testsuite Common,Redshift,S3 --coverage-clover build/logs/clover.xml
-  - export STORAGE_API_TOKEN=$STORAGE_API_TOKEN_ABS; ./vendor/bin/phpunit --testsuite Common,ABS
+  - ./vendor/bin/phpunit --testsuite Common --coverage-clover build/logs/clover.xml
+  - ./vendor/bin/phpunit --testsuite aws
+  - export STORAGE_API_TOKEN=$STORAGE_API_TOKEN_ABS; ./vendor/bin/phpunit --testsuite Common
+  - ./vendor/bin/phpunit --testsuite abs
 
 after_success:
   - ./vendor/bin/test-reporter

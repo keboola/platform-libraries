@@ -46,6 +46,7 @@ class Manifest extends Configuration
                     ->scalarNode("name")->end()
                     ->arrayNode("credentials")->children()
                         ->scalarNode("SASConnectionString")->end()
+                        ->scalarNode("expiration")->end()
                     ->end()->end()
                 ->end()->end()
                 ->arrayNode("metadata")

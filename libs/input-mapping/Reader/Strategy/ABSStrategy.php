@@ -51,7 +51,8 @@ class ABSStrategy extends AbstractStrategy
             "container" => $fileInfo['absPath']['container'],
             "name" => $fileInfo['absPath']['name'],
             "credentials" => [
-                "SASConnectionString" => $fileInfo['absConnection']['SASConnectionString'],
+                "SASConnectionString" => $fileInfo['absCredentials']['SASConnectionString'],
+                "expiration" => $fileInfo['absCredentials']['expiration'],
             ],
         ];
     }

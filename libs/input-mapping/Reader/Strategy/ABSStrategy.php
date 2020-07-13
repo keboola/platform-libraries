@@ -2,7 +2,6 @@
 
 namespace Keboola\InputMapping\Reader\Strategy;
 
-
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 

@@ -43,6 +43,9 @@ class ManifestWriter
         if (isset($tableInfo["s3"])) {
             $manifest["s3"] = $tableInfo["s3"];
         }
+        if (isset($tableInfo["abs"])) {
+            $manifest["abs"] = $tableInfo["abs"];
+        }
         if (!$columns) {
             $columns = $tableInfo["columns"];
         }

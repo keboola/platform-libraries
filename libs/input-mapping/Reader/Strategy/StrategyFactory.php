@@ -28,6 +28,7 @@ class StrategyFactory
 
     private $strategyMap = [
         Reader::STAGING_S3 => S3Strategy::class,
+        Reader::STAGING_ABS => ABSStrategy::class,
         Reader::STAGING_LOCAL => LocalStrategy::class,
         Reader::STAGING_REDSHIFT => RedshiftStrategy::class,
         Reader::STAGING_SNOWFLAKE => SnowflakeStrategy::class

@@ -46,12 +46,12 @@ class ABSStrategy extends AbstractStrategy
     protected function getABSInfo($fileInfo)
     {
         return [
-            "isSliced" => $fileInfo["isSliced"],
+            "is_sliced" => $fileInfo["isSliced"],
             "region" => $fileInfo["region"],
             "container" => $fileInfo['absPath']['container'],
             "name" => $fileInfo['absPath']['name'],
             "credentials" => [
-                "SASConnectionString" => $fileInfo['absCredentials']['SASConnectionString'],
+                "sas_connection_string" => $fileInfo['absCredentials']['SASConnectionString'],
                 "expiration" => $fileInfo['absCredentials']['expiration'],
             ],
         ];

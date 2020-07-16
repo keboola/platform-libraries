@@ -13,7 +13,7 @@ script:
   - ./vendor/bin/phpunit --testsuite Common --coverage-clover build/logs/clover.xml
   - ./vendor/bin/phpunit --testsuite aws
   - export STORAGE_API_TOKEN=$STORAGE_API_TOKEN_ABS; ./vendor/bin/phpunit --testsuite Common
-  - ./vendor/bin/phpunit --testsuite abs
+  - ./vendor/bin/phpunit --testsuite azure
 
 after_success:
   - ./vendor/bin/test-reporter

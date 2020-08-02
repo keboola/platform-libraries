@@ -135,7 +135,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
                 'destination' => 'test2',
                 'where_column' => 'Id',
                 'where_values' => ['id2', 'id3'],
-                'columns' => [
+                'column_types' => [
                     [
                         'source' => 'Id',
                         'destination' => 'MyId',
@@ -181,7 +181,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
                 'destination' => 'test2',
                 'where_column' => 'Id',
                 'where_values' => ['id2'],
-                'columns' => [
+                'column_types' => [
                     [
                         'source' => 'Id',
                         'destination' => 'MyId',

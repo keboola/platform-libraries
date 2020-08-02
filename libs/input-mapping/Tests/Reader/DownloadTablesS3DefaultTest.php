@@ -73,4 +73,29 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
         $this->assertS3info($manifest);
         self::assertTrue($logger->hasInfoThatContains('Processing 2 S3 table exports.'));
     }
+
+    public function testReadTablesABSUnsupportedBackend()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+            ],
+            [
+                "source" => "in.c-docker-test.test2",
+                "destination" => "test2.csv",
+            ]
+        ]);
+
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage('This project does not have ABS backend.');
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            'abs'
+        );
+    }
 }

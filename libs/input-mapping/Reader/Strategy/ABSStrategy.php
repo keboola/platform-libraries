@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Reader\Strategy;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
@@ -45,6 +46,9 @@ class ABSStrategy extends AbstractStrategy
 
     protected function getABSInfo($fileInfo)
     {
+        if (empty($fileInfo['absPath'])) {
+            throw new InvalidInputException('This project does not have ABS backend.');
+        }
         return [
             "is_sliced" => $fileInfo["isSliced"],
             "region" => $fileInfo["region"],

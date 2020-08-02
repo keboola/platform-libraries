@@ -27,17 +27,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'DaysNullConfiguration' => [
@@ -54,17 +48,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => null,
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'DaysConfiguration' => [
@@ -81,17 +69,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => 1,
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'ChangedSinceNullConfiguration' => [
@@ -108,17 +90,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => null,
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'ChangedSinceConfiguration' => [
@@ -135,17 +111,11 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'SearchSourceConfiguration' => [
@@ -168,24 +138,18 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     ],
                     "destination" => "test",
                     "changed_since" => "-1 days",
-                    "columns" => [
-                        [
-                            'source' => "Id",
-                        ],
-                        [
-                            'source' => "Name",
-                        ],
-                    ],
+                    "columns" => ["Id", "Name"],
                     "where_column" => "status",
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
+                    "column_types" => [],
                 ],
             ],
             'DataTypesConfiguration' => [
                 [
                     "source" => "foo",
                     "destination" => "bar",
-                    "columns" => [
+                    "column_types" => [
                         [
                             "source" => "Id",
                             "type" => "VARCHAR",
@@ -202,7 +166,8 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 [
                     "source" => "foo",
                     "destination" => "bar",
-                    "columns" => [
+                    "columns" => [],
+                    "column_types" => [
                         [
                             "source" => "Id",
                             "type" => "VARCHAR",
@@ -221,14 +186,15 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 [
                     "source" => "foo",
                     "destination" => "bar",
-                    "columns" => [
+                    "columns" => ["Id"],
+                    "column_types" => [
                         [
                             "source" => "Id",
                             "type" => "VARCHAR",
                             "destination" => "MyId",
                             "length" => "10,2",
                             "nullable" => true,
-                            "convertEmptyValuesToNull" => true,
+                            "convert_empty_values_to_null" => true,
                             "compression" => "DELTA32K",
                         ],
                     ],
@@ -236,19 +202,20 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 [
                     "source" => "foo",
                     "destination" => "bar",
-                    "columns" => [
+                    "columns" => ["Id"],
+                    "where_values" => [],
+                    "where_operator" => "eq",
+                    "column_types" => [
                         [
                             "source" => "Id",
                             "type" => "VARCHAR",
                             "destination" => "MyId",
                             "length" => "10,2",
                             "nullable" => true,
-                            "convertEmptyValuesToNull" => true,
+                            "convert_empty_values_to_null" => true,
                             "compression" => "DELTA32K",
                         ],
                     ],
-                    "where_values" => [],
-                    "where_operator" => "eq",
                 ],
             ],
             'BasicConfiguration' => [
@@ -260,6 +227,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "columns" => [],
                     "where_values" => [],
                     "where_operator" => "eq",
+                    "column_types" => [],
                 ],
             ],
         ];
@@ -350,6 +318,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
         $expectedArray["where_operator"] = "eq";
         $expectedArray["columns"] = [];
         $expectedArray["where_values"] = [];
+        $expectedArray["column_types"] = [];
         $processedConfiguration = (new Table())->parse(["config" => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
     }

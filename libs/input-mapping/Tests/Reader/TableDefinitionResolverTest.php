@@ -75,6 +75,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
             ],
             "destination" => "test",
             'columns' => [],
+            'column_types' => [],
             'where_values' => [],
             'where_operator' => 'eq',
             "source" => "table1",

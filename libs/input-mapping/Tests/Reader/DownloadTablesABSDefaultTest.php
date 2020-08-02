@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Reader;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
@@ -68,5 +69,30 @@ class DownloadTablesABSDefaultTest extends DownloadTablesTestAbstract
         self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
         $this->assertABSinfo($manifest);
         self::assertTrue($logger->hasInfoThatContains('Processing 2 ABS table exports.'));
+    }
+
+    public function testReadTablesS3UnsupportedBackend()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                "source" => "in.c-docker-test.test",
+                "destination" => "test.csv",
+            ],
+            [
+                "source" => "in.c-docker-test.test2",
+                "destination" => "test2.csv",
+            ]
+        ]);
+
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage('This project does not have S3 backend.');
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            "s3"
+        );
     }
 }

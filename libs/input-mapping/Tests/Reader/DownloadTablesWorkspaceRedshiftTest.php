@@ -25,7 +25,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
             [
                 'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2',
-                'columns' => [
+                'column_types' => [
                     [
                         'source' => 'Id',
                         'type' => 'VARCHAR',

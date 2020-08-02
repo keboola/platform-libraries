@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Reader\Strategy;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
@@ -44,6 +45,9 @@ class S3Strategy extends AbstractStrategy
 
     protected function getS3Info($fileInfo)
     {
+        if (empty($fileInfo["credentials"]["AccessKeyId"])) {
+            throw new InvalidInputException('This project does not have S3 backend.');
+        }
         return [
             "isSliced" => $fileInfo["isSliced"],
             "region" => $fileInfo["region"],

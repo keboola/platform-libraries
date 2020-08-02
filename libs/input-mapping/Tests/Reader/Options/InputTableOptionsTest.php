@@ -31,6 +31,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'columns' => [],
             'where_values' => [],
             'where_operator' => 'eq',
+            'column_types' => [],
         ], $definition->getDefinition());
     }
 
@@ -42,7 +43,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
 
     public function testGetColumnsExtended()
     {
-        $definition = new InputTableOptions(['source' => 'test', 'columns' => [['source' => 'col1'], ['source' => 'col2']]]);
+        $definition = new InputTableOptions(['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]]);
         self::assertEquals(['col1', 'col2'], $definition->getColumnNames());
     }
 
@@ -93,7 +94,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         $definition = new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
-            'columns' => [
+            'column_types' => [
                 [
                     'source' => 'col1',
                     'type' => 'VARCHAR',
@@ -146,7 +147,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         $definition = new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
-            'columns' => [
+            'column_types' => [
                 [
                     'source' => 'col1',
                     'type' => 'VARCHAR',
@@ -181,17 +182,45 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
     }
 
-    public function testInvalidColumns()
+    public function testInvalidColumnsMissing()
     {
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Columns must be either specified as array of strings or as array of objects with type, but not both'
+            'Both columns and column_types are specified, columns field contains surplus columns: col1.'
         );
-        $definition = new InputTableOptions([
+        new InputTableOptions([
             'source' => 'test',
             'destination' => 'dest',
-            'columns' => [
-                'col1',
+            'columns' => ['col2', 'col1'],
+            'column_types' => [
+                [
+                    'source' => 'col2',
+                    'type' => 'VARCHAR',
+                ],
+            ],
+            'changed_since' => '-1 days',
+            'where_column' => 'col1',
+            'where_operator' => 'ne',
+            'where_values' => ['1', '2'],
+            'limit' => 100,
+        ]);
+    }
+
+    public function testInvalidColumnSurplus()
+    {
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage(
+            'Both columns and column_types are specified, column_types field contains surplus columns: col2.'
+        );
+        new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => ['col1'],
+            'column_types' => [
+                [
+                    'source' => 'col1',
+                    'type' => 'VARCHAR',
+                ],
                 [
                     'source' => 'col2',
                     'type' => 'VARCHAR',

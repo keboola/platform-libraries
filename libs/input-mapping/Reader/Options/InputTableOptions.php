@@ -22,17 +22,34 @@ class InputTableOptions
         }
         $tableConfiguration = new \Keboola\InputMapping\Configuration\Table();
         $this->definition = $tableConfiguration->parse(['table' => $configuration]);
-        // column type is required either for all columns or it mustn't be present in any column
-        $typesCount = 0;
-        foreach ($this->definition['columns'] as $column) {
-            if (!empty($column['type'])) {
-                $typesCount++;
-            }
+        $colNamesFromTypes = [];
+        foreach ($this->definition['column_types'] as $column) {
+            $colNamesFromTypes[] = $column['source'];
         }
-        if (($typesCount !== 0) && ($typesCount !== count($this->definition['columns']))) {
-            throw new InvalidInputException(
-                'Columns must be either specified as array of strings or as array of objects with type, but not both.'
-            );
+        $this->validateColumns($colNamesFromTypes);
+        if (empty($this->definition['columns']) && !empty($colNamesFromTypes)) {
+            $this->definition['columns'] = $colNamesFromTypes;
+        }
+    }
+
+    private function validateColumns(array $colNamesFromTypes)
+    {
+        // if both columns and column_types are entered, verify that the columns listed do match
+        if ($this->definition['columns'] && $this->definition['column_types']) {
+            $diff = array_diff($this->definition['columns'], $colNamesFromTypes);
+            if ($diff) {
+                throw new InvalidInputException(sprintf(
+                    'Both columns and column_types are specified, columns field contains surplus columns: %s.',
+                    implode($diff, ', ')
+                ));
+            }
+            $diff = array_diff($colNamesFromTypes, $this->definition['columns']);
+            if ($diff) {
+                throw new InvalidInputException(sprintf(
+                    'Both columns and column_types are specified, column_types field contains surplus columns: %s.',
+                    implode($diff, ', ')
+                ));
+            }
         }
     }
 
@@ -68,13 +85,10 @@ class InputTableOptions
      */
     public function getColumnNames()
     {
-        $colNames = [];
         if (isset($this->definition['columns'])) {
-            foreach ($this->definition['columns'] as $column) {
-                $colNames[] = $column['source'];
-            }
+            return $this->definition['columns'];
         }
-        return $colNames;
+        return [];
     }
 
     /**
@@ -119,17 +133,10 @@ class InputTableOptions
     public function getStorageApiLoadOptions(InputTableStateList $states)
     {
         $exportOptions = [];
-        if (isset($this->definition['columns']) && count($this->definition['columns'])) {
-            /** Columns are formally always specified in extended format here, if the type is specified it's either
-             *  specified for all columns (it was originally in extended format) or for no columns (it was originally
-             *  a simple list). We check the first column (because all are same) to see if the types are specified
-             * or not.
-             */
-            if (!empty($this->definition['columns'][0]['type'])) {
-                $exportOptions['columns'] = $this->definition['columns'];
-            } else {
-                $exportOptions['columns'] = $this->getColumnNames();
-            }
+        if ($this->definition['column_types']) {
+            $exportOptions['columns'] = $this->definition['column_types'];
+        } elseif ($this->definition['columns']) {
+            $exportOptions['columns'] = $this->getColumnNames();
         }
         if (!empty($this->definition['days'])) {
             throw new InvalidInputException(

@@ -344,7 +344,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
-                "columns" => [
+                "column_types" => [
                      [
                          "source" => "bar",
                          "type" => "NUMERIC",

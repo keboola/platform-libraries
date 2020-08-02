@@ -84,7 +84,7 @@ class S3StrategyTest extends \PHPUnit_Framework_TestCase
             [
                 'source' => 'in.c-input-mapping-test-strategy.test1',
                 'destination' => 'some-table.csv',
-                'columns' => [
+                'column_types' => [
                     [
                         'source' => 'Id',
                         'destination' => 'myid',

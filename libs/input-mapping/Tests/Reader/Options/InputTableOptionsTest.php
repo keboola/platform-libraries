@@ -186,7 +186,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     {
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Both columns and column_types are specified, columns field contains surplus columns: col1.'
+            'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "col1".'
         );
         new InputTableOptions([
             'source' => 'test',
@@ -210,7 +210,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     {
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Both columns and column_types are specified, column_types field contains surplus columns: col2.'
+            'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "col2".'
         );
         new InputTableOptions([
             'source' => 'test',

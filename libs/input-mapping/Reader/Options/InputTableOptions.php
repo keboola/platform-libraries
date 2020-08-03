@@ -39,14 +39,14 @@ class InputTableOptions
             $diff = array_diff($this->definition['columns'], $colNamesFromTypes);
             if ($diff) {
                 throw new InvalidInputException(sprintf(
-                    'Both columns and column_types are specified, columns field contains surplus columns: %s.',
+                    'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "%s".',
                     implode($diff, ', ')
                 ));
             }
             $diff = array_diff($colNamesFromTypes, $this->definition['columns']);
             if ($diff) {
                 throw new InvalidInputException(sprintf(
-                    'Both columns and column_types are specified, column_types field contains surplus columns: %s.',
+                    'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "%s".',
                     implode($diff, ', ')
                 ));
             }

@@ -20,6 +20,7 @@ class Reader
     const STAGING_LOCAL = 'local';
     const STAGING_SNOWFLAKE = 'workspace-snowflake';
     const STAGING_REDSHIFT = 'workspace-redshift';
+    const STAGING_SYNAPSE = 'workspace-synapse';
 
     /**
      * @var Client

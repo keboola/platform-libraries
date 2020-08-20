@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Client;
 use Psr\Log\LoggerInterface;
+use Reader\Strategy\SynapseStrategy;
 
 class StrategyFactory
 {
@@ -31,7 +32,8 @@ class StrategyFactory
         Reader::STAGING_ABS => ABSStrategy::class,
         Reader::STAGING_LOCAL => LocalStrategy::class,
         Reader::STAGING_REDSHIFT => RedshiftStrategy::class,
-        Reader::STAGING_SNOWFLAKE => SnowflakeStrategy::class
+        Reader::STAGING_SNOWFLAKE => SnowflakeStrategy::class,
+        Reader::STAGING_SYNAPSE => SynapseStrategy::class,
     ];
 
     /** @var string */

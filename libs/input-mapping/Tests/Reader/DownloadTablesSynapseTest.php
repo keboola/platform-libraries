@@ -31,7 +31,9 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
-        $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
+        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
+        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
+        $this->client = new Client(["token" => $token, "url" => $url]);
         try {
             $this->client->dropBucket("in.c-docker-test-synapse", ["force" => true]);
         } catch (ClientException $e) {
@@ -107,7 +109,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-synapse.csv.manifest");
         self::assertEquals("in.c-docker-test-synapse.test", $manifest["id"]);
-        $this->assertS3info($manifest);
+        $this->assertABSinfo($manifest);
     }
 
     public function testReadTablesEmptySlices()
@@ -123,16 +125,16 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->client->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
+        $this->client->createTableAsync('in.c-docker-test-synapse', 'empty', $headerCsvFile, []);
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
+        $this->client->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.empty",
+                "source" => "in.c-docker-test-synapse.empty",
                 "destination" => "empty.csv",
             ],
         ]);
@@ -147,6 +149,6 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/empty.csv.manifest");
-        self::assertEquals("in.c-docker-test.empty", $manifest["id"]);
+        self::assertEquals("in.c-docker-test-synapse.empty", $manifest["id"]);
     }
 }

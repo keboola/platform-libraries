@@ -1,10 +1,8 @@
 <?php
 
-namespace Reader\Strategy;
+namespace Keboola\InputMapping\Reader\Strategy;
 
-use Keboola\InputMapping\Reader\LoadTypeDecider;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
-use Keboola\InputMapping\Reader\Strategy\AbstractStrategy;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 
 class SynapseStrategy extends AbstractStrategy

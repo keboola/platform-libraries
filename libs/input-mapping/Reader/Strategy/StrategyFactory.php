@@ -8,7 +8,6 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Client;
 use Psr\Log\LoggerInterface;
-use Reader\Strategy\SynapseStrategy;
 
 class StrategyFactory
 {

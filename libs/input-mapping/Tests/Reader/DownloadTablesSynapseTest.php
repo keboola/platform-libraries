@@ -10,14 +10,28 @@ use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Psr\Log\NullLogger;
 
 class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 {
+    private $runSynapseTests;
+
     public function setUp()
     {
         parent::setUp();
+        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
+        if (!$this->runSynapseTests) {
+            return;
+        }
+        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
+            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
+        }
+        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
+            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
+        }
+        $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
         try {
             $this->client->dropBucket("in.c-docker-test-synapse", ["force" => true]);
         } catch (ClientException $e) {
@@ -41,6 +55,9 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
     public function testReadTablesSynapse()
     {
+        if (!$this->runSynapseTests) {
+            $this->markTestSkipped('Synapse tests disabled');
+        }
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
@@ -69,6 +86,9 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
     public function testReadTablesABSSynapse()
     {
+        if (!$this->runSynapseTests) {
+            $this->markTestSkipped('Synapse tests disabled');
+        }
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
@@ -92,6 +112,9 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptySlices()
     {
+        if (!$this->runSynapseTests) {
+            $this->markTestSkipped('Synapse tests disabled');
+        }
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)

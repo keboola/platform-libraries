@@ -8,3 +8,6 @@ services:
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL

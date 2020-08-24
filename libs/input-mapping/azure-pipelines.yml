@@ -5,7 +5,8 @@ stages:
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: Build & Check (PHP 5.6)
+      - job: build-php56
+        displayName: 'Build & Check (PHP 5.6)'
         steps:
         - script: docker info
           displayName: 'Info'
@@ -18,7 +19,8 @@ stages:
         - script: docker-compose run tests56 /code/vendor/bin/phpcs --standard=psr2 --ignore=vendor -n -v /code/
           displayName: 'CS Check (PHP 5.6)'
 
-      - job: Build & Check (PHP 7.4)
+      - job: build-php74
+        displayName: 'Build & Check (PHP 7.4)'
         steps:
         - script: docker info
           displayName: 'Info'
@@ -31,11 +33,12 @@ stages:
         - script: docker-compose run tests74 /code/vendor/bin/phpcs --standard=psr2 --ignore=vendor -n -v /code/
           displayName: 'CS Check (PHP 7.4)'
 
-  - stage: PHP74
+  - stage: PHP56
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: Test on AWS backend
+      - job: aws-tests
+        displayName: 'Test on AWS backend'
         timeoutInMinutes: 60
         steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
@@ -56,7 +59,8 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-      - job: Test on Azure backend
+      - job: azure-tests
+        displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
         steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
@@ -81,7 +85,8 @@ stages:
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: Test on AWS backend
+      - job: aws-tests
+        displayName: 'Test on AWS backend'
         timeoutInMinutes: 60
         steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
@@ -102,7 +107,8 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-      - job: Test on Azure backend
+      - job: azure-tests
+        displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
         steps:      
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common

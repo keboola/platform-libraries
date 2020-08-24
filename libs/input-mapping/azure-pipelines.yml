@@ -85,8 +85,8 @@ stages:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
-            SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
-            SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
+            SYNAPSE_STORAGE_API_TOKEN:
+            SYNAPSE_STORAGE_API_URL:
 
         - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite Azure
           displayName: 'Run Azure testsuite on Azure (PHP 5.6)'
@@ -94,8 +94,8 @@ stages:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
-            SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
-            SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
+            SYNAPSE_STORAGE_API_TOKEN:
+            SYNAPSE_STORAGE_API_URL:
 
       - job: azure_tests_files
         displayName: 'Files Tests on Azure backend'
@@ -104,8 +104,8 @@ stages:
           - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite CommonFiles
             displayName: 'Run Common Files testsuite on Azure (PHP 5.6)'
             env:
-              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
-              STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
               SYNAPSE_STORAGE_API_URL:

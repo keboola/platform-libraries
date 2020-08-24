@@ -10,14 +10,14 @@ use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-class SynapseWriterWorkspaceTest extends BaseWriterTest
+class SynapseWriterWorkspaceTest extends WriterWorkspaceTest
 {
 
     private $runSynapseTests = false;
 
     public function setUp()
     {
-        parent::setUp();
+        BaseWriterTest::setUp();
 
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
@@ -46,7 +46,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterTest
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
 
-        $this->clearBuckets(['out.c-docker-test']);
+        $this->clearBuckets(['out.c-docker-test', 'in.c-output-mapping-test']);
         $this->clearFileUploads(['docker-bundle-test']);
     }
 

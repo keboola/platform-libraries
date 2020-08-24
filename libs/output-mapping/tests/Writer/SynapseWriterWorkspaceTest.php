@@ -10,7 +10,7 @@ use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-public class SynapseWriterWorkspaceTest extends BaseWriterTest
+class SynapseWriterWorkspaceTest extends BaseWriterTest
 {
 
     private $runSynapseTests = false;

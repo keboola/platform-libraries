@@ -37,6 +37,7 @@ stages:
     jobs:
       - job: Test on AWS backend
         timeoutInMinutes: 60
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on AWS (PHP 5.6)'
           env:
@@ -80,6 +81,7 @@ stages:
     jobs:
       - job: Test on AWS backend
         timeoutInMinutes: 60
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on AWS (PHP 7.4)'
           env:

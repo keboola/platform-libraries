@@ -57,6 +57,8 @@ stages:
             SYNAPSE_STORAGE_API_URL:
 
       - job: Test on Azure backend
+        timeoutInMinutes: 60
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on Azure (PHP 5.6)'
           env:
@@ -101,6 +103,8 @@ stages:
             SYNAPSE_STORAGE_API_URL:
 
       - job: Test on Azure backend
+        timeoutInMinutes: 60
+        steps:      
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on Azure (PHP 7.4)'
           env:

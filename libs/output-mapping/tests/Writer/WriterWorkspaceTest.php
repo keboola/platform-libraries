@@ -36,7 +36,7 @@ class WriterWorkspaceTest extends BaseWriterTest
         parent::tearDown();
     }
 
-    private function getWorkspaceProvider()
+    protected function getWorkspaceProvider()
     {
         $mock = self::getMockBuilder(NullWorkspaceProvider::class)
             ->setMethods(['getWorkspaceId'])
@@ -55,7 +55,7 @@ class WriterWorkspaceTest extends BaseWriterTest
         return $mock;
     }
 
-    private function prepareWorkspaceWithTables($type)
+    protected function prepareWorkspaceWithTables($type)
     {
         $temp = new Temp();
         $temp->initRunFolder();

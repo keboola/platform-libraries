@@ -81,6 +81,10 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
             SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
 
+      - job: azure_tests_synapse
+        displayName: 'Test on Azure Synapse backend'
+        timeoutInMinutes: 60
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite AzureSynapse
           displayName: 'Run Azure testsuite on Azure w. Synapse (PHP 5.6)'
           env:
@@ -119,7 +123,7 @@ stages:
       - job: azure_tests
         displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
-        steps:      
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on Azure (PHP 7.4)'
           env:
@@ -138,6 +142,10 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
             SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
 
+      - job: azure_tests_synapse
+        displayName: 'Test on Azure Synapse backend'
+        timeoutInMinutes: 60
+        steps:
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite AzureSynapse
           displayName: 'Run Azure testsuite on Azure w. Synapse (PHP 7.4)'
           env:

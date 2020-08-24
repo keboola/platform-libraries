@@ -5,7 +5,7 @@ stages:
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: build-php56
+      - job: build_php56
         displayName: 'Build & Check (PHP 5.6)'
         steps:
         - script: docker info
@@ -19,7 +19,7 @@ stages:
         - script: docker-compose run tests56 /code/vendor/bin/phpcs --standard=psr2 --ignore=vendor -n -v /code/
           displayName: 'CS Check (PHP 5.6)'
 
-      - job: build-php74
+      - job: build_php74
         displayName: 'Build & Check (PHP 7.4)'
         steps:
         - script: docker info
@@ -37,7 +37,7 @@ stages:
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: aws-tests
+      - job: aws_tests
         displayName: 'Test on AWS backend'
         timeoutInMinutes: 60
         steps:
@@ -59,7 +59,7 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-      - job: azure-tests
+      - job: azure_tests
         displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
         steps:
@@ -85,7 +85,7 @@ stages:
     pool:
       vmImage: ubuntu-latest
     jobs:
-      - job: aws-tests
+      - job: aws_tests
         displayName: 'Test on AWS backend'
         timeoutInMinutes: 60
         steps:
@@ -107,7 +107,7 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-      - job: azure-tests
+      - job: azure_tests
         displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
         steps:      

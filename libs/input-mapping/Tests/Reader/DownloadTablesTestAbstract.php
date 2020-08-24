@@ -20,6 +20,11 @@ class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
         $this->temp = new Temp('docker');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . "/download");
+        $this->initClient();
+    }
+
+    protected function initClient()
+    {
         $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
     }
 

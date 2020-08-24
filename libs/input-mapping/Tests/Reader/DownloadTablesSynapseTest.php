@@ -58,7 +58,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
     public function testReadTablesSynapse()
     {
         if (!$this->runSynapseTests) {
-            $this->markTestSkipped('Synapse tests disabled');
+            self::markTestSkipped('Synapse tests disabled');
         }
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
@@ -89,7 +89,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
     public function testReadTablesABSSynapse()
     {
         if (!$this->runSynapseTests) {
-            $this->markTestSkipped('Synapse tests disabled');
+            self::markTestSkipped('Synapse tests disabled');
         }
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([

@@ -40,10 +40,10 @@ stages:
       vmImage: ubuntu-latest
     jobs:
       - job: aws_tests
-        displayName: 'Test on AWS backend'
+        displayName: 'Tables Tests on AWS backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
+        - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on AWS (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
@@ -52,7 +52,7 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Aws
+        - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite Aws
           displayName: 'Run AWS testsuite on AWS (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
@@ -61,11 +61,25 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
-      - job: azure_tests
-        displayName: 'Test on Azure backend'
+      - job: aws_tests_files
+        displayName: 'Files Tests on AWS backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Common
+          - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files testsuite on AWS (PHP 5.6)'
+            env:
+              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+              RUN_SYNAPSE_TESTS: 0
+              SYNAPSE_STORAGE_API_TOKEN:
+              SYNAPSE_STORAGE_API_URL:
+
+
+      - job: azure_tests
+        displayName: 'Tests on Azure backend'
+        timeoutInMinutes: 60
+        steps:
+        - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite Common
           displayName: 'Run Common testsuite on Azure (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
@@ -74,7 +88,7 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
             SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
 
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Azure
+        - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite Azure
           displayName: 'Run Azure testsuite on Azure (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
@@ -83,11 +97,24 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
             SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
 
+      - job: azure_tests_files
+        displayName: 'Files Tests on Azure backend'
+        timeoutInMinutes: 60
+        steps:
+          - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files testsuite on Azure (PHP 5.6)'
+            env:
+              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+              RUN_SYNAPSE_TESTS: 0
+              SYNAPSE_STORAGE_API_TOKEN:
+              SYNAPSE_STORAGE_API_URL:
+
       - job: azure_tests_synapse
         displayName: 'Test on Azure Synapse backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite AzureSynapse
+        - script: docker-compose run tests56 /code/vendor/bin/phpunit --testsuite AzureSynapse
           displayName: 'Run Azure testsuite on Azure w. Synapse (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
@@ -122,6 +149,20 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN: 
             SYNAPSE_STORAGE_API_URL:
 
+      - job: aws_tests_files
+        displayName: 'Files Tests on AWS backend'
+        timeoutInMinutes: 60
+        steps:
+          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files testsuite on AWS (PHP 7.4)'
+            env:
+              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+              RUN_SYNAPSE_TESTS: 0
+              SYNAPSE_STORAGE_API_TOKEN:
+              SYNAPSE_STORAGE_API_URL:
+
+
       - job: azure_tests
         displayName: 'Test on Azure backend'
         timeoutInMinutes: 60
@@ -132,8 +173,8 @@ stages:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
-            SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
-            SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
+            SYNAPSE_STORAGE_API_TOKEN:
+            SYNAPSE_STORAGE_API_URL:
 
         - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Azure
           displayName: 'Run Azure testsuite on Azure (PHP 7.4)'
@@ -141,8 +182,21 @@ stages:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
-            SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
-            SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)
+            SYNAPSE_STORAGE_API_TOKEN:
+            SYNAPSE_STORAGE_API_URL:
+
+      - job: azure_tests_files
+        displayName: 'Files Tests on Azure backend'
+        timeoutInMinutes: 60
+        steps:
+          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files testsuite on Azure (PHP 7.4)'
+            env:
+              STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+              RUN_SYNAPSE_TESTS: 0
+              SYNAPSE_STORAGE_API_TOKEN:
+              SYNAPSE_STORAGE_API_URL:
 
       - job: azure_tests_synapse
         displayName: 'Test on Azure Synapse backend'

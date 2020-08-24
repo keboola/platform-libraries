@@ -52,7 +52,7 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
 
         // Delete file uploads
         $options = new ListFilesOptions();
-        $options->setTags(["docker-bundle-test"]);
+        $options->setTags(["download-files-test"]);
         $files = $this->client->listFiles($options);
         foreach ($files as $file) {
             $this->client->deleteFile($file["id"]);

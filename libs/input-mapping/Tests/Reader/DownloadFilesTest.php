@@ -19,12 +19,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
-        $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
+        $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
+        $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
         sleep(2);
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
-        $configuration = [["tags" => ["docker-bundle-test"]]];
+        $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, $root . "/download");
 
         self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
@@ -54,7 +54,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
-        $fo->setTags(["docker-bundle-test"]);
+        $fo->setTags(["download-files-test"]);
 
         $this->client->setRunId('xyz');
         $id1 = $this->client->uploadFile($root . "/upload", $fo);
@@ -67,7 +67,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
         sleep(2);
 
-        $configuration = [["tags" => ["docker-bundle-test"], "filter_by_run_id" => true]];
+        $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
@@ -84,7 +84,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
-        $fo->setTags(["docker-bundle-test"]);
+        $fo->setTags(["download-files-test"]);
 
         $this->client->setRunId('xyz');
         $id1 = $this->client->uploadFile($root . "/upload", $fo);
@@ -97,7 +97,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
         sleep(2);
 
-        $configuration = [["query" => "tags: docker-bundle-test", "filter_by_run_id" => true]];
+        $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
@@ -115,7 +115,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
-            $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["docker-bundle-test"]));
+            $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
         }
         sleep(2);
 
@@ -141,7 +141,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals(100, $finder->count());
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
-        $configuration = [['tags' => ['docker-bundle-test'], 'limit' => 102]];
+        $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');

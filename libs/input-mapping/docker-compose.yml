@@ -1,13 +1,31 @@
 version: "2"
 services:
-  # for development purposes
-  php:
-    build: .
-    volumes:
-      - ./:/code
+  tests: &tests
+    build: 
+      context: .
+      dockerfile: Dockerfile74
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_URL
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+    command: ["composer", "ci"]
+
+  # for development purposes
+  tests-local:
+    <<: *tests
+    volumes:
+      - ./:/code
+
+  tests56:
+    <<: *tests
+    build: 
+      context: .
+      dockerfile: Dockerfile56
+
+  tests74:
+    <<: *tests
+    build: 
+      context: .
+      dockerfile: Dockerfile74

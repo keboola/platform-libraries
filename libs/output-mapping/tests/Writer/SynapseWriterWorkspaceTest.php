@@ -1,8 +1,7 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests;
+namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
@@ -10,9 +9,8 @@ use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-class SynapseWriterWorkspaceTest extends WriterWorkspaceTest
+class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-
     private $runSynapseTests = false;
 
     public function setUp()
@@ -46,7 +44,7 @@ class SynapseWriterWorkspaceTest extends WriterWorkspaceTest
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
 
-        $this->clearBuckets(['out.c-docker-test', 'in.c-output-mapping-test']);
+        $this->clearBuckets(['in.c-output-mapping-test', 'out.c-output-mapping-test']);
         $this->clearFileUploads(['docker-bundle-test']);
     }
 

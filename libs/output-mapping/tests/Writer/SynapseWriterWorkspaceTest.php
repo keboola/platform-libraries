@@ -15,7 +15,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function setUp()
     {
-        BaseWriterTest::setUp();
+        \PHPUnit_Framework_TestCase::setUp();
 
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {

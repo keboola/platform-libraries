@@ -29,6 +29,15 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
         $fs = new Filesystem();
         $fs->mkdir($this->tmpDir . "/download");
         $this->client = new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
+        $tokenInfo = $this->client->verifyToken();
+        print(sprintf(
+            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
+            $tokenInfo['description'],
+            $tokenInfo['id'],
+            $tokenInfo['owner']['name'],
+            $tokenInfo['owner']['id'],
+            $this->client->getApiUrl()
+        ));
     }
 
     public function tearDown()

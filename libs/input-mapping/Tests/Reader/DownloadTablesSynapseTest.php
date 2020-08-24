@@ -31,9 +31,6 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->client = new Client(["token" => $token, "url" => $url]);
         try {
             $this->client->dropBucket("in.c-docker-test-synapse", ["force" => true]);
         } catch (ClientException $e) {
@@ -53,6 +50,22 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $csv->writeRow(["Id", "Name"]);
         $csv->writeRow(["test", "test"]);
         $this->client->createTableAsync("in.c-docker-test-synapse", "test", $csv);
+    }
+
+    protected function initClient()
+    {
+        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
+        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
+        $this->client = new Client(["token" => $token, "url" => $url]);
+        $tokenInfo = $this->client->verifyToken();
+        print(sprintf(
+            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
+            $tokenInfo['description'],
+            $tokenInfo['id'],
+            $tokenInfo['owner']['name'],
+            $tokenInfo['owner']['id'],
+            $this->client->getApiUrl()
+        ));
     }
 
     public function testReadTablesSynapse()

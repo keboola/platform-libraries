@@ -22,6 +22,15 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
     {
         parent::setUp();
         $this->client = new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
+        $tokenInfo = $this->client->verifyToken();
+        print(sprintf(
+            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
+            $tokenInfo['description'],
+            $tokenInfo['id'],
+            $tokenInfo['owner']['name'],
+            $tokenInfo['owner']['id'],
+            $this->client->getApiUrl()
+        ));
         try {
             $this->client->dropBucket('in.c-input-mapping-test-strategy', ['force' => true]);
         } catch (ClientException $e) {

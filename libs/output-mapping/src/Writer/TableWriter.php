@@ -32,6 +32,7 @@ class TableWriter extends AbstractWriter
     const STAGING_LOCAL = 'local';
     const STAGING_SNOWFLAKE = 'workspace-snowflake';
     const STAGING_REDSHIFT = 'workspace-redshift';
+    const STAGING_SYNAPSE = 'workspace-synapse';
 
     /**
      * @var Metadata
@@ -546,7 +547,8 @@ class TableWriter extends AbstractWriter
 
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
-        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+        $stagingType = $this->validateWorkspaceStaging($stagingStorageOutput);
+        if ($stagingType === self::STAGING_LOCAL) {
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
                 $options['dataFileId'] = $fileId;
@@ -559,27 +561,41 @@ class TableWriter extends AbstractWriter
                 $options['dataFileId'] = $fileId;
                 $tableQueue = new LoadTable($this->client, $tableId, $options);
             }
-        } elseif (($stagingStorageOutput === self::STAGING_REDSHIFT) || ($stagingStorageOutput === self::STAGING_SNOWFLAKE)) {
-            if ($stagingStorageOutput === self::STAGING_REDSHIFT) {
-                $type = 'redshift';
-            } else {
-                $type = 'snowflake';
-            }
+        } else {
             $options = [
-                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($type),
+                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($stagingType),
                 'dataTableName' => $sourcePath,
             ];
             $tableQueue = new LoadTable($this->client, $tableId, $options);
-        } else {
-            throw new InvalidOutputException(
-                'Parameter "storage" must be one of: ' .
-                implode(
-                    ', ',
-                    [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
-                )
-            );
         }
         return $tableQueue;
+    }
+
+    /**
+     * @param string $stagingStorageOutput
+     * @return string
+     * @throws InvalidOutputException if not local or valid workspace
+     */
+    private function validateWorkspaceStaging($stagingStorageOutput)
+    {
+        switch ($stagingStorageOutput) {
+            case self::STAGING_LOCAL:
+                return 'local';
+            case self::STAGING_SNOWFLAKE:
+                return 'snowflake';
+            case self::STAGING_REDSHIFT:
+                return 'redshift';
+            case self::STAGING_SYNAPSE:
+                return 'synapse';
+            default:
+                throw new InvalidOutputException(
+                    'Parameter "storage" must be one of: ' .
+                    implode(
+                        ', ',
+                        [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT, self::STAGING_SYNAPSE]
+                    )
+                );
+        }
     }
 
     /**

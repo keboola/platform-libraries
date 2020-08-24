@@ -145,7 +145,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
-        self::assertEquals(102, $finder->count());
+        self::assertGreaterThanOrEqual(102, $finder->count());
     }
 
     public function testReadSlicedFileSnowflake()

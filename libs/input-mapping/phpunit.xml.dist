@@ -29,6 +29,8 @@
         </testsuite>
         <testsuite name="Azure">
             <file>Tests/Reader/DownloadTablesABSDefaultTest.php</file>
+        </testsuite>
+        <testsuite name="AzureSynapse">
             <file>Tests/Reader/DownloadTablesSynapseTest.php</file>
             <file>Tests/Reader/DownloadTablesWorkspaceSynapseTest.php</file>
         </testsuite>

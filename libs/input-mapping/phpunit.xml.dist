@@ -11,16 +11,20 @@
          bootstrap="bootstrap.php">
 
     <testsuites>
-        <testsuite name="Common">
+        <testsuite name="CommonPart1">
             <directory>Tests</directory>
             <exclude>Tests/Reader/DownloadFilesTest.php</exclude>
             <exclude>Tests/Reader/DownloadFilesRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesRedshiftTest.php</exclude>
+            <exclude>Tests/Reader/DownloadTablesDefaultTest</exclude>
             <exclude>Tests/Reader/DownloadTablesS3DefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesABSDefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesWorkspaceRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesSynapseTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesWorkspaceSynapseTest.php</exclude>
+        </testsuite>
+        <testsuite name="CommonPart2">
+            <file>Tests/Reader/DownloadTablesDefaultTest.php</file>
         </testsuite>
         <testsuite name="CommonFiles">
             <file>Tests/Reader/DownloadFilesTest.php</file>

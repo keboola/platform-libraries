@@ -22,13 +22,13 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     {
         parent::setUp();
         try {
-            $this->client->dropBucket("in.c-docker-test", ["force" => true]);
+            $this->client->dropBucket("in.c-input-mapping-test-default", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
+        $this->client->createBucket("input-mapping-test-default", Client::STAGE_IN, "Input Mapping Testsuite");
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
@@ -36,8 +36,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $csv->writeRow(["id1", "name1", "foo1", "bar1"]);
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
-        $this->client->createTableAsync("in.c-docker-test", "test", $csv);
-        $this->client->createTableAsync("in.c-docker-test", "test2", $csv);
+        $this->client->createTableAsync("in.c-input-mapping-test-default", "test", $csv);
+        $this->client->createTableAsync("in.c-input-mapping-test-default", "test2", $csv);
     }
 
     public function testReadTablesDefaultBackend()
@@ -46,11 +46,11 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "destination" => "test.csv"
             ],
             [
-                "source" => "in.c-docker-test.test2",
+                "source" => "in.c-input-mapping-test-default.test2",
                 "destination" => "test2.csv"
             ]
         ]);
@@ -72,14 +72,14 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
 
         self::assertCSVEquals(
             $expectedCSVContent,
             $this->temp->getTmpFolder() . "/download/test2.csv"
         );
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
-        self::assertEquals("in.c-docker-test.test2", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test2", $manifest["id"]);
         self::assertTrue($logger->hasInfoThatContains('Processing 2 local table exports.'));
     }
 
@@ -88,7 +88,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "destination" => "test.csv",
                 "days" => 0,
             ]
@@ -112,7 +112,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "destination" => "test.csv",
                 "changed_since" => "",
             ]
@@ -150,12 +150,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ];
         $metadata = new Metadata($this->client);
-        $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
-        $metadata->postColumnMetadata('in.c-docker-test.test.Name', 'dataLoaderTest', $columnMetadata);
+        $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
+        $metadata->postColumnMetadata('in.c-input-mapping-test-default.test.Name', 'dataLoaderTest', $columnMetadata);
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "destination" => "test.csv",
             ]
         ]);
@@ -169,7 +169,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -210,7 +210,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ];
         $metadata = new Metadata($this->client);
-        $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
+        $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
@@ -231,7 +231,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(1, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -257,9 +257,9 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         ];
         $metadata = new Metadata($this->client);
-        $metadata->postTableMetadata('in.c-docker-test.test', 'dataLoaderTest', $tableMetadata);
+        $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata(
-            'in.c-docker-test.test.Name',
+            'in.c-input-mapping-test-default.test.Name',
             'dataLoaderTest',
             [
                 [
@@ -269,7 +269,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ]
         );
         $metadata->postColumnMetadata(
-            'in.c-docker-test.test.bar',
+            'in.c-input-mapping-test-default.test.bar',
             'dataLoaderTest',
             [
                 [
@@ -281,7 +281,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "columns" => ["bar", "foo", "Id"],
                 "destination" => "test.csv",
             ]
@@ -302,7 +302,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
         self::assertArrayHasKey('columns', $manifest);
         self::assertEquals(['bar', 'foo', "Id"], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);
@@ -343,7 +343,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "column_types" => [
                      [
                          "source" => "bar",
@@ -373,7 +373,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-docker-test.test", $manifest["id"]);
+        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
         self::assertArrayHasKey('columns', $manifest);
         self::assertEquals(['bar', 'foo'], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);
@@ -400,14 +400,14 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($client, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.test",
+                "source" => "in.c-input-mapping-test-default.test",
                 "destination" => "test.csv"
             ]
         ]);
 
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Table "in.c-docker-test.test" with size 1024 bytes exceeds the input mapping limit ' .
+            'Table "in.c-input-mapping-test-default.test" with size 1024 bytes exceeds the input mapping limit ' .
             'of 10 bytes. Please contact support to raise this limit'
         );
         $reader->downloadTables(

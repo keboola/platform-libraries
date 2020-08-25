@@ -80,8 +80,8 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        $this->clearBuckets(['out.c-docker-test']);
-        $this->clearFileUploads(['docker-bundle-test']);
+        $this->clearBuckets(['out.c-output-mapping-test']);
+        $this->clearFileUploads(['output-mapping-test']);
         // Delete local files
         $this->tmp = null;
     }

@@ -12,6 +12,13 @@ use Psr\Log\NullLogger;
 
 class StorageApiSlicedWriterTest extends BaseWriterTest
 {
+    public function setUp()
+    {
+        parent::setUp();
+        $this->clearBuckets(['out.c-docker-test']);
+        $this->clearFileUploads(['docker-bundle-test']);
+    }
+
     public function initBucket($backendType)
     {
         $this->client->createBucket('docker-test', 'out', null, $backendType);

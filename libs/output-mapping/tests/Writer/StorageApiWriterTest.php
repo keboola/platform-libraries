@@ -20,7 +20,13 @@ class StorageApiWriterTest extends BaseWriterTest
     public function setUp()
     {
         parent::setUp();
-        $this->clearBuckets(['out.c-docker-test', 'out.c-docker-default-test', 'out.c-docker-redshift-test', 'in.c-docker-test']);
+        $this->clearFileUploads(['docker-bundle-test']);
+        $this->clearBuckets([
+            'out.c-docker-test',
+            'out.c-docker-default-test',
+            'out.c-docker-redshift-test',
+            'in.c-docker-test',
+        ]);
         $this->client->createBucket('docker-redshift-test', 'out', '', 'redshift');
         $this->client->createBucket('docker-default-test', 'out');
     }

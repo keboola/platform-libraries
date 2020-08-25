@@ -14,11 +14,6 @@ use Psr\Log\NullLogger;
 
 class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-    public function setUp()
-    {
-        parent::setUp();
-        $this->clearBuckets(['out.c-output-mapping-test', 'in.c-output-mapping-test']);
-    }
 
     public function testSnowflakeTableOutputMapping()
     {

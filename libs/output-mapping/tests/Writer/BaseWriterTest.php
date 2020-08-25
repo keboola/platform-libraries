@@ -54,7 +54,11 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         $fs = new Filesystem();
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
+        $this->initClient();
+    }
 
+    protected function initClient()
+    {
         $this->client = new Client([
             'url' => STORAGE_API_URL,
             'token' => STORAGE_API_TOKEN,
@@ -63,8 +67,6 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
                 return 1;
             },
         ]);
-        $this->clearBuckets(['out.c-docker-test']);
-        $this->clearFileUploads(['docker-bundle-test']);
     }
 
     public function tearDown()

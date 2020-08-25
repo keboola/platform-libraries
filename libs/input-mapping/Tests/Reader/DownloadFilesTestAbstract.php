@@ -43,6 +43,7 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
         sleep(5);
         $options = new ListFilesOptions();
         $options->setTags(["download-files-test"]);
+        $options->setLimit(1000);
         $files = $this->client->listFiles($options);
         foreach ($files as $file) {
             $this->client->deleteFile($file["id"]);

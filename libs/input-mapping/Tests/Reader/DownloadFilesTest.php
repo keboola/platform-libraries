@@ -9,6 +9,7 @@ use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
 
@@ -140,11 +141,13 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
+        $tmpDir = new Temp('file-test');
+        $tmpDir->initRunFolder();
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download");
         $finder = new Finder();
-        $finder->files()->in($root . "/download")->notName('*.manifest');
+        $finder->files()->in($tmpDir->getTmpFolder() . "/download")->notName('*.manifest');
         foreach ($finder as $file) {
             var_dump($file->getPathname() . $file->getFilename());
         }

@@ -16,7 +16,7 @@
             <exclude>Tests/Reader/DownloadFilesTest.php</exclude>
             <exclude>Tests/Reader/DownloadFilesRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesRedshiftTest.php</exclude>
-            <exclude>Tests/Reader/DownloadTablesDefaultTest</exclude>
+            <exclude>Tests/Reader/DownloadTablesDefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesS3DefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesABSDefaultTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesWorkspaceRedshiftTest.php</exclude>

@@ -14,7 +14,7 @@ use Psr\Log\Test\TestLogger;
 
 class PrimaryKeyHelperTest extends TestCase
 {
-    const TEST_BUCKET_ID = 'out.c-docker-test';
+    const TEST_BUCKET_ID = 'out.c-output-mapping-test';
     const TEST_TABLE_NAME = 'test-table';
     const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
     /**
@@ -33,7 +33,7 @@ class PrimaryKeyHelperTest extends TestCase
     private function createTable(array $columns, $primaryKey)
     {
         if (!$this->client->bucketExists(self::TEST_BUCKET_ID)) {
-            $this->client->createBucket('docker-test', 'out');
+            $this->client->createBucket('output-mapping-test', 'out');
         }
         try {
             $this->client->dropTable(self::TEST_TABLE_ID);
@@ -63,7 +63,7 @@ class PrimaryKeyHelperTest extends TestCase
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-docker-test.table',
+                'destination' => 'out.c-output-mapping-test.table',
                 'primary_key' => ['Id'],
             ]
         );
@@ -79,7 +79,7 @@ class PrimaryKeyHelperTest extends TestCase
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-docker-test.table',
+                'destination' => 'out.c-output-mapping-test.table',
                 'primary_key' => [],
             ]
         );
@@ -93,14 +93,14 @@ class PrimaryKeyHelperTest extends TestCase
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
             'Output mapping does not match destination table: primary key "Id, Name" ' .
-            'does not match "Id" in "out.c-docker-test.table".'
+            'does not match "Id" in "out.c-output-mapping-test.table".'
         );
         PrimaryKeyHelper::validatePrimaryKeyAgainstTable(
             new NullLogger(),
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-docker-test.table',
+                'destination' => 'out.c-output-mapping-test.table',
                 'primary_key' => ['Id', 'Name'],
             ]
         );
@@ -226,7 +226,7 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-docker-test.test-table" from "id, name" to "id, foo".'
+            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "id, name" to "id, foo".'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -247,7 +247,7 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-docker-test.test-table" from "" to "id, foo".'
+            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "" to "id, foo".'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -268,11 +268,11 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-docker-test.test-table-non-existent" from "id, name" to "id, foo".'
+            'Modifying primary key of table "out.c-output-mapping-test.test-table-non-existent" from "id, name" to "id, foo".'
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error deleting primary key of table out.c-docker-test.test-table-non-existent: The ' .
-            'table "test-table-non-existent" was not found in the bucket "out.c-docker-test" in the project'
+            'Error deleting primary key of table out.c-output-mapping-test.test-table-non-existent: The ' .
+            'table "test-table-non-existent" was not found in the bucket "out.c-output-mapping-test" in the project'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -293,10 +293,10 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'bar']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-docker-test.test-table" from "id, name" to "id, bar".'
+            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "id, name" to "id, bar".'
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error changing primary key of table out.c-docker-test.test-table: Primary key ' .
+            'Error changing primary key of table out.c-output-mapping-test.test-table: Primary key ' .
             'columns "bar" not found in "id, name, foo"'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);

@@ -2,6 +2,9 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
+use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
@@ -101,17 +104,22 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
-        $data = (array) $this->client->getTableDataPreview(
-            'out.c-output-mapping-test.table1a',
-            ['format' => 'json']
+
+        $reader = new Reader($this->client, new NullLogger(), $this->getWorkspaceProvider());
+        $reader->downloadTables(
+            new InputTableOptionsList([
+                [
+                    'source' => 'out.c-output-mapping-test.table1a',
+                    'destination' => 'table1a-returned.csv',
+                ]
+            ]),
+            new InputTableStateList([]),
+            $root
         );
-        $values = [];
-        foreach ($data['rows'] as $row) {
-            foreach ($row as $column) {
-                $values[] = $column['value'];
-            }
-        }
-        sort($values);
-        $this->assertEquals(['aabb', 'ccdd', 'test', 'test'], $values);
+        $expectedCsvOutput = "\"Id\",\"Name\"\n\"aabb\",\"ccdd\"\n\"test\",\"test\"\n";
+        self::assertEquals(
+            $expectedCsvOutput,
+            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')
+        );
     }
 }

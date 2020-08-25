@@ -148,9 +148,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download");
         $finder = new Finder();
         $finder->files()->in($tmpDir->getTmpFolder() . "/download")->notName('*.manifest');
-        foreach ($finder as $file) {
-            var_dump($file->getPathname() . $file->getFilename());
-        }
         self::assertEquals(102, $finder->count());
     }
 

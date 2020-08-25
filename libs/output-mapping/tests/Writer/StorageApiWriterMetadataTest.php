@@ -30,7 +30,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
     public function setUp()
     {
         parent::setUp();
-        $this->clearBuckets(['in.c-docker-test', 'in.c-docker-test-backend']);
+        $this->clearFileUploads(['docker-bundle-test']);
+        $this->clearBuckets(['in.c-docker-test', 'in.c-docker-test-backend', 'out.c-docker-test']);
         $this->client->createBucket('docker-test', "in", '', 'snowflake');
     }
 

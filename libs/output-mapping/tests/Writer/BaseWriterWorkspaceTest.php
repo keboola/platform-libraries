@@ -15,6 +15,13 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
      */
     protected $workspaceId;
 
+    public function setUp()
+    {
+        parent::setUp();
+        $this->clearBuckets(['out.c-docker-test', 'out.c-output-mapping-test', 'in.c-output-mapping-test']);
+        $this->clearFileUploads(['docker-bundle-test']);
+    }
+
     public function tearDown()
     {
         if ($this->workspaceId) {

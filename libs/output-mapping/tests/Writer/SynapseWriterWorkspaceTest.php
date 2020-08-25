@@ -15,8 +15,6 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function setUp()
     {
-        \PHPUnit_Framework_TestCase::setUp();
-
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
             return;
@@ -27,6 +25,11 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
+        parent::setUp();
+    }
+
+    protected function initClient()
+    {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
         $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
         $this->client = new Client([
@@ -37,15 +40,6 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 return 1;
             },
         ]);
-        $this->tmp = new Temp();
-        $this->tmp->initRunFolder();
-        $root = $this->tmp->getTmpFolder();
-        $fs = new Filesystem();
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
-        $fs->mkdir($root . DIRECTORY_SEPARATOR . 'download');
-
-        $this->clearBuckets(['in.c-output-mapping-test', 'out.c-output-mapping-test']);
-        $this->clearFileUploads(['docker-bundle-test']);
     }
 
     public function testSynapseTableOutputMapping()

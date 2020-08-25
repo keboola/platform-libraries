@@ -21,7 +21,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
         $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
-        sleep(2);
+        sleep(5);
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [["tags" => ["download-files-test"]]];
@@ -65,7 +65,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $this->client->setRunId('1234567.8901234');
         $id5 = $this->client->uploadFile($root . "/upload", $fo);
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
-        sleep(2);
+        sleep(5);
 
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
@@ -95,7 +95,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $this->client->setRunId('1234567.8901234');
         $id5 = $this->client->uploadFile($root . "/upload", $fo);
         $id6 = $this->client->uploadFile($root . "/upload", $fo);
-        sleep(2);
+        sleep(5);
 
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, $root . "/download");
@@ -117,7 +117,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         for ($i = 0; $i < 102; $i++) {
             $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
         }
-        sleep(2);
+        sleep(5);
 
         // valid configuration, but does nothing
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
@@ -145,7 +145,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
-        self::assertGreaterThanOrEqual(102, $finder->count());
+        self::assertEquals(102, $finder->count());
     }
 
     public function testReadSlicedFileSnowflake()
@@ -166,6 +166,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $this->client->createTableAsync($bucketId, $tableName, $csv);
         }
         $table = $this->client->exportTableAsync($tableId);
+        sleep(2);
         $fileId = $table['file']['id'];
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
@@ -200,7 +201,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             ->setIsSliced(true)
             ->setFileName('empty_file');
         $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
-        sleep(2);
+        sleep(5);
 
         $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [

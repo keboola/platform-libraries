@@ -38,19 +38,9 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
             $tokenInfo['owner']['id'],
             $this->client->getApiUrl()
         ));
-    }
-
-    public function tearDown()
-    {
-        // Delete local files
-        $finder = new Finder();
-        $fs = new Filesystem();
-        $fs->remove($finder->files()->in($this->tmpDir . "/download"));
-        $fs->remove($finder->files()->in($this->tmpDir));
-        $fs->remove($this->tmpDir . "/download");
-        $fs->remove($this->tmpDir);
 
         // Delete file uploads
+        sleep(5);
         $options = new ListFilesOptions();
         $options->setTags(["download-files-test"]);
         $files = $this->client->listFiles($options);

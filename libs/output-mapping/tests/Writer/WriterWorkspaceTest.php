@@ -1,88 +1,19 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests;
+namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 
-class WriterWorkspaceTest extends BaseWriterTest
+class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-    /**
-     * @var string
-     */
-    private $workspaceId;
-
-    public function setUp()
-    {
-        parent::setUp();
-        $this->clearBuckets(['out.c-output-mapping-test', 'in.c-output-mapping-test']);
-    }
-
-    public function tearDown()
-    {
-        if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->client);
-            $workspaces->deleteWorkspace($this->workspaceId);
-            $this->workspaceId = null;
-        }
-        parent::tearDown();
-    }
-
-    private function getWorkspaceProvider()
-    {
-        $mock = self::getMockBuilder(NullWorkspaceProvider::class)
-            ->setMethods(['getWorkspaceId'])
-            ->getMock();
-        $mock->method('getWorkspaceId')->willReturnCallback(
-            function ($type) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->client);
-                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
-                    $this->workspaceId = $workspace['id'];
-                }
-                return $this->workspaceId;
-            }
-        );
-        /** @var WorkspaceProviderInterface $mock */
-        return $mock;
-    }
-
-    private function prepareWorkspaceWithTables($type)
-    {
-        $temp = new Temp();
-        $temp->initRunFolder();
-        $root = $temp->getTmpFolder();
-        $this->client->createBucket('output-mapping-test', 'in', '', $type);
-        file_put_contents($root . '/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
-        file_put_contents($root . '/table2a.csv', "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
-        $this->client->createTable('in.c-output-mapping-test', 'table1a', new CsvFile($root . '/table1a.csv'));
-        $this->client->createTable('in.c-output-mapping-test', 'table2a', new CsvFile($root . '/table2a.csv'));
-        $workspaces = new Workspaces($this->client);
-        $workspaceProvider = $this->getWorkspaceProvider();
-        $workspaces->loadWorkspaceData(
-            $workspaceProvider->getWorkspaceId($type),
-            [
-                'input' => [
-                    [
-                        'source' => 'in.c-output-mapping-test.table1a',
-                        'destination' => 'table1a',
-                    ],
-                    [
-                        'source' => 'in.c-output-mapping-test.table2a',
-                        'destination' => 'table2a',
-                    ],
-                ],
-            ]
-        );
-    }
 
     public function testSnowflakeTableOutputMapping()
     {

@@ -14,7 +14,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
     public function setUp()
     {
         parent::setUp();
-        $this->client->createBucket('docker-test', 'out');
+        $this->clearBuckets(['out.c-output-mapping-test']);
+        $this->clearFileUploads(['output-mapping-test']);
+        $this->client->createBucket('output-mapping-test', 'out');
     }
 
     public function testWriteTableOutputMapping()
@@ -25,7 +27,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-docker-test.table",
+                "destination" => "out.c-output-mapping-test.table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -37,14 +39,14 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $this->assertCount(1, $jobIds);
         $this->assertEquals(1, $tableQueue->getTaskCount());
 
-        $tables = $this->client->listTables("out.c-docker-test");
+        $tables = $this->client->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -59,7 +61,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table",
-                "destination" => "out.c-docker-test.table",
+                "destination" => "out.c-output-mapping-test.table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -69,12 +71,12 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -88,13 +90,13 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . "upload/table2.csv.manifest",
-            "{\"destination\": \"out.c-docker-test.table2\",\"primary_key\":[\"Id\"],\"columns\":[\"a\",\"b\"]}"
+            "{\"destination\": \"out.c-output-mapping-test.table2\",\"primary_key\":[\"Id\"],\"columns\":[\"a\",\"b\"]}"
         );
 
         $configs = [
             [
                 "source" => "table2.csv",
-                "destination" => "out.c-docker-test.table",
+                "destination" => "out.c-output-mapping-test.table",
                 "columns" => ["Id", "Name"]
             ]
         ];
@@ -105,16 +107,16 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-docker-test");
+        $tables = $this->client->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table', $tables[0]["id"]);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals([], $table["primaryKey"]);
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(1, $table);
         $this->assertEquals([["Id" => "test", "Name" => "test"]], $table);
@@ -124,12 +126,12 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table.csv",
+            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table.csv",
             "\"test\",\"test\"\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-docker-test.table.csv.manifest",
-            "{\"destination\": \"out.c-docker-test.table\",\"primary_key\":[\"Id\",\"Name\"],\"columns\":[\"Id\",\"Name\"]}"
+            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table.csv.manifest",
+            "{\"destination\": \"out.c-output-mapping-test.table\",\"primary_key\":[\"Id\",\"Name\"],\"columns\":[\"Id\",\"Name\"]}"
         );
 
         $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
@@ -138,16 +140,16 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-docker-test");
+        $tables = $this->client->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-docker-test.table', $tables[0]["id"]);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals(["Id", "Name"], $table["primaryKey"]);
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(1, $table);
         $this->assertEquals([["Id" => "test", "Name" => "test"]], $table);
@@ -157,10 +159,10 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
     {
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
         $csvFile->writeRow(["Id", "Name"]);
-        $this->client->createTable("out.c-docker-test", "table", $csvFile);
-        $tables = $this->client->listTables("out.c-docker-test");
+        $this->client->createTable("out.c-output-mapping-test", "table", $csvFile);
+        $tables = $this->client->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $root = $this->tmp->getTmpFolder();
@@ -169,7 +171,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-docker-test.table",
+                "destination" => "out.c-output-mapping-test.table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -180,14 +182,14 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-docker-test");
+        $tables = $this->client->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
-        $table = $this->client->getTable("out.c-docker-test.table");
+        $table = $this->client->getTable("out.c-output-mapping-test.table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->client);
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-docker-test.table', $downloadedFile, []);
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
         $table = $this->client->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);

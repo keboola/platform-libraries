@@ -20,6 +20,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\Finder;
@@ -32,6 +33,7 @@ class TableWriter extends AbstractWriter
     const STAGING_LOCAL = 'local';
     const STAGING_SNOWFLAKE = 'workspace-snowflake';
     const STAGING_REDSHIFT = 'workspace-redshift';
+    const STAGING_SYNAPSE = 'workspace-synapse';
 
     /**
      * @var Metadata
@@ -546,6 +548,7 @@ class TableWriter extends AbstractWriter
 
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
+        $this->validateWorkspaceStaging($stagingStorageOutput);
         if ($stagingStorageOutput === self::STAGING_LOCAL) {
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
@@ -559,27 +562,51 @@ class TableWriter extends AbstractWriter
                 $options['dataFileId'] = $fileId;
                 $tableQueue = new LoadTable($this->client, $tableId, $options);
             }
-        } elseif (($stagingStorageOutput === self::STAGING_REDSHIFT) || ($stagingStorageOutput === self::STAGING_SNOWFLAKE)) {
-            if ($stagingStorageOutput === self::STAGING_REDSHIFT) {
-                $type = 'redshift';
-            } else {
-                $type = 'snowflake';
-            }
+        } else {
+            $backend = $this->convertStagingToStorageApiBackend($stagingStorageOutput);
             $options = [
-                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($type),
+                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($backend),
                 'dataTableName' => $sourcePath,
             ];
             $tableQueue = new LoadTable($this->client, $tableId, $options);
-        } else {
-            throw new InvalidOutputException(
-                'Parameter "storage" must be one of: ' .
-                implode(
-                    ', ',
-                    [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT]
-                )
-            );
         }
         return $tableQueue;
+    }
+
+    /**
+     * @param string $stagingStorageOutput
+     * @throws InvalidOutputException if not local or valid workspace
+     */
+    private function validateWorkspaceStaging($stagingStorageOutput)
+    {
+        $stagingTypes = [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT, self::STAGING_SYNAPSE];
+        if (!in_array($stagingStorageOutput, $stagingTypes)) {
+            throw new InvalidOutputException(
+                'Parameter "storage" must be one of: ' .
+                implode(', ', $stagingTypes)
+            );
+        }
+    }
+
+    /**
+     * Convert staging storage to valid value of Storage backend
+     *  https://keboola.docs.apiary.io/#reference/workspaces/workspaces-collection/create-new-workspace
+     * @param string $stagingStorageOutput
+     * @return string
+     * @throws InvalidOutputException if not local or valid workspace
+     */
+    private function convertStagingToStorageApiBackend($stagingStorageOutput)
+    {
+        switch ($stagingStorageOutput) {
+            case self::STAGING_SNOWFLAKE:
+                return WorkspaceProviderInterface::TYPE_SNOWFLAKE;
+            case self::STAGING_REDSHIFT:
+                return WorkspaceProviderInterface::TYPE_REDSHIFT;
+            case self::STAGING_SYNAPSE:
+                return WorkspaceProviderInterface::TYPE_SYNAPSE;
+            default:
+                throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));
+        }
     }
 
     /**

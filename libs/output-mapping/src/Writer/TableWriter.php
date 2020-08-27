@@ -583,7 +583,7 @@ class TableWriter extends AbstractWriter
         if (!in_array($stagingStorageOutput, $stagingTypes)) {
             throw new InvalidOutputException(
                 'Parameter "storage" must be one of: ' .
-                implode(', ',  $stagingTypes)
+                implode(', ', $stagingTypes)
             );
         }
     }

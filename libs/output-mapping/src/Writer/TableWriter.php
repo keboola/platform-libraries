@@ -20,6 +20,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\Finder;
@@ -547,8 +548,8 @@ class TableWriter extends AbstractWriter
 
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
-        $stagingType = $this->validateWorkspaceStaging($stagingStorageOutput);
-        if ($stagingType === self::STAGING_LOCAL) {
+        $this->validateWorkspaceStaging($stagingStorageOutput);
+        if ($stagingStorageOutput === self::STAGING_LOCAL) {
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
                 $options['dataFileId'] = $fileId;
@@ -562,8 +563,9 @@ class TableWriter extends AbstractWriter
                 $tableQueue = new LoadTable($this->client, $tableId, $options);
             }
         } else {
+            $backend = $this->convertStagingToStorageApiBackend($stagingStorageOutput);
             $options = [
-                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($stagingType),
+                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($backend),
                 'dataTableName' => $sourcePath,
             ];
             $tableQueue = new LoadTable($this->client, $tableId, $options);
@@ -573,28 +575,37 @@ class TableWriter extends AbstractWriter
 
     /**
      * @param string $stagingStorageOutput
-     * @return string
      * @throws InvalidOutputException if not local or valid workspace
      */
     private function validateWorkspaceStaging($stagingStorageOutput)
     {
+        $stagingTypes = [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT, self::STAGING_SYNAPSE];
+        if (!in_array($stagingStorageOutput, $stagingTypes)) {
+            throw new InvalidOutputException(
+                'Parameter "storage" must be one of: ' .
+                implode(', ',  $stagingTypes)
+            );
+        }
+    }
+
+    /**
+     * Convert staging storage to valid value of Storage backend
+     *  https://keboola.docs.apiary.io/#reference/workspaces/workspaces-collection/create-new-workspace
+     * @param string $stagingStorageOutput
+     * @return string
+     * @throws InvalidOutputException if not local or valid workspace
+     */
+    private function convertStagingToStorageApiBackend($stagingStorageOutput)
+    {
         switch ($stagingStorageOutput) {
-            case self::STAGING_LOCAL:
-                return 'local';
             case self::STAGING_SNOWFLAKE:
-                return 'snowflake';
+                return WorkspaceProviderInterface::TYPE_SNOWFLAKE;
             case self::STAGING_REDSHIFT:
-                return 'redshift';
+                return WorkspaceProviderInterface::TYPE_REDSHIFT;
             case self::STAGING_SYNAPSE:
-                return 'synapse';
+                return WorkspaceProviderInterface::TYPE_SYNAPSE;
             default:
-                throw new InvalidOutputException(
-                    'Parameter "storage" must be one of: ' .
-                    implode(
-                        ', ',
-                        [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT, self::STAGING_SYNAPSE]
-                    )
-                );
+                throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));
         }
     }
 

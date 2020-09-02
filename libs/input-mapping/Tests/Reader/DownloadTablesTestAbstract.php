@@ -71,6 +71,10 @@ class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
         self::assertArrayHasKey("credentials", $manifest["abs"]);
         self::assertArrayHasKey("sas_connection_string", $manifest["abs"]['credentials']);
         self::assertArrayHasKey("expiration", $manifest["abs"]['credentials']);
+
+        if ($manifest["abs"]["is_sliced"]) {
+            self::assertStringEndsWith("manifest", $manifest["abs"]["name"]);
+        }
     }
 
     /**

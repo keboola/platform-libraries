@@ -50,13 +50,13 @@ class ABSStrategy extends AbstractStrategy
             throw new InvalidInputException('This project does not have ABS backend.');
         }
         return [
-            "is_sliced" => $fileInfo["isSliced"],
-            "region" => $fileInfo["region"],
-            "container" => $fileInfo['absPath']['container'],
-            "name" => $fileInfo['absPath']['name'],
-            "credentials" => [
-                "sas_connection_string" => $fileInfo['absCredentials']['SASConnectionString'],
-                "expiration" => $fileInfo['absCredentials']['expiration'],
+            'is_sliced' => $fileInfo['isSliced'],
+            'region' => $fileInfo['region'],
+            'container' => $fileInfo['absPath']['container'],
+            'name' => $fileInfo['isSliced'] ? $fileInfo['absPath']['name'] . 'manifest' : $fileInfo['absPath']['name'],
+            'credentials' => [
+                'sas_connection_string' => $fileInfo['absCredentials']['SASConnectionString'],
+                'expiration' => $fileInfo['absCredentials']['expiration'],
             ],
         ];
     }

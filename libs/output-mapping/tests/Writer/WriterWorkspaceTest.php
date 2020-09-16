@@ -27,6 +27,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             [
                 'source' => 'table1a',
                 'destination' => 'out.c-output-mapping-test.table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
             ],
             [
                 'source' => 'table2a',
@@ -64,7 +66,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
+        $job = $this->client->getJob($jobIds[0]);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
+        $this->assertEquals(true, $job['operationParams']['params']['incremental']);
+        $this->assertEquals(['Id'], $job['operationParams']['params']['columns']);
         $data = $this->client->getTableDataPreview('out.c-output-mapping-test.table1a');
+        $job = $this->client->getJob($jobIds[1]);
+        $this->assertEquals('out.c-output-mapping-test.table2a', $job['tableId']);
+        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
+        $this->assertEquals(['Id2', 'Name2'], $job['operationParams']['params']['columns']);
+
         $rows = explode("\n", trim($data));
         sort($rows);
         $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);

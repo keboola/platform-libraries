@@ -23,7 +23,7 @@ class ConfigurationMergerTest extends TestCase
     {
         return [
             'empty-manifest' => [
-                [
+                'mapping' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => [],
                     'columns' => [],
@@ -33,8 +33,8 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ',',
                     'enclosure' => '"',
                 ],
-                [],
-                [
+                'manifest' => [],
+                'expected' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => [],
                     'columns' => [],
@@ -46,8 +46,8 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'empty-mapping' => [
-                [],
-                [
+                'mapping' => [],
+                'manifest' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => [],
                     'columns' => [],
@@ -57,7 +57,7 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ',',
                     'enclosure' => '"',
                 ],
-                [
+                'expected' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => [],
                     'columns' => [],
@@ -69,7 +69,7 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'manifest-overwrite' => [
-                [
+                'mapping' => [
                     'destination' => 'in.c-main.test2',
                     'primary_key' => ['a', 'b'],
                     'columns' => ['c', 'd'],
@@ -79,7 +79,7 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ':',
                     'enclosure' => '|',
                 ],
-                [
+                'manifest' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => [],
                     'columns' => [],
@@ -89,7 +89,7 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ',',
                     'enclosure' => '"',
                 ],
-                [
+                'expected' => [
                     'destination' => 'in.c-main.test2',
                     'primary_key' => ['a', 'b'],
                     'columns' => ['c', 'd'],
@@ -101,13 +101,13 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'defaults-overwrite' => [
-                [
+                'mapping' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => ['g'],
                     'columns' => ['h'],
                     'delete_where_values' => ['i'],
                 ],
-                [
+                'manifest' => [
                     'destination' => 'in.c-main.test2',
                     'primary_key' => ['a', 'b'],
                     'columns' => ['c', 'd'],
@@ -117,7 +117,7 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ':',
                     'enclosure' => '|',
                 ],
-                [
+                'expected' => [
                     'destination' => 'in.c-main.test',
                     'primary_key' => ['g'],
                     'columns' => ['h'],
@@ -130,13 +130,13 @@ class ConfigurationMergerTest extends TestCase
             ],
             'defaults-no-overwrite' => [
                 // this is a very weird case that needs to be fixed https://keboola.atlassian.net/browse/PS-364
-                [
+                'mapping' => [
                     'incremental' => false,
                     'delete_where_operator' => 'eq',
                     'delimiter' => ',',
                     'enclosure' => '"',
                 ],
-                [
+                'manifest' => [
                     'destination' => 'in.c-main.test2',
                     'primary_key' => ['a', 'b'],
                     'columns' => ['c', 'd'],
@@ -146,7 +146,7 @@ class ConfigurationMergerTest extends TestCase
                     'delimiter' => ':',
                     'enclosure' => '|',
                 ],
-                [
+                'expected' => [
                     'destination' => 'in.c-main.test2',
                     'primary_key' => ['a', 'b'],
                     'columns' => ['c', 'd'],
@@ -158,7 +158,7 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'metadata-empty-manifest' => [
-                [
+                'mapping' => [
                     'metadata' => [
                         [
                             'key' => 'a',
@@ -170,8 +170,8 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [],
-                [
+                'manifest' => [],
+                'expected' => [
                     'metadata' => [
                         [
                             'key' => 'a',
@@ -185,8 +185,8 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'metadata-empty-mapping' => [
-                [],
-                [
+                'mapping' => [],
+                'manifest' => [
                     'metadata' => [
                         [
                             'key' => 'a',
@@ -198,7 +198,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'expected' => [
                     'metadata' => [
                         [
                             'key' => 'a',
@@ -212,7 +212,7 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'metadata-merge' => [
-                [
+                'mapping' => [
                     'metadata' => [
                         [
                             'key' => 'a',
@@ -224,7 +224,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'manifest' => [
                     'metadata' => [
                         [
                             'key' => 'b',
@@ -236,7 +236,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'expected' => [
                     'metadata' => [
                         [
                             'key' => 'b',
@@ -254,7 +254,7 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'column-metadata-empty-manifest' => [
-                [
+                'mapping' => [
                     'column_metadata' => [
                         'column1' => [
                             [
@@ -278,8 +278,8 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [],
-                [
+                'manifest' => [],
+                'expected' => [
                     'column_metadata' => [
                         'column1' => [
                             [
@@ -305,8 +305,8 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'column-metadata-empty-mapping' => [
-                [],
-                [
+                'mapping' => [],
+                'manifest' => [
                     'column_metadata' => [
                         'column1' => [
                             [
@@ -330,7 +330,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'expected' => [
                     'column_metadata' => [
                         'column1' => [
                             [
@@ -356,7 +356,7 @@ class ConfigurationMergerTest extends TestCase
                 ],
             ],
             'column-metadata-merge' => [
-                [
+                'mapping' => [
                     'column_metadata' => [
                         'column1' => [
                             [
@@ -380,7 +380,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'manifest' => [
                     'column_metadata' => [
                         'column2' => [
                             [
@@ -404,7 +404,7 @@ class ConfigurationMergerTest extends TestCase
                         ],
                     ],
                 ],
-                [
+                'expected' => [
                     'column_metadata' => [
                         'column2' => [
                             [

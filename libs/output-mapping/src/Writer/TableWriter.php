@@ -567,6 +567,8 @@ class TableWriter extends AbstractWriter
             $options = [
                 'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($backend),
                 'dataTableName' => $sourcePath,
+                'incremental' => $options['incremental'],
+                'columns' => $options['columns'],
             ];
             $tableQueue = new LoadTable($this->client, $tableId, $options);
         }

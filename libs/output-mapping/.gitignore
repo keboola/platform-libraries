@@ -4,3 +4,4 @@
 /composer.lock
 /composer.phar
 .env
+.php_cs.cache

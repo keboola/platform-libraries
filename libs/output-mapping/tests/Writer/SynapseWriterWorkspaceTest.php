@@ -8,9 +8,7 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
-use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 
 class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -29,6 +27,14 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
         parent::setUp();
+    }
+
+    public function tearDown()
+    {
+        if (!$this->runSynapseTests) {
+            return;
+        }
+        parent::tearDown();
     }
 
     protected function initClient()

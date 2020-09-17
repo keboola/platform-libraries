@@ -78,7 +78,13 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
         $rows = explode("\n", trim($data));
         sort($rows);
-        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
+        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $rows = array_map (
+            'strtolower',
+            $rows
+        );
+        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
+        $this->assertEquals(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
     }
 
     public function testTableOutputMappingMissing()

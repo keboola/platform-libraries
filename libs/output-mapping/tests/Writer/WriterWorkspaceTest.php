@@ -79,7 +79,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $rows = explode("\n", trim($data));
         sort($rows);
         // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $rows = array_map (
+        $rows = array_map(
             'strtolower',
             $rows
         );

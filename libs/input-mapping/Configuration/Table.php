@@ -44,7 +44,6 @@ class Table extends Configuration
                             ->scalarNode('source')->isRequired()->end()
                             ->scalarNode('type')->end()
                             ->scalarNode('destination')->end()
-                            ->scalarNode('type')->end()
                             ->scalarNode('length')->end()
                             ->scalarNode('nullable')->end()
                             ->scalarNode('convert_empty_values_to_null')->end()

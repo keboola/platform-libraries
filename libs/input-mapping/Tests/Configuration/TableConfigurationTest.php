@@ -14,7 +14,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
     {
         return [
             'ComplexConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
@@ -23,7 +23,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
@@ -35,7 +35,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'DaysNullConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => null,
@@ -44,7 +44,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => null,
@@ -56,7 +56,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'DaysConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => 1,
@@ -65,7 +65,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "days" => 1,
@@ -77,7 +77,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'ChangedSinceNullConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => null,
@@ -86,7 +86,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => null,
@@ -98,7 +98,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'ChangedSinceConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
@@ -107,7 +107,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "destination" => "test",
                     "changed_since" => "-1 days",
@@ -119,7 +119,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'SearchSourceConfiguration' => [
-                [
+                'config' => [
                     "source_search" => [
                         "key" => "bdm.scaffold.tag",
                         "value" => "test_table",
@@ -131,7 +131,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source_search" => [
                         "key" => "bdm.scaffold.tag",
                         "value" => "test_table",
@@ -146,7 +146,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'DataTypesConfiguration' => [
-                [
+                'config' => [
                     "source" => "foo",
                     "destination" => "bar",
                     "column_types" => [
@@ -163,7 +163,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                 ],
-                [
+                'expected' => [
                     "source" => "foo",
                     "destination" => "bar",
                     "columns" => [],
@@ -183,7 +183,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'FullDataTypesConfiguration' => [
-                [
+                'config' => [
                     "source" => "foo",
                     "destination" => "bar",
                     "columns" => ["Id"],
@@ -199,7 +199,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                         ],
                     ],
                 ],
-                [
+                'expected' => [
                     "source" => "foo",
                     "destination" => "bar",
                     "columns" => ["Id"],
@@ -218,11 +218,47 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
             ],
+            'FullDataTypesConfigurationEmptyLength' => [
+                'config' => [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => ["Id"],
+                    "column_types" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                            "destination" => "MyId",
+                            "length" => "",
+                            "nullable" => true,
+                            "convert_empty_values_to_null" => true,
+                            "compression" => "DELTA32K",
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    "source" => "foo",
+                    "destination" => "bar",
+                    "columns" => ["Id"],
+                    "where_values" => [],
+                    "where_operator" => "eq",
+                    "column_types" => [
+                        [
+                            "source" => "Id",
+                            "type" => "VARCHAR",
+                            "destination" => "MyId",
+                            "length" => "",
+                            "nullable" => true,
+                            "convert_empty_values_to_null" => true,
+                            "compression" => "DELTA32K",
+                        ],
+                    ],
+                ],
+            ],
             'BasicConfiguration' => [
-                [
+                'config' => [
                     "source" => "in.c-main.test",
                 ],
-                [
+                'expected' => [
                     "source" => "in.c-main.test",
                     "columns" => [],
                     "where_values" => [],

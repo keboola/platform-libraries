@@ -140,6 +140,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
                         'source' => 'Id',
                         'destination' => 'MyId',
                         'type' => 'VARCHAR',
+                        'convert_empty_values_to_null' => true,
                     ],
                 ],
             ]

@@ -127,6 +127,35 @@ class InputTableOptions
         return $exportOptions;
     }
 
+    private function getColumnTypes()
+    {
+        if ($this->definition['column_types']) {
+            $ret = [];
+            foreach ($this->definition['column_types'] as $column_type) {
+                $item = [
+                    'source' => $column_type['source'],
+                    'type' => $column_type['type'],
+                ];
+                if (isset($column_type['destination'])) {
+                    $item['destination'] = $column_type['destination'];
+                }
+                if (isset($column_type['length'])) {
+                    $item['length'] = $column_type['length'];
+                }
+                if (isset($column_type['nullable'])) {
+                    $item['nullable'] = $column_type['nullable'];
+                }
+                if (isset($column_type['convert_empty_values_to_null'])) {
+                    $item['convertEmptyValuesToNull'] = $column_type['convert_empty_values_to_null'];
+                }
+                $ret[] = $item;
+            }
+            return $ret;
+        } else {
+            return [];
+        }
+    }
+
     /**
      * @return array
      */
@@ -134,7 +163,7 @@ class InputTableOptions
     {
         $exportOptions = [];
         if ($this->definition['column_types']) {
-            $exportOptions['columns'] = $this->definition['column_types'];
+            $exportOptions['columns'] = $this->getColumnTypes();
         } elseif ($this->definition['columns']) {
             $exportOptions['columns'] = $this->getColumnNames();
         }

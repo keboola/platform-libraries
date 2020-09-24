@@ -24,7 +24,7 @@
         "symfony/yaml": "^2.8|^4.1",
         "symfony/finder": "^2.8|^4.1",
         "symfony/serializer": "^2.8|^4.1",
-        "monolog/monolog": "^1.22",
+        "monolog/monolog": "^1.22|^2.0",
         "keboola/input-mapping": "^9.3",
         "guzzlehttp/guzzle": "^6.2",
         "keboola/sanitizer": "^0.1"

@@ -78,6 +78,7 @@ class TableDefinitionResolverTest extends \PHPUnit_Framework_TestCase
             'column_types' => [],
             'where_values' => [],
             'where_operator' => 'eq',
+            'overwrite' => false,
             "source" => "table1",
         ], $result->getTables()[0]->getDefinition());
     }

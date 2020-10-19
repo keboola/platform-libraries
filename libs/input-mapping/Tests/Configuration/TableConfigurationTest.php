@@ -260,6 +260,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                             "compression" => "DELTA32K",
                         ],
                     ],
+                    "overwrite" => false,
                 ],
             ],
             "OverwriteConfiguration" => [

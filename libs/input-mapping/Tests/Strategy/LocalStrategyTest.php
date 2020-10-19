@@ -74,7 +74,8 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
                 'destination' => './some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name']
-                ]
+                ],
+                'overwrite' => false,
             ],
             $result
         );
@@ -114,7 +115,8 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
                 'destination' => './some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name']
-                ]
+                ],
+                'overwrite' => false,
             ],
             $result
         );

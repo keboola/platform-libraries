@@ -67,6 +67,7 @@ class Table extends Configuration
                         ->thenInvalid("Invalid operator in where_operator %s.")
                     ->end()
                 ->end()
+                ->booleanNode("overwrite")->defaultValue(false)->end()
             ->end()
             ->validate()
             ->ifTrue(function ($v) {

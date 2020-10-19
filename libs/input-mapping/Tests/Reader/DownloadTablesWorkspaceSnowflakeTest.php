@@ -203,4 +203,56 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             'workspace-snowflake'
         );
     }
+
+    public function testTablesSnowflakeOverwrite()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'test2',
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'workspace-snowflake'
+        );
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'test2',
+                'where_column' => 'Id',
+                'where_values' => ['id2', 'id3'],
+                'columns' => ['Id'],
+                'overwrite' => true,
+            ],
+        ]);
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'workspace-snowflake'
+        );
+        $adapter = new Adapter();
+
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
+        self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
+        self::assertEquals(
+            ['Id'],
+            $manifest['columns']
+        );
+        // check that the table exists in the workspace
+        $this->client->createTableAsyncDirect(
+            'out.c-input-mapping-test',
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+        );
+
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to snowflake workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+    }
 }

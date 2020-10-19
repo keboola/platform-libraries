@@ -124,6 +124,7 @@ class InputTableOptions
         if (isset($this->definition['limit'])) {
             $exportOptions['limit'] = $this->definition['limit'];
         }
+        $exportOptions['overwrite'] = $this->definition['overwrite'];
         return $exportOptions;
     }
 
@@ -194,6 +195,7 @@ class InputTableOptions
         if (isset($this->definition['limit'])) {
             $exportOptions['rows'] = $this->definition['limit'];
         }
+        $exportOptions['overwrite'] = $this->definition['overwrite'];
         return $exportOptions;
     }
 }

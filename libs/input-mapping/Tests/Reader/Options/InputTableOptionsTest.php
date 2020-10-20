@@ -65,10 +65,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
     public function testGetExportOptionsEmptyValue()
     {
         $definition = new InputTableOptions(['source' => 'test']);
-        self::assertEquals(
-            ['overwrite' => false],
-            $definition->getStorageApiExportOptions(new InputTableStateList([]))
-        );
+        self::assertEquals([], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
     public function testGetExportOptionsSimpleColumns()
@@ -90,7 +87,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'limit' => 100,
-            'overwrite' => false,
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -128,7 +124,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'limit' => 100,
-            'overwrite' => false,
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -266,7 +261,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ]);
         self::assertEquals([
             'changedSince' => '-2 days',
-            'overwrite' => false,
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -284,7 +278,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ]);
         self::assertEquals([
             'changedSince' => '1989-11-17T21:00:00+0200',
-            'overwrite' => false,
         ], $definition->getStorageApiExportOptions($tablesState));
     }
 
@@ -296,7 +289,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
         ]);
         $tablesState = new InputTableStateList([]);
         self::assertEquals(
-            ['overwrite' => false],
             $definition->getStorageApiExportOptions($tablesState)
         );
     }

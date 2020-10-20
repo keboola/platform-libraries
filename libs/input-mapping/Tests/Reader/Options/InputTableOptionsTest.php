@@ -288,7 +288,7 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
         $tablesState = new InputTableStateList([]);
-        self::assertEquals([],$definition->getStorageApiExportOptions($tablesState));
+        self::assertEquals([], $definition->getStorageApiExportOptions($tablesState));
     }
 
     public function testGetLoadOptionsAdaptiveInputMapping()

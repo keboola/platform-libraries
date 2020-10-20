@@ -151,7 +151,6 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'rows' => 100,
-            'overwrite' => false,
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
     }
 
@@ -199,12 +198,11 @@ class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
                     'convertEmptyValuesToNull' => false,
                 ],
             ],
-            'seconds' => '86400',
+            'seconds' => 86400,
             'whereColumn' => 'col1',
             'whereValues' => ['1', '2'],
             'whereOperator' => 'ne',
             'rows' => 100,
-            'overwrite' => false,
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
     }
 

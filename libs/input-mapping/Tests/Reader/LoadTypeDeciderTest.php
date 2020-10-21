@@ -60,7 +60,7 @@ class LoadTypeDeciderTest extends \PHPUnit_Framework_TestCase
                     'bucket' => ['backend' => 'snowflake'],
                 ],
                 'snowflake',
-                [],
+                ['overwrite' => false],
                 true,
             ],
             'redshift' => [

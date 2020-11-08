@@ -39,7 +39,8 @@ class SnowflakeStrategy extends AbstractStrategy
                 $table = $export['table'];
                 $cloneInputs[] = [
                     'source' => $table->getSource(),
-                    'destination' => $table->getDestination()
+                    'destination' => $table->getDestination(),
+                    'overwrite' => $table->getOverwrite(),
                 ];
                 $workspaceTables[] = $table;
             }

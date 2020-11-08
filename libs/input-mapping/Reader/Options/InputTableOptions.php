@@ -80,6 +80,11 @@ class InputTableOptions
         return '';
     }
 
+    public function getOverwrite()
+    {
+        return $this->definition['overwrite'];
+    }
+
     /**
      * @return array
      */

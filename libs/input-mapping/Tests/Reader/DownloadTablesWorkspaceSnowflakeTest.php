@@ -254,5 +254,43 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to snowflake workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+
+        // check that we can overwrite while using clone
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'test2',
+                'overwrite' => true,
+            ],
+        ]);
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'workspace-snowflake'
+        );
+        $adapter = new Adapter();
+
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
+        self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
+        self::assertEquals(
+            ['Id', 'Name', 'foo', 'bar'],
+            $manifest['columns']
+        );
+        /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
+            the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
+        try {
+            $this->client->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns']
+            );
+            self::fail('Must throw exception');
+        } catch (ClientException $e) {
+            self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
+        }
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be cloned.'));
+        self::assertTrue($logger->hasInfoThatContains('Cloning 1 tables to snowflake workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+
     }
 }

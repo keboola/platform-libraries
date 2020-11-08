@@ -291,6 +291,5 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Cloning 1 tables to snowflake workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
-
     }
 }

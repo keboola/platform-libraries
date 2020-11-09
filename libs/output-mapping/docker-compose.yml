@@ -11,3 +11,7 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+networks:
+  default:
+    external:
+      name: connection_api-tests

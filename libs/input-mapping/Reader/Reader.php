@@ -21,6 +21,7 @@ class Reader
     const STAGING_SNOWFLAKE = 'workspace-snowflake';
     const STAGING_REDSHIFT = 'workspace-redshift';
     const STAGING_SYNAPSE = 'workspace-synapse';
+    const STAGING_ABS_WORKSPACE = 'workspace-abs';
 
     /**
      * @var ClientWrapper

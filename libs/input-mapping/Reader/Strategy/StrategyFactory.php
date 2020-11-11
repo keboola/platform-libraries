@@ -33,6 +33,7 @@ class StrategyFactory
         Reader::STAGING_REDSHIFT => RedshiftStrategy::class,
         Reader::STAGING_SNOWFLAKE => SnowflakeStrategy::class,
         Reader::STAGING_SYNAPSE => SynapseStrategy::class,
+        Reader::STAGING_ABS_WORKSPACE => ABSWorkspaceStrategy::class,
     ];
 
     /** @var string */

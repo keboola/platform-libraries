@@ -7,6 +7,7 @@ interface WorkspaceProviderInterface
     const TYPE_SNOWFLAKE = 'snowflake';
     const TYPE_REDSHIFT = 'redshift';
     const TYPE_SYNAPSE = 'synapse';
+    const TYPE_ABS = 'abs';
 
     /**
      * @param string $type

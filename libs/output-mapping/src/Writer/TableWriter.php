@@ -36,6 +36,7 @@ class TableWriter extends AbstractWriter
     const STAGING_SNOWFLAKE = 'workspace-snowflake';
     const STAGING_REDSHIFT = 'workspace-redshift';
     const STAGING_SYNAPSE = 'workspace-synapse';
+    const STAGING_ABS = 'workspace-abs';
 
     /**
      * @var Metadata
@@ -584,7 +585,13 @@ class TableWriter extends AbstractWriter
      */
     private function validateWorkspaceStaging($stagingStorageOutput)
     {
-        $stagingTypes = [self::STAGING_LOCAL, self::STAGING_SNOWFLAKE, self::STAGING_REDSHIFT, self::STAGING_SYNAPSE];
+        $stagingTypes = [
+            self::STAGING_LOCAL,
+            self::STAGING_SNOWFLAKE,
+            self::STAGING_REDSHIFT,
+            self::STAGING_SYNAPSE,
+            self::STAGING_ABS,
+        ];
         if (!in_array($stagingStorageOutput, $stagingTypes)) {
             throw new InvalidOutputException(
                 'Parameter "storage" must be one of: ' .
@@ -609,6 +616,10 @@ class TableWriter extends AbstractWriter
                 return WorkspaceProviderInterface::TYPE_REDSHIFT;
             case self::STAGING_SYNAPSE:
                 return WorkspaceProviderInterface::TYPE_SYNAPSE;
+            case self::STAGING_ABS:
+                // TODO: when input mapping is released use the new type from there
+                // return WorkspaceProviderInterface::TYPE_ABS;
+                return 'abs';
             default:
                 throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));
         }

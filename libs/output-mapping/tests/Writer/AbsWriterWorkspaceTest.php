@@ -17,10 +17,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
     public function testAbsTableOutputMapping()
     {
         $root = $this->tmp->getTmpFolder();
-        $tokenInfo = $this->client->verifyToken();
-        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
-        // target bucket with the same backend)
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables('abs');
 
         $configs = [
             [

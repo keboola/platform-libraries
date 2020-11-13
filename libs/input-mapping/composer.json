@@ -14,13 +14,13 @@
         "symfony/yaml": "^2.8|^4.1",
         "symfony/finder": "^2.8|^4.1",
         "symfony/serializer": "^2.8|^4.1",
-        "keboola/storage-api-client": "^10.12",
-        "guzzlehttp/guzzle": "^6.2"
+        "keboola/storage-api-client": "^10.21",
+        "guzzlehttp/guzzle": "^6.5"
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^3.2",
+        "squizlabs/php_codesniffer": "^3.5",
         "keboola/php-temp": "^1.0",
-        "phpunit/phpunit": "^5.4",
+        "phpunit/phpunit": "^5.7",
         "codeclimate/php-test-reporter": "^0.4"
     },
     "autoload": {

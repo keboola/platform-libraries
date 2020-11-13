@@ -63,7 +63,7 @@ class SnowflakeStrategy extends AbstractStrategy
                 sprintf('Cloning %s tables to %s workspace.', count($cloneInputs), $this->workspaceProviderId)
             );
             $job = $this->storageClient->apiPost(
-                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
+                'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
                 [
                     'input' => $cloneInputs,
                     'preserve' => 1,
@@ -78,7 +78,7 @@ class SnowflakeStrategy extends AbstractStrategy
                 sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
             );
             $job = $this->storageClient->apiPost(
-                'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+                'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
                 [
                     'input' => $copyInputs,
                     'preserve' => 1,

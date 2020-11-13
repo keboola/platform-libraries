@@ -56,7 +56,12 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $temp = new Temp();
         $temp->initRunFolder();
         $root = $temp->getTmpFolder();
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'in', '', $type);
+        $backendType = $type;
+        // abs is a workspace type, but not a backendType
+        if ($type === 'abs') {
+            $backendType = 'snowflake';
+        }
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'in', '', $backendType);
         // Create tables
         $csv1a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table1a.csv');
         $csv1a->writeRow(['Id', 'Name']);

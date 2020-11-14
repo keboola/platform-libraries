@@ -15,8 +15,3 @@ services:
     <<: *dev
     build:
       context: docker/xdebug
-
-networks:
-  default:
-    external:
-      name: connection_api-tests

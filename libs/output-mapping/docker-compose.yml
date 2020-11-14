@@ -1,7 +1,7 @@
 version: "2"
 services:
   # for development purposes
-  dev:
+  dev: &dev
     build: .
     volumes:
       - ./:/code
@@ -11,3 +11,7 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+  dev-xdebug:
+    <<: *dev
+    build:
+      context: docker/xdebug

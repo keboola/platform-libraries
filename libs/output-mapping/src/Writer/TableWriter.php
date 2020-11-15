@@ -19,6 +19,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use LogicException;
 use Psr\Log\LoggerInterface;
@@ -48,14 +49,14 @@ class TableWriter extends AbstractWriter
     /**
      * AbstractWriter constructor.
      *
-     * @param Client $client
+     * @param ClientWrapper $clientWrapper
      * @param LoggerInterface $logger
      * @param WorkspaceProviderInterface $workspaceProvider
      */
-    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
+    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
     {
-        parent::__construct($client, $logger);
-        $this->metadataClient = new Metadata($client);
+        parent::__construct($clientWrapper, $logger);
+        $this->metadataClient = new Metadata($clientWrapper->getBasicClient());
         $this->workspaceProvider = $workspaceProvider;
     }
 
@@ -168,7 +169,7 @@ class TableWriter extends AbstractWriter
             if (!empty($parsedConfig['metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
-                        $this->client,
+                        $this->clientWrapper->getBasicClient(),
                         $parsedConfig['destination'],
                         $systemMetadata['componentId'],
                         $parsedConfig['metadata'],
@@ -179,7 +180,7 @@ class TableWriter extends AbstractWriter
             if (!empty($parsedConfig['column_metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
-                        $this->client,
+                        $this->clientWrapper->getBasicClient(),
                         $parsedConfig['destination'],
                         $systemMetadata['componentId'],
                         $parsedConfig['column_metadata'],
@@ -190,7 +191,7 @@ class TableWriter extends AbstractWriter
             $jobs[] = $tableJob;
         }
 
-        $tableQueue = new LoadTableQueue($this->client, $jobs);
+        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
         $tableQueue->start();
         return $tableQueue;
     }
@@ -321,7 +322,7 @@ class TableWriter extends AbstractWriter
             if (!empty($config['metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
-                        $this->client,
+                        $this->clientWrapper->getBasicClient(),
                         $config['destination'],
                         $systemMetadata['componentId'],
                         $config['metadata'],
@@ -332,7 +333,7 @@ class TableWriter extends AbstractWriter
             if (!empty($config['column_metadata'])) {
                 $tableJob->addMetadata(
                     new MetadataDefinition(
-                        $this->client,
+                        $this->clientWrapper->getBasicClient(),
                         $config['destination'],
                         $systemMetadata['componentId'],
                         $config['column_metadata'],
@@ -353,7 +354,7 @@ class TableWriter extends AbstractWriter
                 sprintf('Can not process output mapping for file(s): %s.', join('", "', $diff))
             );
         }
-        $tableQueue = new LoadTableQueue($this->client, $jobs);
+        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
         $tableQueue->start();
         return $tableQueue;
     }
@@ -407,17 +408,17 @@ class TableWriter extends AbstractWriter
                 sprintf('Sliced file "%s" columns specification missing.', basename($source))
             );
         }
-        if (!$this->client->bucketExists($this->getBucketId($config['destination']))) {
+        if (!$this->clientWrapper->getBasicClient()->bucketExists($this->getBucketId($config['destination']))) {
             $this->createBucket($config['destination'], $systemMetadata);
         }
 
-        if ($this->client->tableExists($config['destination'])) {
-            $tableInfo = $this->client->getTable($config['destination']);
+        if ($this->clientWrapper->getBasicClient()->tableExists($config['destination'])) {
+            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
             PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $tableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
-                    $this->client,
+                    $this->clientWrapper->getBasicClient(),
                     $config['destination'],
                     $tableInfo['primaryKey'],
                     $config['primary_key']
@@ -430,7 +431,7 @@ class TableWriter extends AbstractWriter
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $this->client->deleteTableRows($config['destination'], $deleteOptions);
+                $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
             }
         } else {
             $primaryKey = join(",", PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']));
@@ -461,7 +462,7 @@ class TableWriter extends AbstractWriter
         ];
         $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
         $tableQueue->addMetadata(new MetadataDefinition(
-            $this->client,
+            $this->clientWrapper->getBasicClient(),
             $config['destination'],
             self::SYSTEM_METADATA_PROVIDER,
             $this->getUpdatedMetadata($systemMetadata),
@@ -484,7 +485,7 @@ class TableWriter extends AbstractWriter
     private function createBucket($tableId, array $systemMetadata)
     {
         // Create bucket if not exists
-        $this->client->createBucket($this->getBucketName($tableId), $this->getBucketStage($tableId));
+        $this->clientWrapper->getBasicClient()->createBucket($this->getBucketName($tableId), $this->getBucketStage($tableId));
         $this->metadataClient->postBucketMetadata(
             $this->getBucketId($tableId),
             self::SYSTEM_METADATA_PROVIDER,
@@ -532,7 +533,7 @@ class TableWriter extends AbstractWriter
         $tmp = new Temp();
         $headerCsvFile = new CsvFile($tmp->createFile($this->getTableName($tableId) . '.header.csv'));
         $headerCsvFile->writeRow($columns);
-        $tableId = $this->client->createTableAsync(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsync(
             $this->getBucketId($tableId),
             $this->getTableName($tableId),
             $headerCsvFile,
@@ -553,14 +554,14 @@ class TableWriter extends AbstractWriter
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->client, $tableId, $options);
+                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
             } else {
-                $fileId = $this->client->uploadFile(
+                $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
                     $sourcePath,
                     (new FileUploadOptions())->setCompress(true)
                 );
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->client, $tableId, $options);
+                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
             }
         } else {
             $backend = $this->convertStagingToStorageApiBackend($stagingStorageOutput);
@@ -570,7 +571,7 @@ class TableWriter extends AbstractWriter
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];
-            $tableQueue = new LoadTable($this->client, $tableId, $options);
+            $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
         }
         return $tableQueue;
     }
@@ -634,7 +635,7 @@ class TableWriter extends AbstractWriter
             ->setIsSliced(true)
             ->setFileName(basename($source))
             ->setCompress(true);
-        return $this->client->uploadSlicedFile($sliceFiles, $fileUploadOptions);
+        return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 
     /**

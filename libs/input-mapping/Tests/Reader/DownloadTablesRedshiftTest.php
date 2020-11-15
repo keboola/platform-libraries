@@ -19,19 +19,24 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
     {
         parent::setUp();
         try {
-            $this->clientWrapper->dropBucket("in.c-docker-test-redshift", ["force" => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket("in.c-docker-test-redshift", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->clientWrapper->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");
+        $this->clientWrapper->getBasicClient()->createBucket(
+            "docker-test-redshift",
+            Client::STAGE_IN,
+            "Docker Testsuite",
+            "redshift"
+        );
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
         $csv->writeRow(["Id", "Name"]);
         $csv->writeRow(["test", "test"]);
-        $this->clientWrapper->createTableAsync("in.c-docker-test-redshift", "test", $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-docker-test-redshift", "test", $csv);
     }
 
     public function testReadTablesRedshift()
@@ -91,15 +96,15 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->writeTableAsyncDirect('in.c-docker-test.empty', $options);
+        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test.empty', $options);
 
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([

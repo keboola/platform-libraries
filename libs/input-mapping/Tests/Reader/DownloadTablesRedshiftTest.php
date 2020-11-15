@@ -19,24 +19,24 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
     {
         parent::setUp();
         try {
-            $this->client->dropBucket("in.c-docker-test-redshift", ["force" => true]);
+            $this->clientWrapper->dropBucket("in.c-docker-test-redshift", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");
+        $this->clientWrapper->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
         $csv->writeRow(["Id", "Name"]);
         $csv->writeRow(["test", "test"]);
-        $this->client->createTableAsync("in.c-docker-test-redshift", "test", $csv);
+        $this->clientWrapper->createTableAsync("in.c-docker-test-redshift", "test", $csv);
     }
 
     public function testReadTablesRedshift()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -64,7 +64,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
     public function testReadTablesS3Redshift()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -91,17 +91,17 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->client->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
+        $this->clientWrapper->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->client->writeTableAsyncDirect('in.c-docker-test.empty', $options);
+        $this->clientWrapper->writeTableAsyncDirect('in.c-docker-test.empty', $options);
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.empty",

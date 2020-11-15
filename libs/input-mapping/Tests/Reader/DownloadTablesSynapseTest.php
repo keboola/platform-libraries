@@ -32,13 +32,13 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
         try {
-            $this->client->dropBucket("in.c-docker-test-synapse", ["force" => true]);
+            $this->clientWrapper->dropBucket("in.c-docker-test-synapse", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket(
+        $this->clientWrapper->createBucket(
             "docker-test-synapse",
             Client::STAGE_IN,
             "Docker Testsuite",
@@ -49,22 +49,22 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
         $csv->writeRow(["Id", "Name"]);
         $csv->writeRow(["test", "test"]);
-        $this->client->createTableAsync("in.c-docker-test-synapse", "test", $csv);
+        $this->clientWrapper->createTableAsync("in.c-docker-test-synapse", "test", $csv);
     }
 
     protected function initClient()
     {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
         $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->client = new Client(["token" => $token, "url" => $url]);
-        $tokenInfo = $this->client->verifyToken();
+        $this->clientWrapper = new Client(["token" => $token, "url" => $url]);
+        $tokenInfo = $this->clientWrapper->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getApiUrl()
         ));
     }
 
@@ -73,7 +73,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -104,7 +104,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -134,17 +134,17 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->client->createTableAsync('in.c-docker-test-synapse', 'empty', $headerCsvFile, []);
+        $this->clientWrapper->createTableAsync('in.c-docker-test-synapse', 'empty', $headerCsvFile, []);
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->client->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
+        $this->clientWrapper->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.empty",

@@ -7,9 +7,9 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\Strategy\StrategyFactory;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -23,9 +23,9 @@ class Reader
     const STAGING_SYNAPSE = 'workspace-synapse';
 
     /**
-     * @var Client
+     * @var ClientWrapper
      */
-    protected $client;
+    protected $clientWrapper;
     /**
      * @var
      */
@@ -41,13 +41,16 @@ class Reader
     private $workspaceProvider;
 
     /**
-     * @param Client $client
+     * @param ClientWrapper $clientWrapper
      * @param LoggerInterface $logger
      */
-    public function __construct(Client $client, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
-    {
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        WorkspaceProviderInterface $workspaceProvider
+    ) {
         $this->logger = $logger;
-        $this->setClient($client);
+        $this->clientWrapper = $clientWrapper;
         $this->workspaceProvider = $workspaceProvider;
     }
 
@@ -56,26 +59,7 @@ class Reader
      */
     protected function getManifestWriter()
     {
-        return new ManifestWriter($this->getClient(), $this->getFormat());
-    }
-
-    /**
-     * @return Client
-     */
-    public function getClient()
-    {
-        return $this->client;
-    }
-
-    /**
-     * @param Client $client
-     * @return $this
-     */
-    public function setClient(Client $client)
-    {
-        $this->client = $client;
-
-        return $this;
+        return new ManifestWriter($this->clientWrapper->getBasicClient(), $this->getFormat());
     }
 
     /**
@@ -110,7 +94,7 @@ class Reader
         } elseif (!is_array($configuration)) {
             throw new InvalidInputException("File download configuration is not an array.");
         }
-        $storageClient = $this->getClient();
+        $storageClient = $this->clientWrapper->getBasicClient();
         $fileOptions = new GetFileOptions();
         $fileOptions->setFederationToken(true);
 
@@ -158,7 +142,7 @@ class Reader
             $fileConfiguration["limit"] = 100;
         }
         $options->setLimit($fileConfiguration["limit"]);
-        $files = $this->getClient()->listFiles($options);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
 
         return $files;
     }
@@ -171,9 +155,9 @@ class Reader
     protected function downloadFile($fileInfo, $fileDestinationPath)
     {
         if ($fileInfo['isSliced']) {
-            $this->getClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
+            $this->clientWrapper->getBasicClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
         } else {
-            $this->getClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
+            $this->clientWrapper->getBasicClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
         }
         $this->getManifestWriter()->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
     }
@@ -187,10 +171,20 @@ class Reader
      * @throws \Keboola\StorageApi\ClientException
      * @throws \Keboola\StorageApi\Exception
      */
-    public function downloadTables(InputTableOptionsList $tablesDefinition, InputTableStateList $tablesState, $destination, $storage = 'local')
-    {
-        $tableResolver = new TableDefinitionResolver($this->client, $this->logger);
-        $strategyFactory = new StrategyFactory($this->client, $this->logger, $this->workspaceProvider, $tablesState, $destination);
+    public function downloadTables(
+        InputTableOptionsList $tablesDefinition,
+        InputTableStateList $tablesState,
+        $destination,
+        $storage = 'local'
+    ) {
+        $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
+        $strategyFactory = new StrategyFactory(
+            $this->clientWrapper->getBasicClient(),
+            $this->logger,
+            $this->workspaceProvider,
+            $tablesState,
+            $destination
+        );
 
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $strategyFactory->getStrategy($storage);
@@ -204,7 +198,7 @@ class Reader
      */
     public function getParentRunId()
     {
-        $runId = $this->client->getRunId();
+        $runId = $this->clientWrapper->getBasicClient()->getRunId();
         if (!empty($runId)) {
             if (($pos = strrpos($runId, '.')) === false) {
                 // there is no parent

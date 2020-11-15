@@ -14,7 +14,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
     public function testTablesRedshiftBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, $this->getWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -50,22 +50,22 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         /* because of https://keboola.atlassian.net/browse/KBC-228 we have to create redshift bucket to
             unload data from redshift workspace */
-        $this->client->dropBucket('out.c-input-mapping-test');
-        $this->client->createBucket('input-mapping-test', Client::STAGE_OUT, 'Docker Testsuite', 'redshift');
+        $this->clientWrapper->dropBucket('out.c-input-mapping-test');
+        $this->clientWrapper->createBucket('input-mapping-test', Client::STAGE_OUT, 'Docker Testsuite', 'redshift');
 
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals('out.c-input-mapping-test.test1', $tableId);
-        $table = $this->client->getTable($tableId);
+        $table = $this->clientWrapper->getTable($tableId);
         self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );

@@ -20,11 +20,17 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
-        $id2 = $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . "/upload",
+            (new FileUploadOptions())->setTags(["download-files-test"])
+        );
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . "/upload",
+            (new FileUploadOptions())->setTags(["download-files-test"])
+        );
         sleep(5);
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, $root . "/download");
 
@@ -53,19 +59,19 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
-        $this->client->setRunId('xyz');
-        $id1 = $this->client->uploadFile($root . "/upload", $fo);
-        $id2 = $this->client->uploadFile($root . "/upload", $fo);
-        $this->client->setRunId('1234567');
-        $id3 = $this->client->uploadFile($root . "/upload", $fo);
-        $id4 = $this->client->uploadFile($root . "/upload", $fo);
-        $this->client->setRunId('1234567.8901234');
-        $id5 = $this->client->uploadFile($root . "/upload", $fo);
-        $id6 = $this->client->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
@@ -83,19 +89,19 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
-        $this->client->setRunId('xyz');
-        $id1 = $this->client->uploadFile($root . "/upload", $fo);
-        $id2 = $this->client->uploadFile($root . "/upload", $fo);
-        $this->client->setRunId('1234567');
-        $id3 = $this->client->uploadFile($root . "/upload", $fo);
-        $id4 = $this->client->uploadFile($root . "/upload", $fo);
-        $this->client->setRunId('1234567.8901234');
-        $id5 = $this->client->uploadFile($root . "/upload", $fo);
-        $id6 = $this->client->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
@@ -116,17 +122,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
-            $this->client->uploadFile($root . "/upload", (new FileUploadOptions())->setTags(["download-files-test"]));
+            $this->clientWrapper->getBasicClient()->uploadFile(
+                $root . "/upload",
+                (new FileUploadOptions())->setTags(["download-files-test"])
+            );
         }
         sleep(5);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [];
         $reader->downloadFiles($configuration, $root . "/download");
 
         // invalid configuration
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [[]];
         try {
             $reader->downloadFiles($configuration, $root . "/download");
@@ -134,7 +143,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         $reader->downloadFiles($configuration, $root . "/download");
         $finder = new Finder();
@@ -143,7 +152,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $tmpDir = new Temp('file-test');
         $tmpDir->initRunFolder();
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
         $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download");
         $finder = new Finder();
@@ -155,24 +164,28 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         // Create bucket
         $bucketId = 'in.c-docker-test-snowflake';
-        if (!$this->client->bucketExists($bucketId)) {
-            $this->client->createBucket('docker-test-snowflake', Client::STAGE_IN, "Docker Testsuite");
+        if (!$this->clientWrapper->getBasicClient()->bucketExists($bucketId)) {
+            $this->clientWrapper->getBasicClient()->createBucket(
+                'docker-test-snowflake',
+                Client::STAGE_IN,
+                "Docker Testsuite"
+            );
         }
 
         // Create redshift table and export it to produce a sliced file
         $tableName = 'test_file';
         $tableId = sprintf('%s.%s', $bucketId, $tableName);
-        if (!$this->client->tableExists($tableId)) {
+        if (!$this->clientWrapper->getBasicClient()->tableExists($tableId)) {
             $csv = new CsvFile($this->tmpDir . "/upload.csv");
             $csv->writeRow(["Id", "Name"]);
             $csv->writeRow(["test", "test"]);
-            $this->client->createTableAsync($bucketId, $tableName, $csv);
+            $this->clientWrapper->getBasicClient()->createTableAsync($bucketId, $tableName, $csv);
         }
-        $table = $this->client->exportTableAsync($tableId);
+        $table = $this->clientWrapper->getBasicClient()->exportTableAsync($tableId);
         sleep(2);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
@@ -203,10 +216,10 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('empty_file');
-        $uploadFileId = $this->client->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,

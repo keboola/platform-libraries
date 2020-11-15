@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
@@ -17,9 +18,9 @@ use Symfony\Component\Finder\Finder;
 class ReaderTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Client
+     * @var ClientWrapper
      */
-    protected $client;
+    protected $clientWrapper;
 
     /**
      * @var Temp
@@ -32,15 +33,19 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $this->temp = new Temp('docker');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
-        $this->client = new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
-        $tokenInfo = $this->client->verifyToken();
+        $this->clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 
@@ -51,21 +56,21 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
     public function testParentId()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
-        $this->client->setRunId('123456789');
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $this->clientWrapper->getBasicClient()->setRunId('123456789');
         self::assertEquals('123456789', $reader->getParentRunId());
-        $this->client->setRunId('123456789.98765432');
+        $this->clientWrapper->getBasicClient()->setRunId('123456789.98765432');
         self::assertEquals('123456789', $reader->getParentRunId());
-        $this->client->setRunId('123456789.98765432.4563456');
+        $this->clientWrapper->getBasicClient()->setRunId('123456789.98765432.4563456');
         self::assertEquals('123456789.98765432', $reader->getParentRunId());
-        $this->client->setRunId(null);
+        $this->clientWrapper->getBasicClient()->setRunId(null);
         self::assertEquals('', $reader->getParentRunId());
     }
 
     public function testReadInvalidConfiguration1()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = null;
         $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         $finder = new Finder();
@@ -76,7 +81,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration2()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = 'foobar';
         try {
             /** @noinspection PhpParamsInspection */
@@ -93,7 +98,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration3()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         $finder = new Finder();
@@ -104,7 +109,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',

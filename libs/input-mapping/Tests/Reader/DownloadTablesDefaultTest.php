@@ -13,6 +13,7 @@ use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
@@ -22,13 +23,17 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     {
         parent::setUp();
         try {
-            $this->client->dropBucket("in.c-input-mapping-test-default", ["force" => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket("in.c-input-mapping-test-default", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket("input-mapping-test-default", Client::STAGE_IN, "Input Mapping Testsuite");
+        $this->clientWrapper->getBasicClient()->createBucket(
+            "input-mapping-test-default",
+            Client::STAGE_IN,
+            "Input Mapping Testsuite"
+        );
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
@@ -36,14 +41,14 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $csv->writeRow(["id1", "name1", "foo1", "bar1"]);
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
-        $this->client->createTableAsync("in.c-input-mapping-test-default", "test", $csv);
-        $this->client->createTableAsync("in.c-input-mapping-test-default", "test2", $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-input-mapping-test-default", "test", $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-input-mapping-test-default", "test2", $csv);
     }
 
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -85,7 +90,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyDaysFilter()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -109,7 +114,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyChangedSinceFilter()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -149,10 +154,10 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 'value' => 'someValue'
             ]
         ];
-        $metadata = new Metadata($this->client);
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-input-mapping-test-default.test.Name', 'dataLoaderTest', $columnMetadata);
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -209,9 +214,9 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 'value' => 'bar'
             ]
         ];
-        $metadata = new Metadata($this->client);
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source_search" => [
@@ -256,7 +261,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 'value' => 'baz'
             ]
         ];
-        $metadata = new Metadata($this->client);
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata(
             'in.c-input-mapping-test-default.test.Name',
@@ -278,7 +283,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 ]
             ]
         );
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -340,7 +345,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTableColumnsDataTypes()
     {
-        $reader = new Reader($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -385,7 +390,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTableLimitTest()
     {
-        $tokenInfo = $this->client->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $tokenInfo['owner']['limits'][LocalStrategy::EXPORT_SIZE_LIMIT_NAME] = [
             'name' => LocalStrategy::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
@@ -395,9 +400,10 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ->setConstructorArgs([['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]])
             ->getMock();
         $client->method('verifyToken')->willReturn($tokenInfo);
-        $logger = new TestLogger();
         /** @var Client $client */
-        $reader = new Reader($client, $logger, new NullWorkspaceProvider());
+        $clientWrapper = new ClientWrapper($client, null, null);
+        $logger = new TestLogger();
+        $reader = new Reader($clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",

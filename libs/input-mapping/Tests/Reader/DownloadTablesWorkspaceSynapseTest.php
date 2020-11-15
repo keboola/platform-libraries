@@ -33,15 +33,15 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
     {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
         $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->client = new Client(["token" => $token, "url" => $url]);
-        $tokenInfo = $this->client->verifyToken();
+        $this->clientWrapper = new Client(["token" => $token, "url" => $url]);
+        $tokenInfo = $this->clientWrapper->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getApiUrl()
         ));
     }
 
@@ -51,7 +51,7 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, $this->getWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -85,8 +85,8 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
-        $this->client->dropBucket('out.c-input-mapping-test');
-        $this->client->createBucket(
+        $this->clientWrapper->dropBucket('out.c-input-mapping-test');
+        $this->clientWrapper->createBucket(
             'input-mapping-test',
             Client::STAGE_OUT,
             'Docker Testsuite',
@@ -95,17 +95,17 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
 
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals('out.c-input-mapping-test.test1', $tableId);
-        $table = $this->client->getTable($tableId);
+        $table = $this->clientWrapper->getTable($tableId);
         self::assertEquals(['Id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );

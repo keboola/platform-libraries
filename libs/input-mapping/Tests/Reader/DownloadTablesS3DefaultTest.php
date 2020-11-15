@@ -22,13 +22,13 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     {
         parent::setUp();
         try {
-            $this->client->dropBucket("in.c-docker-test", ["force" => true]);
+            $this->clientWrapper->dropBucket("in.c-docker-test", ["force" => true]);
         } catch (ClientException $e) {
             if ($e->getCode() != 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
+        $this->clientWrapper->createBucket("docker-test", Client::STAGE_IN, "Docker Testsuite");
 
         // Create table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
@@ -36,14 +36,14 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
         $csv->writeRow(["id1", "name1", "foo1", "bar1"]);
         $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
         $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
-        $this->client->createTableAsync("in.c-docker-test", "test", $csv);
-        $this->client->createTableAsync("in.c-docker-test", "test2", $csv);
+        $this->clientWrapper->createTableAsync("in.c-docker-test", "test", $csv);
+        $this->clientWrapper->createTableAsync("in.c-docker-test", "test2", $csv);
     }
 
     public function testReadTablesS3DefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -77,7 +77,7 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesABSUnsupportedBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",

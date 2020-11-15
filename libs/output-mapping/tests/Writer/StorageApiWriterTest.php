@@ -27,8 +27,8 @@ class StorageApiWriterTest extends BaseWriterTest
             'out.c-output-mapping-redshift-test',
             'in.c-output-mapping-test',
         ]);
-        $this->client->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
-        $this->client->createBucket('output-mapping-default-test', 'out');
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-default-test', 'out');
     }
 
     public function testWriteFiles()
@@ -55,14 +55,14 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
 
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
         sleep(1);
 
         $options = new ListFilesOptions();
         $options->setTags(["output-mapping-test"]);
-        $files = $this->client->listFiles($options);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(3, $files);
 
         $file1 = $file2 = $file3 = null;
@@ -102,14 +102,14 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
 
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
         sleep(1);
 
         $options = new ListFilesOptions();
         $options->setTags(["output-mapping-test"]);
-        $files = $this->client->listFiles($options);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
         $file1 = null;
@@ -141,13 +141,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
         sleep(1);
 
         $options = new ListFilesOptions();
         $options->setTags(["output-mapping-test"]);
-        $files = $this->client->listFiles($options);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
         $file1 = null;
@@ -177,7 +177,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         $writer->setFormat('json');
         try {
             $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
@@ -201,7 +201,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         $writer->setFormat('json');
         try {
             $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
@@ -227,7 +227,7 @@ class StorageApiWriterTest extends BaseWriterTest
                 "is_public" => false
             ]
         ];
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         try {
             $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
             $this->fail("Missing file must fail");
@@ -244,7 +244,7 @@ class StorageApiWriterTest extends BaseWriterTest
             $root . "/upload/file1.manifest",
             "{\"tags\": [\"output-mapping-test-xxx\"],\"is_public\": true}"
         );
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         try {
             $writer->uploadFiles($root . "/upload");
             $this->fail("Orphaned manifest must cause exception.");
@@ -270,13 +270,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
@@ -298,7 +298,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -308,7 +308,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table21', $tables[0]["id"]);
         $this->assertNotEmpty($jobIds[0]);
@@ -326,13 +326,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table31', $tables[0]["id"]);
     }
@@ -349,7 +349,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         try {
             $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
@@ -378,13 +378,13 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
         $this->assertEquals([], $tables[0]["primaryKey"]);
@@ -402,13 +402,13 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-test.table3a\",\"primary_key\": [\"Id\",\"Name\"]}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table3a', $tables[0]["id"]);
         $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
@@ -426,7 +426,7 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-test.table3\",\"primary_key\": \"Id\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
             $this->fail('Invalid table manifest must cause exception');
@@ -447,19 +447,19 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-default-test.table3c\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-default-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-default-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-default-test.table3c', $tables[0]["id"]);
-        $exporter = new TableExporter($this->client);
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
         $exporter->exportTable('out.c-output-mapping-default-test.table3c', $downloadedFile, []);
-        $table = $this->client->parseCsv(file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertEquals(1, count($table));
         $this->assertEquals(2, count($table[0]));
         $this->assertArrayHasKey('Id', $table[0]);
@@ -480,18 +480,18 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-redshift-test.table3d\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-redshift-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-redshift-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-redshift-test.table3d', $tables[0]["id"]);
-        $exporter = new TableExporter($this->client);
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
         $exporter->exportTable('out.c-output-mapping-redshift-test.table3d', $downloadedFile, []);
-        $table = $this->client->parseCsv(file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertEquals(1, count($table));
         $this->assertEquals(2, count($table[0]));
         $this->assertArrayHasKey('Id', $table[0]);
@@ -507,7 +507,7 @@ class StorageApiWriterTest extends BaseWriterTest
             $root . DIRECTORY_SEPARATOR . "upload/table.csv.manifest",
             "{\"destination\": \"out.c-output-mapping-test.table3e\",\"primary_key\": [\"Id\", \"Name\"]}"
         );
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
             $this->fail("Orphaned manifest must fail");
@@ -526,7 +526,7 @@ class StorageApiWriterTest extends BaseWriterTest
                 "destination" => "out.c-output-mapping-test.table81"
             ]
         ];
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Missing table file must fail");
@@ -540,7 +540,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables($root . "/upload", [], [], 'local');
             self::fail("Missing metadata must fail.");
@@ -554,17 +554,17 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table4.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
 
         $this->assertEquals('out.c-output-mapping-test.table4', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table4');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table4');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
     }
 
@@ -573,17 +573,17 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table4", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
 
         $this->assertEquals('out.c-output-mapping-test.table4', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table4');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table4');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
     }
 
@@ -603,22 +603,22 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
+        $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
 
         // And again, check first incremental table
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
+        $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
 
-        $exporter = new TableExporter($this->client);
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $exporter->exportTable("out.c-output-mapping-default-test.table51", $root . DIRECTORY_SEPARATOR . "download.csv", []);
-        $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
         });
@@ -650,7 +650,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -661,9 +661,9 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $exporter = new TableExporter($this->client);
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $exporter->exportTable("out.c-output-mapping-redshift-test.table61", $root . DIRECTORY_SEPARATOR . "download.csv", []);
-        $table = $this->client->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
         });
@@ -684,23 +684,23 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/test", "test");
 
-        $id1 = $this->client->uploadFile(
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
             (new FileUploadOptions())->setTags(["output-mapping-test"])
         );
-        $id2 = $this->client->uploadFile(
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
             (new FileUploadOptions())->setTags(["output-mapping-test"])
         );
         sleep(1);
 
-        $writer = new FileWriter($this->client, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
         $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 
-        $file = $this->client->getFile($id1);
+        $file = $this->clientWrapper->getBasicClient()->getFile($id1);
         $this->assertTrue(in_array('downloaded', $file['tags']));
-        $file = $this->client->getFile($id2);
+        $file = $this->clientWrapper->getBasicClient()->getFile($id2);
         $this->assertTrue(in_array('downloaded', $file['tags']));
     }
 
@@ -710,22 +710,22 @@ class StorageApiWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/table71.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table72.csv", "\"Id\",\"Name2\"\n\"test2\",\"test2\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables($root . "/upload", ["bucket" => "in.c-output-mapping-test"], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
         $this->assertEquals(2, $tableQueue->getTaskCount());
 
-        $tables = $this->client->listTables("in.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("in.c-output-mapping-test");
         $this->assertCount(2, $tables);
 
         $this->assertEquals('in.c-output-mapping-test.table71', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('in.c-output-mapping-test.table71');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-output-mapping-test.table71');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         $this->assertEquals('in.c-output-mapping-test.table72', $tables[1]["id"]);
-        $tableInfo = $this->client->getTable('in.c-output-mapping-test.table72');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-output-mapping-test.table72');
         $this->assertEquals(["Id", "Name2"], $tableInfo["columns"]);
     }
 
@@ -734,7 +734,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table5.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
@@ -743,12 +743,12 @@ class StorageApiWriterTest extends BaseWriterTest
             'local'
         );
         $jobIds = $tableQueue->waitForAll();
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertCount(1, $jobIds);
 
         $this->assertEquals('out.c-output-mapping-test.table5', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table5');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table5');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
     }
 
@@ -764,7 +764,7 @@ class StorageApiWriterTest extends BaseWriterTest
             "{\"primary_key\": [\"Id\", \"Name\"]}"
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
@@ -775,7 +775,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table6', $tables[0]["id"]);
         $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
@@ -793,7 +793,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
@@ -804,7 +804,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table7', $tables[0]["id"]);
     }
@@ -815,7 +815,7 @@ class StorageApiWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/table8.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/table8.csv.manifest", "{\"primary_key\": [\"Id\", \"Name\"]}");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables($root . "/upload", ["mapping" => []], ['componentId' => 'foo'], 'local');
             $this->fail("Empty destination with invalid table name must cause exception.");
@@ -829,7 +829,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table16.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -846,7 +846,7 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table16");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table16");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
     }
 
@@ -855,7 +855,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table15.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $writer->uploadTables(
             $root . "/upload",
             [
@@ -871,7 +871,7 @@ class StorageApiWriterTest extends BaseWriterTest
             'local'
         );
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -889,7 +889,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table15");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table15");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
     }
 
@@ -897,7 +897,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -914,10 +914,10 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table14");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables(
                 $root . "/upload",
@@ -946,7 +946,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -963,10 +963,10 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table13");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
             $writer->uploadTables(
                 $root . "/upload",
@@ -998,7 +998,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $handler = new TestHandler();
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $writer->uploadTables(
             $root . "/upload",
             [
@@ -1013,11 +1013,11 @@ class StorageApiWriterTest extends BaseWriterTest
             ['componentId' => 'foo'],
             'local'
         );
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table12");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
 
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -1034,9 +1034,9 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $this->client->handleAsyncTasks($jobIds);
+        $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
         $this->assertFalse($handler->hasWarningThatContains("Output mapping does not match destination table"));
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table12");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
     }
 
@@ -1047,7 +1047,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $handler = new TestHandler();
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             [
@@ -1065,7 +1065,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $writer = new TableWriter($this->client, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, (new Logger("null"))->pushHandler($handler), new NullWorkspaceProvider());
         file_put_contents(
             $root . "/upload/table11.csv.manifest",
             '{"destination": "out.c-output-mapping-test.table11","primary_key": [""]}'
@@ -1078,7 +1078,7 @@ class StorageApiWriterTest extends BaseWriterTest
                 "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-output-mapping-test.table9'."
             )
         );
-        $tableInfo = $this->client->getTable("out.c-output-mapping-test.table11");
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table11");
         $this->assertEquals([], $tableInfo["primaryKey"]);
     }
 
@@ -1086,19 +1086,19 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue = $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
         $tableQueue->waitForAll();
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
 
         $this->assertEquals('out.c-output-mapping-test.table10', $tables[0]["id"]);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table10');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table10');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-output-mapping-test.table10.csv", "columns" => ["Boing", "Tschak"]]]],
@@ -1115,7 +1115,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" => [["source" => "out.c-output-mapping-test.table10a.csv"], ["source" => "out.c-output-mapping-test.table10b.csv"]]],
@@ -1124,14 +1124,14 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $tableQueue->waitForAll();
 
-        $tables = $this->client->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(2, $tables);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table10a');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table10a');
         $this->assertEquals(["id", "name"], $tableInfo["columns"]);
-        $tableInfo = $this->client->getTable('out.c-output-mapping-test.table10b');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table10b');
         $this->assertEquals(["foo", "bar"], $tableInfo["columns"]);
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables(
             $root . "/upload",
             ["mapping" =>
@@ -1166,7 +1166,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
         $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');

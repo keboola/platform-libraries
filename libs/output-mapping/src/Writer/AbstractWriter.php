@@ -3,14 +3,15 @@
 namespace Keboola\OutputMapping\Writer;
 
 use Keboola\StorageApi\Client;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractWriter
 {
     /**
-     * @var Client
+     * @var ClientWrapper
      */
-    protected $client;
+    protected $clientWrapper;
 
     /**
      * @var LoggerInterface
@@ -25,12 +26,12 @@ abstract class AbstractWriter
     /**
      * AbstractWriter constructor.
      *
-     * @param Client $client
+     * @param ClientWrapper $clientWrapper
      * @param LoggerInterface $logger
      */
-    public function __construct(Client $client, LoggerInterface $logger)
+    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger)
     {
-        $this->client = $client;
+        $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
     }
 

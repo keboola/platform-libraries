@@ -5,15 +5,16 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Symfony\Component\Filesystem\Filesystem;
 
 abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Client
+     * @var ClientWrapper
      */
-    protected $client;
+    protected $clientWrapper;
 
     /**
      * @var Temp
@@ -24,7 +25,7 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
     {
         foreach ($buckets as $bucket) {
             try {
-                $this->client->dropBucket($bucket, ['force' => true]);
+                $this->clientWrapper->getBasicClient()->dropBucket($bucket, ['force' => true]);
             } catch (ClientException $e) {
                 if ($e->getCode() != 404) {
                     throw $e;
@@ -39,9 +40,9 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         $options = new ListFilesOptions();
         $options->setTags($tags);
         sleep(1);
-        $files = $this->client->listFiles($options);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         foreach ($files as $file) {
-            $this->client->deleteFile($file['id']);
+            $this->clientWrapper->getBasicClient()->deleteFile($file['id']);
         }
     }
 
@@ -59,22 +60,26 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
 
     protected function initClient()
     {
-        $this->client = new Client([
-            'url' => STORAGE_API_URL,
-            'token' => STORAGE_API_TOKEN,
-            'backoffMaxTries' => 1,
-            'jobPollRetryDelay' => function () {
-                return 1;
-            },
-        ]);
-        $tokenInfo = $this->client->verifyToken();
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 

@@ -32,7 +32,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         parent::setUp();
         $this->clearFileUploads(['output-mapping-test']);
         $this->clearBuckets(['in.c-output-mapping-test', 'in.c-output-mapping-test-backend', 'out.c-output-mapping-test']);
-        $this->client->createBucket('output-mapping-test', "in", '', 'snowflake');
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', "in", '', 'snowflake');
     }
 
     public function testMetadataWritingTest()
@@ -85,11 +85,11 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             "configurationId" => "metadata-write-test"
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-output-mapping-test.table55');
         $expectedTableMetadata = [
@@ -149,7 +149,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         ];
         $systemMetadata = ["componentId" => "testComponent"];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table "in.c-output-mapping-test.table55a": Load error: ' .
@@ -166,13 +166,13 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
      */
     public function testMetadataWritingTestColumnChange($backend)
     {
-        $this->client->createBucket('output-mapping-test-backend', "in", '', $backend);
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test-backend', "in", '', $backend);
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . "/table88a.csv");
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->client->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
 
         $csv = new CsvFile($root . "/upload/table88b.csv");
         $csv->writeRow(['Id', 'Name', 'Foo']);
@@ -208,12 +208,12 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-output-mapping-test-backend.table88.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -245,13 +245,13 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
      */
     public function testMetadataWritingTestColumnChangeSpecialDelimiter($backend)
     {
-        $this->client->createBucket('output-mapping-test-backend', "in", '', $backend);
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test-backend', "in", '', $backend);
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . "/table88a.csv");
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->client->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
 
         $csv = new CsvFile($root . "/upload/table88b.csv", ';', '\'');
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
@@ -283,12 +283,12 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $nameColMetadata = $metadataApi->listColumnMetadata('in.c-output-mapping-test-backend.table88.Name');
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -313,13 +313,13 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
      */
     public function testMetadataWritingTestColumnChangeSpecialChars($backend)
     {
-        $this->client->createBucket('output-mapping-test-backend', "in", '', $backend);
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test-backend', "in", '', $backend);
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . "/table88a.csv");
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->client->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-output-mapping-test-backend', 'table88', $csv);
 
         $csv = new CsvFile($root . "/upload/table88b.csv");
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
@@ -355,12 +355,12 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $idColMetadata = $metadataApi->listColumnMetadata(
             'in.c-output-mapping-test-backend.table88.Id_with_special_chars'
         );
@@ -394,13 +394,13 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
      */
     public function testMetadataWritingTestColumnChangeHeadless($backend)
     {
-        $this->client->createBucket('output-mapping-test-backend', "in", '', $backend);
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test-backend', "in", '', $backend);
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . "/table99a.csv");
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->client->createTableAsync('in.c-output-mapping-test-backend', 'table99', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-output-mapping-test-backend', 'table99', $csv);
 
         mkdir($root . "/upload/table99b", 0777, true);
         $csv = new CsvFile($root . "/upload/table99b/slice1.csv");
@@ -438,12 +438,12 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $idColMetadata = $metadataApi->listColumnMetadata('in.c-output-mapping-test-backend.table99.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -518,12 +518,12 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             "configurationRowId" => "row-1"
         ];
 
-        $writer = new TableWriter($this->client, new NullLogger(), new NullWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->client);
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
         $tableMetadata = $metadataApi->listTableMetadata('in.c-output-mapping-test.table66');
         $expectedTableMetadata = [

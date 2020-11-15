@@ -147,7 +147,7 @@ class FileWriter extends AbstractWriter
             ->setIsEncrypted($config['is_encrypted'])
             ->setIsPublic($config['is_public'])
             ->setNotify($config['notify']);
-        $this->client->uploadFile($source, $options);
+        $this->clientWrapper->getBasicClient()->uploadFile($source, $options);
     }
 
     /**
@@ -156,13 +156,13 @@ class FileWriter extends AbstractWriter
      */
     public function tagFiles(array $configuration)
     {
-        $reader = new Reader($this->client, $this->logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $this->logger, new NullWorkspaceProvider());
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
                 $files = $reader->getFiles($fileConfiguration);
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
-                        $this->client->addFileTag($file['id'], $tag);
+                        $this->clientWrapper->getBasicClient()->addFileTag($file['id'], $tag);
                     }
                 }
             }

@@ -25,7 +25,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
     public function tearDown()
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->client);
+            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
             $workspaces->deleteWorkspace($this->workspaceId);
             $this->workspaceId = null;
         }
@@ -40,7 +40,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $mock->method('getWorkspaceId')->willReturnCallback(
             function ($type) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->client);
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $type]);
                     $this->workspaceId = $workspace['id'];
                 }
@@ -56,20 +56,20 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $temp = new Temp();
         $temp->initRunFolder();
         $root = $temp->getTmpFolder();
-        $this->client->createBucket('output-mapping-test', 'in', '', $type);
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'in', '', $type);
         // Create tables
         $csv1a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table1a.csv');
         $csv1a->writeRow(['Id', 'Name']);
         $csv1a->writeRow(['test', 'test']);
         $csv1a->writeRow(['aabb', 'ccdd']);
-        $this->client->createTable('in.c-output-mapping-test', 'table1a', $csv1a);
+        $this->clientWrapper->getBasicClient()->createTable('in.c-output-mapping-test', 'table1a', $csv1a);
         $csv2a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table2a.csv');
         $csv2a->writeRow(['Id2', 'Name2']);
         $csv2a->writeRow(['test2', 'test2']);
         $csv2a->writeRow(['aabb2', 'ccdd2']);
-        $this->client->createTable('in.c-output-mapping-test', 'table2a', $csv2a);
+        $this->clientWrapper->getBasicClient()->createTable('in.c-output-mapping-test', 'table2a', $csv2a);
 
-        $workspaces = new Workspaces($this->client);
+        $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
         $workspaceProvider = $this->getWorkspaceProvider();
         $workspaces->loadWorkspaceData(
             $workspaceProvider->getWorkspaceId($type),

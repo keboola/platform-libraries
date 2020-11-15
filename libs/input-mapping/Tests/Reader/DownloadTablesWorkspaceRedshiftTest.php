@@ -50,22 +50,27 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         /* because of https://keboola.atlassian.net/browse/KBC-228 we have to create redshift bucket to
             unload data from redshift workspace */
-        $this->clientWrapper->dropBucket('out.c-input-mapping-test');
-        $this->clientWrapper->createBucket('input-mapping-test', Client::STAGE_OUT, 'Docker Testsuite', 'redshift');
+        $this->clientWrapper->getBasicClient()->dropBucket('out.c-input-mapping-test');
+        $this->clientWrapper->getBasicClient()->createBucket(
+            'input-mapping-test',
+            Client::STAGE_OUT,
+            'Docker Testsuite',
+            'redshift'
+        );
 
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->clientWrapper->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals('out.c-input-mapping-test.test1', $tableId);
-        $table = $this->clientWrapper->getTable($tableId);
+        $table = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->clientWrapper->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );

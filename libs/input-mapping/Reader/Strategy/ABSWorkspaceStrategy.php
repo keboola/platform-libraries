@@ -40,7 +40,7 @@ class ABSWorkspaceStrategy extends AbstractStrategy
             sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
         );
         $job = $this->storageClient->apiPost(
-            'storage/workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+            'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
             [
                 'input' => $copyInputs,
                 'preserve' => 1,
@@ -48,7 +48,6 @@ class ABSWorkspaceStrategy extends AbstractStrategy
             false
         );
         $workspaceJobId = $job['id'];
-
 
         if ($workspaceJobId) {
             $this->logger->info('Processing workspace export.');

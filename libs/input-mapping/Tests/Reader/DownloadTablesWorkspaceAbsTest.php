@@ -6,12 +6,50 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
+use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Exception;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 {
+    private $runSynapseTests;
+
+    public function setUp()
+    {
+        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
+        if (!$this->runSynapseTests) {
+            return;
+        }
+        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
+            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
+        }
+        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
+            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
+        }
+        parent::setUp();
+    }
+
+    protected function initClient()
+    {
+        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
+        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
+        $this->client = new Client(["token" => $token, "url" => $url]);
+        $tokenInfo = $this->client->verifyToken();
+        print(sprintf(
+            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
+            $tokenInfo['description'],
+            $tokenInfo['id'],
+            $tokenInfo['owner']['name'],
+            $tokenInfo['owner']['id'],
+            $this->client->getApiUrl()
+        ));
+    }
+
     public function testTablesAbsWorkspace()
     {
+        if (!$this->runSynapseTests) {
+            self::markTestSkipped('Synapse tests disabled');
+        }
         $logger = new TestLogger();
         $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
         $configuration = new InputTableOptionsList([
@@ -40,13 +78,17 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         );
 
         $adapter = new Adapter();
-
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
 
         $tableId = $this->client->createTableAsyncDirect(
             'out.c-input-mapping-test',
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataTableName' => 'test1',
+                'name' => 'test1',
+                'columns' => ['Id', 'Name', 'foo', 'bar']
+            ]
         );
         self::assertNotEmpty($tableId);
 
@@ -55,7 +97,12 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
         $tableId = $this->client->createTableAsyncDirect(
             'out.c-input-mapping-test',
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataTableName' => 'test2',
+                'name' => 'test2',
+                'columns' => ['Id'],
+            ]
         );
         self::assertNotEmpty($tableId);
 
@@ -64,14 +111,18 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 
         $tableId = $this->client->createTableAsyncDirect(
             'out.c-input-mapping-test',
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataTableName' => 'test3',
+                'name' => 'test3',
+                'columns' => ['Id', 'Name', 'foo', 'bar'],
+            ]
         );
         self::assertNotEmpty($tableId);
-
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be cloned.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 3 tables to abs workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 3 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processing workspace export.'));
     }
 }

@@ -12,6 +12,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
 class DownloadTablesSynapseTest extends DownloadTablesTestAbstract

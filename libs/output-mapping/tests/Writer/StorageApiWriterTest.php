@@ -303,7 +303,7 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $this->clientWrapper->setBranch('dev-123');;
+        $this->clientWrapper->setBranch('dev-123');
         $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();

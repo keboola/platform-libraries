@@ -61,7 +61,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 

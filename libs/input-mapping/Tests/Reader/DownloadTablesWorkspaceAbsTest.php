@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
@@ -55,7 +56,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->client, $logger, $this->getWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, $this->getWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -85,7 +86,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
 
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             [
                 'dataWorkspaceId' => $this->workspaceId,
@@ -99,7 +100,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         // this is copy, so it doesn't contain the _timestamp column
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             [
                 'dataWorkspaceId' => $this->workspaceId,
@@ -113,7 +114,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
 
-        $tableId = $this->client->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             [
                 'dataWorkspaceId' => $this->workspaceId,

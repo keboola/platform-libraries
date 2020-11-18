@@ -8,9 +8,11 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Psr\Log\NullLogger;
@@ -302,7 +304,18 @@ class StorageApiWriterTest extends BaseWriterTest
                 "destination" => "out.c-output-mapping-test.table21a"
             ]
         ];
-
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
         $this->clientWrapper->setBranch('dev-123');
         $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');

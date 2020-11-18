@@ -7,12 +7,13 @@ use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class StrategyFactory
 {
-    /** @var Client */
-    private $storageClient;
+    /** @var ClientWrapper */
+    private $clientWrapper;
 
     /** @var WorkspaceProviderInterface */
     private $workspaceProvider;
@@ -40,14 +41,14 @@ class StrategyFactory
     private $format;
 
     public function __construct(
-        Client $storageClient,
+        ClientWrapper $clientWrapper,
         LoggerInterface $logger,
         WorkspaceProviderInterface $workspaceProvider,
         InputTableStateList $tablesState,
         $destination,
         $format = 'json'
     ) {
-        $this->storageClient = $storageClient;
+        $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->workspaceProvider = $workspaceProvider;
         $this->tablesState = $tablesState;
@@ -74,7 +75,7 @@ class StrategyFactory
         $className = $this->strategyMap[$storageType];
 
         return new $className(
-            $this->storageClient,
+            $this->clientWrapper,
             $this->logger,
             $this->workspaceProvider,
             $this->tablesState,

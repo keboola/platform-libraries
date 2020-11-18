@@ -44,6 +44,7 @@ class Reader
     /**
      * @param ClientWrapper $clientWrapper
      * @param LoggerInterface $logger
+     * @param WorkspaceProviderInterface $workspaceProvider
      */
     public function __construct(
         ClientWrapper $clientWrapper,
@@ -180,7 +181,7 @@ class Reader
     ) {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $strategyFactory = new StrategyFactory(
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper,
             $this->logger,
             $this->workspaceProvider,
             $tablesState,

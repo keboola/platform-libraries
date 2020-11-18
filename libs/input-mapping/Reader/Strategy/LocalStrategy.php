@@ -13,14 +13,14 @@ class LocalStrategy extends AbstractStrategy
 
     public function downloadTable(InputTableOptions $table)
     {
-        $tokenInfo = $this->storageClient->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
         if (!empty($tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME])) {
             $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];
         }
 
         $file = $this->getDestinationFilePath($this->destination, $table);
-        $tableInfo = $this->storageClient->getTable($table->getSource());
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
         if ($tableInfo['dataSizeBytes'] > $exportLimit) {
             throw new InvalidInputException(sprintf(
                 'Table "%s" with size %s bytes exceeds the input mapping limit of %s bytes. ' .
@@ -41,7 +41,7 @@ class LocalStrategy extends AbstractStrategy
 
     public function handleExports($exports)
     {
-        $tableExporter = new TableExporter($this->storageClient);
+        $tableExporter = new TableExporter($this->clientWrapper->getBasicClient());
         $this->logger->info("Processing " . count($exports) . " local table exports.");
         $tableExporter->exportTables($exports);
     }

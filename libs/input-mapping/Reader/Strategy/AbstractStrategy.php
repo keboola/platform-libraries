@@ -7,12 +7,13 @@ use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
-    /** @var Client */
-    protected $storageClient;
+    /** @var ClientWrapper */
+    protected $clientWrapper;
 
     /** LoggerInterface */
     protected $logger;
@@ -30,19 +31,19 @@ abstract class AbstractStrategy implements StrategyInterface
     protected $manifestWriter;
 
     public function __construct(
-        Client $storageClient,
+        ClientWrapper $storageClient,
         LoggerInterface $logger,
         WorkspaceProviderInterface $workspaceProvider,
         InputTableStateList $tablesState,
         $destination,
         $format = 'json'
     ) {
-        $this->storageClient = $storageClient;
+        $this->clientWrapper = $storageClient;
         $this->logger = $logger;
         $this->workspaceProvider = $workspaceProvider;
         $this->tablesState = $tablesState;
         $this->destination = $destination;
-        $this->manifestWriter = new ManifestWriter($this->storageClient, $format);
+        $this->manifestWriter = new ManifestWriter($this->clientWrapper->getBasicClient(), $format);
     }
 
     /**
@@ -55,7 +56,7 @@ abstract class AbstractStrategy implements StrategyInterface
         $exports = [];
         /** @var InputTableOptions $table */
         foreach ($tables as $table) {
-            $tableInfo = $this->storageClient->getTable($table->getSource());
+            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $outputStateConfiguration[] = [
                 'source' => $table->getSource(),
                 'lastImportDate' => $tableInfo['lastImportDate']

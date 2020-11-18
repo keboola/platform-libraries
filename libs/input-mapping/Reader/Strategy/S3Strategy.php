@@ -12,7 +12,7 @@ class S3Strategy extends AbstractStrategy
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
-        $jobId = $this->storageClient->queueTableExport($table->getSource(), $exportOptions);
+        $jobId = $this->clientWrapper->queueTableExport($table->getSource(), $exportOptions);
         return ['jobId' => $jobId, 'table' => $table];
     }
 
@@ -22,7 +22,7 @@ class S3Strategy extends AbstractStrategy
         $jobIds = array_map(function ($export) {
             return $export['jobId'];
         }, $exports);
-        $results = $this->storageClient->handleAsyncTasks($jobIds);
+        $results = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($results as $result) {
             $keyedResults[$result["id"]] = $result;
@@ -32,8 +32,8 @@ class S3Strategy extends AbstractStrategy
         foreach ($exports as $export) {
             $table = $export['table'];
             $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
-            $tableInfo = $this->storageClient->getTable($table->getSource());
-            $fileInfo = $this->storageClient->getFile(
+            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+            $fileInfo = $this->clientWrapper->getBasicClient()->getFile(
                 $keyedResults[$export['jobId']]["results"]["file"]["id"],
                 (new GetFileOptions())->setFederationToken(true)
             )

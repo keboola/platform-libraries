@@ -12,7 +12,7 @@ class SnowflakeStrategy extends AbstractStrategy
 
     public function downloadTable(InputTableOptions $table)
     {
-        $tableInfo = $this->storageClient->getTable($table->getSource());
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         if (LoadTypeDecider::canClone($tableInfo, 'snowflake', $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
@@ -62,7 +62,7 @@ class SnowflakeStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Cloning %s tables to %s workspace.', count($cloneInputs), $this->workspaceProviderId)
             );
-            $job = $this->storageClient->apiPost(
+            $job = $this->clientWrapper->getBasicClient()->apiPost(
                 'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
                 [
                     'input' => $cloneInputs,
@@ -77,7 +77,7 @@ class SnowflakeStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
             );
-            $job = $this->storageClient->apiPost(
+            $job = $this->clientWrapper->getBasicClient()->apiPost(
                 'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
                 [
                     'input' => $copyInputs,
@@ -90,10 +90,10 @@ class SnowflakeStrategy extends AbstractStrategy
 
         if ($workspaceJobs) {
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-            $this->storageClient->handleAsyncTasks($workspaceJobs);
+            $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
-                $tableInfo = $this->storageClient->getTable($table->getSource());
+                $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }
         }

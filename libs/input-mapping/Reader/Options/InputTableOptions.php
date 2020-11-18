@@ -69,6 +69,11 @@ class InputTableOptions
         return $this->definition['source'];
     }
 
+    public function setSource($newSource)
+    {
+        $this->definition['source'] = $newSource;
+    }
+
     /**
      * @return string
      */

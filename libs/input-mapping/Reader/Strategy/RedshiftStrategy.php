@@ -12,7 +12,7 @@ class RedshiftStrategy extends SnowflakeStrategy
 
     public function downloadTable(InputTableOptions $table)
     {
-        $tableInfo = $this->storageClient->getTable($table->getSource());
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         if (LoadTypeDecider::canClone($tableInfo, 'redshift', $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));

@@ -286,6 +286,38 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertNotEmpty($jobIds[1]);
     }
 
+    public function testWriteTableOutputMappingDevMode()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table11a.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table21a.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
+
+        $configs = [
+            [
+                "source" => "table11a.csv",
+                "destination" => "out.c-output-mapping-test.table11a"
+            ],
+            [
+                "source" => "table21a.csv",
+                "destination" => "out.c-output-mapping-test.table21a"
+            ]
+        ];
+
+        $this->clientWrapper->setBranch('dev-123');;
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(2, $jobIds);
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-dev-123-output-mapping-test");
+        $this->assertCount(2, $tables);
+        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
+        sort($tableIds);
+        $this->assertEquals(['out.c-dev-123-output-mapping-test.table11a', 'out.c-dev-123-output-mapping-test.table21a'], $tableIds);
+        $this->assertCount(2, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertNotEmpty($jobIds[1]);
+    }
+
     public function testWriteTableOutputMappingExistingTable()
     {
         $root = $this->tmp->getTmpFolder();

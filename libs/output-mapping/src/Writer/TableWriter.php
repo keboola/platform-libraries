@@ -13,6 +13,7 @@ use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
+use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
@@ -308,6 +309,7 @@ class TableWriter extends AbstractWriter
 
             try {
                 $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
+                $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
                 $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

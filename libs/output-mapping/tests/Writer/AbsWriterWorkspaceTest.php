@@ -64,6 +64,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testAbsTableOutputMapping()
     {
+        if (!$this->runSynapseTests) {
+            return;
+        }
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('abs');
 

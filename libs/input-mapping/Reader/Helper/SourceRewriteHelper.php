@@ -5,20 +5,50 @@ namespace Keboola\InputMapping\Reader\Helper;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class SourceRewriteHelper
 {
-    public static function rewriteDestinations(
+    public static function rewriteTableOptionsDestinations(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
     ) {
-        foreach ($tablesDefinition->getTables() as $table) {
-            self::rewriteDestination($table, $clientWrapper, $logger);
+        if ($clientWrapper->hasBranch()) {
+            foreach ($tablesDefinition->getTables() as $tableOptions) {
+                $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranch());
+                if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
+                    $logger->info(
+                        sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableOptions->getSource())
+                    );
+                    $tableOptions->setSource($newSource);
+                }
+            }
         }
         return $tablesDefinition;
+    }
+
+    public static function rewriteTableStatesDestinations(
+        InputTableStateList $tableStates,
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger
+    ) {
+        if ($clientWrapper->hasBranch()) {
+            $tableStates = $tableStates->jsonSerialize();
+            foreach ($tableStates as &$tableState) {
+                $newSource = self::getNewSource($tableState['source'], $clientWrapper->getBranch());
+                if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
+                    $logger->info(
+                        sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableState['source'])
+                    );
+                    $tableState['source'] = $newSource;
+                }
+            }
+            return new InputTableStateList($tableStates);
+        }
+        return $tableStates;
     }
 
     private static function getNewSource($source, $branch)
@@ -46,7 +76,7 @@ class SourceRewriteHelper
         if ($clientWrapper->hasBranch()) {
             $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranch());
             if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
-                $logger->info(sprintf('Using dev input "%s" instead of "%s".', $tableOptions->getSource(), $newSource));
+                $logger->info(sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableOptions->getSource()));
                 $tableOptions->setSource($newSource);
             }
         }

@@ -2,12 +2,14 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
@@ -131,5 +133,57 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
             'invalid'
         );
+    }
+
+    public function testReadTablesDefaultBackendBranchRewrite()
+    {
+        $logger = new TestLogger();
+        $temp = new Temp(uniqid('input-mapping'));
+        $temp->initRunFolder();
+        file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
+        $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
+        try {
+            $this->clientWrapper->getBasicClient()->dropBucket('in.c-my-branch-docker-test', ['force' => true]);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+        try {
+            $this->clientWrapper->getBasicClient()->dropBucket('in.c-docker-test', ['force' => true]);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+        $this->clientWrapper->getBasicClient()->createBucket('my-branch-docker-test', 'in');
+        $this->clientWrapper->getBasicClient()->createTable('in.c-my-branch-docker-test', 'test', $csvFile);
+        $this->clientWrapper->setBranch('my-branch');
+        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-docker-test.test',
+                'destination' => 'test.csv'
+            ],
+        ]);
+        $state = new InputTableStateList([
+            [
+                'source' => 'in.c-docker-test.test',
+                'lastImportDate' => '1605741600',
+            ],
+        ]);
+        $outState = $reader->downloadTables(
+            $configuration,
+            $state,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'local'
+        );
+        self::assertContains(
+            "\"foo\",\"bar\"\n\"1\",\"2\"",
+            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
+        );
+        $data = $outState->jsonSerialize();
+        self::assertEquals('in.c-my-branch-docker-test.test', $data[0]['source']);
+        self::assertArrayHasKey('lastImportDate', $data[0]);
     }
 }

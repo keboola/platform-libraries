@@ -6,6 +6,8 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
+use Keboola\InputMapping\Reader\State\InputTableStateList;
+use Keboola\InputMapping\Tests\Reader\State\InputTableStateListTest;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -65,7 +67,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteDestinations($inputTablesOptions, $this->clientWrapper, $testLogger);
+        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations($inputTablesOptions, $this->clientWrapper, $testLogger);
         self::assertEquals('out.c-main.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
@@ -111,7 +113,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         self::expectException(InputOperationException::class);
         self::expectExceptionMessage('Invalid destination: "out.c-main"');
-        SourceRewriteHelper::rewriteDestinations(
+        SourceRewriteHelper::rewriteTableOptionsDestinations(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger
@@ -136,7 +138,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteDestinations(
+        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger
@@ -196,7 +198,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteDestinations(
+        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger
@@ -230,5 +232,52 @@ class SourceRewriteHelperTest extends TestCase
             ],
             $destinations->getTables()[1]->getDefinition()
         );
+        self::assertTrue($testLogger->hasInfoThatContains(
+            'Using dev input "out.c-dev-branch-main.my-table-2" instead of "out.c-main.my-table-2".'
+        ));
+    }
+
+    public function testBranchRewriteTableStates()
+    {
+        $this->initBuckets();
+        $this->clientWrapper->setBranch('dev-branch');
+        $temp = new Temp(uniqid('input-mapping'));
+        $temp->initRunFolder();
+        file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
+        $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
+        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table', $csvFile);
+        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table-2', $csvFile);
+        $testLogger = new TestLogger();
+        $inputTablesStates = new InputTableStateList([
+            [
+                'source' => 'out.c-main.my-table',
+                'lastImportDate' => '1605741600',
+            ],
+            [
+                'source' => 'out.c-main.my-table-2',
+                'lastImportDate' => '1605741600',
+            ],
+        ]);
+        $destinations = SourceRewriteHelper::rewriteTableStatesDestinations(
+            $inputTablesStates,
+            $this->clientWrapper,
+            $testLogger
+        );
+        self::assertEquals(
+            [
+                [
+                    'source' => 'out.c-dev-branch-main.my-table',
+                    'lastImportDate' => '1605741600',
+                ],
+                [
+                    'source' => 'out.c-dev-branch-main.my-table-2',
+                    'lastImportDate' => '1605741600',
+                ],
+            ],
+            $destinations->jsonSerialize()
+        );
+        self::assertTrue($testLogger->hasInfoThatContains(
+            'Using dev input "out.c-dev-branch-main.my-table-2" instead of "out.c-main.my-table-2".'
+        ));
     }
 }

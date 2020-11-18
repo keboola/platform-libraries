@@ -100,9 +100,14 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration3()
     {
         // empty configuration, ignored
+        $this->clientWrapper->setBranch('');
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([]);
-        $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download'
+        );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);
@@ -111,6 +116,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
+        $this->clientWrapper->setBranch('');
         $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [

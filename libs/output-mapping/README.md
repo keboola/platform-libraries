@@ -1,5 +1,5 @@
 # Output Mapping 
-[![Build Status](https://travis-ci.org/keboola/output-mapping.svg?branch=master)](https://travis-ci.org/keboola/output-mapping) 
+[![Build Status](https://travis-ci.com/keboola/output-mapping.svg?branch=master)](https://travis-ci.com/keboola/output-mapping) 
 [![Code Climate](https://codeclimate.com/github/keboola/output-mapping/badges/gpa.svg)](https://codeclimate.com/github/keboola/output-mapping) 
 [![Test Coverage](https://codeclimate.com/github/keboola/output-mapping/badges/coverage.svg)](https://codeclimate.com/github/keboola/output-mapping/coverage)
 

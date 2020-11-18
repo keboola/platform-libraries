@@ -41,7 +41,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
     {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
         $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->client = new Client([
+        $this->clientWrapper = new Client([
             "token" => $token,
             "url" => $url,
             'backoffMaxTries' => 1,
@@ -49,14 +49,14 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 return 1;
             },
         ]);
-        $tokenInfo = $this->client->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getApiUrl()
         ));
     }
 
@@ -68,7 +68,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('synapse');
         // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->client->createBucket('output-mapping-test', 'out', '', 'synapse');
+        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'out', '', 'synapse');
         $configs = [
             [
                 'source' => 'table1a',
@@ -91,7 +91,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 ['columns' => ['Id2', 'Name2']]
             )
         );
-        $writer = new TableWriter($this->client, new NullLogger(), $this->getWorkspaceProvider());
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
 
         $tableQueue = $writer->uploadTables(
             $root,
@@ -102,7 +102,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
-        $tables = $this->client->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]['id'], $tables[1]['id']];
         sort($tableIds);
@@ -111,7 +111,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $reader = new Reader($this->client, new NullLogger(), $this->getWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $reader->downloadTables(
             new InputTableOptionsList([
                 [

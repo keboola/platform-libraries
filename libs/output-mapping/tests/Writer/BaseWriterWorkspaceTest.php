@@ -59,7 +59,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $backendType = $type;
         // abs is a workspace type, but not a backendType
         if ($type === 'abs') {
-            $backendType = 'snowflake';
+            $backendType = 'synapse';
         }
         $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'in', '', $backendType);
         // Create tables

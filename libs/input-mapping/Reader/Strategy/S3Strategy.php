@@ -12,7 +12,7 @@ class S3Strategy extends AbstractStrategy
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
-        $jobId = $this->clientWrapper->queueTableExport($table->getSource(), $exportOptions);
+        $jobId = $this->clientWrapper->getBasicClient()->queueTableExport($table->getSource(), $exportOptions);
         return ['jobId' => $jobId, 'table' => $table];
     }
 

@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
 class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
@@ -41,14 +42,18 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
     {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
         $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->clientWrapper = new Client([
-            "token" => $token,
-            "url" => $url,
-            'backoffMaxTries' => 1,
-            'jobPollRetryDelay' => function () {
-                return 1;
-            },
-        ]);
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                "token" => $token,
+                "url" => $url,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
@@ -56,7 +61,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 

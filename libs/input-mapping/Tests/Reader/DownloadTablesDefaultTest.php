@@ -402,6 +402,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $client->method('verifyToken')->willReturn($tokenInfo);
         /** @var Client $client */
         $clientWrapper = new ClientWrapper($client, null, null);
+        $clientWrapper->setBranch('');
         $logger = new TestLogger();
         $reader = new Reader($clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([

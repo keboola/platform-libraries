@@ -9,7 +9,6 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbstract

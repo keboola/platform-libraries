@@ -90,8 +90,8 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
-        $this->clientWrapper->dropBucket('out.c-input-mapping-test');
-        $this->clientWrapper->createBucket(
+        $this->clientWrapper->getBasicClient()->dropBucket('out.c-input-mapping-test');
+        $this->clientWrapper->getBasicClient()->createBucket(
             'input-mapping-test',
             Client::STAGE_OUT,
             'Docker Testsuite',
@@ -100,17 +100,17 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
 
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->clientWrapper->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals('out.c-input-mapping-test.test1', $tableId);
-        $table = $this->clientWrapper->getTable($tableId);
+        $table = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['Id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->clientWrapper->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );

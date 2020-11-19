@@ -9,36 +9,45 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use PHPUnit_Framework_TestCase;
 use Psr\Log\NullLogger;
 
 class LocalStrategyTest extends PHPUnit_Framework_TestCase
 {
-    /** @var Client */
-    private $client;
+    /** @var ClientWrapper */
+    private $clientWrapper;
 
     public function setUp()
     {
         parent::setUp();
-        $this->client = new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]);
-        $tokenInfo = $this->client->verifyToken();
+        $this->clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->client->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
         try {
-            $this->client->dropBucket('in.c-input-mapping-test-strategy', ['force' => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket('in.c-input-mapping-test-strategy', ['force' => true]);
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
-        $this->client->createBucket('input-mapping-test-strategy', Client::STAGE_IN, 'Docker Testsuite');
+        $this->clientWrapper->getBasicClient()->createBucket(
+            'input-mapping-test-strategy',
+            Client::STAGE_IN,
+            'Docker Testsuite'
+        );
 
         // Create table
         $temp = new Temp();
@@ -48,13 +57,13 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
         $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-        $this->client->createTableAsync('in.c-input-mapping-test-strategy', 'test1', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test-strategy', 'test1', $csv);
     }
 
     public function testColumns()
     {
         $strategy = new LocalStrategy(
-            $this->client,
+            $this->clientWrapper,
             new NullLogger(),
             new NullWorkspaceProvider(),
             new InputTableStateList([]),
@@ -84,7 +93,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
     public function testColumnsExtended()
     {
         $strategy = new LocalStrategy(
-            $this->client,
+            $this->clientWrapper,
             new NullLogger(),
             new NullWorkspaceProvider(),
             new InputTableStateList([]),

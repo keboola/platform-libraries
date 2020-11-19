@@ -100,16 +100,21 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test', 'empty', $headerCsvFile, []);
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            'in.c-docker-test-redshift',
+            'empty',
+            $headerCsvFile,
+            []
+        );
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test.empty', $options);
+        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-redshift.empty', $options);
 
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test.empty",
+                "source" => "in.c-docker-test-redshift.empty",
                 "destination" => "empty.csv",
             ],
         ]);
@@ -124,6 +129,6 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/empty.csv.manifest");
-        self::assertEquals("in.c-docker-test.empty", $manifest["id"]);
+        self::assertEquals("in.c-docker-test-redshift.empty", $manifest["id"]);
     }
 }

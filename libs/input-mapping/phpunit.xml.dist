@@ -23,7 +23,6 @@
             <exclude>Tests/Reader/DownloadTablesWorkspaceRedshiftTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesSynapseTest.php</exclude>
             <exclude>Tests/Reader/DownloadTablesWorkspaceSynapseTest.php</exclude>
-            <exclude>Tests/Reader/DownloadTablesWorkspaceAbsTest.php</exclude>
         </testsuite>
         <testsuite name="CommonPart2">
             <file>Tests/Reader/DownloadTablesDefaultTest.php</file>

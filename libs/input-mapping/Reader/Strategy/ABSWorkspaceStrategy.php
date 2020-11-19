@@ -12,7 +12,6 @@ class ABSWorkspaceStrategy extends AbstractStrategy
 
     public function downloadTable(InputTableOptions $table)
     {
-        $tableInfo = $this->storageClient->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
         return [
@@ -39,7 +38,7 @@ class ABSWorkspaceStrategy extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
         );
-        $job = $this->storageClient->apiPost(
+        $job = $this->clientWrapper->getBasicClient()->apiPost(
             'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
             [
                 'input' => $copyInputs,
@@ -51,10 +50,10 @@ class ABSWorkspaceStrategy extends AbstractStrategy
 
         if ($workspaceJobId) {
             $this->logger->info('Processing workspace export.');
-            $this->storageClient->handleAsyncTasks([$workspaceJobId]);
+            $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
-                $tableInfo = $this->storageClient->getTable($table->getSource());
+                $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }
         }

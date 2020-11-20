@@ -617,9 +617,7 @@ class TableWriter extends AbstractWriter
             case self::STAGING_SYNAPSE:
                 return WorkspaceProviderInterface::TYPE_SYNAPSE;
             case self::STAGING_ABS:
-                // TODO: when input mapping is released use the new type from there
-                // return WorkspaceProviderInterface::TYPE_ABS;
-                return 'abs';
+                return WorkspaceProviderInterface::TYPE_ABS;
             default:
                 throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));
         }

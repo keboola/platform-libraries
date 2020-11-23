@@ -18,14 +18,14 @@
         "psr-4": {
             "Keboola\\OutputMapping\\Tests\\": "tests/"
         }
-    },    
+    },
     "require": {
         "symfony/config": "^2.8.52|^4.1",
         "symfony/yaml": "^2.8.52|^4.1",
         "symfony/finder": "^2.8.52|^4.1",
         "symfony/serializer": "^2.8.52|^4.1",
         "monolog/monolog": "^1.25.5|^2.0",
-        "keboola/input-mapping": "^10.0.0",
+        "keboola/input-mapping": "^10.2.0",
         "keboola/storage-api-php-client-branch-wrapper": "^0.0.1",
         "guzzlehttp/guzzle": "^6.5.5",
         "keboola/sanitizer": "^0.1"

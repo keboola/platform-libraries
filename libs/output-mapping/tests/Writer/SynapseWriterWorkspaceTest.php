@@ -128,10 +128,8 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             new InputTableStateList([]),
             $root
         );
-        $expectedCsvOutput = "\"Id\",\"Name\"\n\"aabb\",\"ccdd\"\n\"test\",\"test\"\n";
-        self::assertEquals(
-            $expectedCsvOutput,
-            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')
-        );
+        $rows = explode("\n", trim(file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')));
+        sort($rows);
+        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
     }
 }

@@ -28,7 +28,8 @@
         "keboola/input-mapping": "^11.5.0",
         "keboola/storage-api-php-client-branch-wrapper": "^1.0.0",
         "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/sanitizer": "^0.1"
+        "keboola/sanitizer": "^0.1",
+        "keboola/php-file-storage-utils": "^0.1.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5.6",

@@ -51,6 +51,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             null,
             null
         );
+        $this->clientWrapper->setBranchId('');
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

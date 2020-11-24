@@ -55,7 +55,7 @@ class DestinationRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev-123'));
+        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev 123'));
         $config = $this->getConfig();
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
         self::assertEquals('in.c-dev-123-main.table', $expectedConfig['destination']);

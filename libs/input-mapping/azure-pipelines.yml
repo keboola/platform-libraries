@@ -47,6 +47,7 @@ stages:
           displayName: 'Run Common Test Suite (Part 1) on AWS (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
             STORAGE_API_URL: $(STORAGE_API_URL_AWS)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN: 
@@ -56,6 +57,7 @@ stages:
           displayName: 'Run AWS Test Suite on AWS (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
             STORAGE_API_URL: $(STORAGE_API_URL_AWS)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN: 
@@ -69,6 +71,7 @@ stages:
             displayName: 'Run Common Test Suite (Part 2) on AWS (PHP 5.6)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
               STORAGE_API_URL: $(STORAGE_API_URL_AWS)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -82,6 +85,7 @@ stages:
             displayName: 'Run Common Files Test Suite on AWS (PHP 5.6)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
               STORAGE_API_URL: $(STORAGE_API_URL_AWS)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -96,6 +100,7 @@ stages:
           displayName: 'Run Common Test Suite (Part 1) on Azure (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN:
@@ -105,6 +110,7 @@ stages:
           displayName: 'Run Azure Test Suite on Azure (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN:
@@ -118,6 +124,7 @@ stages:
             displayName: 'Run Common Test Suite (Part 2) on Azure (PHP 5.6)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
               STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -131,6 +138,7 @@ stages:
             displayName: 'Run Common Files Test Suite on Azure (PHP 5.6)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
               STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -144,6 +152,7 @@ stages:
           displayName: 'Run Azure Test Suite on Azure w. Synapse (PHP 5.6)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
@@ -161,6 +170,7 @@ stages:
           displayName: 'Run Common Test Suite (Part 1) on AWS (PHP 7.4)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
             STORAGE_API_URL: $(STORAGE_API_URL_AWS)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN: 
@@ -170,6 +180,7 @@ stages:
           displayName: 'Run AWS Test Suite on AWS (PHP 7.4)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
             STORAGE_API_URL: $(STORAGE_API_URL_AWS)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN: 
@@ -183,6 +194,7 @@ stages:
             displayName: 'Run Common Test Suite (Part 2) on AWS (PHP 7.4)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
               STORAGE_API_URL: $(STORAGE_API_URL_AWS)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -196,6 +208,7 @@ stages:
             displayName: 'Run Common Files Test Suite on AWS (PHP 7.4)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
               STORAGE_API_URL: $(STORAGE_API_URL_AWS)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -210,6 +223,7 @@ stages:
           displayName: 'Run Common Test Suite (Part 1) on Azure (PHP 7.4)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN:
@@ -219,6 +233,7 @@ stages:
           displayName: 'Run Azure Test Suite on Azure (PHP 7.4)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: 0
             SYNAPSE_STORAGE_API_TOKEN:
@@ -232,6 +247,7 @@ stages:
             displayName: 'Run Common Test Suite (Part 2) on Azure (PHP 5.6)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
               STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -245,6 +261,7 @@ stages:
             displayName: 'Run Common Files Test Suite on Azure (PHP 7.4)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+              STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
               STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
               RUN_SYNAPSE_TESTS: 0
               SYNAPSE_STORAGE_API_TOKEN:
@@ -258,6 +275,7 @@ stages:
           displayName: 'Run Azure Test Suite on Azure w. Synapse (PHP 7.4)'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+            STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
             STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
             RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
             SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)

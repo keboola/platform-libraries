@@ -7,9 +7,9 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
-use Keboola\InputMapping\Tests\Reader\State\InputTableStateListTest;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
@@ -20,14 +20,24 @@ class SourceRewriteHelperTest extends TestCase
     /** @var ClientWrapper */
     private $clientWrapper;
 
+    /** @var string */
+    private $branchId;
+
     public function setUp()
     {
         parent::setUp();
         $this->clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
             null,
             null
         );
+        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'dev-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        $this->branchId = $branches->createBranch('dev-branch')['id'];
     }
 
     private function initBuckets()
@@ -101,7 +111,7 @@ class SourceRewriteHelperTest extends TestCase
 
     public function testInvalidName()
     {
-        $this->clientWrapper->setBranchId('123');
+        $this->clientWrapper->setBranchId($this->branchId);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -123,7 +133,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteNoTables()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId('123');
+        $this->clientWrapper->setBranchId($this->branchId);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -177,7 +187,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTablesExists()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId('123');
+        $this->clientWrapper->setBranchId($this->branchId);
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
@@ -240,7 +250,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTableStates()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId('123');
+        $this->clientWrapper->setBranchId($this->branchId);
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");

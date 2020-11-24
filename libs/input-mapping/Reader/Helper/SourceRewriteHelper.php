@@ -18,7 +18,7 @@ class SourceRewriteHelper
     ) {
         if ($clientWrapper->hasBranch()) {
             foreach ($tablesDefinition->getTables() as $tableOptions) {
-                $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranch());
+                $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranchName());
                 if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
                     $logger->info(
                         sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableOptions->getSource())
@@ -51,7 +51,7 @@ class SourceRewriteHelper
         return $tableStates;
     }
 
-    private static function getNewSource($source, $branch)
+    private static function getNewSource($source, $branchName)
     {
         $tableIdParts = explode('.', $source);
         if (count($tableIdParts) !== 3) {
@@ -61,7 +61,7 @@ class SourceRewriteHelper
         if (substr($bucketId, 0, 2) === 'c-') {
             $bucketId = substr($bucketId, 2);
         }
-        $bucketId = $branch . '-' . $bucketId;
+        $bucketId = $branchName . '-' . $bucketId;
         // this assumes that bucket id starts with c-
         // https://github.com/keboola/output-mapping/blob/f6451d2faa825913db2ce986952a9ad6db082e50/src/Writer/TableWriter.php#L498
         $tableIdParts[1] = 'c-' . $bucketId;

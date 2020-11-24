@@ -10,6 +10,7 @@ use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
@@ -148,6 +149,12 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
+
+        $this->clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
         try {
             $this->clientWrapper->getBasicClient()->dropBucket('in.c-my-branch-docker-test', ['force' => true]);
         } catch (ClientException $e) {
@@ -162,9 +169,17 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
                 throw $e;
             }
         }
+        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        $branchId = $branches->createBranch('my-branch')['id'];
+
         $this->clientWrapper->getBasicClient()->createBucket('my-branch-docker-test', 'in');
         $this->clientWrapper->getBasicClient()->createTable('in.c-my-branch-docker-test', 'test', $csvFile);
-        $this->clientWrapper->setBranchId('my-branch');
+        $this->clientWrapper->setBranchId($branchId);
         $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [

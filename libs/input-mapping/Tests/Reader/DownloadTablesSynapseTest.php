@@ -62,7 +62,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             null,
             null
         );
-        $this->clientWrapper->setBranch('');
+        $this->clientWrapper->setBranchId('');
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

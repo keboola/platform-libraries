@@ -3,7 +3,6 @@
 namespace Keboola\InputMapping\Reader\Helper;
 
 use Keboola\InputMapping\Exception\InputOperationException;
-use Keboola\InputMapping\Reader\Options\InputTableOptions;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -18,7 +17,10 @@ class SourceRewriteHelper
     ) {
         if ($clientWrapper->hasBranch()) {
             foreach ($tablesDefinition->getTables() as $tableOptions) {
-                $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranchName());
+                $newSource = self::getNewSource(
+                    $tableOptions->getSource(),
+                    $clientWrapper->getBasicClient()->webalizeDisplayName($clientWrapper->getBranchName())['displayName']
+                );
                 if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
                     $logger->info(
                         sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableOptions->getSource())
@@ -38,7 +40,10 @@ class SourceRewriteHelper
         if ($clientWrapper->hasBranch()) {
             $tableStates = $tableStates->jsonSerialize();
             foreach ($tableStates as &$tableState) {
-                $newSource = self::getNewSource($tableState['source'], $clientWrapper->getBranchName());
+                $newSource = self::getNewSource(
+                    $tableState['source'],
+                    $clientWrapper->getBasicClient()->webalizeDisplayName($clientWrapper->getBranchName())['displayName']
+                );
                 if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
                     $logger->info(
                         sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableState['source'])
@@ -66,19 +71,5 @@ class SourceRewriteHelper
         // https://github.com/keboola/output-mapping/blob/f6451d2faa825913db2ce986952a9ad6db082e50/src/Writer/TableWriter.php#L498
         $tableIdParts[1] = 'c-' . $bucketId;
         return implode('.', $tableIdParts);
-    }
-
-    private static function rewriteDestination(
-        InputTableOptions $tableOptions,
-        ClientWrapper $clientWrapper,
-        LoggerInterface $logger
-    ) {
-        if ($clientWrapper->hasBranch()) {
-            $newSource = self::getNewSource($tableOptions->getSource(), $clientWrapper->getBranch());
-            if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
-                $logger->info(sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableOptions->getSource()));
-                $tableOptions->setSource($newSource);
-            }
-        }
     }
 }

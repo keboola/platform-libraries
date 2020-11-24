@@ -33,11 +33,11 @@ class SourceRewriteHelperTest extends TestCase
         );
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'dev-branch') {
+            if ($branch['name'] === 'dev branch') {
                 $branches->deleteBranch($branch['id']);
             }
         }
-        $this->branchId = $branches->createBranch('dev-branch')['id'];
+        $this->branchId = $branches->createBranch('dev branch')['id'];
     }
 
     private function initBuckets()

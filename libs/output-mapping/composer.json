@@ -26,7 +26,7 @@
         "symfony/serializer": "^2.8.52|^4.1",
         "monolog/monolog": "^1.25.5|^2.0",
         "keboola/input-mapping": "dev-odin-PS-1534",
-        "keboola/storage-api-php-client-branch-wrapper": "dev-odin-PS-1535",
+        "keboola/storage-api-php-client-branch-wrapper": "^0.0.2",
         "guzzlehttp/guzzle": "^6.5.5",
         "keboola/sanitizer": "^0.1"
     },

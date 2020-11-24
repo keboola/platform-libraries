@@ -9,6 +9,7 @@ use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
@@ -288,8 +289,34 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertNotEmpty($jobIds[1]);
     }
 
+    public function createBranch($clientWrapper, $branchName)
+    {
+        parent::setUp();
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === $branchName) {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        return $branches->createBranch($branchName)['id'];
+    }
+
     public function testWriteTableOutputMappingDevMode()
     {
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN_MASTER,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table11a.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
         file_put_contents($root . "/upload/table21a.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
@@ -304,19 +331,6 @@ class StorageApiWriterTest extends BaseWriterTest
                 "destination" => "out.c-output-mapping-test.table21a"
             ]
         ];
-        $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-        $this->clientWrapper->setBranch('dev-123');
         $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();

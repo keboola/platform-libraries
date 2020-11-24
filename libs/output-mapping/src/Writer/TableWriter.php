@@ -16,7 +16,6 @@ use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -157,6 +156,7 @@ class TableWriter extends AbstractWriter
             try {
                 $parsedConfig['primary_key'] =
                     PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
+                $parsedConfig = DestinationRewriter::rewriteDestination($parsedConfig, $this->clientWrapper);
                 $tableJob = $this->uploadTable($source, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

@@ -6,10 +6,10 @@ use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
+use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
@@ -20,6 +20,8 @@ use Psr\Log\NullLogger;
 
 class StorageApiWriterTest extends BaseWriterTest
 {
+    use CreateBranchTrait;
+
     public function setUp()
     {
         parent::setUp();
@@ -287,18 +289,6 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
-    }
-
-    public function createBranch($clientWrapper, $branchName)
-    {
-        parent::setUp();
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === $branchName) {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        return $branches->createBranch($branchName)['id'];
     }
 
     public function testWriteTableOutputMappingDevMode()

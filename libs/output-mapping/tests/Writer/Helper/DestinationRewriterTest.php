@@ -3,25 +3,15 @@
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 
 class DestinationRewriterTest extends TestCase
 {
-    public function createBranch(ClientWrapper $clientWrapper, $branchName)
-    {
-        parent::setUp();
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === $branchName) {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        return $branches->createBranch($branchName)['id'];
-    }
+    use CreateBranchTrait;
 
     private function getConfig()
     {

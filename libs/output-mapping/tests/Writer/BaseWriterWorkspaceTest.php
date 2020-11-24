@@ -18,7 +18,11 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
     public function setUp()
     {
         parent::setUp();
-        $this->clearBuckets(['out.c-output-mapping-test', 'in.c-output-mapping-test']);
+        $this->clearBuckets([
+            'out.c-output-mapping-test',
+            'in.c-output-mapping-test',
+            'out.c-dev-123-output-mapping-test',
+        ]);
         $this->clearFileUploads(['output-mapping-test']);
     }
 

@@ -308,6 +308,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
 
         $root = $this->tmp->getTmpFolder();
+        $this->tmp->initRunFolder();
         file_put_contents($root . "/upload/table11a.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
         file_put_contents($root . "/upload/table21a.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
 

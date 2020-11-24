@@ -17,5 +17,4 @@ trait CreateBranchTrait
         }
         return $branches->createBranch($branchName)['id'];
     }
-
 }

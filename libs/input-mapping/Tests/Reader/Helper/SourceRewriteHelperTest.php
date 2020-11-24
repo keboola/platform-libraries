@@ -52,7 +52,7 @@ class SourceRewriteHelperTest extends TestCase
 
     public function testNoBranch()
     {
-        $this->clientWrapper->setBranch('');
+        $this->clientWrapper->setBranchId('');
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -101,7 +101,7 @@ class SourceRewriteHelperTest extends TestCase
 
     public function testInvalidName()
     {
-        $this->clientWrapper->setBranch('test');
+        $this->clientWrapper->setBranchId('123');
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -123,7 +123,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteNoTables()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranch('dev-branch');
+        $this->clientWrapper->setBranchId('123');
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -177,7 +177,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTablesExists()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranch('dev-branch');
+        $this->clientWrapper->setBranchId('123');
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
@@ -240,7 +240,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTableStates()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranch('dev-branch');
+        $this->clientWrapper->setBranchId('123');
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");

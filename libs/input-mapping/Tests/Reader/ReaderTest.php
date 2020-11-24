@@ -100,7 +100,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration3()
     {
         // empty configuration, ignored
-        $this->clientWrapper->setBranch('');
+        $this->clientWrapper->setBranchId('');
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
@@ -116,7 +116,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $this->clientWrapper->setBranch('');
+        $this->clientWrapper->setBranchId('');
         $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [
@@ -164,7 +164,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         }
         $this->clientWrapper->getBasicClient()->createBucket('my-branch-docker-test', 'in');
         $this->clientWrapper->getBasicClient()->createTable('in.c-my-branch-docker-test', 'test', $csvFile);
-        $this->clientWrapper->setBranch('my-branch');
+        $this->clientWrapper->setBranchId('my-branch');
         $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
             [

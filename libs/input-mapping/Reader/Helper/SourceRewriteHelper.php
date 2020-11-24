@@ -38,7 +38,7 @@ class SourceRewriteHelper
         if ($clientWrapper->hasBranch()) {
             $tableStates = $tableStates->jsonSerialize();
             foreach ($tableStates as &$tableState) {
-                $newSource = self::getNewSource($tableState['source'], $clientWrapper->getBranch());
+                $newSource = self::getNewSource($tableState['source'], $clientWrapper->getBranchName());
                 if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
                     $logger->info(
                         sprintf('Using dev input "%s" instead of "%s".', $newSource, $tableState['source'])

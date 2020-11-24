@@ -268,8 +268,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             null
         );
         $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
-
-        $this->prepareWorkspaceWithTables('snowflake');
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
         $configs = [
             [
                 'source' => 'table1a',

@@ -4,6 +4,12 @@ namespace Keboola\InputMapping\Reader\Strategy\Files;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Reader\Strategy\ABSStrategy;
+use Keboola\InputMapping\Reader\Strategy\LocalStrategy;
+use Keboola\InputMapping\Reader\Strategy\RedshiftStrategy;
+use Keboola\InputMapping\Reader\Strategy\S3Strategy;
+use Keboola\InputMapping\Reader\Strategy\SnowflakeStrategy;
+use Keboola\InputMapping\Reader\Strategy\SynapseStrategy;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -23,6 +29,11 @@ class FilesStrategyFactory
     protected $destination;
 
     private $strategyMap = [
+        Reader::STAGING_S3 => LocalFilesStrategy::class,
+        Reader::STAGING_ABS => LocalFilesStrategy::class,
+        Reader::STAGING_REDSHIFT => LocalFilesStrategy::class,
+        Reader::STAGING_SNOWFLAKE => LocalFilesStrategy::class,
+        Reader::STAGING_SYNAPSE => LocalFilesStrategy::class,
         Reader::STAGING_LOCAL => LocalFilesStrategy::class,
         Reader::STAGING_ABS_WORKSPACE => ABSWorkspaceFilesStrategy::class,
     ];

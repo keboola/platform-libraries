@@ -14,7 +14,7 @@
         "symfony/yaml": "^v2.8.52|^4.1",
         "symfony/finder": "^2.8.52|^4.1",
         "symfony/serializer": "^2.8.52|^4.1",
-        "keboola/storage-api-client": "^10.21",
+        "keboola/storage-api-client": "^10.22",
         "keboola/storage-api-php-client-branch-wrapper": "^0.0.2",
         "guzzlehttp/guzzle": "^6.5.5"
     },

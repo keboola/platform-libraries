@@ -2,18 +2,16 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Workspaces;
-use Keboola\Temp\Temp;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
 class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
+    use CreateBranchTrait;
 
     public function testSnowflakeTableOutputMapping()
     {
@@ -253,5 +251,68 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         }
         sort($values);
         $this->assertEquals(['aabb', 'ccdd', 'test', 'test'], $values);
+    }
+
+    public function testWriteTableOutputMappingDevMode()
+    {
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN_MASTER,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => 'out.c-output-mapping-test.table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
+            ],
+            [
+                'source' => 'table2a',
+                'destination' => 'out.c-output-mapping-test.table2a',
+            ],
+        ];
+        $root = $this->tmp->getTmpFolder();
+        $this->tmp->initRunFolder();
+        file_put_contents(
+            $root . '/table1a.manifest',
+            json_encode(
+                ['columns' => ['Id', 'Name']]
+            )
+        );
+        file_put_contents(
+            $root . '/table2a.manifest',
+            json_encode(
+                ['columns' => ['Id2', 'Name2']]
+            )
+        );
+        $writer = new TableWriter($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
+
+        $tableQueue = $writer->uploadTables(
+            $root,
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(2, $jobIds);
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-dev-123-output-mapping-test");
+        $this->assertCount(2, $tables);
+        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
+        sort($tableIds);
+        $this->assertEquals(['out.c-dev-123-output-mapping-test.table1a', 'out.c-dev-123-output-mapping-test.table2a'], $tableIds);
+        $this->assertCount(2, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertNotEmpty($jobIds[1]);
     }
 }

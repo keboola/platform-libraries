@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -10,6 +11,8 @@ use PHPUnit\Framework\TestCase;
 
 class DestinationRewriterTest extends TestCase
 {
+    use CreateBranchTrait;
+
     private function getConfig()
     {
         return [
@@ -33,7 +36,7 @@ class DestinationRewriterTest extends TestCase
         $clientWrapper = new ClientWrapper(
             new Client([
                 'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
+                'token' => STORAGE_API_TOKEN_MASTER,
                 'backoffMaxTries' => 1,
                 'jobPollRetryDelay' => function () {
                     return 1;
@@ -42,7 +45,7 @@ class DestinationRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranch('dev-123');
+        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev 123'));
         $config = $this->getConfig();
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
         self::assertEquals('in.c-dev-123-main.table', $expectedConfig['destination']);
@@ -56,7 +59,7 @@ class DestinationRewriterTest extends TestCase
         $clientWrapper = new ClientWrapper(
             new Client([
                 'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
+                'token' => STORAGE_API_TOKEN_MASTER,
                 'backoffMaxTries' => 1,
                 'jobPollRetryDelay' => function () {
                     return 1;
@@ -66,7 +69,7 @@ class DestinationRewriterTest extends TestCase
             null
         );
         $config['destination'] = 'in.main-table';
-        $clientWrapper->setBranch('dev-123');
+        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev-123'));
         $config = $this->getConfig();
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
         self::assertEquals('in.c-dev-123-main.table', $expectedConfig['destination']);
@@ -80,7 +83,7 @@ class DestinationRewriterTest extends TestCase
         $clientWrapper = new ClientWrapper(
             new Client([
                 'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
+                'token' => STORAGE_API_TOKEN_MASTER,
                 'backoffMaxTries' => 1,
                 'jobPollRetryDelay' => function () {
                     return 1;
@@ -89,7 +92,7 @@ class DestinationRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranch('');
+        $clientWrapper->setBranchId('');
         $config = $this->getConfig();
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
         self::assertEquals('in.c-main.table', $expectedConfig['destination']);
@@ -103,7 +106,7 @@ class DestinationRewriterTest extends TestCase
         $clientWrapper = new ClientWrapper(
             new Client([
                 'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
+                'token' => STORAGE_API_TOKEN_MASTER,
                 'backoffMaxTries' => 1,
                 'jobPollRetryDelay' => function () {
                     return 1;
@@ -112,7 +115,7 @@ class DestinationRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranch('123dev');
+        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev-123'));
         $config = $this->getConfig();
         $config['destination'] = 'in.c-main-table';
         self::expectExceptionMessage('Invalid destination: "in.c-main-table"');

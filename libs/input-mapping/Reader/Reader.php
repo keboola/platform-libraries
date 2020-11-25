@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\Strategy\StrategyFactory;
+use Keboola\InputMapping\Reader\Strategy\Files\FilesStrategyFactory;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -87,82 +88,23 @@ class Reader
     /**
      * @param $configuration array
      * @param $destination string Destination directory
+     * @param $storage string
      */
-    public function downloadFiles($configuration, $destination)
+    public function downloadFiles($configuration, $destination, $storage = 'local')
     {
-        $fs = new Filesystem();
-        $fs->mkdir($destination);
+        $strategyFactory = new FilesStrategyFactory(
+            $this->clientWrapper,
+            $this->logger,
+            $this->workspaceProvider,
+            $destination
+        );
+        $strategy = $strategyFactory->getStrategy($storage);
         if (!$configuration) {
             return;
         } elseif (!is_array($configuration)) {
             throw new InvalidInputException("File download configuration is not an array.");
         }
-        $storageClient = $this->clientWrapper->getBasicClient();
-        $fileOptions = new GetFileOptions();
-        $fileOptions->setFederationToken(true);
-
-        foreach ($configuration as $fileConfiguration) {
-            $files = $this->getFiles($fileConfiguration);
-            foreach ($files as $file) {
-                $fileInfo = $storageClient->getFile($file['id'], $fileOptions);
-                $fileDestinationPath = sprintf('%s/%s_%s', $destination, $fileInfo['id'], $fileInfo["name"]);
-                $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
-                try {
-                    $this->downloadFile($fileInfo, $fileDestinationPath);
-                } catch (\Exception $e) {
-                    throw new InputOperationException(
-                        sprintf('Failed to download file %s (%s).', $fileInfo['name'], $file['id']),
-                        0,
-                        $e
-                    );
-                }
-                $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
-            }
-        }
-        $this->logger->info('All files were fetched.');
-    }
-
-    /**
-     * @param $fileConfiguration
-     * @return array
-     */
-    public function getFiles($fileConfiguration)
-    {
-        $options = new ListFilesOptions();
-        if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])) {
-            throw new InvalidInputException("Invalid file mapping, both 'tags' and 'query' are empty.");
-        }
-        if (!empty($fileConfiguration['filter_by_run_id'])) {
-            $options->setRunId($this->getParentRunId());
-        }
-        if (isset($fileConfiguration["tags"]) && count($fileConfiguration["tags"])) {
-            $options->setTags($fileConfiguration["tags"]);
-        }
-        if (isset($fileConfiguration["query"])) {
-            $options->setQuery($fileConfiguration["query"]);
-        }
-        if (empty($fileConfiguration["limit"])) {
-            $fileConfiguration["limit"] = 100;
-        }
-        $options->setLimit($fileConfiguration["limit"]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
-
-        return $files;
-    }
-
-    /**
-     * @param array $fileInfo array file info from Storage API
-     * @param string $fileDestinationPath string Destination file path
-     * @throws \Exception
-     */
-    protected function downloadFile($fileInfo, $fileDestinationPath)
-    {
-        if ($fileInfo['isSliced']) {
-            $this->clientWrapper->getBasicClient()->downloadSlicedFile($fileInfo['id'], $fileDestinationPath);
-        } else {
-            $this->clientWrapper->getBasicClient()->downloadFile($fileInfo['id'], $fileDestinationPath);
-        }
-        $this->getManifestWriter()->writeFileManifest($fileInfo, $fileDestinationPath . ".manifest");
+        return $strategy->downloadFiles($configuration);
     }
 
     /**

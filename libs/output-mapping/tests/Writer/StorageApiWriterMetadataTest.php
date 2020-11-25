@@ -82,7 +82,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         ];
         $systemMetadata = [
             "componentId" => "testComponent",
-            "configurationId" => "metadata-write-test"
+            "configurationId" => "metadata-write-test",
+            "branchId" => "1234",
         ];
 
         $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
@@ -98,6 +99,8 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
                 'KBC.createdBy.configuration.id' => 'metadata-write-test',
                 'KBC.lastUpdatedBy.component.id' => 'testComponent',
                 'KBC.lastUpdatedBy.configuration.id' => 'metadata-write-test',
+                'KBC.createdBy.branch.id' => '1234',
+                'KBC.lastUpdatedBy.branch.id' => '1234',
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',

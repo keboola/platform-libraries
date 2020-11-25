@@ -528,6 +528,12 @@ class TableWriter extends AbstractWriter
                 'value' => $systemMetadata['configurationRowId'],
             ];
         }
+        if (!empty($systemMetadata['branchId'])) {
+            $metadata[] = [
+                'key' => 'KBC.createdBy.branch.id',
+                'value' => $systemMetadata['branchId'],
+            ];
+        }
         return $metadata;
     }
 
@@ -669,6 +675,12 @@ class TableWriter extends AbstractWriter
             $metadata[] = [
                 'key' => 'KBC.lastUpdatedBy.configurationRow.id',
                 'value' => $systemMetadata['configurationRowId'],
+            ];
+        }
+        if (!empty($systemMetadata['branchId'])) {
+            $metadata[] = [
+                'key' => 'KBC.lastUpdatedBy.branch.id',
+                'value' => $systemMetadata['branchId'],
             ];
         }
         return $metadata;

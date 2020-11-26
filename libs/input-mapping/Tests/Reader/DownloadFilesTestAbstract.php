@@ -7,7 +7,6 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 
 class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
 {
@@ -29,6 +28,22 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
         $this->tmpDir = $temp->getTmpFolder();
         $fs = new Filesystem();
         $fs->mkdir($this->tmpDir . "/download");
+
+        $this->initClient();
+
+        // Delete file uploads
+        sleep(5);
+        $options = new ListFilesOptions();
+        $options->setTags(["download-files-test"]);
+        $options->setLimit(1000);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        foreach ($files as $file) {
+            $this->clientWrapper->getBasicClient()->deleteFile($file["id"]);
+        }
+    }
+
+    protected function initClient()
+    {
         $this->clientWrapper = new ClientWrapper(
             new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
             null,
@@ -43,15 +58,5 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
             $tokenInfo['owner']['id'],
             $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
-
-        // Delete file uploads
-        sleep(5);
-        $options = new ListFilesOptions();
-        $options->setTags(["download-files-test"]);
-        $options->setLimit(1000);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
-        foreach ($files as $file) {
-            $this->clientWrapper->getBasicClient()->deleteFile($file["id"]);
-        }
     }
 }

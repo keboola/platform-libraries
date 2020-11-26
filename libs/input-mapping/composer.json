@@ -14,7 +14,7 @@
         "symfony/yaml": "^v2.8.52|^4.1",
         "symfony/finder": "^2.8.52|^4.1",
         "symfony/serializer": "^2.8.52|^4.1",
-        "keboola/storage-api-client": "^10.22",
+        "keboola/storage-api-client": "^11.2",
         "keboola/storage-api-php-client-branch-wrapper": "^0.0.2",
         "guzzlehttp/guzzle": "^6.5.5"
     },
@@ -31,7 +31,7 @@
     },
     "target-dir": "Keboola/InputMapping",
     "scripts": {
-        "tests": "phpunit",
+        "tests": "phpunit --filter testReadFiles",
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",
         "build": [
             "@phpcs",

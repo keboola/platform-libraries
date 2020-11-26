@@ -6,6 +6,7 @@ namespace Keboola\InputMapping\Reader\Strategy\Files;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\ManifestWriter;
+use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -85,7 +86,7 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'query' are empty.");
         }
         if (!empty($fileConfiguration['filter_by_run_id'])) {
-            $options->setRunId($this->getParentRunId());
+            $options->setRunId(Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId()));
         }
         if (isset($fileConfiguration["tags"]) && count($fileConfiguration["tags"])) {
             $options->setTags($fileConfiguration["tags"]);
@@ -101,5 +102,4 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
 
         return $files;
     }
-
 }

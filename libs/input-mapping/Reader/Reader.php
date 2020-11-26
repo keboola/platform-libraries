@@ -104,7 +104,7 @@ class Reader
         } elseif (!is_array($configuration)) {
             throw new InvalidInputException("File download configuration is not an array.");
         }
-        return $strategy->downloadFiles($configuration);
+        return $strategy->downloadFiles($configuration, $destination);
     }
 
     /**
@@ -148,11 +148,11 @@ class Reader
 
     /**
      * Get parent runId to the current runId (defined by SAPI client)
+     * @param string $runId
      * @return string Parent part of hierarchical Id.
      */
-    public function getParentRunId()
+    public static function getParentRunId($runId)
     {
-        $runId = $this->clientWrapper->getBasicClient()->getRunId();
         if (!empty($runId)) {
             if (($pos = strrpos($runId, '.')) === false) {
                 // there is no parent

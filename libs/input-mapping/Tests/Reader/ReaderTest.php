@@ -61,13 +61,25 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $this->clientWrapper->getBasicClient()->setRunId('123456789');
-        self::assertEquals('123456789', $reader->getParentRunId());
+        self::assertEquals(
+            '123456789',
+            Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId())
+        );
         $this->clientWrapper->getBasicClient()->setRunId('123456789.98765432');
-        self::assertEquals('123456789', $reader->getParentRunId());
+        self::assertEquals(
+            '123456789',
+            Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId())
+        );
         $this->clientWrapper->getBasicClient()->setRunId('123456789.98765432.4563456');
-        self::assertEquals('123456789.98765432', $reader->getParentRunId());
+        self::assertEquals(
+            '123456789.98765432',
+            Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId())
+        );
         $this->clientWrapper->getBasicClient()->setRunId(null);
-        self::assertEquals('', $reader->getParentRunId());
+        self::assertEquals(
+            '',
+            Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId())
+        );
     }
 
     public function testReadInvalidConfiguration1()

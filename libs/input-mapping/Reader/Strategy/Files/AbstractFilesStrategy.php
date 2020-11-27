@@ -2,7 +2,6 @@
 
 namespace Keboola\InputMapping\Reader\Strategy\Files;
 
-
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\ManifestWriter;

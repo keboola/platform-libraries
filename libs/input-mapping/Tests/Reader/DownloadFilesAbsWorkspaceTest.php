@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
@@ -14,6 +15,7 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
@@ -22,6 +24,9 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     /** @var string */
     protected $workspaceId;
+
+    /** @var array [connectionString, container] */
+    protected $workspaceCredentials;
 
     public function setUp()
     {
@@ -69,6 +74,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $type]);
                     $this->workspaceId = $workspace['id'];
+                    $this->workspaceCredentials = $workspace['connection'];
+                    var_dump($workspace);
                 }
                 return $this->workspaceId;
             }
@@ -77,7 +84,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         return $mock;
     }
 
-    public function testReadFiles()
+    public function testAbsReadFiles()
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
@@ -94,15 +101,25 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             (new FileUploadOptions())->setTags(["download-files-test"])
         );
         sleep(5);
-
         $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [["tags" => ["download-files-test"]]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
 
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
+        $blobResult1 = $blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+        );
+        $blobResult2 = $blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+        );
+
+        self::assertEquals("test", stream_get_contents($blobResult1->getContentStream()));
+        self::assertEquals("test", stream_get_contents($blobResult2->getContentStream()));
 
         $adapter = new Adapter();
+
         $manifest1 = $adapter->readFromFile($root . "/download/" . $id1 . "_upload.manifest");
         $manifest2 = $adapter->readFromFile($root . "/download/" . $id2 . "_upload.manifest");
 
@@ -127,7 +144,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -143,7 +160,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
         self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
@@ -160,7 +177,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -176,7 +193,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
         self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
@@ -204,31 +221,31 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         // invalid configuration
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [[]];
         try {
-            $reader->downloadFiles($configuration, $root . "/download");
+            $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
             self::fail("Invalid configuration should fail.");
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
         $tmpDir = new Temp('file-test');
         $tmpDir->initRunFolder();
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
-        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download");
+        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download", Reader::STAGING_ABS_WORKSPACE);
         $finder = new Finder();
         $finder->files()->in($tmpDir->getTmpFolder() . "/download")->notName('*.manifest');
         self::assertEquals(102, $finder->count());
@@ -246,13 +263,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
             ],
         ];
-        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download', Reader::STAGING_ABS_WORKSPACE);
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile(

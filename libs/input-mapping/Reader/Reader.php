@@ -90,7 +90,7 @@ class Reader
      * @param $destination string Destination directory
      * @param $storage string
      */
-    public function downloadFiles($configuration, $destination, $storage = 'local')
+    public function downloadFiles($configuration, $destination, $storage)
     {
         $strategyFactory = new FilesStrategyFactory(
             $this->clientWrapper,

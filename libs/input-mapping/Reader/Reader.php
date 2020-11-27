@@ -120,7 +120,7 @@ class Reader
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
         $destination,
-        $storage = 'local'
+        $storage
     ) {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(

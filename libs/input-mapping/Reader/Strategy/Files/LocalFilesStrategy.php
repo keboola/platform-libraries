@@ -2,8 +2,17 @@
 
 namespace Keboola\InputMapping\Reader\Strategy\Files;
 
+use Symfony\Component\Filesystem\Filesystem;
+
 class LocalFilesStrategy extends AbstractFilesStrategy implements FilesStrategyInterface
 {
+    public function downloadFiles($fileConfigurations, $destination)
+    {
+        $fs = new Filesystem();
+        $fs->mkdir($destination);
+        parent::downloadFiles($fileConfigurations, $destination);
+    }
+
     public function downloadFile($fileInfo, $destinationPath)
     {
         if ($fileInfo['isSliced']) {

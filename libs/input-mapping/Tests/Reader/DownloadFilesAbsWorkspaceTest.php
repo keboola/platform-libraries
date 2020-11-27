@@ -14,8 +14,8 @@ use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
@@ -115,7 +115,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
 
-        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobResult1 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
             ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'

@@ -43,6 +43,16 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         parent::setUp();
     }
 
+    public function tearDown()
+    {
+        if ($this->workspaceId) {
+            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+            $workspaces->deleteWorkspace($this->workspaceId);
+            $this->workspaceId = null;
+        }
+        parent::tearDown();
+    }
+
     protected function initClient()
     {
         $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');

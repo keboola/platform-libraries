@@ -87,7 +87,11 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         // empty configuration, ignored
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = null;
-        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        $reader->downloadFiles(
+            $configuration,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            Reader::STAGING_LOCAL
+        );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);
@@ -100,7 +104,11 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $configuration = 'foobar';
         try {
             /** @noinspection PhpParamsInspection */
-            $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+            $reader->downloadFiles(
+                $configuration,
+                $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+                Reader::STAGING_LOCAL
+            );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
             self::assertContains('File download configuration is not an array', $e->getMessage());
@@ -119,7 +127,8 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            Reader::STAGING_LOCAL
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');

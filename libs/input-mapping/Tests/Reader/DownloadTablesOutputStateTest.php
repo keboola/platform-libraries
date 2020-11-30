@@ -52,7 +52,8 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
         $tablesState = $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            Reader::STAGING_LOCAL
         );
         $testTableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test");
         $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test2");

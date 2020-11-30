@@ -122,7 +122,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            Reader::STAGING_LOCAL
         );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);

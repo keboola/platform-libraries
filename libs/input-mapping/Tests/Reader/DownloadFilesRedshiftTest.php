@@ -33,7 +33,7 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
-        $reader->downloadFiles($configuration, $dlDir);
+        $reader->downloadFiles($configuration, $dlDir, Reader::STAGING_LOCAL);
         $fileName = $fileId . "_in.c-docker-test-redshift.test_file.csv";
 
         $resultFileContent = '';

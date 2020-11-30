@@ -52,7 +52,12 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
                 "lastImportDate" => $testTableInfo['lastImportDate']
             ]
         ]);
-        $tablesState = $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $tablesState = $reader->downloadTables(
+            $configuration,
+            $inputTablesState,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            Reader::STAGING_LOCAL
+        );
 
         self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
         self::assertCSVEquals(
@@ -72,7 +77,12 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
                 "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ]
         ]);
-        $firstTablesState = $reader->downloadTables($configuration, new InputTableStateList([]), $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $firstTablesState = $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            Reader::STAGING_LOCAL
+        );
 
         // Update table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
@@ -81,7 +91,12 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         $this->clientWrapper->getBasicClient()->writeTableAsync("in.c-docker-test.test", $csv, ["incremental" => true]);
 
         $updatedTestTableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test");
-        $secondTablesState = $reader->downloadTables($configuration, $firstTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $secondTablesState = $reader->downloadTables(
+            $configuration,
+            $firstTablesState,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            Reader::STAGING_LOCAL
+        );
 
         self::assertEquals(
             $updatedTestTableInfo['lastImportDate'],
@@ -113,6 +128,11 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
         self::expectException(ClientException::class);
         self::expectExceptionMessage("Invalid date format: nonsense");
-        $reader->downloadTables($configuration, $inputTablesState, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download");
+        $reader->downloadTables(
+            $configuration,
+            $inputTablesState,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
+            Reader::STAGING_LOCAL
+        );
     }
 }

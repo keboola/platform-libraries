@@ -15,6 +15,7 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
 
@@ -85,7 +86,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                     $workspace = $workspaces->createWorkspace(['backend' => $type]);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
-                    var_dump($workspace);
                 }
                 return $this->workspaceId;
             }
@@ -168,16 +168,42 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
-
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
 
-        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
-        self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id3 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id4 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id5 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id6 . '_upload/upload'
+        ));
     }
 
     public function testReadFilesEsQueryFilterRunId()
@@ -201,92 +227,41 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
-
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
 
-        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
-        self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id4 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id5 . '_upload'));
-        self::assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
-    }
-
-    public function testReadFilesLimit()
-    {
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
-        $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
-
-        // make at least 100 files in the project
-        for ($i = 0; $i < 102; $i++) {
-            $this->clientWrapper->getBasicClient()->uploadFile(
-                $root . "/upload",
-                (new FileUploadOptions())->setTags(["download-files-test"])
-            );
-        }
-        sleep(5);
-
-        // valid configuration, but does nothing
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $configuration = [];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
-
-        // invalid configuration
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $configuration = [[]];
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
-            $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
-            self::fail("Invalid configuration should fail.");
-        } catch (InvalidInputException $e) {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
         }
-
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
-        $finder = new Finder();
-        $finder->files()->in($root . "/download")->notName('*.manifest');
-        self::assertEquals(100, $finder->count());
-
-        $tmpDir = new Temp('file-test');
-        $tmpDir->initRunFolder();
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
-        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download", Reader::STAGING_ABS_WORKSPACE);
-        $finder = new Finder();
-        $finder->files()->in($tmpDir->getTmpFolder() . "/download")->notName('*.manifest');
-        self::assertEquals(102, $finder->count());
-    }
-
-    public function testReadFilesEmptySlices()
-    {
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
         }
-        $fileUploadOptions = new FileUploadOptions();
-        $fileUploadOptions
-            ->setIsSliced(true)
-            ->setFileName('empty_file');
-        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
-        sleep(5);
-
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $configuration = [
-            [
-                'query' => 'id:' . $uploadFileId,
-            ],
-        ];
-        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download', Reader::STAGING_ABS_WORKSPACE);
-
-        $adapter = new Adapter();
-        $manifest = $adapter->readFromFile(
-            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest'
-        );
-        self::assertEquals($uploadFileId, $manifest['id']);
-        self::assertEquals('empty_file', $manifest['name']);
-        self::assertDirectoryExists($this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file');
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id3 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id4 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id5 . '_upload/upload'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            ltrim($root, '/') . "/download/" . $id6 . '_upload/upload'
+        ));
     }
 }

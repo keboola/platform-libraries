@@ -2,35 +2,62 @@
 
 namespace Keboola\OutputMapping\Writer;
 
-use Exception;
-use Keboola\InputMapping\Reader;
+use Keboola\FileStorage\Abs\ClientFactory;
+use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
-use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
-use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class FileWriter extends AbstractWriter
+class AbsWorkspaceFileWriter extends AbstractWriter
 {
     /**
-     * Upload files from local temp directory to Storage.
-     *
-     * @param string $source Source path.
-     * @param array $configuration Upload configuration
+     * @var WorkspaceProviderInterface
      */
+    private $workspaceProvider;
+
+    /**
+     * @var BlobRestProxy
+     */
+    private $blobClient;
+
+    /**
+     * @var string workspace container name
+     */
+    private $container;
+
+    /**
+     * AbstractWriter constructor.
+     *
+     * @param ClientWrapper $clientWrapper
+     * @param LoggerInterface $logger
+     * @param WorkspaceProviderInterface $workspaceProvider
+     */
+    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider = null)
+    {
+        parent::__construct($clientWrapper, $logger);
+        $this->workspaceProvider = $workspaceProvider ? $workspaceProvider : new NullWorkspaceProvider();
+        $credentials = $this->workspaceProvider->getCredentials(WorkspaceProviderInterface::TYPE_ABS);
+        $this->blobClient = ClientFactory::createClientFromConnectionString($credentials['connectionString']);
+        $this->container = $credentials['container'];
+    }
+
     public function uploadFiles($source, $configuration = [])
     {
-
         $manifestNames = ManifestHelper::getManifestFiles($source);
+
+        $listBlobOptions = new ListBlobsOptions();
+        $listBlobOptions->setP();
+
+        $files = $this->blobClient->listBlobs($this->container, );
 
         $finder = new Finder();
         /** @var SplFileInfo[] $files */
@@ -98,7 +125,6 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
                 $this->uploadFile($file->getPathname(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -118,59 +144,6 @@ class FileWriter extends AbstractWriter
             throw new InvalidOutputException(
                 "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
             );
-        }
-    }
-
-    /**
-     * @param $source
-     * @return array
-     */
-    private function readFileManifest($source)
-    {
-        $adapter = new FileAdapter($this->format);
-        try {
-            return $adapter->readFromFile($source);
-        } catch (Exception $e) {
-            throw new InvalidOutputException(
-                sprintf('Failed to parse manifest file "%s" as "%s": %s', $source, $this->format, $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
-        }
-    }
-
-    /**
-     * @param $source
-     * @param array $config
-     * @throws ClientException
-     */
-    private function uploadFile($source, array $config = [])
-    {
-        $options = new FileUploadOptions();
-        $options
-            ->setTags(array_unique($config['tags']))
-            ->setIsPermanent($config['is_permanent'])
-            ->setIsEncrypted($config['is_encrypted'])
-            ->setIsPublic($config['is_public'])
-            ->setNotify($config['notify']);
-        $this->clientWrapper->getBasicClient()->uploadFile($source, $options);
-    }
-
-    /**
-     * Add tags to processed input files.
-     * @param $configuration array
-     */
-    public function tagFiles(array $configuration)
-    {
-        foreach ($configuration as $fileConfiguration) {
-            if (!empty($fileConfiguration['processed_tags'])) {
-                $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
-                foreach ($files as $file) {
-                    foreach ($fileConfiguration['processed_tags'] as $tag) {
-                        $this->clientWrapper->getBasicClient()->addFileTag($file['id'], $tag);
-                    }
-                }
-            }
         }
     }
 }

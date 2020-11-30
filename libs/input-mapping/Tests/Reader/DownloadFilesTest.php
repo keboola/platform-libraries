@@ -32,7 +32,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [["tags" => ["download-files-test"]]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
         self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
@@ -75,7 +75,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
         self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
@@ -105,7 +105,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
         self::assertFalse(file_exists($root . "/download/" . $id2 . '_upload'));
@@ -132,20 +132,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         // valid configuration, but does nothing
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         // invalid configuration
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [[]];
         try {
-            $reader->downloadFiles($configuration, $root . "/download");
+            $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
             self::fail("Invalid configuration should fail.");
         } catch (InvalidInputException $e) {
         }
 
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
-        $reader->downloadFiles($configuration, $root . "/download");
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
         $finder = new Finder();
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
@@ -154,7 +154,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $tmpDir->initRunFolder();
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
-        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download");
+        $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download", Reader::STAGING_LOCAL);
         $finder = new Finder();
         $finder->files()->in($tmpDir->getTmpFolder() . "/download")->notName('*.manifest');
         self::assertEquals(102, $finder->count());
@@ -189,7 +189,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
-        $reader->downloadFiles($configuration, $dlDir);
+        $reader->downloadFiles($configuration, $dlDir, Reader::STAGING_LOCAL);
         $fileName = sprintf('%s_%s.csv', $fileId, $tableId);
 
         $resultFileContent = '';
@@ -225,7 +225,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 'query' => 'id:' . $uploadFileId,
             ],
         ];
-        $reader->downloadFiles($configuration, $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        $reader->downloadFiles(
+            $configuration,
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            Reader::STAGING_LOCAL
+        );
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile(

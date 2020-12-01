@@ -26,10 +26,11 @@ class ABSWorkspaceStrategy extends AbstractStrategy
 
         foreach ($exports as $export) {
             list ($table, $exportOptions) = $export['table'];
+            $destination = $this->getDestinationFilePath($this->destination, $table);
             $copyInputs[] = array_merge(
                 [
                     'source' => $table->getSource(),
-                    'destination' => $table->getDestination(),
+                    'destination' => $destination,
                 ],
                 $exportOptions
             );

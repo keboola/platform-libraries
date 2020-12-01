@@ -2,9 +2,7 @@
 
 namespace Keboola\InputMapping\Tests\Reader;
 
-use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
 use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
@@ -13,11 +11,9 @@ use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Psr\Log\NullLogger;
-use Symfony\Component\Finder\Finder;
 
 class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 {
@@ -100,6 +96,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             self::markTestSkipped('Synapse tests disabled');
         }
         $root = $this->tmpDir;
+        echo "\nRoot is " . $root . "\n";
         file_put_contents($root . "/upload", "test");
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
@@ -113,23 +110,22 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
         $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
         $configuration = [["tags" => ["download-files-test"]]];
-        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobResult1 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+            $root . "/download/" . $id1 . '_upload/upload'
         );
         $blobResult2 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+            $root . "/download/" . $id2 . '_upload/upload'
         );
 
         self::assertEquals("test", stream_get_contents($blobResult1->getContentStream()));
         self::assertEquals("test", stream_get_contents($blobResult2->getContentStream()));
 
         $adapter = new Adapter();
-
         $manifest1 = $adapter->readFromFile($root . "/download/" . $id1 . "_upload.manifest");
         $manifest2 = $adapter->readFromFile($root . "/download/" . $id2 . "_upload.manifest");
 
@@ -169,13 +165,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+                $root . "/download/" . $id1 . '_upload/upload'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -183,26 +179,26 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+                $root . "/download/" . $id2 . '_upload/upload'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id3 . '_upload/upload'
+            $root . "/download/" . $id3 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id4 . '_upload/upload'
+            $root . "/download/" . $id4 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id5 . '_upload/upload'
+            $root . "/download/" . $id5 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id6 . '_upload/upload'
+            $root . "/download/" . $id6 . '_upload/upload'
         ));
     }
 
@@ -228,13 +224,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, ltrim($root, '/') . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                ltrim($root, '/') . "/download/" . $id1 . '_upload/upload'
+                $root . "/download/" . $id1 . '_upload/upload'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -242,26 +238,26 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                ltrim($root, '/') . "/download/" . $id2 . '_upload/upload'
+                $root . "/download/" . $id2 . '_upload/upload'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id3 . '_upload/upload'
+            $root . "/download/" . $id3 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id4 . '_upload/upload'
+            $root . "/download/" . $id4 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id5 . '_upload/upload'
+            $root . "/download/" . $id5 . '_upload/upload'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            ltrim($root, '/') . "/download/" . $id6 . '_upload/upload'
+            $root . "/download/" . $id6 . '_upload/upload'
         ));
     }
 }

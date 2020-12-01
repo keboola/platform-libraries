@@ -130,6 +130,55 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertEquals(["output-mapping-test"], $file1["tags"]);
     }
 
+    public function testWriteFilesOutputMappingDevMode()
+    {
+        $this->clearFileUploads(['dev-123-output-mapping-test']);
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN_MASTER,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/file1", "test");
+
+        $configs = [
+            [
+                "source" => "file1",
+                "tags" => ["output-mapping-test"]
+            ]
+        ];
+
+        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+
+        $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags(["dev-123-output-mapping-test"]);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $this->assertCount(1, $files);
+
+        $file1 = null;
+        foreach ($files as $file) {
+            if ($file["name"] == 'file1') {
+                $file1 = $file;
+            }
+        }
+
+        $this->assertNotNull($file1);
+        $this->assertEquals(4, $file1["sizeBytes"]);
+        $this->assertEquals(["dev-123-output-mapping-test"], $file1["tags"]);
+    }
+
     public function testWriteFilesOutputMappingAndManifest()
     {
         $root = $this->tmp->getTmpFolder();

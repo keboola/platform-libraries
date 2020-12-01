@@ -11,7 +11,6 @@ use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
-use phpDocumentor\Reflection\Types\Void_;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract

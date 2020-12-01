@@ -96,7 +96,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             self::markTestSkipped('Synapse tests disabled');
         }
         $root = $this->tmpDir;
-        echo "\nRoot is " . $root . "\n";
         file_put_contents($root . "/upload", "test");
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(

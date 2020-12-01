@@ -31,7 +31,7 @@
     },
     "target-dir": "Keboola/InputMapping",
     "scripts": {
-        "tests": "phpunit --filter testReadFiles",
+        "tests": "phpunit",
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",
         "build": [
             "@phpcs",

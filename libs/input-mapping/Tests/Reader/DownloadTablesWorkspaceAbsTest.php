@@ -9,6 +9,9 @@ use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use phpDocumentor\Reflection\Types\Void_;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
@@ -51,6 +54,18 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         ));
     }
 
+    protected function assertBlobs($basePath)
+    {
+        $blobListOptions = new ListBlobsOptions();
+        $blobListOptions->setPrefix($basePath);
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobList = $blobClient->listBlobs($this->workspaceCredentials['container'], $blobListOptions);
+        foreach ($blobList->getBlobs() as $blob) {
+            $blobResult = $blobClient->getBlob($this->workspaceCredentials['container'], $blob->getName());
+            $this->assertNotEmpty($blobResult);
+        }
+    }
+
     public function testTablesAbsWorkspace()
     {
         if (!$this->runSynapseTests) {
@@ -87,44 +102,19 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
 
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-            'out.c-input-mapping-test',
-            [
-                'dataWorkspaceId' => $this->workspaceId,
-                'dataTableName' => 'test1',
-                'name' => 'test1',
-                'columns' => ['Id', 'Name', 'foo', 'bar']
-            ]
-        );
-        self::assertNotEmpty($tableId);
+        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test1');
 
-        // this is copy, so it doesn't contain the _timestamp column
+        // make sure the blob exists
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-            'out.c-input-mapping-test',
-            [
-                'dataWorkspaceId' => $this->workspaceId,
-                'dataTableName' => 'test2',
-                'name' => 'test2',
-                'columns' => ['Id'],
-            ]
-        );
-        self::assertNotEmpty($tableId);
+
+        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test2');
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
 
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-            'out.c-input-mapping-test',
-            [
-                'dataWorkspaceId' => $this->workspaceId,
-                'dataTableName' => 'test3',
-                'name' => 'test3',
-                'columns' => ['Id', 'Name', 'foo', 'bar'],
-            ]
-        );
-        self::assertNotEmpty($tableId);
+        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test3');
+
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));

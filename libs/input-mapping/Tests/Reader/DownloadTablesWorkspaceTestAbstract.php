@@ -13,6 +13,8 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
 {
     protected $workspaceId;
 
+    protected $workspaceCredentials;
+
     public function setUp()
     {
         parent::setUp();
@@ -73,6 +75,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $type]);
                     $this->workspaceId = $workspace['id'];
+                    $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceId;
             }

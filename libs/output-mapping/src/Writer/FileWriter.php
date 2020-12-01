@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -93,6 +94,7 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
+                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
                 $this->uploadFile($file->getPathname(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

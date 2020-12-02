@@ -2,9 +2,7 @@
 
 namespace Keboola\OutputMapping\Writer;
 
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Reader\Strategy\Files\LocalFilesStrategy;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;

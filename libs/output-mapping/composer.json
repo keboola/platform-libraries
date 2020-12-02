@@ -37,7 +37,7 @@
         "ext-json": "*"
     },
     "scripts": {
-        "tests": "phpunit --filter AbsWriterWorkspaceTest",
+        "tests": "phpunit",
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",
         "build": [
             "@phpcs",

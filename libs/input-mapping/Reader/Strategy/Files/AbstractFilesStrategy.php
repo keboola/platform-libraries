@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Reader\Strategy\Files;
 
+use Aws\Redshift\Exception\RedshiftException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\ManifestWriter;
@@ -54,7 +55,7 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
         $fileOptions->setFederationToken(true);
 
         foreach ($fileConfigurations as $fileConfiguration) {
-            $files = $this->getFiles($fileConfiguration);
+            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper->getBasicClient());
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = sprintf('%s/%s_%s', $destination, $fileInfo['id'], $fileInfo["name"]);
@@ -72,33 +73,5 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
             }
         }
         $this->logger->info('All files were fetched.');
-    }
-
-    /**
-     * @param $fileConfiguration
-     * @return array
-     */
-    public function getFiles($fileConfiguration)
-    {
-        $options = new ListFilesOptions();
-        if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])) {
-            throw new InvalidInputException("Invalid file mapping, both 'tags' and 'query' are empty.");
-        }
-        if (!empty($fileConfiguration['filter_by_run_id'])) {
-            $options->setRunId(Reader::getParentRunId($this->clientWrapper->getBasicClient()->getRunId()));
-        }
-        if (isset($fileConfiguration["tags"]) && count($fileConfiguration["tags"])) {
-            $options->setTags($fileConfiguration["tags"]);
-        }
-        if (isset($fileConfiguration["query"])) {
-            $options->setQuery($fileConfiguration["query"]);
-        }
-        if (empty($fileConfiguration["limit"])) {
-            $fileConfiguration["limit"] = 100;
-        }
-        $options->setLimit($fileConfiguration["limit"]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
-
-        return $files;
     }
 }

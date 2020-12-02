@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\InputMapping\Reader\NullWorkspaceProvider;
 use Keboola\InputMapping\Reader\Reader;
+use Keboola\InputMapping\Reader\Strategy\Files\LocalFilesStrategy;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -158,10 +159,10 @@ class FileWriter extends AbstractWriter
      */
     public function tagFiles(array $configuration)
     {
-        $reader = new Reader($this->clientWrapper, $this->logger, new NullWorkspaceProvider());
+        $filesStrategy = new LocalFilesStrategy($this->clientWrapper, $this->logger, new NullWorkspaceProvider(), null);
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
-                $files = $reader->getFiles($fileConfiguration);
+                $files = $filesStrategy->getFiles($fileConfiguration);
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getBasicClient()->addFileTag($file['id'], $tag);

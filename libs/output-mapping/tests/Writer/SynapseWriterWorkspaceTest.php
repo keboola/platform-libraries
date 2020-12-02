@@ -126,7 +126,8 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 ]
             ]),
             new InputTableStateList([]),
-            $root
+            $root,
+            Reader::STAGING_LOCAL
         );
         $rows = explode("\n", trim(file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')));
         sort($rows);

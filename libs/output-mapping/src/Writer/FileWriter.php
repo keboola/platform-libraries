@@ -159,10 +159,9 @@ class FileWriter extends AbstractWriter
      */
     public function tagFiles(array $configuration)
     {
-        $filesStrategy = new LocalFilesStrategy($this->clientWrapper, $this->logger, new NullWorkspaceProvider(), null);
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
-                $files = $filesStrategy->getFiles($fileConfiguration);
+                $files = Reader::getFiles($fileConfiguration, $this->clientWrapper->getBasicClient());
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getBasicClient()->addFileTag($file['id'], $tag);

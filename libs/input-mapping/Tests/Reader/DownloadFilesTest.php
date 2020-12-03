@@ -239,4 +239,32 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals('empty_file', $manifest['name']);
         self::assertDirectoryExists($this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file');
     }
+
+    public function testReadFilesYamlFormat()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+
+        $id = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . "/upload",
+            (new FileUploadOptions())->setTags(["download-files-test"])
+        );
+        sleep(5);
+
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader->setFormat('yaml');
+        $configuration = [["tags" => ["download-files-test"]]];
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
+
+        self::assertEquals("test", file_get_contents($root . "/download/" . $id . '_upload'));
+        
+        $adapter = new Adapter();
+        $adapter->setFormat('yaml');
+        $manifest = $adapter->readFromFile($root . "/download/" . $id . "_upload.manifest");
+        self::assertArrayHasKey('id', $manifest);
+        self::assertArrayHasKey('name', $manifest);
+        self::assertArrayHasKey('created', $manifest);
+        self::assertArrayHasKey('is_public', $manifest);
+        self::assertArrayHasKey('is_encrypted', $manifest);
+    }
 }

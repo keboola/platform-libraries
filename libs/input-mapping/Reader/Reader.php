@@ -97,7 +97,8 @@ class Reader
             $this->clientWrapper,
             $this->logger,
             $this->workspaceProvider,
-            $destination
+            $destination,
+            $this->format
         );
         $strategy = $strategyFactory->getStrategy($storage);
         if (!$configuration) {

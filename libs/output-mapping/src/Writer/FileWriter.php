@@ -26,10 +26,16 @@ class FileWriter extends AbstractWriter
      *
      * @param string $source Source path.
      * @param array $configuration Upload configuration
+     * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      */
-    public function uploadFiles($source, $configuration = [])
+    public function uploadFiles($source, $configuration = [], $storage)
     {
-
+        $strategyFactory = new FilesStrategyFactory(
+            $this->clientWrapper,
+            $this->logger,
+            $this->workspaceProvider,
+        );
+        $strategy = $strategyFactory->getStrategy($storage);
         $manifestNames = ManifestHelper::getManifestFiles($source);
 
         $finder = new Finder();

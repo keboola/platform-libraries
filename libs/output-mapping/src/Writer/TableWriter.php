@@ -56,9 +56,8 @@ class TableWriter extends AbstractWriter
      */
     public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
     {
-        parent::__construct($clientWrapper, $logger);
+        parent::__construct($clientWrapper, $logger, $workspaceProvider);
         $this->metadataClient = new Metadata($clientWrapper->getBasicClient());
-        $this->workspaceProvider = $workspaceProvider;
     }
 
     /**

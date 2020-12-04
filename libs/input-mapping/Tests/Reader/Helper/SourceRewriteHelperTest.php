@@ -61,7 +61,6 @@ class SourceRewriteHelperTest extends TestCase
         foreach ($this->clientWrapper->getBasicClient()->listBuckets() as $bucket) {
             if (preg_match('/^c\-[0-9]+\-output\-mapping\-test$/ui', $bucket['name'])) {
                 $this->clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
-
             }
         }
 

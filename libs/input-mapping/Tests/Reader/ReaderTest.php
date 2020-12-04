@@ -190,6 +190,11 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
                 throw $e;
             }
         }
+        foreach ($this->clientWrapper->getBasicClient()->listBuckets() as $bucket) {
+            if (preg_match('/^c\-[0-9]+\-docker\-test$/ui', $bucket['name'])) {
+                $this->clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
+            }
+        }
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === 'my-branch') {
@@ -198,8 +203,8 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         }
         $branchId = $branches->createBranch('my-branch')['id'];
 
-        $this->clientWrapper->getBasicClient()->createBucket('my-branch-docker-test', 'in');
-        $this->clientWrapper->getBasicClient()->createTable('in.c-my-branch-docker-test', 'test', $csvFile);
+        $branchBucketId = $this->clientWrapper->getBasicClient()->createBucket(sprintf('%s-docker-test', $branchId), 'in');
+        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'test', $csvFile);
         $this->clientWrapper->setBranchId($branchId);
         $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
         $configuration = new InputTableOptionsList([
@@ -225,7 +230,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
             file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
         );
         $data = $outState->jsonSerialize();
-        self::assertEquals('in.c-my-branch-docker-test.test', $data[0]['source']);
+        self::assertEquals(sprintf('%s.test', $branchBucketId), $data[0]['source']);
         self::assertArrayHasKey('lastImportDate', $data[0]);
     }
 }

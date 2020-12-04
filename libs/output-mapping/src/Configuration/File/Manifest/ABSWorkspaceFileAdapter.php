@@ -2,7 +2,6 @@
 
 namespace Keboola\OutputMapping\Configuration\File\Manifest;
 
-use Keboola\FileStorage\Abs\ClientFactory;
 use \Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
@@ -21,11 +20,17 @@ class ABSWorkspaceFileAdapter extends \Keboola\OutputMapping\Configuration\Adapt
      */
     private $container;
 
+    /**
+     * @var WorkspaceProviderInterface
+     */
+    private $workspaceProvider;
+
     public function __construct($format = 'json', $workspaceProvider = null)
     {
-        parent::__construct($format, $workspaceProvider);
+        parent::__construct($format);
+        $this->workspaceProvider = $workspaceProvider;
         $credentials = $this->workspaceProvider->getCredentials(WorkspaceProviderInterface::TYPE_ABS);
-        $this->blobClient = ClientFactory::createClientFromConnectionString($credentials['connectionString']);
+        $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
         $this->container = $credentials['container'];
     }
 

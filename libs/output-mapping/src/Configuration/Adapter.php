@@ -13,11 +13,6 @@ use Symfony\Component\Yaml\Yaml;
 class Adapter
 {
     /**
-     * @var WorkspaceProviderInterface
-     */
-    protected $workspaceProvider;
-
-    /**
      * @var array
      */
     protected $config;
@@ -36,11 +31,9 @@ class Adapter
      * Constructor.
      *
      * @param string $format Configuration file format ('yaml', 'json')
-     * @param WorkspaceProviderInterface $workspaceProvider defaults as NullWorkspaceProvider
      */
-    public function __construct($format = 'json', $workspaceProvider = null)
+    public function __construct($format = 'json')
     {
-        $this->workspaceProvider = $workspaceProvider ? $workspaceProvider : new NullWorkspaceProvider();
         $this->setFormat($format);
     }
 

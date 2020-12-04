@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\Reader\Reader;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
@@ -29,15 +30,15 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->clearBuckets([
             'out.c-output-mapping-test',
             'out.c-output-mapping-default-test',
-            'out.c-output-mapping-redshift-test',
+            // 'out.c-output-mapping-redshift-test',
             'in.c-output-mapping-test',
             'out.c-dev-123-output-mapping-test'
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
+        // $this->clientWrapper->getBasicClient()->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
         $this->clientWrapper->getBasicClient()->createBucket('output-mapping-default-test', 'out');
     }
 
-    public function testWriteFiles()
+    public function testWriteBasicFiles()
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/file1", "test");
@@ -61,9 +62,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
-        $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -108,9 +109,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
-        $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -158,9 +159,9 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
-        $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -197,8 +198,8 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
-        $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -233,10 +234,10 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $writer->setFormat('json');
         try {
-            $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+            $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
             $this->fail("Invalid manifest must raise exception.");
         } catch (InvalidOutputException $e) {
             $this->assertContains('json', $e->getMessage());
@@ -257,10 +258,10 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $writer->setFormat('json');
         try {
-            $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+            $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
             $this->fail("Invalid manifest must raise exception.");
         } catch (InvalidOutputException $e) {
             $this->assertContains('json', $e->getMessage());
@@ -283,9 +284,9 @@ class StorageApiWriterTest extends BaseWriterTest
                 "is_public" => false
             ]
         ];
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadFiles($root . "/upload", ["mapping" => $configs]);
+            $writer->uploadFiles($root . "/upload", ["mapping" => $configs], Reader::STAGING_LOCAL);
             $this->fail("Missing file must fail");
         } catch (InvalidOutputException $e) {
             $this->assertContains("File 'file2' not found", $e->getMessage());
@@ -300,9 +301,9 @@ class StorageApiWriterTest extends BaseWriterTest
             $root . "/upload/file1.manifest",
             "{\"tags\": [\"output-mapping-test-xxx\"],\"is_public\": true}"
         );
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         try {
-            $writer->uploadFiles($root . "/upload");
+            $writer->uploadFiles($root . "/upload", [], Reader::STAGING_LOCAL);
             $this->fail("Orphaned manifest must cause exception.");
         } catch (InvalidOutputException $e) {
             $this->assertContains("Found orphaned file manifest: 'file1.manifest'", $e->getMessage());
@@ -802,7 +803,7 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         sleep(1);
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger());
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 

@@ -2,19 +2,39 @@
 
 namespace Keboola\OutputMapping\Writer\Strategy\Files;
 
+use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\File\Manifest\ABSWorkspaceFileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\StorageApiBranch\ClientWrapper;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use Psr\Log\LoggerInterface;
 
 class AbsWorkspaceFilesStrategy extends AbstractFilesStrategy implements FilesStrategyInterface
 {
+    /** @var BlobRestProxy */
+    private $blobClient;
+
+    /** @var string */
+    private $container;
+
+    public function __construct(ClientWrapper $storageClient, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider, $format = 'json')
+    {
+        parent::__construct($storageClient, $logger, $workspaceProvider, $format);
+        $credentials = $this->workspaceProvider->getCredentials(WorkspaceProviderInterface::TYPE_ABS);
+        $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
+        $this->container = $credentials['container'];
+    }
+
     public function getManifestFiles($dir)
     {
-        $finder = new Finder();
-        $manifests = $finder->files()->name('*.manifest')->in($dir)->depth(0);
-        $manifestFileNames = [];
-        /** @var SplFileInfo $manifest */
-        foreach ($manifests as $manifest) {
-            $manifestFileNames[] = $manifest->getPathname();
+        $blobListOptions = new ListBlobsOptions();
+        $blobListOptions->setPrefix($dir);
+        $blobListResult = $this->blobClient->listBlobs($this->container, $blobListOptions);
+        foreach ($blobListResult->getBlobs() as $blob) {
+            if (substr( $blob->getName(), -strlen('.manifest')) === '.manifest') {
+                $manifestFileNames[] = $blob->getName();
+            }
         }
         return $manifestFileNames;
     }
@@ -43,7 +63,7 @@ class AbsWorkspaceFilesStrategy extends AbstractFilesStrategy implements FilesSt
      */
     public function getFiles($dir)
     {
-        // TODO: Implement getFiles() method.
+
     }
 
     /**

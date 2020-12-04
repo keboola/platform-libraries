@@ -49,6 +49,7 @@ class SourceRewriteHelperTest extends TestCase
                 throw $e;
             }
         }
+
         try {
             $this->clientWrapper->getBasicClient()->dropBucket('out.c-dev-branch-main', ['force' => true]);
         } catch (ClientException $e) {
@@ -56,8 +57,16 @@ class SourceRewriteHelperTest extends TestCase
                 throw $e;
             }
         }
+
+        foreach ($this->clientWrapper->getBasicClient()->listBuckets() as $bucket) {
+            if (preg_match('/^c\-[0-9]+\-output\-mapping\-test$/ui', $bucket['name'])) {
+                $this->clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
+
+            }
+        }
+
         $this->clientWrapper->getBasicClient()->createBucket('main', 'out');
-        $this->clientWrapper->getBasicClient()->createBucket('dev-branch-main', 'out');
+        $this->clientWrapper->getBasicClient()->createBucket($this->branchId . '-main', 'out');
     }
 
     public function testNoBranch()
@@ -192,8 +201,10 @@ class SourceRewriteHelperTest extends TestCase
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
-        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table', $csvFile);
-        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table-2', $csvFile);
+
+        $branchBucketId = sprintf('out.c-%s-main', $this->branchId);
+        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
+        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -213,11 +224,12 @@ class SourceRewriteHelperTest extends TestCase
             $this->clientWrapper,
             $testLogger
         );
-        self::assertEquals('out.c-dev-branch-main.my-table', $destinations->getTables()[0]->getSource());
+        $expectedTableId = sprintf('%s.my-table', $branchBucketId);
+        self::assertEquals($expectedTableId, $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
             [
-                'source' => 'out.c-dev-branch-main.my-table',
+                'source' => $expectedTableId,
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
@@ -228,11 +240,12 @@ class SourceRewriteHelperTest extends TestCase
             ],
             $destinations->getTables()[0]->getDefinition()
         );
-        self::assertEquals('out.c-dev-branch-main.my-table-2', $destinations->getTables()[1]->getSource());
+        $expectedTableId = sprintf('%s.my-table-2', $branchBucketId);
+        self::assertEquals($expectedTableId, $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
         self::assertEquals(
             [
-                'source' => 'out.c-dev-branch-main.my-table-2',
+                'source' => $expectedTableId,
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
                 'column_types' => [],
@@ -243,7 +256,7 @@ class SourceRewriteHelperTest extends TestCase
             $destinations->getTables()[1]->getDefinition()
         );
         self::assertTrue($testLogger->hasInfoThatContains(
-            'Using dev input "out.c-dev-branch-main.my-table-2" instead of "out.c-main.my-table-2".'
+            sprintf('Using dev input "%s" instead of "out.c-main.my-table-2".', $expectedTableId)
         ));
     }
 
@@ -255,8 +268,9 @@ class SourceRewriteHelperTest extends TestCase
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
-        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table', $csvFile);
-        $this->clientWrapper->getBasicClient()->createTable('out.c-dev-branch-main', 'my-table-2', $csvFile);
+        $branchBucketId = sprintf('out.c-%s-main', $this->branchId);
+        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
+        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
         $testLogger = new TestLogger();
         $inputTablesStates = new InputTableStateList([
             [
@@ -276,18 +290,18 @@ class SourceRewriteHelperTest extends TestCase
         self::assertEquals(
             [
                 [
-                    'source' => 'out.c-dev-branch-main.my-table',
+                    'source' => sprintf('%s.my-table', $branchBucketId),
                     'lastImportDate' => '1605741600',
                 ],
                 [
-                    'source' => 'out.c-dev-branch-main.my-table-2',
+                    'source' => sprintf('%s.my-table-2', $branchBucketId),
                     'lastImportDate' => '1605741600',
                 ],
             ],
             $destinations->jsonSerialize()
         );
         self::assertTrue($testLogger->hasInfoThatContains(
-            'Using dev input "out.c-dev-branch-main.my-table-2" instead of "out.c-main.my-table-2".'
+            sprintf('Using dev input "%s.my-table-2" instead of "out.c-main.my-table-2".', $branchBucketId)
         ));
     }
 }

@@ -10,6 +10,7 @@ use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
+use Keboola\OutputMapping\Writer\Strategy\Files\FilesStrategyFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -34,13 +35,13 @@ class FileWriter extends AbstractWriter
             $this->clientWrapper,
             $this->logger,
             $this->workspaceProvider,
+            $this->format
         );
         $strategy = $strategyFactory->getStrategy($storage);
-        $manifestNames = ManifestHelper::getManifestFiles($source);
 
-        $finder = new Finder();
-        /** @var SplFileInfo[] $files */
-        $files = $finder->files()->notName('*.manifest')->in($source)->depth(0);
+        $manifestNames = $strategy->getManifestFiles($source);
+
+        $files = $strategy->getFiles($source);
 
         $outputMappingFiles = [];
         if (isset($configuration['mapping'])) {
@@ -53,9 +54,8 @@ class FileWriter extends AbstractWriter
 
         $fileNames = [];
         foreach ($files as $file) {
-            $fileNames[] = $file->getFilename();
+            $fileNames[] = $file->getFileName();
         }
-
         // Check if all files from output mappings are present
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
@@ -84,9 +84,9 @@ class FileWriter extends AbstractWriter
                     }
                 }
             }
-            $manifestKey = array_search($file->getPathname() . '.manifest', $manifestNames);
+            $manifestKey = array_search($file->getPath() . '.manifest', $manifestNames);
             if ($manifestKey !== false) {
-                $configFromManifest = $this->readFileManifest($file->getPathname() . '.manifest');
+                $configFromManifest = $strategy->readFileManifest($file->getPath() . '.manifest');
                 unset($manifestNames[$manifestKey]);
             }
             try {
@@ -105,7 +105,7 @@ class FileWriter extends AbstractWriter
             }
             try {
                 $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
-                $this->uploadFile($file->getPathname(), $storageConfig);
+                $strategy->uploadFile($file->getPath(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getFilename()}' to Storage API: " . $e->getMessage(),

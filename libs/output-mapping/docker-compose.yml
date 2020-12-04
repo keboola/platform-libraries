@@ -7,6 +7,7 @@ services:
       - ./:/code
     environment:
       - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN

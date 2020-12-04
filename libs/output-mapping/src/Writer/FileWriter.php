@@ -128,41 +128,6 @@ class FileWriter extends AbstractWriter
     }
 
     /**
-     * @param $source
-     * @return array
-     */
-    private function readFileManifest($source)
-    {
-        $adapter = new FileAdapter($this->format);
-        try {
-            return $adapter->readFromFile($source);
-        } catch (Exception $e) {
-            throw new InvalidOutputException(
-                sprintf('Failed to parse manifest file "%s" as "%s": %s', $source, $this->format, $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
-        }
-    }
-
-    /**
-     * @param $source
-     * @param array $config
-     * @throws ClientException
-     */
-    private function uploadFile($source, array $config = [])
-    {
-        $options = new FileUploadOptions();
-        $options
-            ->setTags(array_unique($config['tags']))
-            ->setIsPermanent($config['is_permanent'])
-            ->setIsEncrypted($config['is_encrypted'])
-            ->setIsPublic($config['is_public'])
-            ->setNotify($config['notify']);
-        $this->clientWrapper->getBasicClient()->uploadFile($source, $options);
-    }
-
-    /**
      * Add tags to processed input files.
      * @param $configuration array
      */

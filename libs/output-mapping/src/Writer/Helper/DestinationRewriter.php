@@ -19,7 +19,7 @@ class DestinationRewriter
                 $bucketId = substr($bucketId, 2);
             }
             $bucketId =
-                $clientWrapper->getBasicClient()->webalizeDisplayName($clientWrapper->getBranchName())['displayName'] .
+                $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName'] .
                 '-' . $bucketId;
             // this assumes that bucket id starts with c-
             // https://github.com/keboola/output-mapping/blob/f6451d2faa825913db2ce986952a9ad6db082e50/src/Writer/TableWriter.php#L498

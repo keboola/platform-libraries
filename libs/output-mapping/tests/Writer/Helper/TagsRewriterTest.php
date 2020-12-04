@@ -40,13 +40,14 @@ class TagsRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev 123'));
+        $branchId = $this->createBranch($clientWrapper, 'dev 123');
+        $clientWrapper->setBranchId($branchId);
         $storageConfig = $this->getStorageConfig();
         $expectedConfig = TagsRewriter::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals(
             [
-                'dev-123-first-tag',
-                'dev-123-secondary-tag',
+                sprintf('%s-first-tag', $branchId),
+                sprintf('%s-secondary-tag', $branchId),
             ],
             $expectedConfig['tags']
         );
@@ -69,7 +70,9 @@ class TagsRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev 123'));
+
+        $branchId = $this->createBranch($clientWrapper, 'dev 123');
+        $clientWrapper->setBranchId($branchId);
         $storageConfig = $this->getStorageConfig();
         $storageConfig['tags'] = [];
         $expectedConfig = TagsRewriter::rewriteTags($storageConfig, $clientWrapper);

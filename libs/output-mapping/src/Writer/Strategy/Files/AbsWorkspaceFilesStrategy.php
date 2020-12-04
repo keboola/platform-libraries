@@ -63,7 +63,16 @@ class AbsWorkspaceFilesStrategy extends AbstractFilesStrategy implements FilesSt
      */
     public function getFiles($dir)
     {
-
+        $blobListOptions = new ListBlobsOptions();
+        $blobListOptions->setPrefix($dir);
+        $blobListResult = $this->blobClient->listBlobs($this->container, $blobListOptions);
+        $files = [];
+        foreach ($blobListResult->getBlobs() as $blob) {
+            if (substr( $blob->getName(), -strlen('.manifest')) !== '.manifest') {
+                $files[] = (new File())->setFileName($blob->getName())->setPath($blob->getUrl());
+            }
+        }
+        return $files;
     }
 
     /**

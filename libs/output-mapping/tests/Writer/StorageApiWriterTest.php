@@ -145,7 +145,8 @@ class StorageApiWriterTest extends BaseWriterTest
             null,
             null
         );
-        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $this->clientWrapper->setBranchId($branchId);
 
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/file1", "test");
@@ -163,7 +164,7 @@ class StorageApiWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["dev-123-output-mapping-test"]);
+        $options->setTags([sprintf('%s-output-mapping-test', $branchId)]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -176,7 +177,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $this->assertNotNull($file1);
         $this->assertEquals(4, $file1["sizeBytes"]);
-        $this->assertEquals(["dev-123-output-mapping-test"], $file1["tags"]);
+        $this->assertEquals([sprintf('%s-output-mapping-test', $branchId)], $file1["tags"]);
     }
 
     public function testWriteFilesOutputMappingAndManifest()
@@ -355,7 +356,8 @@ class StorageApiWriterTest extends BaseWriterTest
             null,
             null
         );
-        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $this->clientWrapper->setBranchId($branchId);
 
         $root = $this->tmp->getTmpFolder();
         $this->tmp->initRunFolder();
@@ -376,11 +378,17 @@ class StorageApiWriterTest extends BaseWriterTest
         $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-dev-123-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf('out.c-%s-output-mapping-test', $branchId));
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
-        $this->assertEquals(['out.c-dev-123-output-mapping-test.table11a', 'out.c-dev-123-output-mapping-test.table21a'], $tableIds);
+        $this->assertEquals(
+            [
+                sprintf('out.c-%s-output-mapping-test.table11a', $branchId),
+                sprintf('out.c-%s-output-mapping-test.table21a', $branchId),
+            ],
+            $tableIds
+        );
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);

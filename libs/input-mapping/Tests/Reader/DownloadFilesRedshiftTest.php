@@ -14,6 +14,8 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
 {
     public function testReadSlicedFile()
     {
+        $this->clientWrapper->setBranchId('');
+
         // Create bucket
         if (!$this->clientWrapper->getBasicClient()->bucketExists("in.c-docker-test-redshift")) {
             $this->clientWrapper->getBasicClient()->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");

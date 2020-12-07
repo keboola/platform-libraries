@@ -144,6 +144,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testReadFilesTagsFilterRunId()
     {
+        $this->clientWrapper->setBranchId('');
+
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }

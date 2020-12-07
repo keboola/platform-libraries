@@ -55,6 +55,10 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
         $fileOptions->setFederationToken(true);
 
         foreach ($fileConfigurations as $fileConfiguration) {
+            if (isset($fileConfiguration["query"]) && $this->clientWrapper->hasBranch()) {
+                throw new InvalidInputException("Invalid file mapping, 'query' attribute is restricted for dev/branch context.");
+            }
+
             $files = Reader::getFiles($fileConfiguration, $this->clientWrapper->getBasicClient());
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);

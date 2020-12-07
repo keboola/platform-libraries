@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader\Helper\SourceRewriteHelper;
+use Keboola\InputMapping\Reader\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
 use Keboola\InputMapping\Reader\State\InputTableStateList;
 use Keboola\InputMapping\Reader\Strategy\StrategyFactory;
@@ -170,12 +171,19 @@ class Reader
     }
 
     /**
-     * @param array $fileConfiguration
-     * @param ClientWrapper $clientWrapper
      * @return array
      */
-    public static function getFiles($fileConfiguration, $clientWrapper)
-    {
+    public static function getFiles(
+        array $fileConfiguration,
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger
+    ) {
+        $fileConfiguration = TagsRewriteHelper::rewriteFileTags(
+            $fileConfiguration,
+            $clientWrapper,
+            $logger
+        );
+
         $storageClient = $clientWrapper->getBasicClient();
 
         if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {

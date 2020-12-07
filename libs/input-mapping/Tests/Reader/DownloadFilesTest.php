@@ -307,7 +307,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         try {
-            Reader::getFiles($fileConfiguration, $clientWrapper);
+            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
             self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());

@@ -55,7 +55,7 @@ abstract class AbstractFilesStrategy implements FilesStrategyInterface
         $fileOptions->setFederationToken(true);
 
         foreach ($fileConfigurations as $fileConfiguration) {
-            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper);
+            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = sprintf('%s/%s_%s', $destination, $fileInfo['id'], $fileInfo["name"]);

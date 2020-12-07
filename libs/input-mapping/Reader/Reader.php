@@ -171,11 +171,17 @@ class Reader
 
     /**
      * @param array $fileConfiguration
-     * @param Client $storageClient
+     * @param ClientWrapper $clientWrapper
      * @return array
      */
-    public static function getFiles($fileConfiguration, $storageClient)
+    public static function getFiles($fileConfiguration, $clientWrapper)
     {
+        $storageClient = $clientWrapper->getBasicClient();
+
+        if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
+            throw new InvalidInputException("Invalid file mapping, 'query' attribute is restricted for dev/branch context.");
+        }
+
         $options = new ListFilesOptions();
         if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'query' are empty.");

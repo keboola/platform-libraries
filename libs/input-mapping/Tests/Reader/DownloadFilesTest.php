@@ -10,6 +10,7 @@ use Keboola\InputMapping\Reader\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
@@ -279,16 +280,28 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadAndDownloadFilesWithEsQueryIsRestrictedForBranch()
     {
-        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'dev branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === 'my-branch') {
                 $branches->deleteBranch($branch['id']);
             }
         }
 
-        $this->clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
+        $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($clientWrapper, new NullLogger(), new NullWorkspaceProvider());
 
         $fileConfiguration = ['query' => 'tags: download-files-test'];
 

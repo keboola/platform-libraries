@@ -5,6 +5,7 @@ namespace Keboola\OutputMapping\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
 use Keboola\InputMapping\WorkspaceProviderInterface;
+use Keboola\InputMapping\Tests\Reader\DownloadTablesAdaptiveTest;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
@@ -24,6 +25,7 @@ use Keboola\Temp\Temp;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -37,15 +39,8 @@ class TableWriter extends AbstractWriter
     const STAGING_SYNAPSE = 'workspace-synapse';
     const STAGING_ABS = 'workspace-abs';
 
-    /**
-     * @var Metadata
-     */
+    /** @var Metadata */
     private $metadataClient;
-
-    /**
-     * @var WorkspaceProviderInterface
-     */
-    private $workspaceProvider;
 
     /**
      * AbstractWriter constructor.
@@ -73,7 +68,7 @@ class TableWriter extends AbstractWriter
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+        if ($stagingStorageOutput === Reader::STAGING_LOCAL) {
             return $this->uploadTablesLocal($source, $configuration, $systemMetadata, $stagingStorageOutput);
         } else {
             return $this->uploadTablesWorkspace($source, $configuration, $systemMetadata, $stagingStorageOutput);
@@ -369,8 +364,14 @@ class TableWriter extends AbstractWriter
     private function readTableManifest($source)
     {
         $adapter = new TableAdapter($this->format);
+        $fs = new Filesystem();
+        if (!$fs->exists($source)) {
+            throw new InvalidOutputException("File '$source' not found.");
+        }
         try {
-            return $adapter->readFromFile($source);
+            $fileHandler = new SplFileInfo($source, "", basename($source));
+            $serialized = $fileHandler->getContents();
+            return $adapter->deserialize($serialized);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
                 'Failed to read table manifest from file ' . basename($source) . ' ' . $e->getMessage(),
@@ -558,7 +559,7 @@ class TableWriter extends AbstractWriter
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
         $this->validateWorkspaceStaging($stagingStorageOutput);
-        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+        if ($stagingStorageOutput === Reader::STAGING_LOCAL) {
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
                 $options['dataFileId'] = $fileId;
@@ -591,11 +592,12 @@ class TableWriter extends AbstractWriter
     private function validateWorkspaceStaging($stagingStorageOutput)
     {
         $stagingTypes = [
-            self::STAGING_LOCAL,
-            self::STAGING_SNOWFLAKE,
-            self::STAGING_REDSHIFT,
-            self::STAGING_SYNAPSE,
-            self::STAGING_ABS,
+            Reader::STAGING_LOCAL,
+            Reader::STAGING_SNOWFLAKE,
+            Reader::STAGING_REDSHIFT,
+            Reader::STAGING_SYNAPSE,
+            Reader::STAGING_ABS,
+            Reader::STAGING_ABS_WORKSPACE,
         ];
         if (!in_array($stagingStorageOutput, $stagingTypes)) {
             throw new InvalidOutputException(
@@ -615,13 +617,13 @@ class TableWriter extends AbstractWriter
     private function convertStagingToStorageApiBackend($stagingStorageOutput)
     {
         switch ($stagingStorageOutput) {
-            case self::STAGING_SNOWFLAKE:
+            case Reader::STAGING_SNOWFLAKE:
                 return WorkspaceProviderInterface::TYPE_SNOWFLAKE;
-            case self::STAGING_REDSHIFT:
+            case Reader::STAGING_REDSHIFT:
                 return WorkspaceProviderInterface::TYPE_REDSHIFT;
-            case self::STAGING_SYNAPSE:
+            case Reader::STAGING_SYNAPSE:
                 return WorkspaceProviderInterface::TYPE_SYNAPSE;
-            case self::STAGING_ABS:
+            case Reader::STAGING_ABS_WORKSPACE:
                 return WorkspaceProviderInterface::TYPE_ABS;
             default:
                 throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));

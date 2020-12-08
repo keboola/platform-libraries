@@ -58,7 +58,9 @@ class LocalTest extends BaseWriterTest
         foreach ($files as $file) {
             $fileNames[$file->getName()] = $file->getPath();
         }
-        self::assertEquals(['my-file', 'my-second-file'], array_keys($fileNames));
+        $keys = array_keys($fileNames);
+        sort($keys);
+        self::assertEquals(['my-file', 'my-second-file'], $keys);
         self::assertStringEndsWith('/data/out/files', $fileNames['my-file']);
     }
 
@@ -87,7 +89,9 @@ class LocalTest extends BaseWriterTest
         foreach ($files as $file) {
             $fileNames[$file->getName()] = $file->getPath();
         }
-        self::assertEquals(['my-file.manifest', 'my-second-file.manifest'], array_keys($fileNames));
+        $keys = array_keys($fileNames);
+        sort($keys);
+        self::assertEquals(['my-file.manifest', 'my-second-file.manifest'], $keys);
         self::assertStringEndsWith('/data/out/files', $fileNames['my-file.manifest']);
     }
 
@@ -231,7 +235,8 @@ class LocalTest extends BaseWriterTest
             'notify' => false,
             'tags' => []
         ];
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
             json_encode(new stdClass())
         );
         $manifestData = $strategy->readFileManifest($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest');

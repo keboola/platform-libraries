@@ -132,7 +132,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         $storageConfig = $this->preProcessStorageConfig($storageConfig);
         $options = new FileUploadOptions();
         $options
-            ->setTags(array_unique($storageConfig['tags'] ))
+            ->setTags(array_unique($storageConfig['tags']))
             ->setIsPermanent($storageConfig['is_permanent'])
             ->setIsEncrypted($storageConfig['is_encrypted'])
             ->setIsPublic($storageConfig['is_public'])

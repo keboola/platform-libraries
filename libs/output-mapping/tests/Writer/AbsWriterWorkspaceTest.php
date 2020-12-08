@@ -138,7 +138,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
         $blobClient->createBlockBlob(
-            $this->workspace['connection']['container'], 
+            $this->workspace['connection']['container'],
             'upload/file2.manifest',
             '{"tags": ["output-mapping-test", "xxx"],"is_public": false}'
         );
@@ -197,5 +197,5 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotNull($file1['maxAgeDays']);
         $this->assertNull($file2['maxAgeDays']);
         $this->assertNull($file3['maxAgeDays']);
-    }    
+    }
 }

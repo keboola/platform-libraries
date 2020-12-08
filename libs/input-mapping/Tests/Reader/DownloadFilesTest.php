@@ -288,12 +288,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'dev branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === 'my-branch') {
                 $branches->deleteBranch($branch['id']);
             }

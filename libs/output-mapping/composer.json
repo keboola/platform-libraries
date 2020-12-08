@@ -25,7 +25,7 @@
         "symfony/finder": "^2.8.52|^4.1",
         "symfony/serializer": "^2.8.52|^4.1",
         "monolog/monolog": "^1.25.5|^2.0",
-        "keboola/input-mapping": "^11.0.1",
+        "keboola/input-mapping": "^11.1.0",
         "keboola/storage-api-php-client-branch-wrapper": "^1.0.0",
         "guzzlehttp/guzzle": "^6.5.5",
         "keboola/sanitizer": "^0.1"

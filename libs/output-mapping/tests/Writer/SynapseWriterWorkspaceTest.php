@@ -5,72 +5,33 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Exception;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
 class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-    private $runSynapseTests = false;
+    use InitSynapseStorageClientTrait;
 
     public function setUp()
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
+        if (!$this->checkSynapseTests()) {
+            self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-    }
-
-    public function tearDown()
-    {
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        parent::tearDown();
+        $this->clearBuckets([
+            'in.c-output-mapping-test',
+            'out.c-output-mapping-test',
+        ]);
     }
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->clientWrapper = new ClientWrapper(
-            new Client([
-                "token" => $token,
-                "url" => $url,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-        $this->clientWrapper->setBranchId('');
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
-        ));
+        $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
     public function testSynapseTableOutputMapping()
     {
-        if (!$this->runSynapseTests) {
-            $this->markTestSkipped('Synapse tests disabled');
-        }
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('synapse');
         // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228

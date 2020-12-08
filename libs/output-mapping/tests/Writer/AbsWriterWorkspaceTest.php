@@ -10,57 +10,30 @@ use Psr\Log\NullLogger;
 
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-    private $runSynapseTests = false;
+    use InitSynapseStorageClientTrait;
+    
+    /** @var array */
+    protected $workspace;
 
     public function setUp()
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
+        if (!$this->checkSynapseTests()) {
+            self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-    }
-
-    public function tearDown()
-    {
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        parent::tearDown();
+        $this->clearBuckets([
+            'in.c-output-mapping-test',
+            'out.c-output-mapping-test',
+        ]);
     }
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null
-        );
-        $this->clientWrapper->setBranchId('');
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
-        ));
+        $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
     public function testAbsTableOutputMapping()
     {
-        if (!$this->runSynapseTests) {
-            return;
-        }
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('abs');
 
@@ -127,4 +100,102 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // 1a has only the id column
         $this->assertEquals(['"id"', '"test"'], $rows);
     }
+
+    protected function getWorkspaceProvider($workspaceData = [])
+    {
+        $mock = self::getMockBuilder(NullWorkspaceProvider::class)
+            ->setMethods(['getCredentials', 'getWorkspaceId'])
+            ->getMock();
+        $mock->method('getCredentials')->willReturnCallback(
+            function ($type) use ($workspaceData) {
+                if (!$this->workspace) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
+                    $this->workspace = $workspaceData ? $workspaceData : $workspace;
+                }
+                return $this->workspace['connection'];
+            }
+        );
+        $mock->method('getWorkspaceId')->willReturnCallback(
+            function ($type) use ($workspaceData) {
+                if (!$this->workspace) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
+                    $this->workspace = $workspaceData ? $workspaceData : $workspace;
+                }
+                return $this->workspace['id'];
+            }
+        );
+        /** @var WorkspaceProviderInterface $mock */
+        return $mock;
+    }
+    
+    public function testWriteBasicFiles()
+    {
+        $workspaceProvider = $this->getWorkspaceProvider();
+        $workspaceProvider->getCredentials('abs'); //initializes $this->workspace
+        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
+        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'], 
+            'upload/file2.manifest',
+            '{"tags": ["output-mapping-test", "xxx"],"is_public": false}'
+        );
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'],
+            'upload/file3',
+            'test'
+        );
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'],
+            'upload/file3.manifest',
+            '{"tags": ["output-mapping-test"],"is_permanent": true}'
+        );
+        $configs = [
+            [
+                'source' => 'file1',
+                'tags' => ['output-mapping-test']
+            ],
+            [
+                'source' => 'file2',
+                'tags' => ['output-mapping-test', 'another-tag'],
+                'is_permanent' => true
+            ]
+        ];
+
+        $writer = new FileWriter($this->clientWrapper, new NullLogger(), $workspaceProvider);
+
+        $writer->uploadFiles('/upload', ['mapping' => $configs], Reader::STAGING_ABS_WORKSPACE);
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags(['output-mapping-test']);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $this->assertCount(3, $files);
+
+        $file1 = $file2 = $file3 = null;
+        foreach ($files as $file) {
+            if ($file['name'] == 'file1') {
+                $file1 = $file;
+            }
+            if ($file['name'] == 'file2') {
+                $file2 = $file;
+            }
+            if ($file['name'] == 'file3') {
+                $file3 = $file;
+            }
+        }
+
+        $this->assertNotNull($file1);
+        $this->assertNotNull($file2);
+        $this->assertNotNull($file3);
+        $this->assertEquals(4, $file1['sizeBytes']);
+        $this->assertEquals(['output-mapping-test'], $file1['tags']);
+        $this->assertEquals(['output-mapping-test', 'another-tag'], $file2['tags']);
+        $this->assertEquals(['output-mapping-test'], $file3['tags']);
+        $this->assertNotNull($file1['maxAgeDays']);
+        $this->assertNull($file2['maxAgeDays']);
+        $this->assertNull($file3['maxAgeDays']);
+    }    
 }

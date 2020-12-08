@@ -4,21 +4,12 @@ namespace Keboola\OutputMapping\Writer;
 
 use Exception;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
-use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\File\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
-use Keboola\OutputMapping\Writer\Strategy\Files\FilesStrategyFactory;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
 class FileWriter extends AbstractWriter
 {
@@ -29,19 +20,17 @@ class FileWriter extends AbstractWriter
      * @param array $configuration Upload configuration
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      */
-    public function uploadFiles($source, $configuration = [], $storage)
+    public function uploadFiles($source, $configuration, $storage)
     {
-        $strategyFactory = new FilesStrategyFactory(
+        $strategyFactory = new StrategyFactory(
             $this->clientWrapper,
             $this->logger,
             $this->workspaceProvider,
             $this->format
         );
         $strategy = $strategyFactory->getStrategy($storage);
-
-        $manifestNames = $strategy->getManifestFiles($source);
-
-        $files = $strategy->getFiles($source);
+        $files = $strategy->listFiles($source);
+        $manifests = $strategy->listManifests($source);
 
         $outputMappingFiles = [];
         if (isset($configuration['mapping'])) {
@@ -54,7 +43,7 @@ class FileWriter extends AbstractWriter
 
         $fileNames = [];
         foreach ($files as $file) {
-            $fileNames[] = $file->getFileName();
+            $fileNames[] = $file->getName();
         }
         // Check if all files from output mappings are present
         if (isset($configuration['mapping'])) {
@@ -66,9 +55,9 @@ class FileWriter extends AbstractWriter
         }
 
         // Check for manifest orphans
-        foreach ($manifestNames as $manifest) {
-            if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new InvalidOutputException('Found orphaned file manifest: \'' . basename($manifest) . "'");
+        foreach ($manifests as $manifest) {
+            if (!in_array(substr(basename($manifest->getName()), 0, -9), $fileNames)) {
+                throw new InvalidOutputException('Found orphaned file manifest: \'' . basename($manifest->getName()) . "'");
             }
         }
 
@@ -77,17 +66,17 @@ class FileWriter extends AbstractWriter
             $configFromManifest = [];
             if (isset($configuration['mapping'])) {
                 foreach ($configuration['mapping'] as $mapping) {
-                    if (isset($mapping['source']) && $mapping['source'] === $file->getFilename()) {
+                    if (isset($mapping['source']) && $mapping['source'] === $file->getName()) {
                         $configFromMapping = $mapping;
                         $processedOutputMappingFiles[] = $configFromMapping['source'];
                         unset($configFromMapping['source']);
                     }
                 }
             }
-            $manifestKey = array_search($file->getPath() . '.manifest', $manifestNames);
-            if ($manifestKey !== false) {
-                $configFromManifest = $strategy->readFileManifest($file->getPath() . '.manifest');
-                unset($manifestNames[$manifestKey]);
+            $manifestKey = $file->getPathName() . '.manifest';
+            if (isset($manifests[$manifestKey])) {
+                $configFromManifest = $strategy->readFileManifest($file->getPathName() . '.manifest');
+                unset($manifests[$manifestKey]);
             }
             try {
                 // Mapping with higher priority
@@ -98,17 +87,17 @@ class FileWriter extends AbstractWriter
                 }
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
-                    "Failed to write manifest for table {$file->getFilename()}.",
+                    "Failed to write manifest for table {$file->getPathName()}.",
                     0,
                     $e
                 );
             }
             try {
                 $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
-                $strategy->uploadFile($file->getPath(), $storageConfig);
+                $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
-                    "Cannot upload file '{$file->getFilename()}' to Storage API: " . $e->getMessage(),
+                    "Cannot upload file '{$file->getName()}' to Storage API: " . $e->getMessage(),
                     $e->getCode(),
                     $e
                 );

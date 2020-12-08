@@ -98,76 +98,23 @@ class Adapter
     }
 
     /**
+     * Read configuration from data
      *
-     * Read configuration from file
-     *
-     * @param $file
-     * @return array
+     * @param string $serialized
+     * @return array Configuration data
      * @throws OutputOperationException
      */
-    public function readFromFile($file)
+    public function deserialize($serialized)
     {
-        $fs = new Filesystem();
-        if (!$fs->exists($file)) {
-            throw new OutputOperationException("File '$file' not found.");
-        }
-
-        $serialized = $this->getContents($file);
-
         if ($this->getFormat() == 'yaml') {
             $data = Yaml::parse($serialized);
         } elseif ($this->getFormat() == 'json') {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
-            throw new OutputOperationException("Invalid configuration format {$this->format}.");
+            throw new OutputOperationException(sprintf('Invalid configuration format "%s".', $this->format));
         }
         $this->setConfig($data);
         return $this->getConfig();
-    }
-
-    /**
-     *
-     * Write configuration to file in given format
-     *
-     * @param $file
-     */
-    public function writeToFile($file)
-    {
-        if ($this->getFormat() == 'yaml') {
-            $serialized = Yaml::dump($this->getConfig(), 10);
-            if ($serialized == 'null') {
-                $serialized = '{}';
-            }
-        } elseif ($this->getFormat() == 'json') {
-            $encoder = new JsonEncoder();
-            $serialized = $encoder->encode(
-                $this->getConfig(),
-                $encoder::FORMAT,
-                ['json_encode_options' => JSON_PRETTY_PRINT]
-            );
-        } else {
-            throw new OutputOperationException("Invalid configuration format {$this->format}.");
-        }
-        $fs = new Filesystem();
-        $fs->dumpFile($file, $serialized);
-    }
-
-    /**
-     * @param $file
-     * @return mixed
-     * @throws OutputOperationException
-     */
-    public function getContents($file)
-    {
-        if (!(new Filesystem())->exists($file)) {
-            throw new OutputOperationException("File" . $file . " not found.");
-        }
-        $fileHandler = new SplFileInfo($file, "", basename($file));
-        if ($fileHandler) {
-            return $fileHandler->getContents();
-        } else {
-            throw new OutputOperationException("File" . $file . " not found.");
-        }
     }
 }

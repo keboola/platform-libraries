@@ -5,7 +5,6 @@ namespace Keboola\OutputMapping\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
 use Keboola\InputMapping\WorkspaceProviderInterface;
-use Keboola\InputMapping\Tests\Reader\DownloadTablesAdaptiveTest;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
@@ -33,18 +32,10 @@ class TableWriter extends AbstractWriter
 {
     const SYSTEM_METADATA_PROVIDER = 'system';
 
-    const STAGING_LOCAL = 'local';
-    const STAGING_SNOWFLAKE = 'workspace-snowflake';
-    const STAGING_REDSHIFT = 'workspace-redshift';
-    const STAGING_SYNAPSE = 'workspace-synapse';
-    const STAGING_ABS = 'workspace-abs';
-
     /** @var Metadata */
     private $metadataClient;
 
     /**
-     * AbstractWriter constructor.
-     *
      * @param ClientWrapper $clientWrapper
      * @param LoggerInterface $logger
      * @param WorkspaceProviderInterface $workspaceProvider

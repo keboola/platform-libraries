@@ -45,34 +45,13 @@ class DestinationRewriterTest extends TestCase
             null,
             null
         );
-        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev 123'));
-        $config = $this->getConfig();
-        $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
-        self::assertEquals('in.c-dev-123-main.table', $expectedConfig['destination']);
-        unset($expectedConfig['destination']);
-        unset($config['destination']);
-        self::assertEquals($config, $expectedConfig);
-    }
 
-    public function testRewriteBranchCDash()
-    {
-        $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-        $config['destination'] = 'in.main-table';
-        $clientWrapper->setBranchId($this->createBranch($clientWrapper, 'dev-123'));
+        $branchId = $this->createBranch($clientWrapper, 'dev 123');
+        $clientWrapper->setBranchId($branchId);
+
         $config = $this->getConfig();
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
-        self::assertEquals('in.c-dev-123-main.table', $expectedConfig['destination']);
+        self::assertEquals(sprintf('in.c-%s-main.table', $branchId), $expectedConfig['destination']);
         unset($expectedConfig['destination']);
         unset($config['destination']);
         self::assertEquals($config, $expectedConfig);

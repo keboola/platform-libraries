@@ -267,7 +267,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             null,
             null
         );
-        $this->clientWrapper->setBranchId($this->createBranch($this->clientWrapper, 'dev-123'));
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $this->clientWrapper->setBranchId($branchId);
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
         $configs = [
@@ -306,11 +307,17 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-dev-123-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf('out.c-%s-output-mapping-test', $branchId));
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
-        $this->assertEquals(['out.c-dev-123-output-mapping-test.table1a', 'out.c-dev-123-output-mapping-test.table2a'], $tableIds);
+        $this->assertEquals(
+            [
+                sprintf('out.c-%s-output-mapping-test.table1a', $branchId),
+                sprintf('out.c-%s-output-mapping-test.table2a', $branchId),
+            ],
+            $tableIds
+        );
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);

@@ -92,6 +92,49 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertTrue(file_exists($root . "/download/" . $id6 . '_upload'));
     }
 
+    public function testReadFilesIncludeAllTags()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+
+        $file1 = new FileUploadOptions();
+        $file1->setTags(["tag-1"]);
+
+        $file2 = new FileUploadOptions();
+        $file2->setTags(["tag-1", "tag-2"]);
+
+        $file3 = new FileUploadOptions();
+        $file3->setTags(["tag-1", "tag-2", "tag-3"]);
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file2);
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file3);
+
+        sleep(5);
+
+        $configuration = [
+            [
+                "source" => [
+                    "tags" => [
+                        [
+                            "name" => "tag-1"
+                        ],
+                        [
+                            "name" => "tag-2"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
+
+        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id2 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
+    }
+
     public function testReadFilesEsQueryFilterRunId()
     {
         $this->clientWrapper->setBranchId('');
@@ -274,7 +317,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         self::assertEquals("test", file_get_contents($root . "/download/" . $id . '_upload'));
-        
+
         $adapter = new Adapter();
         $adapter->setFormat('yaml');
         $manifest = $adapter->readFromFile($root . "/download/" . $id . "_upload.manifest");

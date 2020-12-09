@@ -193,7 +193,7 @@ class Reader
 
         $options = new ListFilesOptions();
         if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query']) && empty($fileConfiguration['source']['tags'])) {
-            throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source' are empty.");
+            throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are empty.");
         }
         if (!empty($fileConfiguration['tags']) && !empty($fileConfiguration['source']['tags'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");

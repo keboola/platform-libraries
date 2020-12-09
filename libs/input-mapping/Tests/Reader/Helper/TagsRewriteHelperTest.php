@@ -46,17 +46,6 @@ class TagsRewriteHelperTest extends TestCase
             }
         }
         $this->branchId = $branches->createBranch('dev branch')['id'];
-
-        // Delete file uploads
-        sleep(5);
-        $options = new ListFilesOptions();
-        $options->setTags(['tags-rewriter']);
-        $options->setLimit(1000);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
-        foreach ($files as $file) {
-            $this->clientWrapper->getBasicClient()->deleteFile($file["id"]);
-        }
-        sleep(5);
     }
 
     public function testNoBranch()
@@ -80,10 +69,7 @@ class TagsRewriteHelperTest extends TestCase
 
         $this->clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([
-                $branchTag,
-                'tags-rewriter'
-            ])
+            (new FileUploadOptions())->setTags([$branchTag])
         );
         sleep(5);
 

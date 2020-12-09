@@ -135,6 +135,45 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
     }
 
+    public function testReadFilesIncludeAllTagsWithLimit()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+
+        $file1 = new FileUploadOptions();
+        $file1->setTags(["tag-1", "tag-2"]);
+
+        $file2 = new FileUploadOptions();
+        $file2->setTags(["tag-1", "tag-2"]);
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file2);
+
+        sleep(5);
+
+        $configuration = [
+            [
+                "source" => [
+                    "tags" => [
+                        [
+                            "name" => "tag-1"
+                        ],
+                        [
+                            "name" => "tag-2"
+                        ]
+                    ]
+                ],
+                "limit" => 1
+            ]
+        ];
+
+        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
+
+        self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
+        self::assertTrue(file_exists($root . "/download/" . $id2 . '_upload'));
+    }
+
     public function testReadFilesEsQueryFilterRunId()
     {
         $this->clientWrapper->setBranchId('');

@@ -19,6 +19,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles()
     {
+        $this->clientWrapper->setBranchId('');
+
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
@@ -59,6 +61,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesTagsFilterRunId()
     {
+        $this->clientWrapper->setBranchId('');
+
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
@@ -252,6 +256,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesYamlFormat()
     {
+        $this->clientWrapper->setBranchId('');
+
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 

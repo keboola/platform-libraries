@@ -13,6 +13,7 @@ use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
+use Psr\Log\Test\TestLogger;
 use Symfony\Component\Finder\Finder;
 
 class DownloadFilesTest extends DownloadFilesTestAbstract
@@ -318,5 +319,61 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
             self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());
         }
+    }
+
+    public function testReadFilesForBranch()
+    {
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        $branchId = $branches->createBranch('my-branch')['id'];
+        $clientWrapper->setBranchId($branchId);
+
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $branchTag = sprintf('%s-testReadFilesForBranch', $branchId);
+
+        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag])
+        );
+        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags(['testReadFilesForBranch'])
+        );
+        sleep(5);
+
+
+        $testLogger = new TestLogger();
+        $reader = new Reader($clientWrapper, $testLogger, new NullWorkspaceProvider());
+
+        $configuration = [['tags' => ['testReadFilesForBranch']]];
+        $reader->downloadFiles($configuration, $root . '/download', Reader::STAGING_LOCAL);
+
+        self::assertEquals("test", file_get_contents($root . '/download/' . $file1Id . '_upload'));
+        self::assertFileNotExists($root . '/download/' . $file2Id . '_upload');
+
+        $adapter = new Adapter();
+        $manifest1 = $adapter->readFromFile($root . '/download/' . $file1Id . '_upload.manifest');
+
+        self::assertArrayHasKey('id', $manifest1);
+        self::assertArrayHasKey('tags', $manifest1);
+        self::assertEquals($file1Id, $manifest1['id']);
+        self::assertEquals([$branchTag], $manifest1['tags']);
+
+        self::assertTrue($testLogger->hasInfoThatContains(
+            sprintf('Using dev tags "%s" instead of "testReadFilesForBranch".', $branchTag)
+        ));
     }
 }

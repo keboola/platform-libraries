@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Reader;
 
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Reader\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Reader\Helper\FilterFilesHelper;
 use Keboola\InputMapping\Reader\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Reader\Helper\TagsRewriteHelper;
@@ -204,12 +205,10 @@ class Reader
         if (isset($fileConfiguration["tags"]) && count($fileConfiguration["tags"])) {
             $options->setTags($fileConfiguration["tags"]);
         }
-        if (isset($fileConfiguration['source']['tags'])) {
-            self::validateSourceTags($fileConfiguration['source']['tags']);
-            $options->setTags(FilterFilesHelper::getTagsFromSourceTags($fileConfiguration['source']['tags']));
-        }
-        if (isset($fileConfiguration["query"])) {
-            $options->setQuery($fileConfiguration["query"]);
+        if (isset($fileConfiguration["query"]) || isset($fileConfiguration['source']['tags'])) {
+            $options->setQuery(
+                BuildQueryFromConfigurationHelper::buildQuery($fileConfiguration)
+            );
         }
         if (empty($fileConfiguration["limit"])) {
             $fileConfiguration["limit"] = 100;

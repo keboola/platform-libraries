@@ -159,7 +159,7 @@ class FileWriter extends AbstractWriter
     {
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
-                $files = Reader::getFiles($fileConfiguration, $this->clientWrapper);
+                $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getBasicClient()->addFileTag($file['id'], $tag);

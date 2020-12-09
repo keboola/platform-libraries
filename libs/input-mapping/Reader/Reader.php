@@ -218,22 +218,4 @@ class Reader
 
         return $files;
     }
-
-    public static function validateSourceTags($tags)
-    {
-        if (!is_array($tags)) {
-            throw new InvalidInputException("Invalid file mapping, 'source.tags' must be an array,");
-        }
-        foreach ($tags as $tag) {
-            if (!is_array($tag)) {
-                throw new InvalidInputException("Invalid file mapping, each item in 'source.tags' must be an array.");
-            }
-            if (!isset($tag['name'])) {
-                throw new InvalidInputException("Invalid file mapping, each item in 'source.tags' must have a name.");
-            }
-            if (!is_string($tag['name'])) {
-                throw new InvalidInputException("Invalid file mapping, each item in 'source.tags' must be a string.");
-            }
-        }
-    }
 }

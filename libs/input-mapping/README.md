@@ -13,6 +13,7 @@ Create `.env` file from this template
 
 ```ini
 STORAGE_API_TOKEN=
+STORAGE_API_TOKEN_MASTER=
 STORAGE_API_URL=https://connection.keboola.com
 RUN_SYNAPSE_TESTS=0
 SYNAPSE_STORAGE_API_TOKEN=

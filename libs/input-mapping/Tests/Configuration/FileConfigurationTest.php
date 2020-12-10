@@ -23,7 +23,6 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testConfigurationWithSourceTags()
     {
         $config = [
-            "tags" => [],
             "query" => "esquery",
             "processed_tags" => ["tag3"],
             "filter_by_run_id" => true,
@@ -51,5 +50,26 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testEmptyConfiguration()
     {
         (new File())->parse(["config" => []]);
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
+     * @expectedExceptionMessage Invalid configuration for path "file": Both 'tags' and 'source.tags' cannot be defined.
+     */
+    public function testConfigurationWithTagsAndSourceTags()
+    {
+        (new File())->parse(["config" => [
+            "tags" => ["tag1"],
+            "source" => [
+                "tags" => [
+                    [
+                        "name" => "tag1"
+                    ],
+                    [
+                        "name" => "tag2"
+                    ]
+                ]
+            ],
+        ]]);
     }
 }

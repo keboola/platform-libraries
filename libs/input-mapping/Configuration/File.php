@@ -50,6 +50,17 @@ class File extends Configuration
                 }
                 return false;
             })
-                ->thenInvalid("At least one of 'tags', 'source.tags' or 'query' parameters must be defined.");
+                ->thenInvalid("At least one of 'tags', 'source.tags' or 'query' parameters must be defined.")
+            ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                if (isset($v["tags"]) && isset($v["source"]["tags"])) {
+                    return true;
+                }
+                return false;
+            })
+            ->thenInvalid("Both 'tags' and 'source.tags' cannot be defined.")
+            ->end()
+        ;
     }
 }

@@ -94,6 +94,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeAllTags()
     {
+        $this->clientWrapper->setBranchId('');
+
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
@@ -135,8 +137,79 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
     }
 
+    public function testReadFilesIncludeAllTagsWithBranchOverwrite()
+    {
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, 'url' => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        $branchId = $branches->createBranch('my-branch')['id'];
+        $clientWrapper->setBranchId($branchId);
+
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $file1 = new FileUploadOptions();
+        $file1->setTags(['tag-1']);
+
+        $file2 = new FileUploadOptions();
+        $file2->setTags([sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]);
+
+        $file3 = new FileUploadOptions();
+        $file3->setTags(['tag-1', sprintf('%s-tag-2', $branchId)]);
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+
+        sleep(5);
+
+        $configuration = [
+            [
+                'source' => [
+                    'tags' => [
+                        [
+                            'name' => 'tag-1',
+                        ],
+                        [
+                            'name' => 'tag-2',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $testLogger = new TestLogger();
+        $reader = new Reader($clientWrapper, $testLogger, new NullWorkspaceProvider());
+        $reader->downloadFiles($configuration, $root . '/download', Reader::STAGING_LOCAL);
+
+        self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
+        self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
+        self::assertFalse(file_exists($root . '/download/' . $id3 . '_upload'));
+
+        self::assertTrue(
+            $testLogger->hasInfoThatContains(
+                sprintf(
+                    'Using dev source tags "%s" instead of "tag-1, tag-2".',
+                    implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)])
+                )
+            )
+        );
+    }
+
     public function testReadFilesIncludeAllTagsWithLimit()
     {
+        $this->clientWrapper->setBranchId('');
+
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());

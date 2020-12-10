@@ -43,7 +43,15 @@ class File extends Configuration
                     ->prototype("scalar")->end()
                 ->end()
             ->end()
-        ->validate()
+            ->validate()
+                ->always(function($v) {
+                    if (empty($v['tags'])) {
+                        unset($v['tags']);
+                    }
+                    return $v;
+                })
+            ->end()
+            ->validate()
             ->ifTrue(function ($v) {
                 if ((!isset($v["tags"]) || count($v["tags"]) == 0) && !isset($v["query"]) && (!isset($v["source"]["tags"]) || count($v["source"]["tags"]) == 0)) {
                     return true;

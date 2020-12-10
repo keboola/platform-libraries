@@ -87,6 +87,46 @@ class TagsRewriteHelperTest extends TestCase
         self::assertEquals([$branchTag], $expectedConfiguration['tags']);
     }
 
+    public function testBranchRewriteSourceTagsFilesExists()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $branchTag = sprintf('%s-im-files-test', $this->branchId);
+
+        $this->clientWrapper
+            ->getBasicClient()
+            ->uploadFile($root . '/upload', (new FileUploadOptions())->setTags([$branchTag]));
+        sleep(5);
+
+        $this->clientWrapper->setBranchId($this->branchId);
+
+        $configuration = [
+            'source' => [
+                'tags' => [
+                    [
+                        'name' => 'im-files-test'
+                    ]
+                ],
+            ],
+        ];
+
+        $testLogger = new TestLogger();
+        $expectedConfiguration = TagsRewriteHelper::rewriteFileTags(
+            $configuration,
+            $this->clientWrapper,
+            $testLogger
+        );
+
+        self::assertTrue(
+            $testLogger->hasInfoThatContains(
+                sprintf('Using dev source tags "%s" instead of "im-files-test".', $branchTag)
+            )
+        );
+
+        self::assertEquals([['name' => $branchTag]], $expectedConfiguration['source']['tags']);
+    }
+
     public function testBranchRewriteNoFiles()
     {
         $configuration = ['tags' => ['im-files-test']];
@@ -101,6 +141,38 @@ class TagsRewriteHelperTest extends TestCase
         self::assertFalse($testLogger->hasInfoThatContains(
             sprintf('Using dev tags "%s" instead of "im-files-test".', $branchTag)
         ));
+
+        self::assertEquals($configuration, $expectedConfiguration);
+    }
+
+    public function testBranchRewriteSourceTagsNoFiles()
+    {
+        $configuration = [
+            'source' => [
+                'tags' => [
+                    [
+                        'name' => 'im-files-test'
+                    ]
+                ],
+            ],
+        ];
+
+        $this->clientWrapper->setBranchId($this->branchId);
+
+        $testLogger = new TestLogger();
+        $expectedConfiguration = TagsRewriteHelper::rewriteFileTags(
+            $configuration,
+            $this->clientWrapper,
+            $testLogger
+        );
+
+        $branchTag = sprintf('%s-im-files-test', $this->branchId);
+
+        self::assertFalse(
+            $testLogger->hasInfoThatContains(
+                sprintf('Using dev source tags "%s" instead of "im-files-test".', $branchTag)
+            )
+        );
 
         self::assertEquals($configuration, $expectedConfiguration);
     }

@@ -39,4 +39,13 @@ class BuildQueryFromConfigurationHelper
             return $tag['name'];
         }, $tags);
     }
+
+    public static function getSourceTagsFromTags($tags)
+    {
+        return array_map(function ($tag) {
+            return [
+                'name' => $tag
+            ];
+        }, $tags);
+    }
 }

@@ -22,6 +22,24 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
+    public function testGetSourceTagsFromTags()
+    {
+        self::assertEquals(
+            [
+                [
+                    'name' => 'componentId: keboola.ex-gmail',
+                ],
+                [
+                    'name' => 'configurationId: 123',
+                ],
+            ],
+            BuildQueryFromConfigurationHelper::getSourceTagsFromTags([
+                'componentId: keboola.ex-gmail',
+                'configurationId: 123',
+            ])
+        );
+    }
+
     public function testBuildQueryForTags()
     {
         self::assertEquals(

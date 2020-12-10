@@ -48,6 +48,9 @@ class File extends Configuration
                     if (empty($v['tags'])) {
                         unset($v['tags']);
                     }
+                    if (empty($v['query'])) {
+                        unset($v['query']);
+                    }
                     return $v;
                 })
             ->end()

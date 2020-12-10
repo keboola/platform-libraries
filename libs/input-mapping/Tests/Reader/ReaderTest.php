@@ -137,6 +137,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
     public function testReadInvalidConfigurationNoQueryNoTagsNoSource()
     {
+        $this->clientWrapper->setBranchId('');
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configurations = [[]];
         try {
@@ -157,6 +158,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
     public function testReadInvalidConfigurationBothTagsAndSourceTags()
     {
+        $this->clientWrapper->setBranchId('');
         $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
         $configurations = [
             [

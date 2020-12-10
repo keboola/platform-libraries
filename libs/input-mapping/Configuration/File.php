@@ -56,10 +56,8 @@ class File extends Configuration
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
-                if (
-                    (!isset($v["tags"]) || count($v["tags"]) == 0) && !isset($v["query"]) &&
-                    (!isset($v["source"]["tags"]) || count($v["source"]["tags"]) == 0)
-                ) {
+                if ((!isset($v["tags"]) || count($v["tags"]) == 0) && !isset($v["query"]) &&
+                    (!isset($v["source"]["tags"]) || count($v["source"]["tags"]) == 0)) {
                     return true;
                 }
                 return false;

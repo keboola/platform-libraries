@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
+use Keboola\InputMapping\NullWorkspaceProvider;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;

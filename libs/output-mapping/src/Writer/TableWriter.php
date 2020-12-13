@@ -4,7 +4,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
+use Keboola\InputMapping\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;

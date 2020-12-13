@@ -2,7 +2,8 @@
 
 namespace Keboola\OutputMapping\Writer;
 
-use Keboola\InputMapping\Reader\Reader;
+use Exception;
+use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -125,7 +126,7 @@ class FileWriter extends AbstractWriter
         $adapter = new FileAdapter($this->format);
         try {
             return $adapter->readFromFile($source);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new InvalidOutputException(
                 sprintf('Failed to parse manifest file "%s" as "%s": %s', $source, $this->format, $e->getMessage()),
                 $e->getCode(),
@@ -137,7 +138,7 @@ class FileWriter extends AbstractWriter
     /**
      * @param $source
      * @param array $config
-     * @throws \Keboola\StorageApi\ClientException
+     * @throws ClientException
      */
     private function uploadFile($source, array $config = [])
     {

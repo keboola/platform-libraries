@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
+use Keboola\InputMapping\NullWorkspaceProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;

@@ -2,9 +2,9 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\InputMapping\Reader\Options\InputTableOptionsList;
-use Keboola\InputMapping\Reader\Reader;
-use Keboola\InputMapping\Reader\State\InputTableStateList;
+use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;

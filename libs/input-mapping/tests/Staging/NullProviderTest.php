@@ -11,6 +11,8 @@ class NullProviderTest extends TestCase
     public function testProvideSnowflakeWorkspace()
     {
         $provider = new NullProvider();
+        $provider->cleanup();
+        self::assertSame([], $provider->getCredentials());
         self::expectException(LogicException::class);
         self::expectExceptionMessage('getWorkspaceId not implemented.');
         $provider->getWorkspaceId();

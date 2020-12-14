@@ -2,7 +2,6 @@
 
 namespace Keboola\InputMapping\Staging;
 
-use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\ABSWorkspace as FileABSWorkspace;
@@ -179,7 +178,15 @@ class StrategyFactory
     public function getFileStrategy($stagingType)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
-        $stagingDefinition->validateFor(Definition::STAGING_FILE);
+        try {
+            $stagingDefinition->validateFor(Definition::STAGING_FILE);
+        } catch (StagingException $e) {
+            throw new InvalidInputException(
+                sprintf('The project does not support "%s" file backend.', $stagingDefinition->getName()),
+                0,
+                $e
+            );
+        }
         $this->getLogger()->info(sprintf('Using "%s" file staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getFileStagingClass();
         return new $className(
@@ -204,7 +211,7 @@ class StrategyFactory
             $stagingDefinition->validateFor(Definition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
-                sprintf('The project does not support "%s" backend.', $stagingDefinition->getName()),
+                sprintf('The project does not support "%s" table backend.', $stagingDefinition->getName()),
                 0,
                 $e
             );

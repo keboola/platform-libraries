@@ -235,7 +235,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . "/download/" . $id1 . '_upload/upload'
+                $root . "/download/" . $id1 . '_upload/'  . $id1
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -243,26 +243,26 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . "/download/" . $id2 . '_upload/upload'
+                $root . "/download/" . $id2 . '_upload/' . $id2
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id3 . '_upload/upload'
+            $root . "/download/" . $id3 . '_upload/' . $id3
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id4 . '_upload/upload'
+            $root . "/download/" . $id4 . '_upload/' . $id4
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id5 . '_upload/upload'
+            $root . "/download/" . $id5 . '_upload/' . $id5
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id6 . '_upload/upload'
+            $root . "/download/" . $id6 . '_upload/' . $id6
         ));
     }
 }

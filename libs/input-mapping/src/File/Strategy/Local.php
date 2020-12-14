@@ -22,6 +22,8 @@ class Local extends AbstractStrategy implements StrategyInterface
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         } else {
+            $fs = new Filesystem();
+            $fs->mkdir(dirname($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath));
             $this->clientWrapper->getBasicClient()->downloadFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath

@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
 
-class Operation
+class Scope
 {
     const TABLE_DATA = 'tableData';
     const TABLE_METADATA = 'tableMetadata';
@@ -12,27 +12,27 @@ class Operation
     const FILE_METADATA = 'fileMetadata';
 
     /** @var array */
-    private $operationTypes;
+    private $scopeTypes;
 
-    public function __construct(array $operationTypes)
+    public function __construct(array $scopeTypes)
     {
-        $allowedOperationTypes = [
+        $allowedScopeTypes = [
             self::TABLE_DATA,
             self::TABLE_METADATA,
             self::FILE_DATA,
             self::FILE_METADATA
         ];
-        if ($diff = array_diff($operationTypes, $allowedOperationTypes)) {
-            throw new StagingException(sprintf('Unknown operation types "%s".', implode(', ', $diff)));
+        if ($diff = array_diff($scopeTypes, $allowedScopeTypes)) {
+            throw new StagingException(sprintf('Unknown scope types "%s".', implode(', ', $diff)));
         }
-        $this->operationTypes = $operationTypes;
+        $this->scopeTypes = $scopeTypes;
     }
 
     /**
      * @return string[]
      */
-    public function getOperationTypes()
+    public function getScopeTypes()
     {
-        return $this->operationTypes;
+        return $this->scopeTypes;
     }
 }

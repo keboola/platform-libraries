@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -78,9 +78,9 @@ class ReaderTest extends TestCase
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Operation([
-                    Operation::TABLE_DATA, Operation::TABLE_METADATA,
-                    Operation::FILE_DATA, Operation::FILE_METADATA
+                StrategyFactory::LOCAL => new Scope([
+                    Scope::TABLE_DATA, Scope::TABLE_METADATA,
+                    Scope::FILE_DATA, Scope::FILE_METADATA
                 ])
             ]
         );

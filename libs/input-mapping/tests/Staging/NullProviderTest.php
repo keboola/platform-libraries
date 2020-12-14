@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\InputMapping\Tests;
+namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Staging\NullProvider;
 use LogicException;

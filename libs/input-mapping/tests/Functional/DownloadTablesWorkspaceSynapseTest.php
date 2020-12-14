@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;

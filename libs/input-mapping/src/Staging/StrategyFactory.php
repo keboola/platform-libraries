@@ -104,11 +104,11 @@ class StrategyFactory
 
     /**
      * @param ProviderInterface $provider
-     * @param Operation[] $operations
+     * @param Scope[] $scopes
      */
-    public function addProvider(ProviderInterface $provider, $operations)
+    public function addProvider(ProviderInterface $provider, $scopes)
     {
-        foreach ($operations as $stagingType => $operation) {
+        foreach ($scopes as $stagingType => $scope) {
             if (!isset($this->getStrategyMap()[$stagingType])) {
                 throw new StagingException(sprintf(
                     'Staging "%s" is unknown. Known types are "%s".',
@@ -117,22 +117,22 @@ class StrategyFactory
                 ));
             }
             $staging = $this->getStrategyMap()[$stagingType];
-            foreach ($operation->getOperationTypes() as $operationTypes) {
-                switch ($operationTypes) {
-                    case Operation::TABLE_DATA:
+            foreach ($scope->getScopeTypes() as $scopeType) {
+                switch ($scopeType) {
+                    case Scope::TABLE_DATA:
                         $staging->setTableDataProvider($provider);
                         break;
-                    case Operation::TABLE_METADATA:
+                    case Scope::TABLE_METADATA:
                         $staging->setTableMetadataProvider($provider);
                         break;
-                    case Operation::FILE_DATA:
+                    case Scope::FILE_DATA:
                         $staging->setFileDataProvider($provider);
                         break;
-                    case Operation::FILE_METADATA:
+                    case Scope::FILE_METADATA:
                         $staging->setFileMetadataProvider($provider);
                         break;
                     default:
-                        throw new StagingException(sprintf('Invalid operation type: "%s". ', $operationTypes));
+                        throw new StagingException(sprintf('Invalid scope type: "%s". ', $scopeType));
                 }
             }
         }

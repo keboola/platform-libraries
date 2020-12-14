@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
@@ -129,9 +129,9 @@ class DownloadTablesTestAbstract extends TestCase
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
-                StrategyFactory::ABS => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
-                StrategyFactory::S3 => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
+                StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+                StrategyFactory::ABS => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+                StrategyFactory::S3 => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
             ]
         );
         return $stagingFactory;

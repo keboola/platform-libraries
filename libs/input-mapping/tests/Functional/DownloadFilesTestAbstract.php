@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
@@ -85,7 +85,7 @@ class DownloadFilesTestAbstract extends TestCase
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Operation([Operation::FILE_DATA, Operation::FILE_METADATA])
+                StrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])
             ]
         );
         return $stagingFactory;

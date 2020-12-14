@@ -11,6 +11,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 use Symfony\Component\Filesystem\Filesystem;
@@ -283,7 +284,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     {
         $this->clientWrapper->setBranchId('');
 
-        $root = $this->tmpDir;
+        $temp = new Temp();
+        $temp->initRunFolder();
+        $root = $temp->getTmpFolder();
         file_put_contents($root . "/upload", "test");
 
         // make at least 100 files in the project
@@ -313,7 +316,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
         $finder = new Finder();
-        $finder->files()->in($root . "/download")->notName('*.manifest');
+        $finder->files()->in($this->temp->getTmpFolder() . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
         $fs = new Filesystem();

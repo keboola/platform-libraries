@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
@@ -101,13 +101,13 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                $backend[0] => new Operation([Operation::TABLE_METADATA]),
+                $backend[0] => new Scope([Scope::TABLE_METADATA]),
             ]
         );
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                $backend[0] => new Operation([Operation::TABLE_DATA])
+                $backend[0] => new Scope([Scope::TABLE_DATA])
             ]
         );
         return $stagingFactory;

@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
@@ -105,14 +105,14 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                StrategyFactory::WORKSPACE_ABS => new Operation([Operation::FILE_DATA])
+                StrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_DATA])
             ]
         );
         /** @var ProviderInterface $mockLocal */
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::WORKSPACE_ABS => new Operation([Operation::FILE_METADATA])
+                StrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_METADATA])
             ]
         );
         return $stagingFactory;

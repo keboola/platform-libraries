@@ -40,7 +40,7 @@ class DownloadTablesABSDefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesABSDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -73,7 +73,6 @@ class DownloadTablesABSDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesS3UnsupportedBackend()
     {
-        $logger = new TestLogger();
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [

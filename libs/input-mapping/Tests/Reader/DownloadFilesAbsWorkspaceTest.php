@@ -116,11 +116,11 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobResult1 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id1 . '_upload/upload'
+            $root . "/download/" . $id1 . '_upload/' . $id1
         );
         $blobResult2 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id2 . '_upload/upload'
+            $root . "/download/" . $id2 . '_upload/' . $id2
         );
 
         self::assertEquals("test", stream_get_contents($blobResult1->getContentStream()));

@@ -3,11 +3,14 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullCapability;
-use Keboola\InputMapping\CapabilityInterface;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
+use Psr\Log\NullLogger;
 
 class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
 {
@@ -64,23 +67,72 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         parent::tearDown();
     }
 
-    protected function getWorkspaceProvider()
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
     {
-        $mock = self::getMockBuilder(NullCapability::class)
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockWorkspaceSnowflake = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
-        $mock->method('getWorkspaceId')->willReturnCallback(
-            function ($type) {
+        $mockWorkspaceSnowflake->method('getWorkspaceId')->willReturnCallback(
+            function () {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
+                    $workspace = $workspaces->createWorkspace(['backend' => 'snowflake']);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceId;
             }
         );
-        /** @var CapabilityInterface $mock */
-        return $mock;
+        $mockWorkspaceRedshift = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId'])
+            ->getMock();
+        $mockWorkspaceRedshift->method('getWorkspaceId')->willReturnCallback(
+            function () {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => 'redshift']);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspaceRedshift */
+        /** @var ProviderInterface $mockWorkspaceSnowflake */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::LOCAL => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
+                StrategyFactory::WORKSPACE_SNOWFLAKE => new Operation([Operation::TABLE_METADATA]),
+                StrategyFactory::WORKSPACE_REDSHIFT => new Operation([Operation::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspaceSnowflake,
+            [
+                StrategyFactory::WORKSPACE_SNOWFLAKE => new Operation([Operation::TABLE_DATA])
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspaceRedshift,
+            [
+                StrategyFactory::WORKSPACE_REDSHIFT => new Operation([Operation::TABLE_DATA])
+            ]
+        );
+        return $stagingFactory;
     }
 }

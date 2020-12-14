@@ -4,9 +4,9 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\CapabilityInterface;
-use Keboola\InputMapping\Staging\Fulfillment;
-use Keboola\InputMapping\Staging\NullCapability;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
@@ -72,10 +72,14 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         ));
     }
 
-    protected function getStagingFactory()
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
     {
-        $stagingFactory = new StrategyFactory($this->clientWrapper, new NullLogger(), 'json');
-        $mockWorkspace = self::getMockBuilder(NullCapability::class)
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
@@ -89,7 +93,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 return $this->workspaceId;
             }
         );
-        $mockLocal = self::getMockBuilder(NullCapability::class)
+        $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
@@ -97,18 +101,18 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 return $this->temp->getTmpFolder();
             }
         );
-        /** @var CapabilityInterface $mockWorkspace */
-        $stagingFactory->addStagingCapability(
+        /** @var ProviderInterface $mockWorkspace */
+        $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                StrategyFactory::WORKSPACE_ABS => new Fulfillment([Fulfillment::FILE_DATA])
+                StrategyFactory::WORKSPACE_ABS => new Operation([Operation::FILE_DATA])
             ]
         );
-        /** @var CapabilityInterface $mockLocal */
-        $stagingFactory->addStagingCapability(
+        /** @var ProviderInterface $mockLocal */
+        $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::WORKSPACE_ABS => new Fulfillment([Fulfillment::FILE_METADATA])
+                StrategyFactory::WORKSPACE_ABS => new Operation([Operation::FILE_METADATA])
             ]
         );
         return $stagingFactory;
@@ -133,9 +137,9 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             (new FileUploadOptions())->setTags(["download-files-test"])
         );
         sleep(5);
-        $reader = new Reader($this->clientWrapper, $this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = [["tags" => ["download-files-test"]]];
-        $reader->downloadFiles($configuration, 'data/in/files', StrategyFactory::WORKSPACE_ABS);
+        $reader->downloadFiles($configuration, 'data/in/files/', StrategyFactory::WORKSPACE_ABS);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobResult1 = $blobClient->getBlob(
@@ -177,7 +181,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -192,7 +196,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
@@ -213,19 +217,19 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id3 . '_upload/' . $id3
+            'download/' . $id3 . '_upload/' . $id3
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id4 . '_upload/' . $id4
+            'download/' . $id4 . '_upload/' . $id4
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id5 . '_upload/' . $id5
+            'download/' . $id5 . '_upload/' . $id5
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id6 . '_upload/' . $id6
+            'download/' . $id6 . '_upload/' . $id6
         ));
     }
 
@@ -238,7 +242,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -253,7 +257,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_ABS_WORKSPACE);
+        $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
 
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
@@ -274,19 +278,19 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id3 . '_upload/' . $id3
+            'download/' . $id3 . '_upload/' . $id3
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id4 . '_upload/' . $id4
+            'download/' . $id4 . '_upload/' . $id4
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id5 . '_upload/' . $id5
+            'download/' . $id5 . '_upload/' . $id5
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
-            $root . "/download/" . $id6 . '_upload/' . $id6
+            'download/' . $id6 . '_upload/' . $id6
         ));
     }
 }

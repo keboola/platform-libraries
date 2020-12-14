@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullCapability;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\S3;
@@ -11,9 +11,10 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class S3StrategyTest extends \PHPUnit_Framework_TestCase
+class S3StrategyTest extends TestCase
 {
     /** @var ClientWrapper */
     private $clientWrapper;
@@ -64,7 +65,8 @@ class S3StrategyTest extends \PHPUnit_Framework_TestCase
         $strategy = new S3(
             $this->clientWrapper,
             new NullLogger(),
-            new NullCapability(),
+            new NullProvider(),
+            new NullProvider(),
             new InputTableStateList([]),
             '.'
         );
@@ -94,7 +96,8 @@ class S3StrategyTest extends \PHPUnit_Framework_TestCase
         $strategy = new S3(
             $this->clientWrapper,
             new NullLogger(),
-            new NullCapability(),
+            new NullProvider(),
+            new NullProvider(),
             new InputTableStateList([]),
             '.'
         );

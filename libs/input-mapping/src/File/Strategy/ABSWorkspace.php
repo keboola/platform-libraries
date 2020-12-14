@@ -4,7 +4,6 @@ namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\StorageApi\Workspaces;
-use Symfony\Component\Filesystem\Filesystem;
 
 class ABSWorkspace extends AbstractStrategy implements StrategyInterface
 {
@@ -18,7 +17,7 @@ class ABSWorkspace extends AbstractStrategy implements StrategyInterface
         ];
         $this->manifestWriter->writeFileManifest(
             $fileInfo,
-            $this->metadataStorage->getPath() . $destinationPath . '.manifest'
+            $this->ensurePathDelimiter($this->metadataStorage->getPath()) . $destinationPath . '.manifest'
         );
     }
 

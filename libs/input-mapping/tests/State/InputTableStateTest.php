@@ -3,8 +3,9 @@
 namespace Keboola\InputMapping\Tests\State;
 
 use Keboola\InputMapping\State\InputTableState;
+use PHPUnit\Framework\TestCase;
 
-class InputTableStateTest extends \PHPUnit_Framework_TestCase
+class InputTableStateTest extends TestCase
 {
     public function testGetSource()
     {

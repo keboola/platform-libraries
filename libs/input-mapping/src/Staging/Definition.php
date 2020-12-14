@@ -18,34 +18,34 @@ class Definition
     /** @var string */
     private $fileStagingClass;
 
-    /** @var CapabilityInterface */
-    private $tableDataCapability;
+    /** @var ProviderInterface */
+    private $tableDataProvider;
 
-    /** @var CapabilityInterface */
-    private $tableMetadataCapability;
+    /** @var ProviderInterface */
+    private $tableMetadataProvider;
 
-    /** @var CapabilityInterface */
-    private $fileDataCapability;
+    /** @var ProviderInterface */
+    private $fileDataProvider;
 
-    /** @var CapabilityInterface */
-    private $fileMetadataCapability;
+    /** @var ProviderInterface */
+    private $fileMetadataProvider;
 
     public function __construct(
         $name,
         $fileStagingClass,
         $tableStagingClass,
-        $fileDataCapability = null,
-        $fileMetadataCapability = null,
-        $tableDataCapability = null,
-        $tableMetadataCapability = null
+        $fileDataProvider = null,
+        $fileMetadataProvider = null,
+        $tableDataProvider = null,
+        $tableMetadataProvider = null
     ) {
         $this->name = $name;
         $this->fileStagingClass = $fileStagingClass;
         $this->tableStagingClass = $tableStagingClass;
-        $this->fileDataCapability = $fileDataCapability;
-        $this->fileMetadataCapability = $fileMetadataCapability;
-        $this->tableDataCapability = $tableDataCapability;
-        $this->tableMetadataCapability = $tableMetadataCapability;
+        $this->fileDataProvider = $fileDataProvider;
+        $this->fileMetadataProvider = $fileMetadataProvider;
+        $this->tableDataProvider = $tableDataProvider;
+        $this->tableMetadataProvider = $tableMetadataProvider;
     }
 
     /**
@@ -73,69 +73,69 @@ class Definition
     }
 
     /**
-     * @return CapabilityInterface
+     * @return ProviderInterface
      */
-    public function getFileDataCapability()
+    public function getFileDataProvider()
     {
-        return $this->fileDataCapability;
+        return $this->fileDataProvider;
     }
 
     /**
-     * @param CapabilityInterface $fileDataCapability
+     * @param ProviderInterface $fileDataProvider
      */
-    public function setFileDataCapability($fileDataCapability)
+    public function setFileDataProvider($fileDataProvider)
     {
-        $this->fileDataCapability = $fileDataCapability;
+        $this->fileDataProvider = $fileDataProvider;
     }
 
     /**
-     * @return CapabilityInterface
+     * @return ProviderInterface
      */
-    public function getFileMetadataCapability()
+    public function getFileMetadataProvider()
     {
-        return $this->fileMetadataCapability;
+        return $this->fileMetadataProvider;
     }
 
     /**
-     * @param CapabilityInterface $fileMetadataCapability
+     * @param ProviderInterface $fileMetadataProvider
      * @return Definition
      */
-    public function setFileMetadataCapability($fileMetadataCapability)
+    public function setFileMetadataProvider($fileMetadataProvider)
     {
-        $this->fileMetadataCapability = $fileMetadataCapability;
+        $this->fileMetadataProvider = $fileMetadataProvider;
         return $this;
     }
 
     /**
-     * @return CapabilityInterface
+     * @return ProviderInterface
      */
-    public function getTableDataCapability()
+    public function getTableDataProvider()
     {
-        return $this->tableDataCapability;
+        return $this->tableDataProvider;
     }
 
     /**
-     * @param CapabilityInterface $tableDataCapability
+     * @param ProviderInterface $tableDataProvider
      */
-    public function setTableDataCapability($tableDataCapability)
+    public function setTableDataProvider($tableDataProvider)
     {
-        $this->tableDataCapability = $tableDataCapability;
+        $this->tableDataProvider = $tableDataProvider;
     }
 
     /**
-     * @return CapabilityInterface
+     * @return ProviderInterface
      */
-    public function getTableMetadataCapability()
+    public function getTableMetadataProvider()
     {
-        return $this->tableMetadataCapability;
+        return $this->tableMetadataProvider;
     }
 
     /**
-     * @param CapabilityInterface $tableMetadataCapability
+     * @param ProviderInterface $tableMetadataProvider
      */
-    public function setTableMetadataCapability($tableMetadataCapability)
+    public function setTableMetadataProvider($tableMetadataProvider)
     {
-        $this->tableMetadataCapability = $tableMetadataCapability;
+        $this->tableMetadataProvider = $tableMetadataProvider;
     }
 
     public function validateFor($stagingType)
@@ -145,14 +145,14 @@ class Definition
                 if (empty($this->fileStagingClass)) {
                     throw new StagingException(sprintf('Undefined file class in "%s" staging.', $this->name));
                 }
-                if (empty($this->fileDataCapability)) {
+                if (empty($this->fileDataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined file data capability in "%s" staging.', $this->name)
+                        sprintf('Undefined file data provider in "%s" staging.', $this->name)
                     );
                 }
-                if (empty($this->fileMetadataCapability)) {
+                if (empty($this->fileMetadataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined file metadata capability in "%s" staging.', $this->name)
+                        sprintf('Undefined file metadata provider in "%s" staging.', $this->name)
                     );
                 }
                 break;
@@ -160,14 +160,14 @@ class Definition
                 if (empty($this->tableStagingClass)) {
                     throw new StagingException(sprintf('Undefined table class in "%s" staging.', $this->name));
                 }
-                if (empty($this->tableDataCapability)) {
+                if (empty($this->tableDataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined table data capability in "%s" staging.', $this->name)
+                        sprintf('Undefined table data provider in "%s" staging.', $this->name)
                     );
                 }
-                if (empty($this->tableMetadataCapability)) {
+                if (empty($this->tableMetadataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined table metadata capability in "%s" staging.', $this->name)
+                        sprintf('Undefined table metadata provider in "%s" staging.', $this->name)
                     );
                 }
                 break;

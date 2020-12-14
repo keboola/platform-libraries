@@ -4,10 +4,9 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
-use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
 
 class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
@@ -18,7 +17,12 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
 
         // Create bucket
         if (!$this->clientWrapper->getBasicClient()->bucketExists("in.c-docker-test-redshift")) {
-            $this->clientWrapper->getBasicClient()->createBucket("docker-test-redshift", Client::STAGE_IN, "Docker Testsuite", "redshift");
+            $this->clientWrapper->getBasicClient()->createBucket(
+                "docker-test-redshift",
+                Client::STAGE_IN,
+                "Docker Testsuite",
+                "redshift"
+            );
         }
 
         // Create redshift table and export it to produce a sliced file
@@ -31,11 +35,11 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         $table = $this->clientWrapper->getBasicClient()->exportTableAsync('in.c-docker-test-redshift.test_file');
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
-        $reader->downloadFiles($configuration, $dlDir, Reader::STAGING_LOCAL);
+        $reader->downloadFiles($configuration, '/download/', StrategyFactory::LOCAL);
         $fileName = $fileId . "_in.c-docker-test-redshift.test_file.csv";
 
         $resultFileContent = '';

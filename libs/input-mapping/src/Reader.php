@@ -25,11 +25,6 @@ class Reader
     protected $clientWrapper;
 
     /**
-     * @var
-     */
-    protected $format = 'json';
-
-    /**
      * @var LoggerInterface
      */
     private $logger;
@@ -40,48 +35,19 @@ class Reader
     private $strategyFactory;
 
     /**
-     * @param ClientWrapper $clientWrapper
      * @param StrategyFactory $strategyFactory
      */
     public function __construct(
-        ClientWrapper $clientWrapper,
         StrategyFactory $strategyFactory
     ) {
         $this->logger = $strategyFactory->getLogger();
-        $this->clientWrapper = $clientWrapper;
+        $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->strategyFactory = $strategyFactory;
     }
 
     /**
-     * @return ManifestWriter
-     */
-    protected function getManifestWriter()
-    {
-        return new ManifestWriter($this->clientWrapper->getBasicClient(), $this->getFormat());
-    }
-
-    /**
-     * @return string
-     */
-    public function getFormat()
-    {
-        return $this->format;
-    }
-
-    /**
-     * @param string $format
-     * @return $this
-     */
-    public function setFormat($format)
-    {
-        $this->format = $format;
-
-        return $this;
-    }
-
-    /**
      * @param $configuration array
-     * @param $destination string Destination directory
+     * @param $destination string Relative path to the destination directory
      * @param $stagingType string
      */
     public function downloadFiles($configuration, $destination, $stagingType)

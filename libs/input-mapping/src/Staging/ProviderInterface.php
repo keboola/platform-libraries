@@ -2,7 +2,7 @@
 
 namespace Keboola\InputMapping\Staging;
 
-interface CapabilityInterface
+interface ProviderInterface
 {
     /**
      * @return string

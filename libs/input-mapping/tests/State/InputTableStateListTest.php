@@ -4,8 +4,9 @@ namespace Keboola\InputMapping\Tests\State;
 
 use Keboola\InputMapping\Exception\TableNotFoundException;
 use Keboola\InputMapping\State\InputTableStateList;
+use PHPUnit\Framework\TestCase;
 
-class InputTableStateListTest extends \PHPUnit_Framework_TestCase
+class InputTableStateListTest extends TestCase
 {
     public function testGetTable()
     {

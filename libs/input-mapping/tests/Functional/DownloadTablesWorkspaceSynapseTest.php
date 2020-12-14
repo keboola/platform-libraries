@@ -4,11 +4,17 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
+use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbstract
@@ -51,13 +57,59 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         ));
     }
 
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockWorkspaceSynapse = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId'])
+            ->getMock();
+        $mockWorkspaceSynapse->method('getWorkspaceId')->willReturnCallback(
+            function () {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => 'synapse']);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspaceSynapse */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::WORKSPACE_SYNAPSE => new Operation([Operation::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspaceSynapse,
+            [
+                StrategyFactory::WORKSPACE_SYNAPSE => new Operation([Operation::TABLE_DATA])
+            ]
+        );
+        return $stagingFactory;
+    }
+
     public function testTablesSynapseBackend()
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, $this->getWorkspaceProvider());
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -84,8 +136,8 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'workspace-synapse'
+            'download',
+            StrategyFactory::WORKSPACE_SYNAPSE
         );
 
         $adapter = new Adapter();

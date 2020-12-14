@@ -3,13 +3,12 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
-use Psr\Log\NullLogger;
 
 class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
 {
@@ -37,7 +36,7 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
 
     public function testDownloadTablesReturnsAllTablesTimestamps()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -52,8 +51,8 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
         $tablesState = $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
-            Reader::STAGING_LOCAL
+            'download',
+            StrategyFactory::LOCAL
         );
         $testTableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test");
         $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test2");

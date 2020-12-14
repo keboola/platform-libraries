@@ -4,14 +4,13 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Psr\Log\NullLogger;
 
 class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 {
@@ -41,7 +40,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
     public function testReadTablesRedshift()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -52,8 +51,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         self::assertEquals(
@@ -69,7 +68,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
     public function testReadTablesS3Redshift()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.test",
@@ -80,8 +79,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            's3'
+            'download',
+            StrategyFactory::S3
         );
         $adapter = new Adapter();
 
@@ -111,7 +110,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-redshift.empty', $options);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-redshift.empty",
@@ -122,8 +121,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            Reader::STAGING_LOCAL
+            'download',
+            StrategyFactory::LOCAL
         );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);

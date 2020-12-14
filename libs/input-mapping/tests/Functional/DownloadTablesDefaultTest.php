@@ -5,8 +5,8 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Strategy\Local;
@@ -14,7 +14,6 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
@@ -48,7 +47,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -63,8 +62,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         $expectedCSVContent =  "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
@@ -90,7 +89,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyDaysFilter()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -102,8 +101,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
@@ -114,7 +113,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyChangedSinceFilter()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -126,8 +125,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
@@ -157,7 +156,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-input-mapping-test-default.test.Name', 'dataLoaderTest', $columnMetadata);
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -168,8 +167,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         $adapter = new Adapter();
@@ -216,12 +215,12 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         ];
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source_search" => [
-                    'key'=> 'foo',
-                    'value'=>'bar',
+                    'key' => 'foo',
+                    'value' => 'bar',
                 ],
                 "destination" => "test.csv",
             ]
@@ -230,8 +229,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         $adapter = new Adapter();
@@ -283,7 +282,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 ]
             ]
         );
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -295,8 +294,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         self::assertCSVEquals(
@@ -345,7 +344,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTableColumnsDataTypes()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -366,8 +365,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         self::assertCSVEquals(
@@ -403,8 +402,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         /** @var Client $client */
         $clientWrapper = new ClientWrapper($client, null, null);
         $clientWrapper->setBranchId('');
-        $logger = new TestLogger();
-        $reader = new Reader($clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -420,8 +418,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
     }
 }

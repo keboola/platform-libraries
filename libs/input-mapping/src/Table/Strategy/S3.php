@@ -31,7 +31,8 @@ class S3 extends AbstractStrategy
         /** @var InputTableOptions $table */
         foreach ($exports as $export) {
             $table = $export['table'];
-            $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+            $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
+                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $fileInfo = $this->clientWrapper->getBasicClient()->getFile(
                 $keyedResults[$export['jobId']]["results"]["file"]["id"],

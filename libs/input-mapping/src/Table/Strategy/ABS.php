@@ -32,7 +32,7 @@ class ABS extends AbstractStrategy
         /** @var InputTableOptions $table */
         foreach ($exports as $export) {
             list ($jobId, $table) = $export;
-            $manifestPath = $this->metadataStorage->getPath() .
+            $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . ".manifest";
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $fileInfo = $this->clientWrapper->getBasicClient()->getFile(

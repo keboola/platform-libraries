@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
@@ -14,7 +15,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
     public function testTablesRedshiftBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, $this->getWorkspaceProvider());
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -41,8 +42,8 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'workspace-redshift'
+            'download',
+            StrategyFactory::WORKSPACE_REDSHIFT
         );
 
         $adapter = new Adapter();

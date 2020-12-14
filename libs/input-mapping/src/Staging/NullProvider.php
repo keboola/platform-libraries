@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Staging;
 
 use LogicException;
 
-class NullCapability implements CapabilityInterface
+class NullProvider implements ProviderInterface
 {
     public function getWorkspaceId()
     {

@@ -2,12 +2,18 @@
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
+class DownloadTablesTestAbstract extends TestCase
 {
     /** @var ClientWrapper */
     protected $clientWrapper;
@@ -102,5 +108,32 @@ class DownloadTablesTestAbstract extends \PHPUnit_Framework_TestCase
         for ($i = 1; $i < count($expectedArray); $i++) {
             self::assertTrue(in_array($expectedArray[$i], $actualArrayWithoutHeader));
         }
+    }
+
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::LOCAL => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
+                StrategyFactory::ABS => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
+                StrategyFactory::S3 => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
+            ]
+        );
+        return $stagingFactory;
     }
 }

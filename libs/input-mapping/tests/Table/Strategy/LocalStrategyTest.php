@@ -3,7 +3,8 @@
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullCapability;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
@@ -11,17 +12,22 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class LocalStrategyTest extends PHPUnit_Framework_TestCase
+class LocalStrategyTest extends TestCase
 {
     /** @var ClientWrapper */
     private $clientWrapper;
 
+    /** @var Temp */
+    private $temp;
+
     public function setUp()
     {
         parent::setUp();
+        $this->temp = new Temp();
+        $this->temp->initRunFolder();
         $this->clientWrapper = new ClientWrapper(
             new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
             null,
@@ -60,14 +66,29 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test-strategy', 'test1', $csv);
     }
 
+    private function getProvider()
+    {
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        return $mockLocal;
+    }
+
     public function testColumns()
     {
         $strategy = new Local(
             $this->clientWrapper,
             new NullLogger(),
-            new NullCapability(),
+            $this->getProvider(),
+            $this->getProvider(),
             new InputTableStateList([]),
-            '.'
+            'boo'
         );
         $tableOptions = new InputTableOptions(
             [
@@ -80,7 +101,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         self::assertEquals(
             [
                 'tableId' => 'in.c-input-mapping-test-strategy.test1',
-                'destination' => './some-table.csv',
+                'destination' => $this->temp->getTmpFolder() . '/boo/some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
@@ -95,9 +116,10 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         $strategy = new Local(
             $this->clientWrapper,
             new NullLogger(),
-            new NullCapability(),
+            $this->getProvider(),
+            $this->getProvider(),
             new InputTableStateList([]),
-            '.'
+            'boo'
         );
         $tableOptions = new InputTableOptions(
             [
@@ -121,7 +143,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         self::assertEquals(
             [
                 'tableId' => 'in.c-input-mapping-test-strategy.test1',
-                'destination' => './some-table.csv',
+                'destination' => $this->temp->getTmpFolder() . '/boo/some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,

@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\InputOperationException;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\ABSWorkspace as FileABSWorkspace;
 use Keboola\InputMapping\File\Strategy\Local as FileLocal;
@@ -102,12 +103,12 @@ class StrategyFactory
     }
 
     /**
-     * @param CapabilityInterface $capability
-     * @param Fulfillment[] $fulfills
+     * @param ProviderInterface $provider
+     * @param Operation[] $operations
      */
-    public function addStagingCapability(CapabilityInterface $capability, $fulfills)
+    public function addProvider(ProviderInterface $provider, $operations)
     {
-        foreach ($fulfills as $stagingType => $fulfillment) {
+        foreach ($operations as $stagingType => $operation) {
             if (!isset($this->getStrategyMap()[$stagingType])) {
                 throw new StagingException(sprintf(
                     'Staging "%s" is unknown. Known types are "%s".',
@@ -116,22 +117,22 @@ class StrategyFactory
                 ));
             }
             $staging = $this->getStrategyMap()[$stagingType];
-            foreach ($fulfillment->getFulfillmentTypes() as $fulfillmentType) {
-                switch ($fulfillmentType) {
-                    case Fulfillment::TABLE_DATA:
-                        $staging->setTableDataCapability($capability);
+            foreach ($operation->getOperationTypes() as $operationTypes) {
+                switch ($operationTypes) {
+                    case Operation::TABLE_DATA:
+                        $staging->setTableDataProvider($provider);
                         break;
-                    case Fulfillment::TABLE_METADATA:
-                        $staging->setTableMetadataCapability($capability);
+                    case Operation::TABLE_METADATA:
+                        $staging->setTableMetadataProvider($provider);
                         break;
-                    case Fulfillment::FILE_DATA:
-                        $staging->setFileDataCapability($capability);
+                    case Operation::FILE_DATA:
+                        $staging->setFileDataProvider($provider);
                         break;
-                    case Fulfillment::FILE_METADATA:
-                        $staging->setFileMetadataCapability($capability);
+                    case Operation::FILE_METADATA:
+                        $staging->setFileMetadataProvider($provider);
                         break;
                     default:
-                        throw new StagingException(sprintf('Invalid fulfilment type: "%s". ', $fulfillmentType));
+                        throw new StagingException(sprintf('Invalid operation type: "%s". ', $operationTypes));
                 }
             }
         }
@@ -146,13 +147,21 @@ class StrategyFactory
     }
 
     /**
+     * @return ClientWrapper
+     */
+    public function getClientWrapper()
+    {
+        return $this->clientWrapper;
+    }
+
+    /**
      * @param string $stagingType
      * @return Definition
      */
     private function getStagingDefinition($stagingType)
     {
         if (!isset($this->getStrategyMap()[$stagingType])) {
-            throw new InputOperationException(
+            throw new InvalidInputException(
                 sprintf(
                     'Input mapping on type "%s" is not supported. Supported types are "%s".',
                     $stagingType,
@@ -176,8 +185,8 @@ class StrategyFactory
         return new $className(
             $this->clientWrapper,
             $this->logger,
-            $stagingDefinition->getFileDataCapability(),
-            $stagingDefinition->getFileMetadataCapability(),
+            $stagingDefinition->getFileDataProvider(),
+            $stagingDefinition->getFileMetadataProvider(),
             $this->format
         );
     }
@@ -191,16 +200,24 @@ class StrategyFactory
     public function getTableStrategy($stagingType, $destination, InputTableStateList $tablesState)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
-        $stagingDefinition->validateFor(Definition::STAGING_TABLE);
+        try {
+            $stagingDefinition->validateFor(Definition::STAGING_TABLE);
+        } catch (StagingException $e) {
+            throw new InvalidInputException(
+                sprintf('The project does not support "%s" backend.', $stagingDefinition->getName()),
+                0,
+                $e
+            );
+        }
         $this->getLogger()->info(sprintf('Using "%s" table staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getTableStagingClass();
         return new $className(
             $this->clientWrapper,
             $this->logger,
+            $stagingDefinition->getTableDataProvider(),
+            $stagingDefinition->getTableMetadataProvider(),
             $tablesState,
             $destination,
-            $stagingDefinition->getTableDataCapability(),
-            $stagingDefinition->getTableMetadataCapability(),
             $this->format
         );
     }

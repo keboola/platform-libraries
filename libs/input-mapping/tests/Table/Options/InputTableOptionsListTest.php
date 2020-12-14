@@ -4,8 +4,9 @@ namespace Keboola\InputMapping\Tests\Table\Options;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use PHPUnit\Framework\TestCase;
 
-class InputTableOptionsListTest extends \PHPUnit_Framework_TestCase
+class InputTableOptionsListTest extends TestCase
 {
     public function testGetTables()
     {

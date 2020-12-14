@@ -16,20 +16,20 @@ class Local extends AbstractStrategy implements StrategyInterface
     {
         if ($fileInfo['isSliced']) {
             $fs = new Filesystem();
-            $fs->mkdir($this->dataStorage->getPath() . $destinationPath);
+            $fs->mkdir($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath);
             $this->clientWrapper->getBasicClient()->downloadSlicedFile(
                 $fileInfo['id'],
-                $this->dataStorage->getPath() . $destinationPath
+                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         } else {
             $this->clientWrapper->getBasicClient()->downloadFile(
                 $fileInfo['id'],
-                $this->dataStorage->getPath() . $destinationPath
+                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         }
         $this->manifestWriter->writeFileManifest(
             $fileInfo,
-            $this->dataStorage->getPath() . $destinationPath . '.manifest'
+            $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath . '.manifest'
         );
     }
 }

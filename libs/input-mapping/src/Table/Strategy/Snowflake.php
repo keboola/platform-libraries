@@ -89,7 +89,7 @@ class Snowflake extends AbstractStrategy
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
             $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
             foreach ($workspaceTables as $table) {
-                $manifestPath = $this->metadataStorage->getPath() .
+                $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());

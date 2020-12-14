@@ -5,9 +5,10 @@ namespace Keboola\InputMapping\Tests\Table\Options;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class InputTableOptionsTest extends \PHPUnit_Framework_TestCase
+class InputTableOptionsTest extends TestCase
 {
 
     public function testGetSource()

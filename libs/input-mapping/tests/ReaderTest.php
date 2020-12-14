@@ -4,8 +4,9 @@ namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
@@ -13,12 +14,13 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-class ReaderTest extends \PHPUnit_Framework_TestCase
+class ReaderTest extends TestCase
 {
     /**
      * @var ClientWrapper
@@ -57,9 +59,36 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $this->temp = null;
     }
 
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockLocal = self::getMockBuilder(\Keboola\InputMapping\Staging\NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var \Keboola\InputMapping\Staging\ProviderInterface $mockLocal */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::LOCAL => new Operation([
+                    Operation::TABLE_DATA, Operation::TABLE_METADATA,
+                    Operation::FILE_DATA, Operation::FILE_METADATA
+                ])
+            ]
+        );
+        return $stagingFactory;
+    }
+
     public function testParentId()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $this->clientWrapper->getBasicClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
@@ -85,12 +114,12 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration1()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = null;
         $reader->downloadFiles(
             $configuration,
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            Reader::STAGING_LOCAL
+            'download',
+            StrategyFactory::LOCAL
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
@@ -100,14 +129,14 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration2()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = 'foobar';
         try {
             /** @noinspection PhpParamsInspection */
             $reader->downloadFiles(
                 $configuration,
-                $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-                Reader::STAGING_LOCAL
+                'download',
+                StrategyFactory::LOCAL
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
@@ -122,13 +151,13 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         // empty configuration, ignored
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            Reader::STAGING_LOCAL
+            'download',
+            StrategyFactory::LOCAL
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
@@ -138,14 +167,13 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfigurationNoQueryNoTagsNoSource()
     {
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configurations = [[]];
         try {
-            /** @noinspection PhpParamsInspection */
             $reader->downloadFiles(
                 $configurations,
-                $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-                Reader::STAGING_LOCAL
+                'download',
+                StrategyFactory::LOCAL
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
@@ -159,7 +187,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfigurationBothTagsAndSourceTags()
     {
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configurations = [
             [
                 'source' => [
@@ -175,11 +203,10 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
             ]
         ];
         try {
-            /** @noinspection PhpParamsInspection */
             $reader->downloadFiles(
                 $configurations,
-                $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-                Reader::STAGING_LOCAL
+                'download',
+                StrategyFactory::LOCAL
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
@@ -194,7 +221,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         $logger = new TestLogger();
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',
@@ -208,12 +235,12 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage(
-            'Parameter "storage" must be one of: s3, abs, local, workspace-redshift, workspace-snowflake'
+            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, workspace-abs,'
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
+            'download',
             'invalid'
         );
     }
@@ -261,7 +288,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $branchBucketId = $this->clientWrapper->getBasicClient()->createBucket(sprintf('%s-docker-test', $branchId), 'in');
         $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'test', $csvFile);
         $this->clientWrapper->setBranchId($branchId);
-        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',
@@ -277,8 +304,8 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $outState = $reader->downloadTables(
             $configuration,
             $state,
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
         self::assertContains(
             "\"foo\",\"bar\"\n\"1\",\"2\"",

@@ -3,8 +3,9 @@
 namespace Keboola\InputMapping\Tests\Helper;
 
 use Keboola\InputMapping\Helper\LoadTypeDecider;
+use PHPUnit\Framework\TestCase;
 
-class LoadTypeDeciderTest extends \PHPUnit_Framework_TestCase
+class LoadTypeDeciderTest extends TestCase
 {
     /**
      * @dataProvider decideProvider

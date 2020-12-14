@@ -5,8 +5,8 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
@@ -40,7 +40,7 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesS3DefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -55,8 +55,8 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
-            "s3"
+            'download',
+            StrategyFactory::S3
         );
 
         $adapter = new Adapter();
@@ -74,7 +74,7 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesABSUnsupportedBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -91,8 +91,8 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download",
-            'abs'
+            'download',
+            StrategyFactory::ABS
         );
     }
 }

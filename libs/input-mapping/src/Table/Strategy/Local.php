@@ -19,7 +19,7 @@ class Local extends AbstractStrategy
             $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];
         }
 
-        $file = $this->dataStorage->getPath() . $this->getDestinationFilePath($this->destination, $table);
+        $file = $this->ensurePathDelimiter($this->dataStorage->getPath()) . $this->getDestinationFilePath($this->destination, $table);
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
         if ($tableInfo['dataSizeBytes'] > $exportLimit) {
             throw new InvalidInputException(sprintf(
@@ -33,7 +33,7 @@ class Local extends AbstractStrategy
 
         $this->manifestWriter->writeTableManifest(
             $tableInfo,
-            $this->metadataStorage->getPath() .
+            $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . ".manifest",
             $table->getColumnNames()
         );

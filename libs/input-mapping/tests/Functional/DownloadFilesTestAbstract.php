@@ -2,13 +2,19 @@
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Operation;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
+class DownloadFilesTestAbstract extends TestCase
 {
     /** @var ClientWrapper */
     protected $clientWrapper;
@@ -58,5 +64,30 @@ class DownloadFilesTestAbstract extends \PHPUnit_Framework_TestCase
             $tokenInfo['owner']['id'],
             $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
+    }
+
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::LOCAL => new Operation([Operation::FILE_DATA, Operation::FILE_METADATA])
+            ]
+        );
+        return $stagingFactory;
     }
 }

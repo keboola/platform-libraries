@@ -4,8 +4,8 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
-use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApi\Client;
@@ -13,7 +13,6 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
 
 class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 {
@@ -79,7 +78,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -90,8 +89,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'local'
+            'download',
+            StrategyFactory::LOCAL
         );
 
         self::assertEquals(
@@ -110,7 +109,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -121,8 +120,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            'abs'
+            'download',
+            StrategyFactory::ABS
         );
         $adapter = new Adapter();
 
@@ -150,7 +149,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
+        $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.empty",
@@ -161,8 +160,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download',
-            Reader::STAGING_LOCAL
+            'download',
+            StrategyFactory::LOCAL
         );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);

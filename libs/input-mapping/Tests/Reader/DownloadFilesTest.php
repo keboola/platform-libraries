@@ -476,6 +476,42 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
     }
 
+    public function testInputMappingWithProcessedTagsIsRestrictedForBranch()
+    {
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
+
+        $reader = new Reader($clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+
+        $fileConfiguration = ['processed_tags' => ['downloaded']];
+
+        try {
+            $reader->downloadFiles([$fileConfiguration], $this->tmpDir . '/dummy', Reader::STAGING_LOCAL);
+            self::fail('Must throw exception');
+        } catch (InvalidInputException $e) {
+            self::assertSame("Invalid file mapping, 'processed_tags' attribute is restricted for dev/branch context.", $e->getMessage());
+        }
+
+        try {
+            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
+            self::fail('Must throw exception');
+        } catch (InvalidInputException $e) {
+            self::assertSame("Invalid file mapping, 'processed_tags' attribute is restricted for dev/branch context.", $e->getMessage());
+        }
+    }
+
     public function testReadFilesForBranch()
     {
         $clientWrapper = new ClientWrapper(

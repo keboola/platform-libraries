@@ -72,7 +72,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_ABS, 'abs']));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -115,10 +115,11 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 
         $this->assertBlobs($this->temp->getTmpFolder() . '/download/test3');
 
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Copying 3 tables to abs workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Copying 3 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing workspace export.'));
     }
 }

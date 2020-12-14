@@ -13,6 +13,7 @@ use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 class DownloadFilesTest extends DownloadFilesTestAbstract
@@ -315,6 +316,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $finder->files()->in($root . "/download")->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
+        $fs = new Filesystem();
+        $fs->remove($this->temp->getTmpFolder());
         $this->temp->initRunFolder();
         $reader = new Reader($this->getStagingFactory());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];

@@ -15,7 +15,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
     public function testTablesRedshiftBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',

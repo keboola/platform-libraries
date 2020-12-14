@@ -67,35 +67,21 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         parent::tearDown();
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
     {
         $stagingFactory = new StrategyFactory(
             $clientWrapper ? $clientWrapper : $this->clientWrapper,
             $logger ? $logger : new NullLogger(),
             $format
         );
-        $mockWorkspaceSnowflake = self::getMockBuilder(NullProvider::class)
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
-        $mockWorkspaceSnowflake->method('getWorkspaceId')->willReturnCallback(
-            function () {
+        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
+            function () use ($backend) {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => 'snowflake']);
-                    $this->workspaceId = $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceId;
-            }
-        );
-        $mockWorkspaceRedshift = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId'])
-            ->getMock();
-        $mockWorkspaceRedshift->method('getWorkspaceId')->willReturnCallback(
-            function () {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => 'redshift']);
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
                 }
@@ -111,26 +97,17 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
             }
         );
         /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspaceRedshift */
-        /** @var ProviderInterface $mockWorkspaceSnowflake */
+        /** @var ProviderInterface $mockWorkspace */
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Operation([Operation::TABLE_DATA, Operation::TABLE_METADATA]),
-                StrategyFactory::WORKSPACE_SNOWFLAKE => new Operation([Operation::TABLE_METADATA]),
-                StrategyFactory::WORKSPACE_REDSHIFT => new Operation([Operation::TABLE_METADATA]),
+                $backend[0] => new Operation([Operation::TABLE_METADATA]),
             ]
         );
         $stagingFactory->addProvider(
-            $mockWorkspaceSnowflake,
+            $mockWorkspace,
             [
-                StrategyFactory::WORKSPACE_SNOWFLAKE => new Operation([Operation::TABLE_DATA])
-            ]
-        );
-        $stagingFactory->addProvider(
-            $mockWorkspaceRedshift,
-            [
-                StrategyFactory::WORKSPACE_REDSHIFT => new Operation([Operation::TABLE_DATA])
+                $backend[0] => new Operation([Operation::TABLE_DATA])
             ]
         );
         return $stagingFactory;

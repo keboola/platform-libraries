@@ -57,59 +57,13 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         ));
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
-    {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
-            $logger ? $logger : new NullLogger(),
-            $format
-        );
-        $mockWorkspaceSynapse = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId'])
-            ->getMock();
-        $mockWorkspaceSynapse->method('getWorkspaceId')->willReturnCallback(
-            function () {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => 'synapse']);
-                    $this->workspaceId = $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceId;
-            }
-        );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            }
-        );
-        /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspaceSynapse */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                StrategyFactory::WORKSPACE_SYNAPSE => new Operation([Operation::TABLE_METADATA]),
-            ]
-        );
-        $stagingFactory->addProvider(
-            $mockWorkspaceSynapse,
-            [
-                StrategyFactory::WORKSPACE_SYNAPSE => new Operation([Operation::TABLE_DATA])
-            ]
-        );
-        return $stagingFactory;
-    }
-
     public function testTablesSynapseBackend()
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SYNAPSE, 'synapse']));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',

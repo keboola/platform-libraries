@@ -3,12 +3,9 @@
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
-use Keboola\InputMapping\WorkspaceProviderInterface;
 
 class ABSWorkspace extends AbstractStrategy
 {
-    protected $workspaceProviderId = WorkspaceProviderInterface::TYPE_ABS;
-
     public function downloadTable(InputTableOptions $table)
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
@@ -22,6 +19,7 @@ class ABSWorkspace extends AbstractStrategy
     public function handleExports($exports)
     {
         $copyInputs = [];
+        $workspaceTables = [];
 
         foreach ($exports as $export) {
             list ($table, $exportOptions) = $export['table'];
@@ -36,10 +34,10 @@ class ABSWorkspace extends AbstractStrategy
             $workspaceTables[] = $table;
         }
         $this->logger->info(
-            sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
+            sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
         $job = $this->clientWrapper->getBasicClient()->apiPost(
-            'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+            'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
             [
                 'input' => $copyInputs,
                 'preserve' => 1,
@@ -52,7 +50,8 @@ class ABSWorkspace extends AbstractStrategy
             $this->logger->info('Processing workspace export.');
             $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
-                $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $manifestPath = $this->metadataStorage->getPath() .
+                    $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }

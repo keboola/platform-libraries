@@ -3,8 +3,8 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullWorkspaceProvider;
-use Keboola\InputMapping\WorkspaceProviderInterface;
+use Keboola\InputMapping\NullCapability;
+use Keboola\InputMapping\CapabilityInterface;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
@@ -66,7 +66,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
 
     protected function getWorkspaceProvider()
     {
-        $mock = self::getMockBuilder(NullWorkspaceProvider::class)
+        $mock = self::getMockBuilder(NullCapability::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
         $mock->method('getWorkspaceId')->willReturnCallback(
@@ -80,7 +80,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
                 return $this->workspaceId;
             }
         );
-        /** @var WorkspaceProviderInterface $mock */
+        /** @var CapabilityInterface $mock */
         return $mock;
     }
 }

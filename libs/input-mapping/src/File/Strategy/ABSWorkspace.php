@@ -3,14 +3,11 @@
 namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\InputMapping\WorkspaceProviderInterface;
 use Keboola\StorageApi\Workspaces;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ABSWorkspace extends AbstractStrategy implements StrategyInterface
 {
-    protected $workspaceType = WorkspaceProviderInterface::TYPE_ABS;
-
     protected $inputs = [];
 
     public function downloadFile($fileInfo, $destinationPath)
@@ -19,19 +16,18 @@ class ABSWorkspace extends AbstractStrategy implements StrategyInterface
             'dataFileId' => $fileInfo['id'],
             'destination' => $destinationPath,
         ];
-        $this->manifestWriter->writeFileManifest($fileInfo, $destinationPath . ".manifest");
+        $this->manifestWriter->writeFileManifest(
+            $fileInfo,
+            $this->metadataStorage->getPath() . $destinationPath . '.manifest'
+        );
     }
 
     public function downloadFiles($fileConfigurations, $destination)
     {
-        // Need to make the local destination dir to store manifests
-        $fs = new Filesystem();
-        $fs->mkdir($destination);
-
         parent::downloadFiles($fileConfigurations, $destination);
         if (!empty($this->inputs)) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-            $workspaceId = $this->workspaceProvider->getWorkspaceId($this->workspaceType);
+            $workspaceId = $this->dataStorage->getWorkspaceId();
             $workspaces->loadWorkspaceData($workspaceId, [
                 'input' => $this->inputs,
             ]);

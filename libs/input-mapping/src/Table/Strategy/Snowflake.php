@@ -4,12 +4,9 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
-use Keboola\InputMapping\WorkspaceProviderInterface;
 
 class Snowflake extends AbstractStrategy
 {
-    protected $workspaceProviderId = WorkspaceProviderInterface::TYPE_SNOWFLAKE;
-
     public function downloadTable(InputTableOptions $table)
     {
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
@@ -60,10 +57,10 @@ class Snowflake extends AbstractStrategy
         $workspaceJobs = [];
         if ($cloneInputs) {
             $this->logger->info(
-                sprintf('Cloning %s tables to %s workspace.', count($cloneInputs), $this->workspaceProviderId)
+                sprintf('Cloning %s tables to workspace.', count($cloneInputs))
             );
             $job = $this->clientWrapper->getBasicClient()->apiPost(
-                'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load-clone',
+                'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load-clone',
                 [
                     'input' => $cloneInputs,
                     'preserve' => 1,
@@ -75,10 +72,10 @@ class Snowflake extends AbstractStrategy
 
         if ($copyInputs) {
             $this->logger->info(
-                sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
+                sprintf('Copying %s tables to workspace.', count($copyInputs))
             );
             $job = $this->clientWrapper->getBasicClient()->apiPost(
-                'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+                'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
                 [
                     'input' => $copyInputs,
                     'preserve' => 1,
@@ -92,7 +89,8 @@ class Snowflake extends AbstractStrategy
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
             $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
             foreach ($workspaceTables as $table) {
-                $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $manifestPath = $this->metadataStorage->getPath() .
+                    $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }

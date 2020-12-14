@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -48,7 +48,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesDefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -90,7 +90,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyDaysFilter()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -114,7 +114,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTablesEmptyChangedSinceFilter()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -157,7 +157,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $metadata->postColumnMetadata('in.c-input-mapping-test-default.test.Name', 'dataLoaderTest', $columnMetadata);
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -216,7 +216,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         ];
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source_search" => [
@@ -283,7 +283,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
                 ]
             ]
         );
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -345,7 +345,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
     public function testReadTableColumnsDataTypes()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",
@@ -404,7 +404,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $clientWrapper = new ClientWrapper($client, null, null);
         $clientWrapper->setBranchId('');
         $logger = new TestLogger();
-        $reader = new Reader($clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-input-mapping-test-default.test",

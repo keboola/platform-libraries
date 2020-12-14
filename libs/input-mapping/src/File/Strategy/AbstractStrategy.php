@@ -7,7 +7,7 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Helper\ManifestWriter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\WorkspaceProviderInterface;
+use Keboola\InputMapping\Staging\CapabilityInterface;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -20,7 +20,7 @@ abstract class AbstractStrategy implements StrategyInterface
     /** LoggerInterface */
     protected $logger;
 
-    /** @var WorkspaceProviderInterface */
+    /** @var CapabilityInterface */
     protected $workspaceProvider;
 
     /** string */
@@ -29,18 +29,26 @@ abstract class AbstractStrategy implements StrategyInterface
     /** @var ManifestWriter */
     protected $manifestWriter;
 
+    /** @var CapabilityInterface */
+    protected $dataStorage;
+
+    /** @var CapabilityInterface */
+    protected $metadataStorage;
+
     public function __construct(
         ClientWrapper $storageClient,
         LoggerInterface $logger,
-        WorkspaceProviderInterface $workspaceProvider,
+        CapabilityInterface $dataStorage,
+        CapabilityInterface $metadataStorage,
         $destination,
         $format = 'json'
     ) {
         $this->clientWrapper = $storageClient;
         $this->logger = $logger;
-        $this->workspaceProvider = $workspaceProvider;
         $this->destination = $destination;
         $this->manifestWriter = new ManifestWriter($this->clientWrapper->getBasicClient(), $format);
+        $this->dataStorage = $dataStorage;
+        $this->metadataStorage = $metadataStorage;
     }
 
     /**

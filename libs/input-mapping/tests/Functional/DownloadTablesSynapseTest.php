@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -79,7 +79,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -110,7 +110,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.test",
@@ -150,7 +150,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test-synapse.empty",

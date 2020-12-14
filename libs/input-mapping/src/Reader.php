@@ -3,14 +3,13 @@
 namespace Keboola\InputMapping;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\File\StrategyFactory as FileStrategyFactory;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\ManifestWriter;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
-use Keboola\InputMapping\Table\StrategyFactory as TableStrategyFactory;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
@@ -20,45 +19,37 @@ use Psr\Log\LoggerInterface;
 
 class Reader
 {
-    const STAGING_S3 = 's3';
-    const STAGING_ABS = 'abs';
-    const STAGING_LOCAL = 'local';
-    const STAGING_SNOWFLAKE = 'workspace-snowflake';
-    const STAGING_REDSHIFT = 'workspace-redshift';
-    const STAGING_SYNAPSE = 'workspace-synapse';
-    const STAGING_ABS_WORKSPACE = 'workspace-abs';
-
     /**
      * @var ClientWrapper
      */
     protected $clientWrapper;
+
     /**
      * @var
      */
     protected $format = 'json';
+
     /**
      * @var LoggerInterface
      */
     private $logger;
 
     /**
-     * @var WorkspaceProviderInterface
+     * @var StrategyFactory
      */
-    private $workspaceProvider;
+    private $strategyFactory;
 
     /**
      * @param ClientWrapper $clientWrapper
-     * @param LoggerInterface $logger
-     * @param WorkspaceProviderInterface $workspaceProvider
+     * @param StrategyFactory $strategyFactory
      */
     public function __construct(
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger,
-        WorkspaceProviderInterface $workspaceProvider
+        StrategyFactory $strategyFactory
     ) {
-        $this->logger = $logger;
+        $this->logger = $strategyFactory->getLogger();
         $this->clientWrapper = $clientWrapper;
-        $this->workspaceProvider = $workspaceProvider;
+        $this->strategyFactory = $strategyFactory;
     }
 
     /**
@@ -91,31 +82,24 @@ class Reader
     /**
      * @param $configuration array
      * @param $destination string Destination directory
-     * @param $storage string
+     * @param $stagingType string
      */
-    public function downloadFiles($configuration, $destination, $storage)
+    public function downloadFiles($configuration, $destination, $stagingType)
     {
-        $strategyFactory = new FileStrategyFactory(
-            $this->clientWrapper,
-            $this->logger,
-            $this->workspaceProvider,
-            $destination,
-            $this->format
-        );
-        $strategy = $strategyFactory->getStrategy($storage);
+        $strategy = $this->strategyFactory->getFileStrategy($stagingType);
         if (!$configuration) {
             return;
         } elseif (!is_array($configuration)) {
             throw new InvalidInputException("File download configuration is not an array.");
         }
-        return $strategy->downloadFiles($configuration, $destination);
+        $strategy->downloadFiles($configuration, $destination);
     }
 
     /**
      * @param InputTableOptionsList $tablesDefinition list of input mappings
      * @param InputTableStateList $tablesState list of input mapping states
      * @param string $destination destination folder
-     * @param string $storage
+     * @param string $stagingType
      * @return InputTableStateList
      * @throws ClientException
      * @throws Exception
@@ -124,7 +108,7 @@ class Reader
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
         $destination,
-        $storage
+        $stagingType
     ) {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
@@ -132,16 +116,8 @@ class Reader
             $this->clientWrapper,
             $this->logger
         );
-        $strategyFactory = new TableStrategyFactory(
-            $this->clientWrapper,
-            $this->logger,
-            $this->workspaceProvider,
-            $tablesState,
-            $destination
-        );
-
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
-        $strategy = $strategyFactory->getStrategy($storage);
+        $strategy = $this->strategyFactory->getTableStrategy($stagingType, $destination, $tablesState);
         $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsDestinations(
             $tablesDefinition,
             $this->clientWrapper,
@@ -188,7 +164,9 @@ class Reader
         $storageClient = $clientWrapper->getBasicClient();
 
         if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
-            throw new InvalidInputException("Invalid file mapping, 'query' attribute is restricted for dev/branch context.");
+            throw new InvalidInputException(
+                "Invalid file mapping, 'query' attribute is restricted for dev/branch context."
+            );
         }
 
         if (isset($fileConfiguration["processed_tags"]) && $clientWrapper->hasBranch()) {
@@ -196,7 +174,9 @@ class Reader
         }
 
         $options = new ListFilesOptions();
-        if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query']) && empty($fileConfiguration['source']['tags'])) {
+        if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])
+            && empty($fileConfiguration['source']['tags'])
+        ) {
             throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are empty.");
         }
         if (!empty($fileConfiguration['tags']) && !empty($fileConfiguration['source']['tags'])) {

@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -59,7 +59,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
 
     public function testParentId()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $this->clientWrapper->getBasicClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
@@ -85,7 +85,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration1()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = null;
         $reader->downloadFiles(
             $configuration,
@@ -100,7 +100,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfiguration2()
     {
         // empty configuration, ignored
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = 'foobar';
         try {
             /** @noinspection PhpParamsInspection */
@@ -122,7 +122,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         // empty configuration, ignored
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
@@ -138,7 +138,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfigurationNoQueryNoTagsNoSource()
     {
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configurations = [[]];
         try {
             /** @noinspection PhpParamsInspection */
@@ -159,7 +159,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     public function testReadInvalidConfigurationBothTagsAndSourceTags()
     {
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configurations = [
             [
                 'source' => [
@@ -194,7 +194,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         $logger = new TestLogger();
         $this->clientWrapper->setBranchId('');
-        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',
@@ -261,7 +261,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $branchBucketId = $this->clientWrapper->getBasicClient()->createBucket(sprintf('%s-docker-test', $branchId), 'in');
         $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'test', $csvFile);
         $this->clientWrapper->setBranchId($branchId);
-        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',

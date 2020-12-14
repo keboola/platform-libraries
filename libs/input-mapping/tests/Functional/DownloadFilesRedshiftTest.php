@@ -4,7 +4,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\StorageApi\Client;
 use Psr\Log\NullLogger;
@@ -31,7 +31,7 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         $table = $this->clientWrapper->getBasicClient()->exportTableAsync('in.c-docker-test-redshift.test_file');
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";

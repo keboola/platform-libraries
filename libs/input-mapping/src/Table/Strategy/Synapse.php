@@ -3,13 +3,9 @@
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
-use Keboola\InputMapping\WorkspaceProviderInterface;
 
 class Synapse extends AbstractStrategy
 {
-
-    protected $workspaceProviderId = WorkspaceProviderInterface::TYPE_SYNAPSE;
-
     public function downloadTable(InputTableOptions $table)
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
@@ -22,6 +18,9 @@ class Synapse extends AbstractStrategy
 
     public function handleExports($exports)
     {
+        $copyInputs = [];
+        $workspaceTables = [];
+
         foreach ($exports as $export) {
             /** @var InputTableOptions $table */
             list ($table, $exportOptions) = $export['table'];
@@ -36,10 +35,10 @@ class Synapse extends AbstractStrategy
         }
         $workspaceJobs = [];
         $this->logger->info(
-            sprintf('Copying %s tables to %s workspace.', count($copyInputs), $this->workspaceProviderId)
+            sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
         $job = $this->clientWrapper->getBasicClient()->apiPost(
-            'workspaces/' . $this->workspaceProvider->getWorkspaceId($this->workspaceProviderId) . '/load',
+            'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
             [
                 'input' => $copyInputs,
                 'preserve' => 1,
@@ -52,7 +51,8 @@ class Synapse extends AbstractStrategy
             $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
             $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
             foreach ($workspaceTables as $table) {
-                $manifestPath = $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $manifestPath = $this->metadataStorage->getPath() .
+                    $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }

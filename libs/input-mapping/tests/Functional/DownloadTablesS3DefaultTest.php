@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -40,7 +40,7 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesS3DefaultBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",
@@ -74,7 +74,7 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
     public function testReadTablesABSUnsupportedBackend()
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->clientWrapper, $logger, new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, $logger, new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",

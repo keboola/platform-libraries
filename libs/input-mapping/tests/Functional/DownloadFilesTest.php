@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
@@ -35,7 +35,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
@@ -66,7 +66,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -98,7 +98,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
 
         $file1 = new FileUploadOptions();
         $file1->setTags(["tag-1"]);
@@ -189,7 +189,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         ];
 
         $testLogger = new TestLogger();
-        $reader = new Reader($clientWrapper, $testLogger, new NullWorkspaceProvider());
+        $reader = new Reader($clientWrapper, $testLogger, new NullCapability());
         $reader->downloadFiles($configuration, $root . '/download', Reader::STAGING_LOCAL);
 
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -212,7 +212,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
 
         $file1 = new FileUploadOptions();
         $file1->setTags(["tag-1", "tag-2"]);
@@ -253,7 +253,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $fo = new FileUploadOptions();
         $fo->setTags(["download-files-test"]);
 
@@ -296,12 +296,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [];
         $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
 
         // invalid configuration
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [[]];
         try {
             $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
@@ -309,7 +309,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
         $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
         $finder = new Finder();
@@ -318,7 +318,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $tmpDir = new Temp('file-test');
         $tmpDir->initRunFolder();
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
         $reader->downloadFiles($configuration, $tmpDir->getTmpFolder() . "/download", Reader::STAGING_LOCAL);
         $finder = new Finder();
@@ -353,7 +353,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(2);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
@@ -389,7 +389,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
@@ -423,7 +423,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $reader->setFormat('yaml');
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, $root . "/download", Reader::STAGING_LOCAL);
@@ -457,7 +457,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
 
-        $reader = new Reader($clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($clientWrapper, new NullLogger(), new NullCapability());
 
         $fileConfiguration = ['query' => 'tags: download-files-test'];
 
@@ -547,7 +547,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
 
         $testLogger = new TestLogger();
-        $reader = new Reader($clientWrapper, $testLogger, new NullWorkspaceProvider());
+        $reader = new Reader($clientWrapper, $testLogger, new NullCapability());
 
         $configuration = [['tags' => ['testReadFilesForBranch']]];
         $reader->downloadFiles($configuration, $root . '/download', Reader::STAGING_LOCAL);

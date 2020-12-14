@@ -3,13 +3,13 @@
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 
-class NullWorkspaceProviderTest extends \PHPUnit_Framework_TestCase
+class NullStagingCapabilityTest extends \PHPUnit_Framework_TestCase
 {
     public function testProvideSnowflakeWorkspace()
     {
-        $provider = new NullWorkspaceProvider();
+        $provider = new NullCapability();
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('Workspace "snowflake" is not available.');
         $provider->getWorkspaceId('snowflake');
@@ -17,7 +17,7 @@ class NullWorkspaceProviderTest extends \PHPUnit_Framework_TestCase
 
     public function testProvideSnowflakeWorkspaceCredentials()
     {
-        $provider = new NullWorkspaceProvider();
+        $provider = new NullCapability();
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('Workspace "snowflake" is not available.');
         $provider->getWorkspaceId('snowflake');

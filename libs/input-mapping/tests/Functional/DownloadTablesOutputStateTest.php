@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -37,7 +37,7 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
 
     public function testDownloadTablesReturnsAllTablesTimestamps()
     {
-        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->clientWrapper, new NullLogger(), new NullCapability());
         $configuration = new InputTableOptionsList([
             [
                 "source" => "in.c-docker-test.test",

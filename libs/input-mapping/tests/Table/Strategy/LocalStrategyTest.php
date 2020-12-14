@@ -3,7 +3,7 @@
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\NullCapability;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
@@ -65,7 +65,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         $strategy = new Local(
             $this->clientWrapper,
             new NullLogger(),
-            new NullWorkspaceProvider(),
+            new NullCapability(),
             new InputTableStateList([]),
             '.'
         );
@@ -95,7 +95,7 @@ class LocalStrategyTest extends PHPUnit_Framework_TestCase
         $strategy = new Local(
             $this->clientWrapper,
             new NullLogger(),
-            new NullWorkspaceProvider(),
+            new NullCapability(),
             new InputTableStateList([]),
             '.'
         );

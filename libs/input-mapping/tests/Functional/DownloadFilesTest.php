@@ -496,12 +496,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
 
-        $reader = new Reader($clientWrapper, new NullLogger(), new NullWorkspaceProvider());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
 
         $fileConfiguration = ['processed_tags' => ['downloaded']];
 
         try {
-            $reader->downloadFiles([$fileConfiguration], $this->tmpDir . '/dummy', Reader::STAGING_LOCAL);
+            $reader->downloadFiles([$fileConfiguration], $this->tmpDir . '/dummy', StrategyFactory::LOCAL);
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
             self::assertSame("Invalid file mapping, 'processed_tags' attribute is restricted for dev/branch context.", $e->getMessage());

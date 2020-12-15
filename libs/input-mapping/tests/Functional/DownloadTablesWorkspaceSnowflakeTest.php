@@ -88,6 +88,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
+        sleep(2);
         $jobs = $this->clientWrapper->getBasicClient()->listJobs(['limit' => 10]);
         $params = null;
         foreach ($jobs as $job) {

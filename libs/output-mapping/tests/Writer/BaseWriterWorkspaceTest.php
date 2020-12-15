@@ -3,8 +3,8 @@
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
+use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\InputMapping\WorkspaceProviderInterface;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;
 

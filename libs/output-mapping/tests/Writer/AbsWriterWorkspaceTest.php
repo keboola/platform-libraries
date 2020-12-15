@@ -2,17 +2,10 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
-use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest

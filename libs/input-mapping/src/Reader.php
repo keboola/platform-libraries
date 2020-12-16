@@ -52,7 +52,7 @@ class Reader
      */
     public function downloadFiles($configuration, $destination, $stagingType)
     {
-        $strategy = $this->strategyFactory->getFileStrategy($stagingType);
+        $strategy = $this->strategyFactory->getFileInputStrategy($stagingType);
         if (!$configuration) {
             return;
         } elseif (!is_array($configuration)) {
@@ -83,7 +83,7 @@ class Reader
             $this->logger
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
-        $strategy = $this->strategyFactory->getTableStrategy($stagingType, $destination, $tablesState);
+        $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
         $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsDestinations(
             $tablesDefinition,
             $this->clientWrapper,

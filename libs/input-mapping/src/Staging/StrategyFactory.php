@@ -30,16 +30,16 @@ class StrategyFactory
     const WORKSPACE_SYNAPSE = 'workspace-synapse';
 
     /** @var Definition[] */
-    private $strategyMap;
+    protected $strategyMap;
 
     /** @var ClientWrapper */
-    private $clientWrapper;
+    protected $clientWrapper;
 
     /** LoggerInterface */
-    private $logger;
+    protected $logger;
 
     /** @var string */
-    private $format;
+    protected $format;
 
     /**
      * StagingStrategyFactory constructor.
@@ -157,7 +157,7 @@ class StrategyFactory
      * @param string $stagingType
      * @return Definition
      */
-    private function getStagingDefinition($stagingType)
+    protected function getStagingDefinition($stagingType)
     {
         if (!isset($this->getStrategyMap()[$stagingType])) {
             throw new InvalidInputException(
@@ -175,19 +175,19 @@ class StrategyFactory
      * @param string $stagingType
      * @return FileStrategyInterface
      */
-    public function getFileStrategy($stagingType)
+    public function getFileInputStrategy($stagingType)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
             $stagingDefinition->validateFor(Definition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
-                sprintf('The project does not support "%s" file backend.', $stagingDefinition->getName()),
+                sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
                 0,
                 $e
             );
         }
-        $this->getLogger()->info(sprintf('Using "%s" file staging.', $stagingDefinition->getName()));
+        $this->getLogger()->info(sprintf('Using "%s" file output staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getFileStagingClass();
         return new $className(
             $this->clientWrapper,
@@ -204,19 +204,19 @@ class StrategyFactory
      * @param InputTableStateList $tablesState
      * @return TableStrategyInterface
      */
-    public function getTableStrategy($stagingType, $destination, InputTableStateList $tablesState)
+    public function getTableInputStrategy($stagingType, $destination, InputTableStateList $tablesState)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
             $stagingDefinition->validateFor(Definition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
-                sprintf('The project does not support "%s" table backend.', $stagingDefinition->getName()),
+                sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),
                 0,
                 $e
             );
         }
-        $this->getLogger()->info(sprintf('Using "%s" table staging.', $stagingDefinition->getName()));
+        $this->getLogger()->info(sprintf('Using "%s" table output staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getTableStagingClass();
         return new $className(
             $this->clientWrapper,

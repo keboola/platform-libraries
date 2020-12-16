@@ -115,7 +115,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 
         $this->assertBlobs($this->temp->getTmpFolder() . '/download/test3');
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table output staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));

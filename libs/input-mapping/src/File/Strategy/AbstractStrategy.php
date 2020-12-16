@@ -17,13 +17,10 @@ abstract class AbstractStrategy implements StrategyInterface
     /** @var ClientWrapper */
     protected $clientWrapper;
 
-    /** LoggerInterface */
+    /** @var LoggerInterface */
     protected $logger;
 
-    /** @var ProviderInterface */
-    protected $workspaceProvider;
-
-    /** string */
+    /** @var string */
     protected $destination;
 
     /** @var ManifestWriter */

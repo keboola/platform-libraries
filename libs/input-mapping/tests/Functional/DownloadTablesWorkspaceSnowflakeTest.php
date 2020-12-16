@@ -80,7 +80,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
         }
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table output staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be cloned.'));
@@ -169,7 +169,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table output staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
@@ -253,7 +253,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table output staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
@@ -291,7 +291,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         } catch (ClientException $e) {
             self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
         }
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table output staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Cloning 1 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));

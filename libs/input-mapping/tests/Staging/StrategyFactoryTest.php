@@ -48,8 +48,8 @@ class StrategyFactoryTest extends TestCase
             'json'
         );
         self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" file backend.');
-        $factory->getFileStrategy(StrategyFactory::LOCAL);
+        self::expectExceptionMessage('The project does not support "local" file output backend.');
+        $factory->getFileInputStrategy(StrategyFactory::LOCAL);
     }
 
     public function testGetFileStrategySuccess()
@@ -67,7 +67,7 @@ class StrategyFactoryTest extends TestCase
         $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]);
         self::assertInstanceOf(
             LocalFile::class,
-            $factory->getFileStrategy(StrategyFactory::LOCAL)
+            $factory->getFileInputStrategy(StrategyFactory::LOCAL)
         );
     }
 
@@ -84,8 +84,8 @@ class StrategyFactoryTest extends TestCase
             'json'
         );
         self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" table backend.');
-        $factory->getTableStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]));
+        self::expectExceptionMessage('The project does not support "local" table output backend.');
+        $factory->getTableInputStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]));
     }
 
     public function testGetTableStrategySuccess()
@@ -103,7 +103,7 @@ class StrategyFactoryTest extends TestCase
         $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
         self::assertInstanceOf(
             LocalTable::class,
-            $factory->getTableStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]))
+            $factory->getTableInputStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]))
         );
     }
 
@@ -138,6 +138,6 @@ class StrategyFactoryTest extends TestCase
         );
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('Input mapping on type "invalid" is not supported. Supported types are "abs, local,');
-        $factory->getTableStrategy('invalid', 'test', new InputTableStateList([]));
+        $factory->getTableInputStrategy('invalid', 'test', new InputTableStateList([]));
     }
 }

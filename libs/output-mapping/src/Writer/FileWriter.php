@@ -2,11 +2,9 @@
 
 namespace Keboola\OutputMapping\Writer;
 
-use Exception;
 use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\File\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
 use Keboola\StorageApi\ClientException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -22,13 +20,7 @@ class FileWriter extends AbstractWriter
      */
     public function uploadFiles($source, $configuration, $storage)
     {
-        $strategyFactory = new StrategyFactory(
-            $this->clientWrapper,
-            $this->logger,
-            $this->workspaceProvider,
-            $this->format
-        );
-        $strategy = $strategyFactory->getStrategy($storage);
+        $strategy = $this->strategyFactory->getFileOutputStrategy($storage);
         $files = $strategy->listFiles($source);
         $manifests = $strategy->listManifests($source);
 

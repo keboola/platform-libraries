@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
 use Exception;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -34,11 +34,12 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
-        WorkspaceProviderInterface $workspaceProvider,
+        ProviderInterface $dataStorage,
+        ProviderInterface $metadataStorage,
         $format
     ) {
-        parent::__construct($clientWrapper, $logger, $workspaceProvider, $format);
-        $credentials = $this->workspaceProvider->getCredentials(WorkspaceProviderInterface::TYPE_ABS);
+        parent::__construct($clientWrapper, $logger, $dataStorage, $metadataStorage, $format);
+        $credentials = $this->dataStorage->getCredentials();
         if (empty($credentials['connectionString']) || empty($credentials['container'])) {
             throw new OutputOperationException(
                 'Invalid credentials received: ' . implode(', ', array_keys($credentials))

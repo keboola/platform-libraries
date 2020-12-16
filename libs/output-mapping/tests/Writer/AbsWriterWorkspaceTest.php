@@ -2,10 +2,16 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Scope;
+use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
+use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Exception;
-use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApi\Workspaces;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\NullLogger;
 
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
@@ -32,8 +38,70 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId', 'getCredentials'])
+            ->getMock();
+        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
+            function () use ($backend) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $workspace;
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mockWorkspace->method('getCredentials')->willReturnCallback(
+            function () use ($backend) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $workspace;
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceCredentials;
+            }
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->tmp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspace */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspace,
+            [
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA])
+            ]
+        );
+        return $stagingFactory;
+    }
+
     public function testAbsTableOutputMapping()
     {
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('abs');
 
@@ -61,8 +129,8 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 ['columns' => ['Id2', 'Name2']]
             )
         );
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
 
+        $writer = new TableWriter($factory);
         $tableQueue = $writer->uploadTables(
             $root,
             ['mapping' => $configs],
@@ -100,41 +168,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // 1a has only the id column
         $this->assertEquals(['"id"', '"test"'], $rows);
     }
-
-    protected function getWorkspaceProvider($workspaceData = [])
-    {
-        $mock = self::getMockBuilder(NullWorkspaceProvider::class)
-            ->setMethods(['getCredentials', 'getWorkspaceId'])
-            ->getMock();
-        $mock->method('getCredentials')->willReturnCallback(
-            function ($type) use ($workspaceData) {
-                if (!$this->workspace) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
-                    $this->workspace = $workspaceData ? $workspaceData : $workspace;
-                }
-                return $this->workspace['connection'];
-            }
-        );
-        $mock->method('getWorkspaceId')->willReturnCallback(
-            function ($type) use ($workspaceData) {
-                if (!$this->workspace) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
-                    $this->workspace = $workspaceData ? $workspaceData : $workspace;
-                }
-                return $this->workspace['id'];
-            }
-        );
-        /** @var WorkspaceProviderInterface $mock */
-        return $mock;
-    }
     
     public function testWriteBasicFiles()
     {
-        $workspaceProvider = $this->getWorkspaceProvider();
-        $workspaceProvider->getCredentials('abs'); //initializes $this->workspace
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getFileOutputStrategy(StrategyFactory::WORKSPACE_ABS);
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
         $blobClient->createBlockBlob(
@@ -164,9 +204,8 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             ]
         ];
 
-        $writer = new FileWriter($this->clientWrapper, new NullLogger(), $workspaceProvider);
-
-        $writer->uploadFiles('/upload', ['mapping' => $configs], Reader::STAGING_ABS_WORKSPACE);
+        $writer = new FileWriter($factory);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::WORKSPACE_ABS);
         sleep(1);
 
         $options = new ListFilesOptions();

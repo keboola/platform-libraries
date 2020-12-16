@@ -3,43 +3,87 @@
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullWorkspaceProvider;
-use Keboola\InputMapping\WorkspaceProviderInterface;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Scope;
+use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;
+use Psr\Log\NullLogger;
 
 abstract class BaseWriterWorkspaceTest extends BaseWriterTest
 {
     /** @var string */
     protected $workspaceId;
 
+    /** @var array */
+    protected $workspaceCredentials;
+
+    /** @var array */
+    protected $workspace;
+
     public function tearDown()
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-            $workspaces->deleteWorkspace($this->workspaceId);
+            try {
+                $workspaces->deleteWorkspace($this->workspaceId);
+            } catch (ClientException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
+            }
             $this->workspaceId = null;
         }
         parent::tearDown();
     }
 
-    protected function getWorkspaceProvider()
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
     {
-        $mock = self::getMockBuilder(NullWorkspaceProvider::class)
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
-        $mock->method('getWorkspaceId')->willReturnCallback(
-            function ($type) {
+        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
+            function () use ($backend) {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $type]);
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
                     $this->workspaceId = $workspace['id'];
+                    $this->workspace = $workspace;
+                    $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceId;
             }
         );
-        /** @var WorkspaceProviderInterface $mock */
-        return $mock;
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->tmp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspace */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                $backend[0] => new Scope([Scope::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspace,
+            [
+                $backend[0] => new Scope([Scope::TABLE_DATA])
+            ]
+        );
+        return $stagingFactory;
     }
 
     protected function prepareWorkspaceWithTables($type)
@@ -66,9 +110,8 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $this->clientWrapper->getBasicClient()->createTable('in.c-output-mapping-test', 'table2a', $csv2a);
 
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-        $workspaceProvider = $this->getWorkspaceProvider();
         $workspaces->loadWorkspaceData(
-            $workspaceProvider->getWorkspaceId($type),
+            $this->workspaceId,
             [
                 'input' => [
                     [

@@ -5,9 +5,10 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Psr\Log\NullLogger;
+use Keboola\StorageApi\TableExporter;
 
 class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -32,6 +33,9 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testSynapseTableOutputMapping()
     {
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SYNAPSE, 'synapse']);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SYNAPSE)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('synapse');
         // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
@@ -58,13 +62,13 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 ['columns' => ['Id2', 'Name2']]
             )
         );
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
+        $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
             $root,
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-synapse'
+            StrategyFactory::WORKSPACE_SYNAPSE
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
@@ -78,18 +82,8 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $reader = new Reader($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
-        $reader->downloadTables(
-            new InputTableOptionsList([
-                [
-                    'source' => 'out.c-output-mapping-test.table1a',
-                    'destination' => 'table1a-returned.csv',
-                ]
-            ]),
-            new InputTableStateList([]),
-            $root,
-            Reader::STAGING_LOCAL
-        );
+        $te = new TableExporter($this->clientWrapper->getBasicClient());
+        $te->exportTable('out.c-output-mapping-test.table1a', $root . DIRECTORY_SEPARATOR . 'table1a-returned.csv', []);
         $rows = explode("\n", trim(file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')));
         sort($rows);
         $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);

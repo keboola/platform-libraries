@@ -2,7 +2,8 @@
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
@@ -26,16 +27,30 @@ class LocalTest extends BaseWriterTest
         $this->temp->initRunFolder();
     }
 
+    private function getProvider()
+    {
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        return $mockLocal;
+    }
+
     public function testListFilesNoFiles()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $files = $strategy->listFiles($this->temp->getTmpFolder());
         self::assertSame([], $files);
     }
 
     public function testListFilesNonExistentDir()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('Failed to list files: "The "non-existent-directory/and-file" directory does not exist.".');
         $strategy->listFiles('non-existent-directory/and-file');
@@ -43,7 +58,7 @@ class LocalTest extends BaseWriterTest
     
     public function testListFiles()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
@@ -66,7 +81,7 @@ class LocalTest extends BaseWriterTest
 
     public function testListManifestsNonExistentDir()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('Failed to list files: "The "non-existent-directory/and-file" directory does not exist.".');
         $strategy->listManifests('non-existent-directory/and-file');
@@ -74,7 +89,7 @@ class LocalTest extends BaseWriterTest
 
     public function testListManifests()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
@@ -97,7 +112,7 @@ class LocalTest extends BaseWriterTest
 
     public function testLoadFileToStorageEmptyConfig()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -120,7 +135,7 @@ class LocalTest extends BaseWriterTest
 
     public function testLoadFileToStorageFullConfig()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -152,7 +167,7 @@ class LocalTest extends BaseWriterTest
 
     public function testLoadFileToStorageFileDoesNotExist()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         self::expectException(ClientException::class);
@@ -162,7 +177,7 @@ class LocalTest extends BaseWriterTest
 
     public function testLoadFileToStorageFileNameEmpty()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(ClientException::class);
         self::expectExceptionMessage('File is not readable:');
         $strategy->loadFileToStorage('', []);
@@ -170,7 +185,7 @@ class LocalTest extends BaseWriterTest
 
     public function testReadFileManifestFull()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -197,7 +212,7 @@ class LocalTest extends BaseWriterTest
 
     public function testReadFileManifestFullYaml()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'yaml');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'yaml');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -224,7 +239,7 @@ class LocalTest extends BaseWriterTest
 
     public function testReadFileManifestEmpty()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -248,7 +263,7 @@ class LocalTest extends BaseWriterTest
 
     public function testReadFileManifestNotExists()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         self::expectException(InvalidOutputException::class);
@@ -260,7 +275,7 @@ class LocalTest extends BaseWriterTest
 
     public function testReadFileManifestInvalid()
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), new NullWorkspaceProvider(), 'json');
+        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest', 'not a valid json');

@@ -61,7 +61,6 @@ class StrategyFactory extends InputMappingStrategyFactory
         try {
             $stagingDefinition->validateFor(Definition::STAGING_FILE);
         } catch (StagingException $e) {
-            var_dump($e);
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
                 0,

@@ -15,5 +15,4 @@ interface StrategyInterface
      * @return ProviderInterface
      */
     public function getMetadataStorage();
-
 }

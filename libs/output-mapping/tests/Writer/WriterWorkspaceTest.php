@@ -27,11 +27,11 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testSnowflakeTableOutputMapping()
     {
-        $factory = $this->getStagingFactory();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
@@ -150,12 +150,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testMappingMerge()
     {
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']);
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
 
         $root = $this->tmp->getTmpFolder();
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
@@ -290,12 +290,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             null,
             null
         );
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']);
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
         $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
         $this->clientWrapper->setBranchId($branchId);
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
         $configs = [
             [

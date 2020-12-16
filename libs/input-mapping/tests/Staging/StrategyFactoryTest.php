@@ -48,7 +48,7 @@ class StrategyFactoryTest extends TestCase
             'json'
         );
         self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" file output backend.');
+        self::expectExceptionMessage('The project does not support "local" file input backend.');
         $factory->getFileInputStrategy(StrategyFactory::LOCAL);
     }
 
@@ -84,7 +84,7 @@ class StrategyFactoryTest extends TestCase
             'json'
         );
         self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" table output backend.');
+        self::expectExceptionMessage('The project does not support "local" table input backend.');
         $factory->getTableInputStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]));
     }
 

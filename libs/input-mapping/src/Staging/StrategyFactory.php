@@ -182,12 +182,12 @@ class StrategyFactory
             $stagingDefinition->validateFor(Definition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
-                sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
+                sprintf('The project does not support "%s" file input backend.', $stagingDefinition->getName()),
                 0,
                 $e
             );
         }
-        $this->getLogger()->info(sprintf('Using "%s" file output staging.', $stagingDefinition->getName()));
+        $this->getLogger()->info(sprintf('Using "%s" file input staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getFileStagingClass();
         return new $className(
             $this->clientWrapper,
@@ -211,12 +211,12 @@ class StrategyFactory
             $stagingDefinition->validateFor(Definition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
-                sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),
+                sprintf('The project does not support "%s" table input backend.', $stagingDefinition->getName()),
                 0,
                 $e
             );
         }
-        $this->getLogger()->info(sprintf('Using "%s" table output staging.', $stagingDefinition->getName()));
+        $this->getLogger()->info(sprintf('Using "%s" table input staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getTableStagingClass();
         return new $className(
             $this->clientWrapper,

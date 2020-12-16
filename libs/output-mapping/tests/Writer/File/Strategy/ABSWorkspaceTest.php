@@ -2,6 +2,8 @@
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\Writer\AbsWriterWorkspaceTest;
@@ -28,6 +30,37 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
         parent::setUp();
     }
 
+    private function getProvider(array $data = [])
+    {
+        $mock = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId', 'getCredentials'])
+            ->getMock();
+        $mock->method('getWorkspaceId')->willReturnCallback(
+            function () use ($data) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => 'abs']);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $data ? $data : $workspace;
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mock->method('getCredentials')->willReturnCallback(
+            function () use ($data) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => 'abs']);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $data ? $data : $workspace;
+                }
+                return $this->workspace['connection'];
+            }
+        );
+        /** @var ProviderInterface $mock */
+        return $mock;
+    }
+
     public function testCreateStrategyInvalidWorkspace()
     {
         self::expectException(OutputOperationException::class);
@@ -35,21 +68,22 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
         new ABSWorkspace(
             $this->clientWrapper,
             new TestLogger(),
-            $this->getWorkspaceProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
+            $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
+            $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
             'json'
         );
     }
 
     public function testListFilesNoFiles()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $files = $strategy->listFiles('data/out/files');
         self::assertSame([], $files);
     }
 
     public function testListFilesWorkspaceDropped()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
         $workspaces->deleteWorkspace($this->workspace['id']);
         self::expectException(InvalidOutputException::class);
@@ -59,7 +93,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testListFiles()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file.manifest');
@@ -77,7 +111,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testListFilesMaxItems()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         for ($i = 0; $i < 1000; $i++) {
             $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file' . $i);
@@ -89,7 +123,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testListManifestsWorkspaceDropped()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
         $workspaces->deleteWorkspace($this->workspace['id']);
         self::expectException(InvalidOutputException::class);
@@ -99,7 +133,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testListManifests()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file.manifest');
@@ -117,7 +151,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testLoadFileToStorageEmptyConfig()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one.manifest', 'manifest');
@@ -139,7 +173,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testLoadFileToStorageFullConfig()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one.manifest', 'manifest');
@@ -170,7 +204,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testLoadFileToStorageFileDoesNotExist()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('File "data/out/files/my-file_one" does not exist in container "' . $this->workspace['connection']['container'] . '".');
         $strategy->loadFileToStorage('data/out/files/my-file_one', []);
@@ -178,7 +212,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testLoadFileToStorageFileNameEmpty()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('File "\'\'" is empty.');
         $strategy->loadFileToStorage('', []);
@@ -186,7 +220,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testReadFileManifestFull()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $sourceData = [
@@ -213,7 +247,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testReadFileManifestFullYaml()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'yaml');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'yaml');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $sourceData = [
@@ -240,7 +274,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testReadFileManifestEmpty()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $expectedData = [
@@ -264,7 +298,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testReadFileManifestNotExists()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
             'Failed to read manifest "data/out/files/my-file_one.manifest": "The specified blob does not exist.'
@@ -274,7 +308,7 @@ class ABSWorkspaceTest extends AbsWriterWorkspaceTest
 
     public function testReadFileManifestInvalid()
     {
-        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getWorkspaceProvider(), 'json');
+        $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
         $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],

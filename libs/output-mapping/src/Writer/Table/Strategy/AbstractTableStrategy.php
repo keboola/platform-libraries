@@ -1,12 +1,13 @@
 <?php
 
-namespace Keboola\OutputMapping\Writer\File\Strategy;
+namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class AbstractFileStrategy
+class AbstractTableStrategy implements StrategyInterface
 {
     /** @var ClientWrapper */
     protected $clientWrapper;
@@ -44,27 +45,13 @@ class AbstractFileStrategy
         $this->format = $format;
     }
 
-    /**
-     * @param array $storageConfig
-     * @return array
-     */
-    protected function preProcessStorageConfig(array $storageConfig)
+    public function getDataStorage()
     {
-        if (!isset($storageConfig['tags'])) {
-            $storageConfig['tags'] = [];
-        }
-        if (!isset($storageConfig['is_permanent'])) {
-            $storageConfig['is_permanent'] = false;
-        }
-        if (!isset($storageConfig['is_encrypted'])) {
-            $storageConfig['is_encrypted'] = true;
-        }
-        if (!isset($storageConfig['is_public'])) {
-            $storageConfig['is_public'] = false;
-        }
-        if (!isset($storageConfig['notify'])) {
-            $storageConfig['notify'] = false;
-        }
-        return $storageConfig;
+        return $this->dataStorage;
+    }
+
+    public function getMetadataStorage()
+    {
+        return $this->metadataStorage;
     }
 }

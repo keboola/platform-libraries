@@ -2,11 +2,16 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Scope;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
 abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
@@ -82,6 +87,34 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
             $tokenInfo['owner']['id'],
             $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
+    }
+
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->tmp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                StrategyFactory::LOCAL => new Scope([
+                    Scope::TABLE_DATA, Scope::TABLE_METADATA,
+                    Scope::FILE_DATA, Scope::FILE_METADATA
+                ])
+            ]
+        );
+        return $stagingFactory;
     }
 
     public function tearDown()

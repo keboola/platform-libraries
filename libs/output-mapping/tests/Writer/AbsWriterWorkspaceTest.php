@@ -85,13 +85,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA]),
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::TABLE_METADATA]),
             ]
         );
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA])
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA, Scope::TABLE_METADATA, Scope::TABLE_DATA])
             ]
         );
         return $stagingFactory;

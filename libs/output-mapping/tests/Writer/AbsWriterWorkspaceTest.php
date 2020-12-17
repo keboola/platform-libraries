@@ -17,7 +17,7 @@ use Psr\Log\NullLogger;
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use InitSynapseStorageClientTrait;
-    
+
     /** @var array */
     protected $workspace;
 
@@ -107,13 +107,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
         $configs = [
             [
-                'source' => 'table1a',
+                'source' => 'table1a/',
                 'destination' => 'out.c-output-mapping-test.table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
             ],
             [
-                'source' => 'table2a',
+                'source' => 'table2a/',
                 'destination' => 'out.c-output-mapping-test.table2a',
             ],
         ];
@@ -166,9 +166,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             $rows
         );
         // 1a has only the id column
-        $this->assertEquals(['"id"', '"test"'], $rows);
+        $this->assertEquals(['"id"', '"aabb"', '"test"'], $rows);
     }
-    
+
     public function testWriteBasicFiles()
     {
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);

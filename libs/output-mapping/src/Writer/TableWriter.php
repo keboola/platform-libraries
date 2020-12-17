@@ -564,7 +564,7 @@ class TableWriter extends AbstractWriter
             $dataStorage = $this->strategy->getDataStorage();
             $options = [
                 'dataWorkspaceId' => $dataStorage->getWorkspaceId(),
-                'dataTableName' => $sourcePath,
+                'dataObject' => $sourcePath,
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];

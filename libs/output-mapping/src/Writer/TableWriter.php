@@ -74,7 +74,7 @@ class TableWriter extends AbstractWriter
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $finder = new Finder();
         /** @var SplFileInfo[] $files */
-        $files = $finder->files()->name('*.manifest')->in($source)->depth(0);
+        $files = $finder->files()->name('*.manifest')->in($this->strategy->getMetadataStorage()->getPath() . '/' . $source)->depth(0);
 
         $sources = [];
         // add output mappings fom configuration
@@ -193,7 +193,7 @@ class TableWriter extends AbstractWriter
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $manifestNames = ManifestHelper::getManifestFiles($source);
+        $manifestNames = ManifestHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
 
         $finder = new Finder();
 
@@ -207,7 +207,7 @@ class TableWriter extends AbstractWriter
         $processedOutputMappingTables = [];
 
         /** @var SplFileInfo[] $files */
-        $files = $finder->notName('*.manifest')->in($source)->depth(0);
+        $files = $finder->notName('*.manifest')->in($this->strategy->getDataStorage()->getPath() . '/' . $source)->depth(0);
 
         $fileNames = [];
         foreach ($files as $file) {

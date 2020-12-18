@@ -91,7 +91,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA, Scope::TABLE_METADATA, Scope::TABLE_DATA])
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA, Scope::TABLE_DATA])
             ]
         );
         return $stagingFactory;
@@ -132,7 +132,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
         $writer = new TableWriter($factory);
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-abs'

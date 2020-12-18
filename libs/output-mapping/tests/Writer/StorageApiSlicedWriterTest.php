@@ -43,7 +43,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -79,7 +79,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -116,7 +116,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -148,7 +148,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -185,7 +185,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -217,7 +217,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
         try {
-            $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+            $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals('Sliced file "table" columns specification missing.', $e->getMessage());
@@ -253,7 +253,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -294,7 +294,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -338,7 +338,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
@@ -389,7 +389,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

@@ -23,14 +23,17 @@ class Local extends AbstractFileStrategy implements StrategyInterface
     {
         try {
             $finder = new Finder();
-            $manifests = $finder->files()->name('*.manifest')->in($dir)->depth(0);
+            $manifests = $finder->files()->name('*.manifest')->in($this->dataStorage->getPath() . '/' . $dir)->depth(0);
         } catch (InvalidArgumentException $e) {
             throw new OutputOperationException(sprintf('Failed to list files: "%s".', $e->getMessage()), $e);
         }
         $manifestFileNames = [];
+        $fs = new Filesystem();
         /** @var SplFileInfo $manifest */
         foreach ($manifests as $manifest) {
-            $manifestFileNames[$manifest->getPathname()] = new FileItem($manifest->getPathname(), $manifest->getPath(), $manifest->getFilename());
+            $path = $fs->makePathRelative($manifest->getPath(), $this->metadataStorage->getPath());
+            $pathName = $path . $manifest->getFilename();
+            $manifestFileNames[$pathName] = new FileItem($pathName, $path, $manifest->getFilename());
         }
         return $manifestFileNames;
     }
@@ -43,13 +46,16 @@ class Local extends AbstractFileStrategy implements StrategyInterface
         try {
             $finder = new Finder();
             /** @var SplFileInfo[] $foundFiles */
-            $foundFiles = $finder->files()->notName('*.manifest')->in($source)->depth(0);
+            $foundFiles = $finder->files()->notName('*.manifest')->in($this->metadataStorage->getPath() . '/' . $source)->depth(0);
         } catch (InvalidArgumentException $e) {
             throw new OutputOperationException(sprintf('Failed to list files: "%s".', $e->getMessage()), $e);
         }
         $files = [];
+        $fs = new Filesystem();
         foreach ($foundFiles as $file) {
-            $files[$file->getPathname()] = new FileItem($file->getPathname(), $file->getPath(), $file->getFilename());
+            $path = $fs->makePathRelative($file->getPath(), $this->metadataStorage->getPath());
+            $pathName = $path . $file->getFilename();
+            $files[$pathName] = new FileItem($pathName, $path, $file->getFilename());
         }
         return $files;
     }
@@ -67,7 +73,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
             ->setIsEncrypted($storageConfig['is_encrypted'])
             ->setIsPublic($storageConfig['is_public'])
             ->setNotify($storageConfig['notify']);
-        return $this->clientWrapper->getBasicClient()->uploadFile($source, $options);
+        return $this->clientWrapper->getBasicClient()->uploadFile($this->dataStorage->getPath() . '/' . $source, $options);
     }
 
     /**
@@ -75,6 +81,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
      */
     public function readFileManifest($manifestFile)
     {
+        $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
         $adapter = new FileAdapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {

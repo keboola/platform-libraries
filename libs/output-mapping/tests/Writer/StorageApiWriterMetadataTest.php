@@ -86,7 +86,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
@@ -118,7 +118,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
+        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -152,7 +152,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         $systemMetadata = ["componentId" => "testComponent"];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, StrategyFactory::LOCAL);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table "in.c-output-mapping-test.table55a": Load error: ' .
             'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
@@ -211,7 +211,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -286,7 +286,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -358,7 +358,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -441,7 +441,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('upload', $config, ["componentId" => "testComponent"], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -521,7 +521,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables('/upload', $config, $systemMetadata, StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -554,7 +554,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables($root . "/upload", $config, $systemMetadata, 'local');
+        $tableQueue =  $writer->uploadTables('/upload', $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

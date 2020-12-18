@@ -6,7 +6,8 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Tests\Writer\AbsWriterWorkspaceTest;
+use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
+use Keboola\OutputMapping\Tests\Writer\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;
@@ -15,10 +16,17 @@ use Psr\Log\Test\TestLogger;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
-class ABSWorkspaceTest extends AbsWriterWorkspaceTest
+class ABSWorkspaceTest extends BaseWriterWorkspaceTest
 {
+    use InitSynapseStorageClientTrait;
+
     /** @var Temp */
     private $temp;
+
+    protected function initClient()
+    {
+        $this->clientWrapper = $this->getSynapseClientWrapper();
+    }
 
     public function setUp()
     {

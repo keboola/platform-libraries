@@ -65,7 +65,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             StrategyFactory::WORKSPACE_SYNAPSE

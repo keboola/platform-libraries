@@ -63,7 +63,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
@@ -118,7 +118,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $writer = new TableWriter($this->getStagingFactory());
         $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
@@ -141,7 +141,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to read file table1a Cannot open file table1a');
         $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
@@ -193,7 +193,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
@@ -253,7 +253,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables($root, ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
+        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
@@ -326,7 +326,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'

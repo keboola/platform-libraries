@@ -4,7 +4,6 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
-use Keboola\InputMapping\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
@@ -12,6 +11,7 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
@@ -19,11 +19,9 @@ use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
-use LogicException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -31,34 +29,16 @@ class TableWriter extends AbstractWriter
 {
     const SYSTEM_METADATA_PROVIDER = 'system';
 
-    const STAGING_LOCAL = 'local';
-    const STAGING_SNOWFLAKE = 'workspace-snowflake';
-    const STAGING_REDSHIFT = 'workspace-redshift';
-    const STAGING_SYNAPSE = 'workspace-synapse';
-    const STAGING_ABS = 'workspace-abs';
-
-    /**
-     * @var Metadata
-     */
+    /** @var Metadata */
     private $metadataClient;
 
-    /**
-     * @var WorkspaceProviderInterface
-     */
-    private $workspaceProvider;
+    /** @var Table\StrategyInterface */
+    private $strategy;
 
-    /**
-     * AbstractWriter constructor.
-     *
-     * @param ClientWrapper $clientWrapper
-     * @param LoggerInterface $logger
-     * @param WorkspaceProviderInterface $workspaceProvider
-     */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, WorkspaceProviderInterface $workspaceProvider)
+    public function __construct(StrategyFactory $strategyFactory)
     {
-        parent::__construct($clientWrapper, $logger);
-        $this->metadataClient = new Metadata($clientWrapper->getBasicClient());
-        $this->workspaceProvider = $workspaceProvider;
+        parent::__construct($strategyFactory);
+        $this->metadataClient = new Metadata($this->clientWrapper->getBasicClient());
     }
 
     /**
@@ -74,7 +54,7 @@ class TableWriter extends AbstractWriter
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+        if ($stagingStorageOutput === StrategyFactory::LOCAL) {
             return $this->uploadTablesLocal($source, $configuration, $systemMetadata, $stagingStorageOutput);
         } else {
             return $this->uploadTablesWorkspace($source, $configuration, $systemMetadata, $stagingStorageOutput);
@@ -91,9 +71,10 @@ class TableWriter extends AbstractWriter
      */
     private function uploadTablesWorkspace($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
+        $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $finder = new Finder();
         /** @var SplFileInfo[] $files */
-        $files = $finder->files()->name('*.manifest')->in($source)->depth(0);
+        $files = $finder->files()->name('*.manifest')->in($this->strategy->getMetadataStorage()->getPath() . '/' . $source)->depth(0);
 
         $sources = [];
         // add output mappings fom configuration
@@ -208,10 +189,11 @@ class TableWriter extends AbstractWriter
      */
     private function uploadTablesLocal($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
+        $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         if (empty($systemMetadata['componentId'])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $manifestNames = ManifestHelper::getManifestFiles($source);
+        $manifestNames = ManifestHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
 
         $finder = new Finder();
 
@@ -225,7 +207,7 @@ class TableWriter extends AbstractWriter
         $processedOutputMappingTables = [];
 
         /** @var SplFileInfo[] $files */
-        $files = $finder->notName('*.manifest')->in($source)->depth(0);
+        $files = $finder->notName('*.manifest')->in($this->strategy->getDataStorage()->getPath() . '/' . $source)->depth(0);
 
         $fileNames = [];
         foreach ($files as $file) {
@@ -370,8 +352,14 @@ class TableWriter extends AbstractWriter
     private function readTableManifest($source)
     {
         $adapter = new TableAdapter($this->format);
+        $fs = new Filesystem();
+        if (!$fs->exists($source)) {
+            throw new InvalidOutputException("File '$source' not found.");
+        }
         try {
-            return $adapter->readFromFile($source);
+            $fileHandler = new SplFileInfo($source, "", basename($source));
+            $serialized = $fileHandler->getContents();
+            return $adapter->deserialize($serialized);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
                 'Failed to read table manifest from file ' . basename($source) . ' ' . $e->getMessage(),
@@ -559,7 +547,7 @@ class TableWriter extends AbstractWriter
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
         $this->validateWorkspaceStaging($stagingStorageOutput);
-        if ($stagingStorageOutput === self::STAGING_LOCAL) {
+        if ($stagingStorageOutput === StrategyFactory::LOCAL) {
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath);
                 $options['dataFileId'] = $fileId;
@@ -573,9 +561,9 @@ class TableWriter extends AbstractWriter
                 $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
             }
         } else {
-            $backend = $this->convertStagingToStorageApiBackend($stagingStorageOutput);
+            $dataStorage = $this->strategy->getDataStorage();
             $options = [
-                'dataWorkspaceId' => $this->workspaceProvider->getWorkspaceId($backend),
+                'dataWorkspaceId' => $dataStorage->getWorkspaceId(),
                 'dataTableName' => $sourcePath,
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
@@ -592,40 +580,17 @@ class TableWriter extends AbstractWriter
     private function validateWorkspaceStaging($stagingStorageOutput)
     {
         $stagingTypes = [
-            self::STAGING_LOCAL,
-            self::STAGING_SNOWFLAKE,
-            self::STAGING_REDSHIFT,
-            self::STAGING_SYNAPSE,
-            self::STAGING_ABS,
+            StrategyFactory::LOCAL,
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            StrategyFactory::WORKSPACE_REDSHIFT,
+            StrategyFactory::WORKSPACE_SYNAPSE,
+            StrategyFactory::WORKSPACE_ABS,
         ];
         if (!in_array($stagingStorageOutput, $stagingTypes)) {
             throw new InvalidOutputException(
                 'Parameter "storage" must be one of: ' .
                 implode(', ', $stagingTypes)
             );
-        }
-    }
-
-    /**
-     * Convert staging storage to valid value of Storage backend
-     *  https://keboola.docs.apiary.io/#reference/workspaces/workspaces-collection/create-new-workspace
-     * @param string $stagingStorageOutput
-     * @return string
-     * @throws InvalidOutputException if not local or valid workspace
-     */
-    private function convertStagingToStorageApiBackend($stagingStorageOutput)
-    {
-        switch ($stagingStorageOutput) {
-            case self::STAGING_SNOWFLAKE:
-                return WorkspaceProviderInterface::TYPE_SNOWFLAKE;
-            case self::STAGING_REDSHIFT:
-                return WorkspaceProviderInterface::TYPE_REDSHIFT;
-            case self::STAGING_SYNAPSE:
-                return WorkspaceProviderInterface::TYPE_SYNAPSE;
-            case self::STAGING_ABS:
-                return WorkspaceProviderInterface::TYPE_ABS;
-            default:
-                throw new LogicException(sprintf('Invalid staging storage "%".', $stagingStorageOutput));
         }
     }
 

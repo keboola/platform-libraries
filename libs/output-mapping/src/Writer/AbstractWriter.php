@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Writer;
 
-use Keboola\StorageApi\Client;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -24,15 +24,15 @@ abstract class AbstractWriter
     protected $format = 'json';
 
     /**
-     * AbstractWriter constructor.
-     *
-     * @param ClientWrapper $clientWrapper
-     * @param LoggerInterface $logger
+     * @var StrategyFactory
      */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger)
+    protected $strategyFactory;
+
+    public function __construct(StrategyFactory $strategyFactory)
     {
-        $this->clientWrapper = $clientWrapper;
-        $this->logger = $logger;
+        $this->clientWrapper = $strategyFactory->getClientWrapper();
+        $this->logger = $strategyFactory->getLogger();
+        $this->strategyFactory = $strategyFactory;
     }
 
     /**

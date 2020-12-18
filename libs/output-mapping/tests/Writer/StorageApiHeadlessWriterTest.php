@@ -3,11 +3,10 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\NullWorkspaceProvider;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;
-use Psr\Log\NullLogger;
 
 class StorageApiHeadlessWriterTest extends BaseWriterTest
 {
@@ -32,9 +31,8 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
-
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $this->assertEquals(1, $tableQueue->getTaskCount());
@@ -66,8 +64,8 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -101,9 +99,8 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
-
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -134,9 +131,8 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-test.table\",\"primary_key\":[\"Id\",\"Name\"],\"columns\":[\"Id\",\"Name\"]}"
         );
 
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
-
-        $tableQueue =  $writer->uploadTables($root . "/upload", [], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', [], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -176,9 +172,8 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), new NullWorkspaceProvider());
-
-        $tableQueue =  $writer->uploadTables($root . "/upload", ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

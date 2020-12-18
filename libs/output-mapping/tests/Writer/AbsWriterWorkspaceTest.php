@@ -2,65 +2,106 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\Scope;
+use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
+use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Exception;
-use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApi\Workspaces;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\NullLogger;
 
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
-    private $runSynapseTests = false;
+    use InitSynapseStorageClientTrait;
+    
+    /** @var array */
+    protected $workspace;
 
     public function setUp()
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
+        if (!$this->checkSynapseTests()) {
+            self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-    }
-
-    public function tearDown()
-    {
-        if (!$this->runSynapseTests) {
-            return;
-        }
-        parent::tearDown();
+        $this->clearBuckets([
+            'in.c-output-mapping-test',
+            'out.c-output-mapping-test',
+        ]);
     }
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null
+        $this->clientWrapper = $this->getSynapseClientWrapper();
+    }
+
+    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
+    {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $logger ? $logger : new NullLogger(),
+            $format
         );
-        $this->clientWrapper->setBranchId('');
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
-        ));
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId', 'getCredentials'])
+            ->getMock();
+        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
+            function () use ($backend) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $workspace;
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mockWorkspace->method('getCredentials')->willReturnCallback(
+            function () use ($backend) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
+                    $this->workspaceId = $workspace['id'];
+                    $this->workspace = $workspace;
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceCredentials;
+            }
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->tmp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspace */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspace,
+            [
+                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA, Scope::TABLE_DATA])
+            ]
+        );
+        return $stagingFactory;
     }
 
     public function testAbsTableOutputMapping()
     {
-        if (!$this->runSynapseTests) {
-            return;
-        }
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('abs');
 
@@ -88,10 +129,10 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
                 ['columns' => ['Id2', 'Name2']]
             )
         );
-        $writer = new TableWriter($this->clientWrapper, new NullLogger(), $this->getWorkspaceProvider());
 
+        $writer = new TableWriter($factory);
         $tableQueue = $writer->uploadTables(
-            $root,
+            '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-abs'
@@ -126,5 +167,74 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         // 1a has only the id column
         $this->assertEquals(['"id"', '"test"'], $rows);
+    }
+    
+    public function testWriteBasicFiles()
+    {
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getFileOutputStrategy(StrategyFactory::WORKSPACE_ABS);
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
+        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'],
+            'upload/file2.manifest',
+            '{"tags": ["output-mapping-test", "xxx"],"is_public": false}'
+        );
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'],
+            'upload/file3',
+            'test'
+        );
+        $blobClient->createBlockBlob(
+            $this->workspace['connection']['container'],
+            'upload/file3.manifest',
+            '{"tags": ["output-mapping-test"],"is_permanent": true}'
+        );
+        $configs = [
+            [
+                'source' => 'file1',
+                'tags' => ['output-mapping-test']
+            ],
+            [
+                'source' => 'file2',
+                'tags' => ['output-mapping-test', 'another-tag'],
+                'is_permanent' => true
+            ]
+        ];
+
+        $writer = new FileWriter($factory);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::WORKSPACE_ABS);
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags(['output-mapping-test']);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $this->assertCount(3, $files);
+
+        $file1 = $file2 = $file3 = null;
+        foreach ($files as $file) {
+            if ($file['name'] == 'file1') {
+                $file1 = $file;
+            }
+            if ($file['name'] == 'file2') {
+                $file2 = $file;
+            }
+            if ($file['name'] == 'file3') {
+                $file3 = $file;
+            }
+        }
+
+        $this->assertNotNull($file1);
+        $this->assertNotNull($file2);
+        $this->assertNotNull($file3);
+        $this->assertEquals(4, $file1['sizeBytes']);
+        $this->assertEquals(['output-mapping-test'], $file1['tags']);
+        $this->assertEquals(['output-mapping-test', 'another-tag'], $file2['tags']);
+        $this->assertEquals(['output-mapping-test'], $file3['tags']);
+        $this->assertNotNull($file1['maxAgeDays']);
+        $this->assertNull($file2['maxAgeDays']);
+        $this->assertNull($file3['maxAgeDays']);
     }
 }

@@ -175,14 +175,6 @@ class LocalTest extends BaseWriterTest
         $strategy->loadFileToStorage('/data/out/files/non-existent', []);
     }
 
-    public function testLoadFileToStorageFileNameEmpty()
-    {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('Error on file upload to S3:');
-        $strategy->loadFileToStorage('', []);
-    }
-
     public function testReadFileManifestFull()
     {
         $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');

@@ -405,7 +405,7 @@ class StorageApiWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables( '/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -681,7 +681,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables( '/upload', [], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

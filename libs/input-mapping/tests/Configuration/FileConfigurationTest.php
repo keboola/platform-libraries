@@ -37,6 +37,23 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
+    public function testEmptyProcessedTagsRemoved()
+    {
+        $config = [
+            "tags" => ["tag3"],
+            "query" => "esquery",
+            "processed_tags" => [],
+            "filter_by_run_id" => true,
+            "limit" => 1000,
+        ];
+        $expectedResponse = $config;
+        unset($expectedResponse["processed_tags"]);
+        $processedConfiguration = (new File())->parse([
+            "config" => $config,
+        ]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
+    }
+
     public function testEmptyQueryRemoved()
     {
         $config = [

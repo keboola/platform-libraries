@@ -23,7 +23,7 @@ class ABSWorkspace extends AbstractStrategy
 
         foreach ($exports as $export) {
             list ($table, $exportOptions) = $export['table'];
-            $destination = $this->getDestinationFilePath($this->destination, $table);
+            $destination = $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table);
             $copyInputs[] = array_merge(
                 [
                     'source' => $table->getSource(),
@@ -51,7 +51,7 @@ class ABSWorkspace extends AbstractStrategy
             $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                    $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                    $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
                 $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
             }

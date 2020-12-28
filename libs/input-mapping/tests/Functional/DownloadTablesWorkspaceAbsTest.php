@@ -60,10 +60,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         $blobListOptions->setPrefix($basePath);
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobList = $blobClient->listBlobs($this->workspaceCredentials['container'], $blobListOptions);
-        foreach ($blobList->getBlobs() as $blob) {
-            $blobResult = $blobClient->getBlob($this->workspaceCredentials['container'], $blob->getName());
-            $this->assertNotEmpty($blobResult);
-        }
+        self::assertGreaterThan(0, count($blobList->getBlobs()));
     }
 
     public function testTablesAbsWorkspace()
@@ -102,18 +99,18 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
 
-        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test1');
+        $this->assertBlobs('download/test1');
 
         // make sure the blob exists
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
 
-        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test2');
+        $this->assertBlobs('download/test2');
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
 
-        $this->assertBlobs($this->temp->getTmpFolder() . '/download/test3');
+        $this->assertBlobs('download/test3');
 
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
@@ -121,5 +118,35 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 3 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing workspace export.'));
+    }
+
+    public function testTablesAbsWorkspaceSlash()
+    {
+        if (!$this->runSynapseTests) {
+            self::markTestSkipped('Synapse tests disabled');
+        }
+        $logger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_ABS, 'abs']));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download/test/',
+            StrategyFactory::WORKSPACE_ABS
+        );
+
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test/test1.manifest');
+        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
+
+        $this->assertBlobs('download/test/test1');
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table input staging.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
     }
 }

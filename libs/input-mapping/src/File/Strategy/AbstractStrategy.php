@@ -61,6 +61,14 @@ abstract class AbstractStrategy implements StrategyInterface
     }
 
     /**
+     * @param string $destinationPath
+     * @param string $fileId
+     * @param string $fileName
+     * @return string
+     */
+    abstract protected function getFileDestinationPath($destinationPath, $fileId, $fileName);
+
+    /**
      * @param array $fileConfigurations
      * @param string $destination
      */
@@ -73,12 +81,7 @@ abstract class AbstractStrategy implements StrategyInterface
             $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
-                $fileDestinationPath = sprintf(
-                    '%s/%s_%s',
-                    $this->ensureNoPathDelimiter($destination),
-                    $fileInfo['id'],
-                    $fileInfo["name"]
-                );
+                $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
                     $this->downloadFile($fileInfo, $fileDestinationPath);

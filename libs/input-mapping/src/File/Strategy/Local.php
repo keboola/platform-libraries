@@ -38,4 +38,15 @@ class Local extends AbstractStrategy implements StrategyInterface
         $fs = new Filesystem();
         $fs->dumpFile($destination, $contents);
     }
+
+    protected function getFileDestinationPath($destinationPath, $fileId, $fileName)
+    {
+        /* this is the actual file name being used by the export, hence it contains file id + file name */
+        return sprintf(
+            '%s/%s_%s',
+            $this->ensureNoPathDelimiter($destinationPath),
+            $fileId,
+            $fileName
+        );
+    }
 }

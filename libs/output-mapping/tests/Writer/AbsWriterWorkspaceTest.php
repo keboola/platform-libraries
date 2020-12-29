@@ -13,6 +13,7 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\NullLogger;
+use Symfony\Component\Filesystem\Filesystem;
 
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -97,48 +98,155 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         return $stagingFactory;
     }
 
-    public function testAbsTableOutputMapping()
+    public function testAbsTableSlicedManifestOutputMapping()
     {
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('abs');
+        $this->prepareWorkspaceWithTables('abs', 'someday/');
 
         $configs = [
             [
-                'source' => 'table1a/',
+                'source' => 'table1a',
                 'destination' => 'out.c-output-mapping-test.table1a',
-                'incremental' => true,
-                'columns' => ['Id'],
-            ],
-            [
-                'source' => 'table2a/',
-                'destination' => 'out.c-output-mapping-test.table2a',
             ],
         ];
+        $fs = new Filesystem();
+        $fs->mkdir($root . '/someday');
         file_put_contents(
-            $root . '/table1a.manifest',
+            $root . '/someday/table1a.manifest',
             json_encode(
                 ['columns' => ['Id', 'Name']]
-            )
-        );
-        file_put_contents(
-            $root . '/table2a.manifest',
-            json_encode(
-                ['columns' => ['Id2', 'Name2']]
             )
         );
 
         $writer = new TableWriter($factory);
         $tableQueue = $writer->uploadTables(
-            '/',
+            'someday',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-abs'
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
+        $this->assertCount(1, $jobIds);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $this->assertCount(1, $tables);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
+        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
+        $this->assertEquals(['Id', 'Name'], $job['operationParams']['params']['columns']);
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
+    }
+
+    public function testAbsTableSlicedOutputMapping()
+    {
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $content = "\"first value\",\"second value\"\n";
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv/slice1', $content);
+        $content = "\"secondRow1\",\"secondRow2\"\n";
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv/slice2', $content);
+
+        $configs = [
+            [
+                'source' => 'table1a.csv',
+                'destination' => 'out.c-output-mapping-test.table1a',
+            ]
+        ];
+        $fs = new Filesystem();
+        $fs->mkdir($root . '/data/out/tables/');
+        file_put_contents(
+            $root . '/data/out/tables/table1a.csv.manifest',
+            json_encode(
+                ['columns' => ['first column', 'second column']]
+            )
+        );
+
+        $writer = new TableWriter($factory);
+        $tableQueue = $writer->uploadTables(
+            'data/out/tables/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-abs'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $this->assertCount(1, $tables);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
+        $this->assertNotEmpty($jobIds[0]);
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
+        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
+        $this->assertEquals(['first column', 'second column'], $job['operationParams']['params']['columns']);
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $this->assertEquals(
+            ['"first value","second value"', '"first_column","second_column"', '"secondRow1","secondRow2"'],
+            $rows
+        );
+    }
+
+    public function testAbsTableSingleFileOutputMapping()
+    {
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $content = "\"First column\",\"Second Column\"\n\"first value\",\"second value\"\n\"secondRow1\",\"secondRow2\"";
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv', $content);
+        $content = "\"First column\",\"Id\"\n\"first\",\"second\"\n\"third\",\"fourth\"";
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv2', $content);
+
+        $configs = [
+            [
+                'source' => 'table1a.csv',
+                'destination' => 'out.c-output-mapping-test.table1a',
+                'incremental' => true,
+                'columns' => ['first column'],
+            ],
+            [
+                'source' => 'table1a.csv2',
+                'destination' => 'out.c-output-mapping-test.table2a',
+            ],
+        ];
+        $fs = new Filesystem();
+        $fs->mkdir($root . '/data/out/tables/');
+        file_put_contents(
+            $root . '/data/out/tables/table1a.csv.manifest',
+            json_encode(
+                ['columns' => ['first column', 'second column']]
+            )
+        );
+        file_put_contents(
+            $root . '/data/out/tables/table1a.csv2.manifest',
+            json_encode(
+                ['columns' => ['first column', 'second column']]
+            )
+        );
+
+        $writer = new TableWriter($factory);
+        $tableQueue = $writer->uploadTables(
+            'data/out/tables/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-abs'
+        );
+        $jobIds = $tableQueue->waitForAll();
 
         $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
         $this->assertCount(2, $tables);
@@ -151,24 +259,26 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
         $this->assertEquals(true, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['Id'], $job['operationParams']['params']['columns']);
+        $this->assertEquals(['first column'], $job['operationParams']['params']['columns']);
         $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        // 1a has only the first_column column
+        $this->assertEquals(['"first value"', '"first_column"', '"secondRow1"'], $rows);
+
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
         $this->assertEquals('out.c-output-mapping-test.table2a', $job['tableId']);
         $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['Id2', 'Name2'], $job['operationParams']['params']['columns']);
+        $this->assertEquals(['first column', 'second column'], $job['operationParams']['params']['columns']);
 
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table2a');
         $rows = explode("\n", trim($data));
         sort($rows);
-        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $rows = array_map(
-            'strtolower',
-            $rows
-        );
-        // 1a has only the id column
-        $this->assertEquals(['"id"', '"aabb"', '"test"'], $rows);
+        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $this->assertEquals(['"first","second"', '"first_column","second_column"', '"third","fourth"'], $rows);
     }
-    
+
     public function testWriteBasicFiles()
     {
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);

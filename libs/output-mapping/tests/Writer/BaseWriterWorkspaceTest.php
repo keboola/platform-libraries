@@ -86,7 +86,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         return $stagingFactory;
     }
 
-    protected function prepareWorkspaceWithTables($type)
+    protected function prepareWorkspaceWithTables($type, $tablePrefix = '')
     {
         $temp = new Temp();
         $temp->initRunFolder();
@@ -116,11 +116,11 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
                 'input' => [
                     [
                         'source' => 'in.c-output-mapping-test.table1a',
-                        'destination' => 'table1a',
+                        'destination' => $tablePrefix . 'table1a',
                     ],
                     [
                         'source' => 'in.c-output-mapping-test.table2a',
-                        'destination' => 'table2a',
+                        'destination' => $tablePrefix . 'table2a',
                     ],
                 ],
             ]

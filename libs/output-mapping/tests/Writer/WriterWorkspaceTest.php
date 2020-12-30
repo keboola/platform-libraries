@@ -219,6 +219,64 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
     }
 
+    public function testTableOutputMappingMissingDestinationManifest()
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        $configs = [
+            [
+                'source' => 'table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
+            ]
+        ];
+        $writer = new TableWriter($factory);
+        file_put_contents(
+            $root . '/table1a.manifest',
+            json_encode(
+                ['columns' => ['Id', 'Name']]
+            )
+        );
+
+        self::expectException(InvalidOutputException::class);
+        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake'
+        );
+    }
+
+    public function testTableOutputMappingMissingDestinationNoManifest()
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        $configs = [
+            [
+                'source' => 'table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
+            ]
+        ];
+        $writer = new TableWriter($factory);
+
+        self::expectException(InvalidOutputException::class);
+        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake'
+        );
+    }
+
     public function testRedshiftTableOutputMapping()
     {
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']);

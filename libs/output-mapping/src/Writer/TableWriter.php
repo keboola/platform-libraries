@@ -114,24 +114,13 @@ class TableWriter extends AbstractWriter
 
             if ($manifest !== false) {
                 $configFromManifest = $this->readTableManifest($manifest->getPathname());
-                if (empty($configFromManifest['destination']) || isset($configuration['bucket'])) {
-                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
-                        $prefix,
-                        $manifest->getBasename('.manifest')
-                    );
-                }
-            } else {
-                // If no manifest found and no output mapping, use filename (without .csv if present) as table id
-                if (empty($configFromMapping['destination']) || isset($configuration['bucket'])) {
-                    $configFromMapping['destination'] = $this->createDestinationConfigParam(
-                        $prefix,
-                        $manifest->getBasename('.manifest')
-                    );
-                }
             }
 
             try {
                 $mergedConfig = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
+                if (empty($mergedConfig['destination'])) {
+                    throw new InvalidOutputException(sprintf('Failed to resolve destination for output table "%s".', $sourceName));
+                }
                 $parsedConfig = (new TableManifest())->parse([$mergedConfig]);
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(

@@ -20,6 +20,9 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -34,6 +37,9 @@ class TableWriter extends AbstractWriter
 
     /** @var Table\StrategyInterface */
     private $strategy;
+
+    /** @var string */
+    private $sourcePath;
 
     public function __construct(StrategyFactory $strategyFactory)
     {
@@ -71,6 +77,7 @@ class TableWriter extends AbstractWriter
      */
     private function uploadTablesWorkspace($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
+        $this->sourcePath = $source;
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $finder = new Finder();
         /** @var SplFileInfo[] $files */
@@ -91,12 +98,12 @@ class TableWriter extends AbstractWriter
 
         $jobs = [];
         /** @var SplFileInfo|bool $manifest */
-        foreach ($sources as $source => $manifest) {
+        foreach ($sources as $sourceName => $manifest) {
             $configFromMapping = [];
             $configFromManifest = [];
             if (isset($configuration['mapping'])) {
                 foreach ($configuration['mapping'] as $mapping) {
-                    if (isset($mapping['source']) && $mapping['source'] === $source) {
+                    if (isset($mapping['source']) && $mapping['source'] === $sourceName) {
                         $configFromMapping = $mapping;
                         unset($configFromMapping['source']);
                     }
@@ -128,7 +135,7 @@ class TableWriter extends AbstractWriter
                 $parsedConfig = (new TableManifest())->parse([$mergedConfig]);
             } catch (InvalidConfigurationException $e) {
                 throw new InvalidOutputException(
-                    "Failed to write manifest for table {$source}." . $e->getMessage(),
+                    "Failed to write manifest for table {$sourceName}." . $e->getMessage(),
                     0,
                     $e
                 );
@@ -138,10 +145,10 @@ class TableWriter extends AbstractWriter
                 $parsedConfig['primary_key'] =
                     PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
                 $parsedConfig = DestinationRewriter::rewriteDestination($parsedConfig, $this->clientWrapper);
-                $tableJob = $this->uploadTable($source, $parsedConfig, $systemMetadata, $stagingStorageOutput);
+                $tableJob = $this->uploadTable($sourceName, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
-                    "Cannot upload file '{$source}' to table '{$parsedConfig["destination"]}' in Storage API: "
+                    "Cannot upload file '{$sourceName}' to table '{$parsedConfig["destination"]}' in Storage API: "
                     . $e->getMessage(),
                     $e->getCode(),
                     $e
@@ -561,16 +568,55 @@ class TableWriter extends AbstractWriter
                 $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
             }
         } else {
+            if ($stagingStorageOutput === StrategyFactory::WORKSPACE_ABS) {
+                $sourcePath = $this->specifySourceAbsPath($sourcePath);
+            }
             $dataStorage = $this->strategy->getDataStorage();
             $options = [
                 'dataWorkspaceId' => $dataStorage->getWorkspaceId(),
-                'dataTableName' => $sourcePath,
+                'dataObject' => $sourcePath,
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];
             $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
         }
         return $tableQueue;
+    }
+
+    private function specifySourceAbsPath($sourcePath)
+    {
+        $path = $this->ensurePathDelimiter($this->sourcePath) . $sourcePath;
+        $absCredentials = $this->strategy->getDataStorage()->getCredentials();
+        $blobClient = BlobRestProxy::createBlobService($absCredentials['connectionString']);
+        try {
+            $options = new ListBlobsOptions();
+            $options->setPrefix($path);
+            $blobs = $blobClient->listBlobs($absCredentials['container'], $options);
+            $isSliced = false;
+            foreach ($blobs->getBlobs() as $blob) {
+                /* there can be multiple blobs with the same prefix (e.g `my`, `my-file`, ...), we're checking
+                    if there are blobs where the prefix is a directory. (e.g `my/` or `my-file/`) */
+                if (substr($blob->getName(), 0, strlen($path) + 1) === $path . '/') {
+                    $isSliced = true;
+                }
+            }
+            if ($isSliced) {
+                $path .= '/';
+            }
+        } catch (\Exception $e) {
+            throw new InvalidOutputException('Failed to list blobs ' . $e->getMessage(), 0, $e);
+        }
+        return $path;
+    }
+
+    protected function ensurePathDelimiter($path)
+    {
+        return $this->ensureNoPathDelimiter($path) . '/';
+    }
+
+    protected function ensureNoPathDelimiter($path)
+    {
+        return rtrim($path, '\\/');
     }
 
     /**

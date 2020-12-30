@@ -141,7 +141,6 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
         $rows = explode("\n", trim($data));
         sort($rows);
-        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
         $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
     }
 
@@ -168,7 +167,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         file_put_contents(
             $root . '/data/out/tables/table1a.csv.manifest',
             json_encode(
-                ['columns' => ['first column', 'second column']]
+                ['columns' => ['First column', 'Second column']]
             )
         );
 
@@ -189,13 +188,12 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
         $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['first column', 'second column'], $job['operationParams']['params']['columns']);
+        $this->assertEquals(['First column', 'Second column'], $job['operationParams']['params']['columns']);
         $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
         $rows = explode("\n", trim($data));
         sort($rows);
-        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
         $this->assertEquals(
-            ['"first value","second value"', '"first_column","second_column"', '"secondRow1","secondRow2"'],
+            ['"First_column","Second_column"', '"first value","second value"', '"secondRow1","secondRow2"'],
             $rows
         );
     }

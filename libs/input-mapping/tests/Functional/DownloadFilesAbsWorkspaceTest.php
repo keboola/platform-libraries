@@ -121,6 +121,14 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     public function testAbsReadFiles()
     {
         $this->clientWrapper->setBranchId('');
+        $this->getStagingFactory()->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
+            ->getFileDataProvider()->getWorkspaceId(); //initialize the mock
+        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobClient->createBlockBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/tables/sometable.csv',
+            'some data'
+        );
 
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
@@ -170,6 +178,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1["id"]);
         self::assertEquals($id2, $manifest2["id"]);
+
+        // verify that the workspace contents were preserved
+        $blobResult = $blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/tables/sometable.csv'
+        );
+        self::assertEquals('some data', stream_get_contents($blobResult->getContentStream()));
     }
 
     public function testReadFilesTagsFilterRunId()

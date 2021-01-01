@@ -29,6 +29,7 @@ class ABSWorkspace extends AbstractStrategy implements StrategyInterface
             $workspaceId = $this->dataStorage->getWorkspaceId();
             $workspaces->loadWorkspaceData($workspaceId, [
                 'input' => $this->inputs,
+                'preserve' => 1,
             ]);
             $this->logger->info('All files were fetched.');
         }

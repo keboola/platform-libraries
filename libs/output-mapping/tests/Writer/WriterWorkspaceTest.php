@@ -277,6 +277,48 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
     }
 
+    public function testSnowflakeTableOutputBucketNoDestination()
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+
+        $configs = [
+            [
+                'source' => 'table1a',
+            ]
+        ];
+        file_put_contents(
+            $root . '/table1a.manifest',
+            json_encode(
+                ['columns' => ['Id', 'Name']]
+            )
+        );
+        $writer = new TableWriter($factory);
+
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs, 'bucket' => 'out.c-output-mapping-test'],
+            ['componentId' => 'foo'],
+            'workspace-snowflake'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
+        $this->assertEquals(['Id', 'Name'], $job['operationParams']['params']['columns']);
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
+
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
+    }
+
     public function testRedshiftTableOutputMapping()
     {
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']);

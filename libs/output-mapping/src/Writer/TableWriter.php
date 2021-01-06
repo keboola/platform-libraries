@@ -114,6 +114,12 @@ class TableWriter extends AbstractWriter
 
             if ($manifest !== false) {
                 $configFromManifest = $this->readTableManifest($manifest->getPathname());
+                if (empty($configFromManifest['destination']) && isset($configuration['bucket'])) {
+                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
+                        $prefix,
+                        $manifest->getBasename('.manifest')
+                    );
+                }
             }
 
             try {

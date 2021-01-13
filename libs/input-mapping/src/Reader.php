@@ -90,7 +90,7 @@ class Reader
         if ($disableDevInputs) {
             InputBucketValidator::checkDevBuckets(
                 $tablesDefinition,
-                $this->clientWrapper,
+                $this->clientWrapper
             );
         }
         $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsSources(

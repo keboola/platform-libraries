@@ -4,6 +4,7 @@ namespace Keboola\InputMapping;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
+use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\ManifestWriter;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
@@ -66,6 +67,7 @@ class Reader
      * @param InputTableStateList $tablesState list of input mapping states
      * @param string $destination destination folder
      * @param string $stagingType
+     * @param bool $disableDevInputs If true, then inputs from buckets in development branches are not permitted
      * @return InputTableStateList
      * @throws ClientException
      * @throws Exception
@@ -74,7 +76,8 @@ class Reader
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
         $destination,
-        $stagingType
+        $stagingType,
+        $disableDevInputs = true
     ) {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
@@ -84,7 +87,13 @@ class Reader
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
-        $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsDestinations(
+        if ($disableDevInputs) {
+            InputBucketValidator::checkDevBuckets(
+                $tablesDefinition,
+                $this->clientWrapper,
+            );
+        }
+        $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsSources(
             $tablesDefinition,
             $this->clientWrapper,
             $this->logger

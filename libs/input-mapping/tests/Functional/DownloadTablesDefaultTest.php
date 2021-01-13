@@ -422,4 +422,54 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             StrategyFactory::LOCAL
         );
     }
+
+    public function testReadTablesDevBucket()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
+        $configuration = new InputTableOptionsList([
+            [
+                "source" => "in.c-input-mapping-test-default.test",
+                "destination" => "test.csv"
+            ],
+            [
+                "source" => "in.c-input-mapping-test-default.test2",
+                "destination" => "test2.csv"
+            ]
+        ]);
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata->postBucketMetadata(
+            'in.c-input-mapping-test-default',
+            'test',
+            [
+                [
+                    'key' => 'KBC.lastUpdatedBy.branch.id',
+                    'value' => '1234',
+                ],
+            ]
+        );
+
+        // without the check it passes
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::LOCAL,
+            false
+        );
+
+        // with the check it fails
+        self::expectException(InvalidInputException::class);
+        self::expectExceptionMessage(
+            'The buckets "in.c-input-mapping-test-default" come from a development ' .
+            'branch and must not be used directly in input mapping.'
+        );
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::LOCAL,
+            true
+        );
+    }
 }

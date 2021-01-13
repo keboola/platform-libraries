@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 
 class SourceRewriteHelper
 {
-    public static function rewriteTableOptionsDestinations(
+    public static function rewriteTableOptionsSources(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger

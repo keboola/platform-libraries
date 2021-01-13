@@ -85,7 +85,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations($inputTablesOptions, $this->clientWrapper, $testLogger);
+        $destinations = SourceRewriteHelper::rewriteTableOptionsSources($inputTablesOptions, $this->clientWrapper, $testLogger);
         self::assertEquals('out.c-main.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
@@ -131,7 +131,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         self::expectException(InputOperationException::class);
         self::expectExceptionMessage('Invalid destination: "out.c-main"');
-        SourceRewriteHelper::rewriteTableOptionsDestinations(
+        SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger
@@ -156,7 +156,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations(
+        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger
@@ -218,7 +218,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsDestinations(
+        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
             $this->clientWrapper,
             $testLogger

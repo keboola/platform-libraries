@@ -374,7 +374,12 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo', 'branchId' => $branchId],
+            'local'
+        );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
         $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf('out.c-%s-output-mapping-test', $branchId));

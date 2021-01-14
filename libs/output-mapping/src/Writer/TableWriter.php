@@ -405,7 +405,7 @@ class TableWriter extends AbstractWriter
             foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
                 if (($metadatum['key'] === self::KBC_LAST_UPDATED_BY_BRANCH_ID) ||
                     ($metadatum['key'] === self::KBC_CREATED_BY_BRANCH_ID)) {
-                    if ($metadatum['value'] === $this->clientWrapper->getBranchId()) {
+                    if ((string) $metadatum['value'] === (string) $this->clientWrapper->getBranchId()) {
                         return;
                     } else {
                         throw new InvalidOutputException(sprintf(

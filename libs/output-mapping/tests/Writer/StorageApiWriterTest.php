@@ -1388,12 +1388,10 @@ class StorageApiWriterTest extends BaseWriterTest
                             'key' => $metadatum['key'],
                             'value' => '12345',
                         ],
-                    ],
+                    ]
                 );
-                $v = $metadata->listBucketMetadata($bucketId);
             }
         }
-        $v = $metadata->listBucketMetadata($bucketId);
 
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(sprintf(

@@ -9,6 +9,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\Test\TestLogger;
@@ -56,7 +57,8 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::S3
+            StrategyFactory::S3,
+            new ReaderOptions(true)
         );
 
         $adapter = new Adapter();
@@ -92,7 +94,8 @@ class DownloadTablesS3DefaultTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::ABS
+            StrategyFactory::ABS,
+            new ReaderOptions(true)
         );
     }
 }

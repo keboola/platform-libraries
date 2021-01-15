@@ -7,6 +7,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 
@@ -52,7 +53,8 @@ class DownloadTablesOutputStateTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
         $testTableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test");
         $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test2");

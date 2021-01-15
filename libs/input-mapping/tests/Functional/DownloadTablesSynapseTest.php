@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
@@ -90,7 +91,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
 
         self::assertEquals(
@@ -121,7 +123,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::ABS
+            StrategyFactory::ABS,
+            new ReaderOptions(true)
         );
         $adapter = new Adapter();
 
@@ -161,7 +164,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);

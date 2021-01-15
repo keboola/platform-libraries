@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\Test\TestLogger;
 
@@ -39,7 +40,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
 
         $adapter = new Adapter();
@@ -123,7 +125,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
     }
 
@@ -152,7 +155,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
 
         $adapter = new Adapter();
@@ -202,7 +206,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
     }
 
@@ -221,7 +226,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
         $configuration = new InputTableOptionsList([
             [
@@ -237,7 +243,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
         $adapter = new Adapter();
 
@@ -270,7 +277,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
         );
         $adapter = new Adapter();
 

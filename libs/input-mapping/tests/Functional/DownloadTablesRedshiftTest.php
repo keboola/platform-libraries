@@ -8,6 +8,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -52,7 +53,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
 
         self::assertEquals(
@@ -80,7 +82,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::S3
+            StrategyFactory::S3,
+            new ReaderOptions(true)
         );
         $adapter = new Adapter();
 
@@ -122,7 +125,8 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
         $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
         self::assertEquals("\"Id\",\"Name\"\n", $file);

@@ -10,6 +10,7 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApi\Client;
@@ -91,7 +92,8 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SYNAPSE
+            StrategyFactory::WORKSPACE_SYNAPSE,
+            new ReaderOptions(true)
         );
 
         $adapter = new Adapter();

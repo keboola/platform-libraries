@@ -29,7 +29,7 @@ class InputBucketValidatorTest extends TestCase
         $this->clientWrapper->setBranchId('');
     }
 
-    private function initBuckets($metadata)
+    private function initBuckets($hasMetadata)
     {
         $buckets = ['out.c-input-mapping-validator', 'in.c-input-mapping-validator'];
         foreach ($buckets as $bucket) {
@@ -44,9 +44,9 @@ class InputBucketValidatorTest extends TestCase
 
         $this->clientWrapper->getBasicClient()->createBucket('input-mapping-validator', 'in');
         $this->clientWrapper->getBasicClient()->createBucket('input-mapping-validator', 'out');
-        if ($metadata) {
-            $metadata = new Metadata($this->clientWrapper->getBasicClient());
-            $metadata->postBucketMetadata(
+        if ($hasMetadata) {
+            $hasMetadata = new Metadata($this->clientWrapper->getBasicClient());
+            $hasMetadata->postBucketMetadata(
                 'out.c-input-mapping-validator',
                 'test',
                 [
@@ -56,7 +56,7 @@ class InputBucketValidatorTest extends TestCase
                     ],
                 ]
             );
-            $metadata->postBucketMetadata(
+            $hasMetadata->postBucketMetadata(
                 'in.c-input-mapping-validator',
                 'test',
                 [

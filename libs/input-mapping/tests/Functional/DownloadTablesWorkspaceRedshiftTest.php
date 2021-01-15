@@ -7,6 +7,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Psr\Log\Test\TestLogger;
 
@@ -43,7 +44,8 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_REDSHIFT
+            StrategyFactory::WORKSPACE_REDSHIFT,
+            new ReaderOptions(true)
         );
 
         $adapter = new Adapter();

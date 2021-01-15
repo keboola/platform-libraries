@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 
@@ -55,7 +56,8 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
             $configuration,
             $inputTablesState,
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
 
         self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
@@ -80,7 +82,8 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
 
         // Update table
@@ -94,7 +97,8 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
             $configuration,
             $firstTablesState,
             'data/in/tables/',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
 
         self::assertEquals(
@@ -131,7 +135,8 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
             $configuration,
             $inputTablesState,
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
     }
 }

@@ -11,6 +11,7 @@ use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
@@ -67,17 +68,15 @@ class Reader
      * @param InputTableStateList $tablesState list of input mapping states
      * @param string $destination destination folder
      * @param string $stagingType
-     * @param bool $disableDevInputs If true, then inputs from buckets in development branches are not permitted
+     * @param ReaderOptions $readerOptions
      * @return InputTableStateList
-     * @throws ClientException
-     * @throws Exception
      */
     public function downloadTables(
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
         $destination,
         $stagingType,
-        $disableDevInputs = true
+        ReaderOptions $readerOptions
     ) {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
@@ -87,7 +86,7 @@ class Reader
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
-        if ($disableDevInputs) {
+        if ($readerOptions->devInputsDisabled()) {
             InputBucketValidator::checkDevBuckets(
                 $tablesDefinition,
                 $this->clientWrapper

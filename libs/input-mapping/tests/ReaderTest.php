@@ -9,6 +9,7 @@ use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\DevBranches;
@@ -157,7 +158,8 @@ class ReaderTest extends TestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
@@ -241,7 +243,8 @@ class ReaderTest extends TestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            'invalid'
+            'invalid',
+            new ReaderOptions(true)
         );
     }
 
@@ -305,7 +308,8 @@ class ReaderTest extends TestCase
             $configuration,
             $state,
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new ReaderOptions(true)
         );
         self::assertContains(
             "\"foo\",\"bar\"\n\"1\",\"2\"",

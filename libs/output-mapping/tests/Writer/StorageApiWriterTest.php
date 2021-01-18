@@ -10,6 +10,7 @@ use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
@@ -373,7 +374,12 @@ class StorageApiWriterTest extends BaseWriterTest
             ]
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo', 'branchId' => $branchId],
+            'local'
+        );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
         $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf('out.c-%s-output-mapping-test', $branchId));
@@ -1273,5 +1279,138 @@ class StorageApiWriterTest extends BaseWriterTest
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
         $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+    }
+
+    public function testWriteTableExistingBucketDevModeNoDev()
+    {
+        $root = $this->tmp->getTmpFolder();
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN_MASTER,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $this->clientWrapper->setBranchId($branchId);
+
+        file_put_contents($root . '/upload/table21.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+
+        $configs = [
+            [
+                'source' => 'table21.csv',
+                'destination' => 'out.c-output-mapping-test.table21'
+            ]
+        ];
+
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo', 'branchId' => $branchId],
+            StrategyFactory::LOCAL
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+
+        // drop the dev branch metadata
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $bucketId = sprintf('out.c-%s-output-mapping-test', $branchId);
+        foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
+            if (($metadatum['key'] === 'KBC.createdBy.branch.id') || ($metadatum['key'] === 'KBC.lastUpdatedBy.branch.id')) {
+                $metadata->deleteBucketMetadata($bucketId, $metadatum['id']);
+            }
+        }
+        self::expectException(InvalidOutputException::class);
+        self::expectExceptionMessage(sprintf(
+            'Trying to create a table in the development bucket ' .
+            '"out.c-%s-output-mapping-test" on branch "dev-123" (ID "%s"), but the bucket is not assigned ' .
+            'to any development branch.',
+            $branchId,
+            $branchId
+        ));
+        $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            StrategyFactory::LOCAL
+        );
+    }
+
+    public function testWriteTableExistingBucketDevModeDifferentDev()
+    {
+        $root = $this->tmp->getTmpFolder();
+        $this->clientWrapper = new ClientWrapper(
+            new Client([
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN_MASTER,
+                'backoffMaxTries' => 1,
+                'jobPollRetryDelay' => function () {
+                    return 1;
+                },
+            ]),
+            null,
+            null
+        );
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $this->clientWrapper->setBranchId($branchId);
+
+        file_put_contents($root . '/upload/table21.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+
+        $configs = [
+            [
+                'source' => 'table21.csv',
+                'destination' => 'out.c-output-mapping-test.table21'
+            ]
+        ];
+
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo', 'branchId' => $branchId],
+            StrategyFactory::LOCAL
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+
+        // drop the dev branch metadata and create bucket metadata referencing a different branch
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $bucketId = sprintf('out.c-%s-output-mapping-test', $branchId);
+        foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
+            if (($metadatum['key'] === 'KBC.createdBy.branch.id') || ($metadatum['key'] === 'KBC.lastUpdatedBy.branch.id')) {
+                $metadata->deleteBucketMetadata($bucketId, $metadatum['id']);
+                $metadata->postBucketMetadata(
+                    $bucketId,
+                    'system',
+                    [
+                        [
+                            'key' => $metadatum['key'],
+                            'value' => '12345',
+                        ],
+                    ]
+                );
+            }
+        }
+
+        self::expectException(InvalidOutputException::class);
+        self::expectExceptionMessage(sprintf(
+            'Trying to create a table in the development bucket ' .
+            '"out.c-%s-output-mapping-test" on branch "dev-123" (ID "%s"). ' .
+            'The bucket metadata marks it as assigned to branch with ID "12345".',
+            $branchId,
+            $branchId
+        ));
+        $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            StrategyFactory::LOCAL
+        );
     }
 }

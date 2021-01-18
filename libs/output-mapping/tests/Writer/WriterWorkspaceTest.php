@@ -428,7 +428,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $tableQueue = $writer->uploadTables(
             '/',
             ['mapping' => $configs],
-            ['componentId' => 'foo'],
+            ['componentId' => 'foo', 'branchId' => $branchId],
             'workspace-snowflake'
         );
         $jobIds = $tableQueue->waitForAll();

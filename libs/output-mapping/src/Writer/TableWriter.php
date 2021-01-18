@@ -31,6 +31,14 @@ use Symfony\Component\Finder\SplFileInfo;
 class TableWriter extends AbstractWriter
 {
     const SYSTEM_METADATA_PROVIDER = 'system';
+    const KBC_LAST_UPDATED_BY_BRANCH_ID = 'KBC.lastUpdatedBy.branch.id';
+    const KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID = 'KBC.lastUpdatedBy.configurationRow.id';
+    const KBC_LAST_UPDATED_BY_CONFIGURATION_ID = 'KBC.lastUpdatedBy.configuration.id';
+    const KBC_LAST_UPDATED_BY_COMPONENT_ID = 'KBC.lastUpdatedBy.component.id';
+    const KBC_CREATED_BY_BRANCH_ID = 'KBC.createdBy.branch.id';
+    const KBC_CREATED_BY_CONFIGURATION_ROW_ID = 'KBC.createdBy.configurationRow.id';
+    const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
+    const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
 
     /** @var Metadata */
     private $metadataClient;
@@ -386,6 +394,48 @@ class TableWriter extends AbstractWriter
         }
     }
 
+    private function checkDevBucketMetadata($destination)
+    {
+        if (!$this->clientWrapper->hasBranch()) {
+            return;
+        }
+        $bucketId = $this->getBucketId($destination);
+        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        try {
+            foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
+                if (($metadatum['key'] === self::KBC_LAST_UPDATED_BY_BRANCH_ID) ||
+                    ($metadatum['key'] === self::KBC_CREATED_BY_BRANCH_ID)) {
+                    if ((string) $metadatum['value'] === (string) $this->clientWrapper->getBranchId()) {
+                        return;
+                    } else {
+                        throw new InvalidOutputException(sprintf(
+                            'Trying to create a table in the development bucket "%s" on branch ' .
+                            '"%s" (ID "%s"). The bucket metadata marks it as assigned to branch with ID "%s".',
+                            $bucketId,
+                            $this->clientWrapper->getBranchName(),
+                            $this->clientWrapper->getBranchId(),
+                            $metadatum['value']
+                        ));
+                    }
+                }
+            }
+        } catch (ClientException $e) {
+            // this is Ok, if the bucket it does not exists, it can't have wrong metadata
+            if ($e->getCode() === 404) {
+                return;
+            } else {
+                throw $e;
+            }
+        }
+        throw new InvalidOutputException(sprintf(
+            'Trying to create a table in the development ' .
+            'bucket "%s" on branch "%s" (ID "%s"), but the bucket is not assigned to any development branch.',
+            $bucketId,
+            $this->clientWrapper->getBranchName(),
+            $this->clientWrapper->getBranchId()
+        ));
+    }
+
     /**
      * @param string $source
      * @param array $config
@@ -403,6 +453,8 @@ class TableWriter extends AbstractWriter
         }
         if (!$this->clientWrapper->getBasicClient()->bucketExists($this->getBucketId($config['destination']))) {
             $this->createBucket($config['destination'], $systemMetadata);
+        } else {
+            $this->checkDevBucketMetadata($config['destination']);
         }
 
         if ($this->clientWrapper->getBasicClient()->tableExists($config['destination'])) {
@@ -503,24 +555,24 @@ class TableWriter extends AbstractWriter
     private function getCreatedMetadata(array $systemMetadata)
     {
         $metadata[] = [
-            'key' => 'KBC.createdBy.component.id',
+            'key' => self::KBC_CREATED_BY_COMPONENT_ID,
             'value' => $systemMetadata['componentId'],
         ];
         if (!empty($systemMetadata['configurationId'])) {
             $metadata[] = [
-                'key' => 'KBC.createdBy.configuration.id',
+                'key' => self::KBC_CREATED_BY_CONFIGURATION_ID,
                 'value' => $systemMetadata['configurationId'],
             ];
         }
         if (!empty($systemMetadata['configurationRowId'])) {
             $metadata[] = [
-                'key' => 'KBC.createdBy.configurationRow.id',
+                'key' => self::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
                 'value' => $systemMetadata['configurationRowId'],
             ];
         }
         if (!empty($systemMetadata['branchId'])) {
             $metadata[] = [
-                'key' => 'KBC.createdBy.branch.id',
+                'key' => self::KBC_CREATED_BY_BRANCH_ID,
                 'value' => $systemMetadata['branchId'],
             ];
         }
@@ -668,24 +720,24 @@ class TableWriter extends AbstractWriter
     private function getUpdatedMetadata(array $systemMetadata)
     {
         $metadata[] = [
-            'key' => 'KBC.lastUpdatedBy.component.id',
+            'key' => self::KBC_LAST_UPDATED_BY_COMPONENT_ID,
             'value' => $systemMetadata['componentId'],
         ];
         if (!empty($systemMetadata['configurationId'])) {
             $metadata[] = [
-                'key' => 'KBC.lastUpdatedBy.configuration.id',
+                'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
                 'value' => $systemMetadata['configurationId'],
             ];
         }
         if (!empty($systemMetadata['configurationRowId'])) {
             $metadata[] = [
-                'key' => 'KBC.lastUpdatedBy.configurationRow.id',
+                'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
                 'value' => $systemMetadata['configurationRowId'],
             ];
         }
         if (!empty($systemMetadata['branchId'])) {
             $metadata[] = [
-                'key' => 'KBC.lastUpdatedBy.branch.id',
+                'key' => self::KBC_LAST_UPDATED_BY_BRANCH_ID,
                 'value' => $systemMetadata['branchId'],
             ];
         }

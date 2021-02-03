@@ -25,11 +25,6 @@ class Local extends AbstractStrategy implements StrategyInterface
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         }
-
-        $this->manifestWriter->writeFileManifest(
-            $fileInfo,
-            $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath . '.manifest'
-        );
         $manifest = $this->manifestCreator->createFileManifest($fileInfo);
         $adapter = new FileAdapter($this->format);
         $serializedManifest = $adapter->setConfig($manifest)->serialize();

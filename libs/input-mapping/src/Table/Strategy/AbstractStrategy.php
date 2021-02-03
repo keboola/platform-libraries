@@ -2,7 +2,7 @@
 
 namespace Keboola\InputMapping\Table\Strategy;
 
-use Keboola\InputMapping\Helper\ManifestWriter;
+use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -30,8 +30,11 @@ abstract class AbstractStrategy implements StrategyInterface
     /** string */
     protected $destination;
 
-    /** @var ManifestWriter */
-    protected $manifestWriter;
+    /** @var ManifestCreator */
+    protected $manifestCreator;
+
+    /** @var string */
+    protected $format;
 
     public function __construct(
         ClientWrapper $storageClient,
@@ -48,7 +51,8 @@ abstract class AbstractStrategy implements StrategyInterface
         $this->metadataStorage = $metadataStorage;
         $this->tablesState = $tablesState;
         $this->destination = $destination;
-        $this->manifestWriter = new ManifestWriter($this->clientWrapper->getBasicClient(), $format);
+        $this->manifestCreator = new ManifestCreator($this->clientWrapper->getBasicClient());
+        $this->format = $format;
     }
 
     protected function ensurePathDelimiter($path)

@@ -41,7 +41,7 @@ class ABS extends AbstractStrategy
             )
             ;
             $tableInfo["abs"] = $this->getABSInfo($fileInfo);
-            $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
+            $this->manifestCreator->createTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
         }
     }
 

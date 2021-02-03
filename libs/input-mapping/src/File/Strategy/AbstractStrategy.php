@@ -5,7 +5,7 @@ namespace Keboola\InputMapping\File\Strategy;
 use Exception;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\InputMapping\Helper\ManifestWriter;
+use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -23,14 +23,17 @@ abstract class AbstractStrategy implements StrategyInterface
     /** @var string */
     protected $destination;
 
-    /** @var ManifestWriter */
-    protected $manifestWriter;
+    /** @var ManifestCreator */
+    protected $manifestCreator;
 
     /** @var ProviderInterface */
     protected $dataStorage;
 
     /** @var ProviderInterface */
     protected $metadataStorage;
+
+    /** @var string */
+    protected $format;
 
     public function __construct(
         ClientWrapper $storageClient,
@@ -41,9 +44,10 @@ abstract class AbstractStrategy implements StrategyInterface
     ) {
         $this->clientWrapper = $storageClient;
         $this->logger = $logger;
-        $this->manifestWriter = new ManifestWriter($this->clientWrapper->getBasicClient(), $format);
+        $this->manifestCreator = new ManifestCreator($this->clientWrapper->getBasicClient());
         $this->dataStorage = $dataStorage;
         $this->metadataStorage = $metadataStorage;
+        $this->format = $format;
     }
 
     protected function ensurePathDelimiter($path)

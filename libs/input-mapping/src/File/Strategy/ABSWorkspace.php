@@ -2,12 +2,43 @@
 
 namespace Keboola\InputMapping\File\Strategy;
 
+use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
+use Keboola\InputMapping\Exception\InputOperationException;
+use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
 use Keboola\InputMapping\File\StrategyInterface;
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\ClientWrapper;
+use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use Psr\Log\LoggerInterface;
 
-class ABSWorkspace extends AbstractStrategy implements StrategyInterface
+class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
 {
+    /** @var BlobRestProxy */
+    private $blobClient;
+
+    /** @var string */
+    private $container;
+
     protected $inputs = [];
+
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        ProviderInterface $dataStorage,
+        ProviderInterface $metadataStorage,
+        $format = 'json'
+    ) {
+        parent::__construct($clientWrapper, $logger, $dataStorage, $metadataStorage, $format);
+        $credentials = $this->dataStorage->getCredentials();
+        if (empty($credentials['connectionString']) || empty($credentials['container'])) {
+            throw new InputOperationException(
+                'Invalid credentials received: ' . implode(', ', array_keys($credentials))
+            );
+        }
+        $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
+        $this->container = $credentials['container'];
+    }
 
     public function downloadFile($fileInfo, $destinationPath)
     {
@@ -15,10 +46,12 @@ class ABSWorkspace extends AbstractStrategy implements StrategyInterface
             'dataFileId' => $fileInfo['id'],
             'destination' => $destinationPath,
         ];
-        $this->manifestWriter->writeFileManifest(
-            $fileInfo,
-            $this->ensurePathDelimiter($this->metadataStorage->getPath()) . $destinationPath . '.manifest'
-        );
+        $manifest = $this->manifestCreator->createFileManifest($fileInfo);
+        $adapter = new FileAdapter($this->format);
+        $serializedManifest = $adapter->setConfig($manifest)->serialize();
+        $manifestDestination = $this->ensurePathDelimiter($this->metadataStorage->getPath())
+            . $destinationPath . '.manifest';
+        $this->writeFile($serializedManifest, $manifestDestination);
     }
 
     public function downloadFiles($fileConfigurations, $destination)
@@ -33,5 +66,14 @@ class ABSWorkspace extends AbstractStrategy implements StrategyInterface
             ]);
             $this->logger->info('All files were fetched.');
         }
+    }
+
+    public function writeFile($contents, $destination)
+    {
+        $this->blobClient->createBlockBlob(
+            $this->container,
+            $destination,
+            $contents
+        );
     }
 }

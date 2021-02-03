@@ -4,12 +4,15 @@ namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Psr\Log\LoggerInterface;
 
 class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
@@ -70,10 +73,18 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
 
     public function writeFile($contents, $destination)
     {
-        $this->blobClient->createBlockBlob(
-            $this->container,
-            $destination,
-            $contents
-        );
+        try {
+            $this->blobClient->createBlockBlob(
+                $this->container,
+                $destination,
+                $contents
+            );
+        } catch (ServiceException $e) {
+            throw new InvalidInputException(
+                sprintf('Failed writing manifest to "%s" in container "%s".', $destination, $this->container),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 }

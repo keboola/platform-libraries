@@ -96,6 +96,26 @@ class Adapter
         return $this;
     }
 
+    public function serialize()
+    {
+        if ($this->getFormat() == 'yaml') {
+            $serialized = Yaml::dump($this->getConfig(), 10);
+            if ($serialized == 'null') {
+                $serialized = '{}';
+            }
+        } elseif ($this->getFormat() == 'json') {
+            $encoder = new JsonEncoder();
+            $serialized = $encoder->encode(
+                $this->getConfig(),
+                $encoder::FORMAT,
+                ['json_encode_options' => JSON_PRETTY_PRINT]
+            );
+        } else {
+            throw new InputOperationException("Invalid configuration format {$this->format}.");
+        }
+        return $serialized;
+    }
+
     /**
      *
      * Read configuration from file

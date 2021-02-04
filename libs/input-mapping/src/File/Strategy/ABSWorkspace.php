@@ -8,7 +8,6 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;

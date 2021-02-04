@@ -80,7 +80,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             $format
         );
         $mockWorkspace = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId'])
+            ->setMethods(['getWorkspaceId', 'getCredentials'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () {
@@ -93,26 +93,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 return $this->workspaceId;
             }
         );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            }
-        );
+        $mockWorkspace->method('getCredentials')->willReturn($this->workspaceCredentials);
+
         /** @var ProviderInterface $mockWorkspace */
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                StrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_DATA])
-            ]
-        );
-        /** @var ProviderInterface $mockLocal */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                StrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_METADATA])
+                StrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
             ]
         );
         return $stagingFactory;
@@ -120,6 +107,10 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testAbsReadFiles()
     {
+        if (!$this->runSynapseTests) {
+            self::markTestSkipped('Synapse tests disabled');
+        }
+
         $this->clientWrapper->setBranchId('');
         $this->getStagingFactory()->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
             ->getFileDataProvider()->getWorkspaceId(); //initialize the mock
@@ -130,9 +121,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             'some data'
         );
 
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
@@ -149,22 +137,28 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, 'data/in/files/', StrategyFactory::WORKSPACE_ABS);
 
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobResult1 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/' . $id1 . '_upload/' . $id1
+        );
+        $manifestResult1 = $blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/files/' . $id1 . '_upload.manifest'
         );
         $blobResult2 = $blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/' . $id2 . '_upload/' . $id2
         );
+        $maniifestResult2 = $blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/files/' . $id2 . '_upload.manifest'
+        );
 
         self::assertEquals("test", stream_get_contents($blobResult1->getContentStream()));
         self::assertEquals("test", stream_get_contents($blobResult2->getContentStream()));
-
-        $adapter = new Adapter();
-        $manifest1 = $adapter->readFromFile($root . "/data/in/files/" . $id1 . "_upload.manifest");
-        $manifest2 = $adapter->readFromFile($root . "/data/in/files/" . $id2 . "_upload.manifest");
+        
+        $manifest1 = json_decode(stream_get_contents($manifestResult1->getContentStream()), true);
+        $manifest2 = json_decode(stream_get_contents($maniifestResult2->getContentStream()), true);
 
         self::assertArrayHasKey('id', $manifest1);
         self::assertArrayHasKey('name', $manifest1);

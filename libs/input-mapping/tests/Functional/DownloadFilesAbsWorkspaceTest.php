@@ -219,7 +219,23 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
+                $root . "/download/" . $id1 . '_upload.manifest'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
                 $root . "/download/" . $id2 . '_upload/' . $id2
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                $root . "/download/" . $id2 . '_upload.manifest'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -288,7 +304,15 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->assertEmpty($blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . "/download/" . $id1 . '_upload/'  . $id1
+                $root . "/download/" . $id1 . '_upload/' . $id1
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                $root . "/download/" . $id1 . '_upload.manifest'
             ));
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
@@ -301,9 +325,21 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
+        try {
+            $this->assertEmpty($blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                $root . "/download/" . $id2 . '_upload.manifest'
+            ));
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'download/' . $id3 . '_upload/' . $id3
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'download/' . $id3 . '_upload.manifest'
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
@@ -311,11 +347,23 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
+            'download/' . $id4 . '_upload.manifest'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
             'download/' . $id5 . '_upload/' . $id5
         ));
         $this->assertNotEmpty($blobClient->getBlob(
             $this->workspaceCredentials['container'],
+            'download/' . $id5 . '_upload.manifest'
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
             'download/' . $id6 . '_upload/' . $id6
+        ));
+        $this->assertNotEmpty($blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'download/' . $id6 . '_upload.manifest'
         ));
     }
 }

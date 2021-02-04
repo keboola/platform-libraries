@@ -33,7 +33,7 @@ class Local extends AbstractStrategy implements StrategyInterface
         $this->writeFile($serializedManifest, $manifestDestination);
     }
 
-    public function writeFile($contents, $destination)
+    private function writeFile($contents, $destination)
     {
         $fs = new Filesystem();
         $fs->dumpFile($destination, $contents);

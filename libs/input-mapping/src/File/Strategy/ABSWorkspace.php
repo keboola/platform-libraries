@@ -70,7 +70,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         }
     }
 
-    public function writeFile($contents, $destination)
+    private function writeFile($contents, $destination)
     {
         try {
             $this->blobClient->createBlockBlob(

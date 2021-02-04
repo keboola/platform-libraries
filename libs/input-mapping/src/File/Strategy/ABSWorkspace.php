@@ -52,8 +52,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         $manifest = $this->manifestCreator->createFileManifest($fileInfo);
         $adapter = new FileAdapter($this->format);
         $serializedManifest = $adapter->setConfig($manifest)->serialize();
-        $manifestDestination = $this->ensurePathDelimiter($this->metadataStorage->getPath())
-            . $destinationPath . '.manifest';
+        $manifestDestination = $destinationPath . '.manifest';
         $this->writeFile($serializedManifest, $manifestDestination);
     }
 

@@ -31,7 +31,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     {
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
-            return;
+            self::markTestSkipped('Synapse tests disabled');
         }
         if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
             throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
@@ -109,10 +109,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testAbsReadFiles()
     {
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
-
         $this->clientWrapper->setBranchId('');
         $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         $blobClient->createBlockBlob(
@@ -185,9 +181,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     {
         $this->clientWrapper->setBranchId('');
 
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
@@ -278,9 +271,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     {
         $this->clientWrapper->setBranchId('');
 
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());

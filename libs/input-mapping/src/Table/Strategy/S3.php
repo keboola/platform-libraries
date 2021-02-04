@@ -40,7 +40,12 @@ class S3 extends AbstractStrategy
             )
             ;
             $tableInfo["s3"] = $this->getS3Info($fileInfo);
-            $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
+            $this->manifestCreator->writeTableManifest(
+                $tableInfo,
+                $manifestPath,
+                $table->getColumnNames(),
+                $this->format
+            );
         }
     }
 

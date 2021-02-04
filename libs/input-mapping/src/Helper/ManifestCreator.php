@@ -23,9 +23,9 @@ class ManifestCreator
      * @param array $tableInfo
      * @param string $destination
      * @param array $columns
-     * @return array manifest
+     * @param string $format
      */
-    public function createTableManifest($tableInfo, $columns)
+    public function writeTableManifest($tableInfo, $destination, $columns, $format = 'json')
     {
         $manifest = [
             "id" => $tableInfo["id"],
@@ -53,7 +53,16 @@ class ManifestCreator
         foreach ($columns as $column) {
             $manifest['column_metadata'][$column] = $metadata->listColumnMetadata($tableInfo['id'] . '.' . $column);
         }
-        return $manifest;
+        $adapter = new TableAdapter($format);
+        try {
+            $adapter->setConfig($manifest);
+            $adapter->writeToFile($destination);
+        } catch (InvalidInputException $e) {
+            throw new InputOperationException(
+                "Failed to write manifest for table {$tableInfo['id']} - {$tableInfo['name']}.",
+                $e
+            );
+        }
     }
 
     /**

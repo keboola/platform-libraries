@@ -54,7 +54,12 @@ class Synapse extends AbstractStrategy
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->destination, $table) . ".manifest";
                 $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
-                $this->manifestWriter->writeTableManifest($tableInfo, $manifestPath, $table->getColumnNames());
+                $this->manifestCreator->writeTableManifest(
+                    $tableInfo,
+                    $manifestPath,
+                    $table->getColumnNames(),
+                    $this->format
+                );
             }
         }
     }

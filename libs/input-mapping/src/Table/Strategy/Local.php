@@ -31,11 +31,12 @@ class Local extends AbstractStrategy
             ));
         }
 
-        $this->manifestWriter->writeTableManifest(
+        $this->manifestCreator->writeTableManifest(
             $tableInfo,
             $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . ".manifest",
-            $table->getColumnNames()
+            $table->getColumnNames(),
+            $this->format
         );
         return [
             "tableId" => $table->getSource(),

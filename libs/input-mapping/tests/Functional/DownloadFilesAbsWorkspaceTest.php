@@ -27,6 +27,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     /** @var array [connectionString, container] */
     protected $workspaceCredentials;
 
+    /** @var BlobRestProxy */
+    protected $blobClient;
     public function setUp()
     {
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
@@ -42,6 +44,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         parent::setUp();
         $this->getStagingFactory()->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
             ->getFileDataProvider()->getWorkspaceId(); //initialize the mock
+
+        $this->blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
     }
 
     public function tearDown()
@@ -107,11 +111,23 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         return $stagingFactory;
     }
 
+    private function assertBlobNotEmpty($blobPath)
+    {
+        $this->assertNotEmpty(
+            stream_get_contents(
+                $this->blobClient->getBlob(
+                    $this->workspaceCredentials['container'],
+                    $blobPath
+                )->getContentStream()
+            )
+        );
+    }
+
     public function testAbsReadFiles()
     {
         $this->clientWrapper->setBranchId('');
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
-        $blobClient->createBlockBlob(
+
+        $this->blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/in/tables/sometable.csv',
             'some data'
@@ -133,19 +149,19 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $configuration = [["tags" => ["download-files-test"]]];
         $reader->downloadFiles($configuration, 'data/in/files/', StrategyFactory::WORKSPACE_ABS);
 
-        $blobResult1 = $blobClient->getBlob(
+        $blobResult1 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/upload/' . $id1
         );
-        $manifestResult1 = $blobClient->getBlob(
+        $manifestResult1 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
              'data/in/files/upload/' . $id1 . '.manifest'
         );
-        $blobResult2 = $blobClient->getBlob(
+        $blobResult2 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/upload/' . $id2
         );
-        $maniifestResult2 = $blobClient->getBlob(
+        $maniifestResult2 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/upload/' . $id2 . '.manifest'
         );
@@ -170,7 +186,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         self::assertEquals($id2, $manifest2["id"]);
 
         // verify that the workspace contents were preserved
-        $blobResult = $blobClient->getBlob(
+        $blobResult = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/tables/sometable.csv'
         );
@@ -198,79 +214,69 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
-        try {
-            $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
-        } catch (\Exception $e) {
-            $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
-            $l = $blobClient->listBlobs($this->workspaceCredentials['container']);
-            var_dump($l->getBlobs());
-        }
 
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
+
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . '/download/upload/' . $id1
-            ));
+                'download/upload/' . $id1
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                '/download/upload/' . $id1 . '.manifest'
-            ));
+                'download/upload/' . $id1 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                '/download/upload/' . $id2
-            ));
+                'download/upload/' . $id2
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                '/download/upload/' . $id2 . '.manifest'
-            ));
+                'download/upload/' . $id2 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id3
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id3 . '.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id4
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id4 . '.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id5
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id5 . '.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id6
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        );
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id6 . '.manifest'
-        ));
+        );
     }
 
     public function testReadFilesEsQueryFilterRunId()
@@ -296,70 +302,65 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
 
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                "/download/upload/" . $id1
-            ));
+                "download/upload/" . $id1
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                '/download/upload/' . $id1 . '.manifest'
-            ));
+                'download/upload/' . $id1 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . '/download/upload/' . $id2
-            ));
+                $root . 'download/upload/' . $id2
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
         try {
-            $this->assertEmpty($blobClient->getBlob(
+            $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . "/download/" . $id2 . '_upload.manifest'
-            ));
+                $root . "download/" . $id2 . '_upload.manifest'
+            );
+            $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {
             $this->assertEquals(404, $exception->getCode());
         }
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
+        $this->assertBlobNotEmpty(
             'download/upload/' . $id3
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id3 . '_upload.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id4 . '_upload/' . $id4
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id4 . '_upload.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id5 . '_upload/' . $id5
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id5 . '_upload.manifest'
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id6 . '_upload/' . $id6
-        ));
-        $this->assertNotEmpty($blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/' . $id6 . '_upload.manifest'
-        ));
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id3 . '.manifest'
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id4
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id4 . '.manifest'
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id5
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id5 . '.manifest'
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id6
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id6 . '.manifest'
+        );
     }
 }

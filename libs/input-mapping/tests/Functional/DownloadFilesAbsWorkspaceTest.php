@@ -29,7 +29,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     /** @var BlobRestProxy */
     protected $blobClient;
-
     public function setUp()
     {
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
@@ -218,27 +217,42 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
         $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
 
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/upload/' . $id1
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/upload/' . $id1 . '.manifest'
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/upload/' . $id2
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/upload/' . $id2 . '.manifest'
-        );
-
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download/upload/' . $id1
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download/upload/' . $id1 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download/upload/' . $id2
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download/upload/' . $id2 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
         $this->assertBlobNotEmpty(
             'download/upload/' . $id3
         );
@@ -288,27 +302,42 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
 
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            "download/upload/" . $id1
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            'download/upload/' . $id1 . '.manifest'
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            $root . 'download/upload/' . $id2
-        );
-        $this->expectExceptionCode(404);
-        $this->blobClient->getBlob(
-            $this->workspaceCredentials['container'],
-            "download/uppload/" . $id2 . '.manifest'
-        );
-
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                "download/upload/" . $id1
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download/upload/' . $id1 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                $root . 'download/upload/' . $id2
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                "download/uppload/" . $id2 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
         $this->assertBlobNotEmpty(
             'download/upload/' . $id3
         );

@@ -332,7 +332,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
-                $root . "download/" . $id2 . '_upload.manifest'
+                "download/uppload/" . $id2 . '.manifest'
             );
             $this->fail('should have thrown 404');
         } catch (ServiceException $exception) {

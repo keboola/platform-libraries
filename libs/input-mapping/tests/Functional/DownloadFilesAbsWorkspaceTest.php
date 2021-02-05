@@ -155,7 +155,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         );
         $manifestResult1 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
-             'data/in/files/upload/' . $id1 . '.manifest'
+            'data/in/files/upload/' . $id1 . '.manifest'
         );
         $blobResult2 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],

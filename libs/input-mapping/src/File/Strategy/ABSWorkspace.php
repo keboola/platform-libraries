@@ -61,10 +61,12 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         if ($this->inputs) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
             $workspaceId = $this->dataStorage->getWorkspaceId();
-            $workspaces->loadWorkspaceData($workspaceId, [
-                'input' => $this->inputs,
-                'preserve' => 1,
-            ]);
+            foreach ($this->inputs as $input) {
+                $workspaces->loadWorkspaceData($workspaceId, [
+                    'input' => [$input],
+                    'preserve' => 1,
+                ]);
+            }
             $this->logger->info('All files were fetched.');
         }
     }

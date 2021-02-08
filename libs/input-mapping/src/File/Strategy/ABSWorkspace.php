@@ -24,22 +24,21 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
 
     protected $inputs = [];
 
-    public function __construct(
-        ClientWrapper $clientWrapper,
-        LoggerInterface $logger,
-        ProviderInterface $dataStorage,
-        ProviderInterface $metadataStorage,
-        $format = 'json'
-    ) {
-        parent::__construct($clientWrapper, $logger, $dataStorage, $metadataStorage, $format);
-        $credentials = $this->dataStorage->getCredentials();
-        if (empty($credentials['connectionString']) || empty($credentials['container'])) {
-            throw new InputOperationException(
-                'Invalid credentials received: ' . implode(', ', array_keys($credentials))
-            );
+    /**
+     * @return BlobRestProxy
+     */
+    private function initBlobClient()
+    {
+        if (!$this->blobClient) {
+            $credentials = $this->dataStorage->getCredentials();
+            if (empty($credentials['connectionString']) || empty($credentials['container'])) {
+                throw new InputOperationException(
+                    'Invalid credentials received: ' . implode(', ', array_keys($credentials))
+                );
+            }
+            $this->container = $credentials['container'];
+            $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
         }
-        $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
-        $this->container = $credentials['container'];
     }
 
     public function downloadFile($fileInfo, $destinationPath)
@@ -74,6 +73,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     private function writeFile($contents, $destination)
     {
         try {
+            $this->initBlobClient();
             $this->blobClient->createBlockBlob(
                 $this->container,
                 $destination,

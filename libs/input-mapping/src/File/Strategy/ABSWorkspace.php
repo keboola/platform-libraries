@@ -36,9 +36,9 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     {
         if (!$this->credentials) {
             $this->credentials = $this->dataStorage->getCredentials();
-            if (empty($credentials['connectionString']) || empty($credentials['container'])) {
+            if (empty($this->credentials['connectionString']) || empty($this->credentials['container'])) {
                 throw new InputOperationException(
-                    'Invalid credentials received: ' . implode(', ', array_keys($credentials))
+                    'Invalid credentials received: ' . implode(', ', array_keys($this->credentials))
                 );
             }
         }

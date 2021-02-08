@@ -24,11 +24,6 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
 
     protected $inputs = [];
 
-    public function __construct(ClientWrapper $storageClient, LoggerInterface $logger, ProviderInterface $dataStorage, ProviderInterface $metadataStorage, $format = 'json')
-    {
-        parent::__construct($storageClient, $logger, $dataStorage, $metadataStorage, $format);
-    }
-
     /**
      * @return array credentials
      */

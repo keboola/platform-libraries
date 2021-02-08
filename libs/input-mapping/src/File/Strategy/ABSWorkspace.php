@@ -27,7 +27,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     /**
      * @return BlobRestProxy
      */
-    private function initBlobClient()
+    private function getBlobClient()
     {
         if (!$this->blobClient) {
             $credentials = $this->dataStorage->getCredentials();
@@ -39,6 +39,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             $this->container = $credentials['container'];
             $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
         }
+        return $this->blobClient;
     }
 
     public function downloadFile($fileInfo, $destinationPath)
@@ -73,8 +74,8 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     private function writeFile($contents, $destination)
     {
         try {
-            $this->initBlobClient();
-            $this->blobClient->createBlockBlob(
+            $blobClient = $this->getBlobClient();
+            $blobClient->createBlockBlob(
                 $this->container,
                 $destination,
                 $contents

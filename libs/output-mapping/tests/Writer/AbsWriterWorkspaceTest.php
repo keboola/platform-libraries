@@ -18,7 +18,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use InitSynapseStorageClientTrait;
-    
+
     /** @var array */
     protected $workspace;
 
@@ -312,8 +312,15 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             ]
         ];
 
+        $systemMetadata = [
+            "componentId" => "testComponent",
+            "configurationId" => "metadata-write-test",
+            "rowId" => "12345",
+            "branchId" => "1234",
+        ];
+
         $writer = new FileWriter($factory);
-        $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::WORKSPACE_ABS);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, StrategyFactory::WORKSPACE_ABS);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -334,13 +341,21 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             }
         }
 
+        $expectedTags = [
+            'output-mapping-test',
+            'componentId: testComponent',
+            'configurationId: metadata-write-test',
+            'rowId: 12345',
+            'branchId: 1234',
+        ];
+
         $this->assertNotNull($file1);
         $this->assertNotNull($file2);
         $this->assertNotNull($file3);
         $this->assertEquals(4, $file1['sizeBytes']);
-        $this->assertEquals(['output-mapping-test'], $file1['tags']);
-        $this->assertEquals(['output-mapping-test', 'another-tag'], $file2['tags']);
-        $this->assertEquals(['output-mapping-test'], $file3['tags']);
+        $this->assertEquals($expectedTags, $file1["tags"]);
+        $this->assertEquals(sort(array_merge($expectedTags, ['another-tag'])), sort($file2["tags"]));
+        $this->assertEquals($expectedTags, $file3["tags"]);
         $this->assertNotNull($file1['maxAgeDays']);
         $this->assertNull($file2['maxAgeDays']);
         $this->assertNull($file3['maxAgeDays']);

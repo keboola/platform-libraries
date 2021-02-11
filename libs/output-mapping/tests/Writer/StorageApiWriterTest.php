@@ -97,13 +97,14 @@ class StorageApiWriterTest extends BaseWriterTest
             'rowId: 12345',
             'branchId: 1234',
         ];
+        $expectedFile2Tags = array_merge($expectedTags, ['another-tag']);
 
         $this->assertNotNull($file1);
         $this->assertNotNull($file2);
         $this->assertNotNull($file3);
         $this->assertEquals(4, $file1["sizeBytes"]);
         $this->assertEquals($expectedTags, $file1["tags"]);
-        $this->assertEquals(sort(array_merge($expectedTags, ['another-tag'])), sort($file2["tags"]));
+        $this->assertEquals(sort($expectedFile2Tags), sort($file2["tags"]));
         $this->assertEquals($expectedTags, $file3["tags"]);
         $this->assertFalse($file1["isPublic"]);
         $this->assertTrue($file2["isPublic"]);

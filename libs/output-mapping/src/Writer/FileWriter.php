@@ -90,8 +90,8 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
                 $storageConfig = TagsRewriter::addSystemTags($storageConfig, $systemMetadata);
+                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
                 $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

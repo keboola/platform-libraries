@@ -17,4 +17,14 @@ class TagsRewriter
 
         return $storageConfig;
     }
+
+    public static function addSystemTags(array $storageConfig, array $systemMetadata)
+    {
+        if (!empty($systemMetadata)) {
+            foreach ($systemMetadata as $systemKey => $systemValue) {
+                $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
+            }
+        }
+        return $storageConfig;
+    }
 }

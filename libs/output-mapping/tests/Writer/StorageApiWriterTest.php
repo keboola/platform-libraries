@@ -48,6 +48,13 @@ class StorageApiWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/file3", "test");
         file_put_contents($root . "/upload/file3.manifest", "{\"tags\": [\"output-mapping-test\"],\"is_public\": true}");
 
+        $systemMetadata = [
+            "componentId" => "testComponent",
+            "configurationId" => "metadata-write-test",
+            "rowId" => "12345",
+            "branchId" => "1234",
+        ];
+
         $configs = [
             [
                 "source" => "file1",
@@ -62,7 +69,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $writer = new FileWriter($this->getStagingFactory());
 
-        $writer->uploadFiles('/upload', ["mapping" => $configs], StrategyFactory::LOCAL);
+        $writer->uploadFiles('/upload', ["mapping" => $configs], $systemMetadata,StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -83,13 +90,21 @@ class StorageApiWriterTest extends BaseWriterTest
             }
         }
 
+        $expectedTags = [
+            'output-mapping-test',
+            'componentId: testComponent',
+            'configurationId: metadata-write-test',
+            'rowId: 12345',
+            'branchId: 1234',
+        ];
+
         $this->assertNotNull($file1);
         $this->assertNotNull($file2);
         $this->assertNotNull($file3);
         $this->assertEquals(4, $file1["sizeBytes"]);
-        $this->assertEquals(["output-mapping-test"], $file1["tags"]);
-        $this->assertEquals(["output-mapping-test", "another-tag"], $file2["tags"]);
-        $this->assertEquals(["output-mapping-test"], $file3["tags"]);
+        $this->assertEquals($expectedTags, $file1["tags"]);
+        $this->assertEquals(sort(array_merge($expectedTags, ['another-tag'])), sort($file2["tags"]));
+        $this->assertEquals($expectedTags, $file3["tags"]);
         $this->assertFalse($file1["isPublic"]);
         $this->assertTrue($file2["isPublic"]);
         $this->assertTrue($file3["isPublic"]);

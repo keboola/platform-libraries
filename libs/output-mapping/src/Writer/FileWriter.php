@@ -90,7 +90,7 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata);
+                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata, $this->logger);
                 $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
                 $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {

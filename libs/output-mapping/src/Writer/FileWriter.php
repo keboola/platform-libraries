@@ -6,7 +6,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -90,8 +90,8 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsRewriter::addSystemTags($storageConfig, $systemMetadata);
-                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
+                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata);
+                $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
                 $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

@@ -5,7 +5,7 @@ namespace Keboola\OutputMapping\Writer\Helper;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 
-class TagsRewriter
+class TagsHelper
 {
     public static function rewriteTags(array $storageConfig, ClientWrapper $clientWrapper)
     {

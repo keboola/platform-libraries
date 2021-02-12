@@ -22,6 +22,9 @@ class FileWriter extends AbstractWriter
      */
     public function uploadFiles($source, $configuration, $systemMetadata, $storage)
     {
+        if (empty($systemMetadata['componentId'])) {
+            throw new OutputOperationException('Component Id must be set');
+        }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);
         $files = $strategy->listFiles($source);
         $manifests = $strategy->listManifests($source);

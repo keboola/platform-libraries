@@ -315,7 +315,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $systemMetadata = [
             "componentId" => "testComponent",
             "configurationId" => "metadata-write-test",
-            "rowId" => "12345",
+            "configurationRowId" => "12345",
             "branchId" => "1234",
         ];
 
@@ -345,7 +345,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'output-mapping-test',
             'componentId: testComponent',
             'configurationId: metadata-write-test',
-            'rowId: 12345',
+            'configurationRowId: 12345',
             'branchId: 1234',
         ];
         $file2expectedTags = array_merge($expectedTags, ['another-tag']);
@@ -354,9 +354,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotNull($file2);
         $this->assertNotNull($file3);
         $this->assertEquals(4, $file1['sizeBytes']);
-        $this->assertEquals($expectedTags, $file1["tags"]);
-        $this->assertEquals(sort($file2expectedTags), sort($file2["tags"]));
-        $this->assertEquals($expectedTags, $file3["tags"]);
+        $this->assertEquals($expectedTags, $file1['tags']);
+        $this->assertEquals(sort($file2expectedTags), sort($file2['tags']));
+        $this->assertEquals($expectedTags, $file3['tags']);
         $this->assertNotNull($file1['maxAgeDays']);
         $this->assertNull($file2['maxAgeDays']);
         $this->assertNull($file3['maxAgeDays']);

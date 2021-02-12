@@ -3,12 +3,12 @@
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
-use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 
-class TagsRewriterTest extends TestCase
+class TagsHelperTest extends TestCase
 {
     use CreateBranchTrait;
 
@@ -43,7 +43,7 @@ class TagsRewriterTest extends TestCase
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
         $clientWrapper->setBranchId($branchId);
         $storageConfig = $this->getStorageConfig();
-        $expectedConfig = TagsRewriter::rewriteTags($storageConfig, $clientWrapper);
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals(
             [
                 sprintf('%s-first-tag', $branchId),
@@ -75,7 +75,7 @@ class TagsRewriterTest extends TestCase
         $clientWrapper->setBranchId($branchId);
         $storageConfig = $this->getStorageConfig();
         $storageConfig['tags'] = [];
-        $expectedConfig = TagsRewriter::rewriteTags($storageConfig, $clientWrapper);
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals([], $expectedConfig['tags']);
         unset($expectedConfig['tags']);
         unset($storageConfig['tags']);
@@ -98,7 +98,7 @@ class TagsRewriterTest extends TestCase
         );
         $clientWrapper->setBranchId('');
         $storageConfig = $this->getStorageConfig();
-        $expectedConfig = TagsRewriter::rewriteTags($storageConfig, $clientWrapper);
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals(
             [
                 'first-tag',

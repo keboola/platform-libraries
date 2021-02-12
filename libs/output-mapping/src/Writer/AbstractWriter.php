@@ -8,6 +8,11 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractWriter
 {
+    const SYSTEM_KEY_COMPONENT_ID = 'componentId';
+    const SYSTEM_KEY_CONFIGURATION_ID = 'configurationId';
+    const SYSTEM_KEY_CONFIGURATION_ROW_ID = 'configurationRowId';
+    const SYSTEM_KEY_BRANCH_ID = 'branchId';
+
     /**
      * @var ClientWrapper
      */

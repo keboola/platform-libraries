@@ -203,7 +203,7 @@ class StorageApiWriterTest extends BaseWriterTest
             sprintf('%s-output-mapping-test', $branchId),
             sprintf('%s-componentId: testComponent', $branchId),
             sprintf('%s-configurationId: metadata-write-test', $branchId),
-            sprintf('%s-rowId: 12345', $branchId),
+            sprintf('%s-configurationRowId: 12345', $branchId),
             sprintf('%s-branchId: %s', $branchId, $branchId),
         ];
 
@@ -345,7 +345,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $writer = new FileWriter($this->getStagingFactory());
         try {
-            $writer->uploadFiles('/upload', [], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+            $writer->uploadFiles('/upload', [], [], StrategyFactory::LOCAL);
             $this->fail('Missing componentId must cause exception.');
         } catch (InvalidOutputException $e) {
             $this->assertContains('Component Id must be set', $e->getMessage());

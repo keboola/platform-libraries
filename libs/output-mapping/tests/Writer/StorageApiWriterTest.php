@@ -180,7 +180,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $systemMetadata = [
             'componentId' => 'testComponent',
             'configurationId' => 'metadata-write-test',
-            'configurationRowId' => '7998-configurationRowId: 12345',
+            'configurationRowId' => '12345',
             'branchId' => $branchId,
         ];
 

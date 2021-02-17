@@ -5,7 +5,8 @@ namespace Keboola\OutputMapping\Writer;
 use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Helper\TagsRewriter;
+use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -16,10 +17,14 @@ class FileWriter extends AbstractWriter
      *
      * @param string $source Source path.
      * @param array $configuration Upload configuration
+     * @param array $systemMetadata Metadata identifying the source of the file
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      */
-    public function uploadFiles($source, $configuration, $storage)
+    public function uploadFiles($source, $configuration, $systemMetadata, $storage)
     {
+        if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
+            throw new OutputOperationException('Component Id must be set');
+        }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);
         $files = $strategy->listFiles($source);
         $manifests = $strategy->listManifests($source);
@@ -85,7 +90,8 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsRewriter::rewriteTags($storageConfig, $this->clientWrapper);
+                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata, $this->logger);
+                $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
                 $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

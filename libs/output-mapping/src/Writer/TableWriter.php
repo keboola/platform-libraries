@@ -65,7 +65,7 @@ class TableWriter extends AbstractWriter
      */
     public function uploadTables($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
-        if (empty($systemMetadata['componentId'])) {
+        if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         if ($stagingStorageOutput === StrategyFactory::LOCAL) {
@@ -164,7 +164,7 @@ class TableWriter extends AbstractWriter
                     new MetadataDefinition(
                         $this->clientWrapper->getBasicClient(),
                         $parsedConfig['destination'],
-                        $systemMetadata['componentId'],
+                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
                         $parsedConfig['metadata'],
                         MetadataDefinition::TABLE_METADATA
                     )
@@ -175,7 +175,7 @@ class TableWriter extends AbstractWriter
                     new MetadataDefinition(
                         $this->clientWrapper->getBasicClient(),
                         $parsedConfig['destination'],
-                        $systemMetadata['componentId'],
+                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
                         $parsedConfig['column_metadata'],
                         MetadataDefinition::COLUMN_METADATA
                     )
@@ -200,7 +200,7 @@ class TableWriter extends AbstractWriter
     private function uploadTablesLocal($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
-        if (empty($systemMetadata['componentId'])) {
+        if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         $manifestNames = ManifestHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
@@ -319,7 +319,7 @@ class TableWriter extends AbstractWriter
                     new MetadataDefinition(
                         $this->clientWrapper->getBasicClient(),
                         $config['destination'],
-                        $systemMetadata['componentId'],
+                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
                         $config['metadata'],
                         MetadataDefinition::TABLE_METADATA
                     )
@@ -330,7 +330,7 @@ class TableWriter extends AbstractWriter
                     new MetadataDefinition(
                         $this->clientWrapper->getBasicClient(),
                         $config['destination'],
-                        $systemMetadata['componentId'],
+                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
                         $config['column_metadata'],
                         MetadataDefinition::COLUMN_METADATA
                     )
@@ -556,24 +556,24 @@ class TableWriter extends AbstractWriter
     {
         $metadata[] = [
             'key' => self::KBC_CREATED_BY_COMPONENT_ID,
-            'value' => $systemMetadata['componentId'],
+            'value' => $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
         ];
-        if (!empty($systemMetadata['configurationId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
                 'key' => self::KBC_CREATED_BY_CONFIGURATION_ID,
-                'value' => $systemMetadata['configurationId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
-        if (!empty($systemMetadata['configurationRowId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
                 'key' => self::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
-                'value' => $systemMetadata['configurationRowId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
-        if (!empty($systemMetadata['branchId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
                 'key' => self::KBC_CREATED_BY_BRANCH_ID,
-                'value' => $systemMetadata['branchId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_BRANCH_ID],
             ];
         }
         return $metadata;
@@ -721,24 +721,24 @@ class TableWriter extends AbstractWriter
     {
         $metadata[] = [
             'key' => self::KBC_LAST_UPDATED_BY_COMPONENT_ID,
-            'value' => $systemMetadata['componentId'],
+            'value' => $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
         ];
-        if (!empty($systemMetadata['configurationId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
                 'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
-                'value' => $systemMetadata['configurationId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
-        if (!empty($systemMetadata['configurationRowId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
                 'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
-                'value' => $systemMetadata['configurationRowId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
-        if (!empty($systemMetadata['branchId'])) {
+        if (!empty($systemMetadata[self::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
                 'key' => self::KBC_LAST_UPDATED_BY_BRANCH_ID,
-                'value' => $systemMetadata['branchId'],
+                'value' => $systemMetadata[self::SYSTEM_KEY_BRANCH_ID],
             ];
         }
         return $metadata;

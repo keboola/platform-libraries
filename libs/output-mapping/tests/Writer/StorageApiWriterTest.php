@@ -143,8 +143,8 @@ class StorageApiWriterTest extends BaseWriterTest
         }
 
         $this->assertNotNull($file1);
-        $this->assertEquals(4, $file1["sizeBytes"]);
-        $this->assertEquals(["output-mapping-test"], $file1["tags"]);
+        $this->assertEquals(4, $file1['sizeBytes']);
+        $this->assertEquals(['output-mapping-test', 'componentId: foo'], $file1['tags']);
     }
 
     public function testWriteFilesOutputMappingDevMode()
@@ -178,13 +178,13 @@ class StorageApiWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
 
         $systemMetadata = [
-            "componentId" => "testComponent",
-            "configurationId" => "metadata-write-test",
-            "configurationRowId" => "12345",
-            "branchId" => $branchId,
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '7998-configurationRowId: 12345',
+            'branchId' => $branchId,
         ];
 
-        $writer->uploadFiles('/upload', ["mapping" => $configs], $systemMetadata, StrategyFactory::LOCAL);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -345,7 +345,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $writer = new FileWriter($this->getStagingFactory());
         try {
-            $writer->uploadFiles('/upload', [], [], StrategyFactory::LOCAL);
+            $writer->uploadFiles('/upload', [], ['componentId' => 'foo'], StrategyFactory::LOCAL);
             $this->fail('Missing componentId must cause exception.');
         } catch (InvalidOutputException $e) {
             $this->assertContains('Component Id must be set', $e->getMessage());

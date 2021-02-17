@@ -347,7 +347,7 @@ class StorageApiWriterTest extends BaseWriterTest
         try {
             $writer->uploadFiles('/upload', [], [], StrategyFactory::LOCAL);
             $this->fail('Missing componentId must cause exception.');
-        } catch (InvalidOutputException $e) {
+        } catch (OutputOperationException $e) {
             $this->assertContains('Component Id must be set', $e->getMessage());
         }
     }

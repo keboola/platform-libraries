@@ -45,8 +45,19 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         self::assertEquals(
             'tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123"',
             BuildQueryFromConfigurationHelper::buildQueryForSourceTags([
-                ['name' => 'componentId: keboola.ex-gmail'],
-                ['name' => 'configurationId: 123'],
+                ['name' => 'componentId: keboola.ex-gmail', 'match' => 'include'],
+                ['name' => 'configurationId: 123', 'match' => 'include'],
+            ])
+        );
+    }
+
+    public function testBuildQueryForTagsExclude()
+    {
+        self::assertEquals(
+            'tags:"componentId: keboola.ex-gmail" AND NOT tags:"configurationId: 123"',
+            BuildQueryFromConfigurationHelper::buildQueryForSourceTags([
+                ['name' => 'componentId: keboola.ex-gmail', 'match' => 'include'],
+                ['name' => 'configurationId: 123', 'match' => 'exclude'],
             ])
         );
     }
@@ -70,9 +81,11 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                     'tags' => [
                         [
                             'name' => 'componentId: keboola.ex-gmail',
+                            'match' => 'include',
                         ],
                         [
                             'name' => 'configurationId: 123',
+                            'match' => 'include',
                         ],
                     ],
                 ],
@@ -90,9 +103,11 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                     'tags' => [
                         [
                             'name' => 'componentId: keboola.ex-gmail',
+                            'match' => 'include',
                         ],
                         [
                             'name' => 'configurationId: 123',
+                            'match' => 'include',
                         ],
                     ],
                 ],

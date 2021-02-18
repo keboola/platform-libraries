@@ -104,8 +104,9 @@ class TagsRewriteHelperTest extends TestCase
             'source' => [
                 'tags' => [
                     [
-                        'name' => 'im-files-test'
-                    ]
+                        'name' => 'im-files-test',
+                        'match' => 'include',
+                    ],
                 ],
             ],
         ];
@@ -123,7 +124,13 @@ class TagsRewriteHelperTest extends TestCase
             )
         );
 
-        self::assertEquals([['name' => $branchTag]], $expectedConfiguration['source']['tags']);
+        self::assertEquals(
+            [[
+                'name' => $branchTag,
+                'match' => 'include',
+            ]],
+            $expectedConfiguration['source']['tags']
+        );
     }
 
     public function testBranchRewriteNoFiles()
@@ -150,8 +157,9 @@ class TagsRewriteHelperTest extends TestCase
             'source' => [
                 'tags' => [
                     [
-                        'name' => 'im-files-test'
-                    ]
+                        'name' => 'im-files-test',
+                        'match' => 'include',
+                    ],
                 ],
             ],
         ];

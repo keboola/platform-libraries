@@ -81,12 +81,14 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
             "source" => [
                 "tags" => [
                     [
-                        "name" => "tag1"
+                        "name" => "tag1",
+                        "match" => "include",
                     ],
                     [
-                        "name" => "tag2"
-                    ]
-                ]
+                        "name" => "tag2",
+                        "match" => "include",
+                    ],
+                ],
             ],
         ];
         $expectedResponse = $config;
@@ -96,7 +98,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path "file": At least one of 'tags', 'source.tags' or 'query' parameters must be defined.
+     * @expectedExceptionMessage Invalid configuration for path "file": At least one of "tags", "source.tags" or "query" parameters must be defined.
      */
     public function testEmptyConfiguration()
     {
@@ -105,7 +107,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path "file": Both 'tags' and 'source.tags' cannot be defined.
+     * @expectedExceptionMessage Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.
      */
     public function testConfigurationWithTagsAndSourceTags()
     {

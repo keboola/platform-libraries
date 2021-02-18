@@ -419,9 +419,9 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         ]);
 
         self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage(
-            'Table "in.c-input-mapping-test-default.test" with size 1024 bytes exceeds the input mapping limit ' .
-            'of 10 bytes. Please contact support to raise this limit'
+        self::expectExceptionMessageRegExp(
+            '#Table "in\.c-input-mapping-test-default\.test" with size [0-9]+ bytes exceeds the input mapping limit ' .
+            'of 10 bytes\. Please contact support to raise this limit$#'
         );
         $reader->downloadTables(
             $configuration,

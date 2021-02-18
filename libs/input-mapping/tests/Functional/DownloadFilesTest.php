@@ -121,14 +121,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 "source" => [
                     "tags" => [
                         [
-                            "name" => "tag-1"
+                            "name" => "tag-1",
+                            "match" => "include",
                         ],
                         [
-                            "name" => "tag-2"
-                        ]
-                    ]
-                ]
-            ]
+                            "name" => "tag-2",
+                            "match" => "include",
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
@@ -138,6 +140,57 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertTrue(file_exists($root . "/download/" . $id3 . '_upload'));
     }
 
+    public function testReadFilesIncludeExcludeTags()
+    {
+        $this->clientWrapper->setBranchId('');
+
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+        $reader = new Reader($this->getStagingFactory());
+
+        $file1 = new FileUploadOptions();
+        $file1->setTags(['tag-1', 'tag-3']);
+
+        $file2 = new FileUploadOptions();
+        $file2->setTags(['tag-1', 'tag-3']);
+
+        $file3 = new FileUploadOptions();
+        $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+
+        sleep(5);
+
+        $configuration = [
+            [
+                'source' => [
+                    'tags' => [
+                        [
+                            'name' => 'tag-1',
+                            'match' => 'include',
+                        ],
+                        [
+                            'name' => 'tag-3',
+                            'match' => 'include',
+                        ],
+                        [
+                            'name' => 'tag-2',
+                            'match' => 'exclude',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
+
+        self::assertTrue(file_exists($root . '/download/' . $id1 . '_upload'));
+        self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
+        self::assertFalse(file_exists($root . '/download/' . $id3 . '_upload'));
+    }
+    
     public function testReadFilesIncludeAllTagsWithBranchOverwrite()
     {
         $clientWrapper = new ClientWrapper(
@@ -180,9 +233,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                     'tags' => [
                         [
                             'name' => 'tag-1',
+                            'match' => 'include',
                         ],
                         [
                             'name' => 'tag-2',
+                            'match' => 'include',
                         ],
                     ],
                 ],
@@ -231,15 +286,17 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 "source" => [
                     "tags" => [
                         [
-                            "name" => "tag-1"
+                            "name" => "tag-1",
+                            "match" => "include",
                         ],
                         [
-                            "name" => "tag-2"
-                        ]
-                    ]
+                            "name" => "tag-2",
+                            "match" => "include",
+                        ],
+                    ],
                 ],
-                "limit" => 1
-            ]
+                "limit" => 1,
+            ],
         ];
 
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);

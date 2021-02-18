@@ -10,37 +10,33 @@ class BuildQueryFromConfigurationHelper
             return sprintf(
                 '%s AND (%s)',
                 $configuration['query'],
-                self::buildQueryForTags(
-                    self::getTagsFromSourceTags($configuration['source']['tags'])
-                )
+                self::buildQueryForSourceTags($configuration['source']['tags'])
             );
         }
         if (isset($configuration['source']['tags'])) {
-            return self::buildQueryForTags(
-                self::getTagsFromSourceTags($configuration['source']['tags'])
-            );
+            return self::buildQueryForSourceTags($configuration['source']['tags']);
         }
         return $configuration['query'];
     }
 
-    public static function buildQueryForTags($tags)
+    public static function buildQueryForSourceTags(array $tags)
     {
         return implode(
             ' AND ',
-            array_map(function ($tag) {
-                return sprintf('tags:"%s"', $tag);
+            array_map(function (array $tag) {
+                return sprintf('tags:"%s"', $tag['name']);
             }, $tags)
         );
     }
 
-    public static function getTagsFromSourceTags($tags)
+    public static function getTagsFromSourceTags(array $tags)
     {
         return array_map(function ($tag) {
             return $tag['name'];
         }, $tags);
     }
 
-    public static function getSourceTagsFromTags($tags)
+    public static function getSourceTagsFromTags(array $tags)
     {
         return array_map(function ($tag) {
             return [

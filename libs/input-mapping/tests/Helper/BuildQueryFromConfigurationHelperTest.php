@@ -44,9 +44,9 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     {
         self::assertEquals(
             'tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123"',
-            BuildQueryFromConfigurationHelper::buildQueryForTags([
-                'componentId: keboola.ex-gmail',
-                'configurationId: 123',
+            BuildQueryFromConfigurationHelper::buildQueryForSourceTags([
+                ['name' => 'componentId: keboola.ex-gmail'],
+                ['name' => 'configurationId: 123'],
             ])
         );
     }

@@ -22,7 +22,7 @@ class FileWriter extends AbstractWriter
      */
     public function uploadFiles($source, $configuration, $systemMetadata, $storage)
     {
-        if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
+        if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);

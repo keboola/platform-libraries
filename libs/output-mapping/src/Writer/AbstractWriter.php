@@ -12,6 +12,7 @@ abstract class AbstractWriter
     const SYSTEM_KEY_CONFIGURATION_ID = 'configurationId';
     const SYSTEM_KEY_CONFIGURATION_ROW_ID = 'configurationRowId';
     const SYSTEM_KEY_BRANCH_ID = 'branchId';
+    const SYSTEM_KEY_RUN_ID = 'runId';
 
     /**
      * @var ClientWrapper

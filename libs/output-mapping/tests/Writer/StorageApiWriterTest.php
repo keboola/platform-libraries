@@ -72,7 +72,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $writer = new FileWriter($this->getStagingFactory());
 
-        $writer->uploadFiles('/upload', ["mapping" => $configs], StrategyFactory::LOCAL, $systemMetadata);
+        $writer->uploadFiles('/upload', ["mapping" => $configs], $systemMetadata, StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -129,7 +129,7 @@ class StorageApiWriterTest extends BaseWriterTest
 
         $writer = new FileWriter($this->getStagingFactory());
 
-        $writer->uploadFiles('/upload', ["mapping" => $configs], StrategyFactory::LOCAL);
+        $writer->uploadFiles('/upload', ["mapping" => $configs], [], StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -187,7 +187,7 @@ class StorageApiWriterTest extends BaseWriterTest
             'runId' => '999',
         ];
 
-        $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::LOCAL, $systemMetadata);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -234,7 +234,7 @@ class StorageApiWriterTest extends BaseWriterTest
         ];
 
         $writer = new FileWriter($this->getStagingFactory());
-        $writer->uploadFiles('upload', ["mapping" => $configs], StrategyFactory::LOCAL, ['componentId' => 'foo']);
+        $writer->uploadFiles('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -272,7 +272,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $writer->setFormat('json');
         try {
-            $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::LOCAL);
+            $writer->uploadFiles('/upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Invalid manifest must raise exception.');
         } catch (InvalidOutputException $e) {
             $this->assertContains('json', $e->getMessage());
@@ -296,7 +296,7 @@ class StorageApiWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $writer->setFormat('json');
         try {
-            $writer->uploadFiles('upload', ['mapping' => $configs], StrategyFactory::LOCAL);
+            $writer->uploadFiles('upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Invalid manifest must raise exception.');
         } catch (InvalidOutputException $e) {
             $this->assertContains('json', $e->getMessage());
@@ -321,7 +321,7 @@ class StorageApiWriterTest extends BaseWriterTest
         ];
         $writer = new FileWriter($this->getStagingFactory());
         try {
-            $writer->uploadFiles('upload', ['mapping' => $configs], StrategyFactory::LOCAL);
+            $writer->uploadFiles('upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Missing file must fail');
         } catch (InvalidOutputException $e) {
             $this->assertContains("File 'file2' not found", $e->getMessage());
@@ -338,7 +338,7 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $writer = new FileWriter($this->getStagingFactory());
         try {
-            $writer->uploadFiles('/upload', [], StrategyFactory::LOCAL);
+            $writer->uploadFiles('/upload', [], [], StrategyFactory::LOCAL);
             $this->fail('Orphaned manifest must cause exception.');
         } catch (InvalidOutputException $e) {
             $this->assertContains("Found orphaned file manifest: 'file1.manifest'", $e->getMessage());
@@ -349,7 +349,7 @@ class StorageApiWriterTest extends BaseWriterTest
     {
         $writer = new FileWriter($this->getStagingFactory());
         try {
-            $writer->uploadFiles('/upload', [], StrategyFactory::LOCAL, ['configurationId' => '123']);
+            $writer->uploadFiles('/upload', [], ['configurationId' => '123'], StrategyFactory::LOCAL);
             $this->fail('Missing componentId must cause exception.');
         } catch (OutputOperationException $e) {
             $this->assertContains('Component Id must be set', $e->getMessage());

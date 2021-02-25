@@ -22,19 +22,17 @@ class TagsHelper
 
     public static function addSystemTags(array $storageConfig, array $systemMetadata, LoggerInterface $logger)
     {
-        if (!empty($systemMetadata)) {
-            foreach ($systemMetadata as $systemKey => $systemValue) {
-                if (in_array($systemKey, [
-                    FileWriter::SYSTEM_KEY_COMPONENT_ID,
-                    FileWriter::SYSTEM_KEY_CONFIGURATION_ID,
-                    FileWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
-                    FileWriter::SYSTEM_KEY_BRANCH_ID,
-                    FileWriter::SYSTEM_KEY_RUN_ID,
-                ])) {
-                    $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
-                } else {
-                    $logger->info(sprintf('Not generating tag for key: %s', $systemKey));
-                }
+        foreach ($systemMetadata as $systemKey => $systemValue) {
+            if (in_array($systemKey, [
+                FileWriter::SYSTEM_KEY_COMPONENT_ID,
+                FileWriter::SYSTEM_KEY_CONFIGURATION_ID,
+                FileWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
+                FileWriter::SYSTEM_KEY_BRANCH_ID,
+                FileWriter::SYSTEM_KEY_RUN_ID,
+            ])) {
+                $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
+            } else {
+                $logger->info(sprintf('Not generating tag for key: %s', $systemKey));
             }
         }
         return $storageConfig;

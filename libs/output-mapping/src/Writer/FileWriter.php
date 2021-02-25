@@ -17,12 +17,12 @@ class FileWriter extends AbstractWriter
      *
      * @param string $source Source path.
      * @param array $configuration Upload configuration
-     * @param array $systemMetadata Metadata identifying the source of the file
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
+     * @param array $systemMetadata Metadata identifying the source of the file (defaults to empty array
      */
-    public function uploadFiles($source, $configuration, $systemMetadata, $storage)
+    public function uploadFiles($source, $configuration, $storage, $systemMetadata = [])
     {
-        if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
+        if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);

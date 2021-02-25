@@ -320,7 +320,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         ];
 
         $writer = new FileWriter($factory);
-        $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::WORKSPACE_ABS, $systemMetadata);
+        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, StrategyFactory::WORKSPACE_ABS);
         sleep(1);
 
         $options = new ListFilesOptions();

@@ -55,6 +55,7 @@ class StorageApiWriterTest extends BaseWriterTest
             "configurationId" => "metadata-write-test",
             "configurationRowId" => "12345",
             "branchId" => "1234",
+            "runId" => "999",
         ];
 
         $configs = [
@@ -98,6 +99,7 @@ class StorageApiWriterTest extends BaseWriterTest
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',
             'branchId: 1234',
+            'runId: 999',
         ];
         $expectedFile2Tags = array_merge($expectedTags, ['another-tag']);
 
@@ -182,6 +184,7 @@ class StorageApiWriterTest extends BaseWriterTest
             'configurationId' => 'metadata-write-test',
             'configurationRowId' => '12345',
             'branchId' => $branchId,
+            'runId' => '999',
         ];
 
         $writer->uploadFiles('/upload', ['mapping' => $configs], StrategyFactory::LOCAL, $systemMetadata);
@@ -205,6 +208,7 @@ class StorageApiWriterTest extends BaseWriterTest
             sprintf('%s-configurationId: metadata-write-test', $branchId),
             sprintf('%s-configurationRowId: 12345', $branchId),
             sprintf('%s-branchId: %s', $branchId, $branchId),
+            sprintf('%s-runId: 999', $branchId),
         ];
 
         $this->assertNotNull($file1);

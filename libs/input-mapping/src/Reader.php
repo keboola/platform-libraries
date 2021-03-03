@@ -134,16 +134,6 @@ class Reader
 
         $storageClient = $clientWrapper->getBasicClient();
 
-        if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
-            throw new InvalidInputException(
-                "Invalid file mapping, 'query' attribute is restricted for dev/branch context."
-            );
-        }
-
-        if (isset($fileConfiguration["processed_tags"]) && $clientWrapper->hasBranch()) {
-            throw new InvalidInputException("Invalid file mapping, 'processed_tags' attribute is restricted for dev/branch context.");
-        }
-
         $options = new ListFilesOptions();
         if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])
             && empty($fileConfiguration['source']['tags'])

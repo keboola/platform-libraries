@@ -500,6 +500,42 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertArrayHasKey('is_encrypted', $manifest);
     }
 
+    public function testReadAndDownloadFilesWithEsQueryIsRestrictedForBranch()
+    {
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
+
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
+
+        $fileConfiguration = ['query' => 'tags: download-files-test'];
+
+        try {
+            $reader->downloadFiles([$fileConfiguration], 'dummy', StrategyFactory::LOCAL);
+            self::fail('Must throw exception');
+        } catch (InvalidInputException $e) {
+            self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());
+        }
+
+        try {
+            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
+            self::fail('Must throw exception');
+        } catch (InvalidInputException $e) {
+            self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());
+        }
+    }
+
     public function testReadFilesForBranch()
     {
         $clientWrapper = new ClientWrapper(

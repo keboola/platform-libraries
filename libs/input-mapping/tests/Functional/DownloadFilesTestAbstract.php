@@ -16,6 +16,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DownloadFilesTestAbstract extends TestCase
 {
+    const TEST_FILE_TAG_FOR_BRANCH = 'testReadFilesForBranch';
+    const DEFAULT_TEST_FILE_TAG = 'download-files-test';
+
     /** @var ClientWrapper */
     protected $clientWrapper;
 
@@ -40,7 +43,7 @@ class DownloadFilesTestAbstract extends TestCase
         // Delete file uploads
         sleep(5);
         $options = new ListFilesOptions();
-        $options->setTags(["download-files-test"]);
+        $options->setTags([self::DEFAULT_TEST_FILE_TAG, self::TEST_FILE_TAG_FOR_BRANCH]);
         $options->setLimit(1000);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         foreach ($files as $file) {

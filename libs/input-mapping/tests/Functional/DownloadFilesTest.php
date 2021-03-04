@@ -28,16 +28,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
-            (new FileUploadOptions())->setTags(["download-files-test"])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
-            (new FileUploadOptions())->setTags(["download-files-test"])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [["tags" => ["download-files-test"]]];
+        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG]]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
@@ -69,7 +69,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
-        $fo->setTags(["download-files-test"]);
+        $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
         $this->clientWrapper->getBasicClient()->setRunId('xyz');
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
@@ -82,7 +82,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
-        $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
+        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG], "filter_by_run_id" => true]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
@@ -313,7 +313,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
-        $fo->setTags(["download-files-test"]);
+        $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
         $this->clientWrapper->getBasicClient()->setRunId('xyz');
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
@@ -326,7 +326,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
-        $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
+        $configuration = [['query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG, 'filter_by_run_id' => true]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertFalse(file_exists($root . "/download/" . $id1 . '_upload'));
@@ -350,7 +350,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         for ($i = 0; $i < 102; $i++) {
             $this->clientWrapper->getBasicClient()->uploadFile(
                 $root . "/upload",
-                (new FileUploadOptions())->setTags(["download-files-test"])
+                (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
             );
         }
         sleep(5);
@@ -380,7 +380,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fs->remove($this->temp->getTmpFolder());
         $this->temp->initRunFolder();
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['tags' => ['download-files-test'], 'limit' => 102]];
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
         $finder = new Finder();
         $finder->files()->in($this->temp->getTmpFolder() . "/download")->notName('*.manifest');
@@ -480,12 +480,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
-            (new FileUploadOptions())->setTags(["download-files-test"])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
         $reader = new Reader($this->getStagingFactory(null, 'yaml'));
-        $configuration = [["tags" => ["download-files-test"]]];
+        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG]]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertEquals("test", file_get_contents($root . "/download/" . $id . '_upload'));
@@ -519,7 +519,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $reader = new Reader($this->getStagingFactory($clientWrapper));
 
-        $fileConfiguration = ['query' => 'tags: download-files-test'];
+        $fileConfiguration = ['query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG];
 
         try {
             $reader->downloadFiles([$fileConfiguration], 'dummy', StrategyFactory::LOCAL);
@@ -557,7 +557,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
 
-        $branchTag = sprintf('%s-testReadFilesForBranch', $branchId);
+        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
 
         $file1Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
@@ -565,14 +565,14 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         $file2Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags(['testReadFilesForBranch'])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
         sleep(5);
 
         $testLogger = new TestLogger();
         $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
 
-        $configuration = [['tags' => ['testReadFilesForBranch']]];
+        $configuration = [['tags' => [self::TEST_FILE_TAG_FOR_BRANCH]]];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertEquals("test", file_get_contents($root . '/download/' . $file1Id . '_upload'));
@@ -587,7 +587,62 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals([$branchTag], $manifest1['tags']);
 
         self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "testReadFilesForBranch".', $branchTag)
+            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
+        ));
+    }
+
+    public function testReadFilesForBranchWithProcessedTags()
+    {
+        $clientWrapper = new ClientWrapper(
+            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
+            null,
+            null
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        $branchId = $branches->createBranch('my-branch')['id'];
+        $clientWrapper->setBranchId($branchId);
+
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
+
+        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag])
+        );
+        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
+        );
+        sleep(5);
+
+        $testLogger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
+
+        $configuration = [['tags' => [self::TEST_FILE_TAG_FOR_BRANCH]]];
+        $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
+
+        self::assertEquals("test", file_get_contents($root . '/download/' . $file1Id . '_upload'));
+        self::assertFileNotExists($root . '/download/' . $file2Id . '_upload');
+
+        $adapter = new Adapter();
+        $manifest1 = $adapter->readFromFile($root . '/download/' . $file1Id . '_upload.manifest');
+
+        self::assertArrayHasKey('id', $manifest1);
+        self::assertArrayHasKey('tags', $manifest1);
+        self::assertEquals($file1Id, $manifest1['id']);
+        self::assertEquals([$branchTag], $manifest1['tags']);
+
+        self::assertTrue($testLogger->hasInfoThatContains(
+            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
         ));
     }
 }

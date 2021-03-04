@@ -8,6 +8,9 @@ use Psr\Log\LoggerInterface;
 
 class TagsRewriteHelper
 {
+    const MATCH_TYPE_EXCLUDE = 'exclude';
+    const MATCH_TYPE_INCLUDE = 'include';
+
     public static function rewriteFileTags(
         array $fileConfiguration,
         ClientWrapper $clientWrapper,
@@ -40,21 +43,42 @@ class TagsRewriteHelper
 
         if (!empty($fileConfiguration['source']['tags'])) {
             $oldTagsList = $fileConfiguration['source']['tags'];
-            $newTagsList = self::overwriteSourceTags($prefix, $oldTagsList);
+            $includeTags = array_filter($oldTagsList, function ($tag) {
+                return $tag['match'] === self::MATCH_TYPE_INCLUDE;
+            });
+            $excludeTags = array_filter($oldTagsList, function ($tag) {
+                return $tag['match'] === self::MATCH_TYPE_EXCLUDE;
+            });
+            $newIncludeTags = self::overwriteSourceTags($prefix, $includeTags);
 
-            if (self::hasFilesWithSourceTags($clientWrapper, $newTagsList)) {
+            // here prefix NOT tags only if they are in processed_tags
+            $processedTags = isset($fileConfiguration['processedTags']) ? $fileConfiguration['processedTags'] : [];
+            if (!empty($processedTags)) {
+                $processedExcludeTags = array_filter($excludeTags, function ($tag) use ($processedTags) {
+                   return in_array($tag['name'], $processedTags);
+                });
+                $newProcessedExcludeTags = self::overwriteSourceTags($prefix, $processedExcludeTags);
+                $newExcludeTags = array_merge(
+                    $newProcessedExcludeTags,
+                    array_filter($excludeTags, function ($tag) use ($processedTags) {
+                        return !in_array($tag['name'], $processedTags);
+                    })
+                );
+                $excludeTags = $newExcludeTags;
+            }
+
+            if (self::hasFilesWithSourceTags($clientWrapper, $includeTags)) {
                 $logger->info(
                     sprintf(
                         'Using dev source tags "%s" instead of "%s".',
-                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($newTagsList)),
-                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($oldTagsList))
+                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($newIncludeTags)),
+                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags))
                     )
                 );
-
-                $fileConfiguration['source']['tags'] = $newTagsList;
+                $includeTags = $newIncludeTags;
             }
+            $fileConfiguration['source']['tags'] = array_merge($newIncludeTags, $excludeTags);
         }
-
         return $fileConfiguration;
     }
 

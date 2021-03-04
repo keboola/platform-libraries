@@ -4,8 +4,6 @@ namespace Keboola\InputMapping\Helper;
 
 class BuildQueryFromConfigurationHelper
 {
-    const MATCH_TYPE_EXCLUDE = 'exclude';
-
     public static function buildQuery($configuration)
     {
         if (isset($configuration['query']) && isset($configuration['source']['tags'])) {
@@ -27,7 +25,7 @@ class BuildQueryFromConfigurationHelper
             ' AND ',
             array_map(function (array $tag) {
                 $queryPart = sprintf('tags:"%s"', $tag['name']);
-                if ($tag['match'] === self::MATCH_TYPE_EXCLUDE) {
+                if ($tag['match'] === TagsRewriteHelper::MATCH_TYPE_EXCLUDE) {
                     $queryPart = 'NOT ' . $queryPart;
                 }
                 return $queryPart;

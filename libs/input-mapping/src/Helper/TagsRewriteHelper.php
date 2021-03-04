@@ -20,9 +20,7 @@ class TagsRewriteHelper
             return $fileConfiguration;
         }
 
-        $prefix = $clientWrapper
-            ->getBasicClient()
-            ->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName'];
+        $prefix = (string) $clientWrapper->getBranchId();
 
         if (!empty($fileConfiguration['tags'])) {
             $oldTagsList = $fileConfiguration['tags'];

@@ -54,7 +54,7 @@ class TagsRewriteHelper
 
             if (!empty($processedTags)) {
                 $processedExcludeTags = array_filter($excludeTags, function ($tag) use ($processedTags) {
-                   return in_array($tag['name'], $processedTags);
+                    return in_array($tag['name'], $processedTags);
                 });
                 $newProcessedExcludeTags = self::overwriteSourceTags($prefix, $processedExcludeTags);
 

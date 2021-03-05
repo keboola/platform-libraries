@@ -615,8 +615,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
 
-        $processedTag = sprintf('processed-%s',  self::TEST_FILE_TAG_FOR_BRANCH);
-        $branchProcessedTag = sprintf('%s-processed-%s', $branchId,  self::TEST_FILE_TAG_FOR_BRANCH);
+        $processedTag = sprintf('processed-%s', self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchProcessedTag = sprintf('%s-processed-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
         $excludeTag = sprintf('exclude-%s', self::TEST_FILE_TAG_FOR_BRANCH);
 
         $file1Id = $clientWrapper->getBasicClient()->uploadFile(

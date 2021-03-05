@@ -875,20 +875,22 @@ class StorageApiWriterTest extends BaseWriterTest
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["output-mapping-test"])
+            (new FileUploadOptions())->setTags(["12345-output-mapping-test"])
         );
         sleep(1);
         // set it to use a branch
         $this->initClient('12345');
 
         $writer = new FileWriter($this->getStagingFactory());
-        $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['12345-downloaded']]];
+        $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($id1);
-        $this->assertTrue(in_array('12345-downloaded', $file['tags']));
-        $file = $this->clientWrapper->getBasicClient()->getFile($id2);
-        $this->assertTrue(in_array('12345-downloaded', $file['tags']));
+        // first file shouldn't be marked as processed because a branch file exists
+        $file1 = $this->clientWrapper->getBasicClient()->getFile($id1);
+        $this->assertTrue(!in_array('12345-downloaded', $file1['tags']));
+        $file2 = $this->clientWrapper->getBasicClient()->getFile($id2);
+        $this->assertTrue(in_array('12345-downloaded', $file2['tags']));
+        $this->assertTrue(in_array('12345-output-mapping-test', $file2['tags']));
     }
 
     public function testWriteTableToDefaultBucket()

@@ -16,6 +16,7 @@ use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Process\Process;
 
 class DownloadFilesTest extends DownloadFilesTestAbstract
 {
@@ -614,6 +615,10 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
 
+        $processedTag = sprintf('processed-%s',  self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchProcessedTag = sprintf('%s-processed-%s', $branchId,  self::TEST_FILE_TAG_FOR_BRANCH);
+        $excludeTag = sprintf('exclude-%s', self::TEST_FILE_TAG_FOR_BRANCH);
+
         $file1Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag])
@@ -622,27 +627,72 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
+        $processedFileId = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag, $processedTag])
+        );
+        $branchProcessedFileId = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag])
+        );
+        $excludeFileId = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag, $excludeTag])
+        );
         sleep(5);
 
         $testLogger = new TestLogger();
         $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
 
-        $configuration = [['tags' => [self::TEST_FILE_TAG_FOR_BRANCH]]];
+        $configuration = [
+            [
+                'source' => [
+                    'tags' => [
+                        [
+                            'name' => self::TEST_FILE_TAG_FOR_BRANCH,
+                            'match' => 'include',
+                        ],
+                        [
+                            'name' => $excludeTag,
+                            'match' => 'exclude',
+                        ],
+                        [
+                            'name' => $processedTag,
+                            'match' => 'exclude',
+                        ],
+                    ],
+                ],
+                'processed_tags' => [$processedTag],
+            ],
+        ];
         $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
 
         self::assertEquals("test", file_get_contents($root . '/download/' . $file1Id . '_upload'));
+        self::assertEquals("test", file_get_contents($root . '/download/' . $processedFileId . '_upload'));
         self::assertFileNotExists($root . '/download/' . $file2Id . '_upload');
+        self::assertFileNotExists($root . '/download/' . $excludeFileId . '_upload');
+        self::assertFileNotExists($root . '/download/' . $branchProcessedFileId . '_upload');
 
+        $this->assertManifestTags(
+            $root . '/download/' . $file1Id . '_upload.manifest',
+            [$branchTag]
+        );
+        $this->assertManifestTags(
+            $root . '/download/' . $processedFileId . '_upload.manifest',
+            [$branchTag, $processedTag]
+        );
+
+        $this->clientWrapper->getBasicClient()->deleteFile($file1Id);
+        $this->clientWrapper->getBasicClient()->deleteFile($excludeFileId);
+        $this->clientWrapper->getBasicClient()->deleteFile($processedFileId);
+        $this->clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
+    }
+
+    private function assertManifestTags($manifestPath, $tags)
+    {
         $adapter = new Adapter();
-        $manifest1 = $adapter->readFromFile($root . '/download/' . $file1Id . '_upload.manifest');
-
-        self::assertArrayHasKey('id', $manifest1);
-        self::assertArrayHasKey('tags', $manifest1);
-        self::assertEquals($file1Id, $manifest1['id']);
-        self::assertEquals([$branchTag], $manifest1['tags']);
-
-        self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
-        ));
+        $manifest = $adapter->readFromFile($manifestPath);
+        self::assertArrayHasKey('tags', $manifest);
+        self::assertEquals($tags, $manifest['tags']);
     }
 }

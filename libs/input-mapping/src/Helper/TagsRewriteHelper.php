@@ -50,12 +50,14 @@ class TagsRewriteHelper
             $newIncludeTags = self::overwriteSourceTags($prefix, $includeTags);
 
             // here prefix NOT tags only if they are in processed_tags
-            $processedTags = isset($fileConfiguration['processedTags']) ? $fileConfiguration['processedTags'] : [];
+            $processedTags = isset($fileConfiguration['processed_tags']) ? $fileConfiguration['processed_tags'] : [];
+
             if (!empty($processedTags)) {
                 $processedExcludeTags = array_filter($excludeTags, function ($tag) use ($processedTags) {
                    return in_array($tag['name'], $processedTags);
                 });
                 $newProcessedExcludeTags = self::overwriteSourceTags($prefix, $processedExcludeTags);
+
                 $newExcludeTags = array_merge(
                     $newProcessedExcludeTags,
                     array_filter($excludeTags, function ($tag) use ($processedTags) {
@@ -75,7 +77,7 @@ class TagsRewriteHelper
                 );
                 $includeTags = $newIncludeTags;
             }
-            $fileConfiguration['source']['tags'] = array_merge($newIncludeTags, $excludeTags);
+            $fileConfiguration['source']['tags'] = array_merge($includeTags, $excludeTags);
         }
         return $fileConfiguration;
     }

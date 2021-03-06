@@ -63,7 +63,7 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         $this->initClient();
     }
 
-    protected function initClient()
+    protected function initClient($branchId = '')
     {
         $this->clientWrapper = new ClientWrapper(
             new Client([
@@ -77,7 +77,7 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
             null,
             null
         );
-        $this->clientWrapper->setBranchId('');
+        $this->clientWrapper->setBranchId($branchId);
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

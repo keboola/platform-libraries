@@ -34,7 +34,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         ]);
     }
 
-    protected function initClient()
+    protected function initClient($branchId = '')
     {
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }

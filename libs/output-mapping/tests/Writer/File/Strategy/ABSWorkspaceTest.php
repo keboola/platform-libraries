@@ -23,7 +23,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     /** @var Temp */
     private $temp;
 
-    protected function initClient()
+    protected function initClient($branchId = '')
     {
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }

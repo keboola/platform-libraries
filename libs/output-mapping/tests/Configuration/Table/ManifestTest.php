@@ -15,6 +15,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
         $expectedArray = [
             'destination' => 'in.c-main.test',
             'primary_key' => [],
+            'distribution_key' => [],
             'columns' => [],
             'incremental' => false,
             'delete_where_values' => [],
@@ -38,6 +39,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'destination' => 'in.c-main.test',
             'incremental' => true,
             'primary_key' => ['Id', 'Name'],
+            'distribution_key' => [],
             'columns' => ['Id', 'Name', 'status'],
             'delete_where_column' => 'status',
             'delete_where_values' => ['val1', 'val2'],
@@ -87,6 +89,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
         $expectedArray = [
             'destination' => 'in.c-main.test',
             'primary_key' => [],
+            'distribution_key' => [],
             'columns' => [],
             'incremental' => false,
             'delete_where_values' => [],
@@ -132,6 +135,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
         $expectedArray = [
             'destination' => 'in.c-main.test',
             'primary_key' => [],
+            'distribution_key' => [],
             'columns' => [],
             'incremental' => false,
             'delete_where_values' => [],

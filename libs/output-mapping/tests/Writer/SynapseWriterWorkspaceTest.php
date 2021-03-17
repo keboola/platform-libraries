@@ -44,10 +44,12 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             [
                 'source' => 'table1a',
                 'destination' => 'out.c-output-mapping-test.table1a',
+                'distribution_key' => [],
             ],
             [
                 'source' => 'table2a',
                 'destination' => 'out.c-output-mapping-test.table2a',
+                'distribution_key' => ['Id2'],
             ],
         ];
         file_put_contents(
@@ -75,9 +77,14 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 
         $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
         $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]['id'], $tables[1]['id']];
-        sort($tableIds);
-        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
+        $sortedTables = [$tables[0]['id'] => $tables[0], $tables[1]['id'] => $tables[1]];
+        ksort($sortedTables);
+        $this->assertEquals(
+            ['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'],
+            array_keys($sortedTables)
+        );
+        $this->assertArrayHasKey('distributionKey', $sortedTables['out.c-output-mapping-test.table2a']);
+        $this->assertEquals(['Id2'], $sortedTables['out.c-output-mapping-test.table2a']['distributionKey']);
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);

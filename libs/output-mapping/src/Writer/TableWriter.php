@@ -146,7 +146,7 @@ class TableWriter extends AbstractWriter
 
             try {
                 $parsedConfig['primary_key'] =
-                    PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
+                    PrimaryKeyHelper::normalizeKeyArray($this->logger, $parsedConfig['primary_key']);
                 $parsedConfig = DestinationRewriter::rewriteDestination($parsedConfig, $this->clientWrapper);
                 $tableJob = $this->uploadTable($sourceName, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
@@ -301,7 +301,7 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
+                $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
                 $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
                 $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
@@ -479,9 +479,18 @@ class TableWriter extends AbstractWriter
                 $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
             }
         } else {
-            $primaryKey = join(",", PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']));
+            $primaryKey = join(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
+            $distributionKey = join(
+                ",",
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
+            );
             if (!empty($config['columns'])) {
-                $this->createTable($config['destination'], $config['columns'], $primaryKey);
+                $this->createTable(
+                    $config['destination'],
+                    $config['columns'],
+                    $primaryKey,
+                    $distributionKey ?: null
+                );
             } else {
                 try {
                     $csvFile = new CsvFile($source, $config['delimiter'], $config['enclosure']);
@@ -489,7 +498,12 @@ class TableWriter extends AbstractWriter
                 } catch (Exception $e) {
                     throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
                 }
-                $this->createTable($config['destination'], $header, $primaryKey);
+                $this->createTable(
+                    $config['destination'],
+                    $header,
+                    $primaryKey,
+                    $distributionKey ?: null
+                );
                 unset($csvFile);
             }
             $this->metadataClient->postTableMetadata(
@@ -579,16 +593,20 @@ class TableWriter extends AbstractWriter
         return $metadata;
     }
 
-    private function createTable($tableId, array $columns, $primaryKey)
+    private function createTable($tableId, array $columns, $primaryKey, $distributionKey = null)
     {
         $tmp = new Temp();
         $headerCsvFile = new CsvFile($tmp->createFile($this->getTableName($tableId) . '.header.csv'));
         $headerCsvFile->writeRow($columns);
+        $options = ['primaryKey' => $primaryKey];
+        if (isset($distributionKey)) {
+            $options['distributionKey'] = $distributionKey;
+        }
         $tableId = $this->clientWrapper->getBasicClient()->createTableAsync(
             $this->getBucketId($tableId),
             $this->getTableName($tableId),
             $headerCsvFile,
-            ['primaryKey' => $primaryKey]
+            $options
         );
         return $tableId;
     }

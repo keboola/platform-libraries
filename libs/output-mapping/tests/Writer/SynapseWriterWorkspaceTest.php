@@ -44,11 +44,12 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             [
                 'source' => 'table1a',
                 'destination' => 'out.c-output-mapping-test.table1a',
+                'distribution_key' => [],
             ],
             [
                 'source' => 'table2a',
                 'destination' => 'out.c-output-mapping-test.table2a',
-                'distribution_key' => 'Id2',
+                'distribution_key' => ['Id2'],
             ],
         ];
         file_put_contents(

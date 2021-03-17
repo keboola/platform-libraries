@@ -16,7 +16,7 @@ class PrimaryKeyHelper
     public static function validatePrimaryKeyAgainstTable(LoggerInterface $logger, $tableInfo = [], $config = [])
     {
         // primary key
-        $configPK = self::normalizePrimaryKey($logger, $config['primary_key']);
+        $configPK = self::normalizeKeyArray($logger, $config['primary_key']);
         if (count($configPK) > 0 || count($tableInfo['primaryKey']) > 0) {
             if (count(array_diff($tableInfo['primaryKey'], $configPK)) > 0 ||
                 count(array_diff($configPK, $tableInfo['primaryKey'])) > 0
@@ -32,22 +32,22 @@ class PrimaryKeyHelper
     }
 
     /**
-     * @param array $primaryKey
+     * @param array $keys
      * @param LoggerInterface $logger
      * @return array
      */
-    public static function normalizePrimaryKey(LoggerInterface $logger, array $primaryKey)
+    public static function normalizeKeyArray(LoggerInterface $logger, array $keys)
     {
         return array_map(
-            function ($primaryKey) {
-                return trim($primaryKey);
+            function ($key) {
+                return trim($key);
             },
             array_unique(
-                array_filter($primaryKey, function ($col) use ($logger) {
+                array_filter($keys, function ($col) use ($logger) {
                     if ($col !== '') {
                         return true;
                     }
-                    $logger->warning('Found empty column name in primary key.');
+                    $logger->warning('Found empty column name in key array.');
                     return false;
                 })
             )
@@ -62,7 +62,7 @@ class PrimaryKeyHelper
      */
     public static function modifyPrimaryKeyDecider(LoggerInterface $logger, array $tableInfo, array $config)
     {
-        $configPK = self::normalizePrimaryKey($logger, $config['primary_key']);
+        $configPK = self::normalizeKeyArray($logger, $config['primary_key']);
         if (count($tableInfo['primaryKey']) !== count($configPK)) {
             return true;
         }

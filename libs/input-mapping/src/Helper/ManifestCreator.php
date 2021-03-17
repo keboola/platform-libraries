@@ -32,6 +32,7 @@ class ManifestCreator
             "uri" => $tableInfo["uri"],
             "name" => $tableInfo["name"],
             "primary_key" => $tableInfo["primaryKey"],
+            "distribution_key" => $tableInfo['distributionKey'],
             "created" => $tableInfo["created"],
             "last_change_date" => $tableInfo["lastChangeDate"],
             "last_import_date" => $tableInfo["lastImportDate"],

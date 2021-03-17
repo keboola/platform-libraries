@@ -24,6 +24,7 @@ class Manifest extends Configuration
                 ->scalarNode("name")->end()
                 ->scalarNode("uri")->end()
                 ->arrayNode("primary_key")->prototype("scalar")->end()->end()
+                ->arrayNode("distribution_key")->prototype("scalar")->end()->end()
                 ->scalarNode("created")->end()
                 ->scalarNode("last_import_date")->end()
                 ->scalarNode("last_change_date")->end()

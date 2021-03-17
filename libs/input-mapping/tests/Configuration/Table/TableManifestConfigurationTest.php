@@ -13,6 +13,7 @@ class TableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
             "uri" => "https://connection.keboola.com//v2/storage/tables/in.c-docker-test.test",
             "name" => "test",
             "primary_key" => ["col1", "col2"],
+            "distribution_key" => ["col1"],
             "created" => "2015-01-23T04:11:18+0100",
             "last_import_date" => "2015-01-23T04:11:18+0100",
             "last_change_date" => "2015-01-23T04:11:18+0100",

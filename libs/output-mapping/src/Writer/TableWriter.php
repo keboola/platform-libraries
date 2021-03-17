@@ -146,7 +146,7 @@ class TableWriter extends AbstractWriter
 
             try {
                 $parsedConfig['primary_key'] =
-                    PrimaryKeyHelper::normalizePrimaryKey($this->logger, $parsedConfig['primary_key']);
+                    PrimaryKeyHelper::normalizeKeyArray($this->logger, $parsedConfig['primary_key']);
                 $parsedConfig = DestinationRewriter::rewriteDestination($parsedConfig, $this->clientWrapper);
                 $tableJob = $this->uploadTable($sourceName, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
@@ -301,7 +301,7 @@ class TableWriter extends AbstractWriter
             }
 
             try {
-                $config['primary_key'] = PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']);
+                $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
                 $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
                 $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
@@ -479,13 +479,17 @@ class TableWriter extends AbstractWriter
                 $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
             }
         } else {
-            $primaryKey = join(",", PrimaryKeyHelper::normalizePrimaryKey($this->logger, $config['primary_key']));
+            $primaryKey = join(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
+            $distributionKey = join(
+                ",",
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
+            );
             if (!empty($config['columns'])) {
                 $this->createTable(
                     $config['destination'],
                     $config['columns'],
                     $primaryKey,
-                    isset($config['distribution_key']) ? $config['distribution_key'] : null
+                    $distributionKey ?: null
                 );
             } else {
                 try {
@@ -498,7 +502,7 @@ class TableWriter extends AbstractWriter
                     $config['destination'],
                     $header,
                     $primaryKey,
-                    isset($config['distribution_key']) ? $config['distribution_key'] : null
+                    $distributionKey ?: null
                 );
                 unset($csvFile);
             }

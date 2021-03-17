@@ -113,7 +113,7 @@ class PrimaryKeyHelperTest extends TestCase
      */
     public function testNormalizePrimaryKey(array $pkey, array $result)
     {
-        self::assertEquals($result, PrimaryKeyHelper::normalizePrimaryKey(new NullLogger(), $pkey));
+        self::assertEquals($result, PrimaryKeyHelper::normalizeKeyArray(new NullLogger(), $pkey));
     }
 
     /**

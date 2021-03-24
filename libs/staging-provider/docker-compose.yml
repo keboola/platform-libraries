@@ -1,9 +1,21 @@
-version: '3'
+version: "3"
+
+x-tests: &tests
+  command: ["composer", "ci"]
+  env_file:
+    - .env
 
 services:
-  dev:
+  tests-local:
+    <<: *tests
     build:
       context: .
       dockerfile: Dockerfile56
     volumes:
       - ./:/code
+
+  tests56:
+    <<: *tests
+    build:
+      context: .
+      dockerfile: Dockerfile56

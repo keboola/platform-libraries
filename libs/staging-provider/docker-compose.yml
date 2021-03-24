@@ -19,30 +19,6 @@ services:
         PHP_VERSION: 5.6
         XDEBUG_VERSION: 2.5.5
 
-  tests70:
-    <<: *tests
-    build:
-      context: .
-      args:
-        PHP_VERSION: 7.0
-        XDEBUG_VERSION: 2.5.5
-
-  tests71:
-    <<: *tests
-    build:
-      context: .
-      args:
-        PHP_VERSION: 7.1
-        XDEBUG_VERSION: 2.6.1
-
-  tests72:
-    <<: *tests
-    build:
-      context: .
-      args:
-        PHP_VERSION: 7.2
-        XDEBUG_VERSION: 2.9.8
-
   tests73:
     <<: *tests
     build:

@@ -1,0 +1,47 @@
+version: "3"
+
+x-tests: &tests
+  environment:
+    - STORAGE_API_URL
+    - STORAGE_API_TOKEN
+    - RUN_SYNAPSE_TESTS
+    - STORAGE_API_URL_SYNAPSE
+    - STORAGE_API_TOKEN_SYNAPSE
+
+  command: ["composer", "ci"]
+
+services:
+  tests56:
+    <<: *tests
+    build:
+      context: .
+      args:
+        PHP_VERSION: 5.6
+        XDEBUG_VERSION: 2.5.5
+
+  tests73:
+    <<: *tests
+    build:
+      context: .
+      args:
+        PHP_VERSION: 7.3
+        XDEBUG_VERSION: 2.9.8
+
+  tests74:
+    <<: *tests
+    build:
+      context: .
+      args:
+        PHP_VERSION: 7.4
+        XDEBUG_VERSION: 2.9.8
+
+  dev:
+    <<: *tests
+    build:
+      context: .
+      target: dev
+      args:
+        PHP_VERSION: 7.4
+        XDEBUG_VERSION: 2.9.8
+    volumes:
+      - ./:/code

@@ -8,6 +8,7 @@ use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApi\Options\Components\ListConfigurationWorkspacesOptions;
 use Keboola\StorageApi\Workspaces;
+use Keboola\WorkspaceProvider\Exception\WorkspaceProviderException;
 use Keboola\WorkspaceProvider\Provider\AbstractWorkspaceProvider;
 use Keboola\WorkspaceProvider\Provider\RedshiftWorkspaceProvider;
 use Keboola\WorkspaceProvider\Provider\SnowflakeWorkspaceProvider;
@@ -112,6 +113,20 @@ class WorkspaceProviderTest extends TestCase
         self::assertCount(0, $components->listConfigurationWorkspaces($options));
         $provider->getWorkspaceId();
         self::assertCount(1, $components->listConfigurationWorkspaces($options));
+    }
+
+    public function testPath()
+    {
+        $components = new Components($this->client);
+        $configuration = new Configuration();
+        $configuration->setComponentId('keboola.runner-workspace-test');
+        $configuration->setName('runner-tests');
+        $configuration->setConfigurationId('runner-test-configuration');
+        $components->addConfiguration($configuration);
+        $provider = new SnowflakeWorkspaceProvider($this->client, 'keboola.runner-workspace-test', 'runner-test-configuration');
+        self::expectException(WorkspaceProviderException::class);
+        self::expectExceptionMessage('Workspace provides no path.');
+        $provider->getPath();
     }
 
     public function testCleanup()

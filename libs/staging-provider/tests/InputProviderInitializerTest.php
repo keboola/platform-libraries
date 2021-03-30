@@ -14,23 +14,23 @@ use Keboola\InputMapping\Table\Strategy\Redshift as InputTableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
-use Keboola\OutputMapping\Writer\File\Strategy\Local as OutputFileLocal;
-use Keboola\OutputMapping\Writer\Table\Strategy\AllEncompassingTableStrategy;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Components;
+use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\WorkspaceProvider\ProviderInitializer;
+use Keboola\WorkspaceProvider\InputProviderInitializer;
+use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class ProviderInitializerTest extends TestCase
+class InputProviderInitializerTest extends TestCase
 {
     public function testInitializeInputLocal()
     {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
         $stagingFactory = new InputStrategyFactory(
             new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
+                $storageApiClient,
                 null,
                 new NullLogger(),
                 ''
@@ -39,15 +39,20 @@ class ProviderInitializerTest extends TestCase
             'json'
         );
 
-        $init = new ProviderInitializer();
-        $init->initializeInputProviders(
-            $stagingFactory,
-            InputStrategyFactory::LOCAL,
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config',
+            'my-test-config'
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+
+        $init->initializeProviders(
+            InputStrategyFactory::LOCAL,
             [],
             '/tmp/random/data'
         );
+
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::ABS));
@@ -62,9 +67,10 @@ class ProviderInitializerTest extends TestCase
 
     public function testInitializeInputRedshift()
     {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
         $stagingFactory = new InputStrategyFactory(
             new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
+                $storageApiClient,
                 null,
                 new NullLogger(),
                 ''
@@ -73,12 +79,16 @@ class ProviderInitializerTest extends TestCase
             'json'
         );
 
-        $init = new ProviderInitializer();
-        $init->initializeInputProviders(
-            $stagingFactory,
-            InputStrategyFactory::WORKSPACE_REDSHIFT,
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config',
+            'my-test-config'
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_REDSHIFT,
             [
                 'owner' => [
                     'hasSynapse' => true,
@@ -89,6 +99,7 @@ class ProviderInitializerTest extends TestCase
             ],
             '/tmp/random/data'
         );
+
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_REDSHIFT));
@@ -101,9 +112,10 @@ class ProviderInitializerTest extends TestCase
 
     public function testInitializeInputSnowflake()
     {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
         $stagingFactory = new InputStrategyFactory(
             new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
+                $storageApiClient,
                 null,
                 new NullLogger(),
                 ''
@@ -112,22 +124,27 @@ class ProviderInitializerTest extends TestCase
             'json'
         );
 
-        $init = new ProviderInitializer();
-        $init->initializeInputProviders(
-            $stagingFactory,
-            InputStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config',
+            'my-test-config'
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_SNOWFLAKE,
             [
                 'owner' => [
                     'hasSynapse' => true,
                     'hasRedshift' => true,
                     'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
+                    'fileStorageProvider' => 'aws',
                 ],
             ],
             '/tmp/random/data'
         );
+
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE));
@@ -140,9 +157,10 @@ class ProviderInitializerTest extends TestCase
 
     public function testInitializeInputSynapse()
     {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
         $stagingFactory = new InputStrategyFactory(
             new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
+                $storageApiClient,
                 null,
                 new NullLogger(),
                 ''
@@ -151,12 +169,16 @@ class ProviderInitializerTest extends TestCase
             'json'
         );
 
-        $init = new ProviderInitializer();
-        $init->initializeInputProviders(
-            $stagingFactory,
-            InputStrategyFactory::WORKSPACE_SYNAPSE,
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config',
+            'my-test-config'
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_SYNAPSE,
             [
                 'owner' => [
                     'hasSynapse' => true,
@@ -167,6 +189,7 @@ class ProviderInitializerTest extends TestCase
             ],
             '/tmp/random/data'
         );
+
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SYNAPSE));
@@ -179,9 +202,10 @@ class ProviderInitializerTest extends TestCase
 
     public function testInitializeInputAbs()
     {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
         $stagingFactory = new InputStrategyFactory(
             new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
+                $storageApiClient,
                 null,
                 new NullLogger(),
                 ''
@@ -190,12 +214,16 @@ class ProviderInitializerTest extends TestCase
             'json'
         );
 
-        $init = new ProviderInitializer();
-        $init->initializeInputProviders(
-            $stagingFactory,
-            InputStrategyFactory::WORKSPACE_ABS,
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config',
+            'my-test-config'
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_ABS,
             [
                 'owner' => [
                     'hasSynapse' => true,
@@ -215,152 +243,5 @@ class ProviderInitializerTest extends TestCase
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
         $this->expectException(InvalidInputException::class);
         $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE, '', new InputTableStateList([]));
-    }
-
-    public function testInitializeOutputLocal()
-    {
-        $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
-                null,
-                new NullLogger(),
-                ''
-            ),
-            new NullLogger(),
-            'json'
-        );
-
-        $init = new ProviderInitializer();
-        $init->initializeOutputProviders(
-            $stagingFactory,
-            OutputStrategyFactory::LOCAL,
-            'my-test-component',
-            'my-test-config',
-            [],
-            '/tmp/random/data'
-        );
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
-
-        $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
-        $this->expectException(InvalidOutputException::class);
-        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT);
-    }
-
-    public function testInitializeOutputRedshift()
-    {
-        $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
-                null,
-                new NullLogger(),
-                ''
-            ),
-            new NullLogger(),
-            'json'
-        );
-
-        $init = new ProviderInitializer();
-        $init->initializeOutputProviders(
-            $stagingFactory,
-            OutputStrategyFactory::WORKSPACE_REDSHIFT,
-            'my-test-component',
-            'my-test-config',
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-            '/tmp/random/data'
-        );
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT));
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
-        $this->expectException(InvalidOutputException::class);
-        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
-    }
-
-    public function testInitializeOutputSnowflake()
-    {
-        $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
-                null,
-                new NullLogger(),
-                ''
-            ),
-            new NullLogger(),
-            'json'
-        );
-
-        $init = new ProviderInitializer();
-        $init->initializeOutputProviders(
-            $stagingFactory,
-            OutputStrategyFactory::WORKSPACE_SNOWFLAKE,
-            'my-test-component',
-            'my-test-config',
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-            '/tmp/random/data'
-        );
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE));
-
-        $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
-        $this->expectException(InvalidOutputException::class);
-        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT);
-    }
-
-    public function testInitializeOutputSynapse()
-    {
-        $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                new Client(['token' => 'foo', 'url' => 'bar']),
-                null,
-                new NullLogger(),
-                ''
-            ),
-            new NullLogger(),
-            'json'
-        );
-
-        $init = new ProviderInitializer();
-        $init->initializeOutputProviders(
-            $stagingFactory,
-            OutputStrategyFactory::WORKSPACE_SYNAPSE,
-            'my-test-component',
-            'my-test-config',
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-            '/tmp/random/data'
-        );
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_SYNAPSE));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SYNAPSE));
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
-        $this->expectException(InvalidOutputException::class);
-        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
     }
 }

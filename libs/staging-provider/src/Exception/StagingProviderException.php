@@ -2,7 +2,7 @@
 
 namespace Keboola\WorkspaceProvider\Exception;
 
-class WorkspaceProviderException extends \RuntimeException
+class StagingProviderException extends \RuntimeException
 {
 
 }

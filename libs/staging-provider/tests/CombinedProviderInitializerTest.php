@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests;
+namespace Keboola\StagingProvider\Tests;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
@@ -11,9 +11,9 @@ use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\WorkspaceProvider\InputProviderInitializer;
-use Keboola\WorkspaceProvider\OutputProviderInitializer;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StagingProvider\InputProviderInitializer;
+use Keboola\StagingProvider\OutputProviderInitializer;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionProperty;

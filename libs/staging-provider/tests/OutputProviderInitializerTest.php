@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests;
+namespace Keboola\StagingProvider\Tests;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
@@ -13,8 +13,8 @@ use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\WorkspaceProvider\OutputProviderInitializer;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StagingProvider\OutputProviderInitializer;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 

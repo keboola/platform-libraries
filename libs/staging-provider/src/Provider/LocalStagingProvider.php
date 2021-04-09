@@ -1,9 +1,9 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Provider;
+namespace Keboola\StagingProvider\Provider;
 
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\LocalStaging;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\LocalStaging;
 
 /**
  * @extends AbstractStagingProvider<LocalStagingProvider>

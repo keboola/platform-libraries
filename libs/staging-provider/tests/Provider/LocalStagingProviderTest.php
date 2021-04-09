@@ -1,11 +1,11 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests\Provider;
+namespace Keboola\StagingProvider\Tests\Provider;
 
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Provider\LocalStagingProvider;
-use Keboola\WorkspaceProvider\Staging\LocalStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
+use Keboola\StagingProvider\Staging\LocalStaging;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 
 use PHPUnit\Framework\TestCase;
 

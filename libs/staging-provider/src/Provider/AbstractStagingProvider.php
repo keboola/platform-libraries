@@ -1,10 +1,10 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Provider;
+namespace Keboola\StagingProvider\Provider;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\StagingInterface;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\StagingInterface;
 
 /**
  * @template T of StagingInterface

@@ -1,8 +1,8 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Staging\Workspace;
+namespace Keboola\StagingProvider\Staging\Workspace;
 
-use Keboola\WorkspaceProvider\Staging\StagingInterface;
+use Keboola\StagingProvider\Staging\StagingInterface;
 
 interface WorkspaceStagingInterface extends StagingInterface
 {

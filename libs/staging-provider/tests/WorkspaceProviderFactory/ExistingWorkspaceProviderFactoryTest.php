@@ -1,12 +1,12 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests\WorkspaceProviderFactory;
+namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Workspaces;
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ExistingWorkspaceProviderFactory;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 
 class ExistingWorkspaceProviderFactoryTest extends TestCase

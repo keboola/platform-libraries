@@ -1,11 +1,11 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests\WorkspaceProviderFactory;
+namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 
 class ComponentWorkspaceProviderFactoryTest extends TestCase

@@ -1,8 +1,8 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Staging\Workspace;
+namespace Keboola\StagingProvider\Staging\Workspace;
 
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Exception\StagingProviderException;
 
 abstract class WorkspaceStaging implements WorkspaceStagingInterface
 {

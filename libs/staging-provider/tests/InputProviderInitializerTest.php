@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests;
+namespace Keboola\StagingProvider\Tests;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\ABSWorkspace as InputFileABSWorkspace;
@@ -18,8 +18,8 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\WorkspaceProvider\InputProviderInitializer;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StagingProvider\InputProviderInitializer;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 

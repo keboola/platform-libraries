@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Staging;
+namespace Keboola\StagingProvider\Staging;
 
 class LocalStaging implements StagingInterface
 {

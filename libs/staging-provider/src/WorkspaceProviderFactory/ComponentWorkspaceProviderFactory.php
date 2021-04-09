@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\WorkspaceProviderFactory;
+namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;

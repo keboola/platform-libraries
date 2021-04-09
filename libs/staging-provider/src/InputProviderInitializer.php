@@ -1,13 +1,13 @@
 <?php
 
-namespace Keboola\WorkspaceProvider;
+namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
-use Keboola\WorkspaceProvider\Staging\Workspace\AbsWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\RedshiftWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SynapseWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
 
 class InputProviderInitializer extends AbstractProviderInitializer
 {

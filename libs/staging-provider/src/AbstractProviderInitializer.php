@@ -1,13 +1,13 @@
 <?php
 
-namespace Keboola\WorkspaceProvider;
+namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
-use Keboola\WorkspaceProvider\Provider\LocalStagingProvider;
-use Keboola\WorkspaceProvider\Staging\LocalStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\WorkspaceStagingInterface;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInterface;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
+use Keboola\StagingProvider\Staging\LocalStaging;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StagingProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInterface;
 
 abstract class AbstractProviderInitializer
 {

@@ -1,16 +1,16 @@
 <?php
 
-namespace Keboola\WorkspaceProvider;
+namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\Workspace\AbsWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\RedshiftWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SynapseWorkspaceStaging;
-use Keboola\WorkspaceProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInterface;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInterface;
 
 class OutputProviderInitializer extends AbstractProviderInitializer
 {

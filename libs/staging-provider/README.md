@@ -1,6 +1,6 @@
-# Workspace Provider
+# Staging Provider
 
-[![Build Status](https://dev.azure.com/keboola-dev/wokspace-provider/_apis/build/status/keboola.workspace-provider?branchName=main)](https://dev.azure.com/keboola-dev/wokspace-provider/_build/latest?definitionId=69&branchName=main)
+[![Build Status](https://dev.azure.com/keboola-dev/wokspace-provider/_apis/build/status/keboola.staging-provider?branchName=main)](https://dev.azure.com/keboola-dev/wokspace-provider/_build/latest?definitionId=69&branchName=main)
 
 ## Development
 First start with creating `.env` file from `.env.dist`.

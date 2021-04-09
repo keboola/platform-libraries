@@ -1,8 +1,8 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests\Staging;
+namespace Keboola\StagingProvider\Tests\Staging;
 
-use Keboola\WorkspaceProvider\Staging\LocalStaging;
+use Keboola\StagingProvider\Staging\LocalStaging;
 use PHPUnit\Framework\TestCase;
 
 class LocalStagingTest extends TestCase

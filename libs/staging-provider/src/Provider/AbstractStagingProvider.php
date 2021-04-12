@@ -9,7 +9,7 @@ use Keboola\StagingProvider\Staging\StagingInterface;
 /**
  * @template T of StagingInterface
  */
-abstract class AbstractStagingProvider implements ProviderInterface
+abstract class AbstractStagingProvider implements StagingProviderInterface
 {
     /** @var callable */
     private $stagingGetter;

@@ -6,9 +6,7 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\WorkspaceStagingProvider;
 use Keboola\StagingProvider\Staging\LocalStaging;
-use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use PHPUnit\Framework\TestCase;
 

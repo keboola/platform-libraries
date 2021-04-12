@@ -16,21 +16,25 @@ abstract class AbstractProviderInitializer
 
     /** @var WorkspaceProviderFactoryInterface */
     private $workspaceProviderFactory;
+    
+    /** @var string */
+    private $dataDirectory;
 
     public function __construct(
         InputStrategyFactory $stagingFactory,
-        WorkspaceProviderFactoryInterface $workspaceProviderFactory
+        WorkspaceProviderFactoryInterface $workspaceProviderFactory,
+        $dataDirectory
     ) {
         $this->stagingFactory = $stagingFactory;
         $this->workspaceProviderFactory = $workspaceProviderFactory;
+        $this->dataDirectory = $dataDirectory;
     }
 
     /**
      * @param string $stagingType
      * @param array $tokenInfo
-     * @param string $dataDirectory
      */
-    abstract public function initializeProviders($stagingType, array $tokenInfo, $dataDirectory);
+    abstract public function initializeProviders($stagingType, array $tokenInfo);
 
     /**
      * @param class-string<WorkspaceStagingInterface> $workspaceClass
@@ -43,13 +47,12 @@ abstract class AbstractProviderInitializer
     }
 
     /**
-     * @param string $dataDirectory
      * @param array<string, Scope> $scopes
      */
-    protected function addLocalProvider($dataDirectory, $scopes)
+    protected function addLocalProvider($scopes)
     {
-        $stagingProvider = new LocalStagingProvider(function () use ($dataDirectory) {
-            return new LocalStaging($dataDirectory);
+        $stagingProvider = new LocalStagingProvider(function () {
+            return new LocalStaging($this->dataDirectory);
         });
 
         $this->stagingFactory->addProvider($stagingProvider, $scopes);

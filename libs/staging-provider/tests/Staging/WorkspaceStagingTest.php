@@ -1,12 +1,12 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Tests\Staging;
+namespace Keboola\StagingProvider\Tests\Staging;
 
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\Workspace\AbsWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\RedshiftWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\WorkspaceProvider\Staging\Workspace\SynapseWorkspaceStaging;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
 use PHPUnit\Framework\TestCase;
 
 class WorkspaceStagingTest extends TestCase

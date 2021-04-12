@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Exception;
+namespace Keboola\StagingProvider\Exception;
 
 class StagingProviderException extends \RuntimeException
 {

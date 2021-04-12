@@ -1,10 +1,10 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Provider;
+namespace Keboola\StagingProvider\Provider;
 
 use Keboola\StorageApi\Workspaces;
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
-use Keboola\WorkspaceProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 
 /**
  * @extends AbstractStagingProvider<WorkspaceStagingInterface>

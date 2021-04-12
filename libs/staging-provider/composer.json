@@ -1,9 +1,9 @@
 {
-    "name": "keboola/workspace-provider",
+    "name": "keboola/staging-provider",
     "license": "MIT",
     "type": "library",
     "description": "",
-    "keywords": ["keboola", "workspace-provider"],
+    "keywords": ["keboola", "staging-provider"],
     "authors": [
         {
             "name": "Keboola",
@@ -15,12 +15,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Keboola\\WorkspaceProvider\\": "src/"
+            "Keboola\\StagingProvider\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Keboola\\WorkspaceProvider\\Tests\\": "tests/"
+            "Keboola\\StagingProvider\\Tests\\": "tests/"
         }
     },
     "require": {

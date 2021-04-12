@@ -1,9 +1,9 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\WorkspaceProviderFactory;
+namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
-use Keboola\WorkspaceProvider\Provider\WorkspaceStagingProvider;
-use Keboola\WorkspaceProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StagingProvider\Provider\WorkspaceStagingProvider;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 
 interface WorkspaceProviderFactoryInterface
 {

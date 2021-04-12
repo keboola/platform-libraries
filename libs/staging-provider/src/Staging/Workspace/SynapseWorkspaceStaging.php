@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\Staging\Workspace;
+namespace Keboola\StagingProvider\Staging\Workspace;
 
 class SynapseWorkspaceStaging extends WorkspaceStaging
 {

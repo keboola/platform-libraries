@@ -1,9 +1,9 @@
 <?php
 
-namespace Keboola\WorkspaceProvider\WorkspaceProviderFactory;
+namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
 use Keboola\StorageApi\Workspaces;
-use Keboola\WorkspaceProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Exception\StagingProviderException;
 
 class ExistingWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
 {

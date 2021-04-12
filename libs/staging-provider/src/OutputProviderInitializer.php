@@ -16,7 +16,8 @@ class OutputProviderInitializer extends AbstractProviderInitializer
 {
     public function __construct(
         InputStrategyFactory $stagingFactory,
-        WorkspaceProviderFactoryInterface $workspaceProviderFactory
+        WorkspaceProviderFactoryInterface $workspaceProviderFactory,
+        $dataDirectory
     ) {
         if (!$stagingFactory instanceof OutputStrategyFactory) {
             throw new StagingProviderException(sprintf(
@@ -28,14 +29,14 @@ class OutputProviderInitializer extends AbstractProviderInitializer
 
         parent::__construct(
             $stagingFactory,
-            $workspaceProviderFactory
+            $workspaceProviderFactory,
+            $dataDirectory
         );
     }
 
     public function initializeProviders(
         $stagingType,
-        array $tokenInfo,
-        $dataDirectory
+        array $tokenInfo
     ) {
         if ($stagingType === OutputStrategyFactory::WORKSPACE_REDSHIFT &&
             $tokenInfo['owner']['hasRedshift']
@@ -82,7 +83,6 @@ class OutputProviderInitializer extends AbstractProviderInitializer
         }
         
         $this->addLocalProvider(
-            $dataDirectory,
             [
                 OutputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
                 OutputStrategyFactory::WORKSPACE_REDSHIFT => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),

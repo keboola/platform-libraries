@@ -40,12 +40,11 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             OutputStrategyFactory::LOCAL,
-            [],
-            '/tmp/random/data'
+            []
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
@@ -75,7 +74,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             OutputStrategyFactory::WORKSPACE_REDSHIFT,
@@ -86,8 +85,7 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
@@ -119,7 +117,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             OutputStrategyFactory::WORKSPACE_SNOWFLAKE,
@@ -130,8 +128,7 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
@@ -163,7 +160,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             OutputStrategyFactory::WORKSPACE_SYNAPSE,
@@ -174,8 +171,7 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
@@ -229,7 +225,7 @@ class OutputProviderInitializerTest extends TestCase
             'keboola.runner-workspace-abs-test',
             'my-test-config'
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             OutputStrategyFactory::WORKSPACE_ABS,
@@ -240,8 +236,7 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));

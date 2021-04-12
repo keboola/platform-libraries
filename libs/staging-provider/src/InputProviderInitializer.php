@@ -13,8 +13,7 @@ class InputProviderInitializer extends AbstractProviderInitializer
 {
     public function initializeProviders(
         $stagingType,
-        array $tokenInfo,
-        $dataDirectory
+        array $tokenInfo
     ) {
         if ($stagingType === InputStrategyFactory::WORKSPACE_REDSHIFT &&
             $tokenInfo['owner']['hasRedshift']
@@ -61,7 +60,6 @@ class InputProviderInitializer extends AbstractProviderInitializer
         }
 
         $this->addLocalProvider(
-            $dataDirectory,
             [
                 InputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
                 // TABLE_DATA for ABS and S3 is bound to LocalProvider because it requires no provider at all

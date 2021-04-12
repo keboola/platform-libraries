@@ -45,13 +45,9 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
-        $init->initializeProviders(
-            InputStrategyFactory::LOCAL,
-            [],
-            '/tmp/random/data'
-        );
+        $init->initializeProviders(InputStrategyFactory::LOCAL, []);
 
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
@@ -85,7 +81,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             InputStrategyFactory::WORKSPACE_REDSHIFT,
@@ -96,8 +92,7 @@ class InputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'aws',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
@@ -130,7 +125,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             InputStrategyFactory::WORKSPACE_SNOWFLAKE,
@@ -141,8 +136,7 @@ class InputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'aws',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
@@ -175,7 +169,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             InputStrategyFactory::WORKSPACE_SYNAPSE,
@@ -186,8 +180,7 @@ class InputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
@@ -220,7 +213,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config'
         );
-        $init = new InputProviderInitializer($stagingFactory, $providerFactory);
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             InputStrategyFactory::WORKSPACE_ABS,
@@ -231,8 +224,7 @@ class InputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ],
-            '/tmp/random/data'
+            ]
         );
 
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));

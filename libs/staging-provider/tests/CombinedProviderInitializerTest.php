@@ -64,23 +64,21 @@ class CombinedProviderInitializerTest extends TestCase
             );
 
             $inputStagingFactory = new InputStrategyFactory($clientWrapper, $logger, 'json');
-            $inputInitializer = new InputProviderInitializer($inputStagingFactory, $providerFactory);
+            $inputInitializer = new InputProviderInitializer($inputStagingFactory, $providerFactory, '/tmp/random/data');
             $inputInitializer->initializeProviders(
                 InputStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
-                ],
-                '/tmp/random/data'
+                ]
             );
 
             $outputStagingFactory = new OutputStrategyFactory($clientWrapper, $logger, 'json');
-            $outputInitializer = new OutputProviderInitializer($outputStagingFactory, $providerFactory);
+            $outputInitializer = new OutputProviderInitializer($outputStagingFactory, $providerFactory, '/tmp/random/data');
             $outputInitializer->initializeProviders(
                 OutputStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
-                ],
-                '/tmp/random/data'
+                ]
             );
 
             $inputStrategy = $inputStagingFactory->getTableInputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE, 'test', new InputTableStateList([]));

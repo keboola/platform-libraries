@@ -1,2 +1,2 @@
 # configuration-variables-resolver
-Resolve variables and shared code placeholders in configuration
+Library to replace variables and share-code placeholders in component configuration with actual values from `keboola.variables` and `keboola.shared-code` compnents.

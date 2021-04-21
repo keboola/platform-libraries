@@ -1,0 +1,66 @@
+{
+    "name": "keboola/configuration-variables-resolver",
+    "license": "MIT",
+    "type": "library",
+    "description": "Library to replace variables and share-code placeholders in component configuration with actual values",
+    "keywords": [
+        "keboola",
+        "configuration",
+        "variables",
+        "shared-code",
+        "resolver",
+        "placeholder",
+        "replace"
+    ],
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\ConfigurationVariablesResolver\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\ConfigurationVariablesResolver\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^7.3",
+        "ext-json": "*",
+        "psr/log": "^1.1"
+    },
+    "require-dev": {
+        "infection/infection": "^0.18.2",
+        "keboola/coding-standard": ">=7.0.2",
+        "php-parallel-lint/php-parallel-lint": "^1.2",
+        "phpstan/phpstan": "^0.12.51",
+        "phpunit/phpunit": "^9.3"
+    },
+    "scripts": {
+        "tests": "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml",
+        "phpstan": "phpstan analyse --no-progress --level=max src tests -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "phplint": "parallel-lint -j 10 --exclude vendor .",
+        "infection": "infection --threads=4 --min-covered-msi=90 --coverage=build/logs",
+        "build": [
+            "@phplint",
+            "@phpcs",
+            "@phpstan",
+            "@tests",
+            "@infection"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "process-timeout": 3600
+    }
+}

@@ -1,0 +1,24 @@
+pool:
+  vmImage: ubuntu-latest
+
+pr: none
+trigger:
+  batch: true
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+
+steps:
+
+- script: |
+    docker-compose down
+    docker-compose build --pull
+    docker-compose pull
+  displayName: 'Build Tests'
+
+- script: docker-compose run --rm tests
+  displayName: 'Run Tests'
+  env:

@@ -26,6 +26,7 @@ class TableTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'file_tags' => [],
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
@@ -48,6 +49,7 @@ class TableTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '\'',
             'metadata' => [],
             'column_metadata' => [],
+            'file_tags' => [],
         ];
 
         $expectedArray = $config;
@@ -100,6 +102,7 @@ class TableTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'file_tags' => [],
         ];
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
@@ -126,6 +129,35 @@ class TableTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'file_tags' => [],
+        ];
+
+        $processedConfiguration = (new Table())->parse(['config' => $config]);
+        $this->assertEquals($expectedArray, $processedConfiguration);
+    }
+
+    public function testFileTags()
+    {
+        $config = [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+            'file_tags' => ['test', 'foo'],
+        ];
+
+        $expectedArray = [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'file_tags' => ['test', 'foo'],
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);

@@ -1490,4 +1490,59 @@ class StorageApiWriterTest extends BaseWriterTest
             StrategyFactory::LOCAL
         );
     }
+
+    public function testTableFiles()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/file', 'test');
+        // in this case there may be a table manifest present
+        file_put_contents(
+            $root . '/upload/file.manifest',
+            '{"primary_key": ["Id", "Name"]}'
+        );
+        $systemMetadata = [
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '12345',
+            'branchId' => '',
+            'runId' => '999',
+        ];
+        $tableFiles = [
+            'tags' => ['output-mapping-test', 'another-tag'],
+            'is_permanent' => true,
+            'is_public' => true,
+        ];
+
+        $writer = new FileWriter($this->getStagingFactory());
+
+        $writer->uploadFiles(
+            '/upload',
+            [],
+            $systemMetadata,
+            StrategyFactory::LOCAL,
+            $tableFiles
+        );
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags(["output-mapping-test"]);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $this->assertCount(1, $files);
+
+        $expectedTags = [
+            'output-mapping-test',
+            'another-tag',
+            'componentId: testComponent',
+            'configurationId: metadata-write-test',
+            'configurationRowId: 12345',
+            'branchId: ',
+            'runId: 999',
+        ];
+        $file = $files[0];
+        $this->assertNotNull($file);
+        $this->assertEquals(4, $file['sizeBytes']);
+        $this->assertEquals(sort($expectedTags), sort($file['tags']));
+        $this->assertTrue($file['isPublic']);
+        $this->assertNull($file['maxAgeDays']);
+    }
 }

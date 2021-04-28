@@ -18,12 +18,6 @@ class Table extends Configuration
     public static function configureNode(NodeDefinition $node)
     {
         Table\Manifest::configureNode($node);
-
-        $node->children()
-            ->scalarNode("source")->isRequired()->end()
-            ->arrayNode('file_tags')
-                ->prototype('scalar')->end()
-            ->end()
-        ;
+        $node->children()->scalarNode("source")->isRequired()->end();
     }
 }

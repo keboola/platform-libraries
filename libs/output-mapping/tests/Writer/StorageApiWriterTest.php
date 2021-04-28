@@ -1510,7 +1510,6 @@ class StorageApiWriterTest extends BaseWriterTest
         $tableFiles = [
             'tags' => ['output-mapping-test', 'another-tag'],
             'is_permanent' => true,
-            'is_public' => true,
         ];
 
         $writer = new FileWriter($this->getStagingFactory());

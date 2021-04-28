@@ -73,6 +73,7 @@ class FileWriter extends AbstractWriter
                 }
             }
             $manifestKey = $file->getPathName() . '.manifest';
+            // If $tableFiles are supplied then we don't want the manifest because it'll be a table manifest
             if (isset($manifests[$manifestKey]) && empty($tableFiles)) {
                 $configFromManifest = $strategy->readFileManifest($file->getPathName() . '.manifest');
                 unset($manifests[$manifestKey]);

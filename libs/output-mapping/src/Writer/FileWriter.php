@@ -77,12 +77,12 @@ class FileWriter extends AbstractWriter
                 unset($manifests[$manifestKey]);
             }
             try {
-                // Mapping with higher priority
-                if ($configFromMapping || !$configFromManifest) {
-                    $storageConfig = (new FileManifest())->parse([$configFromMapping]);
-                } elseif (!empty($tableFiles)) {
-                    // create storageConfig from the $tableFiles data
+                if (!empty($tableFiles)) {
+                    // tableFiles take highest priority
                     $storageConfig = (new FileManifest())->parse([$tableFiles]);
+                } elseif ($configFromMapping || !$configFromManifest) {
+                    // Mapping with higher priority than manifest
+                    $storageConfig = (new FileManifest())->parse([$configFromMapping]);
                 } else {
                     $storageConfig = (new FileManifest())->parse([$configFromManifest]);
                 }

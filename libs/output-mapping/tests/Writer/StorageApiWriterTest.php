@@ -1541,7 +1541,6 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertNotNull($file);
         $this->assertEquals(4, $file['sizeBytes']);
         $this->assertEquals(sort($expectedTags), sort($file['tags']));
-        $this->assertTrue($file['isPublic']);
         $this->assertNull($file['maxAgeDays']);
     }
 }

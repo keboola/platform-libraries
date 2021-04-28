@@ -24,4 +24,3 @@ class TableFile extends Configuration
         ;
     }
 }
-

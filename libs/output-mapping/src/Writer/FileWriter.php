@@ -19,8 +19,9 @@ class FileWriter extends AbstractWriter
      * @param array $configuration Upload configuration
      * @param array $systemMetadata Metadata identifying the source of the file
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
+     * @param array $tableFiles For the use file storage only case, tags etc are provided here
      */
-    public function uploadFiles($source, $configuration, $systemMetadata, $storage)
+    public function uploadFiles($source, $configuration, $systemMetadata, $storage, $tableFiles = [])
     {
         if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
@@ -71,7 +72,7 @@ class FileWriter extends AbstractWriter
                 }
             }
             $manifestKey = $file->getPathName() . '.manifest';
-            if (isset($manifests[$manifestKey])) {
+            if (isset($manifests[$manifestKey]) && empty($tableFiles)) {
                 $configFromManifest = $strategy->readFileManifest($file->getPathName() . '.manifest');
                 unset($manifests[$manifestKey]);
             }
@@ -79,6 +80,9 @@ class FileWriter extends AbstractWriter
                 // Mapping with higher priority
                 if ($configFromMapping || !$configFromManifest) {
                     $storageConfig = (new FileManifest())->parse([$configFromMapping]);
+                } elseif (!empty($tableFiles)) {
+                    // create storageConfig from the $tableFiles data
+                    $storageConfig = (new FileManifest())->parse([$tableFiles]);
                 } else {
                     $storageConfig = (new FileManifest())->parse([$configFromManifest]);
                 }

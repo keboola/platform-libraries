@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
+use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
@@ -19,8 +20,9 @@ class FileWriter extends AbstractWriter
      * @param array $configuration Upload configuration
      * @param array $systemMetadata Metadata identifying the source of the file
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
+     * @param array $tableFiles For the use file storage only case, tags etc are provided here
      */
-    public function uploadFiles($source, $configuration, $systemMetadata, $storage)
+    public function uploadFiles($source, $configuration, $systemMetadata, $storage, $tableFiles = [])
     {
         if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
@@ -71,13 +73,17 @@ class FileWriter extends AbstractWriter
                 }
             }
             $manifestKey = $file->getPathName() . '.manifest';
-            if (isset($manifests[$manifestKey])) {
+            // If $tableFiles are supplied then we don't want the manifest because it'll be a table manifest
+            if (isset($manifests[$manifestKey]) && empty($tableFiles)) {
                 $configFromManifest = $strategy->readFileManifest($file->getPathName() . '.manifest');
                 unset($manifests[$manifestKey]);
             }
             try {
-                // Mapping with higher priority
-                if ($configFromMapping || !$configFromManifest) {
+                if (!empty($tableFiles)) {
+                    // tableFiles take highest priority
+                    $storageConfig = (new TableFile())->parse([$tableFiles]);
+                } elseif ($configFromMapping || !$configFromManifest) {
+                    // Mapping with higher priority than manifest
                     $storageConfig = (new FileManifest())->parse([$configFromMapping]);
                 } else {
                     $storageConfig = (new FileManifest())->parse([$configFromManifest]);

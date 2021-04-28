@@ -113,7 +113,7 @@ class TableWriter extends AbstractWriter
                 foreach ($configuration['mapping'] as $mapping) {
                     if (isset($mapping['source']) && $mapping['source'] === $sourceName) {
                         $configFromMapping = $mapping;
-                        unset($configFromMapping['source'], $configFromMapping['file_tags']);
+                        unset($configFromMapping['source']);
                     }
                 }
             }
@@ -249,7 +249,7 @@ class TableWriter extends AbstractWriter
                     if (isset($mapping['source']) && $mapping['source'] === $file->getFilename()) {
                         $configFromMapping = $mapping;
                         $processedOutputMappingTables[] = $configFromMapping['source'];
-                        unset($configFromMapping['source'], $configFromMapping['file_tags']);
+                        unset($configFromMapping['source']);
                     }
                 }
             }

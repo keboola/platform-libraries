@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\InputMapping\Reader;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
+use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
@@ -79,7 +80,7 @@ class FileWriter extends AbstractWriter
             try {
                 if (!empty($tableFiles)) {
                     // tableFiles take highest priority
-                    $storageConfig = (new FileManifest())->parse([$tableFiles]);
+                    $storageConfig = (new TableFile())->parse([$tableFiles]);
                 } elseif ($configFromMapping || !$configFromManifest) {
                     // Mapping with higher priority than manifest
                     $storageConfig = (new FileManifest())->parse([$configFromMapping]);

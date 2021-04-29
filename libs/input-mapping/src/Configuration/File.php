@@ -49,6 +49,7 @@ class File extends Configuration
                 ->arrayNode('processed_tags')
                     ->prototype('scalar')->end()
                 ->end()
+                ->scalarNode('changedSince')->end()
             ->end()
             ->validate()
                 ->always(function ($v) {
@@ -82,6 +83,15 @@ class File extends Configuration
                 return false;
             })
             ->thenInvalid('Both "tags" and "source.tags" cannot be defined.')
+            ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                if (isset($v['query']) && isset($v['changedSince'])) {
+                    return true;
+                }
+                return false;
+            })
+                ->thenInvalid('The changedSince property is not supported for query configurations')
             ->end()
         ;
     }

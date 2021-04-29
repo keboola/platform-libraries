@@ -1,11 +1,13 @@
 <?php
 
-namespace Keboola\DockerBundle\Docker\Runner;
+declare(strict_types=1);
+
+namespace Keboola\ConfigurationVariablesResolver;
 
 class VariablesContext
 {
-    private $missingVariables;
-    private $values;
+    private array $missingVariables;
+    private array $values;
 
     public function __construct(array $configurationRow)
     {
@@ -16,22 +18,21 @@ class VariablesContext
         $this->missingVariables = [];
     }
 
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         if (isset($this->values[$name])) {
             return true;
-        } else {
-            $this->missingVariables[] = $name;
-            return false;
         }
+        $this->missingVariables[] = $name;
+        return false;
     }
 
-    public function __get($name)
+    public function __get(string $name): string
     {
         return $this->values[$name];
     }
 
-    public function getMissingVariables()
+    public function getMissingVariables(): array
     {
         return $this->missingVariables;
     }

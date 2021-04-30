@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests\Configuration;
 
 use Keboola\InputMapping\Configuration\File;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class FileConfigurationTest extends \PHPUnit_Framework_TestCase
 {
@@ -123,6 +124,45 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
                     ]
                 ]
             ],
+        ]]);
+    }
+
+    public function testValidAdaptiveInputConfigurationWithTags()
+    {
+        $config = [
+            'tags' => ['tag'],
+            'changed_since' => 'adaptive',
+        ];
+        $expectedResponse = $config;
+        $processedConfiguration = (new File())->parse(["config" => $config]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
+    }
+
+    public function testValidAdaptiveInputConfigurationWithSourceTags()
+    {
+        $config = [
+            'source' => [
+                'tags' => [
+                    [
+                        'name' => 'tag',
+                        'match' => 'include',
+                    ],
+                ],
+            ],
+            'changed_since' => 'adaptive',
+        ];
+        $expectedResponse = $config;
+        $processedConfiguration = (new File())->parse(["config" => $config]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
+    }
+
+    public function testConfigurationWithQueryAndChangedSince()
+    {
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessage('The changed_since property is not supported for query configurations');
+        (new File())->parse(['config' => [
+            'query' => 'some query',
+            'changed_since' => 'adaptive',
         ]]);
     }
 }

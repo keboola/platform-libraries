@@ -3,6 +3,9 @@ services:
   # for development purposes
   tests: &tests
     build: .
+    environment:
+      - STORAGE_API_URL
+      - STORAGE_API_TOKEN
     command: ['sh', '-c', 'composer ci']
 
   tests-local:

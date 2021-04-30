@@ -56,7 +56,7 @@ class VariableResolver
                 $vRow = $this->componentsHelper->getVariablesConfigurationRow($variablesId, $defaultValuesId);
             } else {
                 throw new UserException(sprintf(
-                    'No variable values provided for variables "%s".',
+                    'No variable values provided for variables configuration "%s".',
                     $variablesId
                 ));
             }

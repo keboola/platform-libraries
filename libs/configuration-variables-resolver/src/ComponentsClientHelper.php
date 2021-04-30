@@ -14,7 +14,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class ComponentsClientHelper
 {
-    const KEBOOLA_VARIABLES = 'keboola.variables';
+    public const KEBOOLA_VARIABLES = 'keboola.variables';
 
     private ClientWrapper $clientWrapper;
 
@@ -35,36 +35,35 @@ class ComponentsClientHelper
     {
         try {
             $vConfiguration = $this->getClient()->getConfiguration(self::KEBOOLA_VARIABLES, $variablesId);
-            return (new Variables())->processData([
-                'config' => $vConfiguration['configuration'],
-            ]);
+            return (new Variables())->processData($vConfiguration['configuration']);
         } catch (ClientException $e) {
-            throw new UserException('Variable configuration cannot be read: ' . $e->getMessage(), $e);
+            throw new UserException('Variable configuration cannot be read: ' . $e->getMessage(), 400, $e);
         } catch (InvalidConfigurationException $e) {
-            throw new UserException('Variable configuration is invalid: ' . $e->getMessage(), $e);
+            throw new UserException('Variable configuration is invalid: ' . $e->getMessage(), 400, $e);
         }
     }
 
-    public function getVariablesConfigurationRow(string $configurationId, string $rowId): array
+    public function getVariablesConfigurationRow(string $variablesId, string $variableValuesId): array
     {
         try {
             $vRow = $this->getClient()->getConfigurationRow(
                 self::KEBOOLA_VARIABLES,
-                $configurationId,
-                $rowId
+                $variablesId,
+                $variableValuesId
             );
-            return (new VariableValues())->processData(['config' => $vRow]);
+            return (new VariableValues())->processData($vRow['configuration']);
         } catch (ClientException $e) {
             throw new UserException(
                 sprintf(
-                    'Cannot read requested variable values "%s" for row "%s".',
-                    $configurationId,
-                    $rowId
+                    'Cannot read variable values "%s" of variables configuration "%s".',
+                    $variableValuesId,
+                    $variablesId,
                 ),
+                400,
                 $e
             );
         } catch (InvalidConfigurationException $e) {
-            throw new UserException('Variable values configuration is invalid: ' . $e->getMessage(), $e);
+            throw new UserException('Variable values configuration is invalid: ' . $e->getMessage(), 400, $e);
         }
     }
 }

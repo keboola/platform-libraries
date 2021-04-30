@@ -15,7 +15,7 @@ class InputFileStateList implements JsonSerializable
     public function __construct(array $configurations)
     {
         foreach ($configurations as $item) {
-            $this->files[] = new InputTableState($item);
+            $this->files[] = new InputFileState($item);
         }
     }
 
@@ -31,7 +31,7 @@ class InputFileStateList implements JsonSerializable
                 return $file;
             }
         }
-        throw new FileNotFoundException('State for files defined by "' . implode(', ', $fileTags) . '" not found.');
+        throw new FileNotFoundException('State for files defined by "' . json_encode($fileTags) . '" not found.');
     }
 
     /**

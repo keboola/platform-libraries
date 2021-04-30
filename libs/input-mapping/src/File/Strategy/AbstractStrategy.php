@@ -6,8 +6,11 @@ use Exception;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Helper\ManifestCreator;
+use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\State\InputFileStateList;
+use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -32,6 +35,9 @@ abstract class AbstractStrategy implements StrategyInterface
     /** @var ProviderInterface */
     protected $metadataStorage;
 
+    /** @var InputFileStateList */
+    protected $fileStateList;
+
     /** @var string */
     protected $format;
 
@@ -40,6 +46,7 @@ abstract class AbstractStrategy implements StrategyInterface
         LoggerInterface $logger,
         ProviderInterface $dataStorage,
         ProviderInterface $metadataStorage,
+        InputFileStateList $fileStateList,
         $format = 'json'
     ) {
         $this->clientWrapper = $storageClient;
@@ -47,6 +54,7 @@ abstract class AbstractStrategy implements StrategyInterface
         $this->manifestCreator = new ManifestCreator($this->clientWrapper->getBasicClient());
         $this->dataStorage = $dataStorage;
         $this->metadataStorage = $metadataStorage;
+        $this->fileStateList = $fileStateList;
         $this->format = $format;
     }
 
@@ -78,10 +86,29 @@ abstract class AbstractStrategy implements StrategyInterface
         $fileOptions->setFederationToken(true);
 
         foreach ($fileConfigurations as $fileConfiguration) {
+            // apply the state configuration limits
+            if (isset($fileConfiguration['changed_since']) && !empty($fileConfiguration['changed_since'])) {
+                if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+                    try {
+                        $exportOptions['changedSince'] = $this->fileStateList
+                            ->getFile(TagsRewriteHelper::)
+                            ->getLastImportId();
+                    } catch (TableNotFoundException $e) {
+                        // intentionally blank
+                    }
+                } else {
+                    $exportOptions['changedSince'] = $this->definition['changed_since'];
+                }
+            }
+            $fileState = $this->fileStateList->getFile($fileConfiguration['tags']);
             $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
+                $outputStateConfiguration[] = [
+                    'tags' => $file->getTags(),
+                    'lastImportDate' => $fileInfo['id']
+                ];
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
                     $this->downloadFile($fileInfo, $fileDestinationPath);

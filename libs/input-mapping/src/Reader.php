@@ -8,6 +8,7 @@ use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -48,10 +49,11 @@ class Reader
      * @param $configuration array
      * @param $destination string Relative path to the destination directory
      * @param $stagingType string
+     * @param InputFileStateList $filesState
      */
-    public function downloadFiles($configuration, $destination, $stagingType)
+    public function downloadFiles($configuration, $destination, $stagingType, InputFileStateList $filesState)
     {
-        $strategy = $this->strategyFactory->getFileInputStrategy($stagingType);
+        $strategy = $this->strategyFactory->getFileInputStrategy($stagingType, $filesState);
         if (!$configuration) {
             return;
         } elseif (!is_array($configuration)) {
@@ -136,7 +138,7 @@ class Reader
 
         if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
             throw new InvalidInputException(
-                "Invalid file mapping, 'query' attribute is restricted for dev/branch context."
+                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
             );
         }
 
@@ -148,6 +150,9 @@ class Reader
         }
         if (!empty($fileConfiguration['tags']) && !empty($fileConfiguration['source']['tags'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");
+        }
+        if (!empty($fileConfiguration['query']) && isset($fileConfiguration['changedSince'])) {
+            throw new InvalidInputException('Invalid file mapping, "changedSince" is not supported for query mappings')
         }
         if (!empty($fileConfiguration['filter_by_run_id'])) {
             $options->setRunId(Reader::getParentRunId($storageClient->getRunId()));

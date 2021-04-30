@@ -7,6 +7,7 @@ use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\ABSWorkspace as FileABSWorkspace;
 use Keboola\InputMapping\File\Strategy\Local as FileLocal;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as TableABS;
 use Keboola\InputMapping\Table\Strategy\ABSWorkspace as TableABSWorkspace;
@@ -173,9 +174,10 @@ class StrategyFactory
 
     /**
      * @param string $stagingType
+     * @param InputFileStateList $fileStateList
      * @return FileStrategyInterface
      */
-    public function getFileInputStrategy($stagingType)
+    public function getFileInputStrategy($stagingType, InputFileStateList $fileStateList)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {

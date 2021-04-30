@@ -133,7 +133,6 @@ class Reader
             $clientWrapper,
             $logger
         );
-
         $storageClient = $clientWrapper->getBasicClient();
 
         if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
@@ -141,7 +140,6 @@ class Reader
                 "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
             );
         }
-
         $options = new ListFilesOptions();
         if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])
             && empty($fileConfiguration['source']['tags'])
@@ -169,6 +167,9 @@ class Reader
             $fileConfiguration["limit"] = 100;
         }
         $options->setLimit($fileConfiguration["limit"]);
+        if (isset($fileConfiguration['changed_since'])) {
+            $options->setSinceId($fileConfiguration['changed_since']);
+        }
         $files = $storageClient->listFiles($options);
 
         return $files;

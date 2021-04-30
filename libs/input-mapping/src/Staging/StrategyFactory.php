@@ -196,6 +196,7 @@ class StrategyFactory
             $this->logger,
             $stagingDefinition->getFileDataProvider(),
             $stagingDefinition->getFileMetadataProvider(),
+            $fileStateList,
             $this->format
         );
     }

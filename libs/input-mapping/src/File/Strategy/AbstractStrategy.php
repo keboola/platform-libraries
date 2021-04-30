@@ -3,8 +3,10 @@
 namespace Keboola\InputMapping\File\Strategy;
 
 use Exception;
+use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
+use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Reader;
@@ -89,25 +91,28 @@ abstract class AbstractStrategy implements StrategyInterface
             // apply the state configuration limits
             if (isset($fileConfiguration['changed_since']) && !empty($fileConfiguration['changed_since'])) {
                 if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+                    // get merged tags
+                    $tags = (isset($fileConfiguration['tags']))
+                        ? BuildQueryFromConfigurationHelper::getSourceTagsFromTags($fileConfiguration['tags'])
+                        : $fileConfiguration['source']['tags'];
                     try {
-                        $exportOptions['changedSince'] = $this->fileStateList
-                            ->getFile(TagsRewriteHelper::)
+                        $fileConfiguration['changed_since'] = $this->fileStateList
+                            ->getFile($tags)
                             ->getLastImportId();
-                    } catch (TableNotFoundException $e) {
+                    } catch (FileNotFoundException $e) {
                         // intentionally blank
                     }
                 } else {
-                    $exportOptions['changedSince'] = $this->definition['changed_since'];
+                    $fileConfiguration['changedSince'] = $this->definition['changed_since'];
                 }
             }
-            $fileState = $this->fileStateList->getFile($fileConfiguration['tags']);
             $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
                 $outputStateConfiguration[] = [
                     'tags' => $file->getTags(),
-                    'lastImportDate' => $fileInfo['id']
+                    'lastImportId' => $fileInfo['id']
                 ];
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {

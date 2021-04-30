@@ -11,6 +11,7 @@ use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\State\InputFileState;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -81,13 +82,15 @@ abstract class AbstractStrategy implements StrategyInterface
     /**
      * @param array $fileConfigurations
      * @param string $destination
+     * @return InputFileStateList
      */
     public function downloadFiles($fileConfigurations, $destination)
     {
         $fileOptions = new GetFileOptions();
         $fileOptions->setFederationToken(true);
-
+        $outputStateList = [];
         foreach ($fileConfigurations as $fileConfiguration) {
+            $fileState = null;
             // apply the state configuration limits
             if (isset($fileConfiguration['changed_since']) && !empty($fileConfiguration['changed_since'])) {
                 if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
@@ -96,24 +99,24 @@ abstract class AbstractStrategy implements StrategyInterface
                         ? BuildQueryFromConfigurationHelper::getSourceTagsFromTags($fileConfiguration['tags'])
                         : $fileConfiguration['source']['tags'];
                     try {
-                        $fileConfiguration['changed_since'] = $this->fileStateList
-                            ->getFile($tags)
-                            ->getLastImportId();
+                        $fileState = $this->fileStateList->getFile($tags);
                     } catch (FileNotFoundException $e) {
                         // intentionally blank
                     }
-                } else {
-                    $fileConfiguration['changedSince'] = $this->definition['changed_since'];
                 }
             }
-            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
+            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger, $fileState);
+            $biggestFileId = 0;
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
-                $outputStateConfiguration[] = [
-                    'tags' => $file->getTags(),
-                    'lastImportId' => $fileInfo['id']
-                ];
+                if ((int) $fileInfo['id'] > $biggestFileId) {
+                    $outputStateConfiguration = [
+                        'tags' => $fileState->getTags(),
+                        'lastImportId' => $fileInfo['id'],
+                    ];
+                    $biggestFileId = (int) $fileInfo['id'];
+                }
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
                     $this->downloadFile($fileInfo, $fileDestinationPath);
@@ -126,7 +129,9 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
+            $outputStateList[] = $outputStateConfiguration;
         }
         $this->logger->info('All files were fetched.');
+        return new InputFileStateList($outputStateList);
     }
 }

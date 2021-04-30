@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -147,7 +148,12 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
         $reader = new Reader($this->getStagingFactory());
         $configuration = [["tags" => ["download-files-test"]]];
-        $reader->downloadFiles($configuration, 'data/in/files/', StrategyFactory::WORKSPACE_ABS);
+        $reader->downloadFiles(
+            $configuration,
+            'data/in/files/',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
 
         $blobResult1 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
@@ -215,7 +221,12 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         sleep(5);
         $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
 
-        $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
 
         try {
             $this->blobClient->getBlob(
@@ -300,8 +311,12 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
         $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
-        $reader->downloadFiles($configuration, 'download', StrategyFactory::WORKSPACE_ABS);
-
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],

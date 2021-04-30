@@ -6,6 +6,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StorageApi\Client;
 use Symfony\Component\Finder\Finder;
 
@@ -39,7 +40,12 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         $configuration = [['query' => 'id: ' . $fileId]];
 
         $dlDir = $this->tmpDir . "/download";
-        $reader->downloadFiles($configuration, '/download/', StrategyFactory::LOCAL);
+        $reader->downloadFiles(
+            $configuration,
+            '/download/',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
         $fileName = $fileId . "_in.c-docker-test-redshift.test_file.csv";
 
         $resultFileContent = '';

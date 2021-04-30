@@ -110,7 +110,7 @@ abstract class AbstractStrategy implements StrategyInterface
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
-                if ((int) $fileInfo['id'] > $biggestFileId) {
+                if ($fileState !== null && (int) $fileInfo['id'] > $biggestFileId) {
                     $outputStateConfiguration = [
                         'tags' => $fileState->getTags(),
                         'lastImportId' => $fileInfo['id'],
@@ -129,9 +129,12 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
-            $outputStateList[] = $outputStateConfiguration;
+            if ($outputStateConfiguration) {
+                $outputStateList[] = $outputStateConfiguration;
+            }
         }
         $this->logger->info('All files were fetched.');
+        var_dump($outputStateList);
         return new InputFileStateList($outputStateList);
     }
 }

@@ -51,7 +51,7 @@ class Reader
      * @param $destination string Relative path to the destination directory
      * @param $stagingType string
      * @param InputFileStateList $filesState list of input mapping file states
-     * @return InputTableStateList
+     * @return InputFileStateList
      */
     public function downloadFiles($configuration, $destination, $stagingType, InputFileStateList $filesState)
     {
@@ -127,9 +127,9 @@ class Reader
      */
     public static function getFiles(
         array $fileConfiguration,
-        InputFileState $fileState,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        InputFileState $fileState = null
     ) {
         $fileConfiguration = TagsRewriteHelper::rewriteFileTags(
             $fileConfiguration,
@@ -171,7 +171,11 @@ class Reader
         }
         $options->setLimit($fileConfiguration["limit"]);
 
-        if (isset($fileConfiguration['changed_since']) && $fileConfiguration['changed_since'] === 'adaptive') {
+        if (
+            isset($fileConfiguration['changed_since'])
+            && $fileConfiguration['changed_since'] === 'adaptive'
+            && $fileState !== null
+        ) {
             $options->setSinceId($fileState->getLastImportId());
         }
         $files = $storageClient->listFiles($options);

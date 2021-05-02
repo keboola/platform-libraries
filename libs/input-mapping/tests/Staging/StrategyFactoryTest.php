@@ -5,6 +5,7 @@ namespace Keboola\InputMapping\Tests\Staging;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\Local as LocalFile;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\Scope;
@@ -49,7 +50,10 @@ class StrategyFactoryTest extends TestCase
         );
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('The project does not support "local" file input backend.');
-        $factory->getFileInputStrategy(StrategyFactory::LOCAL);
+        $factory->getFileInputStrategy(
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
     }
 
     public function testGetFileStrategySuccess()
@@ -67,7 +71,10 @@ class StrategyFactoryTest extends TestCase
         $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]);
         self::assertInstanceOf(
             LocalFile::class,
-            $factory->getFileInputStrategy(StrategyFactory::LOCAL)
+            $factory->getFileInputStrategy(
+                StrategyFactory::LOCAL,
+                new InputFileStateList([])
+            )
         );
     }
 

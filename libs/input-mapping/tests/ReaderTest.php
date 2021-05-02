@@ -7,6 +7,7 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -120,7 +121,8 @@ class ReaderTest extends TestCase
         $reader->downloadFiles(
             $configuration,
             'download',
-            StrategyFactory::LOCAL
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
@@ -137,7 +139,8 @@ class ReaderTest extends TestCase
             $reader->downloadFiles(
                 $configuration,
                 'download',
-                StrategyFactory::LOCAL
+                StrategyFactory::LOCAL,
+                new InputFileStateList([])
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
@@ -175,7 +178,8 @@ class ReaderTest extends TestCase
             $reader->downloadFiles(
                 $configurations,
                 'download',
-                StrategyFactory::LOCAL
+                StrategyFactory::LOCAL,
+                new InputFileStateList([])
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
@@ -208,7 +212,8 @@ class ReaderTest extends TestCase
             $reader->downloadFiles(
                 $configurations,
                 'download',
-                StrategyFactory::LOCAL
+                StrategyFactory::LOCAL,
+                new InputFileStateList([])
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {

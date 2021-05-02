@@ -10,10 +10,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
-use PHP_CodeSniffer\Tests\Core\File\FindEndOfStatementTest;
 use Psr\Log\Test\TestLogger;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 
 class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 {
@@ -218,14 +215,33 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
-        sleep(5);
+        sleep(2);
+
+        $convertedTags = [
+            [
+                'name' => self::TEST_FILE_TAG_FOR_BRANCH
+            ], [
+                'name' => 'adaptive'
+            ],
+        ];
 
         $testLogger = new TestLogger();
         $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
 
-        $configuration = [['tags' => [self::TEST_FILE_TAG_FOR_BRANCH]]];
-        $reader->downloadFiles($configuration, 'download', StrategyFactory::LOCAL);
-
+        $configuration = [
+            [
+                'tags' => [self::TEST_FILE_TAG_FOR_BRANCH, 'adaptive'],
+                'changed_since' => 'adaptive',
+            ]
+        ];
+        $outputStateFileList = $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        $lastFileState = $outputStateFileList->getFile($convertedTags);
+        self::assertEquals($file1Id, $lastFileState->getLastImportId());
         self::assertEquals("test", file_get_contents($root . '/download/' . $file1Id . '_upload'));
         self::assertFileNotExists($root . '/download/' . $file2Id . '_upload');
 
@@ -238,7 +254,28 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertEquals([$branchTag], $manifest1['tags']);
 
         self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
+            sprintf(
+                'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
+                $branchId,
+                self::TEST_FILE_TAG_FOR_BRANCH,
+                $branchId,
+                self::TEST_FILE_TAG_FOR_BRANCH
+            )
         ));
+        // add another valid file and assert that it gets downloaded and the previous doesn't
+        $file3Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)])
+        );
+        $newOutputStateFileList = $reader->downloadFiles(
+            $configuration,
+            'download-adaptive',
+            StrategyFactory::LOCAL,
+            $outputStateFileList
+        );
+        $lastFileState = $newOutputStateFileList->getFile($convertedTags);
+        self::assertEquals($file3Id, $lastFileState->getLastImportId());
+        self::assertEquals("test", file_get_contents($root . '/download-adaptive/' . $file3Id . '_upload'));
+        self::assertFileNotExists($root . '/download-adaptive/' . $file1Id . '_upload');
     }
 }

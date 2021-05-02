@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver;
 
+use Keboola\ConfigurationVariablesResolver\Configuration\SharedCodeRow;
 use Keboola\ConfigurationVariablesResolver\Configuration\Variables;
 use Keboola\ConfigurationVariablesResolver\Configuration\VariableValues;
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
@@ -15,6 +16,8 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 class ComponentsClientHelper
 {
     public const KEBOOLA_VARIABLES = 'keboola.variables';
+
+    public const KEBOOLA_SHARED_CODE = 'keboola.shared-code';
 
     private ClientWrapper $clientWrapper;
 
@@ -35,7 +38,7 @@ class ComponentsClientHelper
     {
         try {
             $vConfiguration = $this->getClient()->getConfiguration(self::KEBOOLA_VARIABLES, $variablesId);
-            return (new Variables())->processData($vConfiguration['configuration']);
+            return (new Variables())->process($vConfiguration['configuration']);
         } catch (ClientException $e) {
             throw new UserException('Variable configuration cannot be read: ' . $e->getMessage(), 400, $e);
         } catch (InvalidConfigurationException $e) {
@@ -51,7 +54,7 @@ class ComponentsClientHelper
                 $variablesId,
                 $variableValuesId
             );
-            return (new VariableValues())->processData($vRow['configuration']);
+            return (new VariableValues())->process($vRow['configuration']);
         } catch (ClientException $e) {
             throw new UserException(
                 sprintf(
@@ -64,6 +67,18 @@ class ComponentsClientHelper
             );
         } catch (InvalidConfigurationException $e) {
             throw new UserException('Variable values configuration is invalid: ' . $e->getMessage(), 400, $e);
+        }
+    }
+
+    public function getSharedCodeConfigurationRow(string $sharedCodeId, $sharedCodeRowId): array
+    {
+        try {
+            $sharedCodeConfiguration = $this->getClient()->getConfigurationRow(self::KEBOOLA_SHARED_CODE, $sharedCodeId, $sharedCodeRowId);
+            return (new SharedCodeRow())->process($sharedCodeConfiguration['configuration']);
+        } catch (ClientException $e) {
+            throw new UserException('Shared code configuration cannot be read: ' . $e->getMessage(), 400, $e);
+        } catch (InvalidConfigurationException $e) {
+            throw new UserException('Shared code configuration is invalid: ' . $e->getMessage(), 400, $e);
         }
     }
 }

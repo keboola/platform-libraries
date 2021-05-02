@@ -18,11 +18,10 @@ steps:
     docker-compose build --pull
     docker-compose pull
   displayName: 'Build Tests'
-  env:
-    STORAGE_API_TOKEN: $(STORAGE_API_TOKEN)
-    STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER)
-    STORAGE_API_URL: $(STORAGE_API_URL)
 
 - script: docker-compose run --rm tests
   displayName: 'Run Tests'
   env:
+    STORAGE_API_TOKEN: $(STORAGE_API_TOKEN)
+    STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER)
+    STORAGE_API_URL: $(STORAGE_API_URL)

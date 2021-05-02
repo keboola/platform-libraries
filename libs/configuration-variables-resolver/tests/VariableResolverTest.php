@@ -68,7 +68,7 @@ class VariableResolverTest extends TestCase
         return [$configId, $rowId];
     }
 
-    public function createBranch(string $branchName): string
+    public function createBranch(string $branchName): int
     {
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {

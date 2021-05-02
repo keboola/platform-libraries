@@ -72,7 +72,7 @@ class SharedCodeResolverTest extends TestCase
         return new SharedCodeResolver($this->clientWrapper, $this->testLogger);
     }
 
-    public function createBranch(string $branchName): string
+    public function createBranch(string $branchName): int
     {
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {

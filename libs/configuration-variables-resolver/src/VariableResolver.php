@@ -24,14 +24,14 @@ class VariableResolver
         $this->clientWrapper = $clientWrapper;
         $this->moustache = new Mustache_Engine([
             'escape' => function ($string) {
-                return trim(json_encode($string), '"');
+                return trim((string) json_encode($string), '"');
             },
         ]);
         $this->logger = $logger;
         $this->componentsHelper = new ComponentsClientHelper($this->clientWrapper);
     }
 
-    public function resolveVariables(array $configuration, $variableValuesId, $variableValuesData): array
+    public function resolveVariables(array $configuration, ?string $variableValuesId, ?array $variableValuesData): array
     {
         if ($variableValuesId && $variableValuesData) {
             throw new UserException('Only one of variableValuesId and variableValuesData can be entered.');
@@ -87,7 +87,7 @@ class VariableResolver
     private function renderConfiguration(array $configuration, VariablesContext $context): array
     {
         $newConfiguration = json_decode(
-            $this->moustache->render(json_encode($configuration), $context),
+            $this->moustache->render((string) json_encode($configuration), $context),
             true
         );
         if (json_last_error() !== JSON_ERROR_NONE) {

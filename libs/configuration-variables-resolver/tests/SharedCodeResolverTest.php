@@ -23,8 +23,6 @@ class SharedCodeResolverTest extends TestCase
 
     private TestLogger $testLogger;
 
-    private $component;
-
     public function setUp(): void
     {
         parent::setUp();
@@ -74,7 +72,7 @@ class SharedCodeResolverTest extends TestCase
         return new SharedCodeResolver($this->clientWrapper, $this->testLogger);
     }
 
-    public function createBranch(string $branchName)
+    public function createBranch(string $branchName): string
     {
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -85,20 +83,20 @@ class SharedCodeResolverTest extends TestCase
         return $branches->createBranch($branchName)['id'];
     }
 
-    public function testResolveSharedCode()
+    public function testResolveSharedCode(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
             'shared_code_row_ids' => $sharedCodeRowIds,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -120,19 +118,19 @@ class SharedCodeResolverTest extends TestCase
         );
     }
 
-    public function testResolveSharedCodeNoConfiguration()
+    public function testResolveSharedCodeNoConfiguration(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_row_ids' => $sharedCodeRowIds,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -152,19 +150,19 @@ class SharedCodeResolverTest extends TestCase
         );
     }
 
-    public function testResolveSharedCodeNoRows()
+    public function testResolveSharedCodeNoRows(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -184,20 +182,20 @@ class SharedCodeResolverTest extends TestCase
         );
     }
 
-    public function testResolveSharedCodeNonExistentConfiguration()
+    public function testResolveSharedCodeNonExistentConfiguration(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_id' => 'non-existent',
             'shared_code_row_ids' => $sharedCodeRowIds,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -208,20 +206,20 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
 
-    public function testResolveSharedCodeNonExistentRow()
+    public function testResolveSharedCodeNonExistentRow(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
             'shared_code_row_ids' => ['foo', 'bar'],
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -232,20 +230,20 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
 
-    public function testResolveSharedCodeInvalidRow()
+    public function testResolveSharedCodeInvalidRow(): void
     {
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['this is broken' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
             'shared_code_row_ids' => $sharedCodeRowIds,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();
@@ -256,7 +254,7 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
 
-    public function testResolveSharedCodeBranch()
+    public function testResolveSharedCodeBranch(): void
     {
         $client = new Client([
             'url' => getenv('STORAGE_API_URL'),
@@ -267,7 +265,7 @@ class SharedCodeResolverTest extends TestCase
             $this->clientWrapper->getBasicClient(),
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
-                'secondCode' => ['code_content' => 'bar']
+                'secondCode' => ['code_content' => 'bar'],
             ]
         );
         $this->clientWrapper = new ClientWrapper(
@@ -292,7 +290,7 @@ class SharedCodeResolverTest extends TestCase
             'shared_code_id' => $sharedConfigurationId,
             'shared_code_row_ids' => $sharedCodeRowIds,
             'parameters' => [
-                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .'
+                'some_parameter' => 'foo is {{ foo }} and {{non-existent}} and {{ first_code }} and {{ secondCode }} .',
             ],
         ];
         $sharedCodeResolver = $this->getSharedCodeResolver();

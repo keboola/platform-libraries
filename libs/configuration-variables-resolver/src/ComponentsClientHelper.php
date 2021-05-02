@@ -70,10 +70,14 @@ class ComponentsClientHelper
         }
     }
 
-    public function getSharedCodeConfigurationRow(string $sharedCodeId, $sharedCodeRowId): array
+    public function getSharedCodeConfigurationRow(string $sharedCodeId, string $sharedCodeRowId): array
     {
         try {
-            $sharedCodeConfiguration = $this->getClient()->getConfigurationRow(self::KEBOOLA_SHARED_CODE, $sharedCodeId, $sharedCodeRowId);
+            $sharedCodeConfiguration = $this->getClient()->getConfigurationRow(
+                self::KEBOOLA_SHARED_CODE,
+                $sharedCodeId,
+                $sharedCodeRowId
+            );
             return (new SharedCodeRow())->process($sharedCodeConfiguration['configuration']);
         } catch (ClientException $e) {
             throw new UserException('Shared code configuration cannot be read: ' . $e->getMessage(), 400, $e);

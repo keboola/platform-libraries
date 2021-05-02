@@ -9,7 +9,7 @@ use Symfony\Component\Config\Definition\Processor;
 
 abstract class AbstractConfiguration  implements ConfigurationInterface
 {
-    public function processData(array $jobData): array
+    public function process(array $jobData): array
     {
         $processor = new Processor();
         return $processor->processConfiguration(new static(), [$jobData]);

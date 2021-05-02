@@ -590,14 +590,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             );
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
-            self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());
+            self::assertSame(
+                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
+                $e->getMessage()
+            );
         }
 
         try {
             Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
-            self::assertSame("Invalid file mapping, 'query' attribute is restricted for dev/branch context.", $e->getMessage());
+            self::assertSame(
+                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
+                $e->getMessage()
+            );
         }
     }
 

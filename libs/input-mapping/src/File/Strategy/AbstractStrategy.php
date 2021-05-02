@@ -108,8 +108,8 @@ abstract class AbstractStrategy implements StrategyInterface
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
-                if (
-                    $fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
+
+                if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
                     && $fileInfo['id'] > $biggestFileId
                 ) {
                     $outputStateConfiguration = [

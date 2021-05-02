@@ -64,7 +64,8 @@ class InputFileStateListTest extends TestCase
         $states = new InputFileStateList([]);
         self::expectException(FileNotFoundException::class);
         self::expectExceptionMessage(
-            'State for files defined by "[{"name":"test","match":"include"}]" not found.');
+            'State for files defined by "[{"name":"test","match":"include"}]" not found.'
+        );
         $states->getFile([['name' => 'test', 'match' => 'include']]);
     }
 

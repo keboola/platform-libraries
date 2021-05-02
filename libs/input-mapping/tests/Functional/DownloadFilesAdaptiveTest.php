@@ -93,7 +93,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
     }
 
     public function testReadFilesAdaptiveWithSourceTags()
-
     {
         $this->clientWrapper->setBranchId('');
 

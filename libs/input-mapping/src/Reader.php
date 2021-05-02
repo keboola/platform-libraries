@@ -171,8 +171,7 @@ class Reader
         }
         $options->setLimit($fileConfiguration["limit"]);
 
-        if (
-            isset($fileConfiguration['changed_since'])
+        if (isset($fileConfiguration['changed_since'])
             && $fileConfiguration['changed_since'] === 'adaptive'
             && $fileState !== null
         ) {

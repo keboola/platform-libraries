@@ -27,7 +27,7 @@ class SharedCodeResolver
         $this->clientWrapper = $clientWrapper;
         $this->moustache = new Mustache_Engine([
             'escape' => function ($string) {
-                return trim(json_encode($string), '"');
+                return trim((string) json_encode($string), '"');
             },
             'strict_callables' => true,
         ]);
@@ -61,7 +61,7 @@ class SharedCodeResolver
         ));
 
         $newConfiguration = json_decode(
-            $this->moustache->render(json_encode($configuration), $context),
+            $this->moustache->render((string) json_encode($configuration), $context),
             true
         );
         if (json_last_error() !== JSON_ERROR_NONE) {

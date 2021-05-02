@@ -68,7 +68,7 @@ class VariableResolverTest extends TestCase
         return [$configId, $rowId];
     }
 
-    public function createBranch(string $branchName)
+    public function createBranch(string $branchName): string
     {
         $branches = new DevBranches($this->clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -79,7 +79,7 @@ class VariableResolverTest extends TestCase
         return $branches->createBranch($branchName)['id'];
     }
 
-    public function testResolveVariablesValuesId()
+    public function testResolveVariablesValuesId(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -106,7 +106,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesValuesData()
+    public function testResolveVariablesValuesData(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -136,7 +136,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesDefaultValues()
+    public function testResolveVariablesDefaultValues(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -164,7 +164,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesDefaultValuesOverride()
+    public function testResolveVariablesDefaultValuesOverride(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -192,7 +192,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesDefaultValuesOverrideData()
+    public function testResolveVariablesDefaultValuesOverrideData(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -224,7 +224,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesNoValues()
+    public function testResolveVariablesNoValues(): void
     {
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -245,7 +245,7 @@ class VariableResolverTest extends TestCase
         $variableResolver->resolveVariables($configuration, null, null);
     }
 
-    public function testResolveVariablesInvalidDefaultValues()
+    public function testResolveVariablesInvalidDefaultValues(): void
     {
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -265,7 +265,7 @@ class VariableResolverTest extends TestCase
         $variableResolver->resolveVariables($configuration, null, null);
     }
 
-    public function testResolveVariablesInvalidProvidedValues()
+    public function testResolveVariablesInvalidProvidedValues(): void
     {
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -284,7 +284,7 @@ class VariableResolverTest extends TestCase
         $variableResolver->resolveVariables($configuration, 'non-existent', null);
     }
 
-    public function testResolveVariablesInvalidProvidedArguments()
+    public function testResolveVariablesInvalidProvidedArguments(): void
     {
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -307,7 +307,7 @@ class VariableResolverTest extends TestCase
         );
     }
 
-    public function testResolveVariablesNonExistentVariableConfiguration()
+    public function testResolveVariablesNonExistentVariableConfiguration(): void
     {
         $configuration = [
             'variables_id' => 'non-existent',
@@ -318,10 +318,10 @@ class VariableResolverTest extends TestCase
         self::expectExceptionMessage(
             'Variable configuration cannot be read: Configuration non-existent not found'
         );
-        $variableResolver->resolveVariables($configuration, 'non-existent', null)[0];
+        $variableResolver->resolveVariables($configuration, 'non-existent', null);
     }
 
-    public function testResolveVariablesInvalidVariableConfiguration()
+    public function testResolveVariablesInvalidVariableConfiguration(): void
     {
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -341,7 +341,7 @@ class VariableResolverTest extends TestCase
         $variableResolver->resolveVariables($configuration, 'non-existent', null);
     }
 
-    public function testResolveVariablesNoVariables()
+    public function testResolveVariablesNoVariables(): void
     {
         $configuration = [
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
@@ -359,7 +359,7 @@ class VariableResolverTest extends TestCase
         self::assertFalse($this->testLogger->hasInfoThatContains('Replacing variables using default values with ID:'));
     }
 
-    public function testInvalidValuesConfiguration()
+    public function testInvalidValuesConfiguration(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -379,7 +379,7 @@ class VariableResolverTest extends TestCase
         $variableResolver->resolveVariables($configuration, $vRowId, []);
     }
 
-    public function testResolveVariablesSpecialCharacterReplacement()
+    public function testResolveVariablesSpecialCharacterReplacement(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -409,7 +409,7 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
 
-    public function testResolveVariablesSpecialCharacterNonEscapedReplacement()
+    public function testResolveVariablesSpecialCharacterNonEscapedReplacement(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
@@ -430,7 +430,7 @@ class VariableResolverTest extends TestCase
         );
     }
 
-    public function testResolveVariablesMissingValues()
+    public function testResolveVariablesMissingValues(): void
     {
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),

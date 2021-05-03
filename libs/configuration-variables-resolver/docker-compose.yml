@@ -1,0 +1,15 @@
+version: "2"
+services:
+  # for development purposes
+  tests: &tests
+    build: .
+    environment:
+      - STORAGE_API_URL
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+    command: ['sh', '-c', 'composer ci']
+
+  tests-local:
+    <<: *tests
+    volumes:
+      - ./:/code

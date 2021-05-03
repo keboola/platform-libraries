@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping;
 
+use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\InputBucketValidator;
@@ -11,6 +12,7 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileState;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
@@ -129,55 +131,62 @@ class Reader
         array $fileConfiguration,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
-        InputFileState $fileState = null
+        InputFileStateList $fileStateList
     ) {
-        $fileConfiguration = TagsRewriteHelper::rewriteFileTags(
+        $fileConfigurationRewritten = TagsRewriteHelper::rewriteFileTags(
             $fileConfiguration,
             $clientWrapper,
             $logger
         );
         $storageClient = $clientWrapper->getBasicClient();
 
-        if (isset($fileConfiguration["query"]) && $clientWrapper->hasBranch()) {
+        if (isset($fileConfigurationRewritten["query"]) && $clientWrapper->hasBranch()) {
             throw new InvalidInputException(
                 "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
             );
         }
         $options = new ListFilesOptions();
-        if (empty($fileConfiguration['tags']) && empty($fileConfiguration['query'])
-            && empty($fileConfiguration['source']['tags'])
+        if (empty($fileConfigurationRewritten['tags']) && empty($fileConfigurationRewritten['query'])
+            && empty($fileConfigurationRewritten['source']['tags'])
         ) {
             throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are empty.");
         }
-        if (!empty($fileConfiguration['tags']) && !empty($fileConfiguration['source']['tags'])) {
+        if (!empty($fileConfigurationRewritten['tags']) && !empty($fileConfigurationRewritten['source']['tags'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");
         }
-        if (!empty($fileConfiguration['query']) && isset($fileConfiguration['changed_since'])) {
+        if (!empty($fileConfigurationRewritten['query']) && isset($fileConfigurationRewritten['changed_since'])) {
             throw new InvalidInputException('Invalid file mapping, "changed_since" is not supported for query mappings');
         }
-        if (!empty($fileConfiguration['filter_by_run_id'])) {
+        if (!empty($fileConfigurationRewritten['filter_by_run_id'])) {
             $options->setRunId(Reader::getParentRunId($storageClient->getRunId()));
         }
-        if (isset($fileConfiguration["tags"]) && count($fileConfiguration["tags"])) {
-            $options->setTags($fileConfiguration["tags"]);
+        if (isset($fileConfigurationRewritten["tags"]) && count($fileConfigurationRewritten["tags"])) {
+            $options->setTags($fileConfigurationRewritten["tags"]);
         }
-        if (isset($fileConfiguration["query"]) || isset($fileConfiguration['source']['tags'])) {
+        if (isset($fileConfigurationRewritten["query"]) || isset($fileConfigurationRewritten['source']['tags'])) {
             $options->setQuery(
-                BuildQueryFromConfigurationHelper::buildQuery($fileConfiguration)
+                BuildQueryFromConfigurationHelper::buildQuery($fileConfigurationRewritten)
             );
         }
-        if (empty($fileConfiguration["limit"])) {
-            $fileConfiguration["limit"] = 100;
+        if (empty($fileConfigurationRewritten["limit"])) {
+            $fileConfigurationRewritten["limit"] = 100;
         }
-        $options->setLimit($fileConfiguration["limit"]);
+        $options->setLimit($fileConfigurationRewritten["limit"]);
 
-        if (isset($fileConfiguration['changed_since'])
-            && $fileConfiguration['changed_since'] === 'adaptive'
-            && $fileState !== null
+        if (isset($fileConfigurationRewritten['changed_since'])
+            && $fileConfigurationRewritten['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
         ) {
-            $options->setSinceId($fileState->getLastImportId());
+            try {
+                // apply the state configuration limits
+                $options->setSinceId(
+                    $fileStateList->getFile(
+                        $fileStateList->getFileConfigurationIdentifier($fileConfiguration)
+                    )->getLastImportId()
+                );
+            } catch (FileNotFoundException $e) {
+                // intentionally blank, no state configuration
+            }
         }
-        $files = $storageClient->listFiles($options);
-        return $files;
+        return $storageClient->listFiles($options);
     }
 }

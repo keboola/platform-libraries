@@ -597,7 +597,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         try {
-            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
+            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger(), new InputFileStateList([]));
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
             self::assertSame(

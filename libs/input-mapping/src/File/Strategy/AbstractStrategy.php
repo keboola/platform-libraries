@@ -88,32 +88,16 @@ abstract class AbstractStrategy implements StrategyInterface
         $fileOptions->setFederationToken(true);
         $outputStateList = [];
         foreach ($fileConfigurations as $fileConfiguration) {
-            $fileState = null;
-            // apply the state configuration limits
-            if (isset($fileConfiguration['changed_since']) && !empty($fileConfiguration['changed_since'])) {
-                if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-                    // get merged tags
-                    $tags = (isset($fileConfiguration['tags']))
-                        ? BuildQueryFromConfigurationHelper::getSourceTagsFromTags($fileConfiguration['tags'])
-                        : $fileConfiguration['source']['tags'];
-                    try {
-                        $fileState = $this->fileStateList->getFile($tags);
-                    } catch (FileNotFoundException $e) {
-                        // intentionally blank
-                    }
-                }
-            }
-            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger, $fileState);
+            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger, $this->fileStateList);
             $biggestFileId = 0;
+            $outputStateConfiguration = [];
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
 
-                if ($fileConfiguration['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
-                    && $fileInfo['id'] > $biggestFileId
-                ) {
+                if ($fileInfo['id'] > $biggestFileId) {
                     $outputStateConfiguration = [
-                        'tags' => $tags,
+                        'tags' => $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration),
                         'lastImportId' => $fileInfo['id'],
                     ];
                     $biggestFileId = (int) $fileInfo['id'];
@@ -130,9 +114,7 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
-            if ($outputStateConfiguration) {
-                $outputStateList[] = $outputStateConfiguration;
-            }
+            $outputStateList[] = $outputStateConfiguration;
         }
         $this->logger->info('All files were fetched.');
         return new InputFileStateList($outputStateList);

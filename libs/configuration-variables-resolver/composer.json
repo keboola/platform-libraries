@@ -36,7 +36,7 @@
         "keboola/storage-api-php-client-branch-wrapper": "^1.0",
         "mustache/mustache": "^2.13",
         "psr/log": "^1.1",
-        "symfony/config": "^5.2"
+        "symfony/config": "^4.4|^5.2"
     },
     "require-dev": {
         "infection/infection": "^0.18.2",

@@ -35,6 +35,7 @@ class InputFileStateList implements JsonSerializable
     public function getFile($fileTags)
     {
         foreach ($this->files as $file) {
+            var_dump($file->getTags());
             if ($file->getTags() === $fileTags) {
                 return $file;
             }

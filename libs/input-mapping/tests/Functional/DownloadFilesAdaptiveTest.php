@@ -266,6 +266,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)])
         );
+        sleep(2);
         $newOutputStateFileList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',

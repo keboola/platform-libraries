@@ -35,8 +35,7 @@
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5.6",
         "keboola/php-temp": "^1.0",
-        "phpunit/phpunit": "^5.7.27",
-        "ext-json": "*"
+        "phpunit/phpunit": "^5.7.27"
     },
     "scripts": {
         "tests": "phpunit",

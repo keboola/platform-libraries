@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Writer;
 
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -134,7 +135,12 @@ class FileWriter extends AbstractWriter
         }
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
-                $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
+                $files = Reader::getFiles(
+                    $fileConfiguration,
+                    $this->clientWrapper,
+                    $this->logger,
+                    new InputFileStateList([])
+                );
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getBasicClient()->addFileTag(

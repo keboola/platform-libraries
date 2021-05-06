@@ -1,18 +1,40 @@
-version: "2"
+version: "3"
+
+x-tests: &tests
+  environment:
+    - STORAGE_API_TOKEN
+    - STORAGE_API_TOKEN_MASTER
+    - STORAGE_API_URL
+    - RUN_SYNAPSE_TESTS
+    - SYNAPSE_STORAGE_API_TOKEN
+    - SYNAPSE_STORAGE_API_URL
+
+  command: ["composer", "ci"]
+
 services:
-  # for development purposes
-  dev: &dev
-    build: .
+  tests56:
+    <<: *tests
+    build:
+      context: .
+      args:
+        PHP_VERSION: 5.6
+        XDEBUG_VERSION: 2.5.5
+
+  tests74:
+    <<: *tests
+    build:
+      context: .
+      args:
+        PHP_VERSION: 7.4
+        XDEBUG_VERSION: 2.9.8
+
+  dev:
+    <<: *tests
+    build:
+      context: .
+      target: dev
+      args:
+        PHP_VERSION: 7.4
+        XDEBUG_VERSION: 2.9.8
     volumes:
       - ./:/code
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
-  dev-xdebug:
-    <<: *dev
-    build:
-      context: docker/xdebug

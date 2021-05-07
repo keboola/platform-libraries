@@ -432,7 +432,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             $configuration,
             'download-adaptive',
             StrategyFactory::WORKSPACE_ABS,
-            new InputFileStateList([])
+            $outputFileStateList
         );
         $lastFileState = $newOutputFileStateList->getFile($tagList);
         self::assertEquals($id4, $lastFileState->getLastImportId());

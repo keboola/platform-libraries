@@ -9,6 +9,7 @@ use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
+use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -376,6 +377,112 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         );
         $this->assertBlobNotEmpty(
             'download/upload/' . $id6 . '.manifest'
+        );
+    }
+
+    public function testAbsWorkspaceAdaptiveInput()
+    {
+        $this->clientWrapper->setBranchId('');
+
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+        $reader = new Reader($this->getStagingFactory());
+        $fo = new FileUploadOptions();
+        $fo->setTags(["download-files-test"]);
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        sleep(2);
+        $configuration = [[
+            'tags' => ['download-files-test'],
+            "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
+        ]];
+        $outputFileStateList = $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
+        $tagList = [
+            [
+                'name' => 'download-files-test',
+            ],
+        ];
+        $lastFileState = $outputFileStateList->getFile($tagList);
+        self::assertEquals($id2, $lastFileState->getLastImportId());
+        // make sure the files are there
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id1
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id1 . '.manifest'
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id2
+        );
+        $this->assertBlobNotEmpty(
+            'download/upload/' . $id2 . '.manifest'
+        );
+
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        sleep(2);
+
+        $newOutputFileStateList = $reader->downloadFiles(
+            $configuration,
+            'download-adaptive',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
+        $lastFileState = $newOutputFileStateList->getFile($tagList);
+        self::assertEquals($id4, $lastFileState->getLastImportId());
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                "download-adaptive/upload/" . $id1
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                'download-adaptive/upload/' . $id1 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                $root . 'download-adaptive/upload/' . $id2
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        try {
+            $this->blobClient->getBlob(
+                $this->workspaceCredentials['container'],
+                "download-adaptive/uppload/" . $id2 . '.manifest'
+            );
+            $this->fail('should have thrown 404');
+        } catch (ServiceException $exception) {
+            $this->assertEquals(404, $exception->getCode());
+        }
+        $this->assertBlobNotEmpty(
+            'download-adaptive/upload/' . $id3
+        );
+        $this->assertBlobNotEmpty(
+            'download-adaptive/upload/' . $id3 . '.manifest'
+        );
+        $this->assertBlobNotEmpty(
+            'download-adaptive/upload/' . $id4
+        );
+        $this->assertBlobNotEmpty(
+            'download-adaptive/upload/' . $id4 . '.manifest'
         );
     }
 }

@@ -64,9 +64,14 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         $this->writeFile($serializedManifest, $manifestDestination);
     }
 
+    /**
+     * @param array $fileConfigurations
+     * @param string $destination
+     * @return \Keboola\InputMapping\State\InputFileStateList
+     */
     public function downloadFiles($fileConfigurations, $destination)
     {
-        parent::downloadFiles($fileConfigurations, $destination);
+        $inputFileStateList = parent::downloadFiles($fileConfigurations, $destination);
         if ($this->inputs) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
             $workspaceId = $this->dataStorage->getWorkspaceId();
@@ -78,6 +83,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             }
             $this->logger->info('All files were fetched.');
         }
+        return $inputFileStateList;
     }
 
     private function writeFile($contents, $destination)

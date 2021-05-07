@@ -149,13 +149,15 @@ class Reader
         if (empty($fileConfigurationRewritten['tags']) && empty($fileConfigurationRewritten['query'])
             && empty($fileConfigurationRewritten['source']['tags'])
         ) {
-            throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are empty.");
+            throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are all empty.");
         }
         if (!empty($fileConfigurationRewritten['tags']) && !empty($fileConfigurationRewritten['source']['tags'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");
         }
-        if (!empty($fileConfigurationRewritten['query']) && isset($fileConfigurationRewritten['changed_since'])) {
-            throw new InvalidInputException('Invalid file mapping, "changed_since" is not supported for query mappings');
+        if (!empty($fileConfigurationRewritten['query'])
+            && isset($fileConfigurationRewritten['changed_since'])
+            && isset($fileConfigurationRewritten['changed_since']) === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+            throw new InvalidInputException('Invalid file mapping, adaptive input is not supported for query mappings');
         }
         if (!empty($fileConfigurationRewritten['filter_by_run_id'])) {
             $options->setRunId(Reader::getParentRunId($storageClient->getRunId()));
@@ -167,6 +169,12 @@ class Reader
             $options->setQuery(
                 BuildQueryFromConfigurationHelper::buildQuery($fileConfigurationRewritten)
             );
+        } elseif (isset($fileConfigurationRewritten["changed_since"])
+            && $fileConfigurationRewritten['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+            // need to set the query for the case where query nor source tags are present, but changed_since is
+            $options->setQuery(BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion(
+                $fileConfigurationRewritten['changed_since']
+            ));
         }
         if (empty($fileConfigurationRewritten["limit"])) {
             $fileConfigurationRewritten["limit"] = 100;

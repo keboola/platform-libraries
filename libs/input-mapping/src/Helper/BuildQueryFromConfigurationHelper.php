@@ -20,10 +20,7 @@ class BuildQueryFromConfigurationHelper
         }
         if (isset($configuration['changed_since'])
             && $configuration['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            $query .= sprintf(
-                ' AND created:>%s',
-                date('Y-m-d H:i:s', strtotime($configuration['changed_since']))
-            );
+            $query .= ' AND ' . self::getChangedSinceQueryPortion($configuration['changed_since']);
         }
         return $query;
     }
@@ -39,6 +36,14 @@ class BuildQueryFromConfigurationHelper
                 }
                 return $queryPart;
             }, $tags)
+        );
+    }
+
+    public static function getChangedSinceQueryPortion($changed_since)
+    {
+        return sprintf(
+            'created:>%s',
+            date('Y-m-d H:i:s', strtotime($changed_since))
         );
     }
 

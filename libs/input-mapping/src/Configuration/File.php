@@ -87,12 +87,12 @@ class File extends Configuration
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
-                if (isset($v['query']) && isset($v['changed_since'])) {
+                if (isset($v['query']) && isset($v['changed_since']) && $v['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
                     return true;
                 }
                 return false;
             })
-                ->thenInvalid('The changed_since property is not supported for query configurations')
+                ->thenInvalid('Adaptive inputs is not supported for query configurations')
             ->end()
             ->validate()
             ->ifTrue(function ($v) {

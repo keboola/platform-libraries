@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Configuration;
 
+use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
@@ -92,6 +93,18 @@ class File extends Configuration
                 return false;
             })
                 ->thenInvalid('The changed_since property is not supported for query configurations')
+            ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                if (isset($v['changed_since'])
+                    && $v['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
+                    && strtotime($v['changed_since']) === false) {
+
+                    return true;
+                }
+                return false;
+            })
+                ->thenInvalid('The value provided for changed_since could not be converted to a timestamp')
             ->end()
         ;
     }

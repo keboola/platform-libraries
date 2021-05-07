@@ -6,6 +6,7 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\ABSWorkspace as InputFileABSWorkspace;
 use Keboola\InputMapping\File\Strategy\Local as InputFileLocal;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as InputAbs;
 use Keboola\InputMapping\Table\Strategy\ABSWorkspace as InputTableABSWorkspace;
@@ -49,11 +50,11 @@ class InputProviderInitializerTest extends TestCase
 
         $init->initializeProviders(InputStrategyFactory::LOCAL, []);
 
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::ABS));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::ABS, new InputFileStateList([])));
         self::assertInstanceOf(InputAbs::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::ABS, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::S3));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::S3, new InputFileStateList([])));
         self::assertInstanceOf(InputS3::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::S3, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table input backend.');
@@ -95,9 +96,9 @@ class InputProviderInitializerTest extends TestCase
             ]
         );
 
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_REDSHIFT));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_REDSHIFT, new InputFileStateList([])));
         self::assertInstanceOf(InputTableRedshift::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_REDSHIFT, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
@@ -139,9 +140,9 @@ class InputProviderInitializerTest extends TestCase
             ]
         );
 
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE, new InputFileStateList([])));
         self::assertInstanceOf(InputTableSnowflake::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table input backend.');
@@ -183,9 +184,9 @@ class InputProviderInitializerTest extends TestCase
             ]
         );
 
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SYNAPSE));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_SYNAPSE, new InputFileStateList([])));
         self::assertInstanceOf(InputTableSynapse::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_SYNAPSE, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
@@ -227,9 +228,9 @@ class InputProviderInitializerTest extends TestCase
             ]
         );
 
-        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
-        self::assertInstanceOf(InputFileABSWorkspace::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_ABS));
+        self::assertInstanceOf(InputFileABSWorkspace::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_ABS, new InputFileStateList([])));
         self::assertInstanceOf(InputTableABSWorkspace::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_ABS, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');

@@ -5,7 +5,7 @@ namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 
-class ExistingTableWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
+class ExistingFilesystemWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
 {
     /** @var Workspaces */
     private $workspacesApiClient;
@@ -14,7 +14,7 @@ class ExistingTableWorkspaceProviderFactory extends AbstractCachedWorkspaceProvi
     private $workspaceId;
 
     /** @var string */
-    private $workspacePassword;
+    private $connectionString;
 
     /**
      * @param Workspaces $workspacesApiClient
@@ -27,13 +27,13 @@ class ExistingTableWorkspaceProviderFactory extends AbstractCachedWorkspaceProvi
 
         $this->workspacesApiClient = $workspacesApiClient;
         $this->workspaceId = $workspaceId;
-        $this->workspacePassword = $workspaceConnectionString;
+        $this->connectionString = $workspaceConnectionString;
     }
 
     protected function getWorkspaceData($workspaceClass)
     {
         $data = $this->workspacesApiClient->getWorkspace($this->workspaceId);
-        $data['connection']['password'] = $this->workspacePassword;
+        $data['connection']['connectionString'] = $this->connectionString;
 
         if ($data['connection']['backend'] !== $workspaceClass::getType()) {
             throw new StagingProviderException(sprintf(

@@ -5,7 +5,7 @@ namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 
-class ExistingWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
+class ExistingTableWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
 {
     /** @var Workspaces */
     private $workspacesApiClient;
@@ -19,22 +19,22 @@ class ExistingWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFa
     /**
      * @param Workspaces $workspacesApiClient
      * @param string $workspaceId
-     * @param string $workspacePassword
+     * @param string $workspaceConnectionString
      */
-    public function __construct(Workspaces $workspacesApiClient, $workspaceId, $workspacePassword)
+    public function __construct(Workspaces $workspacesApiClient, $workspaceId, $workspaceConnectionString)
     {
         parent::__construct($workspacesApiClient);
-        
+
         $this->workspacesApiClient = $workspacesApiClient;
         $this->workspaceId = $workspaceId;
-        $this->workspacePassword = $workspacePassword;
+        $this->workspacePassword = $workspaceConnectionString;
     }
 
     protected function getWorkspaceData($workspaceClass)
     {
         $data = $this->workspacesApiClient->getWorkspace($this->workspaceId);
         $data['connection']['password'] = $this->workspacePassword;
-        
+
         if ($data['connection']['backend'] !== $workspaceClass::getType()) {
             throw new StagingProviderException(sprintf(
                 'Incompatible workspace type. Expected workspace backend is "%s", actual backend is "%s"',
@@ -42,7 +42,7 @@ class ExistingWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFa
                 $data['connection']['backend']
             ));
         }
-        
+
         return $data;
     }
 }

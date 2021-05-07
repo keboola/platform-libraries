@@ -16,7 +16,7 @@ Typical use-case can be set up a `Reader` instance to access some data:
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingWorkspaceProviderFactory;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingTableWorkspaceProviderFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -30,7 +30,7 @@ $strategyFactory = new InputStrategyFactory($storageApiClientWrapper, $logger, '
 $tokenInfo = $storageApiClient->verifyToken();
 $dataDir = '/data';
 
-$workspaceProviderFactory = new ExistingWorkspaceProviderFactory(
+$workspaceProviderFactory = new ExistingTableWorkspaceProviderFactory(
     new Workspaces($storageApiClient),
     'my-workspace', // workspace ID
     'abcd1234'      // workspace password

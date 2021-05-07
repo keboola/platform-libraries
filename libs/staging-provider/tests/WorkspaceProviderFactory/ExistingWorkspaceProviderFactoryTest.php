@@ -6,7 +6,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingWorkspaceProviderFactory;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingTableWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 
 class ExistingWorkspaceProviderFactoryTest extends TestCase
@@ -25,7 +25,7 @@ class ExistingWorkspaceProviderFactoryTest extends TestCase
             ],
         ]);
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingTableWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
             $workspacePassword
@@ -50,7 +50,7 @@ class ExistingWorkspaceProviderFactoryTest extends TestCase
             ],
         ]);
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingTableWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
             $workspacePassword
@@ -77,7 +77,7 @@ class ExistingWorkspaceProviderFactoryTest extends TestCase
         $workspaceApi = $this->createMock(Workspaces::class);
         $workspaceApi->expects(self::never())->method(self::anything());
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingTableWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
             $workspacePassword

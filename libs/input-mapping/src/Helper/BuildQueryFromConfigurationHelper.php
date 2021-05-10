@@ -16,8 +16,12 @@ class BuildQueryFromConfigurationHelper
             );
         }
         if (isset($configuration['source']['tags'])) {
-            return self::buildQueryForSourceTags($configuration['source']['tags'], $configuration['changed_since']);
+            return self::buildQueryForSourceTags(
+                $configuration['source']['tags'],
+                isset($configuration['changed_since']) ? $configuration['changed_since'] : null
+            );
         }
+        return $configuration['query'];
     }
 
     public static function buildQueryForSourceTags(array $tags, $changedSince = null)

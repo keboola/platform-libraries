@@ -19,15 +19,15 @@ class ExistingFilesystemWorkspaceProviderFactory extends AbstractCachedWorkspace
     /**
      * @param Workspaces $workspacesApiClient
      * @param string $workspaceId
-     * @param string $workspaceConnectionString
+     * @param string $workspacePassword
      */
-    public function __construct(Workspaces $workspacesApiClient, $workspaceId, $workspaceConnectionString)
+    public function __construct(Workspaces $workspacesApiClient, $workspaceId, $workspacePassword)
     {
         parent::__construct($workspacesApiClient);
 
         $this->workspacesApiClient = $workspacesApiClient;
         $this->workspaceId = $workspaceId;
-        $this->connectionString = $workspaceConnectionString;
+        $this->connectionString = $workspacePassword;
     }
 
     protected function getWorkspaceData($workspaceClass)

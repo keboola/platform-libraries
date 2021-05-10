@@ -8,26 +8,25 @@ class BuildQueryFromConfigurationHelper
 {
     public static function buildQuery($configuration)
     {
-        $query = $configuration['query'];
         if (isset($configuration['query']) && isset($configuration['source']['tags'])) {
-            $query = sprintf(
+            return sprintf(
                 '%s AND (%s)',
                 $configuration['query'],
                 self::buildQueryForSourceTags($configuration['source']['tags'])
             );
-        } elseif (isset($configuration['source']['tags'])) {
-            $query = self::buildQueryForSourceTags($configuration['source']['tags']);
         }
-        if (isset($configuration['changed_since'])
-            && $configuration['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            $query .= ' AND ' . self::getChangedSinceQueryPortion($configuration['changed_since']);
+        if (isset($configuration['source']['tags'])) {
+            return self::buildQueryForSourceTags($configuration['source']['tags'], $configuration['changed_since']);
         }
-        return $query;
     }
 
-    public static function buildQueryForSourceTags(array $tags)
+    public static function buildQueryForSourceTags(array $tags, $changedSince = null)
     {
-        return implode(
+        $query = '';
+        if ($changedSince && $changedSince !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+            $query = '(';
+        }
+        $query .= implode(
             ' AND ',
             array_map(function (array $tag) {
                 $queryPart = sprintf('tags:"%s"', $tag['name']);
@@ -37,13 +36,17 @@ class BuildQueryFromConfigurationHelper
                 return $queryPart;
             }, $tags)
         );
+        if ($changedSince && $changedSince !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
+            $query .= ') AND ' . self::getChangedSinceQueryPortion($changedSince);
+        }
+        return $query;
     }
 
-    public static function getChangedSinceQueryPortion($changed_since)
+    public static function getChangedSinceQueryPortion($changedSince)
     {
         return sprintf(
             'created:>%s',
-            date('Y-m-d H:i:s', strtotime($changed_since))
+            date('Y-m-d H:i:s', strtotime($changedSince))
         );
     }
 

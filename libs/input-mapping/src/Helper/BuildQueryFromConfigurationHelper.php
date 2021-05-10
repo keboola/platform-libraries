@@ -26,11 +26,7 @@ class BuildQueryFromConfigurationHelper
 
     public static function buildQueryForSourceTags(array $tags, $changedSince = null)
     {
-        $query = '';
-        if ($changedSince && $changedSince !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            $query = '(';
-        }
-        $query .= implode(
+        $query = implode(
             ' AND ',
             array_map(function (array $tag) {
                 $queryPart = sprintf('tags:"%s"', $tag['name']);
@@ -41,7 +37,7 @@ class BuildQueryFromConfigurationHelper
             }, $tags)
         );
         if ($changedSince && $changedSince !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            $query .= ') AND ' . self::getChangedSinceQueryPortion($changedSince);
+            $query = '(' . $query . ') AND ' . self::getChangedSinceQueryPortion($changedSince);
         }
         return $query;
     }

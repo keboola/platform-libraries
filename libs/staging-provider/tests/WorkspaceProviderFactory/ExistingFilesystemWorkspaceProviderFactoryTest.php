@@ -2,45 +2,53 @@
 
 namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
-use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingFilesystemWorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
-class ExistingWorkspaceProviderFactoryTest extends TestCase
+class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
 {
     public function testWorkspaceIsFetched()
     {
         $workspaceId = 'my.workspace';
-        $workspacePassword = 'pwd';
-        $stagingClass = SnowflakeWorkspaceStaging::class;
+        $workspaceConnectionString = 'someRandomString';
+        $stagingClass = AbsWorkspaceStaging::class;
 
         $workspaceApi = $this->createMock(Workspaces::class);
-        $workspaceApi->expects(self::once())->method('getWorkspace')->with($workspaceId)->willReturn([
+        $workspaceApi->method('getWorkspace')->with($workspaceId)->willReturn([
             'id' => '1',
             'connection' => [
                 'backend' => $stagingClass::getType(),
+                'container' => 'someContainer',
             ],
         ]);
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspaceConnectionString
         );
 
         $provider = $factory->getProvider($stagingClass);
         $provider->getWorkspaceId();
-
-        // no assert, just check the mock expectations were met
+        $credentials = $provider->getCredentials();
+        self::assertEquals(
+            [
+                'container' => 'someContainer',
+                'connectionString' => 'someRandomString',
+            ],
+            $credentials
+        );
     }
 
     public function testWorkspaceBackendTypeIsChecked()
     {
         $workspaceId = 'my.workspace';
-        $workspacePassword = 'pwd';
+        $workspaceConnectionString = 'someRandomString';
         $stagingClass = SnowflakeWorkspaceStaging::class;
 
         $workspaceApi = $this->createMock(Workspaces::class);
@@ -50,10 +58,10 @@ class ExistingWorkspaceProviderFactoryTest extends TestCase
             ],
         ]);
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspaceConnectionString
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -71,16 +79,16 @@ class ExistingWorkspaceProviderFactoryTest extends TestCase
     public function testStagingInstanceIsCached()
     {
         $workspaceId = 'my.workspace';
-        $workspacePassword = 'pwd';
+        $workspaceConnectionString = 'someRandomString';
         $stagingClass = SnowflakeWorkspaceStaging::class;
 
         $workspaceApi = $this->createMock(Workspaces::class);
         $workspaceApi->expects(self::never())->method(self::anything());
 
-        $factory = new ExistingWorkspaceProviderFactory(
+        $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspaceConnectionString
         );
 
         $provider1 = $factory->getProvider($stagingClass);

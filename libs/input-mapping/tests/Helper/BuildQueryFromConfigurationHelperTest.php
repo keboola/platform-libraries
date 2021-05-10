@@ -117,9 +117,8 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
 
     public function testChangedSinceQueryPortion()
     {
-        $dateTime = date('Y-m-d', strtotime('-5 days'));
-        self::assertContains(
-            sprintf('created:>"%s', $dateTime),
+        self::assertEquals(
+            sprintf('created:>"%s"', date('Y-m-d H:i:s', strtotime('-5 days'))),
             BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion('-5 days')
         );
     }
@@ -137,11 +136,10 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
 
     public function testBuildQueryChangedSinceNoQuerySourceTags()
     {
-        $dateTime = date('Y-m-d', strtotime('-5 days'));
-        self::assertContains(
+        self::assertEquals(
             sprintf(
-                '(tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123") AND created:>"%s',
-                $dateTime
+                '(tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123") AND created:>"%s"',
+                date('Y-m-d H:i:s', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -163,11 +161,10 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
 
     public function testBuildQueryChangedSinceExcludeSourceTags()
     {
-        $dateTime = date('Y-m-d', strtotime('-5 days'));
-        self::assertContains(
+        self::assertEquals(
             sprintf(
-                '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:>"%s',
-                $dateTime
+                '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:>"%s"',
+                date('Y-m-d H:i:s', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -193,11 +190,10 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
 
     public function testBuildQueryChangedSinceAndOnlyExcludedSourceTags()
     {
-        $dateTime = date('Y-m-d', strtotime('-5 days'));
         self::assertContains(
             sprintf(
-                '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:>"%s',
-                $dateTime
+                '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:>"%s"',
+                date('Y-m-d H:i:s', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [

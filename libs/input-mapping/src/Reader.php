@@ -154,10 +154,8 @@ class Reader
         if (!empty($fileConfigurationRewritten['tags']) && !empty($fileConfigurationRewritten['source']['tags'])) {
             throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");
         }
-        if (!empty($fileConfigurationRewritten['query'])
-            && isset($fileConfigurationRewritten['changed_since'])
-            && isset($fileConfigurationRewritten['changed_since']) === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            throw new InvalidInputException('Invalid file mapping, adaptive input is not supported for query mappings');
+        if (!empty($fileConfigurationRewritten['query']) && isset($fileConfigurationRewritten['changed_since'])) {
+            throw new InvalidInputException('Invalid file mapping, changed_since is not supported for query mappings');
         }
         if (!empty($fileConfigurationRewritten['filter_by_run_id'])) {
             $options->setRunId(Reader::getParentRunId($storageClient->getRunId()));

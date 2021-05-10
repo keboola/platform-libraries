@@ -2,12 +2,12 @@
 
 namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
-use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingDatabaseWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
 {
@@ -18,7 +18,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $stagingClass = SnowflakeWorkspaceStaging::class;
 
         $workspaceApi = $this->createMock(Workspaces::class);
-        $workspaceApi->expects(self::once())->method('getWorkspace')->with($workspaceId)->willReturn([
+        $workspaceApi->method('getWorkspace')->with($workspaceId)->willReturn([
             'id' => '1',
             'connection' => [
                 'backend' => $stagingClass::getType(),
@@ -34,7 +34,19 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $provider = $factory->getProvider($stagingClass);
         $provider->getWorkspaceId();
 
-        // no assert, just check the mock expectations were met
+        $method = new ReflectionMethod($factory, 'getWorkspaceData');
+        $method->setAccessible(true);
+        $result = $method->invoke($factory, $stagingClass);
+        self::assertEquals(
+            [
+                'id' => 1,
+                'connection' => [
+                    'backend' => 'snowflake',
+                    'password' => 'pwd',
+                ],
+            ],
+            $result
+        );
     }
 
     public function testWorkspaceBackendTypeIsChecked()

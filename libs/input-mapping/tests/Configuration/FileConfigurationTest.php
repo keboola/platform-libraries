@@ -159,10 +159,20 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testConfigurationWithQueryAndChangedSince()
     {
         self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('The changed_since property is not supported for query configurations');
+        self::expectExceptionMessage('Adaptive inputs is not supported for query configurations');
         (new File())->parse(['config' => [
             'query' => 'some query',
             'changed_since' => 'adaptive',
+        ]]);
+    }
+
+    public function testConfigurationWithInvalidChangedSince()
+    {
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessage('The value provided for changed_since could not be converted to a timestamp');
+        (new File())->parse(['config' => [
+            'query' => 'some query',
+            'changed_since' => '-1 light year',
         ]]);
     }
 }

@@ -183,7 +183,8 @@ class ReaderTest extends TestCase
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
-            self::assertContains("Invalid file mapping, 'tags', 'query' and 'source.tags' are empty.", $e->getMessage());
+            self::assertContains("Invalid file mapping, 'tags', 'query' and 'source.tags' are all empty.",
+                $e->getMessage());
         }
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');

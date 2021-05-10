@@ -99,7 +99,6 @@ class File extends Configuration
                 if (isset($v['changed_since'])
                     && $v['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
                     && strtotime($v['changed_since']) === false) {
-
                     return true;
                 }
                 return false;

@@ -114,4 +114,51 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             ])
         );
     }
+
+    public function testChangedSinceQueryPortion()
+    {
+        $dateTime = date('Y-m-d', strtotime('-5 days'));
+        self::assertContains(
+            sprintf('created:>%s', $dateTime),
+            BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion('-5 days')
+        );
+    }
+
+    public function testBuildQueryChangedSinceWithQueryNoSourceTags()
+    {
+        $dateTime = date('Y-m-d', strtotime('-5 days'));
+        self::assertContains(
+            sprintf('tag:123 AND created:>%s', $dateTime),
+            BuildQueryFromConfigurationHelper::buildQuery([
+                'query' => 'tag:123',
+                'changed_since' => '-5days',
+            ])
+        );
+    }
+
+    public function testBuildQueryChangedSinceNoQuerySourceTags()
+    {
+        $dateTime = date('Y-m-d', strtotime('-5 days'));
+        self::assertContains(
+            sprintf(
+                'tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123" AND created:>%s',
+                $dateTime
+            ),
+            BuildQueryFromConfigurationHelper::buildQuery([
+                'source' => [
+                    'tags' => [
+                        [
+                            'name' => 'componentId: keboola.ex-gmail',
+                            'match' => 'include',
+                        ],
+                        [
+                            'name' => 'configurationId: 123',
+                            'match' => 'include',
+                        ],
+                    ],
+                ],
+                'changed_since' => '-5days',
+            ])
+        );
+    }
 }

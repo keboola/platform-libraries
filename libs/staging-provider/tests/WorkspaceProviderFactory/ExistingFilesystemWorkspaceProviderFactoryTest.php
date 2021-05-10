@@ -23,6 +23,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
             'id' => '1',
             'connection' => [
                 'backend' => $stagingClass::getType(),
+                'container' => 'someContainer',
             ],
         ]);
 
@@ -34,18 +35,13 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
 
         $provider = $factory->getProvider($stagingClass);
         $provider->getWorkspaceId();
-        $method = new ReflectionMethod($factory, 'getWorkspaceData');
-        $method->setAccessible(true);
-        $result = $method->invoke($factory, $stagingClass);
+        $credentials = $provider->getCredentials();
         self::assertEquals(
             [
-                'id' => 1,
-                'connection' => [
-                    'backend' => 'abs',
-                    'connectionString' => 'someRandomString',
-                ],
+                'container' => 'someContainer',
+                'connectionString' => 'someRandomString',
             ],
-            $result
+            $credentials
         );
     }
 

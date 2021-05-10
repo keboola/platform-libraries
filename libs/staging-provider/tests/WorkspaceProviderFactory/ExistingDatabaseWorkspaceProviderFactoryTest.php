@@ -22,6 +22,11 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
             'id' => '1',
             'connection' => [
                 'backend' => $stagingClass::getType(),
+                'host' => 'someHost',
+                'warehouse' => 'someWarehouse',
+                'database' => 'someDatabase',
+                'schema' => 'someSchema',
+                'user' => 'someUser',
             ],
         ]);
 
@@ -34,18 +39,17 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $provider = $factory->getProvider($stagingClass);
         $provider->getWorkspaceId();
 
-        $method = new ReflectionMethod($factory, 'getWorkspaceData');
-        $method->setAccessible(true);
-        $result = $method->invoke($factory, $stagingClass);
+        $credentials = $provider->getCredentials();
         self::assertEquals(
             [
-                'id' => 1,
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'password' => 'pwd',
-                ],
+                'database' => 'someDatabase',
+                'host' => 'someHost',
+                'password' => 'pwd',
+                'schema' => 'someSchema',
+                'user' => 'someUser',
+                'warehouse' => 'someWarehouse',
             ],
-            $result
+            $credentials
         );
     }
 

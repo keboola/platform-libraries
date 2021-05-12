@@ -124,7 +124,7 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
-            if ($outputStateConfiguration) {
+            if (!empty($outputStateConfiguration)) {
                 $outputStateList[] = $outputStateConfiguration;
             }
         }

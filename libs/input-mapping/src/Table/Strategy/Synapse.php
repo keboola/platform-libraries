@@ -37,7 +37,7 @@ class Synapse extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
-        $job = $this->clientWrapper->getBasicClient()->apiPost(
+        $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
             'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
             [
                 'input' => $copyInputs,

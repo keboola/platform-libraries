@@ -60,7 +60,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
     public function tearDown()
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
             $workspaces->deleteWorkspace($this->workspaceId);
             $this->workspaceId = null;
         }
@@ -80,7 +80,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () use ($backend) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];

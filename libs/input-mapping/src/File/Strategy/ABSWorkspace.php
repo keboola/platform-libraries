@@ -6,15 +6,11 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
-use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StorageApiBranch\ClientWrapper;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
-use Psr\Log\LoggerInterface;
 
-class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
+class ABSWorkspace extends AbstractFileStrategy
 {
     /** @var BlobRestProxy */
     private $blobClient;
@@ -73,7 +69,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     {
         $inputFileStateList = parent::downloadFiles($fileConfigurations, $destination);
         if ($this->inputs) {
-            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
             $workspaceId = $this->dataStorage->getWorkspaceId();
             foreach ($this->inputs as $input) {
                 $workspaces->loadWorkspaceData($workspaceId, [

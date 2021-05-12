@@ -53,7 +53,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     public function tearDown()
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
             $workspaces->deleteWorkspace($this->workspaceId);
             $this->workspaceId = null;
         }
@@ -67,7 +67,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $this->clientWrapper = new ClientWrapper(
             new Client(["token" => $token, "url" => $url]),
             null,
-            null
+            null,
+            ClientWrapper::BRANCH_MAIN
         );
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
@@ -93,7 +94,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs']);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
@@ -127,8 +128,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testAbsReadFiles()
     {
-        $this->clientWrapper->setBranchId('');
-
         $this->blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/in/tables/sometable.csv',
@@ -202,8 +201,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testReadAbsFilesTagsFilterRunId()
     {
-        $this->clientWrapper->setBranchId('');
-
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
@@ -293,8 +290,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testReadFilesEsQueryFilterRunId()
     {
-        $this->clientWrapper->setBranchId('');
-
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
@@ -382,8 +377,6 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testAbsWorkspaceAdaptiveInput()
     {
-        $this->clientWrapper->setBranchId('');
-
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());

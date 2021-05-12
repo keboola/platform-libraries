@@ -118,7 +118,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     public function testChangedSinceQueryPortion()
     {
         self::assertEquals(
-            sprintf('created:>"%s"', date('Y-m-d H:i:s', strtotime('-5 days'))),
+            sprintf('created:["%s" TO *]', date('c', strtotime('-5 days'))),
             BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion('-5 days')
         );
     }
@@ -138,8 +138,8 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     {
         self::assertEquals(
             sprintf(
-                '(tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123") AND created:>"%s"',
-                date('Y-m-d H:i:s', strtotime('-5 days'))
+                '(tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123") AND created:["%s" TO *]',
+                date('c', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -163,8 +163,8 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     {
         self::assertEquals(
             sprintf(
-                '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:>"%s"',
-                date('Y-m-d H:i:s', strtotime('-5 days'))
+                '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:["%s" TO *]',
+                date('c', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -192,8 +192,8 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     {
         self::assertContains(
             sprintf(
-                '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:>"%s"',
-                date('Y-m-d H:i:s', strtotime('-5 days'))
+                '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:["%s" TO *]',
+                date('c', strtotime('-5 days'))
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [

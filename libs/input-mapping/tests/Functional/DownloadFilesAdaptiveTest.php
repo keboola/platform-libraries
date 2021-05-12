@@ -356,9 +356,4 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $lastFileState = $newOutputStateList->getFile($convertedTags);
         self::assertEquals($id2, $lastFileState->getLastImportId());
     }
-
-    public function testChangedSinceWithDeprecatedTags()
-    {
-
-    }
 }

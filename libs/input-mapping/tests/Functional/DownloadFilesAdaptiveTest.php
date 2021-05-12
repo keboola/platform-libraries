@@ -278,4 +278,35 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertEquals("test", file_get_contents($root . '/download-adaptive/' . $file3Id . '_upload'));
         self::assertFileNotExists($root . '/download-adaptive/' . $file1Id . '_upload');
     }
+
+    public function testAdaptiveNoMatchingFiles()
+    {
+        $this->clientWrapper->setBranchId('');
+
+        $reader = new Reader($this->getStagingFactory());
+        $configuration = [
+            [
+                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'changed_since' => 'adaptive',
+            ]
+        ];
+        // on the first run the state list will be empty
+        $outputStateList = $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        $this->assertEmpty($outputStateList->jsonSerialize());
+    }
+
+    public function testAdaptiveNoMatchingNewFiles()
+    {
+
+    }
+
+    public function testChangedSinceWithDeprecatedTags()
+    {
+
+    }
 }

@@ -302,7 +302,59 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testAdaptiveNoMatchingNewFiles()
     {
+        $this->clientWrapper->setBranchId('');
 
+        $root = $this->tmpDir;
+        file_put_contents($root . "/upload", "test");
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . "/upload",
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
+        );
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . "/upload",
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
+        );
+        sleep(2);
+
+        $reader = new Reader($this->getStagingFactory());
+        $configuration = [
+            [
+                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'changed_since' => 'adaptive',
+            ]
+        ];
+        // on the first run the state list will be empty
+        $outputStateList = $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        $convertedTags = [
+            [
+                'name' => self::DEFAULT_TEST_FILE_TAG
+            ], [
+                'name' => 'adaptive'
+            ],
+        ];
+        $fileState = $outputStateList->getFile($convertedTags);
+        self::assertEquals($id2, $fileState->getLastImportId());
+
+        self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
+        self::assertFileExists($root . "/download/" . $id1 . '_upload.manifest');
+        self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
+        self::assertFileExists($root . "/download/" . $id2 . '_upload.manifest');
+
+        // now run again with no new files to fetch
+        $newOutputStateList = $reader->downloadFiles(
+            $configuration,
+            'download-adaptive',
+            StrategyFactory::LOCAL,
+            $outputStateList
+        );
+        $lastFileState = $newOutputStateList->getFile($convertedTags);
+        self::assertEquals($id2, $lastFileState->getLastImportId());
     }
 
     public function testChangedSinceWithDeprecatedTags()

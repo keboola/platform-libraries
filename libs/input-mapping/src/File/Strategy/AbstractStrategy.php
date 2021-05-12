@@ -114,11 +114,25 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
-            if (!empty($outputStateConfiguration)) {
+            if (empty($outputStateConfiguration) && $this->fileStateExists($fileConfiguration)) {
+                $outputStateList[] = $this->fileStateList->getFile(
+                    $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration)
+                )->jsonSerialize();
+            } elseif (!empty($outputStateConfiguration)) {
                 $outputStateList[] = $outputStateConfiguration;
             }
         }
         $this->logger->info('All files were fetched.');
         return new InputFileStateList($outputStateList);
+    }
+
+    private function fileStateExists($fileConfiguration)
+    {
+        try {
+            $this->fileStateList->getFile($this->fileStateList->getFileConfigurationIdentifier($fileConfiguration));
+            return true;
+        } catch (FileNotFoundException $exception) {
+            return false;
+        }
     }
 }

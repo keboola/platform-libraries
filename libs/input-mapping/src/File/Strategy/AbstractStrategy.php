@@ -90,7 +90,17 @@ abstract class AbstractStrategy implements StrategyInterface
         foreach ($fileConfigurations as $fileConfiguration) {
             $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger, $this->fileStateList);
             $biggestFileId = 0;
-            $outputStateConfiguration = [];
+            try {
+                $currentState = $this->fileStateList->getFile(
+                    $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration)
+                );
+                $outputStateConfiguration = [
+                    'tags' => $currentState->getTags(),
+                    'lastImportId' => $currentState->getLastImportId(),
+                ];
+            } catch (FileNotFoundException $e) {
+                $outputStateConfiguration = [];
+            }
             foreach ($files as $file) {
                 $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo["name"]);
@@ -114,25 +124,11 @@ abstract class AbstractStrategy implements StrategyInterface
                 }
                 $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
             }
-            if (empty($outputStateConfiguration) && $this->fileStateExists($fileConfiguration)) {
-                $outputStateList[] = $this->fileStateList->getFile(
-                    $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration)
-                )->jsonSerialize();
-            } elseif (!empty($outputStateConfiguration)) {
+            if ($outputStateConfiguration) {
                 $outputStateList[] = $outputStateConfiguration;
             }
         }
         $this->logger->info('All files were fetched.');
         return new InputFileStateList($outputStateList);
-    }
-
-    private function fileStateExists($fileConfiguration)
-    {
-        try {
-            $this->fileStateList->getFile($this->fileStateList->getFileConfigurationIdentifier($fileConfiguration));
-            return true;
-        } catch (FileNotFoundException $exception) {
-            return false;
-        }
     }
 }

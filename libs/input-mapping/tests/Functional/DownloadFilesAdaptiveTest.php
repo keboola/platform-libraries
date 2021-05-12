@@ -297,7 +297,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             StrategyFactory::LOCAL,
             new InputFileStateList([])
         );
-        $this->assertEmpty($outputStateList->jsonSerialize());
+        self::assertEmpty($outputStateList->jsonSerialize());
     }
 
     public function testAdaptiveNoMatchingNewFiles()

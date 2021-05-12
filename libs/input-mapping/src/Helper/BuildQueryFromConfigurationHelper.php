@@ -45,8 +45,8 @@ class BuildQueryFromConfigurationHelper
     public static function getChangedSinceQueryPortion($changedSince)
     {
         return sprintf(
-            'created:>"%s"',
-            date('Y-m-d H:i:s', strtotime($changedSince))
+            'created:["%s" TO *]',
+            date('c', strtotime($changedSince))
         );
     }
 

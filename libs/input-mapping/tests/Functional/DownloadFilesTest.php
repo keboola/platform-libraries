@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
@@ -66,6 +67,53 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1["id"]);
         self::assertEquals($id2, $manifest2["id"]);
+    }
+
+    public function testReadFilesOverwrite()
+    {
+        $this->clientWrapper->setBranchId('');
+
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+        );
+        sleep(3);
+
+        $reader = new Reader($this->getStagingFactory());
+        // download files for the first time
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
+        file_put_contents(file_get_contents($root . '/download/' . $id1 . '_upload'), 'new data');
+
+        // download files for the second time
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
+
+        // download files without overwrite
+        self::expectException(InputOperationException::class);
+        self::expectExceptionMessage('Overwrite cannot be turned off for local mapping.');
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => false]];
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            StrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
     }
 
     public function testReadFilesTagsFilterRunId()

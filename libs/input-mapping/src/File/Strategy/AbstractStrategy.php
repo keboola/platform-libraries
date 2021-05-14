@@ -118,7 +118,12 @@ abstract class AbstractStrategy implements StrategyInterface
                     $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite);
                 } catch (Exception $e) {
                     throw new InputOperationException(
-                        sprintf('Failed to download file %s (%s).', $fileInfo['name'], $file['id']),
+                        sprintf(
+                            'Failed to download file %s (%s): %s',
+                            $fileInfo['name'],
+                            $file['id'],
+                            $e->getMessage()
+                        ),
                         0,
                         $e
                     );

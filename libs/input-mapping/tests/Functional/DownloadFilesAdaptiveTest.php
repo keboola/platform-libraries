@@ -36,6 +36,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
                 'changed_since' => 'adaptive',
+                'overwrite' => true,
             ]
         ];
         // on the first run the state list will be empty
@@ -132,6 +133,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
                     'tags' => $sourceConfigTags,
                 ],
                 'changed_since' => 'adaptive',
+                'overwrite' => true,
             ]
         ];
         // on the first run the state list will be empty
@@ -231,6 +233,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             [
                 'tags' => [self::TEST_FILE_TAG_FOR_BRANCH, 'adaptive'],
                 'changed_since' => 'adaptive',
+                'overwrite' => true,
             ]
         ];
         $outputStateFileList = $reader->downloadFiles(
@@ -288,6 +291,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
                 'changed_since' => 'adaptive',
+                'overwrite' => true,
             ]
         ];
         // on the first run the state list will be empty
@@ -322,6 +326,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
                 'changed_since' => 'adaptive',
+                'overwrite' => true,
             ]
         ];
         // on the first run the state list will be empty
@@ -379,6 +384,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
                 'changed_since' => '-5 minutes',
+                'overwrite' => true,
             ]
         ];
 

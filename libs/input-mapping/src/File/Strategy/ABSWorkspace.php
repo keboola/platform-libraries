@@ -47,11 +47,12 @@ class ABSWorkspace extends AbstractFileStrategy
         return $this->blobClient;
     }
 
-    public function downloadFile($fileInfo, $destinationPath)
+    public function downloadFile($fileInfo, $destinationPath, $overwrite)
     {
         $this->inputs[] = [
             'dataFileId' => $fileInfo['id'],
             'destination' => $destinationPath,
+            'overwrite' => $overwrite,
         ];
         $manifest = $this->manifestCreator->createFileManifest($fileInfo);
         $adapter = new FileAdapter($this->format);

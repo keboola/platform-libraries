@@ -10,30 +10,32 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testConfiguration()
     {
         $config = [
-            "tags" => ["tag1", "tag2"],
-            "query" => "esquery",
-            "processed_tags" => ["tag3"],
-            "filter_by_run_id" => true,
-            "limit" => 1000
+            'tags' => ['tag1', 'tag2'],
+            'query' => 'esquery',
+            'processed_tags' => ['tag3'],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'overwrite' => false,
         ];
         $expectedResponse = $config;
-        $processedConfiguration = (new File())->parse(["config" => $config]);
+        $processedConfiguration = (new File())->parse(['config' => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
     public function testEmptyTagsRemoved()
     {
         $config = [
-            "tags" => [],
-            "query" => "esquery",
-            "processed_tags" => ["tag3"],
-            "filter_by_run_id" => true,
-            "limit" => 1000,
+            'tags' => [],
+            'query' => 'esquery',
+            'processed_tags' => ['tag3'],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
-        unset($expectedResponse["tags"]);
+        unset($expectedResponse['tags']);
         $processedConfiguration = (new File())->parse([
-            "config" => $config,
+            'config' => $config,
         ]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
@@ -41,16 +43,17 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testEmptyProcessedTagsRemoved()
     {
         $config = [
-            "tags" => ["tag3"],
-            "query" => "esquery",
-            "processed_tags" => [],
-            "filter_by_run_id" => true,
-            "limit" => 1000,
+            'tags' => ['tag3'],
+            'query' => 'esquery',
+            'processed_tags' => [],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
-        unset($expectedResponse["processed_tags"]);
+        unset($expectedResponse['processed_tags']);
         $processedConfiguration = (new File())->parse([
-            "config" => $config,
+            'config' => $config,
         ]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
@@ -58,16 +61,17 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testEmptyQueryRemoved()
     {
         $config = [
-            "tags" => ["tag1"],
-            "query" => "",
-            "processed_tags" => ["tag3"],
-            "filter_by_run_id" => true,
-            "limit" => 1000,
+            'tags' => ['tag1'],
+            'query' => '',
+            'processed_tags' => ['tag3'],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
-        unset($expectedResponse["query"]);
+        unset($expectedResponse['query']);
         $processedConfiguration = (new File())->parse([
-            "config" => $config,
+            'config' => $config,
         ]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
@@ -75,22 +79,23 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testConfigurationWithSourceTags()
     {
         $config = [
-            "query" => "esquery",
-            "processed_tags" => ["tag3"],
-            "filter_by_run_id" => true,
-            "limit" => 1000,
-            "source" => [
-                "tags" => [
+            'query' => 'esquery',
+            'processed_tags' => ['tag3'],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'source' => [
+                'tags' => [
                     [
-                        "name" => "tag1",
-                        "match" => "include",
+                        'name' => 'tag1',
+                        'match' => 'include',
                     ],
                     [
-                        "name" => "tag2",
-                        "match" => "include",
+                        'name' => 'tag2',
+                        'match' => 'include',
                     ],
                 ],
             ],
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(["config" => $config]);
@@ -132,8 +137,21 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         $config = [
             'tags' => ['tag'],
             'changed_since' => 'adaptive',
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
+        $processedConfiguration = (new File())->parse(["config" => $config]);
+        self::assertEquals($expectedResponse, $processedConfiguration);
+    }
+
+    public function testOverwriteDefault()
+    {
+        $config = [
+            'tags' => ['tag'],
+            'changed_since' => 'adaptive',
+        ];
+        $expectedResponse = $config;
+        $expectedResponse['overwrite'] = true;
         $processedConfiguration = (new File())->parse(["config" => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
@@ -150,6 +168,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
                 ],
             ],
             'changed_since' => 'adaptive',
+            'overwrite' => true,
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(["config" => $config]);

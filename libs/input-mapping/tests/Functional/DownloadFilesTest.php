@@ -39,7 +39,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG]]];
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -89,7 +89,13 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
-        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG], "filter_by_run_id" => true]];
+        $configuration = [
+            [
+                'tags' => [self::DEFAULT_TEST_FILE_TAG],
+                'filter_by_run_id' => true,
+                'overwrite' => true,
+            ]
+        ];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -130,18 +136,19 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $configuration = [
             [
-                "source" => [
-                    "tags" => [
+                'source' => [
+                    'tags' => [
                         [
-                            "name" => "tag-1",
-                            "match" => "include",
+                            'name' => 'tag-1',
+                            'match' => 'include',
                         ],
                         [
-                            "name" => "tag-2",
-                            "match" => "include",
+                            'name' => 'tag-2',
+                            'match' => 'include',
                         ],
                     ],
                 ],
+                'overwrite' => true,
             ],
         ];
 
@@ -197,6 +204,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                         ],
                     ],
                 ],
+                'overwrite' => true,
             ],
         ];
 
@@ -261,6 +269,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                         ],
                     ],
                 ],
+                'overwrite' => true,
             ],
         ];
 
@@ -307,19 +316,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $configuration = [
             [
-                "source" => [
-                    "tags" => [
+                'source' => [
+                    'tags' => [
                         [
-                            "name" => "tag-1",
-                            "match" => "include",
+                            'name' => 'tag-1',
+                            'match' => 'include',
                         ],
                         [
-                            "name" => "tag-2",
-                            "match" => "include",
+                            'name' => 'tag-2',
+                            'match' => 'include',
                         ],
                     ],
                 ],
-                "limit" => 1,
+                'limit' => 1,
+                'overwrite' => true,
             ],
         ];
 
@@ -354,7 +364,13 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
-        $configuration = [['query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG, 'filter_by_run_id' => true]];
+        $configuration = [
+            [
+                'query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG,
+                'filter_by_run_id' => true,
+                'overwrite' => true,
+            ]
+        ];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -411,7 +427,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)']];
+        $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => false]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -426,7 +442,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fs->remove($this->temp->getTmpFolder());
         $this->temp->initRunFolder();
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102]];
+        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102, 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -466,7 +482,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fileId = $table['file']['id'];
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['query' => 'id: ' . $fileId]];
+        $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
         $dlDir = $this->tmpDir . "/download";
         $reader->downloadFiles(
@@ -510,6 +526,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
+                'overwrite' => true,
             ],
         ];
         $reader->downloadFiles(
@@ -541,7 +558,10 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         $reader = new Reader($this->getStagingFactory(null, 'yaml'));
-        $configuration = [["tags" => [self::DEFAULT_TEST_FILE_TAG]]];
+        $configuration = [[
+            'tags' => [self::DEFAULT_TEST_FILE_TAG],
+            'overwrite' => true,
+        ]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -643,7 +663,10 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $testLogger = new TestLogger();
         $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
 
-        $configuration = [['tags' => [self::TEST_FILE_TAG_FOR_BRANCH]]];
+        $configuration = [[
+            'tags' => [self::TEST_FILE_TAG_FOR_BRANCH],
+            'overwrite' => true,
+        ]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -737,6 +760,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                     ],
                 ],
                 'processed_tags' => [$processedTag],
+                'overwrite' => true,
             ],
         ];
         $reader->downloadFiles(
@@ -764,11 +788,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $this->clientWrapper->getBasicClient()->deleteFile($excludeFileId);
         $this->clientWrapper->getBasicClient()->deleteFile($processedFileId);
         $this->clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
-    }
-
-    public function testReadFilesChangedSinceDateString()
-    {
-        $this->markTestIncomplete('TODO');
     }
 
     private function assertManifestTags($manifestPath, $tags)

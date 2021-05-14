@@ -8,7 +8,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class Local extends AbstractStrategy implements StrategyInterface
 {
-    public function downloadFile($fileInfo, $destinationPath)
+    public function downloadFile($fileInfo, $destinationPath, $overwrite)
     {
         if ($fileInfo['isSliced']) {
             $fs = new Filesystem();

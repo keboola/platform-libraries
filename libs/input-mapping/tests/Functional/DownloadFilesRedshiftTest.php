@@ -37,9 +37,9 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         $fileId = $table['file']['id'];
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['query' => 'id: ' . $fileId]];
+        $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
-        $dlDir = $this->tmpDir . "/download";
+        $dlDir = $this->tmpDir . '/download';
         $reader->downloadFiles(
             $configuration,
             '/download/',

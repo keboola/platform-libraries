@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
@@ -11,6 +12,7 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Workspaces;
@@ -31,6 +33,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     /** @var BlobRestProxy */
     protected $blobClient;
+
     public function setUp()
     {
         $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
@@ -116,7 +119,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     private function assertBlobNotEmpty($blobPath)
     {
-        $this->assertNotEmpty(
+        self::assertNotEmpty(
             stream_get_contents(
                 $this->blobClient->getBlob(
                     $this->workspaceCredentials['container'],
@@ -135,19 +138,19 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         );
 
         $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
+        file_put_contents($root . '/upload', 'test');
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
-            (new FileUploadOptions())->setTags(["download-files-test"])
+            $root . '/upload',
+            (new FileUploadOptions())->setTags(['download-files-test'])
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
-            (new FileUploadOptions())->setTags(["download-files-test"])
+            $root . '/upload',
+            (new FileUploadOptions())->setTags(['download-files-test'])
         );
         sleep(5);
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [["tags" => ["download-files-test"]]];
+        $configuration = [['tags' => ['download-files-test'], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'data/in/files/',
@@ -167,16 +170,16 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             $this->workspaceCredentials['container'],
             'data/in/files/upload/' . $id2
         );
-        $maniifestResult2 = $this->blobClient->getBlob(
+        $manifestResult2 = $this->blobClient->getBlob(
             $this->workspaceCredentials['container'],
             'data/in/files/upload/' . $id2 . '.manifest'
         );
 
-        self::assertEquals("test", stream_get_contents($blobResult1->getContentStream()));
-        self::assertEquals("test", stream_get_contents($blobResult2->getContentStream()));
+        self::assertEquals('test', stream_get_contents($blobResult1->getContentStream()));
+        self::assertEquals('test', stream_get_contents($blobResult2->getContentStream()));
 
         $manifest1 = json_decode(stream_get_contents($manifestResult1->getContentStream()), true);
-        $manifest2 = json_decode(stream_get_contents($maniifestResult2->getContentStream()), true);
+        $manifest2 = json_decode(stream_get_contents($manifestResult2->getContentStream()), true);
 
         self::assertArrayHasKey('id', $manifest1);
         self::assertArrayHasKey('name', $manifest1);
@@ -199,13 +202,73 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         self::assertEquals('some data', stream_get_contents($blobResult->getContentStream()));
     }
 
+    public function testAbsReadFilesOverwrite()
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags(['download-files-test'])
+        );
+        sleep(3);
+        $reader = new Reader($this->getStagingFactory());
+
+        // upload file for the first time
+        $configuration = [['tags' => ['download-files-test'], 'overwrite' => true]];
+        $reader->downloadFiles(
+            $configuration,
+            'data/in/files/',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
+        $blobResult1 = $this->blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/files/upload/' . $id1
+        );
+        self::assertEquals('test', stream_get_contents($blobResult1->getContentStream()));
+
+        // modify file contents
+        $this->blobClient->createBlockBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/files/upload/' . $id1,
+            'some overwritten data'
+        );
+
+        // upload file for the second time
+        $configuration = [['tags' => ['download-files-test'], 'overwrite' => true]];
+        $reader->downloadFiles(
+            $configuration,
+            'data/in/files/',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
+        $blobResult1 = $this->blobClient->getBlob(
+            $this->workspaceCredentials['container'],
+            'data/in/files/upload/' . $id1
+        );
+        // should be overwritten back to what it was
+        self::assertEquals('test', stream_get_contents($blobResult1->getContentStream()));
+
+        // upload file for the third time, should fail now
+        $configuration = [['tags' => ['download-files-test'], 'overwrite' => false]];
+        self::expectException(ClientException::class);
+        self::expectExceptionMessage('already exists in workspace');
+        $reader->downloadFiles(
+            $configuration,
+            'data/in/files/',
+            StrategyFactory::WORKSPACE_ABS,
+            new InputFileStateList([])
+        );
+    }
+
     public function testReadAbsFilesTagsFilterRunId()
     {
         $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
+        file_put_contents($root . '/upload', 'test');
         $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
-        $fo->setTags(["download-files-test"]);
+        $fo->setTags(['download-files-test']);
 
         $this->clientWrapper->getBasicClient()->setRunId('xyz');
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
@@ -217,7 +280,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
-        $configuration = [["tags" => ["download-files-test"], "filter_by_run_id" => true]];
+        $configuration = [
+            [
+                'tags' => ['download-files-test'],
+                'filter_by_run_id' => true,
+                'overwrite' => true,
+            ]
+        ];
 
         $reader->downloadFiles(
             $configuration,
@@ -306,7 +375,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
-        $configuration = [["query" => "tags: download-files-test", "filter_by_run_id" => true]];
+        $configuration = [
+            [
+                'query' => 'tags: download-files-test',
+                'filter_by_run_id' => true,
+                'overwrite' => true,
+            ]
+        ];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -381,14 +456,15 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         file_put_contents($root . "/upload", "test");
         $reader = new Reader($this->getStagingFactory());
         $fo = new FileUploadOptions();
-        $fo->setTags(["download-files-test"]);
+        $fo->setTags(['download-files-test']);
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(2);
         $configuration = [[
             'tags' => ['download-files-test'],
-            "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
+            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
+            'overwrite' => true,
         ]];
         $outputFileStateList = $reader->downloadFiles(
             $configuration,

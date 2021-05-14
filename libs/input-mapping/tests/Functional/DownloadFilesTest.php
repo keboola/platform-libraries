@@ -475,7 +475,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         $reader = new Reader($this->getStagingFactory());
-        $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => false]];
+        $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -483,7 +483,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             new InputFileStateList([])
         );
         $finder = new Finder();
-        $finder->files()->in($this->temp->getTmpFolder() . "/download")->notName('*.manifest');
+        $finder->files()->in($this->temp->getTmpFolder() . '/download')->notName('*.manifest');
         self::assertEquals(100, $finder->count());
 
         $fs = new Filesystem();

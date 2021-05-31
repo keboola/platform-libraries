@@ -33,6 +33,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'DaysNullConfiguration' => [
@@ -55,6 +56,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'DaysConfiguration' => [
@@ -77,6 +79,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'ChangedSinceNullConfiguration' => [
@@ -99,6 +102,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'ChangedSinceConfiguration' => [
@@ -121,6 +125,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'SearchSourceConfiguration' => [
@@ -149,6 +154,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'DataTypesConfiguration' => [
@@ -187,6 +193,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_values" => ["val1", "val2"],
                     "where_operator" => "ne",
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'FullDataTypesConfiguration' => [
@@ -224,6 +231,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                         ],
                     ],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             'FullDataTypesConfigurationEmptyLength' => [
@@ -261,6 +269,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                         ],
                     ],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
             "OverwriteConfiguration" => [
@@ -275,6 +284,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "eq",
                     "column_types" => [],
                     "overwrite" => true,
+                    "use_view" => false,
                 ],
             ],
             "BasicConfiguration" => [
@@ -288,6 +298,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "eq",
                     "column_types" => [],
                     "overwrite" => false,
+                    "use_view" => false,
                 ],
             ],
         ];
@@ -380,6 +391,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
         $expectedArray["where_values"] = [];
         $expectedArray["column_types"] = [];
         $expectedArray["overwrite"] = false;
+        $expectedArray["use_view"] = false;
         $processedConfiguration = (new Table())->parse(["config" => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
     }

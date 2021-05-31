@@ -43,14 +43,20 @@ class Snowflake extends AbstractStrategy
             }
             if ($export['type'] === 'copy') {
                 list ($table, $exportOptions) = $export['table'];
-                $copyInputs[] = array_merge(
+                $copyInput = array_merge(
                     [
                         'source' => $table->getSource(),
-                        'destination' => $table->getDestination(),
+                        'destination' => $table->getDestination()
                     ],
                     $exportOptions
                 );
+
+                if ($table->isUseView()) {
+                    $copyInput['useView'] = true;
+                }
+
                 $workspaceTables[] = $table;
+                $copyInputs[] = $copyInput;
             }
         }
 

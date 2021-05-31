@@ -68,6 +68,7 @@ class Table extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode("overwrite")->defaultValue(false)->end()
+                ->booleanNode("use_view")->defaultValue(false)->end()
             ->end()
             ->validate()
             ->ifTrue(function ($v) {

@@ -24,14 +24,20 @@ class ABSWorkspace extends AbstractStrategy
         foreach ($exports as $export) {
             list ($table, $exportOptions) = $export['table'];
             $destination = $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table);
-            $copyInputs[] = array_merge(
+            $copyInput = array_merge(
                 [
                     'source' => $table->getSource(),
                     'destination' => $this->ensureNoPathDelimiter($destination),
                 ],
                 $exportOptions
             );
+
+            if ($table->isUseView()) {
+                $copyInput['useView'] = true;
+            }
+
             $workspaceTables[] = $table;
+            $copyInputs[] = $copyInput;
         }
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))

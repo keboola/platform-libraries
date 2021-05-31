@@ -80,6 +80,7 @@ class TableDefinitionResolverTest extends TestCase
             'where_values' => [],
             'where_operator' => 'eq',
             'overwrite' => false,
+            'use_view' => false,
             "source" => "table1",
         ], $result->getTables()[0]->getDefinition());
     }

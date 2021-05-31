@@ -208,4 +208,9 @@ class InputTableOptions
         $exportOptions['overwrite'] = $this->definition['overwrite'];
         return $exportOptions;
     }
+
+    public function isUseView()
+    {
+        return $this->definition['use_view'];
+    }
 }

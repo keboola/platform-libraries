@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
@@ -81,6 +82,11 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
                     ],
                 ],
             ],
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test3',
+                'use_view' => true,
+            ],
         ]);
 
         $reader->downloadTables(
@@ -119,6 +125,22 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
         self::assertEquals('out.c-input-mapping-test.test2', $tableId);
+
+        // check table test3
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
+        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
+
+        try {
+            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+            );
+
+            self::assertFalse(true, 'Exception was expected');
+        } catch (\Exception $e) {
+            self::assertInstanceOf(ClientException::class, $e);
+            self::assertStringStartsWith('Invalid columns: _timestamp', $e->getMessage());
+        }
 
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));

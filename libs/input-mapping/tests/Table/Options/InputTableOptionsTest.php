@@ -34,6 +34,7 @@ class InputTableOptionsTest extends TestCase
             'where_operator' => 'eq',
             'column_types' => [],
             'overwrite' => false,
+            'use_view' => false,
         ], $definition->getDefinition());
     }
 
@@ -324,5 +325,15 @@ class InputTableOptionsTest extends TestCase
         self::expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
         self::expectException(InvalidInputException::class);
         $definition->getStorageApiLoadOptions(new InputTableStateList([]));
+    }
+
+    public function testIsUseView()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'use_view' => true,
+        ]);
+
+        self::assertTrue($definition->isUseView());
     }
 }

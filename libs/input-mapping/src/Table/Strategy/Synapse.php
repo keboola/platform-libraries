@@ -24,14 +24,20 @@ class Synapse extends AbstractStrategy
         foreach ($exports as $export) {
             /** @var InputTableOptions $table */
             list ($table, $exportOptions) = $export['table'];
-            $copyInputs[] = array_merge(
+            $copyInput = array_merge(
                 [
                     'source' => $table->getSource(),
                     'destination' => $table->getDestination(),
                 ],
                 $exportOptions
             );
+
+            if ($table->isUseView()) {
+                $copyInput['useView'] = true;
+            }
+
             $workspaceTables[] = $table;
+            $copyInputs[] = $copyInput;
         }
         $workspaceJobs = [];
         $this->logger->info(

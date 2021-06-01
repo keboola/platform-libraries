@@ -304,4 +304,29 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Cloning 1 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
     }
+
+    public function testUseViewFails()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
+                'limit' => 100,
+                'use_view' => true,
+            ]
+        ]);
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.');
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
+        );
+    }
 }

@@ -9,6 +9,7 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbstract
@@ -82,5 +83,29 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+    }
+
+    public function testUseViewFails()
+    {
+        $logger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
+                'use_view' => true,
+            ]
+        ]);
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('View load for table "test1" using backend "redshift" can\'t be used, only Synapse is supported.');
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::WORKSPACE_REDSHIFT,
+            new ReaderOptions(true)
+        );
     }
 }

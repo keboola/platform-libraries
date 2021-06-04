@@ -6,8 +6,6 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Metadata;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class ManifestCreator
 {
@@ -48,12 +46,12 @@ class ManifestCreator
         }
         $manifest["columns"] = $columns;
 
-        $metadata = new Metadata($this->storageClient);
-        $manifest['metadata'] = $metadata->listTableMetadata($tableInfo['id']);
-        $manifest['column_metadata'] = [];
+        $manifest['metadata'] = $tableInfo['metadata'];
         foreach ($columns as $column) {
-            $manifest['column_metadata'][$column] = $metadata->listColumnMetadata($tableInfo['id'] . '.' . $column);
+            $columnMetadata = isset($tableInfo['columnMetadata'][$column]) ? $tableInfo['columnMetadata'][$column] : [];
+            $manifest['column_metadata'][$column] = $columnMetadata;
         }
+
         $adapter = new TableAdapter($format);
         try {
             $adapter->setConfig($manifest);

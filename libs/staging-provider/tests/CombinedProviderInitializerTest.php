@@ -6,6 +6,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
+use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -60,7 +61,8 @@ class CombinedProviderInitializerTest extends TestCase
                 $componentsApi,
                 $workspacesApi,
                 $componentId,
-                $configId
+                $configId,
+                new WorkspaceBackendConfig(null)
             );
 
             $inputStagingFactory = new InputStrategyFactory($clientWrapper, $logger, 'json');

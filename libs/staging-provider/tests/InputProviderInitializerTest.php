@@ -15,6 +15,7 @@ use Keboola\InputMapping\Table\Strategy\Redshift as InputTableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
+use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
@@ -44,7 +45,8 @@ class InputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -80,7 +82,8 @@ class InputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -124,7 +127,8 @@ class InputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -168,7 +172,8 @@ class InputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -212,7 +217,8 @@ class InputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 

@@ -7,6 +7,7 @@ use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local as OutputFileLocal;
 use Keboola\OutputMapping\Writer\Table\Strategy\AllEncompassingTableStrategy;
+use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
@@ -38,7 +39,8 @@ class OutputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -72,7 +74,8 @@ class OutputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -115,7 +118,8 @@ class OutputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -158,7 +162,8 @@ class OutputProviderInitializerTest extends TestCase
             new Components($storageApiClient),
             new Workspaces($storageApiClient),
             'my-test-component',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -223,7 +228,8 @@ class OutputProviderInitializerTest extends TestCase
             $components,
             new Workspaces($stagingFactory->getClientWrapper()->getBasicClient()),
             'keboola.runner-workspace-abs-test',
-            'my-test-config'
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 

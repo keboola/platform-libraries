@@ -2,6 +2,7 @@
 
 namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
+use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
@@ -33,7 +34,8 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $componentsApi,
             $workspaceApi,
             $componentId,
-            $configId
+            $configId,
+            new WorkspaceBackendConfig(null)
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -65,7 +67,8 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $componentsApi,
             $workspaceApi,
             $componentId,
-            $configId
+            $configId,
+            new WorkspaceBackendConfig(null)
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -90,7 +93,8 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $componentsApi,
             $workspaceApi,
             $componentId,
-            $configId
+            $configId,
+            new WorkspaceBackendConfig(null)
         );
 
         $provider1 = $factory->getProvider($stagingClass);

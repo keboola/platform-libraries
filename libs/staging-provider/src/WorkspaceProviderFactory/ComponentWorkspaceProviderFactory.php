@@ -41,10 +41,13 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
 
     protected function getWorkspaceData($workspaceClass)
     {
-        $options = ['backend' => $workspaceClass::getType()];
+        $options = [
+            'backend' => $workspaceClass::getType(),
+        ];
 
-        if ($this->workspaceBackendConfig->getType() !== null) {
-            // TODO will be implemented in PS-2262
+        $requestedBackendType = $this->workspaceBackendConfig->getType();
+        if ($requestedBackendType !== null) {
+            $options['backendSize'] = $requestedBackendType;
         }
 
         if ($this->configId) {

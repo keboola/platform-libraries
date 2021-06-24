@@ -33,7 +33,7 @@ class VariableResolver
 
     public function resolveVariables(array $configuration, ?string $variableValuesId, ?array $variableValuesData): array
     {
-        if ($variableValuesId && $variableValuesData) {
+        if ($variableValuesId && !empty($variableValuesData['values'])) {
             throw new UserException('Only one of variableValuesId and variableValuesData can be entered.');
         }
 
@@ -43,7 +43,7 @@ class VariableResolver
         if ($variablesId) {
             $vConfiguration = $this->componentsHelper->getVariablesConfiguration($variablesId);
 
-            if ($variableValuesData) {
+            if (!empty($variableValuesData['values'])) {
                 $this->logger->info('Replacing variables using inline values.');
                 $vRow = $variableValuesData;
             } elseif ($variableValuesId) {

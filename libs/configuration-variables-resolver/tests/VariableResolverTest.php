@@ -307,6 +307,36 @@ class VariableResolverTest extends TestCase
         );
     }
 
+    public function testResolveVariablesWithEmptyValuesArray(): void
+    {
+        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
+            $this->clientWrapper->getBasicClient(),
+            ['variables' => [['name' => 'foo', 'type' => 'string']]],
+            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+        );
+        $configuration = [
+            'variables_id' => $vConfigurationId,
+            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
+        ];
+        $variableResolver = $this->getVariableResolver();
+        $newConfiguration = $variableResolver->resolveVariables(
+            $configuration,
+            $vRowId,
+            ['values' => []]
+        );
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'some_parameter' => 'foo is bar',
+                ],
+                'variables_id' => $vConfigurationId,
+            ],
+            $newConfiguration
+        );
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+    }
+
     public function testResolveVariablesNonExistentVariableConfiguration(): void
     {
         $configuration = [

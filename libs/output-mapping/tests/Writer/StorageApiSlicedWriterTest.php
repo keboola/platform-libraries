@@ -59,6 +59,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
         $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        self::assertEquals(
+            ['componentId: foo'],
+            $file['tags']
+        );
     }
 
     /**

@@ -387,6 +387,14 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        self::assertEquals(
+            ['componentId: foo'],
+            $file['tags']
+        );
     }
 
     public function testWriteTableOutputMappingDevMode()

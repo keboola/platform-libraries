@@ -16,13 +16,13 @@ use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
-use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -519,6 +519,7 @@ class TableWriter extends AbstractWriter
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
             'incremental' => $config['incremental'],
         ];
+        $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
         $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->clientWrapper->getBasicClient(),
@@ -618,16 +619,17 @@ class TableWriter extends AbstractWriter
 
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
+        $tags = $options['tags'] ? $options['tags'] : [];
         $this->validateWorkspaceStaging($stagingStorageOutput);
         if ($stagingStorageOutput === StrategyFactory::LOCAL) {
             if (is_dir($sourcePath)) {
-                $fileId = $this->uploadSlicedFile($sourcePath);
+                $fileId = $this->uploadSlicedFile($sourcePath, $tags);
                 $options['dataFileId'] = $fileId;
                 $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
             } else {
                 $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
                     $sourcePath,
-                    (new FileUploadOptions())->setCompress(true)
+                    (new FileUploadOptions())->setCompress(true)->setTags($tags)
                 );
                 $options['dataFileId'] = $fileId;
                 $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
@@ -712,7 +714,7 @@ class TableWriter extends AbstractWriter
      * @return string
      * @throws ClientException
      */
-    private function uploadSlicedFile($source)
+    private function uploadSlicedFile($source, $tags)
     {
         $finder = new Finder();
         $slices = $finder->files()->in($source)->depth(0);
@@ -728,7 +730,7 @@ class TableWriter extends AbstractWriter
             ->setIsSliced(true)
             ->setFileName(basename($source))
             ->setCompress(true)
-
+            ->setTags($tags);
         return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 

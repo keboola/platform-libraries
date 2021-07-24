@@ -727,7 +727,8 @@ class TableWriter extends AbstractWriter
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName(basename($source))
-            ->setCompress(true);
+            ->setCompress(true)
+
         return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 

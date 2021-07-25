@@ -15,6 +15,7 @@ use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
 class StorageApiWriterTest extends BaseWriterTest
@@ -387,6 +388,63 @@ class StorageApiWriterTest extends BaseWriterTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        self::assertEquals([], $file['tags']);
+    }
+
+    public function testWriteTableTagStagingFiles()
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . "/upload/table1a.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . "/upload/table2a.csv", "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n");
+
+        $configs = [
+            [
+                "source" => "table1a.csv",
+                "destination" => "out.c-output-mapping-test.table1a"
+            ],
+            [
+                "source" => "table2a.csv",
+                "destination" => "out.c-output-mapping-test.table2a"
+            ]
+        ];
+
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $client = $this->getMockBuilder(Client::class)
+            ->setConstructorArgs([[
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN,
+            ]])
+            ->setMethods(['verifyToken'])
+            ->getMock();
+        $tokenInfo['owner']['features'][] = 'tag-staging-files';
+        $client->method('verifyToken')->willReturn($tokenInfo);
+        $clientWrapper = new ClientWrapper($client, null, new NullLogger(), '');
+        $writer = new TableWriter($this->getStagingFactory($clientWrapper));
+
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(2, $jobIds);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $this->assertCount(2, $tables);
+        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
+        sort($tableIds);
+        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
+        $this->assertCount(2, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertNotEmpty($jobIds[1]);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        self::assertEquals(
+            ['componentId: foo'],
+            $file['tags']
+        );
     }
 
     public function testWriteTableOutputMappingDevMode()

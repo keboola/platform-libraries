@@ -39,6 +39,7 @@ class TableWriter extends AbstractWriter
     const KBC_CREATED_BY_CONFIGURATION_ROW_ID = 'KBC.createdBy.configurationRow.id';
     const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
     const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
+    const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
 
     /** @var Metadata */
     private $metadataClient;
@@ -519,7 +520,10 @@ class TableWriter extends AbstractWriter
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
             'incremental' => $config['incremental'],
         ];
-        $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        if (in_array(self::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'])) {
+            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
+        }
         $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->clientWrapper->getBasicClient(),
@@ -619,7 +623,7 @@ class TableWriter extends AbstractWriter
 
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
-        $tags = $options['tags'] ? $options['tags'] : [];
+        $tags = !empty($options['tags']) ? $options['tags'] : [];
         $this->validateWorkspaceStaging($stagingStorageOutput);
         if ($stagingStorageOutput === StrategyFactory::LOCAL) {
             if (is_dir($sourcePath)) {

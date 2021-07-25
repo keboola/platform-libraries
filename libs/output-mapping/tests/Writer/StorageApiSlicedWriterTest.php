@@ -3,11 +3,15 @@
 namespace Keboola\OutputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\NullLogger;
 
 class StorageApiSlicedWriterTest extends BaseWriterTest
 {
@@ -43,6 +47,58 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $this->assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $this->assertEquals(["Id", "Name"], $table["columns"]);
+
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
+        $this->assertCount(2, $table);
+        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
+        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        self::assertEquals([], $file['tags']);
+    }
+
+    public function testWriteTableTagStagingFile()
+    {
+        $this->initBucket('snowflake');
+        $root = $this->tmp->getTmpFolder();
+        mkdir($root . "/upload/table.csv");
+        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
+
+        $configs = [
+            [
+                "source" => "table.csv",
+                "destination" => "out.c-output-mapping-test.table",
+                "columns" => ["Id","Name"]
+            ]
+        ];
+
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $client = $this->getMockBuilder(Client::class)
+            ->setConstructorArgs([[
+                'url' => STORAGE_API_URL,
+                'token' => STORAGE_API_TOKEN,
+            ]])
+            ->setMethods(['verifyToken'])
+            ->getMock();
+        $tokenInfo['owner']['features'][] = 'tag-staging-files';
+        $client->method('verifyToken')->willReturn($tokenInfo);
+        $clientWrapper = new ClientWrapper($client, null, new NullLogger(), '');
+        $writer = new TableWriter($this->getStagingFactory($clientWrapper));
+
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);

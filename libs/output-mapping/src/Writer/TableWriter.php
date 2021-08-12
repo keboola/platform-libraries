@@ -88,101 +88,57 @@ class TableWriter extends AbstractWriter
     {
         $this->sourcePath = $source;
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
-        $finder = new Finder();
-        /** @var SplFileInfo[] $files */
-        $files = $finder->files()->name('*.manifest')->in($this->strategy->getMetadataStorage()->getPath() . '/' . $source)->depth(0);
 
-        $sources = [];
+        /** @var array<string, false|SplFileInfo> $sourcesManifests */
+        $sourcesManifests = [];
+
         // add output mappings fom configuration
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
-                $sources[$mapping['source']] = false;
+                $sourcesManifests[$mapping['source']] = null;
             }
         }
+        $processedOutputMappingTables = [];
+
+        $sourcePath = $this->strategy->getMetadataStorage()->getPath() . '/' . $source;
 
         // add manifest files
-        foreach ($files as $file) {
-            $sources[$file->getBasename('.manifest')] = $file;
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
+        foreach ($manifestFiles as $file) {
+            $sourcesManifests[$file->getBasename('.manifest')] = $file;
         }
 
         $jobs = [];
-        /** @var SplFileInfo|bool $manifest */
-        foreach ($sources as $sourceName => $manifest) {
-            $configFromMapping = [];
-            $configFromManifest = [];
-            if (isset($configuration['mapping'])) {
-                foreach ($configuration['mapping'] as $mapping) {
-                    if (isset($mapping['source']) && $mapping['source'] === $sourceName) {
-                        $configFromMapping = $mapping;
-                        unset($configFromMapping['source']);
-                    }
-                }
-            }
+        foreach ($sourcesManifests as $sourceName => $manifestFile) {
+            $sourcePath = $sourceName;
 
-            $prefix = isset($configuration['bucket']) ? ($configuration['bucket'] . '.') : '';
-
-            if ($manifest !== false) {
-                $configFromManifest = $this->readTableManifest($manifest->getPathname());
-                if (empty($configFromManifest['destination']) && isset($configuration['bucket'])) {
-                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
-                        $prefix,
-                        $manifest->getBasename('.manifest')
-                    );
-                }
-            }
+            $config = $this->resolveTableConfiguration(
+                $configuration,
+                $sourceName,
+                $manifestFile,
+                $processedOutputMappingTables
+            );
 
             try {
-                $mergedConfig = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
-                if (empty($mergedConfig['destination'])) {
-                    throw new InvalidOutputException(sprintf('Failed to resolve destination for output table "%s".', $sourceName));
-                }
-                $parsedConfig = (new TableManifest())->parse([$mergedConfig]);
-            } catch (InvalidConfigurationException $e) {
-                throw new InvalidOutputException(
-                    "Failed to write manifest for table {$sourceName}." . $e->getMessage(),
-                    0,
-                    $e
+                $jobs[] = $this->uploadTable(
+                    $config,
+                    $sourceName,
+                    $sourcePath,
+                    $systemMetadata,
+                    $stagingStorageOutput
                 );
-            }
-
-            try {
-                $parsedConfig['primary_key'] =
-                    PrimaryKeyHelper::normalizeKeyArray($this->logger, $parsedConfig['primary_key']);
-                $parsedConfig = DestinationRewriter::rewriteDestination($parsedConfig, $this->clientWrapper);
-                $tableJob = $this->uploadTable($sourceName, $parsedConfig, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
-                    "Cannot upload file '{$sourceName}' to table '{$parsedConfig["destination"]}' in Storage API: "
-                    . $e->getMessage(),
+                    sprintf(
+                        'Cannot upload file "%s" to table "%s" in Storage API: %s',
+                        $sourceName,
+                        $config["destination"],
+                        $e->getMessage()
+                    ),
                     $e->getCode(),
                     $e
                 );
             }
-
-            // After the file has been written, we can write metadata
-            if (!empty($parsedConfig['metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $parsedConfig['destination'],
-                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
-                        $parsedConfig['metadata'],
-                        MetadataDefinition::TABLE_METADATA
-                    )
-                );
-            }
-            if (!empty($parsedConfig['column_metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $parsedConfig['destination'],
-                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
-                        $parsedConfig['column_metadata'],
-                        MetadataDefinition::COLUMN_METADATA
-                    )
-                );
-            }
-            $jobs[] = $tableJob;
         }
 
         $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
@@ -200,13 +156,12 @@ class TableWriter extends AbstractWriter
      */
     private function uploadTablesLocal($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
+        $this->sourcePath = $source;
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
+
         if (empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $manifestNames = ManifestHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
-
-        $finder = new Finder();
 
         $outputMappingTables = [];
         if (isset($configuration['mapping'])) {
@@ -217,139 +172,84 @@ class TableWriter extends AbstractWriter
         $outputMappingTables = array_unique($outputMappingTables);
         $processedOutputMappingTables = [];
 
-        /** @var SplFileInfo[] $files */
-        $files = $finder->notName('*.manifest')->in($this->strategy->getDataStorage()->getPath() . '/' . $source)->depth(0);
+        $sourcePath = $this->strategy->getDataStorage()->getPath() . '/' . $source;
 
-        $fileNames = [];
-        foreach ($files as $file) {
-            $fileNames[] = $file->getFilename();
+        /** @var array<string, array{SplFileInfo, ?SplFileInfo}> $sources */
+        $sources = [];
+
+        $dataFiles = ManifestHelper::getNonManifestFiles($sourcePath);
+        foreach ($dataFiles as $file) {
+            $sources[$file->getBasename()] = [$file, null];
+        }
+
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
+        foreach ($manifestFiles as $file) {
+            $dataFileName = $file->getBasename('.manifest');
+
+            if (!isset($sources[$dataFileName])) {
+                throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
+            }
+
+            $sources[$dataFileName][1] = $file;
         }
 
         // Check if all files from output mappings are present
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
-                if (!in_array($mapping['source'], $fileNames)) {
-                    throw new InvalidOutputException("Table source '{$mapping["source"]}' not found.", 404);
-                }
-            }
-        }
+                $filename = $mapping['source'];
 
-        // Check for manifest orphans
-        foreach ($manifestNames as $manifest) {
-            if (!in_array(substr(basename($manifest), 0, -9), $fileNames)) {
-                throw new InvalidOutputException("Found orphaned table manifest: '" . basename($manifest) . "'");
+                if (!isset($sources[$filename])) {
+                    throw new InvalidOutputException(sprintf('Table source "%s" not found.', $mapping['source']), 404);
+                }
             }
         }
 
         $jobs = [];
-        foreach ($files as $file) {
-            $configFromMapping = [];
-            $configFromManifest = [];
-            if (isset($configuration['mapping'])) {
-                foreach ($configuration['mapping'] as $mapping) {
-                    if (isset($mapping['source']) && $mapping['source'] === $file->getFilename()) {
-                        $configFromMapping = $mapping;
-                        $processedOutputMappingTables[] = $configFromMapping['source'];
-                        unset($configFromMapping['source']);
-                    }
-                }
-            }
+        foreach ($sources as list($dataFile, $manifestFile)) {
+            $sourceName = $dataFile->getBasename();
+            $sourcePath = $dataFile->getPathname();
 
-            $prefix = isset($configuration['bucket']) ? ($configuration['bucket'] . '.') : '';
-
-            $manifestKey = array_search($file->getPathname() . '.manifest', $manifestNames);
-            if ($manifestKey !== false) {
-                $configFromManifest = $this->readTableManifest($file->getPathname() . '.manifest');
-                if (empty($configFromManifest['destination']) || isset($configuration['bucket'])) {
-                    $configFromManifest['destination'] = $this->createDestinationConfigParam(
-                        $prefix,
-                        $file->getFilename()
-                    );
-                }
-                unset($manifestNames[$manifestKey]);
-            } else {
-                // If no manifest found and no output mapping, use filename (without .csv if present) as table id
-                if (empty($configFromMapping['destination']) || isset($configuration['bucket'])) {
-                    $configFromMapping['destination'] = $this->createDestinationConfigParam(
-                        $prefix,
-                        $file->getFilename()
-                    );
-                }
-            }
+            $config = $this->resolveTableConfiguration(
+                $configuration,
+                $sourceName,
+                $manifestFile,
+                $processedOutputMappingTables
+            );
 
             try {
-                // Mapping with higher priority
-                if ($configFromMapping || !$configFromManifest) {
-                    $config = (new TableManifest())->parse([$configFromMapping]);
-                } else {
-                    $config = (new TableManifest())->parse([$configFromManifest]);
-                }
-            } catch (InvalidConfigurationException $e) {
-                throw new InvalidOutputException(
-                    "Failed to write manifest for table {$file->getFilename()}.",
-                    0,
-                    $e
+                $jobs[] = $this->uploadTable(
+                    $config,
+                    $sourceName,
+                    $sourcePath,
+                    $systemMetadata,
+                    $stagingStorageOutput
                 );
-            }
-
-            if (count(explode('.', $config['destination'])) !== 3) {
-                throw new InvalidOutputException(sprintf(
-                    'CSV file "%s" file name is not a valid table identifier, either set output mapping for ' .
-                        '"%s" or make sure that the file name is a valid Storage table identifier.',
-                    $config['destination'],
-                    $file->getRelativePathname()
-                ));
-            }
-
-            try {
-                $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
-                $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
-                $tableJob = $this->uploadTable($file->getPathname(), $config, $systemMetadata, $stagingStorageOutput);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
-                    "Cannot upload file '{$file->getFilename()}' to table '{$config["destination"]}' in Storage API: "
-                    . $e->getMessage(),
+                    sprintf(
+                        'Cannot upload file "%s" to table "%s" in Storage API: %s',
+                        $sourceName,
+                        $config["destination"],
+                        $e->getMessage()
+                    ),
                     $e->getCode(),
                     $e
                 );
             }
-
-            // After the file has been written, we can write metadata
-            if (!empty($config['metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $config['destination'],
-                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
-                        $config['metadata'],
-                        MetadataDefinition::TABLE_METADATA
-                    )
-                );
-            }
-            if (!empty($config['column_metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $config['destination'],
-                        $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
-                        $config['column_metadata'],
-                        MetadataDefinition::COLUMN_METADATA
-                    )
-                );
-            }
-            $jobs[] = $tableJob;
         }
 
+        // TODO muze k tomu vubec dojit?
         $processedOutputMappingTables = array_unique($processedOutputMappingTables);
         $diff = array_diff(
             array_merge($outputMappingTables, $processedOutputMappingTables),
             $processedOutputMappingTables
         );
-        if (count($diff)) {
+        if (count($diff) > 0) {
             throw new InvalidOutputException(
-                sprintf('Can not process output mapping for file(s): %s.', join('", "', $diff))
+                sprintf('Can\'t process output mapping for file(s): "%s".', implode('", "', $diff))
             );
         }
+
         $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
         $tableQueue->start();
         return $tableQueue;
@@ -358,7 +258,7 @@ class TableWriter extends AbstractWriter
     /**
      * @param $source
      * @return array
-     * @throws \Exception
+     * @throws InvalidOutputException
      */
     private function readTableManifest($source)
     {
@@ -377,21 +277,6 @@ class TableWriter extends AbstractWriter
                 0,
                 $e
             );
-        }
-    }
-
-    /**
-     * Creates destination configuration parameter from prefix and file name
-     * @param $prefix
-     * @param $filename
-     * @return string
-     */
-    private function createDestinationConfigParam($prefix, $filename)
-    {
-        if (substr($filename, -4) === '.csv') {
-            return $prefix . substr($filename, 0, strlen($filename) - 4);
-        } else {
-            return $prefix . $filename;
         }
     }
 
@@ -438,26 +323,35 @@ class TableWriter extends AbstractWriter
     }
 
     /**
-     * @param string $source
      * @param array $config
+     * @param string $sourceName
+     * @param string $sourcePath
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
      * @return LoadTable
      * @throws ClientException
      */
-    private function uploadTable($source, array $config, array $systemMetadata, $stagingStorageOutput)
-    {
-        if (is_dir($source) && empty($config['columns'])) {
-            throw new InvalidOutputException(
-                sprintf('Sliced file "%s" columns specification missing.', basename($source))
-            );
-        }
-        if (!$this->clientWrapper->getBasicClient()->bucketExists($this->getBucketId($config['destination']))) {
-            $this->createBucket($config['destination'], $systemMetadata);
-        } else {
-            $this->checkDevBucketMetadata($config['destination']);
+    private function uploadTable(
+        array $config,
+        $sourceName,
+        $sourcePath,
+        array $systemMetadata,
+        $stagingStorageOutput
+    ) {
+        if (empty($config['columns']) && is_dir($sourcePath)) {
+            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $sourceName));
         }
 
+        if (!$this->isValidTableId($config['destination'])) {
+            throw new InvalidOutputException(sprintf(
+                'Failed to resolve valid destination. "%s" is not a valid table ID.',
+                $config['destination']
+            ));
+        }
+
+        $this->ensureBucketExists($config['destination'], $systemMetadata);
+
+        // destination table already exists, reuse it
         if ($this->clientWrapper->getBasicClient()->tableExists($config['destination'])) {
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
             PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
@@ -470,6 +364,7 @@ class TableWriter extends AbstractWriter
                     $config['primary_key']
                 );
             }
+
             if (!empty($config['delete_where_column'])) {
                 // Delete rows
                 $deleteOptions = [
@@ -479,12 +374,13 @@ class TableWriter extends AbstractWriter
                 ];
                 $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
             }
+
+        // destination table does not exist yet, create it
         } else {
-            $primaryKey = join(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
-            $distributionKey = join(
-                ",",
-                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
-            );
+            $primaryKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
+            $distributionKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
+
+            // columns explicitly configured
             if (!empty($config['columns'])) {
                 $this->createTable(
                     $config['destination'],
@@ -492,13 +388,16 @@ class TableWriter extends AbstractWriter
                     $primaryKey,
                     $distributionKey ?: null
                 );
+
+            // reconstruct columns from CSV header
             } else {
                 try {
-                    $csvFile = new CsvFile($source, $config['delimiter'], $config['enclosure']);
+                    $csvFile = new CsvFile($sourcePath, $config['delimiter'], $config['enclosure']);
                     $header = $csvFile->getHeader();
                 } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $source . ' ' . $e->getMessage());
+                    throw new InvalidOutputException('Failed to read file ' . $sourcePath . ' ' . $e->getMessage());
                 }
+
                 $this->createTable(
                     $config['destination'],
                     $header,
@@ -507,6 +406,7 @@ class TableWriter extends AbstractWriter
                 );
                 unset($csvFile);
             }
+
             $this->metadataClient->postTableMetadata(
                 $config['destination'],
                 self::SYSTEM_METADATA_PROVIDER,
@@ -524,7 +424,9 @@ class TableWriter extends AbstractWriter
         if (in_array(self::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'])) {
             $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
         }
-        $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
+
+        $tableQueue = $this->loadDataIntoTable($sourcePath, $config['destination'], $loadOptions, $stagingStorageOutput);
+
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->clientWrapper->getBasicClient(),
             $config['destination'],
@@ -532,6 +434,27 @@ class TableWriter extends AbstractWriter
             $this->getUpdatedMetadata($systemMetadata),
             'table'
         ));
+
+        if (!empty($config['metadata'])) {
+            $tableQueue->addMetadata(new MetadataDefinition(
+                $this->clientWrapper->getBasicClient(),
+                $config['destination'],
+                $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
+                $config['metadata'],
+                MetadataDefinition::TABLE_METADATA
+            ));
+        }
+
+        if (!empty($config['column_metadata'])) {
+            $tableQueue->addMetadata(new MetadataDefinition(
+                $this->clientWrapper->getBasicClient(),
+                $config['destination'],
+                $systemMetadata[self::SYSTEM_KEY_COMPONENT_ID],
+                $config['column_metadata'],
+                MetadataDefinition::COLUMN_METADATA
+            ));
+        }
+
         return $tableQueue;
     }
 
@@ -541,9 +464,31 @@ class TableWriter extends AbstractWriter
         return $tableIdParts[0] . '.' . $tableIdParts[1];
     }
 
+    /**
+     * @param string $tableId
+     * @return string[]
+     */
     private function getTableIdParts($tableId)
     {
         return explode('.', $tableId);
+    }
+
+    /**
+     * @param string $tableId
+     * @return bool
+     */
+    private function isValidTableId($tableId)
+    {
+        return count($this->getTableIdParts($tableId)) === 3;
+    }
+
+    /**
+     * @param string $tableName
+     * @return bool
+     */
+    private function isTableName($tableName)
+    {
+        return count($this->getTableIdParts($tableName)) === 1;
     }
 
     private function createBucket($tableId, array $systemMetadata)
@@ -607,13 +552,13 @@ class TableWriter extends AbstractWriter
         if (isset($distributionKey)) {
             $options['distributionKey'] = $distributionKey;
         }
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsync(
+
+        return $this->clientWrapper->getBasicClient()->createTableAsync(
             $this->getBucketId($tableId),
             $this->getTableName($tableId),
             $headerCsvFile,
             $options
         );
-        return $tableId;
     }
 
     private function getTableName($tableId)
@@ -621,6 +566,14 @@ class TableWriter extends AbstractWriter
         return $this->getTableIdParts($tableId)[2];
     }
 
+    /**
+     * @param string $sourcePath
+     * @param string $tableId
+     * @param array $options
+     * @param string $stagingStorageOutput
+     * @return LoadTable
+     * @throws ClientException
+     */
     private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
     {
         $tags = !empty($options['tags']) ? $options['tags'] : [];
@@ -767,5 +720,96 @@ class TableWriter extends AbstractWriter
             ];
         }
         return $metadata;
+    }
+
+    /**
+     * @param array $configuration
+     * @param $sourceName
+     * @param SplFileInfo $manifestFile
+     * @param array $processedOutputMappingTables
+     * @return array
+     * @throws InvalidOutputException
+     */
+    private function resolveTableConfiguration(
+        array $configuration,
+        $sourceName,
+        $manifestFile,
+        array &$processedOutputMappingTables
+    ) {
+        $configFromMapping = [];
+        $configFromManifest = [];
+
+        if (isset($configuration['mapping'])) {
+            foreach ($configuration['mapping'] as $mapping) {
+                if (isset($mapping['source']) && $mapping['source'] === $sourceName) {
+                    $configFromMapping = $mapping;
+                    $processedOutputMappingTables[] = $configFromMapping['source'];
+                    unset($configFromMapping['source']);
+                }
+            }
+        }
+
+        if ($manifestFile !== null) {
+            $configFromManifest = $this->readTableManifest($manifestFile->getPathname());
+
+            if (isset($configuration['bucket']) && $this->isTableName($configFromManifest['destination'])) {
+                $configFromManifest['destination'] = $configuration['bucket'].'.'.basename($sourceName, '.csv');
+            }
+        }
+
+        $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
+
+        if (empty($config['destination'])) {
+            throw new InvalidOutputException(sprintf(
+                'Failed to resolve destination for output table "%s".',
+                $sourceName
+            ));
+        }
+
+        try {
+            $config = (new TableManifest())->parse([$config]);
+        } catch (InvalidConfigurationException $e) {
+            throw new InvalidOutputException(
+                sprintf("Failed to write manifest for table %s: %s", $sourceName, $e->getMessage()),
+                0,
+                $e
+            );
+        }
+
+        $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
+
+        try {
+            $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
+        } catch (ClientException $e) {
+            throw new InvalidOutputException(
+                sprintf(
+                    'Cannot upload file "%s" to table "%s" in Storage API: %s',
+                    $sourceName,
+                    $config["destination"],
+                    $e->getMessage()
+                ),
+                $e->getCode(),
+                $e
+            );
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param $destination
+     * @param array $systemMetadata
+     * @throws ClientException
+     */
+    private function ensureBucketExists($destination, array $systemMetadata)
+    {
+        $destinationBucketId = $this->getBucketId($destination);
+        $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
+
+        if (!$destinationBucketExists) {
+            $this->createBucket($destination, $systemMetadata);
+        } else {
+            $this->checkDevBucketMetadata($destination);
+        }
     }
 }

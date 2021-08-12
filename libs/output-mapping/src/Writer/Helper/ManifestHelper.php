@@ -7,15 +7,23 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class ManifestHelper
 {
+    /**
+     * @param string $dir
+     * @return array<SplFileInfo>
+     */
     public static function getManifestFiles($dir)
     {
-        $finder = new Finder();
-        $manifests = $finder->files()->name('*.manifest')->in($dir)->depth(0);
-        $manifestFileNames = [];
-        /** @var SplFileInfo $manifest */
-        foreach ($manifests as $manifest) {
-            $manifestFileNames[] = $manifest->getPathname();
-        }
-        return $manifestFileNames;
+        $files = (new Finder())->files()->name('*.manifest')->in($dir)->depth(0);
+        return iterator_to_array($files);
+    }
+
+    /**
+     * @param string $dir
+     * @return array<SplFileInfo>
+     */
+    public static function getNonManifestFiles($dir)
+    {
+        $files = (new Finder())->notName('*.manifest')->in($dir)->depth(0);
+        return iterator_to_array($files);
     }
 }

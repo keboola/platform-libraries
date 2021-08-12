@@ -3,10 +3,18 @@
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 
 class DestinationRewriter
 {
+    /**
+     * @param array $config
+     * @param ClientWrapper $clientWrapper
+     * @return array
+     *
+     * @throws ClientException
+     */
     public static function rewriteDestination(array $config, ClientWrapper $clientWrapper)
     {
         if ($clientWrapper->hasBranch()) {

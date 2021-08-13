@@ -1239,6 +1239,17 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
                 'mapping' => null,
                 'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
             ],
+
+            'multiple mappings of the same source are allowed' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1'],
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table2']
+                ],
+                'expectedError' => null,
+                'expectedTables' => ['out.c-output-mapping-test.table1', 'out.c-output-mapping-test.table2'],
+            ],
         ];
     }
 

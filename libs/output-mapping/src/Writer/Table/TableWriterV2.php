@@ -49,73 +49,38 @@ class TableWriterV2 extends AbstractWriter
     }
 
     /**
-     * @param string $source
+     * @param string $sourcePathPrefix
      * @param array $configuration
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
      * @return LoadTableQueue
      * @throws \Exception
      */
-    public function uploadTables($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
+    public function uploadTables($sourcePathPrefix, array $configuration, array $systemMetadata, $stagingStorageOutput)
     {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
+
+        $this->sourcePath = $sourcePathPrefix;
+        $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
+
+        $sourcePath = $this->strategy->getMetadataStorage()->getPath() . '/' . $sourcePathPrefix;
+
         if ($stagingStorageOutput === StrategyFactory::LOCAL) {
-            return $this->uploadTablesLocal($source, $configuration, $systemMetadata, $stagingStorageOutput);
+            $sources = $this->resolveLocalSources($sourcePath, $configuration);
         } else {
-            return $this->uploadTablesWorkspace($source, $configuration, $systemMetadata, $stagingStorageOutput);
-        }
-    }
-
-    /**
-     * @param string $source
-     * @param array $configuration
-     * @param array $systemMetadata
-     * @param string $stagingStorageOutput
-     * @return LoadTableQueue
-     * @throws \Exception
-     */
-    private function uploadTablesWorkspace($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
-    {
-        $this->sourcePath = $source;
-        $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
-
-        /** @var array<string, false|SplFileInfo> $sourcesManifests */
-        $sourcesManifests = [];
-
-        // add output mappings fom configuration
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $sourcesManifests[$mapping['source']] = null;
-            }
-        }
-        $processedOutputMappingTables = [];
-
-        $sourcePath = $this->strategy->getMetadataStorage()->getPath() . '/' . $source;
-
-        // add manifest files
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
-        foreach ($manifestFiles as $file) {
-            $sourcesManifests[$file->getBasename('.manifest')] = $file;
+            $sources = $this->resolveWorkspaceSources($sourcePath, $configuration);
         }
 
         $jobs = [];
-        foreach ($sourcesManifests as $sourceName => $manifestFile) {
-            $sourcePath = $sourceName;
-
-            $config = $this->resolveTableConfiguration(
-                $configuration,
-                $sourceName,
-                $manifestFile,
-                $processedOutputMappingTables
-            );
+        foreach ($sources as $source) {
+            $config = $this->resolveTableConfiguration($source, $configuration);
 
             try {
                 $jobs[] = $this->uploadTable(
+                    $source,
                     $config,
-                    $sourceName,
-                    $sourcePath,
                     $systemMetadata,
                     $stagingStorageOutput
                 );
@@ -123,7 +88,7 @@ class TableWriterV2 extends AbstractWriter
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                        $sourceName,
+                        $source->getSourceName(),
                         $config["destination"],
                         $e->getMessage()
                     ),
@@ -131,114 +96,6 @@ class TableWriterV2 extends AbstractWriter
                     $e
                 );
             }
-        }
-
-        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
-        $tableQueue->start();
-        return $tableQueue;
-    }
-
-    /**
-     * @param string $source
-     * @param array $configuration
-     * @param array $systemMetadata
-     * @param string $stagingStorageOutput
-     * @return LoadTableQueue
-     * @throws \Exception
-     */
-    private function uploadTablesLocal($source, array $configuration, array $systemMetadata, $stagingStorageOutput)
-    {
-        $this->sourcePath = $source;
-        $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
-
-        if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
-            throw new OutputOperationException('Component Id must be set');
-        }
-
-        $outputMappingTables = [];
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $outputMappingTables[] = $mapping['source'];
-            }
-        }
-        $outputMappingTables = array_unique($outputMappingTables);
-        $processedOutputMappingTables = [];
-
-        $sourcePath = $this->strategy->getDataStorage()->getPath() . '/' . $source;
-
-        /** @var array<string, array{SplFileInfo, ?SplFileInfo}> $sources */
-        $sources = [];
-
-        $dataFiles = ManifestHelper::getNonManifestFiles($sourcePath);
-        foreach ($dataFiles as $file) {
-            $sources[$file->getBasename()] = [$file, null];
-        }
-
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
-        foreach ($manifestFiles as $file) {
-            $dataFileName = $file->getBasename('.manifest');
-
-            if (!isset($sources[$dataFileName])) {
-                throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
-            }
-
-            $sources[$dataFileName][1] = $file;
-        }
-
-        // Check if all files from output mappings are present
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $filename = $mapping['source'];
-
-                if (!isset($sources[$filename])) {
-                    throw new InvalidOutputException(sprintf('Table source "%s" not found.', $mapping['source']), 404);
-                }
-            }
-        }
-
-        $jobs = [];
-        foreach ($sources as list($dataFile, $manifestFile)) {
-            $sourceName = $dataFile->getBasename();
-            $sourcePath = $dataFile->getPathname();
-
-            $config = $this->resolveTableConfiguration(
-                $configuration,
-                $sourceName,
-                $manifestFile,
-                $processedOutputMappingTables
-            );
-
-            try {
-                $jobs[] = $this->uploadTable(
-                    $config,
-                    $sourceName,
-                    $sourcePath,
-                    $systemMetadata,
-                    $stagingStorageOutput
-                );
-            } catch (ClientException $e) {
-                throw new InvalidOutputException(
-                    sprintf(
-                        'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                        $sourceName,
-                        $config["destination"],
-                        $e->getMessage()
-                    ),
-                    $e->getCode(),
-                    $e
-                );
-            }
-        }
-
-        $processedOutputMappingTables = array_unique($processedOutputMappingTables);
-        $diff = array_diff(
-            array_merge($outputMappingTables, $processedOutputMappingTables),
-            $processedOutputMappingTables
-        );
-        if (count($diff) > 0) {
-            throw new InvalidOutputException(
-                sprintf('Can\'t process output mapping for file(s): "%s".', implode('", "', $diff))
-            );
         }
 
         $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
@@ -314,23 +171,21 @@ class TableWriterV2 extends AbstractWriter
     }
 
     /**
+     * @param Table\Source\SourceInterface $source
      * @param array $config
-     * @param string $sourceName
-     * @param string $sourcePath
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
      * @return LoadTable
      * @throws ClientException
      */
     private function uploadTable(
+        Table\Source\SourceInterface $source,
         array $config,
-        $sourceName,
-        $sourcePath,
         array $systemMetadata,
         $stagingStorageOutput
     ) {
-        if (empty($config['columns']) && is_dir($sourcePath)) {
-            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $sourceName));
+        if (empty($config['columns']) && is_dir($source->getSourcePath())) {
+            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getSourceName()));
         }
 
         if (!$this->isValidTableId($config['destination'])) {
@@ -383,10 +238,10 @@ class TableWriterV2 extends AbstractWriter
             // reconstruct columns from CSV header
             } else {
                 try {
-                    $csvFile = new CsvFile($sourcePath, $config['delimiter'], $config['enclosure']);
+                    $csvFile = new CsvFile($source->getSourcePath(), $config['delimiter'], $config['enclosure']);
                     $header = $csvFile->getHeader();
                 } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $sourcePath . ' ' . $e->getMessage());
+                    throw new InvalidOutputException('Failed to read file ' . $source->getSourcePath() . ' ' . $e->getMessage());
                 }
 
                 $this->createTable(
@@ -412,11 +267,16 @@ class TableWriterV2 extends AbstractWriter
             'incremental' => $config['incremental'],
         ];
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'])) {
+        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
             $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
         }
 
-        $tableQueue = $this->loadDataIntoTable($sourcePath, $config['destination'], $loadOptions, $stagingStorageOutput);
+        $tableQueue = $this->loadDataIntoTable(
+            $source->getSourcePath(),
+            $config['destination'],
+            $loadOptions,
+            $stagingStorageOutput
+        );
 
         $tableQueue->addMetadata(new MetadataDefinition(
             $this->clientWrapper->getBasicClient(),
@@ -715,38 +575,39 @@ class TableWriterV2 extends AbstractWriter
     }
 
     /**
+     * @param Table\Source\SourceInterface $source
      * @param array $configuration
-     * @param $sourceName
-     * @param null|SplFileInfo $manifestFile
-     * @param array $processedOutputMappingTables
      * @return array
      * @throws InvalidOutputException
      */
     private function resolveTableConfiguration(
-        array $configuration,
-        $sourceName,
-        $manifestFile,
-        array &$processedOutputMappingTables
+        Table\Source\SourceInterface $source,
+        array $configuration
     ) {
         $configFromMapping = [];
         $configFromManifest = [];
 
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                if (isset($mapping['source']) && $mapping['source'] === $sourceName) {
-                    $configFromMapping = $mapping;
-                    $processedOutputMappingTables[] = $configFromMapping['source'];
-                    unset($configFromMapping['source']);
-                }
+        if ($source->getMapping() !== null) {
+            $configFromMapping = $source->getMapping();
+            unset($configFromMapping['source']);
+        }
+
+        if ($source->getManifestFile() !== null) {
+            $configFromManifest = $this->readTableManifest($source->getManifestFile()->getPathname());
+
+            if (isset($configuration['bucket']) && $this->isTableName($configFromManifest['destination'])) {
+                $configFromManifest['destination'] = implode('.', [
+                    $configuration['bucket'],
+                    basename($source->getSourceName(), '.csv')
+                ]);
             }
         }
 
-        if ($manifestFile !== null) {
-            $configFromManifest = $this->readTableManifest($manifestFile->getPathname());
-
-            if (isset($configuration['bucket']) && $this->isTableName($configFromManifest['destination'])) {
-                $configFromManifest['destination'] = $configuration['bucket'].'.'.basename($sourceName, '.csv');
-            }
+        if (empty($configFromMapping) && empty($configFromManifest)) {
+            throw new InvalidOutputException(sprintf(
+                'Failed to resolve destination for output table "%s".',
+                $source->getSourceName()
+            ));
         }
 
         $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
@@ -754,7 +615,7 @@ class TableWriterV2 extends AbstractWriter
         if (empty($config['destination'])) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve destination for output table "%s".',
-                $sourceName
+                $source->getSourceName()
             ));
         }
 
@@ -762,7 +623,7 @@ class TableWriterV2 extends AbstractWriter
             $config = (new TableManifest())->parse([$config]);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
-                sprintf("Failed to write manifest for table %s: %s", $sourceName, $e->getMessage()),
+                sprintf("Failed to write manifest for table %s: %s", $source->getSourceName(), $e->getMessage()),
                 0,
                 $e
             );
@@ -776,7 +637,7 @@ class TableWriterV2 extends AbstractWriter
             throw new InvalidOutputException(
                 sprintf(
                     'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                    $sourceName,
+                    $source->getSourceName(),
                     $config["destination"],
                     $e->getMessage()
                 ),
@@ -803,5 +664,119 @@ class TableWriterV2 extends AbstractWriter
         } else {
             $this->checkDevBucketMetadata($destination);
         }
+    }
+
+    /**
+     * @param $sourcePath
+     * @param array $configuration
+     * @return Source\SourceInterface[]
+     */
+    private function resolveLocalSources($sourcePath, array $configuration)
+    {
+        /** @var Table\Source\SourceInterface[] $sources */
+        $sources = [];
+
+        $dataFiles = ManifestHelper::getNonManifestFiles($sourcePath);
+        foreach ($dataFiles as $file) {
+            $sources[$file->getBasename()] = new Table\Source\FileSource($file);
+        }
+
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
+        foreach ($manifestFiles as $file) {
+            $dataFileName = $file->getBasename('.manifest');
+
+            if (!isset($sources[$dataFileName])) {
+                throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
+            }
+
+            $sources[$dataFileName]->setManifestFile($file);
+        }
+
+        // Check if all files from output mappings are present
+        if (isset($configuration['mapping'])) {
+            foreach ($configuration['mapping'] as $mapping) {
+                $filename = $mapping['source'];
+
+                if (!isset($sources[$filename])) {
+                    throw new InvalidOutputException(sprintf('Table source "%s" not found.', $mapping['source']), 404);
+                }
+            }
+
+            $sources = $this->combineSourcesWithMapping($sources, $configuration['mapping']);
+        }
+
+        return array_values($sources);
+    }
+
+    /**
+     * @param Table\Source\SourceInterface[] $sources
+     * @param array<array{source: string}> $mappings
+     * @return Table\Source\SourceInterface[]
+     */
+    private function combineSourcesWithMapping(array $sources, array $mappings)
+    {
+        $mappingsBySource = [];
+        foreach ($mappings as $mapping) {
+            $mappingsBySource[$mapping['source']][] = $mapping;
+        }
+
+        $sourcesWithMapping = [];
+        foreach ($sources as $source) {
+            $sourceMappings = isset($mappingsBySource[$source->getSourceName()]) ?
+                $mappingsBySource[$source->getSourceName()] :
+                []
+            ;
+
+            if (count($sourceMappings) === 0) {
+                $sourcesWithMapping[] = $source;
+                continue;
+            }
+
+            foreach ($sourceMappings as $sourceMapping) {
+                $sourceCopy = clone $source;
+                $sourceCopy->setMapping($sourceMapping);
+                $sourcesWithMapping[] = $sourceCopy;
+            }
+        }
+
+        return $sourcesWithMapping;
+    }
+
+    /**
+     * @param string $sourcePath
+     * @param array $configuration
+     * @return Source\TableSource[]
+     */
+    private function resolveWorkspaceSources($sourcePath, array $configuration)
+    {
+        /** @var array<string, Table\Source\TableSource> $sourcesManifests */
+        $sourcesManifests = [];
+
+        // add output mappings fom configuration
+        if (isset($configuration['mapping'])) {
+            foreach ($configuration['mapping'] as $mapping) {
+                $sourcesManifests[$mapping['source']] = new Table\Source\TableSource(
+                    $mapping['source'],
+                    null,
+                    $mapping
+                );
+            }
+        }
+
+
+
+        // add manifest files
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
+        foreach ($manifestFiles as $file) {
+            $sourceName = $file->getBasename('.manifest');
+
+            if (isset($sourcesManifests[$sourceName])) {
+                $sourcesManifests[$sourceName]->setManifestFile($file);
+            } else {
+                $sourcesManifests[$sourceName] = new Table\Source\TableSource($sourceName, $file, null);
+            }
+        }
+
+        return $sourcesManifests;
     }
 }

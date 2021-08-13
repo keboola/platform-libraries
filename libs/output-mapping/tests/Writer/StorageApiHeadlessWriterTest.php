@@ -108,7 +108,6 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
         $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
-        $this->assertEquals(['Id'], $table["primaryKey"]);
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());

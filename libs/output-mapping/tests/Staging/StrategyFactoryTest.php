@@ -4,14 +4,12 @@ namespace Keboola\OutputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\File\Strategy\Local as LocalFile;
-use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
-use Keboola\OutputMapping\Writer\Table\Strategy\AllEncompassingTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
@@ -105,7 +103,7 @@ class StrategyFactoryTest extends TestCase
         );
         $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
         self::assertInstanceOf(
-            AllEncompassingTableStrategy::class,
+            LocalTableStrategy::class,
             $factory->getTableOutputStrategy(StrategyFactory::LOCAL)
         );
     }

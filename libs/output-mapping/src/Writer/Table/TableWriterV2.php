@@ -15,7 +15,6 @@ use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table;
@@ -66,20 +65,15 @@ class TableWriterV2 extends AbstractWriter
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
 
         $sourcePath = $this->strategy->getMetadataStorage()->getPath() . '/' . $sourcePathPrefix;
-
-        if ($stagingStorageOutput === StrategyFactory::LOCAL) {
-            $sources = $this->resolveLocalSources($sourcePath, $configuration);
-        } else {
-            $sources = $this->resolveWorkspaceSources($sourcePath, $configuration);
-        }
+        $mappings = $this->strategy->resolveMappings($sourcePath, $configuration);
 
         $jobs = [];
-        foreach ($sources as $source) {
-            $config = $this->resolveTableConfiguration($source, $configuration);
+        foreach ($mappings as $mapping) {
+            $config = $this->resolveTableConfiguration($mapping, $configuration);
 
             try {
                 $jobs[] = $this->uploadTable(
-                    $source,
+                    $mapping,
                     $config,
                     $systemMetadata,
                     $stagingStorageOutput
@@ -88,7 +82,7 @@ class TableWriterV2 extends AbstractWriter
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                        $source->getSourceName(),
+                        $mapping->getSourceName(),
                         $config["destination"],
                         $e->getMessage()
                     ),
@@ -664,119 +658,5 @@ class TableWriterV2 extends AbstractWriter
         } else {
             $this->checkDevBucketMetadata($destination);
         }
-    }
-
-    /**
-     * @param $sourcePath
-     * @param array $configuration
-     * @return Source\SourceInterface[]
-     */
-    private function resolveLocalSources($sourcePath, array $configuration)
-    {
-        /** @var Table\Source\SourceInterface[] $sources */
-        $sources = [];
-
-        $dataFiles = ManifestHelper::getNonManifestFiles($sourcePath);
-        foreach ($dataFiles as $file) {
-            $sources[$file->getBasename()] = new Table\Source\FileSource($file);
-        }
-
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
-        foreach ($manifestFiles as $file) {
-            $dataFileName = $file->getBasename('.manifest');
-
-            if (!isset($sources[$dataFileName])) {
-                throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
-            }
-
-            $sources[$dataFileName]->setManifestFile($file);
-        }
-
-        // Check if all files from output mappings are present
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $filename = $mapping['source'];
-
-                if (!isset($sources[$filename])) {
-                    throw new InvalidOutputException(sprintf('Table source "%s" not found.', $mapping['source']), 404);
-                }
-            }
-
-            $sources = $this->combineSourcesWithMapping($sources, $configuration['mapping']);
-        }
-
-        return array_values($sources);
-    }
-
-    /**
-     * @param Table\Source\SourceInterface[] $sources
-     * @param array<array{source: string}> $mappings
-     * @return Table\Source\SourceInterface[]
-     */
-    private function combineSourcesWithMapping(array $sources, array $mappings)
-    {
-        $mappingsBySource = [];
-        foreach ($mappings as $mapping) {
-            $mappingsBySource[$mapping['source']][] = $mapping;
-        }
-
-        $sourcesWithMapping = [];
-        foreach ($sources as $source) {
-            $sourceMappings = isset($mappingsBySource[$source->getSourceName()]) ?
-                $mappingsBySource[$source->getSourceName()] :
-                []
-            ;
-
-            if (count($sourceMappings) === 0) {
-                $sourcesWithMapping[] = $source;
-                continue;
-            }
-
-            foreach ($sourceMappings as $sourceMapping) {
-                $sourceCopy = clone $source;
-                $sourceCopy->setMapping($sourceMapping);
-                $sourcesWithMapping[] = $sourceCopy;
-            }
-        }
-
-        return $sourcesWithMapping;
-    }
-
-    /**
-     * @param string $sourcePath
-     * @param array $configuration
-     * @return Source\TableSource[]
-     */
-    private function resolveWorkspaceSources($sourcePath, array $configuration)
-    {
-        /** @var array<string, Table\Source\TableSource> $sourcesManifests */
-        $sourcesManifests = [];
-
-        // add output mappings fom configuration
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $sourcesManifests[$mapping['source']] = new Table\Source\TableSource(
-                    $mapping['source'],
-                    null,
-                    $mapping
-                );
-            }
-        }
-
-
-
-        // add manifest files
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
-        foreach ($manifestFiles as $file) {
-            $sourceName = $file->getBasename('.manifest');
-
-            if (isset($sourcesManifests[$sourceName])) {
-                $sourcesManifests[$sourceName]->setManifestFile($file);
-            } else {
-                $sourcesManifests[$sourceName] = new Table\Source\TableSource($sourceName, $file, null);
-            }
-        }
-
-        return $sourcesManifests;
     }
 }

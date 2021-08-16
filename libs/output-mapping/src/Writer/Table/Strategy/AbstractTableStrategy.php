@@ -7,7 +7,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class AbstractTableStrategy implements StrategyInterface
+abstract class AbstractTableStrategy implements StrategyInterface
 {
     /** @var ClientWrapper */
     protected $clientWrapper;

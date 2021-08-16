@@ -9,7 +9,8 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\Strategy\AllEncompassingTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\WorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
 class StrategyFactory extends InputMappingStrategyFactory
@@ -24,27 +25,27 @@ class StrategyFactory extends InputMappingStrategyFactory
                 self::LOCAL => new Definition(
                     self::LOCAL,
                     Local::class,
-                    AllEncompassingTableStrategy::class
+                    LocalTableStrategy::class
                 ),
                 self::WORKSPACE_ABS => new Definition(
                     self::WORKSPACE_ABS,
                     ABSWorkspace::class,
-                    AllEncompassingTableStrategy::class
+                    WorkspaceTableStrategy::class
                 ),
                 self::WORKSPACE_REDSHIFT => new Definition(
                     self::WORKSPACE_REDSHIFT,
                     Local::class,
-                    AllEncompassingTableStrategy::class
+                    WorkspaceTableStrategy::class
                 ),
                 self::WORKSPACE_SNOWFLAKE => new Definition(
                     self::WORKSPACE_SNOWFLAKE,
                     Local::class,
-                    AllEncompassingTableStrategy::class
+                    WorkspaceTableStrategy::class
                 ),
                 self::WORKSPACE_SYNAPSE => new Definition(
                     self::WORKSPACE_SYNAPSE,
                     Local::class,
-                    AllEncompassingTableStrategy::class
+                    WorkspaceTableStrategy::class
                 ),
                 self::WORKSPACE_EXASOL => new Definition(
                     self::WORKSPACE_EXASOL,

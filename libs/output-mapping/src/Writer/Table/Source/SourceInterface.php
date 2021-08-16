@@ -9,12 +9,17 @@ interface SourceInterface
     /**
      * @return string
      */
-    public function getSourceName();
+    public function getSourcePathPrefix();
 
     /**
      * @return string
      */
-    public function getSourcePath();
+    public function getSourceId();
+
+    /**
+     * @return string
+     */
+    public function getSourceName();
 
     /**
      * @param SplFileInfo $file

@@ -4,22 +4,20 @@ namespace Keboola\OutputMapping\Writer\Table\Source;
 
 use SplFileInfo;
 
-class FileSource implements SourceInterface
+class FileSource extends AbstractSource
 {
     /** @var SplFileInfo */
     private $dataFile;
 
-    /** @var null|SplFileInfo */
-    private $manifestFile;
+    public function __construct(
+        $sourcePathPrefix,
+        SplFileInfo $dataFile,
+        SplFileInfo $manifestFile = null,
+        array $mapping = null
+    ) {
+        parent::__construct($sourcePathPrefix, $manifestFile, $mapping);
 
-    /** @var null|array */
-    private $mapping;
-
-    public function __construct(SplFileInfo $dataFile, SplFileInfo $manifestFile = null, array $mapping = null)
-    {
         $this->dataFile = $dataFile;
-        $this->manifestFile = $manifestFile;
-        $this->mapping = $mapping;
     }
 
     public function getSourceName()
@@ -27,28 +25,8 @@ class FileSource implements SourceInterface
         return $this->dataFile->getBasename();
     }
 
-    public function getSourcePath()
+    public function getSourceId()
     {
         return $this->dataFile->getPathname();
-    }
-
-    public function setManifestFile(SplFileInfo $file = null)
-    {
-        $this->manifestFile = $file;
-    }
-
-    public function getManifestFile()
-    {
-        return $this->manifestFile;
-    }
-
-    public function setMapping(array $mapping = null)
-    {
-        $this->mapping = $mapping;
-    }
-
-    public function getMapping()
-    {
-        return $this->mapping;
     }
 }

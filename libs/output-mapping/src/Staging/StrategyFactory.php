@@ -9,6 +9,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
+use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\WorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
@@ -30,7 +31,7 @@ class StrategyFactory extends InputMappingStrategyFactory
                 self::WORKSPACE_ABS => new Definition(
                     self::WORKSPACE_ABS,
                     ABSWorkspace::class,
-                    WorkspaceTableStrategy::class
+                    AbsWorkspaceTableStrategy::class
                 ),
                 self::WORKSPACE_REDSHIFT => new Definition(
                     self::WORKSPACE_REDSHIFT,
@@ -50,7 +51,7 @@ class StrategyFactory extends InputMappingStrategyFactory
                 self::WORKSPACE_EXASOL => new Definition(
                     self::WORKSPACE_EXASOL,
                     Local::class,
-                    AllEncompassingTableStrategy::class
+                    WorkspaceTableStrategy::class
                 ),
             ];
         }

@@ -1,27 +1,32 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
+use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\OutputMapping\Writer\Table\Source\FileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\Options\FileUploadOptions;
+use SplFileInfo;
+use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
-    public function resolveMappings($sourcePath, array $configuration)
+    public function resolveMappings($sourcePathPrefix, array $configuration)
     {
+        $sourcesPath = $this->metadataStorage->getPath() . '/' . $sourcePathPrefix;
+        $dataFiles = ManifestHelper::getNonManifestFiles($sourcesPath);
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
+
         /** @var SourceInterface[] $sources */
         $sources = [];
 
-        $dataFiles = ManifestHelper::getNonManifestFiles($sourcePath);
         foreach ($dataFiles as $file) {
-            $sources[$file->getBasename()] = new FileSource($file);
+            $sources[$file->getBasename()] = new FileSource($sourcePathPrefix, $file);
         }
 
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcePath);
         foreach ($manifestFiles as $file) {
             $dataFileName = $file->getBasename('.manifest');
 
@@ -80,5 +85,50 @@ class LocalTableStrategy extends AbstractTableStrategy
         }
 
         return $sourcesWithMapping;
+    }
+
+    public function loadDataIntoTable(SourceInterface $source, $tableId, array $options)
+    {
+        $tags = !empty($options['tags']) ? $options['tags'] : [];
+        $sourcePath = $source->getSourceId();
+
+        if (is_dir($sourcePath)) {
+            $fileId = $this->uploadSlicedFile($sourcePath, $tags);
+        } else {
+            $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
+                $sourcePath,
+                (new FileUploadOptions())->setCompress(true)->setTags($tags)
+            );
+        }
+
+        $options['dataFileId'] = $fileId;
+        return new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
+    }
+
+    /**
+     * Uploads a sliced table to storage api. Takes all files from the $source folder
+     *
+     * @param string $source Slices folder
+     * @return string
+     * @throws ClientException
+     */
+    private function uploadSlicedFile($source, $tags)
+    {
+        $finder = new Finder();
+        $slices = $finder->files()->in($source)->depth(0);
+        $sliceFiles = [];
+        /** @var SplFileInfo $slice */
+        foreach ($slices as $slice) {
+            $sliceFiles[] = $slice->getPathname();
+        }
+
+        // upload slices
+        $fileUploadOptions = new FileUploadOptions();
+        $fileUploadOptions
+            ->setIsSliced(true)
+            ->setFileName(basename($source))
+            ->setCompress(true)
+            ->setTags($tags);
+        return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 }

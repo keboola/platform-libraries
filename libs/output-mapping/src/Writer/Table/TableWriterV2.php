@@ -21,13 +21,9 @@ use Keboola\OutputMapping\Writer\Table;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
-use MicrosoftAzure\Storage\Blob\BlobRestProxy;
-use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
 class TableWriterV2 extends AbstractWriter
@@ -37,9 +33,6 @@ class TableWriterV2 extends AbstractWriter
 
     /** @var Table\StrategyInterface */
     private $strategy;
-
-    /** @var string */
-    private $sourcePath;
 
     public function __construct(StrategyFactory $strategyFactory)
     {
@@ -61,11 +54,9 @@ class TableWriterV2 extends AbstractWriter
             throw new OutputOperationException('Component Id must be set');
         }
 
-        $this->sourcePath = $sourcePathPrefix;
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
 
-        $sourcePath = $this->strategy->getMetadataStorage()->getPath() . '/' . $sourcePathPrefix;
-        $mappings = $this->strategy->resolveMappings($sourcePath, $configuration);
+        $mappings = $this->strategy->resolveMappings($sourcePathPrefix, $configuration);
 
         $jobs = [];
         foreach ($mappings as $mapping) {
@@ -75,8 +66,7 @@ class TableWriterV2 extends AbstractWriter
                 $jobs[] = $this->uploadTable(
                     $mapping,
                     $config,
-                    $systemMetadata,
-                    $stagingStorageOutput
+                    $systemMetadata
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -135,25 +125,25 @@ class TableWriterV2 extends AbstractWriter
                     ($metadatum['key'] === TableWriter::KBC_CREATED_BY_BRANCH_ID)) {
                     if ((string) $metadatum['value'] === (string) $this->clientWrapper->getBranchId()) {
                         return;
-                    } else {
-                        throw new InvalidOutputException(sprintf(
-                            'Trying to create a table in the development bucket "%s" on branch ' .
-                            '"%s" (ID "%s"). The bucket metadata marks it as assigned to branch with ID "%s".',
-                            $bucketId,
-                            $this->clientWrapper->getBranchName(),
-                            $this->clientWrapper->getBranchId(),
-                            $metadatum['value']
-                        ));
                     }
+
+                    throw new InvalidOutputException(sprintf(
+                        'Trying to create a table in the development bucket "%s" on branch ' .
+                        '"%s" (ID "%s"). The bucket metadata marks it as assigned to branch with ID "%s".',
+                        $bucketId,
+                        $this->clientWrapper->getBranchName(),
+                        $this->clientWrapper->getBranchId(),
+                        $metadatum['value']
+                    ));
                 }
             }
         } catch (ClientException $e) {
             // this is Ok, if the bucket it does not exists, it can't have wrong metadata
             if ($e->getCode() === 404) {
                 return;
-            } else {
-                throw $e;
             }
+
+            throw $e;
         }
         throw new InvalidOutputException(sprintf(
             'Trying to create a table in the development ' .
@@ -168,17 +158,15 @@ class TableWriterV2 extends AbstractWriter
      * @param Table\Source\SourceInterface $source
      * @param array $config
      * @param array $systemMetadata
-     * @param string $stagingStorageOutput
      * @return LoadTable
      * @throws ClientException
      */
     private function uploadTable(
         Table\Source\SourceInterface $source,
         array $config,
-        array $systemMetadata,
-        $stagingStorageOutput
+        array $systemMetadata
     ) {
-        if (empty($config['columns']) && is_dir($source->getSourcePath())) {
+        if (empty($config['columns']) && is_dir($source->getSourceId())) {
             throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getSourceName()));
         }
 
@@ -232,10 +220,10 @@ class TableWriterV2 extends AbstractWriter
             // reconstruct columns from CSV header
             } else {
                 try {
-                    $csvFile = new CsvFile($source->getSourcePath(), $config['delimiter'], $config['enclosure']);
+                    $csvFile = new CsvFile($source->getSourceId(), $config['delimiter'], $config['enclosure']);
                     $header = $csvFile->getHeader();
                 } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $source->getSourcePath() . ' ' . $e->getMessage());
+                    throw new InvalidOutputException('Failed to read file ' . $source->getSourceId() . ' ' . $e->getMessage());
                 }
 
                 $this->createTable(
@@ -265,11 +253,10 @@ class TableWriterV2 extends AbstractWriter
             $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
         }
 
-        $tableQueue = $this->loadDataIntoTable(
-            $source->getSourcePath(),
+        $tableQueue = $this->strategy->loadDataIntoTable(
+            $source,
             $config['destination'],
-            $loadOptions,
-            $stagingStorageOutput
+            $loadOptions
         );
 
         $tableQueue->addMetadata(new MetadataDefinition(
@@ -409,132 +396,6 @@ class TableWriterV2 extends AbstractWriter
     private function getTableName($tableId)
     {
         return $this->getTableIdParts($tableId)[2];
-    }
-
-    /**
-     * @param string $sourcePath
-     * @param string $tableId
-     * @param array $options
-     * @param string $stagingStorageOutput
-     * @return LoadTable
-     * @throws ClientException
-     */
-    private function loadDataIntoTable($sourcePath, $tableId, array $options, $stagingStorageOutput)
-    {
-        $tags = !empty($options['tags']) ? $options['tags'] : [];
-        $this->validateWorkspaceStaging($stagingStorageOutput);
-        if ($stagingStorageOutput === StrategyFactory::LOCAL) {
-            if (is_dir($sourcePath)) {
-                $fileId = $this->uploadSlicedFile($sourcePath, $tags);
-                $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
-            } else {
-                $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
-                    $sourcePath,
-                    (new FileUploadOptions())->setCompress(true)->setTags($tags)
-                );
-                $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
-            }
-        } else {
-            if ($stagingStorageOutput === StrategyFactory::WORKSPACE_ABS) {
-                $sourcePath = $this->specifySourceAbsPath($sourcePath);
-            }
-            $dataStorage = $this->strategy->getDataStorage();
-            $options = [
-                'dataWorkspaceId' => $dataStorage->getWorkspaceId(),
-                'dataObject' => $sourcePath,
-                'incremental' => $options['incremental'],
-                'columns' => $options['columns'],
-            ];
-            $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
-        }
-        return $tableQueue;
-    }
-
-    private function specifySourceAbsPath($sourcePath)
-    {
-        $path = $this->ensurePathDelimiter($this->sourcePath) . $sourcePath;
-        $absCredentials = $this->strategy->getDataStorage()->getCredentials();
-        $blobClient = BlobRestProxy::createBlobService($absCredentials['connectionString']);
-        try {
-            $options = new ListBlobsOptions();
-            $options->setPrefix($path);
-            $blobs = $blobClient->listBlobs($absCredentials['container'], $options);
-            $isSliced = false;
-            foreach ($blobs->getBlobs() as $blob) {
-                /* there can be multiple blobs with the same prefix (e.g `my`, `my-file`, ...), we're checking
-                    if there are blobs where the prefix is a directory. (e.g `my/` or `my-file/`) */
-                if (substr($blob->getName(), 0, strlen($path) + 1) === $path . '/') {
-                    $isSliced = true;
-                }
-            }
-            if ($isSliced) {
-                $path .= '/';
-            }
-        } catch (\Exception $e) {
-            throw new InvalidOutputException('Failed to list blobs ' . $e->getMessage(), 0, $e);
-        }
-        return $path;
-    }
-
-    protected function ensurePathDelimiter($path)
-    {
-        return $this->ensureNoPathDelimiter($path) . '/';
-    }
-
-    protected function ensureNoPathDelimiter($path)
-    {
-        return rtrim($path, '\\/');
-    }
-
-    /**
-     * @param string $stagingStorageOutput
-     * @throws InvalidOutputException if not local or valid workspace
-     */
-    private function validateWorkspaceStaging($stagingStorageOutput)
-    {
-        $stagingTypes = [
-            StrategyFactory::LOCAL,
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
-            StrategyFactory::WORKSPACE_REDSHIFT,
-            StrategyFactory::WORKSPACE_SYNAPSE,
-            StrategyFactory::WORKSPACE_ABS,
-            StrategyFactory::WORKSPACE_EXASOL,
-        ];
-        if (!in_array($stagingStorageOutput, $stagingTypes)) {
-            throw new InvalidOutputException(
-                'Parameter "storage" must be one of: ' .
-                implode(', ', $stagingTypes)
-            );
-        }
-    }
-
-    /**
-     * Uploads a sliced table to storage api. Takes all files from the $source folder
-     *
-     * @param string $source Slices folder
-     * @return string
-     * @throws ClientException
-     */
-    private function uploadSlicedFile($source, $tags)
-    {
-        $finder = new Finder();
-        $slices = $finder->files()->in($source)->depth(0);
-        $sliceFiles = [];
-        /** @var SplFileInfo $slice */
-        foreach ($slices as $slice) {
-            $sliceFiles[] = $slice->getPathname();
-        }
-
-        // upload slices
-        $fileUploadOptions = new FileUploadOptions();
-        $fileUploadOptions
-            ->setIsSliced(true)
-            ->setFileName(basename($source))
-            ->setCompress(true)
-            ->setTags($tags);
-        return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 
     /**

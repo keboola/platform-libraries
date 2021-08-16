@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
 interface StrategyInterface
@@ -18,9 +19,17 @@ interface StrategyInterface
     public function getMetadataStorage();
 
     /**
-     * @param string $sourcePath
+     * @param string$sourcePathPrefix
      * @param array $configuration
      * @return SourceInterface[]
      */
-    public function resolveMappings($sourcePath, array $configuration);
+    public function resolveMappings($sourcePathPrefix, array $configuration);
+
+    /**
+     * @param SourceInterface $source
+     * @param string $tableId
+     * @param array $options
+     * @return LoadTable
+     */
+    public function loadDataIntoTable(SourceInterface $source, $tableId, array $options);
 }

@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
@@ -12,10 +13,10 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
     protected function createMapping($sourcePathPrefix, $sourceId, $manifestFile, $mapping)
     {
-        $sourcePath = rtrim($sourcePathPrefix, '/') . '/' . $sourceId;
+        $sourcePath = Path::join($sourcePathPrefix, $sourceId);
 
         if ($this->isDirectory($sourcePath)) {
-            $sourcePath .= '/';
+            $sourcePath = Path::ensureTrailingSlash($sourcePath);
         }
 
         return new MappingSource($sourcePath, $sourcePath, $manifestFile, $mapping);

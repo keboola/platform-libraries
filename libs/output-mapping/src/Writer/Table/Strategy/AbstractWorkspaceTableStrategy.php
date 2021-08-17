@@ -4,8 +4,9 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
-use SplFileInfo;
+use Symfony\Component\Finder\SplFileInfo;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
@@ -27,7 +28,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         }
 
         // add manifest files
-        $sourcesPath = $this->metadataStorage->getPath() . '/' . $sourcePathPrefix;
+        $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
         $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
         foreach ($manifestFiles as $file) {
             $sourceName = $file->getBasename('.manifest');

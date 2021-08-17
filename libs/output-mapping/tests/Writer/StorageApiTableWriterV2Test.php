@@ -1125,9 +1125,9 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
     }
 
     /**
-     * @dataProvider provideDestinationConfigurations
+     * @dataProvider provideAllowedDestinationConfigurations
      */
-    public function testAllowedDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedError, $expectedTables)
+    public function testAllowedDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedTables)
     {
         $root = $this->tmp->getTmpFolder() . '/upload/';
 
@@ -1137,11 +1137,6 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         }
 
         $tableWriter = new TableWriterV2($this->getStagingFactory());
-
-        if ($expectedError !== null) {
-            $this->expectException(InvalidOutputException::class);
-            $this->expectExceptionMessage($expectedError);
-        }
 
         $queue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
         $queue->waitForAll();
@@ -1153,68 +1148,29 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         self::assertSame($expectedTables, $tablesIds);
     }
 
-    public function provideDestinationConfigurations()
+    public function provideAllowedDestinationConfigurations()
     {
         return [
-            'table ID nowhere' => [
-                'manifest' => null,
-                'defaultBucket' => 'out.c-output-mapping-test',
-                'mapping' => null,
-                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
-                'expectedTables' => [],
-            ],
-
             'table ID in mapping is accepted' => [
                 'manifest' => null,
                 'defaultBucket' => null,
                 'mapping' => [
                     ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table']
                 ],
-                'expectedError' => null,
                 'expectedTables' => ['out.c-output-mapping-test.table'],
-            ],
-
-            'table name in mapping is not accepted' => [
-                'manifest' => null,
-                'defaultBucket' => null,
-                'mapping' => [
-                    ['source' => 'table.csv', 'destination' => 'table']
-                ],
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
-                'expectedTables' => [],
-            ],
-
-            'table name in mapping does not combine with default bucket' => [
-                'manifest' => null,
-                'defaultBucket' => 'out.c-output-mapping-test',
-                'mapping' => [
-                    ['source' => 'table.csv', 'destination' => 'table']
-                ],
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
-                'expectedTables' => [],
             ],
 
             'table ID in manifest is accepted' => [
                 'manifest' => ['destination' => 'out.c-output-mapping-test.table'],
                 'defaultBucket' => null,
                 'mapping' => null,
-                'expectedError' => null,
                 'expectedTables' => ['out.c-output-mapping-test.table'],
-            ],
-
-            'table name in manifest without bucket is not accepted' => [
-                'manifest' => ['destination' => 'table'],
-                'defaultBucket' => null,
-                'mapping' => null,
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
-                'expectedTables' => [],
             ],
 
             'table name in manifest with bucket is accepted' => [
                 'manifest' => ['destination' => 'table'],
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => null,
-                'expectedError' => null,
                 'expectedTables' => ['out.c-output-mapping-test.table'],
             ],
 
@@ -1224,8 +1180,64 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
                 'mapping' => [
                     ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1']
                 ],
-                'expectedError' => null,
                 'expectedTables' => ['out.c-output-mapping-test.table1'],
+            ],
+        ];
+    }
+
+
+    /**
+     * @dataProvider provideForbiddenDestinationConfigurations
+     */
+    public function testForbiddenDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedError)
+    {
+        $root = $this->tmp->getTmpFolder() . '/upload/';
+
+        file_put_contents($root . 'table.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        if ($manifest !== null) {
+            file_put_contents($root . 'table.csv.manifest', json_encode($manifest));
+        }
+
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage($expectedError);
+        $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+    }
+
+    public function provideForbiddenDestinationConfigurations()
+    {
+        return [
+            'table ID nowhere' => [
+                'manifest' => null,
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => null,
+                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
+            ],
+
+            'table name in mapping is not accepted' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'table']
+                ],
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+
+            'table name in mapping does not combine with default bucket' => [
+                'manifest' => null,
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'table']
+                ],
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+
+            'table name in manifest without bucket is not accepted' => [
+                'manifest' => ['destination' => 'table'],
+                'defaultBucket' => null,
+                'mapping' => null,
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
             ],
         ];
     }

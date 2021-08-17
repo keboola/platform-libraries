@@ -453,7 +453,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         $writer = new TableWriterV2($this->getStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to resolve destination for output table "out.c-output-mapping-test.table4.csv".');
+        $this->expectExceptionMessage('Source "out.c-output-mapping-test.table4.csv" has neither manifest nor mapping set');
 
         $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
     }
@@ -1212,7 +1212,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
                 'manifest' => null,
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => null,
-                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
+                'expectedError' => 'Source "table.csv" has neither manifest nor mapping set',
             ],
 
             'table name in mapping is not accepted' => [

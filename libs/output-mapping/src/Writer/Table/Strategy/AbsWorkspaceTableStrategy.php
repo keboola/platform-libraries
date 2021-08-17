@@ -3,35 +3,29 @@
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\MappingSource;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 
-class AbsWorkspaceTableStrategy extends WorkspaceTableStrategy
+class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    public function loadDataIntoTable(SourceInterface $source, $tableId, array $options)
+    protected function createMapping($sourcePathPrefix, $sourceId, $manifestFile, $mapping)
     {
-        $sourcePath = $this->ensurePathDelimiter($source->getSourcePathPrefix()) . $source->getSourceId();
+        $sourcePath = rtrim($sourcePathPrefix, '/') . '/' . $sourceId;
 
-        if ($this->isSlicedSourcePath($sourcePath)) {
+        if ($this->isDirectory($sourcePath)) {
             $sourcePath .= '/';
         }
 
-        return new LoadTable($this->clientWrapper->getBasicClient(), $tableId, [
-            'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
-            'dataObject' => $sourcePath,
-            'incremental' => $options['incremental'],
-            'columns' => $options['columns'],
-        ]);
+        return new MappingSource($sourcePath, $sourcePath, $manifestFile, $mapping);
     }
 
     /**
      * @param string $sourcePath
      * @return bool
      */
-    private function isSlicedSourcePath($sourcePath)
+    private function isDirectory($sourcePath)
     {
         $absCredentials = $this->dataStorage->getCredentials();
         $blobClient = BlobRestProxy::createBlobService($absCredentials['connectionString']);
@@ -53,14 +47,5 @@ class AbsWorkspaceTableStrategy extends WorkspaceTableStrategy
         }
 
         return false;
-    }
-
-    /**
-     * @param string $path
-     * @return string
-     */
-    private function ensurePathDelimiter($path)
-    {
-        return rtrim($path, '/') . '/';
     }
 }

@@ -5,8 +5,7 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
-use Keboola\OutputMapping\Writer\Table\Source\FileSource;
-use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use SplFileInfo;
@@ -14,17 +13,20 @@ use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
-    public function resolveMappings($sourcePathPrefix, array $configuration)
+    public function resolveMappingSources($sourcePathPrefix, array $configuration)
     {
         $sourcesPath = $this->metadataStorage->getPath() . '/' . $sourcePathPrefix;
         $dataFiles = ManifestHelper::getNonManifestFiles($sourcesPath);
         $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
 
-        /** @var SourceInterface[] $sources */
+        /** @var array<string, MappingSource> $sources */
         $sources = [];
 
         foreach ($dataFiles as $file) {
-            $sources[$file->getBasename()] = new FileSource($sourcePathPrefix, $file);
+            $filename = $file->getBasename();
+            $pathname = $file->getPathname();
+
+            $sources[$file->getBasename()] = new MappingSource($filename, $pathname);
         }
 
         foreach ($manifestFiles as $file) {
@@ -37,7 +39,6 @@ class LocalTableStrategy extends AbstractTableStrategy
             $sources[$dataFileName]->setManifestFile($file);
         }
 
-        // Check if all files from output mappings are present
         if (isset($configuration['mapping'])) {
             foreach ($configuration['mapping'] as $mapping) {
                 $filename = $mapping['source'];
@@ -47,18 +48,18 @@ class LocalTableStrategy extends AbstractTableStrategy
                 }
             }
 
-            $sources = $this->combineSourcesWithMapping($sources, $configuration['mapping']);
+            $sources = $this->combineSourcesWithCustomMappings($sources, $configuration['mapping']);
         }
 
         return array_values($sources);
     }
 
     /**
-     * @param SourceInterface[] $sources
+     * @param MappingSource[] $sources
      * @param array<array{source: string}> $mappings
-     * @return SourceInterface[]
+     * @return MappingSource[]
      */
-    private function combineSourcesWithMapping(array $sources, array $mappings)
+    private function combineSourcesWithCustomMappings(array $sources, array $mappings)
     {
         $mappingsBySource = [];
         foreach ($mappings as $mapping) {
@@ -67,8 +68,8 @@ class LocalTableStrategy extends AbstractTableStrategy
 
         $sourcesWithMapping = [];
         foreach ($sources as $source) {
-            $sourceMappings = isset($mappingsBySource[$source->getSourceName()]) ?
-                $mappingsBySource[$source->getSourceName()] :
+            $sourceMappings = isset($mappingsBySource[$source->getName()]) ?
+                $mappingsBySource[$source->getName()] :
                 []
             ;
 
@@ -87,16 +88,15 @@ class LocalTableStrategy extends AbstractTableStrategy
         return $sourcesWithMapping;
     }
 
-    public function loadDataIntoTable(SourceInterface $source, $tableId, array $options)
+    public function loadDataIntoTable($sourceId, $tableId, array $options)
     {
         $tags = !empty($options['tags']) ? $options['tags'] : [];
-        $sourcePath = $source->getSourceId();
 
-        if (is_dir($sourcePath)) {
-            $fileId = $this->uploadSlicedFile($sourcePath, $tags);
+        if (is_dir($sourceId)) {
+            $fileId = $this->uploadSlicedFile($sourceId, $tags);
         } else {
             $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
-                $sourcePath,
+                $sourceId,
                 (new FileUploadOptions())->setCompress(true)->setTags($tags)
             );
         }

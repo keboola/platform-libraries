@@ -56,15 +56,26 @@ class TableWriterV2 extends AbstractWriter
 
         $this->strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
 
-        $mappings = $this->strategy->resolveMappings($sourcePathPrefix, $configuration);
+        $sources = $this->strategy->resolveMappingSources($sourcePathPrefix, $configuration);
+
+        foreach ($sources as $source) {
+            if ($source->getManifestFile() !== null || $source->getMapping() !== null) {
+                continue;
+            }
+
+            throw new InvalidOutputException(sprintf(
+                'Source "%s" has neither manifest nor mapping set',
+                $source->getName()
+            ));
+        }
 
         $jobs = [];
-        foreach ($mappings as $mapping) {
-            $config = $this->resolveTableConfiguration($mapping, $configuration);
+        foreach ($sources as $source) {
+            $config = $this->resolveTableConfiguration($source, $configuration);
 
             try {
                 $jobs[] = $this->uploadTable(
-                    $mapping,
+                    $source,
                     $config,
                     $systemMetadata
                 );
@@ -72,7 +83,7 @@ class TableWriterV2 extends AbstractWriter
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                        $mapping->getSourceName(),
+                        $source->getName(),
                         $config["destination"],
                         $e->getMessage()
                     ),
@@ -155,19 +166,16 @@ class TableWriterV2 extends AbstractWriter
     }
 
     /**
-     * @param Table\Source\SourceInterface $source
-     * @param array $config
-     * @param array $systemMetadata
      * @return LoadTable
      * @throws ClientException
      */
     private function uploadTable(
-        Table\Source\SourceInterface $source,
+        Table\MappingSource $source,
         array $config,
         array $systemMetadata
     ) {
-        if (empty($config['columns']) && is_dir($source->getSourceId())) {
-            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getSourceName()));
+        if (empty($config['columns']) && is_dir($source->getId())) {
+            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getName()));
         }
 
         if (!$this->isValidTableId($config['destination'])) {
@@ -220,10 +228,10 @@ class TableWriterV2 extends AbstractWriter
             // reconstruct columns from CSV header
             } else {
                 try {
-                    $csvFile = new CsvFile($source->getSourceId(), $config['delimiter'], $config['enclosure']);
+                    $csvFile = new CsvFile($source->getId(), $config['delimiter'], $config['enclosure']);
                     $header = $csvFile->getHeader();
                 } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $source->getSourceId() . ' ' . $e->getMessage());
+                    throw new InvalidOutputException('Failed to read file ' . $source->getId() . ' ' . $e->getMessage());
                 }
 
                 $this->createTable(
@@ -254,7 +262,7 @@ class TableWriterV2 extends AbstractWriter
         }
 
         $tableQueue = $this->strategy->loadDataIntoTable(
-            $source,
+            $source->getId(),
             $config['destination'],
             $loadOptions
         );
@@ -430,13 +438,11 @@ class TableWriterV2 extends AbstractWriter
     }
 
     /**
-     * @param Table\Source\SourceInterface $source
-     * @param array $configuration
      * @return array
      * @throws InvalidOutputException
      */
     private function resolveTableConfiguration(
-        Table\Source\SourceInterface $source,
+        Table\MappingSource $source,
         array $configuration
     ) {
         $configFromMapping = [];
@@ -453,16 +459,9 @@ class TableWriterV2 extends AbstractWriter
             if (isset($configuration['bucket']) && $this->isTableName($configFromManifest['destination'])) {
                 $configFromManifest['destination'] = implode('.', [
                     $configuration['bucket'],
-                    basename($source->getSourceName(), '.csv')
+                    basename($source->getName(), '.csv')
                 ]);
             }
-        }
-
-        if (empty($configFromMapping) && empty($configFromManifest)) {
-            throw new InvalidOutputException(sprintf(
-                'Failed to resolve destination for output table "%s".',
-                $source->getSourceName()
-            ));
         }
 
         $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
@@ -470,7 +469,7 @@ class TableWriterV2 extends AbstractWriter
         if (empty($config['destination'])) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve destination for output table "%s".',
-                $source->getSourceName()
+                $source->getName()
             ));
         }
 
@@ -478,7 +477,7 @@ class TableWriterV2 extends AbstractWriter
             $config = (new TableManifest())->parse([$config]);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
-                sprintf("Failed to write manifest for table %s: %s", $source->getSourceName(), $e->getMessage()),
+                sprintf("Failed to write manifest for table %s: %s", $source->getName(), $e->getMessage()),
                 0,
                 $e
             );
@@ -492,7 +491,7 @@ class TableWriterV2 extends AbstractWriter
             throw new InvalidOutputException(
                 sprintf(
                     'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                    $source->getSourceName(),
+                    $source->getName(),
                     $config["destination"],
                     $e->getMessage()
                 ),

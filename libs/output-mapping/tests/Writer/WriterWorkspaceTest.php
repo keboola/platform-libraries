@@ -125,7 +125,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         // fix exception message when https://keboola.atlassian.net/browse/KBC-34 is resolved
         // self::expectExceptionMessage('foo');
-        self::expectException(InvalidOutputException::class);
+        $this->expectException(InvalidOutputException::class);
     }
 
     public function testTableOutputMappingMissingManifest()
@@ -138,8 +138,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to read file table1a Cannot open file table1a');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to read file table1a Cannot open file table1a');
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],
@@ -241,8 +241,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             )
         );
 
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessageRegExp('/^(
+            Failed\ to\ resolve\ valid\ destination\.\ "table1a"\ is\ not\ a\ valid\ table\ ID\.| # TableWriterV2
+            Failed\ to\ resolve\ destination\ for\ output\ table\ "table1a"\.                     # TableWriterV1
+        )$/x');
+
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],
@@ -267,8 +271,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ];
         $writer = new TableWriter($factory);
 
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],

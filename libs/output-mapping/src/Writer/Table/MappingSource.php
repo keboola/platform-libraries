@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Writer\Table;
 
 use InvalidArgumentException;
-use SplFileInfo;
+use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSource
 {
@@ -25,6 +25,20 @@ class MappingSource
      */
     public function __construct($sourceName, $sourceId, SplFileInfo $manifestFile = null, array $mapping = null)
     {
+        if (!is_string($sourceName)) {
+            throw new InvalidArgumentException(sprintf(
+                'Argument $sourceName must be a string, %s given',
+                is_object($sourceName) ? get_class($sourceName) : gettype($sourceName)
+            ));
+        }
+
+        if (!is_string($sourceId)) {
+            throw new InvalidArgumentException(sprintf(
+                'Argument $sourceId must be a string, %s given',
+                is_object($sourceId) ? get_class($sourceId) : gettype($sourceId)
+            ));
+        }
+
         $this->name = $sourceName;
         $this->id = $sourceId;
         $this->manifestFile = $manifestFile;

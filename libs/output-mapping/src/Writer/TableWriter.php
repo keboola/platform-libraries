@@ -50,6 +50,17 @@ class TableWriter extends AbstractWriter
         $realWriter = $this->writerFactory->createTableWriter();
         $realWriter->setFormat($this->format);
 
+        $this->logger->info(sprintf('Using %s to upload tables', $this->resolveRealWriterName($realWriter)));
+
         return $realWriter->uploadTables($source, $configuration, $systemMetadata, $stagingStorageOutput);
+    }
+
+    private function resolveRealWriterName($realWriter)
+    {
+        $writerVariantName = get_class($realWriter);
+        $writerVariantName = substr($writerVariantName, strrpos($writerVariantName, '\\') + 1); // remove namespace
+        $writerVariantName = substr($writerVariantName, strlen('TableWriter')); // remove TableWriter prefix from class name
+
+        return 'TableWriter '.$writerVariantName;
     }
 }

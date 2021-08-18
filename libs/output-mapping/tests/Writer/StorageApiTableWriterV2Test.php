@@ -599,20 +599,6 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
     }
 
-    public function testWriteManifestWithoutDestination()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table8.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table8.csv.manifest", "{\"primary_key\": [\"Id\", \"Name\"]}");
-
-        $writer = new TableWriterV2($this->getStagingFactory());
-
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to resolve destination for output table "table8.csv".');
-
-        $writer->uploadTables('upload', ['mapping' => []], ['componentId' => 'foo'], 'local');
-    }
-
     public function testWriteTableOutputMappingWithPk()
     {
         $root = $this->tmp->getTmpFolder();
@@ -1151,40 +1137,56 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
     public function provideAllowedDestinationConfigurations()
     {
         return [
-            'table ID in mapping is accepted' => [
+            'table ID in mapping' => [
                 'manifest' => null,
                 'defaultBucket' => null,
                 'mapping' => [
-                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table']
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.tableA']
                 ],
-                'expectedTables' => ['out.c-output-mapping-test.table'],
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
             ],
 
-            'table ID in manifest is accepted' => [
-                'manifest' => ['destination' => 'out.c-output-mapping-test.table'],
+            'table ID in manifest' => [
+                'manifest' => ['destination' => 'out.c-output-mapping-test.tableA'],
                 'defaultBucket' => null,
                 'mapping' => null,
-                'expectedTables' => ['out.c-output-mapping-test.table'],
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
             ],
 
-            'table name in manifest with bucket is accepted' => [
-                'manifest' => ['destination' => 'table'],
+            'table name in manifest with bucket' => [
+                'manifest' => ['destination' => 'tableA'],
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => null,
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
+            ],
+
+            'no destination in manifest with bucket' => [
+                'manifest' => ['columns' => ['Id', 'Name']],
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => null,
                 'expectedTables' => ['out.c-output-mapping-test.table'],
             ],
 
             'table ID in mapping overrides manifest' => [
-                'manifest' => ['destination' => 'out.c-output-mapping-test.table'],
+                'manifest' => ['destination' => 'out.c-output-mapping-test.tableA'],
                 'defaultBucket' => null,
                 'mapping' => [
                     ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1']
                 ],
                 'expectedTables' => ['out.c-output-mapping-test.table1'],
             ],
+
+            'multiple mappings of the same source' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1'],
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table2']
+                ],
+                'expectedTables' => ['out.c-output-mapping-test.table1', 'out.c-output-mapping-test.table2'],
+            ],
         ];
     }
-
 
     /**
      * @dataProvider provideForbiddenDestinationConfigurations
@@ -1208,11 +1210,18 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
     public function provideForbiddenDestinationConfigurations()
     {
         return [
-            'table ID nowhere' => [
+            'no manifest nor mapping' => [
                 'manifest' => null,
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => null,
                 'expectedError' => 'Source "table.csv" has neither manifest nor mapping set',
+            ],
+
+            'no destination in manifest without bucket' => [
+                'manifest' => ['columns' => ['Id', 'Name']],
+                'defaultBucket' => null,
+                'mapping' => null,
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
             ],
 
             'table name in mapping is not accepted' => [
@@ -1228,27 +1237,16 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
                 'manifest' => null,
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => [
-                    ['source' => 'table.csv', 'destination' => 'table']
+                    ['source' => 'table.csv', 'destination' => 'table'],
                 ],
                 'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
             ],
 
-            'table name in manifest without bucket is not accepted' => [
+            'table name in manifest without bucket' => [
                 'manifest' => ['destination' => 'table'],
                 'defaultBucket' => null,
                 'mapping' => null,
                 'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
-            ],
-
-            'multiple mappings of the same source are allowed' => [
-                'manifest' => null,
-                'defaultBucket' => null,
-                'mapping' => [
-                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1'],
-                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table2']
-                ],
-                'expectedError' => null,
-                'expectedTables' => ['out.c-output-mapping-test.table1', 'out.c-output-mapping-test.table2'],
             ],
         ];
     }

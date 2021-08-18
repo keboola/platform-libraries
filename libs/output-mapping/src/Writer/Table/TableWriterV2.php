@@ -5,36 +5,54 @@ namespace Keboola\OutputMapping\Writer\Table;
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
-use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
-use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\OutputMapping\Writer\AbstractWriter;
-use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
-use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Finder\SplFileInfo;
+use Psr\Log\LoggerInterface;
 
-class TableWriterV2 extends AbstractWriter
+class TableWriterV2
 {
+    /** @var StrategyFactory */
+    protected $strategyFactory;
+
+    /** @var ClientWrapper */
+    private $clientWrapper;
+
     /** @var Metadata */
     private $metadataClient;
 
+    /** @var TableConfigurationResolver */
+    private $tableConfigurationResolver;
+
+    /** @var LoggerInterface */
+    private $logger;
+
     public function __construct(StrategyFactory $strategyFactory)
     {
-        parent::__construct($strategyFactory);
+        $this->strategyFactory = $strategyFactory;
+        $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->metadataClient = new Metadata($this->clientWrapper->getBasicClient());
+        $this->tableConfigurationResolver = new TableConfigurationResolver(
+            $strategyFactory->getClientWrapper(),
+            $strategyFactory->getLogger()
+        );
+        $this->logger = $strategyFactory->getLogger();
+    }
+
+    public function setFormat($format)
+    {
+        $this->tableConfigurationResolver->setFormat($format);
     }
 
     /**
@@ -65,9 +83,10 @@ class TableWriterV2 extends AbstractWriter
             ));
         }
 
+        $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
         $jobs = [];
         foreach ($sources as $source) {
-            $config = $this->resolveTableConfiguration($source, $configuration);
+            $config = $this->tableConfigurationResolver->resolveTableConfiguration($source, $defaultBucket);
 
             try {
                 $jobs[] = $this->uploadTable(
@@ -93,91 +112,6 @@ class TableWriterV2 extends AbstractWriter
         $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
         $tableQueue->start();
         return $tableQueue;
-    }
-
-    /**
-     * @return array
-     * @throws InvalidOutputException
-     */
-    private function resolveTableConfiguration(
-        Table\MappingSource $source,
-        array $configuration
-    ) {
-        $configFromMapping = [];
-        $configFromManifest = [];
-
-        if ($source->getMapping() !== null) {
-            $configFromMapping = $source->getMapping();
-            unset($configFromMapping['source']);
-        }
-
-        if ($source->getManifestFile() !== null) {
-            $configFromManifest = $this->readTableManifest($source->getManifestFile());
-
-            if (isset($configuration['bucket']) && MappingDestination::isTableName($configFromManifest['destination'])) {
-                $configFromManifest['destination'] = implode('.', [
-                    $configuration['bucket'],
-                    basename($source->getName(), '.csv')
-                ]);
-            }
-        }
-
-        $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
-
-        if (empty($config['destination'])) {
-            throw new InvalidOutputException(sprintf(
-                'Failed to resolve destination for output table "%s".',
-                $source->getName()
-            ));
-        }
-
-        try {
-            $config = (new TableManifest())->parse([$config]);
-        } catch (InvalidConfigurationException $e) {
-            throw new InvalidOutputException(
-                sprintf("Failed to write manifest for table %s: %s", $source->getName(), $e->getMessage()),
-                0,
-                $e
-            );
-        }
-
-        $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
-
-        try {
-            $config = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                    $source->getName(),
-                    $config["destination"],
-                    $e->getMessage()
-                ),
-                $e->getCode(),
-                $e
-            );
-        }
-
-        return $config;
-    }
-
-    /**
-     * @return array
-     * @throws InvalidOutputException
-     */
-    private function readTableManifest(SplFileInfo $manifestFile)
-    {
-        $adapter = new TableAdapter($this->format);
-
-        try {
-            return $adapter->deserialize($manifestFile->getContents());
-        } catch (InvalidConfigurationException $e) {
-            throw new InvalidOutputException(
-                'Failed to read table manifest from file ' . $manifestFile->getBasename() . ' ' . $e->getMessage(),
-                0,
-                $e
-            );
-        }
     }
 
     /**

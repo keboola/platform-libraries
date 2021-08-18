@@ -5,23 +5,57 @@ namespace Keboola\OutputMapping\Tests\Writer\Helper;
 use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use SplFileInfo;
 
 class ManifestHelperTest extends TestCase
 {
-    public function testListManifests()
+    public function testGetManifestFiles()
     {
         $temp = new Temp();
         $temp->initRunFolder();
         mkdir($temp->getTmpFolder() . '/sub-dir');
-        touch($temp->getTmpFolder() . '/my.manifest');
-        touch($temp->getTmpFolder() . '/my.other.file.manifest');
-        touch($temp->getTmpFolder() . '/sub-dir/my.other.file.manifest');
+        touch($temp->getTmpFolder() . '/my.csv');
+        touch($temp->getTmpFolder() . '/my.csv.manifest');
+        touch($temp->getTmpFolder() . '/my.root.file.manifest');
+        touch($temp->getTmpFolder() . '/sub-dir/my.sub-dir.csv');
+        touch($temp->getTmpFolder() . '/sub-dir/my.sub-dir.file.manifest');
+
         $result = ManifestHelper::getManifestFiles($temp->getTmpFolder());
+        $result = array_map(function (SplFileInfo $file) {
+            return $file->getPathname();
+        }, $result);
         sort($result);
-        self::assertEquals(
+
+        self::assertSame(
             [
-                $temp->getTmpFolder()  . DIRECTORY_SEPARATOR . 'my.manifest',
-                $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.other.file.manifest',
+                $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.csv.manifest',
+                $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.root.file.manifest',
+            ],
+            $result
+        );
+    }
+
+    public function testGetNonManifestFiles()
+    {
+        $temp = new Temp();
+        $temp->initRunFolder();
+        mkdir($temp->getTmpFolder() . '/sub-dir');
+        touch($temp->getTmpFolder() . '/my.csv');
+        touch($temp->getTmpFolder() . '/my.csv.manifest');
+        touch($temp->getTmpFolder() . '/my.root.file.manifest');
+        touch($temp->getTmpFolder() . '/sub-dir/my.subdir.csv');
+        touch($temp->getTmpFolder() . '/sub-dir/my.subdir.file.manifest');
+
+        $result = ManifestHelper::getNonManifestFiles($temp->getTmpFolder());
+        $result = array_map(function (SplFileInfo $file) {
+            return $file->getPathname();
+        }, $result);
+        sort($result);
+
+        self::assertSame(
+            [
+                $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.csv',
+                $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'sub-dir',
             ],
             $result
         );

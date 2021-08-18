@@ -47,15 +47,6 @@ class MappingDestination
     }
 
     /**
-     * @param string $value
-     * @return bool
-     */
-    public static function isTableName($value)
-    {
-        return is_string($value) && substr_count($value, '.') === 0;
-    }
-
-    /**
      * @return string
      */
     public function getBucketId()

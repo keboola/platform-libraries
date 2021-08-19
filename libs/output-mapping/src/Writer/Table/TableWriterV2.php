@@ -3,22 +3,21 @@
 namespace Keboola\OutputMapping\Writer\Table;
 
 use InvalidArgumentException;
-use Keboola\Csv\CsvFile;
-use Keboola\Csv\Exception;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\LoadTableTaskV2;
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 
 class TableWriterV2
@@ -115,7 +114,7 @@ class TableWriterV2
     }
 
     /**
-     * @return LoadTableTaskV2
+     * @return LoadTableTaskInterface
      * @throws ClientException
      */
     private function createLoadTableTask(
@@ -139,17 +138,18 @@ class TableWriterV2
 
         $this->ensureValidBucketExists($destination, $systemMetadata);
 
-        // destination table already exists, reuse it
         $storageApiClient = $this->clientWrapper->getBasicClient();
-        if ($storageApiClient->tableExists($config['destination'])) {
-            $tableInfo = $storageApiClient->getTable($config['destination']);
+        $destinationTableExists = $storageApiClient->tableExists($destination->getTableId());
+
+        if ($destinationTableExists) {
+            $tableInfo = $storageApiClient->getTable($destination->getTableId());
 
             PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $tableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getBasicClient(),
-                    $config['destination'],
+                    $destination->getTableId(),
                     $tableInfo['primaryKey'],
                     $config['primary_key']
                 );
@@ -162,50 +162,41 @@ class TableWriterV2
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
+                $this->clientWrapper->getBasicClient()->deleteTableRows($destination->getTableId(), $deleteOptions);
             }
+        }
 
-        // destination table does not exist yet, create it
-        } else {
-            $primaryKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
-            $distributionKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
+        $loadOptions = [
+            'columns' => !empty($config['columns']) ? $config['columns'] : [],
+            'primaryKey' => implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])),
+            'incremental' => $config['incremental'],
+        ];
 
-            // columns explicitly configured
-            if (!empty($config['columns'])) {
-                $this->createTable(
-                    $destination,
-                    $config['columns'],
-                    $primaryKey,
-                    $distributionKey ?: null
-                );
+        if (!$destinationTableExists && isset($config['distribution_key'])) {
+            $loadOptions['distributionKey'] = implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
+        }
 
-            // reconstruct columns from CSV header
-            } else {
-                try {
-                    $csvFile = new CsvFile($source->getId(), $config['delimiter'], $config['enclosure']);
-                    $header = $csvFile->getHeader();
-                } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $source->getId() . ' ' . $e->getMessage());
-                }
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
+            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
+        }
 
-                $this->createTable(
-                    $destination,
-                    $header,
-                    $primaryKey,
-                    $distributionKey ?: null
-                );
-                unset($csvFile);
-            }
+        $loadTask = $strategy->prepareLoadTask(
+            $source->getId(),
+            $destination,
+            $destinationTableExists,
+            $config,
+            $loadOptions
+        );
 
-            $this->metadataClient->postTableMetadata(
+        if (!$destinationTableExists) {
+            $loadTask->addMetadata(new TableMetadata(
                 $destination->getTableId(),
                 TableWriter::SYSTEM_METADATA_PROVIDER,
                 $this->getCreatedMetadata($systemMetadata)
-            );
+            ));
         }
 
-        $loadOptions = $strategy->resolveLoadTaskOptions($source->getId(), $config, $systemMetadata);
-        $loadTask = new LoadTableTaskV2($destination, $loadOptions);
         $loadTask->addMetadata(new TableMetadata(
             $destination->getTableId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
@@ -229,28 +220,6 @@ class TableWriterV2
         }
 
         return $loadTask;
-    }
-
-    /**
-     * @param string $primaryKey
-     * @param null|string $distributionKey
-     */
-    private function createTable(MappingDestination $destination, array $columns, $primaryKey, $distributionKey = null)
-    {
-        $tmp = new Temp();
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName() . '.header.csv'));
-        $headerCsvFile->writeRow($columns);
-        $options = ['primaryKey' => $primaryKey];
-        if (isset($distributionKey)) {
-            $options['distributionKey'] = $distributionKey;
-        }
-
-        $this->clientWrapper->getBasicClient()->createTableAsync(
-            $destination->getBucketId(),
-            $destination->getTableName(),
-            $headerCsvFile,
-            $options
-        );
     }
 
     private function ensureValidBucketExists(MappingDestination $destination, array $systemMetadata)

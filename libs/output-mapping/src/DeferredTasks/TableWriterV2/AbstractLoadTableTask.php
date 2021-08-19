@@ -1,27 +1,27 @@
 <?php
 
-namespace Keboola\OutputMapping\DeferredTasks;
+namespace Keboola\OutputMapping\DeferredTasks\TableWriterV2;
 
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
-class LoadTableTaskV1 implements LoadTableTaskInterface
+abstract class AbstractLoadTableTask implements LoadTableTaskInterface
 {
-    /** @var string */
-    private $destination;
+    /** @var MappingDestination */
+    protected $destination;
 
     /** @var array */
-    private $options;
-
-    /** @var MetadataInterface[] */
-    private $metadataDefinitions = [];
+    protected $options;
 
     /** @var null|string */
-    private $storageJobId;
+    protected $storageJobId;
 
-    public function __construct($destination, array $options)
+    /** @var MetadataInterface[] */
+    protected $metadata = [];
+
+    public function __construct(MappingDestination $destination, array $options)
     {
         $this->destination = $destination;
         $this->options = $options;
@@ -29,17 +29,12 @@ class LoadTableTaskV1 implements LoadTableTaskInterface
 
     public function addMetadata(MetadataInterface $metadataDefinition)
     {
-        $this->metadataDefinitions[] = $metadataDefinition;
-    }
-
-    public function startImport(Client $client)
-    {
-        $this->storageJobId = $client->queueTableImport($this->destination, $this->options);
+        $this->metadata[] = $metadataDefinition;
     }
 
     public function applyMetadata(Metadata $metadataApiClient)
     {
-        foreach ($this->metadataDefinitions as $metadataDefinition) {
+        foreach ($this->metadata as $metadataDefinition) {
             $metadataDefinition->apply($metadataApiClient);
         }
     }

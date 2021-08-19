@@ -30,7 +30,8 @@
         "guzzlehttp/guzzle": "^6.5.5",
         "keboola/sanitizer": "^0.1",
         "microsoft/azure-storage-blob": "^1.5",
-        "ext-json": "*"
+        "ext-json": "*",
+        "keboola/storage-api-client": "^12.4"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5.6",

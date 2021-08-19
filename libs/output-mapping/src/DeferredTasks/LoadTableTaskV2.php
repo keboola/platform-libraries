@@ -21,12 +21,8 @@ class LoadTableTaskV2 implements LoadTableTaskInterface
     /** @var null|string */
     private $storageJobId;
 
-    /** @var Client */
-    private $client;
-
-    public function __construct(Client $client, MappingDestination $destination, array $options)
+    public function __construct(MappingDestination $destination, array $options)
     {
-        $this->client = $client;
         $this->destination = $destination;
         $this->options = $options;
     }
@@ -36,15 +32,13 @@ class LoadTableTaskV2 implements LoadTableTaskInterface
         $this->metadataDefinitions[] = $metadataDefinition;
     }
 
-    public function startImport()
+    public function startImport(Client $client)
     {
-        $this->storageJobId = $this->client->queueTableImport($this->destination->getTableId(), $this->options);
+        $this->storageJobId = $client->queueTableImport($this->destination->getTableId(), $this->options);
     }
 
-    public function applyMetadata()
+    public function applyMetadata(Metadata $metadataApiClient)
     {
-        $metadataApiClient = new Metadata($this->client);
-
         foreach ($this->metadataDefinitions as $metadataDefinition) {
             $metadataDefinition->apply($metadataApiClient);
         }

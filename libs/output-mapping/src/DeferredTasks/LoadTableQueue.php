@@ -4,6 +4,7 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Metadata;
 
 class LoadTableQueue
 {
@@ -25,12 +26,14 @@ class LoadTableQueue
     public function start()
     {
         foreach ($this->loadTableTasks as $loadTableTask) {
-            $loadTableTask->startImport();
+            $loadTableTask->startImport($this->client);
         }
     }
 
     public function waitForAll()
     {
+        $metadataApiClient = new Metadata($this->client);
+
         $jobIds = [];
         $errors = [];
         foreach ($this->loadTableTasks as $task) {
@@ -39,7 +42,7 @@ class LoadTableQueue
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf('Failed to load table "%s": %s', $jobResult['tableId'], $jobResult['error']['message']);
             } else {
-                $task->applyMetadata();
+                $task->applyMetadata($metadataApiClient);
             }
         }
         if ($errors) {

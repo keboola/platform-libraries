@@ -205,7 +205,7 @@ class TableWriterV2
         }
 
         $loadOptions = $strategy->resolveLoadTaskOptions($source->getId(), $config, $systemMetadata);
-        $loadTask = new LoadTableTaskV2($this->clientWrapper->getBasicClient(), $destination, $loadOptions);
+        $loadTask = new LoadTableTaskV2($destination, $loadOptions);
         $loadTask->addMetadata(new TableMetadata(
             $destination->getTableId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,

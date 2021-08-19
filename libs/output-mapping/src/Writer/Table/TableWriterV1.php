@@ -604,14 +604,14 @@ class TableWriterV1 extends AbstractWriter
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath, $tags);
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
+                $tableQueue = new LoadTableTaskV1($tableId, $options);
             } else {
                 $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
                     $sourcePath,
                     (new FileUploadOptions())->setCompress(true)->setTags($tags)
                 );
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
+                $tableQueue = new LoadTableTaskV1($tableId, $options);
             }
         } else {
             if ($stagingStorageOutput === StrategyFactory::WORKSPACE_ABS) {
@@ -624,7 +624,7 @@ class TableWriterV1 extends AbstractWriter
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];
-            $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
+            $tableQueue = new LoadTableTaskV1($tableId, $options);
         }
         return $tableQueue;
     }

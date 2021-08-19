@@ -50,13 +50,13 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
      */
     abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
 
-    public function loadDataIntoTable($sourceId, $tableId, array $options)
+    public function resolveLoadTaskOptions($sourceId, array $config, array $systemMetadata)
     {
-        return new LoadTable($this->clientWrapper->getBasicClient(), $tableId, [
+        return [
             'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
             'dataObject' => $sourceId,
-            'incremental' => $options['incremental'],
-            'columns' => $options['columns'],
-        ]);
+            'incremental' => $config['incremental'],
+            'columns' => !empty($config['columns']) ? $config['columns'] : [],
+        ];
     }
 }

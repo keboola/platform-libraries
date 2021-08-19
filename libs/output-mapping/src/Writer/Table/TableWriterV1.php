@@ -6,9 +6,10 @@ use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskV1;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
@@ -153,26 +154,18 @@ class TableWriterV1 extends AbstractWriter
 
             // After the file has been written, we can write metadata
             if (!empty($parsedConfig['metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $parsedConfig['destination'],
-                        $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                        $parsedConfig['metadata'],
-                        MetadataDefinition::TABLE_METADATA
-                    )
-                );
+                $tableJob->addMetadata(new TableMetadata(
+                    $parsedConfig['destination'],
+                    $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                    $parsedConfig['metadata']
+                ));
             }
             if (!empty($parsedConfig['column_metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $parsedConfig['destination'],
-                        $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                        $parsedConfig['column_metadata'],
-                        MetadataDefinition::COLUMN_METADATA
-                    )
-                );
+                $tableJob->addMetadata(new ColumnMetadata(
+                    $parsedConfig['destination'],
+                    $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                    $parsedConfig['column_metadata']
+                ));
             }
             $jobs[] = $tableJob;
         }
@@ -308,26 +301,18 @@ class TableWriterV1 extends AbstractWriter
 
             // After the file has been written, we can write metadata
             if (!empty($config['metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $config['destination'],
-                        $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                        $config['metadata'],
-                        MetadataDefinition::TABLE_METADATA
-                    )
-                );
+                $tableJob->addMetadata(new TableMetadata(
+                    $config['destination'],
+                    $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                    $config['metadata']
+                ));
             }
             if (!empty($config['column_metadata'])) {
-                $tableJob->addMetadata(
-                    new MetadataDefinition(
-                        $this->clientWrapper->getBasicClient(),
-                        $config['destination'],
-                        $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                        $config['column_metadata'],
-                        MetadataDefinition::COLUMN_METADATA
-                    )
-                );
+                $tableJob->addMetadata(new ColumnMetadata(
+                    $config['destination'],
+                    $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                    $config['column_metadata']
+                ));
             }
             $jobs[] = $tableJob;
         }
@@ -434,7 +419,7 @@ class TableWriterV1 extends AbstractWriter
      * @param array $config
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
-     * @return LoadTable
+     * @return LoadTableTaskV1
      * @throws ClientException
      */
     private function uploadTable($source, array $config, array $systemMetadata, $stagingStorageOutput)
@@ -517,12 +502,10 @@ class TableWriterV1 extends AbstractWriter
             $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
         }
         $tableQueue = $this->loadDataIntoTable($source, $config['destination'], $loadOptions, $stagingStorageOutput);
-        $tableQueue->addMetadata(new MetadataDefinition(
-            $this->clientWrapper->getBasicClient(),
+        $tableQueue->addMetadata(new TableMetadata(
             $config['destination'],
             TableWriter::SYSTEM_METADATA_PROVIDER,
-            $this->getUpdatedMetadata($systemMetadata),
-            'table'
+            $this->getUpdatedMetadata($systemMetadata)
         ));
         return $tableQueue;
     }
@@ -621,14 +604,14 @@ class TableWriterV1 extends AbstractWriter
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath, $tags);
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
+                $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
             } else {
                 $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
                     $sourcePath,
                     (new FileUploadOptions())->setCompress(true)->setTags($tags)
                 );
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
+                $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
             }
         } else {
             if ($stagingStorageOutput === StrategyFactory::WORKSPACE_ABS) {
@@ -641,7 +624,7 @@ class TableWriterV1 extends AbstractWriter
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];
-            $tableQueue = new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
+            $tableQueue = new LoadTableTaskV1($this->clientWrapper->getBasicClient(), $tableId, $options);
         }
         return $tableQueue;
     }

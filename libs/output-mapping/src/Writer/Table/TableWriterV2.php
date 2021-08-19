@@ -5,14 +5,14 @@ namespace Keboola\OutputMapping\Writer\Table;
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception;
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskV2;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
-use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
@@ -84,12 +84,12 @@ class TableWriterV2
         }
 
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
-        $jobs = [];
+        $loadTableTasks = [];
         foreach ($sources as $source) {
             $config = $this->tableConfigurationResolver->resolveTableConfiguration($source, $defaultBucket);
 
             try {
-                $jobs[] = $this->uploadTable(
+                $loadTableTasks[] = $this->createLoadTableTask(
                     $strategy,
                     $source,
                     $config,
@@ -109,16 +109,16 @@ class TableWriterV2
             }
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
+        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $loadTableTasks);
         $tableQueue->start();
         return $tableQueue;
     }
 
     /**
-     * @return LoadTable
+     * @return LoadTableTaskV2
      * @throws ClientException
      */
-    private function uploadTable(
+    private function createLoadTableTask(
         StrategyInterface $strategy,
         Table\MappingSource $source,
         array $config,
@@ -198,58 +198,37 @@ class TableWriterV2
             }
 
             $this->metadataClient->postTableMetadata(
-                $config['destination'],
+                $destination->getTableId(),
                 TableWriter::SYSTEM_METADATA_PROVIDER,
                 $this->getCreatedMetadata($systemMetadata)
             );
         }
 
-        $loadOptions = [
-            'delimiter' => $config['delimiter'],
-            'enclosure' => $config['enclosure'],
-            'columns' => !empty($config['columns']) ? $config['columns'] : [],
-            'incremental' => $config['incremental'],
-        ];
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
-            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
-        }
-
-        $tableQueue = $strategy->loadDataIntoTable(
-            $source->getId(),
-            $config['destination'],
-            $loadOptions
-        );
-
-        $tableQueue->addMetadata(new MetadataDefinition(
-            $this->clientWrapper->getBasicClient(),
-            $config['destination'],
+        $loadOptions = $strategy->resolveLoadTaskOptions($source->getId(), $config, $systemMetadata);
+        $loadTask = new LoadTableTaskV2($this->clientWrapper->getBasicClient(), $destination, $loadOptions);
+        $loadTask->addMetadata(new TableMetadata(
+            $destination->getTableId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
-            $this->getUpdatedMetadata($systemMetadata),
-            'table'
+            $this->getUpdatedMetadata($systemMetadata)
         ));
 
         if (!empty($config['metadata'])) {
-            $tableQueue->addMetadata(new MetadataDefinition(
-                $this->clientWrapper->getBasicClient(),
-                $config['destination'],
+            $loadTask->addMetadata(new TableMetadata(
+                $destination->getTableId(),
                 $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['metadata'],
-                MetadataDefinition::TABLE_METADATA
+                $config['metadata']
             ));
         }
 
         if (!empty($config['column_metadata'])) {
-            $tableQueue->addMetadata(new MetadataDefinition(
-                $this->clientWrapper->getBasicClient(),
-                $config['destination'],
+            $loadTask->addMetadata(new ColumnMetadata(
+                $destination->getTableId(),
                 $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['column_metadata'],
-                MetadataDefinition::COLUMN_METADATA
+                $config['column_metadata']
             ));
         }
 
-        return $tableQueue;
+        return $loadTask;
     }
 
     /**

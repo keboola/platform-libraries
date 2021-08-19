@@ -2,11 +2,12 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use SplFileInfo;
@@ -46,21 +47,32 @@ class LocalTableStrategy extends AbstractTableStrategy
         );
     }
 
-    public function loadDataIntoTable($sourceId, $tableId, array $options)
+    public function resolveLoadTaskOptions($sourceId, array $config, array $systemMetadata)
     {
-        $tags = !empty($options['tags']) ? $options['tags'] : [];
+        $loadOptions = [
+            'delimiter' => $config['delimiter'],
+            'enclosure' => $config['enclosure'],
+            'columns' => !empty($config['columns']) ? $config['columns'] : [],
+            'incremental' => $config['incremental'],
+        ];
+
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
+            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
+        }
+
+        $tags = !empty($loadOptions['tags']) ? $loadOptions['tags'] : [];
 
         if (is_dir($sourceId)) {
-            $fileId = $this->uploadSlicedFile($sourceId, $tags);
+            $loadOptions['dataFileId'] = $this->uploadSlicedFile($sourceId, $tags);
         } else {
-            $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
+            $loadOptions['dataFileId'] = $this->clientWrapper->getBasicClient()->uploadFile(
                 $sourceId,
                 (new FileUploadOptions())->setCompress(true)->setTags($tags)
             );
         }
 
-        $options['dataFileId'] = $fileId;
-        return new LoadTable($this->clientWrapper->getBasicClient(), $tableId, $options);
+        return $loadOptions;
     }
 
     /**

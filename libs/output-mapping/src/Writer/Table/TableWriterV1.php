@@ -7,7 +7,7 @@ use Keboola\Csv\Exception;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\LoadTableTaskV1;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV1\LoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -419,7 +419,7 @@ class TableWriterV1 extends AbstractWriter
      * @param array $config
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
-     * @return LoadTableTaskV1
+     * @return LoadTableTask
      * @throws ClientException
      */
     private function uploadTable($source, array $config, array $systemMetadata, $stagingStorageOutput)
@@ -604,14 +604,14 @@ class TableWriterV1 extends AbstractWriter
             if (is_dir($sourcePath)) {
                 $fileId = $this->uploadSlicedFile($sourcePath, $tags);
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTableTaskV1($tableId, $options);
+                $tableQueue = new LoadTableTask($tableId, $options);
             } else {
                 $fileId = $this->clientWrapper->getBasicClient()->uploadFile(
                     $sourcePath,
                     (new FileUploadOptions())->setCompress(true)->setTags($tags)
                 );
                 $options['dataFileId'] = $fileId;
-                $tableQueue = new LoadTableTaskV1($tableId, $options);
+                $tableQueue = new LoadTableTask($tableId, $options);
             }
         } else {
             if ($stagingStorageOutput === StrategyFactory::WORKSPACE_ABS) {
@@ -624,7 +624,7 @@ class TableWriterV1 extends AbstractWriter
                 'incremental' => $options['incremental'],
                 'columns' => $options['columns'],
             ];
-            $tableQueue = new LoadTableTaskV1($tableId, $options);
+            $tableQueue = new LoadTableTask($tableId, $options);
         }
         return $tableQueue;
     }

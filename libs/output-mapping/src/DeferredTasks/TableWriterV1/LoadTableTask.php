@@ -1,13 +1,13 @@
 <?php
 
-namespace Keboola\OutputMapping\DeferredTasks;
+namespace Keboola\OutputMapping\DeferredTasks\TableWriterV1;
 
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
-use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
-class LoadTableTaskV2 implements LoadTableTaskInterface
+class LoadTableTask implements LoadTableTaskInterface
 {
     /** @var string */
     private $destination;
@@ -21,7 +21,7 @@ class LoadTableTaskV2 implements LoadTableTaskInterface
     /** @var null|string */
     private $storageJobId;
 
-    public function __construct(MappingDestination $destination, array $options)
+    public function __construct($destination, array $options)
     {
         $this->destination = $destination;
         $this->options = $options;
@@ -34,7 +34,7 @@ class LoadTableTaskV2 implements LoadTableTaskInterface
 
     public function startImport(Client $client)
     {
-        $this->storageJobId = $client->queueTableImport($this->destination->getTableId(), $this->options);
+        $this->storageJobId = $client->queueTableImport($this->destination, $this->options);
     }
 
     public function applyMetadata(Metadata $metadataApiClient)

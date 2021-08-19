@@ -2,9 +2,11 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\CreateAndLoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -50,13 +52,22 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
      */
     abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
 
-    public function resolveLoadTaskOptions($sourceId, array $config, array $systemMetadata)
-    {
-        return [
+    public function prepareLoadTask(
+        $sourceId,
+        MappingDestination $destination,
+        $destinationTableExists,
+        array $config,
+        array $loadOptions
+    ) {
+        $loadOptions = array_merge($loadOptions, [
             'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
             'dataObject' => $sourceId,
-            'incremental' => $config['incremental'],
-            'columns' => !empty($config['columns']) ? $config['columns'] : [],
-        ];
+        ]);
+
+        if ($destinationTableExists) {
+            return new LoadTableTask($destination, $loadOptions);
+        }
+
+        return new CreateAndLoadTableTask($destination, $loadOptions);
     }
 }

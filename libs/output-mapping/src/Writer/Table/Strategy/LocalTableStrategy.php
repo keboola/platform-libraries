@@ -2,15 +2,18 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
+use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\CreateAndLoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
-use Keboola\OutputMapping\Writer\Helper\TagsHelper;
+use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use SplFileInfo;
+use Keboola\Temp\Temp;
+use LogicException;
 use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
@@ -47,58 +50,98 @@ class LocalTableStrategy extends AbstractTableStrategy
         );
     }
 
-    public function resolveLoadTaskOptions($sourceId, array $config, array $systemMetadata)
-    {
-        $loadOptions = [
+    public function prepareLoadTask(
+        $sourceId,
+        MappingDestination $destination,
+        $destinationTableExists,
+        array $config,
+        array $loadOptions
+    ) {
+        $loadOptions = array_merge($loadOptions, [
             'delimiter' => $config['delimiter'],
             'enclosure' => $config['enclosure'],
-            'columns' => !empty($config['columns']) ? $config['columns'] : [],
-            'incremental' => $config['incremental'],
-        ];
-
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
-            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
-        }
+        ]);
 
         $tags = !empty($loadOptions['tags']) ? $loadOptions['tags'] : [];
+        $isSliced = is_dir($sourceId);
+        $hasColumns = !empty($config['columns']);
 
-        if (is_dir($sourceId)) {
-            $loadOptions['dataFileId'] = $this->uploadSlicedFile($sourceId, $tags);
-        } else {
-            $loadOptions['dataFileId'] = $this->clientWrapper->getBasicClient()->uploadFile(
-                $sourceId,
-                (new FileUploadOptions())->setCompress(true)->setTags($tags)
-            );
+        if ($isSliced && !$hasColumns) {
+            throw new LogicException('Sliced files must have columns configured!');
         }
 
-        return $loadOptions;
+        if ($isSliced) {
+            $loadOptions['dataFileId'] = $this->uploadSlicedFile($sourceId, $tags);
+        } else {
+            $loadOptions['dataFileId'] = $this->uploadRegularFile($sourceId, $tags);
+        }
+
+        // some scenarios are not supported by the SAPI, so we need to take care of them manually here
+        // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
+        // - sliced files
+        if (!$destinationTableExists && $hasColumns) {
+            $this->createTable($destination, $config['columns'], $loadOptions);
+            $destinationTableExists = true;
+        }
+
+        if ($destinationTableExists) {
+            return new LoadTableTask($destination, $loadOptions);
+        }
+
+        return new CreateAndLoadTableTask($destination, $loadOptions);
+    }
+
+    private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
+    {
+        $tmp = new Temp();
+
+        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv'));
+        $headerCsvFile->writeRow($columns);
+
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            $destination->getBucketId(),
+            $destination->getTableName(),
+            $headerCsvFile,
+            $loadOptions
+        );
     }
 
     /**
-     * Uploads a sliced table to storage api. Takes all files from the $source folder
-     *
      * @param string $source Slices folder
      * @return string
      * @throws ClientException
      */
-    private function uploadSlicedFile($source, $tags)
+    private function uploadSlicedFile($source, array $tags)
     {
         $finder = new Finder();
         $slices = $finder->files()->in($source)->depth(0);
         $sliceFiles = [];
-        /** @var SplFileInfo $slice */
         foreach ($slices as $slice) {
             $sliceFiles[] = $slice->getPathname();
         }
 
-        // upload slices
-        $fileUploadOptions = new FileUploadOptions();
-        $fileUploadOptions
+        $fileUploadOptions = (new FileUploadOptions())
             ->setIsSliced(true)
             ->setFileName(basename($source))
             ->setCompress(true)
-            ->setTags($tags);
-        return $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
+            ->setTags($tags)
+        ;
+
+        return (string) $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
+    }
+
+    /**
+     * @param string $source
+     * @return string
+     * @throws ClientException
+     */
+    private function uploadRegularFile($source, $tags)
+    {
+        $fileUploadOptions = (new FileUploadOptions())
+            ->setCompress(true)
+            ->setTags($tags)
+        ;
+
+        return (string) $this->clientWrapper->getBasicClient()->uploadFile($source, $fileUploadOptions);
     }
 }

@@ -16,6 +16,7 @@ use Keboola\InputMapping\Table\Strategy\Redshift as TableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as TableSynapse;
+use Keboola\InputMapping\Table\Strategy\Exasol as TableExasol;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ class StrategyFactory
     const WORKSPACE_REDSHIFT = 'workspace-redshift';
     const WORKSPACE_SNOWFLAKE = 'workspace-snowflake';
     const WORKSPACE_SYNAPSE = 'workspace-synapse';
+    const WORKSPACE_EXASOL = 'workspace-exasol';
 
     /** @var Definition[] */
     protected $strategyMap;
@@ -96,6 +98,11 @@ class StrategyFactory
                     self::WORKSPACE_SYNAPSE,
                     FileLocal::class,
                     TableSynapse::class
+                ),
+                self::WORKSPACE_EXASOL => new Definition(
+                    self::WORKSPACE_EXASOL,
+                    FileLocal::class,
+                    TableExasol::class
                 ),
             ];
         }

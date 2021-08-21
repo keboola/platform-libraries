@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 
 class ExasolTest extends TestCase
 {
-    public function testExasolDownloadTable(): void
+    public function testExasolDownloadTable()
     {
         $clientWrapper = new ClientWrapper(
             new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),

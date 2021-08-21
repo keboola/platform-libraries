@@ -46,6 +46,11 @@ class StrategyFactory extends InputMappingStrategyFactory
                     Local::class,
                     AllEncompassingTableStrategy::class
                 ),
+                self::WORKSPACE_EXASOL => new Definition(
+                    self::WORKSPACE_EXASOL,
+                    Local::class,
+                    AllEncompassingTableStrategy::class
+                ),
             ];
         }
         return $this->strategyMap;

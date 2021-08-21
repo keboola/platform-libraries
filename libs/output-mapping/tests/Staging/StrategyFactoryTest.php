@@ -32,7 +32,8 @@ class StrategyFactoryTest extends TestCase
         self::assertSame($clientWrapper, $factory->getClientWrapper());
         self::assertSame($logger, $factory->getLogger());
         self::assertEquals(
-            ['local', 'workspace-abs', 'workspace-redshift', 'workspace-snowflake', 'workspace-synapse'],
+            ['local', 'workspace-abs', 'workspace-redshift', 'workspace-snowflake', 'workspace-synapse',
+                'workspace-exasol'],
             array_keys($factory->getStrategyMap())
         );
     }

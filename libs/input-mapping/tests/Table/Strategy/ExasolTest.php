@@ -35,7 +35,8 @@ class ExasolTest extends TestCase
             [
                 'table' => [
                     new InputTableOptions(
-                        ['source' => 'in.c-main.test', 'destination' => 'my-table', 'columns' => ['foo', 'bar']]),
+                        ['source' => 'in.c-main.test', 'destination' => 'my-table', 'columns' => ['foo', 'bar']]
+                    ),
                     [
                         'columns' => ['foo', 'bar'],
                         'overwrite' => false,

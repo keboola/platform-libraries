@@ -4,6 +4,7 @@ namespace Keboola\StagingProvider\Tests\Staging;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
@@ -36,6 +37,7 @@ class WorkspaceStagingTest extends TestCase
         yield 'synapse' => [SynapseWorkspaceStaging::class, 'synapse'];
         yield 'redshift' => [RedshiftWorkspaceStaging::class, 'redshift'];
         yield 'abs' => [AbsWorkspaceStaging::class, 'abs'];
+        yield 'exasol' => [ExasolWorkspaceStaging::class, 'exasol'];
     }
 
     public function testWorkspaceIdIsReturned()

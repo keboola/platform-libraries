@@ -2,6 +2,7 @@
 
 namespace Keboola\StagingProvider\Tests;
 
+use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
@@ -249,6 +250,51 @@ class OutputProviderInitializerTest extends TestCase
         self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(ABSWorkspace::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_ABS));
         self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_ABS));
+
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
+        $this->expectException(InvalidOutputException::class);
+        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
+    }
+
+    public function testInitializeOutputExasol()
+    {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $stagingFactory = new StrategyFactory(
+            new ClientWrapper(
+                $storageApiClient,
+                null,
+                new NullLogger(),
+                ''
+            ),
+            new NullLogger(),
+            'json'
+        );
+
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
+            'my-test-component',
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
+        );
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+
+        $init->initializeProviders(
+            OutputStrategyFactory::WORKSPACE_EXASOL,
+            [
+                'owner' => [
+                    'hasSynapse' => true,
+                    'hasRedshift' => true,
+                    'hasExasol' => true,
+                    'hasSnowflake' => true,
+                    'fileStorageProvider' => 'azure',
+                ],
+            ]
+        );
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_EXASOL));
+        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_EXASOL));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
         $this->expectException(InvalidOutputException::class);

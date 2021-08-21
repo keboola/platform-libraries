@@ -15,6 +15,8 @@ use Keboola\InputMapping\Table\Strategy\Redshift as InputTableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
+use Keboola\InputMapping\Table\Strategy\Exasol as InputTableExasol;
+use Keboola\StagingProvider\AbstractProviderInitializer;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
@@ -238,6 +240,52 @@ class InputProviderInitializerTest extends TestCase
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileABSWorkspace::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_ABS, new InputFileStateList([])));
         self::assertInstanceOf(InputTableABSWorkspace::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_ABS, '', new InputTableStateList([])));
+
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
+        $this->expectException(InvalidInputException::class);
+        $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE, '', new InputTableStateList([]));
+    }
+
+    public function testInitializeInputExasol()
+    {
+        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $stagingFactory = new InputStrategyFactory(
+            new ClientWrapper(
+                $storageApiClient,
+                null,
+                new NullLogger(),
+                ''
+            ),
+            new NullLogger(),
+            'json'
+        );
+
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($storageApiClient),
+            new Workspaces($storageApiClient),
+            'my-test-component',
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_EXASOL,
+            [
+                'owner' => [
+                    'hasSynapse' => true,
+                    'hasRedshift' => true,
+                    'hasSnowflake' => true,
+                    'hasExasol' => true,
+                    'fileStorageProvider' => 'azure',
+                ],
+            ]
+        );
+
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
+        self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_EXASOL, new InputFileStateList([])));
+        self::assertInstanceOf(InputTableExasol::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_EXASOL, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
         $this->expectException(InvalidInputException::class);

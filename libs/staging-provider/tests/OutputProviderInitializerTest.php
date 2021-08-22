@@ -2,7 +2,6 @@
 
 namespace Keboola\StagingProvider\Tests;
 
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
@@ -259,7 +258,7 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputExasol()
     {
         $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
-        $stagingFactory = new StrategyFactory(
+        $stagingFactory = new OutputStrategyFactory(
             new ClientWrapper(
                 $storageApiClient,
                 null,

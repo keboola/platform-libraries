@@ -8,10 +8,9 @@ use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Exasol;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class ExasolTest extends TestCase
+class ExasolTest extends AbstractStrategyTest
 {
     public function testExasolDownloadTable()
     {
@@ -29,13 +28,21 @@ class ExasolTest extends TestCase
             'test'
         );
         $result = $strategy->downloadTable(new InputTableOptions(
-            ['source' => 'in.c-main.test', 'destination' => 'my-table', 'columns' => ['foo', 'bar']]
+            [
+                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'destination' => 'my-table',
+                'columns' => ['foo', 'bar'],
+            ]
         ));
         self::assertEquals(
             [
                 'table' => [
                     new InputTableOptions(
-                        ['source' => 'in.c-main.test', 'destination' => 'my-table', 'columns' => ['foo', 'bar']]
+                        [
+                            'source' => 'in.c-input-mapping-test-strategy.test1',
+                            'destination' => 'my-table',
+                            'columns' => ['foo', 'bar'],
+                        ]
                     ),
                     [
                         'columns' => ['foo', 'bar'],

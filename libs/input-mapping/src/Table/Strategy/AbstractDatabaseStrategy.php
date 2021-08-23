@@ -8,7 +8,7 @@ use Keboola\InputMapping\Table\Options\InputTableOptions;
 abstract class AbstractDatabaseStrategy extends AbstractStrategy
 {
     /** @return string */
-    protected abstract function getWorkspaceType();
+    abstract protected function getWorkspaceType();
 
     public function downloadTable(InputTableOptions $table)
     {

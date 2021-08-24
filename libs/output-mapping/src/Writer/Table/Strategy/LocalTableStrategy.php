@@ -4,7 +4,7 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\StorageApi\ClientException;
@@ -17,8 +17,8 @@ class LocalTableStrategy extends AbstractTableStrategy
     public function resolveMappingSources($sourcePathPrefix, array $configuration)
     {
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
-        $dataFiles = ManifestHelper::getNonManifestFiles($sourcesPath);
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
+        $dataFiles = FilesHelper::getDataFiles($sourcesPath);
+        $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
 
         /** @var array<string, MappingSource> $sources */
         $sources = [];

@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTable;
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Symfony\Component\Finder\SplFileInfo;
@@ -13,7 +13,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
     public function resolveMappingSources($sourcePathPrefix, array $configuration)
     {
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
+        $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
 
         /** @var array<string, MappingSource> $sources */
         $sources = [];

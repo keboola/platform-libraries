@@ -78,7 +78,7 @@ class TableWriterV2
             }
 
             throw new InvalidOutputException(sprintf(
-                'Source "%s" has neither manifest nor mapping set',
+                'Source table "%s" has neither manifest nor mapping set',
                 $source->getName()
             ));
         }

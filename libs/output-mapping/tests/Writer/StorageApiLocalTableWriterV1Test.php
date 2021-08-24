@@ -18,7 +18,7 @@ use Psr\Log\Test\TestLogger;
 /**
  * @group tableWriterV1
  */
-class StorageApiTableWriterV1Test extends BaseWriterTest
+class StorageApiLocalTableWriterV1Test extends BaseWriterTest
 {
     use CreateBranchTrait;
 

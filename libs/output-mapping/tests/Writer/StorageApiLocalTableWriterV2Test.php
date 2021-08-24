@@ -18,7 +18,7 @@ use Psr\Log\Test\TestLogger;
 /**
  * @group tableWriterV2
  */
-class StorageApiTableWriterV2Test extends BaseWriterTest
+class StorageApiLocalTableWriterV2Test extends BaseWriterTest
 {
     use CreateBranchTrait;
 
@@ -429,7 +429,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
             $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains('Table source "table81.csv" not found', $e->getMessage());
+            $this->assertContains('Table sources not found: "table81.csv"', $e->getMessage());
             $this->assertEquals(404, $e->getCode());
         }
     }
@@ -453,7 +453,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         $writer = new TableWriterV2($this->getStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Source "out.c-output-mapping-test.table4.csv" has neither manifest nor mapping set');
+        $this->expectExceptionMessage('Source table "out.c-output-mapping-test.table4.csv" has neither manifest nor mapping set');
 
         $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
     }
@@ -1214,7 +1214,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
                 'manifest' => null,
                 'defaultBucket' => 'out.c-output-mapping-test',
                 'mapping' => null,
-                'expectedError' => 'Source "table.csv" has neither manifest nor mapping set',
+                'expectedError' => 'Source table "table.csv" has neither manifest nor mapping set',
             ],
 
             'no destination in manifest without bucket' => [
@@ -1279,7 +1279,7 @@ class StorageApiTableWriterV2Test extends BaseWriterTest
         $tableWriter = new TableWriterV2($this->getStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table source "unknown.csv" not found.');
+        $this->expectExceptionMessage('Table sources not found: "unknown.csv"');
 
         $tableWriter->uploadTables('upload', [
             'mapping' => [

@@ -11,15 +11,15 @@ use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 
 class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    protected function createMapping($sourcePathPrefix, $sourceId, $manifestFile, $mapping)
+    protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping)
     {
-        $sourcePath = Path::join($sourcePathPrefix, $sourceId);
+        $sourcePath = Path::join($sourcePathPrefix, $sourceName);
 
         if ($this->isDirectory($sourcePath)) {
             $sourcePath = Path::ensureTrailingSlash($sourcePath);
         }
 
-        return new MappingSource($sourcePath, $sourcePath, $manifestFile, $mapping);
+        return new MappingSource($sourceName, $sourcePath, $manifestFile, $mapping);
     }
 
     /**

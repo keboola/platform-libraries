@@ -12,24 +12,19 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
     public function resolveMappingSources($sourcePathPrefix, array $configuration)
     {
+        $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
+        $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
+
         /** @var array<string, MappingSource> $sources */
         $sources = [];
 
-        // add output mappings from configuration
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $sources[$mapping['source']] = $this->createMapping(
-                    $sourcePathPrefix,
-                    $mapping['source'],
-                    null,
-                    $mapping
-                );
-            }
+        foreach (isset($configuration['mapping']) ? $configuration['mapping'] : [] as $mapping) {
+            $sourceName = $mapping['source'];
+
+            // Create empty mapping. This is workaround for not being able to list real list of tables from workspace.
+            $sources[$sourceName] = $this->createMapping($sourcePathPrefix, $sourceName, null, null);
         }
 
-        // add manifest files
-        $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
-        $manifestFiles = ManifestHelper::getManifestFiles($sourcesPath);
         foreach ($manifestFiles as $file) {
             $sourceName = $file->getBasename('.manifest');
 
@@ -40,17 +35,20 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
             }
         }
 
-        return array_values($sources);
+        return $this->combineSourcesWithMappingsFromConfiguration(
+            $sources,
+            isset($configuration['mapping']) ? $configuration['mapping'] : []
+        );
     }
 
     /**
      * @param string $sourcePathPrefix
-     * @param string $sourceId
+     * @param string $sourceName
      * @param null|SplFileInfo $manifestFile
      * @param null|array $mapping
      * @return MappingSource
      */
-    abstract protected function createMapping($sourcePathPrefix, $sourceId, $manifestFile, $mapping);
+    abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
 
     public function loadDataIntoTable($sourceId, $tableId, array $options)
     {

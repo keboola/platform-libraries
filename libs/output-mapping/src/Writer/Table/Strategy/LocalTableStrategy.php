@@ -24,69 +24,26 @@ class LocalTableStrategy extends AbstractTableStrategy
         $sources = [];
 
         foreach ($dataFiles as $file) {
-            $filename = $file->getBasename();
-            $pathname = $file->getPathname();
+            $sourceName = $file->getBasename();
+            $sourceId = $file->getPathname();
 
-            $sources[$file->getBasename()] = new MappingSource($filename, $pathname);
+            $sources[$sourceName] = new MappingSource($sourceName, $sourceId);
         }
 
         foreach ($manifestFiles as $file) {
-            $dataFileName = $file->getBasename('.manifest');
+            $sourceName = $file->getBasename('.manifest');
 
-            if (!isset($sources[$dataFileName])) {
+            if (!isset($sources[$sourceName])) {
                 throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
             }
 
-            $sources[$dataFileName]->setManifestFile($file);
+            $sources[$sourceName]->setManifestFile($file);
         }
 
-        if (isset($configuration['mapping'])) {
-            foreach ($configuration['mapping'] as $mapping) {
-                $filename = $mapping['source'];
-
-                if (!isset($sources[$filename])) {
-                    throw new InvalidOutputException(sprintf('Table source "%s" not found.', $mapping['source']), 404);
-                }
-            }
-
-            $sources = $this->combineSourcesWithCustomMappings($sources, $configuration['mapping']);
-        }
-
-        return array_values($sources);
-    }
-
-    /**
-     * @param MappingSource[] $sources
-     * @param array<array{source: string}> $mappings
-     * @return MappingSource[]
-     */
-    private function combineSourcesWithCustomMappings(array $sources, array $mappings)
-    {
-        $mappingsBySource = [];
-        foreach ($mappings as $mapping) {
-            $mappingsBySource[$mapping['source']][] = $mapping;
-        }
-
-        $sourcesWithMapping = [];
-        foreach ($sources as $source) {
-            $sourceMappings = isset($mappingsBySource[$source->getName()]) ?
-                $mappingsBySource[$source->getName()] :
-                []
-            ;
-
-            if (count($sourceMappings) === 0) {
-                $sourcesWithMapping[] = $source;
-                continue;
-            }
-
-            foreach ($sourceMappings as $sourceMapping) {
-                $sourceCopy = clone $source;
-                $sourceCopy->setMapping($sourceMapping);
-                $sourcesWithMapping[] = $sourceCopy;
-            }
-        }
-
-        return $sourcesWithMapping;
+        return $this->combineSourcesWithMappingsFromConfiguration(
+            $sources,
+            isset($configuration['mapping']) ? $configuration['mapping'] : []
+        );
     }
 
     public function loadDataIntoTable($sourceId, $tableId, array $options)

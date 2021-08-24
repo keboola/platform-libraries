@@ -15,7 +15,7 @@ use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Table;
@@ -196,7 +196,7 @@ class TableWriterV1 extends AbstractWriter
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $manifestNames = ManifestHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
+        $manifestNames = FilesHelper::getManifestFiles($this->strategy->getMetadataStorage()->getPath() . '/' . $source);
 
         $finder = new Finder();
 

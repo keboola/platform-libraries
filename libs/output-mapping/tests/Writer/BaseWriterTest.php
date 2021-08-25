@@ -117,6 +117,40 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         return $stagingFactory;
     }
 
+    protected function assertTablesExists(array $expectedTables)
+    {
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tableIds = array_column($tables, 'id');
+
+        // order of listed tables is not guaranteed
+        sort($tableIds);
+        sort($expectedTables);
+
+        $this->assertSame($expectedTables, $tableIds);
+    }
+
+    protected function assertTableRowsEquals($tableName, array $expectedRows)
+    {
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview($tableName);
+
+        $rows = explode("\n", trim($data));
+        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $rows = array_map('strtolower', $rows);
+
+        // order of rows is not guaranteed
+        $rows = sort($rows);
+        $expectedRows = sort($expectedRows);
+
+        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
+        $this->assertEquals($expectedRows, $rows);
+    }
+
+    protected function assertJobParamsMatches(array $expectedParams, $jobId)
+    {
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobId);
+        self::assertArraySubset($expectedParams, $job['operationParams']['params']);
+    }
+
     public function tearDown()
     {
         $this->clearBuckets(['out.c-output-mapping-test']);

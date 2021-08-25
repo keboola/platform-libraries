@@ -6,7 +6,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local as OutputFileLocal;
-use Keboola\OutputMapping\Writer\Table\Strategy\AllEncompassingTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -49,7 +49,7 @@ class OutputProviderInitializerTest extends TestCase
             []
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
         $this->expectException(InvalidOutputException::class);
@@ -91,9 +91,9 @@ class OutputProviderInitializerTest extends TestCase
             ]
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_REDSHIFT));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
         $this->expectException(InvalidOutputException::class);
@@ -135,9 +135,9 @@ class OutputProviderInitializerTest extends TestCase
             ]
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE));
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
         $this->expectException(InvalidOutputException::class);
@@ -180,9 +180,9 @@ class OutputProviderInitializerTest extends TestCase
         );
 
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_SYNAPSE));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SYNAPSE));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SYNAPSE));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
         $this->expectException(InvalidOutputException::class);
@@ -246,9 +246,9 @@ class OutputProviderInitializerTest extends TestCase
         );
 
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(ABSWorkspace::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_ABS));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_ABS));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_ABS));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
         $this->expectException(InvalidOutputException::class);
@@ -291,9 +291,9 @@ class OutputProviderInitializerTest extends TestCase
             ]
         );
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
         self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_EXASOL));
-        self::assertInstanceOf(AllEncompassingTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_EXASOL));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_EXASOL));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
         $this->expectException(InvalidOutputException::class);

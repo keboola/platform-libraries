@@ -139,18 +139,26 @@ class TableWriterV2
         $this->ensureValidBucketExists($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
-        $destinationTableExists = $storageApiClient->tableExists($destination->getTableId());
+        try {
+            $destinationTableInfo = $storageApiClient->getTable($destination->getTableId());
+            $destinationTableExists = true;
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
 
-        if ($destinationTableExists) {
-            $tableInfo = $storageApiClient->getTable($destination->getTableId());
+            $destinationTableInfo = null;
+            $destinationTableExists = false;
+        }
 
-            PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $tableInfo, $config)) {
+        if ($destinationTableInfo !== null) {
+            PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $destinationTableInfo, $config);
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getBasicClient(),
                     $destination->getTableId(),
-                    $tableInfo['primaryKey'],
+                    $destinationTableInfo['primaryKey'],
                     $config['primary_key']
                 );
             }

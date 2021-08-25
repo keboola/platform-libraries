@@ -7,7 +7,7 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
-use Keboola\OutputMapping\Writer\Table\TableWriterV1;
+use Keboola\OutputMapping\Writer\Table\TableWriterV2;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
@@ -16,9 +16,9 @@ use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
 /**
- * @group tableWriterV1
+ * @group tableWriterV2
  */
-class StorageApiTableWriterV1Test extends BaseWriterTest
+class StorageApiLocalTableWriterV2Test extends BaseWriterTest
 {
     use CreateBranchTrait;
 
@@ -56,7 +56,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -105,7 +105,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
         $clientWrapper = new ClientWrapper($client, null, new NullLogger(), '');
-        $writer = new TableWriterV1($this->getStagingFactory($clientWrapper));
+        $writer = new TableWriterV2($this->getStagingFactory($clientWrapper));
 
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -161,7 +161,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
                 "destination" => "out.c-output-mapping-test.table21a"
             ]
         ];
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
@@ -198,7 +198,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -226,7 +226,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -249,7 +249,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         try {
             $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
@@ -278,7 +278,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -287,7 +287,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
-        $this->assertEquals([], $tables[0]["primaryKey"]);
+        $this->assertEquals(['Id'], $tables[0]["primaryKey"]);
     }
 
     public function testWriteTableManifest()
@@ -302,7 +302,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-test.table3a\",\"primary_key\": [\"Id\",\"Name\"]}"
         );
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -326,7 +326,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-test.table3\",\"primary_key\": \"Id\"}"
         );
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
             $this->fail('Invalid table manifest must cause exception');
@@ -347,7 +347,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-default-test.table3c\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -360,8 +360,8 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
         $exporter->exportTable('out.c-output-mapping-default-test.table3c', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertEquals(1, count($table));
-        $this->assertEquals(2, count($table[0]));
+        $this->assertCount(1, $table);
+        $this->assertCount(2, $table[0]);
         $this->assertArrayHasKey('Id', $table[0]);
         $this->assertArrayHasKey('Name', $table[0]);
         $this->assertEquals('test', $table[0]['Id']);
@@ -380,7 +380,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             "{\"destination\": \"out.c-output-mapping-redshift-test.table3d\",\"delimiter\": \"\\t\",\"enclosure\": \"'\"}"
         );
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -392,8 +392,8 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
         $exporter->exportTable('out.c-output-mapping-redshift-test.table3d', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertEquals(1, count($table));
-        $this->assertEquals(2, count($table[0]));
+        $this->assertCount(1, $table);
+        $this->assertCount(2, $table[0]);
         $this->assertArrayHasKey('Id', $table[0]);
         $this->assertArrayHasKey('Name', $table[0]);
         $this->assertEquals('test', $table[0]['Id']);
@@ -407,40 +407,36 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             $root . DIRECTORY_SEPARATOR . "upload/table.csv.manifest",
             "{\"destination\": \"out.c-output-mapping-test.table3e\",\"primary_key\": [\"Id\", \"Name\"]}"
         );
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
             $this->fail("Orphaned manifest must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains("Found orphaned table manifest: 'table.csv.manifest'", $e->getMessage());
+            $this->assertContains('Found orphaned table manifest: "table.csv.manifest"', $e->getMessage());
         }
     }
 
     public function testWriteTableOutputMappingMissing()
     {
-        $root = $this->tmp->getTmpFolder();
-
         $configs = [
             [
                 "source" => "table81.csv",
                 "destination" => "out.c-output-mapping-test.table81"
             ]
         ];
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains("Table source 'table81.csv' not found", $e->getMessage());
+            $this->assertContains('Table sources not found: "table81.csv"', $e->getMessage());
             $this->assertEquals(404, $e->getCode());
         }
     }
 
     public function testWriteTableMetadataMissing()
     {
-        $root = $this->tmp->getTmpFolder();
-
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables('/upload', [], [], 'local');
             self::fail("Missing metadata must fail.");
@@ -449,42 +445,17 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         }
     }
 
-    public function testWriteTableBare()
+    public function testWriteTableBareFails()
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table4.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Source table "out.c-output-mapping-test.table4.csv" has neither manifest nor mapping set');
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
-        $this->assertCount(1, $tables);
-
-        $this->assertEquals('out.c-output-mapping-test.table4', $tables[0]["id"]);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table4');
-        $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
-    }
-
-    public function testWriteTableBareWithoutSuffix()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table4", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-
-        $writer = new TableWriterV1($this->getStagingFactory());
-
-        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
-        $this->assertCount(1, $tables);
-
-        $this->assertEquals('out.c-output-mapping-test.table4', $tables[0]["id"]);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table4');
-        $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
+        $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
     }
 
     public function testWriteTableIncrementalWithDeleteDefault()
@@ -503,7 +474,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -522,8 +493,8 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
         });
-        $this->assertEquals(3, count($table));
-        $this->assertEquals(2, count($table[0]));
+        $this->assertCount(3, $table);
+        $this->assertCount(2, $table[0]);
         $this->assertArrayHasKey('Id', $table[0]);
         $this->assertArrayHasKey('Name', $table[0]);
         $this->assertEquals('aabb', $table[0]['Id']);
@@ -550,7 +521,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
@@ -567,8 +538,8 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
         });
-        $this->assertEquals(3, count($table));
-        $this->assertEquals(2, count($table[0]));
+        $this->assertCount(3, $table);
+        $this->assertCount(2, $table[0]);
         $this->assertArrayHasKey('Id', $table[0]);
         $this->assertArrayHasKey('Name', $table[0]);
         $this->assertEquals('aabb', $table[0]['Id']);
@@ -583,63 +554,35 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table71.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table72.csv", "\"Id\",\"Name2\"\n\"test2\",\"test2\"\n");
+        file_put_contents($root . "/upload/table71.csv.manifest", '{}');
 
-        $writer = new TableWriterV1($this->getStagingFactory());
-
-        $tableQueue =  $writer->uploadTables('/upload', ["bucket" => "in.c-output-mapping-test"], ['componentId' => 'foo'], 'local');
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertEquals(2, $tableQueue->getTaskCount());
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables("in.c-output-mapping-test");
-        $this->assertCount(2, $tables);
-
-        $this->assertEquals('in.c-output-mapping-test.table71', $tables[0]["id"]);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-output-mapping-test.table71');
-        $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
-
-        $this->assertEquals('in.c-output-mapping-test.table72', $tables[1]["id"]);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-output-mapping-test.table72');
-        $this->assertEquals(["Id", "Name2"], $tableInfo["columns"]);
-    }
-
-    public function testWriteTableBareWithDefaultBucket()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table5.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             '/upload',
-            ['bucket' => 'out.c-output-mapping-test'],
+            ['bucket' => 'in.c-output-mapping-test'],
             ['componentId' => 'foo'],
             'local'
         );
         $jobIds = $tableQueue->waitForAll();
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
-        $this->assertCount(1, $tables);
         $this->assertCount(1, $jobIds);
+        $this->assertEquals(1, $tableQueue->getTaskCount());
 
-        $this->assertEquals('out.c-output-mapping-test.table5', $tables[0]["id"]);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table5');
+        $tables = $this->clientWrapper->getBasicClient()->listTables("in.c-output-mapping-test");
+        $this->assertCount(1, $tables);
+
+        $this->assertEquals('in.c-output-mapping-test.table71', $tables[0]["id"]);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-output-mapping-test.table71');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
     }
 
     public function testWriteTableManifestWithDefaultBucket()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents(
-            $root . "/upload/table6.csv",
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
-        );
-        file_put_contents(
-            $root . "/upload/table6.csv.manifest",
-            "{\"primary_key\": [\"Id\", \"Name\"]}"
-        );
+        file_put_contents($root . "/upload/table6.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/table6.csv.manifest", '{"primary_key": ["Id", "Name"]}');
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             '/upload',
@@ -656,55 +599,12 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
     }
 
-    public function testWriteTableOutputMappingWithDefaultBucket()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table7.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
-
-        $configs = [
-            [
-                "source" => "table7.csv",
-                "destination" => "table7"
-            ]
-        ];
-
-        $writer = new TableWriterV1($this->getStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ["mapping" => $configs, 'bucket' => 'out.c-output-mapping-test'],
-            ['componentId' => 'foo'],
-            'local'
-        );
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
-        $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-output-mapping-test.table7', $tables[0]["id"]);
-    }
-
-    public function testWriteManifestWithoutDestination()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table8.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table8.csv.manifest", "{\"primary_key\": [\"Id\", \"Name\"]}");
-
-        $writer = new TableWriterV1($this->getStagingFactory());
-        try {
-            $writer->uploadTables('upload', ["mapping" => []], ['componentId' => 'foo'], 'local');
-            $this->fail("Empty destination with invalid table name must cause exception.");
-        } catch (InvalidOutputException $e) {
-            $this->assertContains('valid table identifier', $e->getMessage());
-        }
-    }
-
     public function testWriteTableOutputMappingWithPk()
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table16.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             [
@@ -730,7 +630,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table15.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $writer->uploadTables(
             'upload',
             [
@@ -746,7 +646,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             'local'
         );
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             [
@@ -772,7 +672,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             [
@@ -792,7 +692,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table14");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables(
                 'upload',
@@ -821,7 +721,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             [
@@ -841,7 +741,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table13");
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         try {
             $writer->uploadTables(
                 'upload',
@@ -872,7 +772,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         file_put_contents($root . "/upload/table12.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $testLogger = new TestLogger();
-        $writer = new TableWriterV1($this->getStagingFactory(null, 'json', $testLogger));
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $testLogger));
         $writer->uploadTables(
             'upload',
             [
@@ -890,7 +790,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
 
-        $writer = new TableWriterV1($this->getStagingFactory(null, 'json', $testLogger));
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $testLogger));
         $tableQueue =  $writer->uploadTables(
             'upload',
             [
@@ -919,7 +819,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         file_put_contents($root . "/upload/table11.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $testLogger = new TestLogger();
-        $writer = new TableWriterV1($this->getStagingFactory(null, 'json', $testLogger));
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $testLogger));
         $tableQueue =  $writer->uploadTables(
             'upload',
             [
@@ -937,7 +837,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $writer = new TableWriterV1($this->getStagingFactory(null, 'json', $testLogger));
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $testLogger));
         file_put_contents(
             $root . "/upload/table11.csv.manifest",
             '{"destination": "out.c-output-mapping-test.table11","primary_key": [""]}'
@@ -958,8 +858,16 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriterV1($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', [], ['componentId' => 'foo'], 'local');
+        $writer = new TableWriterV2($this->getStagingFactory());
+        $configuration = [
+            'mapping' => [
+                [
+                    'source' => 'out.c-output-mapping-test.table10.csv',
+                    'destination' => 'out.c-output-mapping-test.table10',
+                ]
+            ]
+        ];
+        $tableQueue = $writer->uploadTables('upload', $configuration, ['componentId' => 'foo'], 'local');
         $tableQueue->waitForAll();
 
         $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
@@ -970,13 +878,18 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriterV1($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ["mapping" => [["source" => "out.c-output-mapping-test.table10.csv", "columns" => ["Boing", "Tschak"]]]],
-            ['componentId' => 'foo'],
-            'local'
-        );
+        $writer = new TableWriterV2($this->getStagingFactory());
+        $configuration = [
+            'mapping' => [
+                [
+                    'source' => 'out.c-output-mapping-test.table10.csv',
+                    'destination' => 'out.c-output-mapping-test.table10',
+                    'columns' => ['Boing', 'Tschak']
+                ]
+            ]
+        ];
+        $tableQueue = $writer->uploadTables('upload', $configuration, ['componentId' => 'foo'], 'local');
+
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessageRegExp('/Some columns are missing in the csv file. Missing columns: id,name./i');
         $tableQueue->waitForAll();
@@ -987,13 +900,21 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
-        $writer = new TableWriterV1($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ["mapping" => [["source" => "out.c-output-mapping-test.table10a.csv"], ["source" => "out.c-output-mapping-test.table10b.csv"]]],
-            ['componentId' => 'foo'],
-            'local'
-        );
+        $writer = new TableWriterV2($this->getStagingFactory());
+        $configuration = [
+            'mapping' => [
+                [
+                    'source' => 'out.c-output-mapping-test.table10a.csv',
+                    'destination' => 'out.c-output-mapping-test.table10a',
+                ],
+                [
+                    'source' => 'out.c-output-mapping-test.table10b.csv',
+                    'destination' => 'out.c-output-mapping-test.table10b',
+                ],
+            ]
+        ];
+
+        $tableQueue =  $writer->uploadTables('upload', $configuration, ['componentId' => 'foo'], 'local');
         $tableQueue->waitForAll();
 
         $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
@@ -1003,18 +924,22 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable('out.c-output-mapping-test.table10b');
         $this->assertEquals(["foo", "bar"], $tableInfo["columns"]);
 
-        $writer = new TableWriterV1($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ["mapping" =>
+        $writer = new TableWriterV2($this->getStagingFactory());
+        $configuration = [
+            'mapping' => [
                 [
-                    ["source" => "out.c-output-mapping-test.table10a.csv", "columns" => ["Boing", "Tschak"]],
-                    ["source" => "out.c-output-mapping-test.table10b.csv", "columns" => ["bum", "tschak"]]
-                ]
+                    'source' => 'out.c-output-mapping-test.table10a.csv',
+                    'destination' => 'out.c-output-mapping-test.table10a',
+                    'columns' => ['Boing', 'Tschak'],
+                ],
+                [
+                    'source' => 'out.c-output-mapping-test.table10b.csv',
+                    'destination' => 'out.c-output-mapping-test.table10b',
+                    'columns' => ['bum', 'tschak'],
+                ],
             ],
-            ['componentId' => 'foo'],
-            'local'
-        );
+        ];
+        $tableQueue =  $writer->uploadTables('upload', $configuration, ['componentId' => 'foo'], 'local');
         try {
             $tableQueue->waitForAll();
             $this->fail("Must raise exception");
@@ -1038,10 +963,18 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
-        $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+
+        $writer->uploadTables('/upload', [
+            'mapping' => [
+                [
+                    'source' => 'out.c-output-mapping-test.table10.csv',
+                    'destination' => 'out.c-output-mapping-test.table10'
+                ]
+            ]
+        ], ['componentId' => 'foo'], 'local');
     }
 
     public function testWriteTableExistingBucketDevModeNoDev()
@@ -1071,7 +1004,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
@@ -1132,7 +1065,7 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ]
         ];
 
-        $writer = new TableWriterV1($this->getStagingFactory());
+        $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
@@ -1175,5 +1108,186 @@ class StorageApiTableWriterV1Test extends BaseWriterTest
             ['componentId' => 'foo'],
             StrategyFactory::LOCAL
         );
+    }
+
+    /**
+     * @dataProvider provideAllowedDestinationConfigurations
+     */
+    public function testAllowedDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedTables)
+    {
+        $root = $this->tmp->getTmpFolder() . '/upload/';
+
+        file_put_contents($root . 'table.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        if ($manifest !== null) {
+            file_put_contents($root . 'table.csv.manifest', json_encode($manifest));
+        }
+
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $queue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+        $queue->waitForAll();
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tablesIds = array_map(function (array $table) {
+            return $table['id'];
+        }, $tables);
+        self::assertSame($expectedTables, $tablesIds);
+    }
+
+    public function provideAllowedDestinationConfigurations()
+    {
+        return [
+            'table ID in mapping' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.tableA']
+                ],
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
+            ],
+
+            'table ID in manifest' => [
+                'manifest' => ['destination' => 'out.c-output-mapping-test.tableA'],
+                'defaultBucket' => null,
+                'mapping' => null,
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
+            ],
+
+            'table name in manifest with bucket' => [
+                'manifest' => ['destination' => 'tableA'],
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => null,
+                'expectedTables' => ['out.c-output-mapping-test.tableA'],
+            ],
+
+            'no destination in manifest with bucket' => [
+                'manifest' => ['columns' => ['Id', 'Name']],
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => null,
+                'expectedTables' => ['out.c-output-mapping-test.table'],
+            ],
+
+            'table ID in mapping overrides manifest' => [
+                'manifest' => ['destination' => 'out.c-output-mapping-test.tableA'],
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1']
+                ],
+                'expectedTables' => ['out.c-output-mapping-test.table1'],
+            ],
+
+            'multiple mappings of the same source' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table1'],
+                    ['source' => 'table.csv', 'destination' => 'out.c-output-mapping-test.table2']
+                ],
+                'expectedTables' => ['out.c-output-mapping-test.table1', 'out.c-output-mapping-test.table2'],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideForbiddenDestinationConfigurations
+     */
+    public function testForbiddenDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedError)
+    {
+        $root = $this->tmp->getTmpFolder() . '/upload/';
+
+        file_put_contents($root . 'table.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        if ($manifest !== null) {
+            file_put_contents($root . 'table.csv.manifest', json_encode($manifest));
+        }
+
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage($expectedError);
+        $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+    }
+
+    public function provideForbiddenDestinationConfigurations()
+    {
+        return [
+            'no manifest nor mapping' => [
+                'manifest' => null,
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => null,
+                'expectedError' => 'Source table "table.csv" has neither manifest nor mapping set',
+            ],
+
+            'no destination in manifest without bucket' => [
+                'manifest' => ['columns' => ['Id', 'Name']],
+                'defaultBucket' => null,
+                'mapping' => null,
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+
+            'table name in mapping is not accepted' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'table']
+                ],
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+
+            'table name in mapping does not combine with default bucket' => [
+                'manifest' => null,
+                'defaultBucket' => 'out.c-output-mapping-test',
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => 'table'],
+                ],
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+
+            'table name in manifest without bucket' => [
+                'manifest' => ['destination' => 'table'],
+                'defaultBucket' => null,
+                'mapping' => null,
+                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+            ],
+        ];
+    }
+
+    public function testLocalTableUploadRequiresComponentId()
+    {
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('Component Id must be set');
+
+        $tableWriter->uploadTables('upload', [], [], 'local');
+    }
+
+    public function testLocalTableUploadChecksForOrphanedManifests()
+    {
+        $root = $this->tmp->getTmpFolder() . '/upload/';
+        file_put_contents($root . 'table.csv.manifest', json_encode([]));
+
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Found orphaned table manifest: "table.csv.manifest"');
+
+        $tableWriter->uploadTables('upload', [], ['componentId' => 'foo'], 'local');
+    }
+
+    public function testLocalTableUploadChecksForUnusedMappingEntries()
+    {
+        $tableWriter = new TableWriterV2($this->getStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Table sources not found: "unknown.csv"');
+
+        $tableWriter->uploadTables('upload', [
+            'mapping' => [
+                [
+                    'source' => 'unknown.csv',
+                    'destination' => 'unknown',
+                ]
+            ]
+        ], ['componentId' => 'foo'], 'local');
     }
 }

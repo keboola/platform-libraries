@@ -3,11 +3,13 @@
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class AbstractTableStrategy implements StrategyInterface
+abstract class AbstractTableStrategy implements StrategyInterface
 {
     /** @var ClientWrapper */
     protected $clientWrapper;
@@ -53,5 +55,51 @@ class AbstractTableStrategy implements StrategyInterface
     public function getMetadataStorage()
     {
         return $this->metadataStorage;
+    }
+
+    /**
+     * @param MappingSource[] $sources
+     * @param array<array{source: string}> $mappings
+     * @return MappingSource[]
+     */
+    protected function combineSourcesWithMappingsFromConfiguration(array $sources, array $mappings)
+    {
+        $mappingsBySource = [];
+        foreach ($mappings as $mapping) {
+            $mappingsBySource[$mapping['source']][] = $mapping;
+        }
+
+        $sourcesWithMapping = [];
+        foreach ($sources as $source) {
+            $sourceName = $source->getName();
+
+            $sourceMappings = isset($mappingsBySource[$sourceName]) ? $mappingsBySource[$sourceName] : [];
+            unset($mappingsBySource[$sourceName]);
+
+            if (count($sourceMappings) === 0) {
+                $sourcesWithMapping[] = $source;
+                continue;
+            }
+
+            foreach ($sourceMappings as $sourceMapping) {
+                $sourceCopy = clone $source;
+                $sourceCopy->setMapping($sourceMapping);
+                $sourcesWithMapping[] = $sourceCopy;
+            }
+        }
+
+        if (count($mappingsBySource) > 0) {
+            $invalidSources = array_keys($mappingsBySource);
+            $invalidSources = array_map(function ($source) {
+                return sprintf('"%s"', $source);
+            }, $invalidSources);
+
+            throw new InvalidOutputException(
+                sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
+                404
+            );
+        }
+
+        return $sourcesWithMapping;
     }
 }

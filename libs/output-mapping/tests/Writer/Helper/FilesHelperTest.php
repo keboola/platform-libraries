@@ -2,12 +2,12 @@
 
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
-use Keboola\OutputMapping\Writer\Helper\ManifestHelper;
+use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use SplFileInfo;
 
-class ManifestHelperTest extends TestCase
+class FilesHelperTest extends TestCase
 {
     public function testGetManifestFiles()
     {
@@ -20,7 +20,7 @@ class ManifestHelperTest extends TestCase
         touch($temp->getTmpFolder() . '/sub-dir/my.sub-dir.csv');
         touch($temp->getTmpFolder() . '/sub-dir/my.sub-dir.file.manifest');
 
-        $result = ManifestHelper::getManifestFiles($temp->getTmpFolder());
+        $result = FilesHelper::getManifestFiles($temp->getTmpFolder());
         $result = array_map(function (SplFileInfo $file) {
             return $file->getPathname();
         }, $result);
@@ -46,7 +46,7 @@ class ManifestHelperTest extends TestCase
         touch($temp->getTmpFolder() . '/sub-dir/my.subdir.csv');
         touch($temp->getTmpFolder() . '/sub-dir/my.subdir.file.manifest');
 
-        $result = ManifestHelper::getNonManifestFiles($temp->getTmpFolder());
+        $result = FilesHelper::getDataFiles($temp->getTmpFolder());
         $result = array_map(function (SplFileInfo $file) {
             return $file->getPathname();
         }, $result);

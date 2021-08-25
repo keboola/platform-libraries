@@ -28,7 +28,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
             try {
-                $workspaces->deleteWorkspace($this->workspaceId);
+                $workspaces->deleteWorkspace($this->workspaceId, ['async' => 1]);
             } catch (ClientException $e) {
                 if ($e->getCode() !== 404) {
                     throw $e;

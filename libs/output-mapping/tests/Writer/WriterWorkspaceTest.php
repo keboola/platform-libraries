@@ -8,7 +8,6 @@ use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
 
 class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -125,12 +124,11 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         // fix exception message when https://keboola.atlassian.net/browse/KBC-34 is resolved
         // self::expectExceptionMessage('foo');
-        self::expectException(InvalidOutputException::class);
+        $this->expectException(InvalidOutputException::class);
     }
 
     public function testTableOutputMappingMissingManifest()
     {
-        $root = $this->tmp->getTmpFolder();
         $configs = [
             [
                 'source' => 'table1a',
@@ -138,8 +136,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to read file table1a Cannot open file table1a');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessageRegExp('/^(
+            Table\ sources\ not\ found:\ "table1a"|                       # TableWriterV2
+            Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a  # TableWriterV1
+        )$/x');
+
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],
@@ -241,8 +243,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             )
         );
 
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessageRegExp('/^(
+            Failed\ to\ resolve\ valid\ destination\.\ "table1a"\ is\ not\ a\ valid\ table\ ID\.| # TableWriterV2
+            Failed\ to\ resolve\ destination\ for\ output\ table\ "table1a"\.                     # TableWriterV1
+        )$/x');
+
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],
@@ -257,7 +263,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
-        $root = $this->tmp->getTmpFolder();
         $configs = [
             [
                 'source' => 'table1a',
@@ -267,8 +272,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ];
         $writer = new TableWriter($factory);
 
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage('Failed to resolve destination for output table "table1a".');
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessageRegExp('/^(
+            Failed\ to\ resolve\ destination\ for\ output\ table\ "table1a"\.| # TableWriterV2
+            Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a       # TableWriterV1
+        )$/x');
+
         $writer->uploadTables(
             '/',
             ['mapping' => $configs],
@@ -447,5 +456,67 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
+    }
+
+    /**
+     * @group tableWriterV2
+     */
+    public function testSnowflakeMultipleMappingOfSameSource()
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => 'out.c-output-mapping-test.table1a',
+            ],
+            [
+                'source' => 'table1a',
+                'destination' => 'out.c-output-mapping-test.table1a_2',
+            ],
+        ];
+        file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
+
+        $writer = new TableWriter($factory);
+        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], 'workspace-snowflake');
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(2, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertNotEmpty($jobIds[1]);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $this->assertSame('out.c-output-mapping-test.table1a', $job['tableId']);
+
+        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
+        $this->assertSame('out.c-output-mapping-test.table1a_2', $job['tableId']);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $this->assertCount(2, $tables);
+        $tableIds = [$tables[0]['id'], $tables[1]['id']];
+        sort($tableIds);
+        $this->assertSame(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table1a_2'], $tableIds);
+
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $rows = array_map('strtolower', $rows);
+        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
+        $this->assertSame(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
+
+        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a_2');
+        $rows = explode("\n", trim($data));
+        sort($rows);
+        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
+        $rows = array_map('strtolower', $rows);
+        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
+        $this->assertSame(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
     }
 }

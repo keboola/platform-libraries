@@ -5,6 +5,7 @@ namespace Keboola\StagingProvider;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
@@ -59,6 +60,17 @@ class InputProviderInitializer extends AbstractProviderInitializer
             );
         }
 
+        if ($stagingType === InputStrategyFactory::WORKSPACE_EXASOL &&
+            $tokenInfo['owner']['hasExasol']
+        ) {
+            $this->addWorkspaceProvider(
+                ExasolWorkspaceStaging::class,
+                [
+                    InputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::TABLE_DATA]),
+                ]
+            );
+        }
+
         $this->addLocalProvider(
             [
                 InputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
@@ -69,6 +81,7 @@ class InputProviderInitializer extends AbstractProviderInitializer
                 InputStrategyFactory::WORKSPACE_SYNAPSE => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
                 InputStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
                 InputStrategyFactory::WORKSPACE_ABS => new Scope([Scope::TABLE_METADATA]),
+                InputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
             ]
         );
     }

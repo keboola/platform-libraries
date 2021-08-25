@@ -40,7 +40,7 @@ class LoadTableQueue
             $jobIds[] = $task->getStorageJobId();
             $jobResult = $this->client->waitForJob($task->getStorageJobId());
             if ($jobResult['status'] === 'error') {
-                $errors[] = sprintf('Failed to load table "%s": %s', $jobResult['tableId'], $jobResult['error']['message']);
+                $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
             } else {
                 $task->applyMetadata($metadataApiClient);
             }

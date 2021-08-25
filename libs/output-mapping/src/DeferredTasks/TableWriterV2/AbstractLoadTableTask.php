@@ -39,9 +39,11 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         }
     }
 
-    /**
-     * @return null|string
-     */
+    public function getDestinationTableName()
+    {
+        return $this->destination->getTableId();
+    }
+
     public function getStorageJobId()
     {
         return $this->storageJobId;

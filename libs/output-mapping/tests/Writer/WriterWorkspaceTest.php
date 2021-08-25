@@ -69,34 +69,25 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]['id'], $tables[1]['id']];
-        sort($tableIds);
-        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
-        $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
-        $this->assertEquals(true, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['Id'], $job['operationParams']['params']['columns']);
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
-        $this->assertEquals('out.c-output-mapping-test.table2a', $job['tableId']);
-        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['Id2', 'Name2'], $job['operationParams']['params']['columns']);
 
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $rows = array_map(
-            'strtolower',
-            $rows
-        );
-        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
-        $this->assertEquals(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
+        $this->assertJobParamsMatches([
+            'incremental' => true,
+            'columns' => ['Id'],
+        ], $jobIds[0]);
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['Id2', 'Name2'],
+        ], $jobIds[1]);
+
+        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"id","name"',
+            '"test","test"',
+            '"aabb","ccdd"',
+        ]);
     }
 
     public function testTableOutputMappingMissing()
@@ -318,14 +309,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
-        $this->assertEquals(['Id', 'Name'], $job['operationParams']['params']['columns']);
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
 
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
+        $this->assertJobParamsMatches([
+            'columns' => ['Id', 'Name'],
+        ], $jobIds[0]);
+
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"id","name"',
+            '"test","test"',
+            '"aabb","ccdd"',
+        ]);
     }
 
     public function testRedshiftTableOutputMapping()
@@ -365,24 +358,15 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]['id'], $tables[1]['id']];
-        sort($tableIds);
-        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
-        $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
-        $data = (array) $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a', ['format' => 'json']);
-        $values = [];
-        foreach ($data['rows'] as $row) {
-            foreach ($row as $column) {
-                $values[] = $column['value'];
-            }
-        }
-        sort($values);
-        $this->assertEquals(['aabb', 'ccdd', 'test', 'test'], $values);
+
+        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"id","name"',
+            '"test","test"',
+            '"aabb","ccdd"',
+        ]);
     }
 
     public function testWriteTableOutputMappingDevMode()
@@ -491,32 +475,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertSame('out.c-output-mapping-test.table1a', $job['tableId']);
-
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
-        $this->assertSame('out.c-output-mapping-test.table1a_2', $job['tableId']);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]['id'], $tables[1]['id']];
-        sort($tableIds);
-        $this->assertSame(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table1a_2'], $tableIds);
-
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $rows = array_map('strtolower', $rows);
-        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
-        $this->assertSame(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
-
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a_2');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $rows = array_map('strtolower', $rows);
-        // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
-        $this->assertSame(['"id","name"', '"aabb","ccdd"', '"test","test"'], $rows);
+        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table1a_2']);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"id","name"',
+            '"test","test"',
+            '"aabb","ccdd"',
+        ]);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a_2', [
+            '"id","name"',
+            '"test","test"',
+            '"aabb","ccdd"',
+        ]);
     }
 }

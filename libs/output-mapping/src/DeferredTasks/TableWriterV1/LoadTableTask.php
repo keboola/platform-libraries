@@ -44,9 +44,11 @@ class LoadTableTask implements LoadTableTaskInterface
         }
     }
 
-    /**
-     * @return null|string
-     */
+    public function getDestinationTableName()
+    {
+        return $this->destination;
+    }
+
     public function getStorageJobId()
     {
         return $this->storageJobId;

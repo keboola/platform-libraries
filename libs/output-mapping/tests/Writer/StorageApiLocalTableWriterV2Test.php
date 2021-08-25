@@ -253,7 +253,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         $tableQueue = $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to load table "": There are no data in import file');
+        $this->expectExceptionMessage('Failed to load table "out.c-output-mapping-test.table41": There are no data in import file');
         $tableQueue->waitForAll();
     }
 

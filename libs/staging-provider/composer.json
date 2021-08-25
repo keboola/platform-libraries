@@ -25,8 +25,8 @@
     },
     "require": {
         "php": ">=5.6",
-        "keboola/input-mapping": "dev-odin-PS-2464 as 12.10.2",
-        "keboola/output-mapping": "dev-odin-PS-2465 as 14.6.0",
+        "keboola/input-mapping": "^12.11",
+        "keboola/output-mapping": "^14.7",
         "keboola/storage-api-client": "^11.2|^12.0"
     },
     "require-dev": {

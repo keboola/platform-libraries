@@ -2,16 +2,12 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\Csv\CsvFile;
-use Keboola\OutputMapping\DeferredTasks\TableWriterV2\CreateAndLoadTableTask;
-use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
+use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
-use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
-use Keboola\Temp\Temp;
-use LogicException;
-use Symfony\Component\Finder\SplFileInfo;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
@@ -20,28 +16,30 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
         $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
 
-        /** @var array<string, MappingSource> $sources */
-        $sources = [];
+        /** @var array<string, MappingSource> $mappingSources */
+        $mappingSources = [];
 
+        // Create MappingSource for each mapping row. This is workaround for not being able to list real list of tables
+        // from workspace.
         foreach (isset($configuration['mapping']) ? $configuration['mapping'] : [] as $mapping) {
             $sourceName = $mapping['source'];
-
-            // Create empty mapping. This is workaround for not being able to list real list of tables from workspace.
-            $sources[$sourceName] = $this->createMapping($sourcePathPrefix, $sourceName, null, null);
+            $source = $this->createSource($sourcePathPrefix, $sourceName);
+            $mappingSources[$sourceName] = new MappingSource($source);
         }
 
         foreach ($manifestFiles as $file) {
             $sourceName = $file->getBasename('.manifest');
 
-            if (isset($sources[$sourceName])) {
-                $sources[$sourceName]->setManifestFile($file);
-            } else {
-                $sources[$sourceName] = $this->createMapping($sourcePathPrefix, $sourceName, $file, null);
+            if (!isset($mappingSources[$sourceName])) {
+                $source = $this->createSource($sourcePathPrefix, $sourceName);
+                $mappingSources[$sourceName] = new MappingSource($source);
             }
+
+            $mappingSources[$sourceName]->setManifestFile($file);
         }
 
         return $this->combineSourcesWithMappingsFromConfiguration(
-            $sources,
+            $mappingSources,
             isset($configuration['mapping']) ? $configuration['mapping'] : []
         );
     }
@@ -49,57 +47,23 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
     /**
      * @param string $sourcePathPrefix
      * @param string $sourceName
-     * @param null|SplFileInfo $manifestFile
-     * @param null|array $mapping
-     * @return MappingSource
+     * @return WorkspaceItemSource
      */
-    abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
+    abstract protected function createSource($sourcePathPrefix, $sourceName);
 
-    public function prepareLoadTask(
-        MappingSource $source,
-        MappingDestination $destination,
-        $destinationTableExists,
-        array $config,
-        array $loadOptions
-    ) {
-        $loadOptions = array_merge($loadOptions, [
-            'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
-            'dataObject' => $source->getId(),
-        ]);
-
-        $hasColumns = !empty($config['columns']);
-
-        if ($source->isSliced() && !$hasColumns) {
-            throw new LogicException('Sliced files must have columns configured!');
-        }
-
-        // some scenarios are not supported by the SAPI, so we need to take care of them manually here
-        // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
-        // - sliced files
-        if (!$destinationTableExists && $hasColumns) {
-            $this->createTable($destination, $config['columns'], $loadOptions);
-            $destinationTableExists = true;
-        }
-
-        if ($destinationTableExists) {
-            return new LoadTableTask($destination, $loadOptions);
-        }
-
-        return new CreateAndLoadTableTask($destination, $loadOptions);
-    }
-
-    private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config)
     {
-        $tmp = new Temp();
+        if (!$source instanceof WorkspaceItemSource) {
+            throw new InvalidArgumentException(sprintf(
+                'Argument $source is expected to be instance of %s, %s given',
+                WorkspaceItemSource::class,
+                get_class($source)
+            ));
+        }
 
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv'));
-        $headerCsvFile->writeRow($columns);
-
-        $this->clientWrapper->getBasicClient()->createTableAsync(
-            $destination->getBucketId(),
-            $destination->getTableName(),
-            $headerCsvFile,
-            $loadOptions
-        );
+        return [
+            'dataWorkspaceId' => $source->getWorkspaceId(),
+            'dataObject' => $source->getDataObject(),
+        ];
     }
 }

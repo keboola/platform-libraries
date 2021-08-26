@@ -3,7 +3,7 @@
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
 interface StrategyInterface
 {
@@ -25,14 +25,7 @@ interface StrategyInterface
     public function resolveMappingSources($sourcePathPrefix, array $configuration);
 
     /**
-     * @param bool $destinationTableExists
-     * @return LoadTableTaskInterface
+     * @return array
      */
-    public function prepareLoadTask(
-        MappingSource $source,
-        MappingDestination $destination,
-        $destinationTableExists,
-        array $config,
-        array $loadOptions
-    );
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config);
 }

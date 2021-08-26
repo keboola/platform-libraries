@@ -8,6 +8,9 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\TagsHelper;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -47,7 +50,7 @@ class TableConfigurationResolver
      * @return array
      * @throws InvalidOutputException
      */
-    public function resolveTableConfiguration(MappingSource $source, $defaultBucket)
+    public function resolveTableConfiguration(MappingSource $source, $defaultBucket, array $systemMetadata)
     {
         $configFromManifest = [];
         $configFromMapping = [];
@@ -57,7 +60,7 @@ class TableConfigurationResolver
 
             $configFromManifest['destination'] = $this->normalizeManifestDestination(
                 isset($configFromManifest['destination']) ? $configFromManifest['destination'] : null,
-                $source->getName(),
+                $source->getSource(),
                 $defaultBucket
             );
         }
@@ -72,11 +75,18 @@ class TableConfigurationResolver
         if (empty($config['destination'])) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve destination for output table "%s".',
-                $source->getName()
+                $source->getSourceName()
             ));
         }
 
-        return $this->normalizeConfig($config, $source);
+        $config = $this->normalizeConfig($config, $source);
+
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
+            $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
+        }
+
+        return $config;
     }
 
     /**
@@ -100,18 +110,18 @@ class TableConfigurationResolver
 
     /**
      * @param null|string $destination
-     * @param string $dataFileName
+     * @param SourceInterface $source
      * @param null|string $defaultBucket
      * @return string
      */
-    private function normalizeManifestDestination($destination, $dataFileName, $defaultBucket)
+    private function normalizeManifestDestination($destination, $source, $defaultBucket)
     {
         if (MappingDestination::isTableId($destination)) {
             return $destination;
         }
 
         if ($destination === null || $destination === '') {
-            $destination = basename($dataFileName, '.csv');
+            $destination = basename($source->getName(), '.csv');
         }
 
         if ($defaultBucket !== null) {
@@ -134,7 +144,7 @@ class TableConfigurationResolver
             $config = (new TableManifest())->parse([$config]);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
-                sprintf("Failed to prepare mapping configuration for table %s: %s", $source->getName(), $e->getMessage()),
+                sprintf("Failed to prepare mapping configuration for table %s: %s", $source->getSourceName(), $e->getMessage()),
                 0,
                 $e
             );

@@ -58,11 +58,11 @@ abstract class AbstractTableStrategy implements StrategyInterface
     }
 
     /**
-     * @param MappingSource[] $sources
+     * @param MappingSource[] $mappingSources
      * @param array<array{source: string}> $mappings
      * @return MappingSource[]
      */
-    protected function combineSourcesWithMappingsFromConfiguration(array $sources, array $mappings)
+    protected function combineSourcesWithMappingsFromConfiguration(array $mappingSources, array $mappings)
     {
         $mappingsBySource = [];
         foreach ($mappings as $mapping) {
@@ -70,8 +70,8 @@ abstract class AbstractTableStrategy implements StrategyInterface
         }
 
         $sourcesWithMapping = [];
-        foreach ($sources as $source) {
-            $sourceName = $source->getName();
+        foreach ($mappingSources as $source) {
+            $sourceName = $source->getSourceName();
 
             $sourceMappings = isset($mappingsBySource[$sourceName]) ? $mappingsBySource[$sourceName] : [];
             unset($mappingsBySource[$sourceName]);

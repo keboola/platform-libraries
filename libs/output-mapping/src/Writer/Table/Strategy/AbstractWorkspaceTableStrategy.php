@@ -2,12 +2,15 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
+use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\DeferredTasks\TableWriterV2\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\Temp\Temp;
+use LogicException;
 use Symfony\Component\Finder\SplFileInfo;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
@@ -53,7 +56,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
     abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
 
     public function prepareLoadTask(
-        $sourceId,
+        MappingSource $source,
         MappingDestination $destination,
         $destinationTableExists,
         array $config,
@@ -61,13 +64,42 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
     ) {
         $loadOptions = array_merge($loadOptions, [
             'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
-            'dataObject' => $sourceId,
+            'dataObject' => $source->getId(),
         ]);
+
+        $hasColumns = !empty($config['columns']);
+
+        if ($source->isSliced() && !$hasColumns) {
+            throw new LogicException('Sliced files must have columns configured!');
+        }
+
+        // some scenarios are not supported by the SAPI, so we need to take care of them manually here
+        // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
+        // - sliced files
+        if (!$destinationTableExists && $hasColumns) {
+            $this->createTable($destination, $config['columns'], $loadOptions);
+            $destinationTableExists = true;
+        }
 
         if ($destinationTableExists) {
             return new LoadTableTask($destination, $loadOptions);
         }
 
         return new CreateAndLoadTableTask($destination, $loadOptions);
+    }
+
+    private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
+    {
+        $tmp = new Temp();
+
+        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv'));
+        $headerCsvFile->writeRow($columns);
+
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            $destination->getBucketId(),
+            $destination->getTableName(),
+            $headerCsvFile,
+            $loadOptions
+        );
     }
 }

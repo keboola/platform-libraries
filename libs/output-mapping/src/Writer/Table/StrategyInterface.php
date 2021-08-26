@@ -25,12 +25,11 @@ interface StrategyInterface
     public function resolveMappingSources($sourcePathPrefix, array $configuration);
 
     /**
-     * @param string $sourceId
      * @param bool $destinationTableExists
      * @return LoadTableTaskInterface
      */
     public function prepareLoadTask(
-        $sourceId,
+        MappingSource $source,
         MappingDestination $destination,
         $destinationTableExists,
         array $config,

@@ -13,6 +13,9 @@ class MappingSource
     /** @var string */
     private $id;
 
+    /** @var bool */
+    private $isSliced;
+
     /** @var null|SplFileInfo */
     private $manifestFile;
 
@@ -22,9 +25,15 @@ class MappingSource
     /**
      * @param string $sourceName
      * @param string $sourceId
+     * @param bool $isSliced
      */
-    public function __construct($sourceName, $sourceId, SplFileInfo $manifestFile = null, array $mapping = null)
-    {
+    public function __construct(
+        $sourceName,
+        $sourceId,
+        $isSliced,
+        SplFileInfo $manifestFile = null,
+        array $mapping = null
+    ) {
         if (!is_string($sourceName)) {
             throw new InvalidArgumentException(sprintf(
                 'Argument $sourceName must be a string, %s given',
@@ -39,8 +48,16 @@ class MappingSource
             ));
         }
 
+        if (!is_bool($isSliced)) {
+            throw new InvalidArgumentException(sprintf(
+                'Argument $isSliced must be a boolean, %s given',
+                is_object($isSliced) ? get_class($isSliced) : gettype($isSliced)
+            ));
+        }
+
         $this->name = $sourceName;
         $this->id = $sourceId;
+        $this->isSliced = $isSliced;
         $this->manifestFile = $manifestFile;
         $this->mapping = $mapping;
     }
@@ -59,6 +76,14 @@ class MappingSource
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSliced()
+    {
+        return $this->isSliced;
     }
 
     /**

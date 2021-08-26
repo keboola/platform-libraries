@@ -190,7 +190,7 @@ class TableWriterV2
         }
 
         $loadTask = $strategy->prepareLoadTask(
-            $source->getId(),
+            $source,
             $destination,
             $destinationTableExists,
             $config,

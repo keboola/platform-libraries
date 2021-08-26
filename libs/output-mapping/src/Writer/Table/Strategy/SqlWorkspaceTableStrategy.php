@@ -2,12 +2,17 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping)
+    protected function createSource($sourcePathPrefix, $sourceName)
     {
-        return new MappingSource($sourceName, $sourceName, false, $manifestFile, $mapping);
+        return new WorkspaceItemSource(
+            $sourceName,
+            (string) $this->dataStorage->getWorkspaceId(),
+            $sourceName,
+            false
+        );
     }
 }

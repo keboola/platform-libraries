@@ -14,12 +14,13 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
     protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping)
     {
         $sourcePath = Path::join($sourcePathPrefix, $sourceName);
+        $isSliced = $this->isDirectory($sourcePath);
 
-        if ($this->isDirectory($sourcePath)) {
+        if ($isSliced) {
             $sourcePath = Path::ensureTrailingSlash($sourcePath);
         }
 
-        return new MappingSource($sourceName, $sourcePath, $manifestFile, $mapping);
+        return new MappingSource($sourceName, $sourcePath, $isSliced, $manifestFile, $mapping);
     }
 
     /**

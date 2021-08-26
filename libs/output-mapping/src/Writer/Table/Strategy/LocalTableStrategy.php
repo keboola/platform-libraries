@@ -30,8 +30,9 @@ class LocalTableStrategy extends AbstractTableStrategy
         foreach ($dataFiles as $file) {
             $sourceName = $file->getBasename();
             $sourceId = $file->getPathname();
+            $isSliced = $file->isDir();
 
-            $sources[$sourceName] = new MappingSource($sourceName, $sourceId);
+            $sources[$sourceName] = new MappingSource($sourceName, $sourceId, $isSliced);
         }
 
         foreach ($manifestFiles as $file) {
@@ -51,7 +52,7 @@ class LocalTableStrategy extends AbstractTableStrategy
     }
 
     public function prepareLoadTask(
-        $sourceId,
+        MappingSource $source,
         MappingDestination $destination,
         $destinationTableExists,
         array $config,
@@ -63,17 +64,16 @@ class LocalTableStrategy extends AbstractTableStrategy
         ]);
 
         $tags = !empty($loadOptions['tags']) ? $loadOptions['tags'] : [];
-        $isSliced = is_dir($sourceId);
         $hasColumns = !empty($config['columns']);
 
-        if ($isSliced && !$hasColumns) {
+        if ($source->isSliced() && !$hasColumns) {
             throw new LogicException('Sliced files must have columns configured!');
         }
 
-        if ($isSliced) {
-            $loadOptions['dataFileId'] = $this->uploadSlicedFile($sourceId, $tags);
+        if ($source->isSliced()) {
+            $loadOptions['dataFileId'] = $this->uploadSlicedFile($source->getId(), $tags);
         } else {
-            $loadOptions['dataFileId'] = $this->uploadRegularFile($sourceId, $tags);
+            $loadOptions['dataFileId'] = $this->uploadRegularFile($source->getId(), $tags);
         }
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here

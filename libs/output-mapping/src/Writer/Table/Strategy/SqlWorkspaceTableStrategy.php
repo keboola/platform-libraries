@@ -8,6 +8,6 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
     protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping)
     {
-        return new MappingSource($sourceName, $sourceName, $manifestFile, $mapping);
+        return new MappingSource($sourceName, $sourceName, false, $manifestFile, $mapping);
     }
 }

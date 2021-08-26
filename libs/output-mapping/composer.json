@@ -20,18 +20,18 @@
         }
     },
     "require": {
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^6.5.5",
+        "keboola/input-mapping": "^12.11",
+        "keboola/sanitizer": "^0.1",
+        "keboola/storage-api-client": "^12.4",
+        "keboola/storage-api-php-client-branch-wrapper": "^1.0.0",
+        "microsoft/azure-storage-blob": "^1.5",
+        "monolog/monolog": "^1.25.5|^2.0",
         "symfony/config": "^2.8.52|^4.1",
-        "symfony/yaml": "^2.8.52|^4.1",
         "symfony/finder": "^2.8.52|^4.1",
         "symfony/serializer": "^2.8.52|^4.1",
-        "monolog/monolog": "^1.25.5|^2.0",
-        "keboola/input-mapping": "^12.11",
-        "keboola/storage-api-php-client-branch-wrapper": "^1.0.0",
-        "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/sanitizer": "^0.1",
-        "microsoft/azure-storage-blob": "^1.5",
-        "ext-json": "*",
-        "keboola/storage-api-client": "^12.4"
+        "symfony/yaml": "^2.8.52|^4.1"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5.6",
@@ -52,5 +52,8 @@
             "@composer validate --no-check-all --strict",
             "@build"
         ]
+    },
+    "config": {
+        "sort-packages": true
     }
 }

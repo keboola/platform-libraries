@@ -443,6 +443,45 @@ class ConfigurationMergerTest extends TestCase
                     ],
                 ],
             ],
+
+            'metadata-with-multiple-matching-keys' => [
+                'mapping' => [
+                    'metadata' => [
+                        [
+                            'key' => 'table.key.one',
+                            'value' => 'table value three',
+                        ],
+                        [
+                            'key' => 'table.key.two',
+                            'value' => 'table value four',
+                        ],
+                    ],
+                ],
+                'manifest' => [
+                    'metadata' => [
+                        [
+                            'key' => 'table.key.one',
+                            'value' => 'table value one',
+                        ],
+                        [
+                            'key' => 'table.key.two',
+                            'value' => 'table value two',
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'metadata' => [
+                        [
+                            'key' => 'table.key.one',
+                            'value' => 'table value three',
+                        ],
+                        [
+                            'key' => 'table.key.two',
+                            'value' => 'table value four',
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 }

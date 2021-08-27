@@ -42,19 +42,19 @@ class ConfigurationMerger
 
     private static function mergeMetadata($target, $source)
     {
-        // overwrite existing keys
-        for ($i = 0; $i < count($target); $i++) {
-            for ($j = 0; $j < count($source); $j++) {
-                if ($target[$i]['key'] === $source[$j]['key']) {
-                    $target[$i]['value'] = $source[$j]['value'];
-                    unset($source[$j]);
-                }
-            }
+        $metadataMap = [];
+        foreach ($target as $metadataItem) {
+            $metadataMap[$metadataItem['key']] = $metadataItem['value'];
         }
-        // add remaining entries
-        foreach ($source as $item) {
-            $target[] = $item;
+        foreach ($source as $metadataItem) {
+            $metadataMap[$metadataItem['key']] = $metadataItem['value'];
         }
-        return $target;
+
+        $metadataList = [];
+        foreach ($metadataMap as $key => $value) {
+            $metadataList[] = ['key' => $key, 'value' => $value];
+        }
+
+        return $metadataList;
     }
 }

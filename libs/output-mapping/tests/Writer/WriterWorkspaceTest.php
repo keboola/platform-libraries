@@ -92,7 +92,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testTableOutputMappingMissing()
     {
-        self::markTestSkipped('Works, but takes ages https://keboola.atlassian.net/browse/KBC-34');
         $root = $this->tmp->getTmpFolder();
         $configs = [
             [
@@ -107,19 +106,23 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             )
         );
         $writer = new TableWriter($this->getStagingFactory());
-        $writer->uploadTables(
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to load table "out.c-output-mapping-test.table1a": Table "table1a" not found in schema "WORKSPACE_');
+
+        $tableQueue = $writer->uploadTables(
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
         );
-        // fix exception message when https://keboola.atlassian.net/browse/KBC-34 is resolved
-        // self::expectExceptionMessage('foo');
-        $this->expectException(InvalidOutputException::class);
+        $tableQueue->waitForAll();
     }
 
     public function testTableOutputMappingMissingManifest()
     {
+        self::markTestSkipped('Works, but takes ages https://keboola.atlassian.net/browse/KBC-34');
+
         $configs = [
             [
                 'source' => 'table1a',
@@ -133,12 +136,13 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a  # TableWriterV1
         )$/x');
 
-        $writer->uploadTables(
+        $tableQueue = $writer->uploadTables(
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake'
         );
+        $tableQueue->waitForAll();
     }
 
     public function testMappingMerge()

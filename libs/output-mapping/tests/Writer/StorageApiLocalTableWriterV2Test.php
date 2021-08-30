@@ -954,26 +954,6 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         }
     }
 
-//    public function testWriteTableInvalidCsv()
-//    {
-//        $root = $this->tmp->getTmpFolder();
-//        file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
-//        $writer = new TableWriterV2($this->getStagingFactory());
-//
-//        $this->expectException(InvalidOutputException::class);
-//        $this->expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
-//
-//        $tableQueue = $writer->uploadTables('/upload', [
-//            'mapping' => [
-//                [
-//                    'source' => 'out.c-output-mapping-test.table10.csv',
-//                    'destination' => 'out.c-output-mapping-test.table10'
-//                ]
-//            ]
-//        ], ['componentId' => 'foo'], 'local');
-//        $tableQueue->waitForAll();
-//    }
-
     public function testWriteTableExistingBucketDevModeNoDev()
     {
         $root = $this->tmp->getTmpFolder();

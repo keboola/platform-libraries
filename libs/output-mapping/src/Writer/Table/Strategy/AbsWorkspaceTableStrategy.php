@@ -5,21 +5,27 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 use Exception;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\Path;
-use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 
 class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping)
+    protected function createSource($sourcePathPrefix, $sourceName)
     {
         $sourcePath = Path::join($sourcePathPrefix, $sourceName);
+        $isSliced = $this->isDirectory($sourcePath);
 
-        if ($this->isDirectory($sourcePath)) {
+        if ($isSliced) {
             $sourcePath = Path::ensureTrailingSlash($sourcePath);
         }
 
-        return new MappingSource($sourceName, $sourcePath, $manifestFile, $mapping);
+        return new WorkspaceItemSource(
+            $sourceName,
+            (string) $this->dataStorage->getWorkspaceId(),
+            $sourcePath,
+            $isSliced
+        );
     }
 
     /**

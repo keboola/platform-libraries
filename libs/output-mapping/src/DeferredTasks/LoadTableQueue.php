@@ -4,19 +4,19 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Metadata;
 
 class LoadTableQueue
 {
-    /**
-     * @var LoadTable[]
-     */
+    /** @var Client */
+    private $client;
+
+    /** @var LoadTableTaskInterface[] */
     private $loadTableTasks;
 
     /**
-     * @var Client
+     * @param LoadTableTaskInterface[] $loadTableTasks
      */
-    private $client;
-
     public function __construct(Client $client, array $loadTableTasks)
     {
         $this->client = $client;
@@ -26,21 +26,23 @@ class LoadTableQueue
     public function start()
     {
         foreach ($this->loadTableTasks as $loadTableTask) {
-            $loadTableTask->startImport();
+            $loadTableTask->startImport($this->client);
         }
     }
 
     public function waitForAll()
     {
+        $metadataApiClient = new Metadata($this->client);
+
         $jobIds = [];
         $errors = [];
         foreach ($this->loadTableTasks as $task) {
             $jobIds[] = $task->getStorageJobId();
             $jobResult = $this->client->waitForJob($task->getStorageJobId());
-            if ($jobResult['status'] == 'error') {
-                $errors[] = sprintf('Failed to load table "%s": %s', $jobResult['tableId'], $jobResult['error']['message']);
+            if ($jobResult['status'] === 'error') {
+                $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
             } else {
-                $task->setMetadata();
+                $task->applyMetadata($metadataApiClient);
             }
         }
         if ($errors) {

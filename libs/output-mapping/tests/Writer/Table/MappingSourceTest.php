@@ -2,44 +2,50 @@
 
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
-use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSourceTest extends TestCase
 {
-    public function testSourceNameMustBeString()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $sourceName must be a string, boolean given');
-
-        new MappingSource(false, 'sourceId');
-    }
-
-    public function testSourceIdMustBeString()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $sourceId must be a string, NULL given');
-
-        new MappingSource('sourceName', null);
-    }
-
     public function testGetters()
     {
+        $source = new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false);
         $manifestFile = new SplFileInfo('', '', '');
         $mapping = ['a' => 'b'];
 
-        $source = new MappingSource(
-            'sourceName',
-            'sourceId',
+        $mappingSource = new MappingSource(
+            $source,
             $manifestFile,
             $mapping
         );
 
-        self::assertSame('sourceName', $source->getName());
-        self::assertSame('sourceId', $source->getId());
+        self::assertSame($source, $mappingSource->getSource());
+        self::assertSame('source-name', $mappingSource->getSourceName());
+        self::assertSame($manifestFile, $mappingSource->getManifestFile());
+        self::assertSame($mapping, $mappingSource->getMapping());
+    }
+
+    public function testSetManifestFile()
+    {
+        $source = new MappingSource(new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false));
+        self::assertNull($source->getManifestFile());
+
+        $manifestFile = new SplFileInfo('', '', '');
+        $source->setManifestFile($manifestFile);
+
         self::assertSame($manifestFile, $source->getManifestFile());
-        self::assertSame($mapping, $source->getMapping());
+    }
+
+    public function testSetMapping()
+    {
+        $source = new MappingSource(new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false));
+        self::assertNull($source->getMapping());
+
+        $manifestFile = ['a' => 'b'];
+        $source->setMapping($manifestFile);
+
+        self::assertSame($manifestFile, $source->getMapping());
     }
 }

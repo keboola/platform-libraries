@@ -2,16 +2,13 @@
 
 namespace Keboola\OutputMapping\Writer\Table;
 
-use InvalidArgumentException;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSource
 {
-    /** @var string */
-    private $name;
-
-    /** @var string */
-    private $id;
+    /** @var SourceInterface */
+    private $source;
 
     /** @var null|SplFileInfo */
     private $manifestFile;
@@ -19,46 +16,30 @@ class MappingSource
     /** @var null|array */
     private $mapping;
 
-    /**
-     * @param string $sourceName
-     * @param string $sourceId
-     */
-    public function __construct($sourceName, $sourceId, SplFileInfo $manifestFile = null, array $mapping = null)
-    {
-        if (!is_string($sourceName)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $sourceName must be a string, %s given',
-                is_object($sourceName) ? get_class($sourceName) : gettype($sourceName)
-            ));
-        }
-
-        if (!is_string($sourceId)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $sourceId must be a string, %s given',
-                is_object($sourceId) ? get_class($sourceId) : gettype($sourceId)
-            ));
-        }
-
-        $this->name = $sourceName;
-        $this->id = $sourceId;
+    public function __construct(
+        SourceInterface $source,
+        SplFileInfo $manifestFile = null,
+        array $mapping = null
+    ) {
+        $this->source = $source;
         $this->manifestFile = $manifestFile;
         $this->mapping = $mapping;
     }
 
     /**
-     * @return string
+     * @return SourceInterface
      */
-    public function getName()
+    public function getSource()
     {
-        return $this->name;
+        return $this->source;
     }
 
     /**
      * @return string
      */
-    public function getId()
+    public function getSourceName()
     {
-        return $this->id;
+        return $this->source->getName();
     }
 
     /**

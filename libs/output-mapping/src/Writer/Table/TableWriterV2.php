@@ -4,16 +4,17 @@ namespace Keboola\OutputMapping\Writer\Table;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
-use Keboola\Csv\Exception;
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\MetadataDefinition;
+use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\CreateAndLoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\TableWriterV2\LoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
-use Keboola\OutputMapping\Writer\Helper\TagsHelper;
-use Keboola\OutputMapping\Writer\Table;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -70,28 +71,32 @@ class TableWriterV2
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
-        $sources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
+        $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
 
-        foreach ($sources as $source) {
+        foreach ($mappingSources as $source) {
             if ($source->getManifestFile() !== null || $source->getMapping() !== null) {
                 continue;
             }
 
             throw new InvalidOutputException(sprintf(
                 'Source table "%s" has neither manifest nor mapping set',
-                $source->getName()
+                $source->getSourceName()
             ));
         }
 
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
-        $jobs = [];
-        foreach ($sources as $source) {
-            $config = $this->tableConfigurationResolver->resolveTableConfiguration($source, $defaultBucket);
+        $loadTableTasks = [];
+        foreach ($mappingSources as $mappingSource) {
+            $config = $this->tableConfigurationResolver->resolveTableConfiguration(
+                $mappingSource,
+                $defaultBucket,
+                $systemMetadata
+            );
 
             try {
-                $jobs[] = $this->uploadTable(
+                $loadTableTasks[] = $this->createLoadTableTask(
                     $strategy,
-                    $source,
+                    $mappingSource->getSource(),
                     $config,
                     $systemMetadata
                 );
@@ -99,7 +104,7 @@ class TableWriterV2
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
-                        $source->getName(),
+                        $mappingSource->getSourceName(),
                         $config["destination"],
                         $e->getMessage()
                     ),
@@ -109,22 +114,23 @@ class TableWriterV2
             }
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $jobs);
+        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $loadTableTasks);
         $tableQueue->start();
         return $tableQueue;
     }
 
     /**
-     * @return LoadTable
+     * @return LoadTableTaskInterface
      * @throws ClientException
      */
-    private function uploadTable(
+    private function createLoadTableTask(
         StrategyInterface $strategy,
-        Table\MappingSource $source,
+        SourceInterface $source,
         array $config,
         array $systemMetadata
     ) {
-        if (empty($config['columns']) && is_dir($source->getId())) {
+        $hasColumns = !empty($config['columns']);
+        if (!$hasColumns && $source->isSliced()) {
             throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getName()));
         }
 
@@ -137,20 +143,29 @@ class TableWriterV2
             ), 0, $e);
         }
 
-        $this->ensureValidBucketExists($destination, $systemMetadata);
+        $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
 
-        // destination table already exists, reuse it
         $storageApiClient = $this->clientWrapper->getBasicClient();
-        if ($storageApiClient->tableExists($config['destination'])) {
-            $tableInfo = $storageApiClient->getTable($config['destination']);
+        try {
+            $destinationTableInfo = $storageApiClient->getTable($destination->getTableId());
+            $destinationTableExists = true;
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
 
-            PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $tableInfo, $config);
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $tableInfo, $config)) {
+            $destinationTableInfo = null;
+            $destinationTableExists = false;
+        }
+
+        if ($destinationTableInfo !== null) {
+            PrimaryKeyHelper::validatePrimaryKeyAgainstTable($this->logger, $destinationTableInfo, $config);
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getBasicClient(),
-                    $config['destination'],
-                    $tableInfo['primaryKey'],
+                    $destination->getTableId(),
+                    $destinationTableInfo['primaryKey'],
                     $config['primary_key']
                 );
             }
@@ -162,119 +177,74 @@ class TableWriterV2
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $this->clientWrapper->getBasicClient()->deleteTableRows($config['destination'], $deleteOptions);
+                $this->clientWrapper->getBasicClient()->deleteTableRows($destination->getTableId(), $deleteOptions);
             }
-
-        // destination table does not exist yet, create it
-        } else {
-            $primaryKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']));
-            $distributionKey = implode(",", PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
-
-            // columns explicitly configured
-            if (!empty($config['columns'])) {
-                $this->createTable(
-                    $destination,
-                    $config['columns'],
-                    $primaryKey,
-                    $distributionKey ?: null
-                );
-
-            // reconstruct columns from CSV header
-            } else {
-                try {
-                    $csvFile = new CsvFile($source->getId(), $config['delimiter'], $config['enclosure']);
-                    $header = $csvFile->getHeader();
-                } catch (Exception $e) {
-                    throw new InvalidOutputException('Failed to read file ' . $source->getId() . ' ' . $e->getMessage());
-                }
-
-                $this->createTable(
-                    $destination,
-                    $header,
-                    $primaryKey,
-                    $distributionKey ?: null
-                );
-                unset($csvFile);
-            }
-
-            $this->metadataClient->postTableMetadata(
-                $config['destination'],
-                TableWriter::SYSTEM_METADATA_PROVIDER,
-                $this->getCreatedMetadata($systemMetadata)
-            );
         }
 
         $loadOptions = [
-            'delimiter' => $config['delimiter'],
-            'enclosure' => $config['enclosure'],
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
+            'primaryKey' => implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])),
             'incremental' => $config['incremental'],
         ];
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
-            $loadOptions = TagsHelper::addSystemTags($loadOptions, $systemMetadata, $this->logger);
+
+        if (!$destinationTableExists && isset($config['distribution_key'])) {
+            $loadOptions['distributionKey'] = implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
         }
 
-        $tableQueue = $strategy->loadDataIntoTable(
-            $source->getId(),
-            $config['destination'],
-            $loadOptions
+        $loadOptions = array_merge(
+            $loadOptions,
+            $strategy->prepareLoadTaskOptions($source, $config)
         );
 
-        $tableQueue->addMetadata(new MetadataDefinition(
-            $this->clientWrapper->getBasicClient(),
-            $config['destination'],
+        // some scenarios are not supported by the SAPI, so we need to take care of them manually here
+        // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
+        // - sliced files
+        if (!$destinationTableExists && $hasColumns) {
+            $this->createTable($destination, $config['columns'], $loadOptions);
+            $loadTask = new LoadTableTask($destination, $loadOptions);
+            $tableCreated = true;
+        } elseif ($destinationTableExists) {
+            $loadTask = new LoadTableTask($destination, $loadOptions);
+            $tableCreated = false;
+        } else {
+            $loadTask = new CreateAndLoadTableTask($destination, $loadOptions);
+            $tableCreated = true;
+        }
+
+        if ($tableCreated) {
+            $loadTask->addMetadata(new TableMetadata(
+                $destination->getTableId(),
+                TableWriter::SYSTEM_METADATA_PROVIDER,
+                $this->getCreatedMetadata($systemMetadata)
+            ));
+        }
+
+        $loadTask->addMetadata(new TableMetadata(
+            $destination->getTableId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
-            $this->getUpdatedMetadata($systemMetadata),
-            'table'
+            $this->getUpdatedMetadata($systemMetadata)
         ));
 
         if (!empty($config['metadata'])) {
-            $tableQueue->addMetadata(new MetadataDefinition(
-                $this->clientWrapper->getBasicClient(),
-                $config['destination'],
+            $loadTask->addMetadata(new TableMetadata(
+                $destination->getTableId(),
                 $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['metadata'],
-                MetadataDefinition::TABLE_METADATA
+                $config['metadata']
             ));
         }
 
         if (!empty($config['column_metadata'])) {
-            $tableQueue->addMetadata(new MetadataDefinition(
-                $this->clientWrapper->getBasicClient(),
-                $config['destination'],
+            $loadTask->addMetadata(new ColumnMetadata(
+                $destination->getTableId(),
                 $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['column_metadata'],
-                MetadataDefinition::COLUMN_METADATA
+                $config['column_metadata']
             ));
         }
 
-        return $tableQueue;
+        return $loadTask;
     }
 
-    /**
-     * @param string $primaryKey
-     * @param null|string $distributionKey
-     */
-    private function createTable(MappingDestination $destination, array $columns, $primaryKey, $distributionKey = null)
-    {
-        $tmp = new Temp();
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName() . '.header.csv'));
-        $headerCsvFile->writeRow($columns);
-        $options = ['primaryKey' => $primaryKey];
-        if (isset($distributionKey)) {
-            $options['distributionKey'] = $distributionKey;
-        }
-
-        $this->clientWrapper->getBasicClient()->createTableAsync(
-            $destination->getBucketId(),
-            $destination->getTableName(),
-            $headerCsvFile,
-            $options
-        );
-    }
-
-    private function ensureValidBucketExists(MappingDestination $destination, array $systemMetadata)
+    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata)
     {
         $destinationBucketId = $destination->getBucketId();
         $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
@@ -297,6 +267,21 @@ class TableWriterV2
             $destination->getBucketId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
             $this->getCreatedMetadata($systemMetadata)
+        );
+    }
+
+    private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
+    {
+        $tmp = new Temp();
+
+        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv'));
+        $headerCsvFile->writeRow($columns);
+
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            $destination->getBucketId(),
+            $destination->getTableName(),
+            $headerCsvFile,
+            $loadOptions
         );
     }
 

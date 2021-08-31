@@ -2,11 +2,12 @@
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\OutputMapping\DeferredTasks\LoadTable;
+use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
-use Symfony\Component\Finder\SplFileInfo;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
@@ -15,28 +16,30 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
         $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
 
-        /** @var array<string, MappingSource> $sources */
-        $sources = [];
+        /** @var array<string, MappingSource> $mappingSources */
+        $mappingSources = [];
 
+        // Create MappingSource for each mapping row. This is workaround for not being able to list real list of tables
+        // from workspace.
         foreach (isset($configuration['mapping']) ? $configuration['mapping'] : [] as $mapping) {
             $sourceName = $mapping['source'];
-
-            // Create empty mapping. This is workaround for not being able to list real list of tables from workspace.
-            $sources[$sourceName] = $this->createMapping($sourcePathPrefix, $sourceName, null, null);
+            $source = $this->createSource($sourcePathPrefix, $sourceName);
+            $mappingSources[$sourceName] = new MappingSource($source);
         }
 
         foreach ($manifestFiles as $file) {
             $sourceName = $file->getBasename('.manifest');
 
-            if (isset($sources[$sourceName])) {
-                $sources[$sourceName]->setManifestFile($file);
-            } else {
-                $sources[$sourceName] = $this->createMapping($sourcePathPrefix, $sourceName, $file, null);
+            if (!isset($mappingSources[$sourceName])) {
+                $source = $this->createSource($sourcePathPrefix, $sourceName);
+                $mappingSources[$sourceName] = new MappingSource($source);
             }
+
+            $mappingSources[$sourceName]->setManifestFile($file);
         }
 
         return $this->combineSourcesWithMappingsFromConfiguration(
-            $sources,
+            $mappingSources,
             isset($configuration['mapping']) ? $configuration['mapping'] : []
         );
     }
@@ -44,19 +47,23 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
     /**
      * @param string $sourcePathPrefix
      * @param string $sourceName
-     * @param null|SplFileInfo $manifestFile
-     * @param null|array $mapping
-     * @return MappingSource
+     * @return WorkspaceItemSource
      */
-    abstract protected function createMapping($sourcePathPrefix, $sourceName, $manifestFile, $mapping);
+    abstract protected function createSource($sourcePathPrefix, $sourceName);
 
-    public function loadDataIntoTable($sourceId, $tableId, array $options)
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config)
     {
-        return new LoadTable($this->clientWrapper->getBasicClient(), $tableId, [
-            'dataWorkspaceId' => $this->dataStorage->getWorkspaceId(),
-            'dataObject' => $sourceId,
-            'incremental' => $options['incremental'],
-            'columns' => $options['columns'],
-        ]);
+        if (!$source instanceof WorkspaceItemSource) {
+            throw new InvalidArgumentException(sprintf(
+                'Argument $source is expected to be instance of %s, %s given',
+                WorkspaceItemSource::class,
+                get_class($source)
+            ));
+        }
+
+        return [
+            'dataWorkspaceId' => $source->getWorkspaceId(),
+            'dataObject' => $source->getDataObject(),
+        ];
     }
 }

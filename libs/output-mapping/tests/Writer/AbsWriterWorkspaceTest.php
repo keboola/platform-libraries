@@ -134,14 +134,17 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
-        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['Id', 'Name'], $job['operationParams']['params']['columns']);
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['Id', 'Name'],
+        ], $jobIds[0]);
+
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"Id","Name"',
+            '"aabb","ccdd"',
+            '"test","test"',
+        ]);
     }
 
     public function testAbsTableSlicedOutputMapping()
@@ -185,17 +188,17 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertCount(1, $tables);
         $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
         $this->assertNotEmpty($jobIds[0]);
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
-        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['First column', 'Second column'], $job['operationParams']['params']['columns']);
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        $this->assertEquals(
-            ['"First_column","Second_column"', '"first value","second value"', '"secondRow1","secondRow2"'],
-            $rows
-        );
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['First column', 'Second column'],
+        ], $jobIds[0]);
+
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"First_column","Second_column"',
+            '"first value","second value"',
+            '"secondRow1","secondRow2"',
+        ]);
     }
 
     public function testAbsTableSingleFileOutputMapping()
@@ -245,36 +248,31 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'workspace-abs'
         );
         $jobIds = $tableQueue->waitForAll();
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]['id'], $tables[1]['id']];
-        sort($tableIds);
-        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $job['tableId']);
-        $this->assertEquals(true, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['first column'], $job['operationParams']['params']['columns']);
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table1a');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        // 1a has only the first_column column
-        $this->assertEquals(['"first value"', '"first_column"', '"secondRow1"'], $rows);
 
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
-        $this->assertEquals('out.c-output-mapping-test.table2a', $job['tableId']);
-        $this->assertEquals(false, $job['operationParams']['params']['incremental']);
-        $this->assertEquals(['first column', 'second column'], $job['operationParams']['params']['columns']);
+        $this->assertJobParamsMatches([
+            'incremental' => true,
+            'columns' => ['first column'],
+        ], $jobIds[0]);
 
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview('out.c-output-mapping-test.table2a');
-        $rows = explode("\n", trim($data));
-        sort($rows);
-        // column name is lowercase because of https://keboola.atlassian.net/browse/KBC-864
-        $this->assertEquals(['"first","second"', '"first_column","second_column"', '"third","fourth"'], $rows);
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['first column', 'second column'],
+        ], $jobIds[1]);
+
+        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+            '"first_column"',
+            '"first value"',
+            '"secondRow1"',
+        ]);
+        $this->assertTableRowsEquals('out.c-output-mapping-test.table2a', [
+            '"first_column","second_column"',
+            '"first","second"',
+            '"third","fourth"',
+        ]);
     }
 
     public function testWriteBasicFiles()

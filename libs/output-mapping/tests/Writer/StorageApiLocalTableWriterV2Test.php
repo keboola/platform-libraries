@@ -110,15 +110,10 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
-        sort($tableIds);
-        $this->assertEquals(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'], $tableIds);
-        $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
+
+        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
 
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
@@ -250,13 +245,11 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         ];
 
         $writer = new TableWriterV2($this->getStagingFactory());
+        $tableQueue = $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
 
-        try {
-            $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
-            $this->fail("Empty CSV file must fail");
-        } catch (InvalidOutputException $e) {
-            $this->assertContains('no data in import file', $e->getMessage());
-        }
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to load table "out.c-output-mapping-test.table41": There are no data in import file');
+        $tableQueue->waitForAll();
     }
 
     public function testWriteTableOutputMappingAndManifest()
@@ -631,7 +624,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         file_put_contents($root . "/upload/table15.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $writer = new TableWriterV2($this->getStagingFactory());
-        $writer->uploadTables(
+        $tableQueue = $writer->uploadTables(
             'upload',
             [
                 "mapping" => [
@@ -645,6 +638,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
             ['componentId' => 'foo'],
             'local'
         );
+        $tableQueue->waitForAll();
 
         $writer = new TableWriterV2($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
@@ -773,7 +767,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
 
         $testLogger = new TestLogger();
         $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $testLogger));
-        $writer->uploadTables(
+        $tableQueue = $writer->uploadTables(
             'upload',
             [
                 "mapping" => [
@@ -787,6 +781,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
             ['componentId' => 'foo'],
             'local'
         );
+        $tableQueue->waitForAll();
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table12");
         $this->assertEquals([], $tableInfo["primaryKey"]);
 
@@ -957,24 +952,6 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
                 $e->getMessage()
             );
         }
-    }
-
-    public function testWriteTableInvalidCsv()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\r\"test\",\"test\"\r");
-        $writer = new TableWriterV2($this->getStagingFactory());
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Invalid line break. Please use unix \n or win \r\n line breaks.');
-
-        $writer->uploadTables('/upload', [
-            'mapping' => [
-                [
-                    'source' => 'out.c-output-mapping-test.table10.csv',
-                    'destination' => 'out.c-output-mapping-test.table10'
-                ]
-            ]
-        ], ['componentId' => 'foo'], 'local');
     }
 
     public function testWriteTableExistingBucketDevModeNoDev()
@@ -1204,7 +1181,9 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedError);
-        $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+
+        $tableQueue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+        $tableQueue->waitForAll();
     }
 
     public function provideForbiddenDestinationConfigurations()

@@ -438,19 +438,6 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         }
     }
 
-    public function testWriteTableBareFails()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table4.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-
-        $writer = new TableWriterV2($this->getStagingFactory());
-
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Source table "out.c-output-mapping-test.table4.csv" has neither manifest nor mapping set');
-
-        $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
-    }
-
     public function testWriteTableIncrementalWithDeleteDefault()
     {
         $root = $this->tmp->getTmpFolder();
@@ -1189,18 +1176,11 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
     public function provideForbiddenDestinationConfigurations()
     {
         return [
-            'no manifest nor mapping' => [
-                'manifest' => null,
-                'defaultBucket' => 'out.c-output-mapping-test',
-                'mapping' => null,
-                'expectedError' => 'Source table "table.csv" has neither manifest nor mapping set',
-            ],
-
             'no destination in manifest without bucket' => [
                 'manifest' => ['columns' => ['Id', 'Name']],
                 'defaultBucket' => null,
                 'mapping' => null,
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
             ],
 
             'table name in mapping is not accepted' => [
@@ -1209,7 +1189,7 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
                 'mapping' => [
                     ['source' => 'table.csv', 'destination' => 'table']
                 ],
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
             ],
 
             'table name in mapping does not combine with default bucket' => [
@@ -1218,14 +1198,90 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
                 'mapping' => [
                     ['source' => 'table.csv', 'destination' => 'table'],
                 ],
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
             ],
 
             'table name in manifest without bucket' => [
                 'manifest' => ['destination' => 'table'],
                 'defaultBucket' => null,
                 'mapping' => null,
-                'expectedError' => 'Failed to resolve valid destination. "table" is not a valid table ID.',
+                'expectedError' => 'Failed to resolve destination for output table "table.csv".',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideWriteTableBareAllowedVariants
+     */
+    public function testWriteTableBareAllowedVariants($fileName, $defaultBucket, $expectedTableName)
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $logger = new TestLogger();
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $logger));
+
+        $tableQueue =  $writer->uploadTables('/upload', ['bucket' => $defaultBucket], ['componentId' => 'foo'], 'local');
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+
+        self::assertTrue($logger->hasWarningThatContains('This behaviour was DEPRECATED and will be removed in the future.'));
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $this->assertCount(1, $tables);
+
+        $this->assertEquals($expectedTableName, $tables[0]['id']);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($expectedTableName);
+        $this->assertEquals(['Id', 'Name'], $tableInfo['columns']);
+    }
+
+    public function provideWriteTableBareAllowedVariants()
+    {
+        return [
+            'table ID as filename without default bucket' => [
+                'filename' => 'out.c-output-mapping-test.table41.csv',
+                'bucketName' => null,
+                'expectedTableName' => 'out.c-output-mapping-test.table41',
+            ],
+
+            'table ID as filename with default bucket' => [
+                'filename' => 'out.c-output-mapping-test.table42.csv',
+                'bucketName' => 'out.c-bucket-is-not-used',
+                'expectedTableName' => 'out.c-output-mapping-test.table42',
+            ],
+
+            'table name as filename with default bucket' => [
+                'filename' => 'table43.csv',
+                'bucketName' => 'out.c-output-mapping-test',
+                'expectedTableName' => 'out.c-output-mapping-test.table43',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideWriteTableBareForbiddenVariants
+     */
+    public function testWriteTableBareForbiddenVariants($fileName, $defaultBucket, $expectedError)
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $logger = new TestLogger();
+        $writer = new TableWriterV2($this->getStagingFactory(null, 'json', $logger));
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage($expectedError);
+
+        $writer->uploadTables('/upload', ['bucket' => $defaultBucket], ['componentId' => 'foo'], 'local');
+    }
+
+    public function provideWriteTableBareForbiddenVariants()
+    {
+        return [
+            'table name as filename without default bucket' => [
+                'filename' => 'table51.csv',
+                'bucketName' => null,
+                'expectedError' => 'Failed to resolve destination for output table "table51.csv".',
             ],
         ];
     }

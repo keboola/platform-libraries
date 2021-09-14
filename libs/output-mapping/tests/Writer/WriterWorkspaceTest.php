@@ -121,8 +121,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testTableOutputMappingMissingManifest()
     {
-        self::markTestSkipped('Works, but takes ages https://keboola.atlassian.net/browse/KBC-34');
-
         $configs = [
             [
                 'source' => 'table1a',
@@ -132,7 +130,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessageRegExp('/^(
-            Table\ sources\ not\ found:\ "table1a"|                       # TableWriterV2
+            Failed\ to\ load\ table\ "out\.c-output-mapping-test\.table1a":\ Table\ "table1a"\ not\ found\ in\ schema\ "WORKSPACE_\d+"| # TableWriterV2
             Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a  # TableWriterV1
         )$/x');
 

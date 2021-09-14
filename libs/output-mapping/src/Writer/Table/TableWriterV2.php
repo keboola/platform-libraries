@@ -72,19 +72,8 @@ class TableWriterV2
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
-
-        foreach ($mappingSources as $source) {
-            if ($source->getManifestFile() !== null || $source->getMapping() !== null) {
-                continue;
-            }
-
-            throw new InvalidOutputException(sprintf(
-                'Source table "%s" has neither manifest nor mapping set',
-                $source->getSourceName()
-            ));
-        }
-
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
+
         $loadTableTasks = [];
         foreach ($mappingSources as $mappingSource) {
             $config = $this->tableConfigurationResolver->resolveTableConfiguration(

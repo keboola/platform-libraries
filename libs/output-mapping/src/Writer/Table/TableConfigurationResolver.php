@@ -50,36 +50,50 @@ class TableConfigurationResolver
      * @return array
      * @throws InvalidOutputException
      */
-    public function resolveTableConfiguration(MappingSource $source, $defaultBucket, array $systemMetadata)
+    public function resolveTableConfiguration(MappingSource $mappingSource, $defaultBucket, array $systemMetadata)
     {
         $configFromManifest = [];
         $configFromMapping = [];
 
-        if ($source->getManifestFile() !== null) {
-            $configFromManifest = $this->loadTableManifest($source->getManifestFile());
+        if ($mappingSource->getManifestFile() !== null) {
+            $configFromManifest = $this->loadTableManifest($mappingSource->getManifestFile());
 
             $configFromManifest['destination'] = $this->normalizeManifestDestination(
                 isset($configFromManifest['destination']) ? $configFromManifest['destination'] : null,
-                $source->getSource(),
+                $mappingSource->getSource(),
                 $defaultBucket
             );
         }
 
-        if ($source->getMapping() !== null) {
-            $configFromMapping = $source->getMapping();
+        if ($mappingSource->getMapping() !== null) {
+            $configFromMapping = $mappingSource->getMapping();
             unset($configFromMapping['source']);
         }
 
         $config = ConfigurationMerger::mergeConfigurations($configFromManifest, $configFromMapping);
 
-        if (empty($config['destination'])) {
+        if (!isset($config['destination'])) {
+            $this->logger->warning(sprintf(
+                'Source table "%s" has neither manifest file nor mapping set, falling back to the source name as a destination.'.
+                'This behaviour was DEPRECATED and will be removed in the future.',
+                $mappingSource->getSourceName()
+            ));
+
+            $config['destination'] = $this->normalizeManifestDestination(
+                null,
+                $mappingSource->getSource(),
+                $defaultBucket
+            );
+        }
+
+        if (empty($config['destination']) || !MappingDestination::isTableId($config['destination'])) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve destination for output table "%s".',
-                $source->getSourceName()
+                $mappingSource->getSourceName()
             ));
         }
 
-        $config = $this->normalizeConfig($config, $source);
+        $config = $this->normalizeConfig($config, $mappingSource);
 
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
@@ -122,6 +136,10 @@ class TableConfigurationResolver
 
         if ($destination === null || $destination === '') {
             $destination = basename($source->getName(), '.csv');
+        }
+
+        if (MappingDestination::isTableId($destination)) {
+            return $destination;
         }
 
         if ($defaultBucket !== null) {

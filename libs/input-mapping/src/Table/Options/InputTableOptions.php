@@ -106,7 +106,7 @@ class InputTableOptions
      */
     public function getStorageApiExportOptions(InputTableStateList $states)
     {
-        $exportOptions = [];
+        $exportOptions = ['gzip' => true];
         if (isset($this->definition['columns']) && count($this->definition['columns'])) {
             $exportOptions['columns'] = $this->getColumnNames();
         }

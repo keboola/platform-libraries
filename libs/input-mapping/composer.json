@@ -16,6 +16,7 @@
         "symfony/serializer": "^2.8.52|^4.1",
         "keboola/storage-api-client": "^12.3",
         "keboola/storage-api-php-client-branch-wrapper": "^1.1",
+        "keboola/storage-api-client": "dev-odin-PS-2620 as 14.4.0",
         "ext-json": "*"
     },
     "require-dev": {

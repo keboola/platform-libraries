@@ -2,7 +2,9 @@
 
 namespace Keboola\OutputMapping\DeferredTasks;
 
+use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Table\Result;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
@@ -14,6 +16,9 @@ class LoadTableQueue
     /** @var LoadTableTaskInterface[] */
     private $loadTableTasks;
 
+    /** @var Result */
+    private $tableResult;
+
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
      */
@@ -21,6 +26,7 @@ class LoadTableQueue
     {
         $this->client = $client;
         $this->loadTableTasks = $loadTableTasks;
+        $this->tableResult = new Result();
     }
 
     public function start()
@@ -39,10 +45,14 @@ class LoadTableQueue
         foreach ($this->loadTableTasks as $task) {
             $jobIds[] = $task->getStorageJobId();
             $jobResult = $this->client->waitForJob($task->getStorageJobId());
+
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
             } else {
                 $task->applyMetadata($metadataApiClient);
+                if (isset($jobResult['tableId'])) {
+                    $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
+                }
             }
         }
         if ($errors) {
@@ -54,5 +64,10 @@ class LoadTableQueue
     public function getTaskCount()
     {
         return count($this->loadTableTasks);
+    }
+
+    public function getTableResult()
+    {
+        return $this->tableResult;
     }
 }

@@ -22,9 +22,9 @@ class S3 extends AbstractStrategy
         $jobIds = array_map(function ($export) {
             return $export['jobId'];
         }, $exports);
-        $results = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
+        $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
-        foreach ($results as $result) {
+        foreach ($jobResults as $result) {
             $keyedResults[$result["id"]] = $result;
         }
 
@@ -47,6 +47,7 @@ class S3 extends AbstractStrategy
                 $this->format
             );
         }
+        return $jobResults;
     }
 
     protected function getS3Info($fileInfo)

@@ -15,6 +15,7 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -72,7 +73,7 @@ class Reader
      * @param string $destination destination folder
      * @param string $stagingType
      * @param ReaderOptions $readerOptions
-     * @return InputTableStateList
+     * @return Result
      */
     public function downloadTables(
         InputTableOptionsList $tablesDefinition,

@@ -6,7 +6,7 @@ use Generator;
 
 class Metrics
 {
-    /** @var array */
+    /** @var TableMetrics[] */
     private $metrics;
 
     public function __construct(array $jobResults)
@@ -19,7 +19,7 @@ class Metrics
     /**
      * @return Generator
      */
-    public function getMetrics()
+    public function getTableMetrics()
     {
         foreach ($this->metrics as $metric) {
             yield $metric;

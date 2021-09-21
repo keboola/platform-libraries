@@ -99,20 +99,19 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $workspaceJobs[] = $job['id'];
         }
 
-        if ($workspaceJobs) {
-            $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-            $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
-            foreach ($workspaceTables as $table) {
-                $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                    $this->getDestinationFilePath($this->destination, $table) . ".manifest";
-                $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
-                $this->manifestCreator->writeTableManifest(
-                    $tableInfo,
-                    $manifestPath,
-                    $table->getColumnNames(),
-                    $this->format
-                );
-            }
+        $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
+        $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
+        foreach ($workspaceTables as $table) {
+            $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
+                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+            $this->manifestCreator->writeTableManifest(
+                $tableInfo,
+                $manifestPath,
+                $table->getColumnNames(),
+                $this->format
+            );
         }
+        return $jobResults;
     }
 }

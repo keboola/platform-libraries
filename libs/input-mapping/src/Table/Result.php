@@ -24,7 +24,7 @@ class Result
 
     public function addTable(TableInfo $table)
     {
-        $this->tables = $table;
+        $this->tables[] = $table;
     }
 
     /**

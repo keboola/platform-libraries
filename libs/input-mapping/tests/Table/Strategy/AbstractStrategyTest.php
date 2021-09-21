@@ -9,7 +9,7 @@ use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 
-class AbstractStrategyTest extends TestCase
+abstract class AbstractStrategyTest extends TestCase
 {
     /** @var ClientWrapper */
     protected $clientWrapper;

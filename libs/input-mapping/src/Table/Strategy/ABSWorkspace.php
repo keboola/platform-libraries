@@ -52,9 +52,10 @@ class ABSWorkspace extends AbstractStrategy
         );
         $workspaceJobId = $job['id'];
 
+        $jobResults = [];
         if ($workspaceJobId) {
             $this->logger->info('Processing workspace export.');
-            $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
+            $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table) . ".manifest";
@@ -67,5 +68,6 @@ class ABSWorkspace extends AbstractStrategy
                 );
             }
         }
+        return $jobResults;
     }
 }

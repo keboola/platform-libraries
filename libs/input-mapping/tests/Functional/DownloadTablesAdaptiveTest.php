@@ -52,7 +52,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
                 "lastImportDate" => $testTableInfo['lastImportDate']
             ]
         ]);
-        $tablesState = $reader->downloadTables(
+        $tablesResult = $reader->downloadTables(
             $configuration,
             $inputTablesState,
             'download',
@@ -60,12 +60,15 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
             new ReaderOptions(true)
         );
 
-        self::assertEquals($testTableInfo['lastImportDate'], $tablesState->getTable("in.c-docker-test.test")->getLastImportDate());
+        self::assertEquals(
+            $testTableInfo['lastImportDate'],
+            $tablesResult->getInputTableStateList()->getTable("in.c-docker-test.test")->getLastImportDate()
+        );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
         );
-        self::assertCount(1, $tablesState->jsonSerialize());
+        self::assertCount(1, $tablesResult->getInputTableStateList()->jsonSerialize());
     }
 
     public function testDownloadTablesDownloadsOnlyNewRows()
@@ -78,7 +81,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
                 "changed_since" => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ]
         ]);
-        $firstTablesState = $reader->downloadTables(
+        $firstTablesResult = $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
@@ -93,9 +96,9 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         $this->clientWrapper->getBasicClient()->writeTableAsync("in.c-docker-test.test", $csv, ["incremental" => true]);
 
         $updatedTestTableInfo = $this->clientWrapper->getBasicClient()->getTable("in.c-docker-test.test");
-        $secondTablesState = $reader->downloadTables(
+        $secondTablesResult = $reader->downloadTables(
             $configuration,
-            $firstTablesState,
+            $firstTablesResult->getInputTableStateList(),
             'data/in/tables/',
             StrategyFactory::LOCAL,
             new ReaderOptions(true)
@@ -103,13 +106,13 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
         self::assertEquals(
             $updatedTestTableInfo['lastImportDate'],
-            $secondTablesState->getTable("in.c-docker-test.test")->getLastImportDate()
+            $secondTablesResult->getInputTableStateList()->getTable("in.c-docker-test.test")->getLastImportDate()
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'data/in/tables/test.csv'
         );
-        self::assertCount(1, $secondTablesState->jsonSerialize());
+        self::assertCount(1, $secondTablesResult->getInputTableStateList()->jsonSerialize());
     }
 
     public function testDownloadTablesInvalidDate()

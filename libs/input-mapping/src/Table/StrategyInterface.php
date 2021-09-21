@@ -8,4 +8,10 @@ interface StrategyInterface
 {
     public function downloadTable(InputTableOptions $table);
     public function handleExports($exports, $preserve);
+
+    /**
+     * @param array $exports
+     * @return array
+     */
+    public function handleExports($exports);
 }

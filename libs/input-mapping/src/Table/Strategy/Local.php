@@ -55,6 +55,6 @@ class Local extends AbstractStrategy
         }
         $tableExporter = new TableExporter($this->clientWrapper->getBasicClient());
         $this->logger->info("Processing " . count($exports) . " local table exports.");
-        $tableExporter->exportTables($exports);
+        return $tableExporter->exportTables($exports);
     }
 }

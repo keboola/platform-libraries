@@ -312,7 +312,7 @@ class ReaderTest extends TestCase
                 'lastImportDate' => '1605741600',
             ],
         ]);
-        $outState = $reader->downloadTables(
+        $result = $reader->downloadTables(
             $configuration,
             $state,
             'download',
@@ -323,7 +323,7 @@ class ReaderTest extends TestCase
             "\"foo\",\"bar\"\n\"1\",\"2\"",
             file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
         );
-        $data = $outState->jsonSerialize();
+        $data = $result->getInputTableStateList()->jsonSerialize();
         self::assertEquals(sprintf('%s.test', $branchBucketId), $data[0]['source']);
         self::assertArrayHasKey('lastImportDate', $data[0]);
     }

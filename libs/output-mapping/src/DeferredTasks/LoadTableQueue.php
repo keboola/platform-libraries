@@ -50,8 +50,14 @@ class LoadTableQueue
                 $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
             } else {
                 $task->applyMetadata($metadataApiClient);
-                if (isset($jobResult['tableId'])) {
-                    $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
+
+                switch ($jobResult['operationName']) {
+                    case 'tableImport':
+                        $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
+                        break;
+                    case 'tableCreate':
+                        $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['results']['id'])));
+                        break;
                 }
             }
         }

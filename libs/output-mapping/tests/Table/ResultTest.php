@@ -61,9 +61,9 @@ class ResultTest extends TestCase
 
         /** @var TableInfo[] $tables */
         $tables = iterator_to_array($tablesResult->getTables());
-        self::assertCount(2, $tables);
+        self::assertCount(3, $tables);
 
-        $table1 = array_shift($tables);
+        $table1 = array_pop($tables);
         self::assertSame('in.c-main.table', $table1->getId());
         self::assertSame($expectedImportData, $table1->getLastImportDate());
     }

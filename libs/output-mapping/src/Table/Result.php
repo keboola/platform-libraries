@@ -12,7 +12,7 @@ class Result
 
     public function addTable(TableInfo $table)
     {
-        $this->tables[$table->getId()] = $table;
+        $this->tables[] = $table;
     }
 
     /**

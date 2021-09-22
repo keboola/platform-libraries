@@ -73,9 +73,15 @@ class LoadTableQueueTest extends TestCase
 
         $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
 
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to load table "myTable": Table with displayName "test" already exists.');
-        $loadQueue->waitForAll();
+        try {
+            $loadQueue->waitForAll();
+            self::fail('waitForAll shoud fail with InvalidOutputException-');
+        } catch (InvalidOutputException $e) {
+            self::assertSame(
+                'Failed to load table "myTable": Table with displayName "test" already exists.',
+                $e->getMessage()
+            );
+        }
 
         $tables = $loadQueue->getTableResult()->getTables();
         self::assertCount(0, iterator_to_array($tables));

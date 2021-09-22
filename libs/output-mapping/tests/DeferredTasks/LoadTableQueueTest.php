@@ -81,9 +81,11 @@ class LoadTableQueueTest extends TestCase
         self::assertCount(0, iterator_to_array($tables));
     }
 
-    public function testWaitForAll()
+    /**
+     * @dataProvider waitForAllData
+     */
+    public function testWaitForAll($expectedTableId, $jobResult)
     {
-        $expectedTableId = 'in.c-myBucket.table';
         $storageApiMock = $this->createMock(Client::class);
 
         $storageApiMock->expects($this->once())
@@ -97,10 +99,7 @@ class LoadTableQueueTest extends TestCase
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)
-            ->willReturn([
-                'status' => 'success',
-                'tableId' => $expectedTableId,
-            ])
+            ->willReturn($jobResult)
         ;
 
         $loadTask = $this->createMock(LoadTableTask::class);
@@ -130,5 +129,28 @@ class LoadTableQueueTest extends TestCase
 
         $table = reset($tables);
         self::assertSame($expectedTableId, $table->getId());
+    }
+
+    public function waitForAllData()
+    {
+        yield [
+            'in.c-myBucket.tableImported',
+            [
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => 'in.c-myBucket.tableImported',
+            ],
+        ];
+
+        yield [
+            'in.c-myBucket.tableCreated',
+            [
+                'operationName' => 'tableCreate',
+                'status' => 'success',
+                'results' => [
+                    'id' => 'in.c-myBucket.tableCreated',
+                ]
+            ],
+        ];
     }
 }

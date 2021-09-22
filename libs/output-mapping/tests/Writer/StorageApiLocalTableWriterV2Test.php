@@ -81,11 +81,19 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
         self::assertCount(2, $tables);
 
-        $table1a = array_shift($tables);
-        self::assertSame('out.c-output-mapping-test.table1a', $table1a->getId());
+        /** @var TableInfo[] $tables */
+        $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
+        self::assertCount(2, $tables);
 
-        $table2a = array_shift($tables);
-        self::assertSame('out.c-output-mapping-test.table2a', $table2a->getId());
+        $tableIds = array_map(function ($table) {
+            return $table->getId();
+        }, $tables);
+
+        sort($tableIds);
+        self::assertSame([
+            'out.c-output-mapping-test.table1a',
+            'out.c-output-mapping-test.table2a',
+        ], $tableIds);
     }
 
     public function testWriteTableTagStagingFiles()

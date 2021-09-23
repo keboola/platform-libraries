@@ -7,5 +7,5 @@ use Keboola\InputMapping\Table\Options\InputTableOptions;
 interface StrategyInterface
 {
     public function downloadTable(InputTableOptions $table);
-    public function handleExports($exports);
+    public function handleExports($exports, $preserve);
 }

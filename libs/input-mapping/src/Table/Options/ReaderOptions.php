@@ -13,13 +13,24 @@ class ReaderOptions
      */
     private $devInputsDisabled;
 
-    public function __construct($devInputsDisabled)
+    /**
+     * @var bool
+     */
+    private $preserveWorkspace;
+
+    public function __construct($devInputsDisabled, $preserveWorkspace = true)
     {
         $this->devInputsDisabled = $devInputsDisabled;
+        $this->preserveWorkspace = $preserveWorkspace;
     }
 
     public function devInputsDisabled()
     {
         return $this->devInputsDisabled;
+    }
+
+    public function preserveWorkspace()
+    {
+        return $this->preserveWorkspace;
     }
 }

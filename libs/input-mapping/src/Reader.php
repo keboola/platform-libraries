@@ -81,6 +81,7 @@ class Reader
         $stagingType,
         ReaderOptions $readerOptions
     ) {
+        var_dump($readerOptions);
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
             $tablesState,
@@ -100,7 +101,7 @@ class Reader
             $this->clientWrapper,
             $this->logger
         );
-        return $strategy->downloadTables($tablesDefinition->getTables());
+        return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
     }
 
     /**

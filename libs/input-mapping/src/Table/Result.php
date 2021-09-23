@@ -10,7 +10,7 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 class Result
 {
     /** @var TableInfo[] */
-    private $tables;
+    private $tables = [];
 
     /** @var InputTableStateList */
     private $inputTableStateList;

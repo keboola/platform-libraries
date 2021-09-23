@@ -329,4 +329,74 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             new ReaderOptions(true)
         );
     }
+
+    public function testDownloadTablesPreserveFalse()
+    {
+        // first we create the workspace and load there some data.
+        // then we will do a new load with preserve=false to make sure that the old data was removed
+        $logger = new TestLogger();
+        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'initial_table',
+                'where_column' => 'Id',
+                'where_values' => ['id2', 'id3'],
+                'columns' => ['Id'],
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
+        );
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'new_clone_table',
+            ],
+            [
+                'source' => 'in.c-input-mapping-test.test2',
+                'destination' => 'new_copy_table',
+                'where_column' => 'Id',
+                'where_values' => ['id2', 'id3'],
+                'columns' => ['Id'],
+            ],
+        ]);
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true, false)
+        );
+        // the initial_table should not be present in the workspace anymore
+        try {
+            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'initial_table', 'name' => 'initial_table']
+            );
+            self::fail('should throw 404 for workspace table not found');
+        } catch (ClientException $exception) {
+            self::assertContains('Table "initial_table" not found in schema', $exception->getMessage());
+        }
+
+        // check that the tables exist in the workspace. the cloned table will throw the _timestamp col error
+        try {
+            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_clone_table', 'name' => 'new_clone_table']
+            );
+        } catch (ClientException $exception) {
+            self::assertContains('Invalid columns: _timestamp:', $exception->getMessage());
+        }
+
+        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            'out.c-input-mapping-test',
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table']
+        );
+    }
 }

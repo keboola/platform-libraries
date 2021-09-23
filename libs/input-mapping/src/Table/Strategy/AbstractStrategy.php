@@ -70,7 +70,8 @@ abstract class AbstractStrategy implements StrategyInterface
     }
 
     /**
-     * @param InputTableOptions[]
+     * @param InputTableOptions[] $tables
+     * @param bool $preserve
      * @return Result
      */
     public function downloadTables($tables, $preserve)
@@ -90,11 +91,7 @@ abstract class AbstractStrategy implements StrategyInterface
             $result->addTable(new TableInfo($tableInfo));
         }
 
-        $this->handleExports($exports, $preserve);
-
-        $tableList->setMetrics($this->handleExports($exports));
-        $tableList->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
-        $result->setMetrics($this->handleExports($exports));
+        $result->setMetrics($this->handleExports($exports, $preserve));
         $result->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
         $this->logger->info("All tables were fetched.");
 

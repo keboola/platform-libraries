@@ -32,6 +32,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
     {
         $cloneInputs = [];
         $copyInputs = [];
+        $workspaceTables = [];
 
         foreach ($exports as $export) {
             if ($export['type'] === 'clone') {

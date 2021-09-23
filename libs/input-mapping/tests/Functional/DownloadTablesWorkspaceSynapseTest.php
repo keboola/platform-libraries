@@ -145,5 +145,41 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+
+        // test loading with preserve = false to clean the workspace
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => 'in.c-input-mapping-test.test1',
+                'destination' => 'test1',
+                'changed_since' => '-2 days',
+                'columns' => ['Id'],
+            ],
+        ]);
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            StrategyFactory::WORKSPACE_SYNAPSE,
+            new ReaderOptions(true, false)
+        );
+        // the initially loaded tables should not be present in the workspace anymore
+        try {
+            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            );
+            self::fail('should throw 404 for workspace table not found');
+        } catch (ClientException $exception) {
+            self::assertContains('Table "test2" not found in schema', $exception->getMessage());
+        }
+        try {
+            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+                'out.c-input-mapping-test',
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+            );
+            self::fail('should throw 404 for workspace table not found');
+        } catch (ClientException $exception) {
+            self::assertContains('Table "test3" not found in schema', $exception->getMessage());
+        }
     }
 }

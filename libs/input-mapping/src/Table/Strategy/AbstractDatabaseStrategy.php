@@ -28,7 +28,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         ];
     }
 
-    public function handleExports($exports, $preserve = true)
+    public function handleExports($exports, $preserve)
     {
         $cloneInputs = [];
         $copyInputs = [];

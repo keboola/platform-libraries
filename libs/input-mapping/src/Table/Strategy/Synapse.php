@@ -16,7 +16,7 @@ class Synapse extends AbstractStrategy
         ];
     }
 
-    public function handleExports($exports)
+    public function handleExports($exports, $preserve)
     {
         $copyInputs = [];
         $workspaceTables = [];
@@ -47,7 +47,7 @@ class Synapse extends AbstractStrategy
             'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
             [
                 'input' => $copyInputs,
-                'preserve' => 1,
+                'preserve' => $preserve,
             ],
             false
         );

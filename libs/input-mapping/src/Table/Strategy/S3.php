@@ -16,7 +16,7 @@ class S3 extends AbstractStrategy
         return ['jobId' => $jobId, 'table' => $table];
     }
 
-    public function handleExports($exports)
+    public function handleExports($exports, $preserve)
     {
         $this->logger->info("Processing " . count($exports) . " S3 table exports.");
         $jobIds = array_map(function ($export) {

@@ -17,7 +17,7 @@ class ABS extends AbstractStrategy
         return [$jobId, $table];
     }
 
-    public function handleExports($exports)
+    public function handleExports($exports, $preserve)
     {
         $this->logger->info("Processing " . count($exports) . " ABS table exports.");
         $jobIds = array_map(function ($export) {

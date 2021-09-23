@@ -16,7 +16,7 @@ class ABSWorkspace extends AbstractStrategy
         ];
     }
 
-    public function handleExports($exports)
+    public function handleExports($exports, $preserve)
     {
         $copyInputs = [];
         $workspaceTables = [];

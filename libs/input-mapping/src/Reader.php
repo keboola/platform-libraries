@@ -81,7 +81,6 @@ class Reader
         $stagingType,
         ReaderOptions $readerOptions
     ) {
-        var_dump($readerOptions);
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
             $tablesState,

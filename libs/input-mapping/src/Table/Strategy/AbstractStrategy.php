@@ -69,7 +69,7 @@ abstract class AbstractStrategy implements StrategyInterface
      * @param InputTableOptions[]
      * @return InputTableStateList
      */
-    public function downloadTables($tables, $preserve = true)
+    public function downloadTables($tables, $preserve)
     {
         $outputStateConfiguration = [];
         $exports = [];

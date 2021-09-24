@@ -22,9 +22,9 @@
     "require": {
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/input-mapping": "dev-odin-PS-2620",
+        "keboola/input-mapping": "^13.0",
         "keboola/sanitizer": "^0.1",
-        "keboola/storage-api-client": "dev-odin-PS-2620 as 12.4.0",
+        "keboola/storage-api-client": "^12.5",
         "keboola/storage-api-php-client-branch-wrapper": "^1.1",
         "microsoft/azure-storage-blob": "^1.5",
         "monolog/monolog": "^1.25.5|^2.0",

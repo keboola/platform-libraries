@@ -22,10 +22,10 @@
     "require": {
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/input-mapping": "^12.11",
+        "keboola/input-mapping": "^13.0",
         "keboola/sanitizer": "^0.1",
-        "keboola/storage-api-client": "^12.4",
-        "keboola/storage-api-php-client-branch-wrapper": "^1.0.0",
+        "keboola/storage-api-client": "^12.5",
+        "keboola/storage-api-php-client-branch-wrapper": "^1.1",
         "microsoft/azure-storage-blob": "^1.5",
         "monolog/monolog": "^1.25.5|^2.0",
         "symfony/config": "^2.8.52|^4.1",

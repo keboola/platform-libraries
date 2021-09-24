@@ -2,6 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests;
 
+use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
@@ -75,6 +76,24 @@ class StorageApiLocalTableWriterV2Test extends BaseWriterTest
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
         self::assertEquals([], $file['tags']);
+
+        /** @var TableInfo[] $tables */
+        $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
+        self::assertCount(2, $tables);
+
+        /** @var TableInfo[] $tables */
+        $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
+        self::assertCount(2, $tables);
+
+        $tableIds = array_map(function ($table) {
+            return $table->getId();
+        }, $tables);
+
+        sort($tableIds);
+        self::assertSame([
+            'out.c-output-mapping-test.table1a',
+            'out.c-output-mapping-test.table2a',
+        ], $tableIds);
     }
 
     public function testWriteTableTagStagingFiles()

@@ -34,4 +34,12 @@ class MappingDestinationTest extends TestCase
         self::assertSame($destination->getBucketName(), 'my-bucket');
         self::assertSame($destination->getTableName(), 'some-table');
     }
+
+    public function testBucketPrefixIsRemovedProperly()
+    {
+        $destination = new MappingDestination('in.c-clever-bucket.some-table');
+        self::assertSame($destination->getBucketId(), 'in.c-clever-bucket');
+        self::assertSame($destination->getBucketStage(), 'in');
+        self::assertSame($destination->getBucketName(), 'clever-bucket');
+    }
 }

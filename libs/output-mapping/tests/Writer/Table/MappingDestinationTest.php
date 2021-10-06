@@ -26,20 +26,26 @@ class MappingDestinationTest extends TestCase
 
     public function testTableIdIsProperlyParsed()
     {
+        // c- prefixed
         $destination = new MappingDestination('in.c-my-bucket.some-table');
+        self::assertSame('in.c-my-bucket.some-table', $destination->getTableId());
+        self::assertSame('in.c-my-bucket', $destination->getBucketId());
+        self::assertSame('in', $destination->getBucketStage());
+        self::assertSame('my-bucket', $destination->getBucketName());
+        self::assertSame('some-table', $destination->getTableName());
 
-        self::assertSame($destination->getTableId(), 'in.c-my-bucket.some-table');
-        self::assertSame($destination->getBucketId(), 'in.c-my-bucket');
-        self::assertSame($destination->getBucketStage(), 'in');
-        self::assertSame($destination->getBucketName(), 'my-bucket');
-        self::assertSame($destination->getTableName(), 'some-table');
-    }
+        // non-prefixed
+        $destination = new MappingDestination('in.my-bucket.some-table');
+        self::assertSame('in.my-bucket.some-table', $destination->getTableId());
+        self::assertSame('in.my-bucket', $destination->getBucketId());
+        self::assertSame('in', $destination->getBucketStage());
+        self::assertSame('my-bucket', $destination->getBucketName());
+        self::assertSame('some-table', $destination->getTableName());
 
-    public function testBucketPrefixIsRemovedProperly()
-    {
+        // make sure buckets starting with 'c' are not broken
         $destination = new MappingDestination('in.c-clever-bucket.some-table');
-        self::assertSame($destination->getBucketId(), 'in.c-clever-bucket');
-        self::assertSame($destination->getBucketStage(), 'in');
-        self::assertSame($destination->getBucketName(), 'clever-bucket');
+        self::assertSame('in.c-clever-bucket', $destination->getBucketId());
+        self::assertSame('in', $destination->getBucketStage());
+        self::assertSame('clever-bucket', $destination->getBucketName());
     }
 }

@@ -50,7 +50,6 @@ class MappingDestinationTest extends TestCase
             'bucketName' => 'clever-bucket',
             'tableName' => 'some-table',
         ];
-
     }
 
     /**

@@ -24,28 +24,51 @@ class MappingDestinationTest extends TestCase
         new MappingDestination('abc');
     }
 
-    public function testTableIdIsProperlyParsed()
+    public function destinationProvider()
     {
-        // c- prefixed
-        $destination = new MappingDestination('in.c-my-bucket.some-table');
-        self::assertSame('in.c-my-bucket.some-table', $destination->getTableId());
-        self::assertSame('in.c-my-bucket', $destination->getBucketId());
-        self::assertSame('in', $destination->getBucketStage());
-        self::assertSame('my-bucket', $destination->getBucketName());
-        self::assertSame('some-table', $destination->getTableName());
+        yield 'c-prefixed' => [
+            'value' => 'in.c-my-bucket.some-table',
+            'tableId' => 'in.c-my-bucket.some-table',
+            'bucketId' => 'in.c-my-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'my-bucket',
+            'tableName' => 'some-table',
+        ];
+        yield 'non-prefixed' => [
+            'value' => 'in.c-my-bucket.some-table',
+            'tableId' => 'in.c-my-bucket.some-table',
+            'bucketId' => 'in.c-my-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'my-bucket',
+            'tableName' => 'some-table',
+        ];
+        yield 'name starts with c' => [
+            'value' => 'in.c-clever-bucket.some-table',
+            'tableId' => 'in.c-clever-bucket.some-table',
+            'bucketId' => 'in.c-clever-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'clever-bucket',
+            'tableName' => 'some-table',
+        ];
 
-        // non-prefixed
-        $destination = new MappingDestination('in.my-bucket.some-table');
-        self::assertSame('in.my-bucket.some-table', $destination->getTableId());
-        self::assertSame('in.my-bucket', $destination->getBucketId());
-        self::assertSame('in', $destination->getBucketStage());
-        self::assertSame('my-bucket', $destination->getBucketName());
-        self::assertSame('some-table', $destination->getTableName());
+    }
 
-        // make sure buckets starting with 'c' are not broken
-        $destination = new MappingDestination('in.c-clever-bucket.some-table');
-        self::assertSame('in.c-clever-bucket', $destination->getBucketId());
-        self::assertSame('in', $destination->getBucketStage());
-        self::assertSame('clever-bucket', $destination->getBucketName());
+    /**
+     * @param $value
+     * @param $tableId
+     * @param $bucketId
+     * @param $stageId
+     * @param $bucketName
+     * @param $tableName
+     * @dataProvider destinationProvider
+     */
+    public function testTableIdIsProperlyParsed($value, $tableId, $bucketId, $stageId, $bucketName, $tableName)
+    {
+        $destination = new MappingDestination($value);
+        self::assertSame($tableId, $destination->getTableId());
+        self::assertSame($bucketId, $destination->getBucketId());
+        self::assertSame($stageId, $destination->getBucketStage());
+        self::assertSame($bucketName, $destination->getBucketName());
+        self::assertSame($tableName, $destination->getTableName());
     }
 }

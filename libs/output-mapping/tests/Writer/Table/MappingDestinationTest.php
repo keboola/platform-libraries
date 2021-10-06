@@ -24,14 +24,50 @@ class MappingDestinationTest extends TestCase
         new MappingDestination('abc');
     }
 
-    public function testTableIdIsProperlyParsed()
+    public function destinationProvider()
     {
-        $destination = new MappingDestination('in.c-my-bucket.some-table');
+        yield 'c-prefixed' => [
+            'value' => 'in.c-my-bucket.some-table',
+            'tableId' => 'in.c-my-bucket.some-table',
+            'bucketId' => 'in.c-my-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'my-bucket',
+            'tableName' => 'some-table',
+        ];
+        yield 'non-prefixed' => [
+            'value' => 'in.c-my-bucket.some-table',
+            'tableId' => 'in.c-my-bucket.some-table',
+            'bucketId' => 'in.c-my-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'my-bucket',
+            'tableName' => 'some-table',
+        ];
+        yield 'name starts with c' => [
+            'value' => 'in.c-clever-bucket.some-table',
+            'tableId' => 'in.c-clever-bucket.some-table',
+            'bucketId' => 'in.c-clever-bucket',
+            'stageId' => 'in',
+            'bucketName' => 'clever-bucket',
+            'tableName' => 'some-table',
+        ];
+    }
 
-        self::assertSame($destination->getTableId(), 'in.c-my-bucket.some-table');
-        self::assertSame($destination->getBucketId(), 'in.c-my-bucket');
-        self::assertSame($destination->getBucketStage(), 'in');
-        self::assertSame($destination->getBucketName(), 'my-bucket');
-        self::assertSame($destination->getTableName(), 'some-table');
+    /**
+     * @param $value
+     * @param $tableId
+     * @param $bucketId
+     * @param $stageId
+     * @param $bucketName
+     * @param $tableName
+     * @dataProvider destinationProvider
+     */
+    public function testTableIdIsProperlyParsed($value, $tableId, $bucketId, $stageId, $bucketName, $tableName)
+    {
+        $destination = new MappingDestination($value);
+        self::assertSame($tableId, $destination->getTableId());
+        self::assertSame($bucketId, $destination->getBucketId());
+        self::assertSame($stageId, $destination->getBucketStage());
+        self::assertSame($bucketName, $destination->getBucketName());
+        self::assertSame($tableName, $destination->getTableName());
     }
 }

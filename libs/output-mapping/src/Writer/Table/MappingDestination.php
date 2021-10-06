@@ -75,7 +75,10 @@ class MappingDestination
      */
     public function getBucketName()
     {
-        return ltrim($this->bucketName, 'c-');
+        if (substr($this->bucketName, 0, 2) === 'c-') {
+            return substr($this->bucketName, 2);
+        }
+        return $this->bucketName;
     }
 
     /**

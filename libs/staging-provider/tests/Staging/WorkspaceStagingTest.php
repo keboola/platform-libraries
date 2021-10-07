@@ -53,6 +53,19 @@ class WorkspaceStagingTest extends TestCase
         self::assertSame($workspaceId, $workspace->getWorkspaceId());
     }
 
+    public function testBackendSizeIsReturned()
+    {
+        $backendSize = 'large';
+        $workspace = new SnowflakeWorkspaceStaging([
+            'backendSize' => $backendSize,
+            'connection' => [
+                'backend' => SnowflakeWorkspaceStaging::getType(),
+            ]
+        ]);
+
+        self::assertSame($backendSize, $workspace->getBackendSize());
+    }
+
     public function testCredentialsAreReturned()
     {
         $credentials = [

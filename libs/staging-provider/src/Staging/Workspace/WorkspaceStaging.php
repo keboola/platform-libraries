@@ -43,4 +43,12 @@ abstract class WorkspaceStaging implements WorkspaceStagingInterface
             'password' => $connection['password'],
         ];
     }
+
+    /**
+     * @return ?string
+     */
+    public function getBackendSize()
+    {
+        return $this->data['backendSize'];
+    }
 }

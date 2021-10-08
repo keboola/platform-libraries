@@ -44,4 +44,9 @@ class WorkspaceStagingProvider extends AbstractStagingProvider
     {
         $this->workspacesApiClient->deleteWorkspace($this->getWorkspaceId(), ['async' => true]);
     }
+
+    public function getBackendSize()
+    {
+        return $this->getStaging()->getBackendSize();
+    }
 }

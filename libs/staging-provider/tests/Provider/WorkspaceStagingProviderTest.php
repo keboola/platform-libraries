@@ -15,13 +15,15 @@ class WorkspaceStagingProviderTest extends TestCase
     public function testWorkspaceIdIsReturned()
     {
         $workspaceId = 'test';
+        $backendSize = 'large';
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () use ($workspaceId) {
+        $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () use ($workspaceId, $backendSize) {
             return new SnowflakeWorkspaceStaging([
                 'id' => $workspaceId,
+                'backendSize' => $backendSize,
                 'connection' => [
                     'backend' => SnowflakeWorkspaceStaging::getType(),
                 ],
@@ -29,6 +31,7 @@ class WorkspaceStagingProviderTest extends TestCase
         });
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
+        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
     }
 
     public function testCredentialsAreReturnedForWorkspaceStaging()
@@ -104,6 +107,7 @@ class WorkspaceStagingProviderTest extends TestCase
             $callCounter += 1;
             return new SnowflakeWorkspaceStaging([
                 'id' => 'test',
+                'backendSize' => 'medium',
                 'connection' => [
                     'backend' => SnowflakeWorkspaceStaging::getType(),
                     'host' => 'host',
@@ -125,6 +129,9 @@ class WorkspaceStagingProviderTest extends TestCase
         self::assertSame(1, $callCounter, 'Check getter is called at most once within getWorkspaceId');
 
         $workspaceProvider->getCredentials();
+        self::assertSame(1, $callCounter, 'Check getter is called at most once within any method');
+
+        $workspaceProvider->getBackendSize();
         self::assertSame(1, $callCounter, 'Check getter is called at most once within any method');
     }
 

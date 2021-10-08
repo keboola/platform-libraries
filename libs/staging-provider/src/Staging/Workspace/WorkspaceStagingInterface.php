@@ -20,4 +20,9 @@ interface WorkspaceStagingInterface extends StagingInterface
      * @return array
      */
     public function getCredentials();
+
+    /**
+     * @return ?string
+     */
+    public function getBackendSize();
 }

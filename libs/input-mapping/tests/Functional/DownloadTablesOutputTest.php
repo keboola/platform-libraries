@@ -96,8 +96,8 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
         $metrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
         self::assertEquals('in.c-input-mapping-test.test', $metrics[0]->getTableId());
         self::assertEquals('in.c-input-mapping-test.test2', $metrics[1]->getTableId());
-        self::assertGreaterThan(0, $metrics[0]->getUncompressedBytes());
-        self::assertSame(0, $metrics[0]->getCompressedBytes());
+        self::assertSame(0, $metrics[0]->getUncompressedBytes());
+        self::assertGreaterThan(0, $metrics[0]->getCompressedBytes());
         /** @var TableInfo[] $tables */
         $tables = iterator_to_array($tablesResult->getTables());
         self::assertSame('in.c-input-mapping-test.test', $tables[0]->getId());

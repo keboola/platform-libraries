@@ -22,7 +22,7 @@
     "require": {
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/input-mapping": "^13.0",
+        "keboola/input-mapping": "^13.1",
         "keboola/sanitizer": "^0.1",
         "keboola/storage-api-client": "^12.6",
         "keboola/storage-api-php-client-branch-wrapper": "^1.1",

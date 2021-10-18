@@ -6,9 +6,9 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
-  - job: tests_php56_tableWriterV1
+  - job: tests_php56_tableWriter
     timeoutInMinutes: 120
-    displayName: 'Run tests on PHP 5.6, TableWriterV1'
+    displayName: 'Run tests on PHP 5.6'
     steps:
     - script: docker-compose build --pull tests56
       displayName: 'Build Tests image'
@@ -16,7 +16,7 @@ jobs:
     - script: docker-compose run --rm tests56 composer phpcs
       displayName: 'CS Check'
 
-    - script: docker-compose run --rm tests56 vendor/bin/phpunit --exclude-group tableWriterV2
+    - script: docker-compose run --rm tests56 vendor/bin/phpunit
       displayName: 'Run Test Suite'
       env:
         STORAGE_API_URL: $(STORAGE_API_URL)
@@ -26,9 +26,9 @@ jobs:
         SYNAPSE_STORAGE_API_URL: $(SYNAPSE_STORAGE_API_URL)
         SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN_PHP_56)
 
-  - job: tests_php74_tableWriterV1
+  - job: tests_php74_tableWriter
     timeoutInMinutes: 120
-    displayName: 'Run tests on PHP 7.4, TableWriterV1'
+    displayName: 'Run tests on PHP 7.4'
     steps:
     - script: docker-compose build --pull tests74
       displayName: 'Build Tests image'
@@ -36,7 +36,7 @@ jobs:
     - script: docker-compose run --rm tests74 composer phpcs
       displayName: 'CS Check'
 
-    - script: docker-compose run --rm tests74 vendor/bin/phpunit --exclude-group tableWriterV2
+    - script: docker-compose run --rm tests74 vendor/bin/phpunit
       displayName: 'Run Test Suite'
       env:
         STORAGE_API_URL: $(STORAGE_API_URL)
@@ -45,43 +45,3 @@ jobs:
         RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
         SYNAPSE_STORAGE_API_URL: $(SYNAPSE_STORAGE_API_URL)
         SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN_PHP_74)
-
-  - job: tests_php56_tableWriterV2
-    timeoutInMinutes: 120
-    displayName: 'Run tests on PHP 5.6, TableWriterV2'
-    steps:
-    - script: docker-compose build --pull tests56
-      displayName: 'Build Tests image'
-
-    - script: docker-compose run --rm tests56 composer phpcs
-      displayName: 'CS Check'
-
-    - script: docker-compose run --rm tests56 vendor/bin/phpunit --exclude-group tableWriterV1
-      displayName: 'Run Test Suite'
-      env:
-        STORAGE_API_URL: $(STORAGE_API_URL)
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_PHP_56_NEW_OM)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_PHP_56_NEW_OM)
-        RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
-        SYNAPSE_STORAGE_API_URL: $(SYNAPSE_STORAGE_API_URL)
-        SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN_PHP_56_NEW_OM)
-
-  - job: tests_php74_tableWriterV2
-    timeoutInMinutes: 120
-    displayName: 'Run tests on PHP 7.4, TableWriterV2'
-    steps:
-    - script: docker-compose build --pull tests74
-      displayName: 'Build Tests image'
-
-    - script: docker-compose run --rm tests74 composer phpcs
-      displayName: 'CS Check'
-
-    - script: docker-compose run --rm tests74 vendor/bin/phpunit --exclude-group tableWriterV1
-      displayName: 'Run Test Suite'
-      env:
-        STORAGE_API_URL: $(STORAGE_API_URL)
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_PHP_74_NEW_OM)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_PHP_74_NEW_OM)
-        RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
-        SYNAPSE_STORAGE_API_URL: $(SYNAPSE_STORAGE_API_URL)
-        SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN_PHP_74_NEW_OM)

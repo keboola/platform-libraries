@@ -129,10 +129,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ];
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/^(
-            Failed\ to\ load\ table\ "out\.c-output-mapping-test\.table1a":\ Table\ "table1a"\ not\ found\ in\ schema\ "WORKSPACE_\d+"| # TableWriterV2
-            Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a  # TableWriterV1
-        )$/x');
+        $this->expectExceptionMessageRegExp('/^Failed to load table "out\.c-output-mapping-test\.table1a": Table "table1a" not found in schema "WORKSPACE_\d+"$/');
 
         $tableQueue = $writer->uploadTables(
             '/',
@@ -237,10 +234,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/^(
-            Failed\ to\ resolve\ valid\ destination\.\ "table1a"\ is\ not\ a\ valid\ table\ ID\.| # TableWriterV2
-            Failed\ to\ resolve\ destination\ for\ output\ table\ "table1a"\.                     # TableWriterV1
-        )$/x');
+        $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
 
         $writer->uploadTables(
             '/',
@@ -266,10 +260,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($factory);
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/^(
-            Failed\ to\ resolve\ destination\ for\ output\ table\ "table1a"\.| # TableWriterV2
-            Failed\ to\ read\ file\ table1a\ Cannot\ open\ file\ table1a       # TableWriterV1
-        )$/x');
+        $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
 
         $writer->uploadTables(
             '/',
@@ -444,9 +435,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[1]);
     }
 
-    /**
-     * @group tableWriterV2
-     */
     public function testSnowflakeMultipleMappingOfSameSource()
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();

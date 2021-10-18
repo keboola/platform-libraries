@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\OutputMapping\DeferredTasks\TableWriterV2;
+namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;

@@ -1,12 +1,8 @@
 <?php
 
-namespace Keboola\OutputMapping\DeferredTasks\TableWriterV2;
+namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
-use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
-use Keboola\OutputMapping\DeferredTasks\TableWriterV2\AbstractLoadTableTask;
-use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Metadata;
 
 class CreateAndLoadTableTask extends AbstractLoadTableTask
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\OutputMapping\DeferredTasks\TableWriterV2;
+namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
 use Keboola\StorageApi\Client;
 

@@ -4,7 +4,7 @@ namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
-use Keboola\OutputMapping\DeferredTasks\TableWriterV1\LoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;

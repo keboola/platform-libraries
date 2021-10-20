@@ -27,8 +27,10 @@ class InputTableOptions
             $colNamesFromTypes[] = $column['source'];
         }
         $this->validateColumns($colNamesFromTypes);
-        if (empty($this->definition['columns']) && !empty($colNamesFromTypes)) {
-            $this->definition['columns'] = $colNamesFromTypes;
+        if (empty($this->definition['column_types']) && !empty($this->definition['columns'])) {
+            foreach ($this->definition['columns'] as $column) {
+                $this->definition['column_types'][] = ['source' => $column];
+            }
         }
     }
 
@@ -145,8 +147,10 @@ class InputTableOptions
             foreach ($this->definition['column_types'] as $column_type) {
                 $item = [
                     'source' => $column_type['source'],
-                    'type' => $column_type['type'],
                 ];
+                if (isset($column_type['type'])) {
+                    $item['type'] = $column_type['type'];
+                }
                 if (isset($column_type['destination'])) {
                     $item['destination'] = $column_type['destination'];
                 }

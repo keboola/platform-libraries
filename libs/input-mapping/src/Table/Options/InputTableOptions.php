@@ -97,8 +97,12 @@ class InputTableOptions
      */
     public function getColumnNames()
     {
-        if (isset($this->definition['columns'])) {
-            return $this->definition['columns'];
+        if (isset($this->definition['column_types']) && count($this->definition['column_types'])) {
+            $colNamesFromTypes = [];
+            foreach ($this->definition['column_types'] as $column) {
+                $colNamesFromTypes[] = $column['source'];
+            }
+            return $colNamesFromTypes;
         }
         return [];
     }
@@ -109,7 +113,7 @@ class InputTableOptions
     public function getStorageApiExportOptions(InputTableStateList $states)
     {
         $exportOptions = [];
-        if (isset($this->definition['columns']) && count($this->definition['columns'])) {
+        if (isset($this->definition['column_types']) && count($this->definition['column_types'])) {
             $exportOptions['columns'] = $this->getColumnNames();
         }
         if (!empty($this->definition['days'])) {
@@ -179,8 +183,6 @@ class InputTableOptions
         $exportOptions = [];
         if ($this->definition['column_types']) {
             $exportOptions['columns'] = $this->getColumnTypes();
-        } elseif ($this->definition['columns']) {
-            $exportOptions['columns'] = $this->getColumnNames();
         }
         if (!empty($this->definition['days'])) {
             throw new InvalidInputException(

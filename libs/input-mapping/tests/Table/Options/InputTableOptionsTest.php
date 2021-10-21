@@ -144,7 +144,10 @@ class InputTableOptionsTest extends TestCase
             'limit' => 100,
         ]);
         self::assertEquals([
-            'columns' => ['col1', 'col2'],
+            'columns' => [
+                ['source' => 'col1'],
+                ['source' => 'col2'],
+            ],
             'seconds' => 86400,
             'whereColumn' => 'col1',
             'whereValues' => ['1', '2'],

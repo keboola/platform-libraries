@@ -41,7 +41,14 @@ class ExasolTest extends AbstractStrategyTest
                         [
                             'source' => 'in.c-input-mapping-test-strategy.test1',
                             'destination' => 'my-table',
-                            'columns' => ['foo', 'bar'],
+                            'columns' => [
+                                [
+                                    'source' => 'foo',
+                                ],
+                                [
+                                    'source' => 'bar',
+                                ],
+                            ],
                         ]
                     ),
                     [

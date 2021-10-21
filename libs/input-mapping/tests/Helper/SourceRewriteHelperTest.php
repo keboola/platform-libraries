@@ -261,7 +261,10 @@ class SourceRewriteHelperTest extends TestCase
                 'source' => $expectedTableId,
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
-                'column_types' => [],
+                'column_types' => [
+                    ['source' => 'foo'],
+                    ['source' => 'bar'],
+                ],
                 'where_values' => [],
                 'where_operator' => 'eq',
                 'overwrite' => false,

@@ -43,7 +43,7 @@ class S3 extends AbstractStrategy
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,
-                $table->getColumnNames(),
+                $table->getColumnNamesFromTypes(),
                 $this->format
             );
         }

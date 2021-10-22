@@ -36,7 +36,7 @@ class Local extends AbstractStrategy
             $tableInfo,
             $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . ".manifest",
-            $table->getColumnNames(),
+            $table->getColumnNamesFromTypes(),
             $this->format
         );
         return [

@@ -23,31 +23,98 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals('dest', $definition->getDestination());
     }
 
-    public function testGetDefinition()
+    /**
+     * @dataProvider definitionProvider
+     */
+    public function testGetDefinition(array $input, array $expected)
     {
-        $definition = new InputTableOptions(['source' => 'test', 'destination' => 'dest']);
-        self::assertEquals([
-            'source' => 'test',
-            'destination' => 'dest',
-            'columns' => [],
-            'where_values' => [],
-            'where_operator' => 'eq',
-            'column_types' => [],
-            'overwrite' => false,
-            'use_view' => false,
-        ], $definition->getDefinition());
+        $definition = new InputTableOptions($input);
+        self::assertEquals($expected, $definition->getDefinition());
+    }
+
+    public function definitionProvider()
+    {
+        yield 'no columns' => [
+            [
+                'source' => 'test',
+                'destination' => 'dest'
+            ],
+            [
+                'source' => 'test',
+                'destination' => 'dest',
+                'columns' => [],
+                'where_values' => [],
+                'where_operator' => 'eq',
+                'column_types' => [],
+                'overwrite' => false,
+                'use_view' => false,
+            ],
+        ];
+        yield 'simple columns' => [
+            [
+                'source' => 'test',
+                'destination' => 'dest',
+                'columns' => ['a', 'b'],
+            ],
+            [
+                'source' => 'test',
+                'destination' => 'dest',
+                'columns' => ['a', 'b'],
+                'where_values' => [],
+                'where_operator' => 'eq',
+                'column_types' => [
+                    ['source' => 'a'],
+                    ['source' => 'b'],
+                ],
+                'overwrite' => false,
+                'use_view' => false,
+            ],
+        ];
+        yield 'complex columns' => [
+            [
+                'source' => 'test',
+                'destination' => 'dest',
+                'column_types' => [
+                    [
+                        'source' => 'a',
+                        'destination' => 'a',
+                    ],
+                    [
+                        'source' => 'b',
+                    ],
+                ],
+            ],
+            [
+                'source' => 'test',
+                'destination' => 'dest',
+                'columns' => [],
+                'where_values' => [],
+                'where_operator' => 'eq',
+                'column_types' => [
+                    [
+                        'source' => 'a',
+                        'destination' => 'a',
+                    ],
+                    [
+                        'source' => 'b',
+                    ],
+                ],
+                'overwrite' => false,
+                'use_view' => false,
+            ],
+        ];
     }
 
     public function testGetColumns()
     {
         $definition = new InputTableOptions(['source' => 'test', 'columns' => ['col1', 'col2']]);
-        self::assertEquals(['col1', 'col2'], $definition->getColumnNames());
+        self::assertEquals(['col1', 'col2'], $definition->getColumnNamesFromTypes());
     }
 
     public function testGetColumnsExtended()
     {
         $definition = new InputTableOptions(['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]]);
-        self::assertEquals(['col1', 'col2'], $definition->getColumnNames());
+        self::assertEquals(['col1', 'col2'], $definition->getColumnNamesFromTypes());
     }
 
     public function testConstructorMissingSource()

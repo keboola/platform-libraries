@@ -22,11 +22,7 @@ class InputTableOptions
         }
         $tableConfiguration = new \Keboola\InputMapping\Configuration\Table();
         $this->definition = $tableConfiguration->parse(['table' => $configuration]);
-        $colNamesFromTypes = [];
-        foreach ($this->definition['column_types'] as $column) {
-            $colNamesFromTypes[] = $column['source'];
-        }
-        $this->validateColumns($colNamesFromTypes);
+        $this->validateColumns();
         if (empty($this->definition['column_types']) && !empty($this->definition['columns'])) {
             foreach ($this->definition['columns'] as $column) {
                 $this->definition['column_types'][] = ['source' => $column];
@@ -34,8 +30,9 @@ class InputTableOptions
         }
     }
 
-    private function validateColumns(array $colNamesFromTypes)
+    private function validateColumns()
     {
+        $colNamesFromTypes = $this->getColumnNamesFromTypes();
         // if both columns and column_types are entered, verify that the columns listed do match
         if ($this->definition['columns'] && $this->definition['column_types']) {
             $diff = array_diff($this->definition['columns'], $colNamesFromTypes);
@@ -95,16 +92,9 @@ class InputTableOptions
     /**
      * @return array
      */
-    public function getColumnNames()
+    public function getColumnNamesFromTypes()
     {
-        if (isset($this->definition['column_types']) && count($this->definition['column_types'])) {
-            $colNamesFromTypes = [];
-            foreach ($this->definition['column_types'] as $column) {
-                $colNamesFromTypes[] = $column['source'];
-            }
-            return $colNamesFromTypes;
-        }
-        return [];
+        return array_column($this->definition['column_types'], 'source');
     }
 
     /**
@@ -113,8 +103,8 @@ class InputTableOptions
     public function getStorageApiExportOptions(InputTableStateList $states)
     {
         $exportOptions = [];
-        if (isset($this->definition['column_types']) && count($this->definition['column_types'])) {
-            $exportOptions['columns'] = $this->getColumnNames();
+        if (count($this->definition['column_types'])) {
+            $exportOptions['columns'] = $this->getColumnNamesFromTypes();
         }
         if (!empty($this->definition['days'])) {
             $exportOptions['changedSince'] = "-{$this->definition["days"]} days";

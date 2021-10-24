@@ -28,6 +28,9 @@ class InputTableOptions
                 $this->definition['column_types'][] = ['source' => $column];
             }
         }
+        if (empty($this->definition['columns']) && !empty($this->getColumnNamesFromTypes())) {
+            $this->definition['columns'] = $this->getColumnNamesFromTypes();
+        }
     }
 
     private function validateColumns()

@@ -87,7 +87,7 @@ class InputTableOptionsTest extends TestCase
             [
                 'source' => 'test',
                 'destination' => 'dest',
-                'columns' => [],
+                'columns' => ['a', 'b'],
                 'where_values' => [],
                 'where_operator' => 'eq',
                 'column_types' => [

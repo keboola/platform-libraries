@@ -76,7 +76,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                     'input' => $cloneInputs,
                     'preserve' => $preserve ? 1 : 0,
                 ],
-                false
+                true
             );
             $workspaceJobs[] = $job['id'];
             if (!$preserve) {

@@ -23,14 +23,12 @@ class InputTableOptions
         $tableConfiguration = new \Keboola\InputMapping\Configuration\Table();
         $this->definition = $tableConfiguration->parse(['table' => $configuration]);
         $this->validateColumns();
-        if (empty($this->definition['column_types']) && !empty($this->definition['columns'])) {
+        if (empty($this->definition['column_types'])) {
             foreach ($this->definition['columns'] as $column) {
                 $this->definition['column_types'][] = ['source' => $column];
             }
         }
-        if (empty($this->definition['columns']) && !empty($this->getColumnNamesFromTypes())) {
-            $this->definition['columns'] = $this->getColumnNamesFromTypes();
-        }
+        $this->definition['columns'] = $this->getColumnNamesFromTypes();
     }
 
     private function validateColumns()

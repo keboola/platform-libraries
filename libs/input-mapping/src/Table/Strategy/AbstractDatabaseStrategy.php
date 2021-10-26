@@ -70,7 +70,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Cloning %s tables to workspace.', count($cloneInputs))
             );
-            $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
+            $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
                 'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load-clone',
                 [
                     'input' => $cloneInputs,
@@ -78,7 +78,6 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 ],
                 true
             );
-            $workspaceJobs[] = $job['id'];
             if (!$preserve) {
                 $hasBeenCleaned = true;
             }

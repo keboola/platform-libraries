@@ -81,14 +81,13 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         } catch (ClientException $e) {
             self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
         }
-
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Cloning 2 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getBasicClient()->listJobs(['limit' => 20]);

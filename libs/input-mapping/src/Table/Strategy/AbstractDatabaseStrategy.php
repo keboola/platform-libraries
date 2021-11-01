@@ -70,6 +70,10 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Cloning %s tables to workspace.', count($cloneInputs))
             );
+            // here we are waiting for the jobs to finish. handleAsyncTask = true
+            // We need to do this because there is no lock on the table and there is a race between the
+            // clone and copy jobs which can end in an error that the table already exists.
+            // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
             $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
                 'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load-clone',
                 [

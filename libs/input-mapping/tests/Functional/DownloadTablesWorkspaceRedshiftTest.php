@@ -82,7 +82,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
 
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     public function testUseViewFails()

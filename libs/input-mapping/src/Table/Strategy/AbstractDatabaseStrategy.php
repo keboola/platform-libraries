@@ -64,7 +64,8 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             }
         }
 
-        $workspaceJobs = [];
+        $cloneJobResult = [];
+        $copyJobResult = [];
         $hasBeenCleaned = false;
         if ($cloneInputs) {
             $this->logger->info(
@@ -74,14 +75,15 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             // We need to do this because there is no lock on the table and there is a race between the
             // clone and copy jobs which can end in an error that the table already exists.
             // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
+            $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
                 'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load-clone',
                 [
                     'input' => $cloneInputs,
                     'preserve' => $preserve ? 1 : 0,
                 ],
-                true
+                false
             );
+            $cloneJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$job['id']]);
             if (!$preserve) {
                 $hasBeenCleaned = true;
             }
@@ -99,11 +101,11 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 ],
                 false
             );
-            $workspaceJobs[] = $job['id'];
+            $copyJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$job['id']]);
         }
+        $jobResults = array_merge($cloneJobResult, $copyJobResult);
+        $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
 
-        $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-        $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . ".manifest";

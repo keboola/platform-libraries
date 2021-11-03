@@ -36,13 +36,16 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             ],
         ]);
 
-        $reader->downloadTables(
+        $result = $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
             StrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
+
+        // there were 2 jobs, clone and copy, so should have 2 metrics entries
+        $this->assertCount(2, $result->getMetrics()->getTableMetrics());
 
         $adapter = new Adapter();
 
@@ -87,7 +90,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Cloning 2 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getBasicClient()->listJobs(['limit' => 20]);

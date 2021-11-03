@@ -178,7 +178,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     public function testTablesSnowflakeDataTypesInvalid()
@@ -265,7 +265,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
 
         // check that we can overwrite while using clone
         $configuration = new InputTableOptionsList([
@@ -304,7 +304,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Cloning 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     public function testUseViewFails()

@@ -15,22 +15,12 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 class SharedCodeResolver
 {
     private ClientWrapper$clientWrapper;
-
-    private Mustache_Engine $moustache;
-
     private LoggerInterface $logger;
-
     private ComponentsClientHelper $componentsHelper;
 
     public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger)
     {
         $this->clientWrapper = $clientWrapper;
-        $this->moustache = new Mustache_Engine([
-            'escape' => function ($string) {
-                return trim((string) json_encode($string), '"');
-            },
-            'strict_callables' => true,
-        ]);
         $this->logger = $logger;
         $this->componentsHelper = new ComponentsClientHelper($this->clientWrapper);
     }
@@ -53,23 +43,67 @@ class SharedCodeResolver
                 $sharedCodeId,
                 $sharedCodeRowId
             );
-            $context->pushValue($sharedCodeRowId, $sharedCodeConfiguration['code_content']);
+            $context->pushValue(
+                $sharedCodeRowId,
+                $sharedCodeConfiguration['code_content']
+            );
         }
         $this->logger->info(sprintf(
             'Loaded shared code snippets with ids: "%s".',
             implode(', ', $context->getKeys())
         ));
 
-        $newConfiguration = json_decode(
-            $this->moustache->render((string) json_encode($configuration), $context),
-            true
-        );
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new UserException(
-                'Shared code replacement resulted in invalid configuration, error: ' . json_last_error_msg()
-            );
-        }
+        $newConfiguration = $configuration;
+        $this->replaceSharedCodeInConfiguration($newConfiguration, $context);
 
         return $newConfiguration;
+    }
+
+    private function replaceSharedCodeInConfiguration(array &$configuration, SharedCodeContext $context): void
+    {
+        foreach ($configuration as &$value) {
+            if (is_array($value)) {
+                if ($this->isScalarOrdinalArray($value)) {
+                    $value = $this->replaceSharedCodeInArray($value, $context);
+                } else {
+                    $this->replaceSharedCodeInConfiguration($value, $context);
+                }
+            } // else it's a scalar, leave as is - shared code is replaced only in arrays
+        }
+    }
+
+    private function isScalarOrdinalArray(array $array): bool
+    {
+        foreach ($array as $key => $value) {
+            if (!is_scalar($value) || !is_int($key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function replaceSharedCodeInArray(array $nodes, SharedCodeContext $context): array
+    {
+        $renderedNodes = [];
+        foreach ($nodes as $node) {
+            preg_match_all('/{{([ a-zA-Z0-9_-]+)}}/', $node, $matches, PREG_PATTERN_ORDER);
+            $matches = $matches[1];
+            array_walk(
+                $matches,
+                function (&$v) {
+                    $v = trim($v);
+                }
+            );
+            $filteredMatches = array_intersect($context->getKeys(), $matches);
+            if (count($filteredMatches) === 0) {
+                $renderedNodes[] = $node;
+            } else {
+                foreach ($filteredMatches as $match) {
+                    $match = trim($match);
+                    $renderedNodes = array_merge($renderedNodes, $context->$match);
+                }
+            }
+        }
+        return $renderedNodes;
     }
 }

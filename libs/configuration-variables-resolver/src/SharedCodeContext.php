@@ -8,7 +8,7 @@ class SharedCodeContext
 {
     private array $values = [];
 
-    public function pushValue(string $key, string $value): void
+    public function pushValue(string $key, array $value): void
     {
         $this->values[$key] = $value;
     }
@@ -20,15 +20,11 @@ class SharedCodeContext
 
     public function __isset(string $name): bool
     {
-        return true;
+        return isset($this->values[$name]);
     }
 
-    public function __get(string $name): string
+    public function __get(string $name): array
     {
-        if (isset($this->values[$name])) {
-            return $this->values[$name];
-        } else {
-            return '{{ ' . $name . ' }}';
-        }
+        return $this->values[$name];
     }
 }

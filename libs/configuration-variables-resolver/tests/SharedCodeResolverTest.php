@@ -363,4 +363,43 @@ class SharedCodeResolverTest extends TestCase
             $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".')
         );
     }
+
+    public function testResolveSharedCodeNumericIds(): void
+    {
+        list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
+            $this->clientWrapper->getBasicClient(),
+            [
+                '123456' => ['code_content' => ['SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id']],
+                // bwd compatible shared code configuration where the code is not array
+                1234567 => ['code_content' => 'bar'],
+            ]
+        );
+        $configuration = [
+            'shared_code_id' => $sharedConfigurationId,
+            'shared_code_row_ids' => $sharedCodeRowIds,
+            'parameters' => [
+                'first code' => ['{{123456}}'],
+                'second code' => ['{{1234567}}'],
+            ],
+        ];
+        $sharedCodeResolver = $this->getSharedCodeResolver();
+        $newConfiguration = $sharedCodeResolver->resolveSharedCode($configuration);
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'first code' => ['SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
+                    'second code' => ['bar'],
+                ],
+                'shared_code_id' => $sharedConfigurationId,
+                'shared_code_row_ids' => [
+                    '123456',
+                    '1234567'
+                ],
+            ],
+            $newConfiguration
+        );
+        self::assertTrue(
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "123456, 1234567".')
+        );
+    }
 }

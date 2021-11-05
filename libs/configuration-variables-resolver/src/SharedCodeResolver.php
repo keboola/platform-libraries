@@ -99,7 +99,7 @@ class SharedCodeResolver
                 $renderedNodes[] = $node;
             } else {
                 foreach ($filteredMatches as $match) {
-                    $match = trim($match);
+                    $match = trim((string) $match);
                     $renderedNodes = array_merge($renderedNodes, $context->$match);
                 }
             }

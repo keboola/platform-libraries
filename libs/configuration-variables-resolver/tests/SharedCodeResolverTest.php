@@ -393,7 +393,7 @@ class SharedCodeResolverTest extends TestCase
                 'shared_code_id' => $sharedConfigurationId,
                 'shared_code_row_ids' => [
                     '123456',
-                    '1234567'
+                    '1234567',
                 ],
             ],
             $newConfiguration

@@ -19,12 +19,6 @@ services:
     volumes:
       - ./:/code
 
-  tests56:
-    <<: *tests
-    build: 
-      context: .
-      dockerfile: Dockerfile56
-
   tests74:
     <<: *tests
     build: 

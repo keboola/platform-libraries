@@ -107,7 +107,7 @@ stages:
         timeoutInMinutes: 60
         steps:
           - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonPart2
-            displayName: 'Run Common Test Suite (Part 2) on Azure (PHP 5.6)'
+            displayName: 'Run Common Test Suite (Part 2) on Azure (PHP 7.4)'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
               STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)

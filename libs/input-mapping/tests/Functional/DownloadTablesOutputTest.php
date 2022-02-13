@@ -41,7 +41,7 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
         $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test', 'test2', $csv);
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $metadataApi->postColumnMetadata(
-            'in.c-input-mapping-test.test.id',
+            'in.c-input-mapping-test.test.Id',
             'someProvider',
             [[
                 'key' => 'someKey',

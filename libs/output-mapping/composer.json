@@ -23,7 +23,7 @@
         "php": ">=7.4",
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5.5",
-        "keboola/input-mapping": "^13.1",
+        "keboola/input-mapping": "^14.0",
         "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/sanitizer": "^0.1",
         "keboola/storage-api-client": "^12.6",

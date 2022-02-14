@@ -2,6 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -11,7 +12,6 @@ use Keboola\OutputMapping\Tests\Writer\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;
-use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\Test\TestLogger;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
@@ -102,7 +102,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testListFiles()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file.manifest');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-second-file');
@@ -120,7 +120,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testListFilesMaxItems()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         for ($i = 0; $i < 1000; $i++) {
             $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file' . $i);
         }
@@ -142,7 +142,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testListManifests()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file.manifest');
         $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-second-file');
@@ -160,7 +160,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testLoadFileToStorageEmptyConfig()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one.manifest', 'manifest');
         $fileId = $strategy->loadFileToStorage('data/out/files/my-file_one', []);
@@ -182,7 +182,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testLoadFileToStorageFullConfig()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one.manifest', 'manifest');
         $fileId = $strategy->loadFileToStorage(
@@ -229,7 +229,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testReadFileManifestFull()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $sourceData = [
             'is_public' => true,
@@ -256,7 +256,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testReadFileManifestFullYaml()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'yaml');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $sourceData = [
             'is_public' => true,
@@ -283,7 +283,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testReadFileManifestEmpty()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'data/out/files/my-file_one', 'my-data');
         $expectedData = [
             'is_public' => false,
@@ -317,7 +317,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
     public function testReadFileManifestInvalid()
     {
         $strategy = new ABSWorkspace($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
-        $blobClient = BlobRestProxy::createBlobService($this->workspace['connection']['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspace['connection']['connectionString']);
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',

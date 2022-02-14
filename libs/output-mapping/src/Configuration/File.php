@@ -9,8 +9,8 @@ class File extends Configuration
 {
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $root = $treeBuilder->root("file");
+        $treeBuilder = new TreeBuilder('file');
+        $root = $treeBuilder->getRootNode();
         self::configureNode($root);
         return $treeBuilder;
     }

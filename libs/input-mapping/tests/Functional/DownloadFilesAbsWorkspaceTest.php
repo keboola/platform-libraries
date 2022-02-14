@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
@@ -50,7 +51,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $this->getStagingFactory()->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
             ->getFileDataProvider()->getWorkspaceId(); //initialize the mock
 
-        $this->blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $this->blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
     }
 
     public function tearDown()

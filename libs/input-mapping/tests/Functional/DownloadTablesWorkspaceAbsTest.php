@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
@@ -60,7 +61,8 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
     {
         $blobListOptions = new ListBlobsOptions();
         $blobListOptions->setPrefix($basePath);
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $blobList = $blobClient->listBlobs($this->workspaceCredentials['container'], $blobListOptions);
         self::assertGreaterThan(0, count($blobList->getBlobs()));
     }

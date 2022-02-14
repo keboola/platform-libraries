@@ -2,6 +2,7 @@
 
 namespace Keboola\InputMapping\File\Strategy;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -42,7 +43,7 @@ class ABSWorkspace extends AbstractFileStrategy
     private function getBlobClient()
     {
         if (!$this->blobClient) {
-            $this->blobClient = BlobRestProxy::createBlobService($this->getCredentials()['connectionString']);
+            $this->blobClient = ClientFactory::createClientFromConnectionString($this->getCredentials()['connectionString']);
         }
         return $this->blobClient;
     }

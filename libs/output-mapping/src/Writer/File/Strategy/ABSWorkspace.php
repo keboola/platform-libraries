@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
 use Exception;
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -45,7 +46,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                 'Invalid credentials received: ' . implode(', ', array_keys($credentials))
             );
         }
-        $this->blobClient = BlobRestProxy::createBlobService($credentials['connectionString']);
+        $this->blobClient = ClientFactory::createClientFromConnectionString($credentials['connectionString']);
         $this->container = $credentials['container'];
     }
 

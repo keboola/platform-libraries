@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests\Configuration\File;
 
 use Keboola\InputMapping\Configuration\File\Manifest;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class FileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
 {
@@ -30,6 +31,8 @@ class FileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessage('The child config "id" under "file" must be configured.');
         (new Manifest())->parse(["config" => []]);
     }
 }

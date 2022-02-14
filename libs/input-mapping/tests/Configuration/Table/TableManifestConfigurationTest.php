@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Tests\Configuration\Table;
 
 use Keboola\InputMapping\Configuration\Table\Manifest;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class TableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
 {
@@ -38,6 +39,8 @@ class TableManifestConfigurationTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyConfiguration()
     {
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessage('The child config "id" under "table" must be configured.');
         (new Manifest())->parse(["config" => []]);
     }
 }

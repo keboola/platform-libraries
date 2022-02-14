@@ -10,8 +10,8 @@ class Manifest extends Configuration
 {
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $root = $treeBuilder->root("table");
+        $treeBuilder = new TreeBuilder('table');
+        $root = $treeBuilder->getRootNode();
         self::configureNode($root);
         return $treeBuilder;
     }

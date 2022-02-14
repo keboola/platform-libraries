@@ -9,8 +9,8 @@ class TableFile extends Configuration
 {
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $root = $treeBuilder->root("tableFile");
+        $treeBuilder = new TreeBuilder('tableFile');
+        $root = $treeBuilder->getRootNode();
         self::configureNode($root);
         return $treeBuilder;
     }

@@ -3,8 +3,10 @@
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\Table;
+use PHPUnit_Framework_TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class TableTest extends \PHPUnit_Framework_TestCase
+class TableTest extends PHPUnit_Framework_TestCase
 {
     public function testBasicConfiguration()
     {
@@ -70,12 +72,11 @@ class TableTest extends \PHPUnit_Framework_TestCase
         (new Table())->parse(['config' => $config]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage The child node "source" at path "table" must be configured
-     */
     public function testEmptyConfiguration()
     {
+        self::expectException(InvalidConfigurationException::class);
+        self::expectExceptionMessage('The child config "source" under "table" must be configured.');
+
         (new Table())->parse(['config' => []]);
     }
 

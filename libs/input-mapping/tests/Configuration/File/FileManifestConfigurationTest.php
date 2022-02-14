@@ -25,10 +25,6 @@ class FileManifestConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage The child node "id" at path "file" must be configured.
-     */
     public function testEmptyConfiguration()
     {
         self::expectException(InvalidConfigurationException::class);

@@ -3,10 +3,10 @@
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
-use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 
 class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
@@ -35,7 +35,7 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
     private function isDirectory($sourcePath)
     {
         $absCredentials = $this->dataStorage->getCredentials();
-        $blobClient = BlobRestProxy::createBlobService($absCredentials['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($absCredentials['connectionString']);
 
         try {
             $options = new ListBlobsOptions();

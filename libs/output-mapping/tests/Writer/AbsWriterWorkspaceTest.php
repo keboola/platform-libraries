@@ -2,6 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
@@ -11,7 +12,6 @@ use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
-use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -153,7 +153,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $content = "\"first value\",\"second value\"\n";
         $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv/slice1', $content);
         $content = "\"secondRow1\",\"secondRow2\"\n";
@@ -207,7 +207,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $content = "\"First column\",\"Second Column\"\n\"first value\",\"second value\"\n\"secondRow1\",\"secondRow2\"";
         $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'data/out/tables/table1a.csv', $content);
         $content = "\"First column\",\"Id\"\n\"first\",\"second\"\n\"third\",\"fourth\"";
@@ -280,7 +280,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_ABS, 'abs']);
         // initialize the workspace mock
         $factory->getFileOutputStrategy(StrategyFactory::WORKSPACE_ABS);
-        $blobClient = BlobRestProxy::createBlobService($this->workspaceCredentials['connectionString']);
+        $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
         $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
         $blobClient->createBlockBlob(

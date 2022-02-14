@@ -12,14 +12,6 @@ x-tests: &tests
   command: ["composer", "ci"]
 
 services:
-  tests56:
-    <<: *tests
-    build:
-      context: .
-      args:
-        PHP_VERSION: 5.6
-        XDEBUG_VERSION: 2.5.5
-
   tests74:
     <<: *tests
     build:

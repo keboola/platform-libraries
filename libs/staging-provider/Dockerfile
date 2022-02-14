@@ -1,7 +1,5 @@
-ARG PHP_VERSION=7.4
-FROM php:${PHP_VERSION}-cli as dev
+FROM php:7.4-cli as dev
 
-ARG XDEBUG_VERSION=2.9.8
 ENV COMPOSER_ALLOW_SUPERUSER 1
 
 WORKDIR /code
@@ -17,7 +15,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # install extensions
 RUN pecl config-set php_ini /usr/local/etc/php.ini \
-    && yes | pecl install "xdebug-${XDEBUG_VERSION}" \
+    && yes | pecl install "xdebug-2.9.8" \
     && echo "zend_extension=$(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini
 
 FROM dev as tests

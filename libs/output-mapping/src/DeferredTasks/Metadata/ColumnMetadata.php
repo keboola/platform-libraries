@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class ColumnMetadata implements MetadataInterface
@@ -30,9 +31,18 @@ class ColumnMetadata implements MetadataInterface
 
     public function apply(Metadata $apiClient)
     {
+        $columnsMetadata = [];
         foreach ($this->metadata as $column => $metadataArray) {
-            $columnId = $this->tableId . '.' . ColumnNameSanitizer::sanitize($column);
-            $apiClient->postColumnMetadata($columnId, $this->provider, $metadataArray);
+            $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $metadataArray;
         }
+
+        $options = new TableMetadataUpdateOptions(
+            $this->tableId,
+            $this->provider,
+            null,
+            $columnsMetadata
+        );
+
+        $apiClient->postTableMetadataWithColumns($options);
     }
 }

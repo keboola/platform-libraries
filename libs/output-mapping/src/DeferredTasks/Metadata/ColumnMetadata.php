@@ -33,7 +33,15 @@ class ColumnMetadata implements MetadataInterface
     {
         $columnsMetadata = [];
         foreach ($this->metadata as $column => $metadataArray) {
-            $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $metadataArray;
+            $columnMetadata = [];
+            foreach ($metadataArray as $metadata) {
+                $columnMetadata[] = [
+                    'key' => (string) $metadata['key'],
+                    'value' => (string) $metadata['value'],
+                ];
+            }
+
+            $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $columnMetadata;
         }
 
         $options = new TableMetadataUpdateOptions(

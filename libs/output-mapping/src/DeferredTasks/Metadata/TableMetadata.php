@@ -30,10 +30,18 @@ class TableMetadata implements MetadataInterface
 
     public function apply(Metadata $apiClient)
     {
+        $tableMetadata = [];
+        foreach ($this->metadata as $metadata) {
+            $tableMetadata[] = [
+                'key' => (string) $metadata['key'],
+                'value' => (string) $metadata['value'],
+            ];
+        }
+
         $apiClient->postTableMetadataWithColumns(new TableMetadataUpdateOptions(
             $this->tableId,
             $this->provider,
-            $this->metadata
+            $tableMetadata
         ));
     }
 }

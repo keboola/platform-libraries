@@ -3,6 +3,7 @@
 namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 
 class TableMetadata implements MetadataInterface
 {
@@ -29,6 +30,18 @@ class TableMetadata implements MetadataInterface
 
     public function apply(Metadata $apiClient)
     {
-        $apiClient->postTableMetadata($this->tableId, $this->provider, $this->metadata);
+        $tableMetadata = [];
+        foreach ($this->metadata as $metadata) {
+            $tableMetadata[] = [
+                'key' => (string) $metadata['key'],
+                'value' => (string) $metadata['value'],
+            ];
+        }
+
+        $apiClient->postTableMetadataWithColumns(new TableMetadataUpdateOptions(
+            $this->tableId,
+            $this->provider,
+            $tableMetadata
+        ));
     }
 }

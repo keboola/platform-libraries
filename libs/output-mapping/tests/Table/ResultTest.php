@@ -22,6 +22,7 @@ class ResultTest extends TestCase
             'displayName' => 'My table',
             'columns' => ['id', 'name'],
             'lastImportDate' => null,
+            'lastChangeDate' => null,
         ]);
 
         $tablesResult->addTable($table1);
@@ -32,6 +33,7 @@ class ResultTest extends TestCase
             'displayName' => 'Other table',
             'columns' => ['id'],
             'lastImportDate' => null,
+            'lastChangeDate' => null,
         ]);
 
         $tablesResult->addTable($table2);
@@ -54,7 +56,7 @@ class ResultTest extends TestCase
             'displayName' => 'My table',
             'columns' => ['id', 'name'],
             'lastImportDate' => $expectedImportData,
-
+            'lastChangeDate' => null,
         ]);
 
         $tablesResult->addTable($table1Update);

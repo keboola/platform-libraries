@@ -99,7 +99,11 @@ class LoadTableQueueTest extends TestCase
             ->with($expectedTableId)
             ->willReturn([
                 'id' => $expectedTableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
                 'columns' => [],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
             ]);
 
         $storageApiMock->expects($this->once())

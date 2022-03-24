@@ -2,9 +2,9 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 trait InitSynapseStorageClientTrait
 {
@@ -32,18 +32,21 @@ trait InitSynapseStorageClientTrait
     protected function getSynapseClientWrapper()
     {
         $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                'token' => (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
+            new ClientOptions(
+                (string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
+                null,
+                null,
+                null,
+                null,
+                1,
+                null,
+                null,
+                function () {
                     return 1;
-                },
-            ]),
-            null,
-            null
+                }
+            )
         );
-        $clientWrapper->setBranchId('');
         $tokenInfo = $clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

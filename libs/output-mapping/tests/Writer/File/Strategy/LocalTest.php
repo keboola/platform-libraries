@@ -17,8 +17,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class LocalTest extends BaseWriterTest
 {
-    /** @var Temp */
-    private $temp;
+    private Temp $temp;
 
     public function setUp()
     {
@@ -55,7 +54,7 @@ class LocalTest extends BaseWriterTest
         self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listFiles('non-existent-directory/and-file');
     }
-    
+
     public function testListFiles()
     {
         $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');

@@ -96,7 +96,8 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             ->getMock();
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
-        $clientWrapper = new ClientWrapper($client, null, new NullLogger(), '');
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->method('getBasicClient')->willReturn($client);
         $writer = new TableWriter($this->getStagingFactory($clientWrapper));
 
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);

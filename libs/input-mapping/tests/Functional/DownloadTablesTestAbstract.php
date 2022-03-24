@@ -6,8 +6,8 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -15,11 +15,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DownloadTablesTestAbstract extends TestCase
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** @var Temp */
-    protected $temp;
+    protected ClientWrapper $clientWrapper;
+    protected Temp $temp;
 
     public function setUp()
     {
@@ -33,11 +30,8 @@ class DownloadTablesTestAbstract extends TestCase
     protected function initClient()
     {
         $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
         );
-        $this->clientWrapper->setBranchId('');
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

@@ -6,9 +6,9 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -19,14 +19,8 @@ class DownloadFilesTestAbstract extends TestCase
     const TEST_FILE_TAG_FOR_BRANCH = 'testReadFilesForBranch';
     const DEFAULT_TEST_FILE_TAG = 'download-files-test';
 
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** @var string */
-    protected $tmpDir;
-
-    /** @var Temp */
-    protected $temp;
+    protected string $tmpDir;
+    protected Temp $temp;
 
     public function setUp()
     {
@@ -38,41 +32,29 @@ class DownloadFilesTestAbstract extends TestCase
         $fs = new Filesystem();
         $fs->mkdir($this->tmpDir . "/download");
 
-        $this->initClient();
-
         // Delete file uploads
         sleep(5);
         $options = new ListFilesOptions();
         $options->setTags([self::DEFAULT_TEST_FILE_TAG, self::TEST_FILE_TAG_FOR_BRANCH]);
         $options->setLimit(1000);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $clientWrapper = $this->getClientWrapper(null);
+        $files = $clientWrapper->getBasicClient()->listFiles($options);
         foreach ($files as $file) {
-            $this->clientWrapper->getBasicClient()->deleteFile($file["id"]);
+            $clientWrapper->getBasicClient()->deleteFile($file["id"]);
         }
     }
 
-    protected function initClient()
+    protected function getClientWrapper(?string $branchId): ClientWrapper
     {
-        $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-            null,
-            null
+        return new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
-        ));
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    protected function getStagingFactory($clientWrapper, $format = 'json', $logger = null): StrategyFactory
     {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $clientWrapper,
             $logger ? $logger : new NullLogger(),
             $format
         );

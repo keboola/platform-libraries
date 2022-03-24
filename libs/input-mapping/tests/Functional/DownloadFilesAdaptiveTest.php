@@ -6,32 +6,30 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\Test\TestLogger;
 
 class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 {
     public function testReadFilesAdaptiveWithTags()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
         sleep(2);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
@@ -62,12 +60,12 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertFileExists($root . "/download/" . $id2 . '_upload.manifest');
 
         // now load some new files and make sure we just grab the latest since the last run
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id3 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
         );
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id4 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
         );
         sleep(2);
@@ -95,26 +93,26 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testReadFilesAdaptiveWithSourceTags()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
-        $idExclude = $this->clientWrapper->getBasicClient()->uploadFile(
+        $idExclude = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'exclude'])
         );
         sleep(2);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $sourceConfigTags = [
             [
                 'name' => self::DEFAULT_TEST_FILE_TAG,
@@ -153,12 +151,12 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertFileNotExists($root . "/download/" . $idExclude . '_upload');
 
         // now load some new files and make sure we just grab the latest since the last run
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id3 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
         );
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id4 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
         );
         sleep(2);
@@ -187,11 +185,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testReadFilesAdaptiveWithBranch()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
-        );
+        $clientWrapper = $this->getClientWrapper(null);
 
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -201,7 +195,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         }
 
         $branchId = $branches->createBranch('my-branch')['id'];
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -284,9 +278,9 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testAdaptiveNoMatchingFiles()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
@@ -306,22 +300,22 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testAdaptiveNoMatchingNewFiles()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
+        file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
-            $root . "/upload",
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
         sleep(2);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
@@ -346,10 +340,10 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $fileState = $outputStateList->getFile($convertedTags);
         self::assertEquals($id2, $fileState->getLastImportId());
 
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
-        self::assertFileExists($root . "/download/" . $id1 . '_upload.manifest');
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
-        self::assertFileExists($root . "/download/" . $id2 . '_upload.manifest');
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
+        self::assertFileExists($root . '/download/' . $id1 . '_upload.manifest');
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id2 . '_upload'));
+        self::assertFileExists($root . '/download/' . $id2 . '_upload.manifest');
 
         // now run again with no new files to fetch
         $newOutputStateList = $reader->downloadFiles(
@@ -364,22 +358,22 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testChangedSinceNonAdaptive()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
         sleep(2);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [
             [
                 'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
@@ -395,9 +389,9 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             new InputFileStateList([])
         );
 
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id1 . '_upload'));
-        self::assertFileExists($root . "/download/" . $id1 . '_upload.manifest');
-        self::assertEquals("test", file_get_contents($root . "/download/" . $id2 . '_upload'));
-        self::assertFileExists($root . "/download/" . $id2 . '_upload.manifest');
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
+        self::assertFileExists($root . '/download/' . $id1 . '_upload.manifest');
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id2 . '_upload'));
+        self::assertFileExists($root . '/download/' . $id2 . '_upload.manifest');
     }
 }

@@ -6,16 +6,14 @@ use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractStrategyTest extends TestCase
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** @var Temp */
-    protected $temp;
+    protected ClientWrapper $clientWrapper;
+    protected Temp $temp;
 
     public function setUp()
     {
@@ -23,9 +21,7 @@ abstract class AbstractStrategyTest extends TestCase
         $this->temp = new Temp();
         $this->temp->initRunFolder();
         $this->clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
         );
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(

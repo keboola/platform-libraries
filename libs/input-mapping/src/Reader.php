@@ -9,7 +9,6 @@ use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Staging\StrategyFactory;
-use Keboola\InputMapping\State\InputFileState;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -23,27 +22,12 @@ use Psr\Log\LoggerInterface;
 
 class Reader
 {
-    /**
-     * @var ClientWrapper
-     */
-    protected $clientWrapper;
+    protected ClientWrapper $clientWrapper;
+    private LoggerInterface $logger;
+    private StrategyFactory $strategyFactory;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var StrategyFactory
-     */
-    private $strategyFactory;
-
-    /**
-     * @param StrategyFactory $strategyFactory
-     */
-    public function __construct(
-        StrategyFactory $strategyFactory
-    ) {
+    public function __construct(StrategyFactory $strategyFactory)
+    {
         $this->logger = $strategyFactory->getLogger();
         $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->strategyFactory = $strategyFactory;
@@ -125,15 +109,12 @@ class Reader
         return $parentRunId;
     }
 
-    /**
-     * @return array
-     */
     public static function getFiles(
         array $fileConfiguration,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
         InputFileStateList $fileStateList
-    ) {
+    ): array {
         $fileConfigurationRewritten = TagsRewriteHelper::rewriteFileTags(
             $fileConfiguration,
             $clientWrapper,

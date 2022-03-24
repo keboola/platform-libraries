@@ -14,11 +14,11 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
 {
     public function testReadSlicedFile()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         // Create bucket
-        if (!$this->clientWrapper->getBasicClient()->bucketExists("in.c-docker-test-redshift")) {
-            $this->clientWrapper->getBasicClient()->createBucket(
+        if (!$clientWrapper->getBasicClient()->bucketExists("in.c-docker-test-redshift")) {
+            $clientWrapper->getBasicClient()->createBucket(
                 "docker-test-redshift",
                 Client::STAGE_IN,
                 "Docker Testsuite",
@@ -27,16 +27,16 @@ class DownloadFilesRedshiftTest extends DownloadFilesTestAbstract
         }
 
         // Create redshift table and export it to produce a sliced file
-        if (!$this->clientWrapper->getBasicClient()->tableExists("in.c-docker-test-redshift.test_file")) {
+        if (!$clientWrapper->getBasicClient()->tableExists("in.c-docker-test-redshift.test_file")) {
             $csv = new CsvFile($this->tmpDir . "/upload.csv");
             $csv->writeRow(["Id", "Name"]);
             $csv->writeRow(["test", "test"]);
-            $this->clientWrapper->getBasicClient()->createTableAsync("in.c-docker-test-redshift", "test_file", $csv);
+            $clientWrapper->getBasicClient()->createTableAsync("in.c-docker-test-redshift", "test_file", $csv);
         }
-        $table = $this->clientWrapper->getBasicClient()->exportTableAsync('in.c-docker-test-redshift.test_file');
+        $table = $clientWrapper->getBasicClient()->exportTableAsync('in.c-docker-test-redshift.test_file');
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
         $dlDir = $this->tmpDir . '/download';

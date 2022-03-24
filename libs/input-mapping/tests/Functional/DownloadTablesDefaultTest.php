@@ -408,8 +408,9 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             ->getMock();
         $client->method('verifyToken')->willReturn($tokenInfo);
         /** @var Client $client */
-        $clientWrapper = new ClientWrapper($client, null, null);
-        $clientWrapper->setBranchId('');
+        $clientWrapper = self::createMock(ClientWrapper::class);
+        $clientWrapper->method('getBasicClient')->willReturn($client);
+
         $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [

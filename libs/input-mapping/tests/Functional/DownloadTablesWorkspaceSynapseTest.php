@@ -12,6 +12,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbstract
@@ -35,14 +36,12 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
         $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null
+            new ClientOptions(
+                (string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+            ),
         );
-        $this->clientWrapper->setBranchId('');
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

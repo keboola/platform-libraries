@@ -7,31 +7,23 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 
 class SourceRewriteHelperTest extends TestCase
 {
-    /** @var ClientWrapper */
-    private $clientWrapper;
-
-    /** @var string */
-    private $branchId;
+    private string $branchId;
 
     public function setUp()
     {
         parent::setUp();
-        $this->clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
-        );
-        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        $clientWrapper = $this->getClientWrapper(null);
+        $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === 'dev branch') {
                 $branches->deleteBranch($branch['id']);
@@ -40,10 +32,18 @@ class SourceRewriteHelperTest extends TestCase
         $this->branchId = $branches->createBranch('dev branch')['id'];
     }
 
+    protected function getClientWrapper(?string $branchId): ClientWrapper
+    {
+        return new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+        );
+    }
+
     private function initBuckets()
     {
+        $clientWrapper = $this->getClientWrapper(null);
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket('out.c-main', ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket('out.c-main', ['force' => true]);
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;
@@ -51,26 +51,26 @@ class SourceRewriteHelperTest extends TestCase
         }
 
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket('out.c-dev-branch-main', ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket('out.c-dev-branch-main', ['force' => true]);
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
 
-        foreach ($this->clientWrapper->getBasicClient()->listBuckets() as $bucket) {
+        foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
             if (preg_match('/^c\-[0-9]+\-output\-mapping\-test$/ui', $bucket['name'])) {
-                $this->clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
+                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
             }
         }
 
-        $this->clientWrapper->getBasicClient()->createBucket('main', 'out');
-        $this->clientWrapper->getBasicClient()->createBucket($this->branchId . '-main', 'out');
+        $clientWrapper->getBasicClient()->createBucket('main', 'out');
+        $clientWrapper->getBasicClient()->createBucket($this->branchId . '-main', 'out');
     }
 
     public function testNoBranch()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -85,7 +85,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources($inputTablesOptions, $this->clientWrapper, $testLogger);
+        $destinations = SourceRewriteHelper::rewriteTableOptionsSources($inputTablesOptions, $clientWrapper, $testLogger);
         self::assertEquals('out.c-main.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
@@ -127,7 +127,7 @@ class SourceRewriteHelperTest extends TestCase
 
     public function testInvalidName()
     {
-        $this->clientWrapper->setBranchId($this->branchId);
+        $clientWrapper = $this->getClientWrapper($this->branchId);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -141,7 +141,7 @@ class SourceRewriteHelperTest extends TestCase
         self::expectExceptionMessage('Invalid destination: "out.c-main"');
         SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger
         );
     }
@@ -149,7 +149,7 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteNoTables()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId($this->branchId);
+        $clientWrapper = $this->getClientWrapper($this->branchId);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -166,7 +166,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger
         );
         self::assertEquals('out.c-main.my-table', $destinations->getTables()[0]->getSource());
@@ -211,15 +211,15 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTablesExists()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId($this->branchId);
+        $clientWrapper = $this->getClientWrapper($this->branchId);
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
 
         $branchBucketId = sprintf('out.c-%s-main', $this->branchId);
-        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
-        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
+        $clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -236,7 +236,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger
         );
         $expectedTableId = sprintf('%s.my-table', $branchBucketId);
@@ -286,14 +286,14 @@ class SourceRewriteHelperTest extends TestCase
     public function testBranchRewriteTableStates()
     {
         $this->initBuckets();
-        $this->clientWrapper->setBranchId($this->branchId);
+        $clientWrapper = $this->getClientWrapper($this->branchId);
         $temp = new Temp(uniqid('input-mapping'));
         $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
         $branchBucketId = sprintf('out.c-%s-main', $this->branchId);
-        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
-        $this->clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table', $csvFile);
+        $clientWrapper->getBasicClient()->createTable($branchBucketId, 'my-table-2', $csvFile);
         $testLogger = new TestLogger();
         $inputTablesStates = new InputTableStateList([
             [
@@ -307,7 +307,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         $destinations = SourceRewriteHelper::rewriteTableStatesDestinations(
             $inputTablesStates,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger
         );
         self::assertEquals(

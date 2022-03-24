@@ -14,6 +14,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 {
@@ -55,14 +56,13 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
         $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null
+            new ClientOptions(
+                (string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+            ),
         );
-        $this->clientWrapper->setBranchId('');
+
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
@@ -136,7 +136,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
     public function testReadTablesEmptySlices()
     {
         if (!$this->runSynapseTests) {
-            $this->markTestSkipped('Synapse tests disabled');
+            self::markTestSkipped('Synapse tests disabled');
         }
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions

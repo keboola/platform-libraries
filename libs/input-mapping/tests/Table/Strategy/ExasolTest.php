@@ -6,8 +6,8 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Exasol;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\NullLogger;
 
 class ExasolTest extends AbstractStrategyTest
@@ -15,9 +15,7 @@ class ExasolTest extends AbstractStrategyTest
     public function testExasolDownloadTable()
     {
         $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
         );
         $strategy = new Exasol(
             $clientWrapper,

@@ -9,11 +9,10 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
-use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\Test\TestLogger;
 
@@ -38,14 +37,12 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 
     protected function initClient()
     {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
         $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null
+            new ClientOptions(
+                (string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+            ),
         );
-        $this->clientWrapper->setBranchId('');
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

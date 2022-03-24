@@ -5,28 +5,25 @@ namespace Keboola\InputMapping\Tests\Helper;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class InputBucketValidatorTest extends TestCase
 {
-    /** @var ClientWrapper */
-    private $clientWrapper;
+    private ClientWrapper $clientWrapper;
 
     public function setUp()
     {
         parent::setUp();
         $this->clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN_MASTER
+            ),
         );
-        $this->clientWrapper->setBranchId('');
     }
 
     private function initBuckets($hasMetadata)

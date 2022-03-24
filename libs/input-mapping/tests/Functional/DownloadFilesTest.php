@@ -24,22 +24,22 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -71,18 +71,18 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesOverwrite()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(3);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         // download files for the first time
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
@@ -118,23 +118,23 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesTagsFilterRunId()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
 
         $configuration = [
@@ -161,11 +161,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeAllTags()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
 
         $file1 = new FileUploadOptions();
         $file1->setTags(["tag-1"]);
@@ -176,9 +176,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(["tag-1", "tag-2", "tag-3"]);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file2);
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file3);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -213,11 +213,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeExcludeTags()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1', 'tag-3']);
@@ -228,9 +228,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -269,11 +269,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeAllTagsWithBranchOverwrite()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, 'url' => STORAGE_API_URL]),
-            null,
-            null
-        );
+        $clientWrapper = $this->getClientWrapper(null);
 
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -283,7 +279,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         $branchId = $branches->createBranch('my-branch')['id'];
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -297,9 +293,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', sprintf('%s-tag-2', $branchId)]);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -345,11 +341,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeAllTagsWithLimit()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
 
         $file1 = new FileUploadOptions();
         $file1->setTags(["tag-1", "tag-2"]);
@@ -357,8 +353,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file2 = new FileUploadOptions();
         $file2->setTags(["tag-1", "tag-2"]);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file2);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file1);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $file2);
 
         sleep(5);
 
@@ -393,23 +389,23 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesEsQueryFilterRunId()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
         sleep(5);
 
         $configuration = [
@@ -435,24 +431,24 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesLimit()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $temp = new Temp();
         $temp->initRunFolder();
         $root = $temp->getTmpFolder();
-        file_put_contents($root . "/upload", "test");
+        file_put_contents($root . '/upload', 'test');
 
         // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
-            $this->clientWrapper->getBasicClient()->uploadFile(
-                $root . "/upload",
+            $clientWrapper->getBasicClient()->uploadFile(
+                $root . '/upload',
                 (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
             );
         }
         sleep(5);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [];
         $reader->downloadFiles(
             $configuration,
@@ -461,7 +457,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             new InputFileStateList([])
         );
         // invalid configuration
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [[]];
         try {
             $reader->downloadFiles(
@@ -474,7 +470,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
         }
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -489,7 +485,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fs = new Filesystem();
         $fs->remove($this->temp->getTmpFolder());
         $this->temp->initRunFolder();
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102, 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -504,12 +500,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadSlicedFileSnowflake()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         // Create bucket
         $bucketId = 'in.c-docker-test-snowflake';
-        if (!$this->clientWrapper->getBasicClient()->bucketExists($bucketId)) {
-            $this->clientWrapper->getBasicClient()->createBucket(
+        if (!$clientWrapper->getBasicClient()->bucketExists($bucketId)) {
+            $clientWrapper->getBasicClient()->createBucket(
                 'docker-test-snowflake',
                 Client::STAGE_IN,
                 "Docker Testsuite"
@@ -519,20 +515,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         // Create redshift table and export it to produce a sliced file
         $tableName = 'test_file';
         $tableId = sprintf('%s.%s', $bucketId, $tableName);
-        if (!$this->clientWrapper->getBasicClient()->tableExists($tableId)) {
+        if (!$clientWrapper->getBasicClient()->tableExists($tableId)) {
             $csv = new CsvFile($this->tmpDir . "/upload.csv");
             $csv->writeRow(["Id", "Name"]);
             $csv->writeRow(["test", "test"]);
-            $this->clientWrapper->getBasicClient()->createTableAsync($bucketId, $tableName, $csv);
+            $clientWrapper->getBasicClient()->createTableAsync($bucketId, $tableName, $csv);
         }
-        $table = $this->clientWrapper->getBasicClient()->exportTableAsync($tableId);
+        $table = $clientWrapper->getBasicClient()->exportTableAsync($tableId);
         sleep(2);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
-        $dlDir = $this->tmpDir . "/download";
+        $dlDir = $this->tmpDir . '/download';
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -561,16 +557,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesEmptySlices()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('empty_file');
-        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
@@ -594,18 +590,18 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesYamlFormat()
     {
-        $this->clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
 
         $root = $this->tmpDir;
         file_put_contents($root . "/upload", "test");
 
-        $id = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id = $clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload",
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory(null, 'yaml'));
+        $reader = new Reader($this->getStagingFactory($clientWrapper, 'yaml'));
         $configuration = [[
             'tags' => [self::DEFAULT_TEST_FILE_TAG],
             'overwrite' => true,
@@ -630,20 +626,15 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadAndDownloadFilesWithEsQueryIsRestrictedForBranch()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
-        );
-
+        $clientWrapper = $this->getClientWrapper(null);
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === 'my-branch') {
                 $branches->deleteBranch($branch['id']);
             }
         }
-
-        $clientWrapper->setBranchId($branches->createBranch('my-branch')['id']);
+        $branchId = $branches->createBranch('my-branch')['id'];
+        $clientWrapper = $this->getClientWrapper($branchId);
 
         $reader = new Reader($this->getStagingFactory($clientWrapper));
 
@@ -677,11 +668,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesForBranch()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
-        );
+        $clientWrapper = $this->getClientWrapper(null);
 
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -691,7 +678,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         $branchId = $branches->createBranch('my-branch')['id'];
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -739,11 +726,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesForBranchWithProcessedTags()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client(['token' => STORAGE_API_TOKEN_MASTER, "url" => STORAGE_API_URL]),
-            null,
-            null
-        );
+        $clientWrapper = $this->getClientWrapper(null);
 
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -753,7 +736,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         }
 
         $branchId = $branches->createBranch('my-branch')['id'];
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -832,10 +815,10 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             [$branchTag, $processedTag]
         );
 
-        $this->clientWrapper->getBasicClient()->deleteFile($file1Id);
-        $this->clientWrapper->getBasicClient()->deleteFile($excludeFileId);
-        $this->clientWrapper->getBasicClient()->deleteFile($processedFileId);
-        $this->clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
+        $clientWrapper->getBasicClient()->deleteFile($file1Id);
+        $clientWrapper->getBasicClient()->deleteFile($excludeFileId);
+        $clientWrapper->getBasicClient()->deleteFile($processedFileId);
+        $clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
     }
 
     private function assertManifestTags($manifestPath, $tags)

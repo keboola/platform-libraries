@@ -34,15 +34,9 @@ class StrategyFactory
 
     /** @var Definition[] */
     protected $strategyMap;
-
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** LoggerInterface */
-    protected $logger;
-
-    /** @var string */
-    protected $format;
+    protected ClientWrapper $clientWrapper;
+    protected LoggerInterface $logger;
+    protected string $format;
 
     /**
      * StagingStrategyFactory constructor.

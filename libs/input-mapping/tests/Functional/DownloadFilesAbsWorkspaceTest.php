@@ -3,8 +3,6 @@
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\FileStorage\Abs\ClientFactory;
-use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
@@ -12,33 +10,26 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StorageApiBranch\ClientWrapper;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Psr\Log\NullLogger;
 
 class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 {
-    private $runSynapseTests;
-
-    /** @var string */
-    protected $workspaceId;
+    protected ?string $workspaceId;
 
     /** @var array [connectionString, container] */
-    protected $workspaceCredentials;
-
-    /** @var BlobRestProxy */
-    protected $blobClient;
+    protected array $workspaceCredentials;
+    protected BlobRestProxy $blobClient;
 
     public function setUp()
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
-        if (!$this->runSynapseTests) {
+        $runSynapseTests = (string) getenv('RUN_SYNAPSE_TESTS');
+        if (!$runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
@@ -48,7 +39,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
         parent::setUp();
-        $this->getStagingFactory()->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
+        $this->getStagingFactory($this->getClientWrapper(null))->getStrategyMap()[StrategyFactory::WORKSPACE_ABS]
             ->getFileDataProvider()->getWorkspaceId(); //initialize the mock
 
         $this->blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
@@ -57,38 +48,17 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
     public function tearDown()
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            $workspaces = new Workspaces($this->getClientWrapper(null)->getBranchClientIfAvailable());
             $workspaces->deleteWorkspace($this->workspaceId);
             $this->workspaceId = null;
         }
         parent::tearDown();
     }
 
-    protected function initClient()
-    {
-        $token = (string) getenv('SYNAPSE_STORAGE_API_TOKEN');
-        $url = (string) getenv('SYNAPSE_STORAGE_API_URL');
-        $this->clientWrapper = new ClientWrapper(
-            new Client(["token" => $token, "url" => $url]),
-            null,
-            null,
-            ClientWrapper::BRANCH_MAIN
-        );
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
-        ));
-    }
-
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
+    protected function getStagingFactory($clientWrapper, $format = 'json', $logger = null): StrategyFactory
     {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
+            $clientWrapper,
             $logger ? $logger : new NullLogger(),
             $format
         );
@@ -96,9 +66,9 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             ->setMethods(['getWorkspaceId', 'getCredentials'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            function () use ($clientWrapper) {
+                if (empty($this->workspaceId)) {
+                    $workspaces = new Workspaces($clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs']);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
@@ -106,7 +76,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 return $this->workspaceId;
             }
         );
-        $mockWorkspace->method('getCredentials')->willReturn($this->workspaceCredentials);
+        $mockWorkspace->method('getCredentials')->willReturn($this->workspaceCredentials ?? null);
 
         /** @var ProviderInterface $mockWorkspace */
         $stagingFactory->addProvider(
@@ -140,17 +110,17 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
-
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $clientWrapper = $this->getClientWrapper(null);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
-        sleep(5);
-        $reader = new Reader($this->getStagingFactory());
+        sleep(3);
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = [['tags' => ['download-files-test'], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -208,12 +178,13 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $clientWrapper = $this->getClientWrapper(null);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
         sleep(3);
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
 
         // upload file for the first time
         $configuration = [['tags' => ['download-files-test'], 'overwrite' => true]];
@@ -265,21 +236,23 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testReadAbsFilesTagsFilterRunId()
     {
+        $clientWrapper = $this->getClientWrapper(null);
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $fo = new FileUploadOptions();
         $fo->setTags(['download-files-test']);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+
+        $clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
         $configuration = [
             [
@@ -301,36 +274,36 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 $this->workspaceCredentials['container'],
                 'download/upload/' . $id1
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 'download/upload/' . $id1 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 'download/upload/' . $id2
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 'download/upload/' . $id2 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         $this->assertBlobNotEmpty(
             'download/upload/' . $id3
@@ -360,21 +333,22 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testReadFilesEsQueryFilterRunId()
     {
+        $clientWrapper = $this->getClientWrapper(null);
         $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        file_put_contents($root . '/upload', 'test');
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $fo = new FileUploadOptions();
-        $fo->setTags(["download-files-test"]);
+        $fo->setTags(['download-files-test']);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
         $configuration = [
             [
@@ -394,36 +368,36 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 $this->workspaceCredentials['container'],
                 "download/upload/" . $id1
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 'download/upload/' . $id1 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 $root . 'download/upload/' . $id2
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 "download/uppload/" . $id2 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         $this->assertBlobNotEmpty(
             'download/upload/' . $id3
@@ -453,14 +427,15 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
 
     public function testAbsWorkspaceAdaptiveInput()
     {
+        $clientWrapper = $this->getClientWrapper(null);
         $root = $this->tmpDir;
-        file_put_contents($root . "/upload", "test");
-        $reader = new Reader($this->getStagingFactory());
+        file_put_contents($root . '/upload', 'test');
+        $reader = new Reader($this->getStagingFactory($clientWrapper));
         $fo = new FileUploadOptions();
         $fo->setTags(['download-files-test']);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(2);
         $configuration = [[
             'tags' => ['download-files-test'],
@@ -494,8 +469,8 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             'download/upload/' . $id2 . '.manifest'
         );
 
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . "/upload", $fo);
+        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(2);
 
         $newOutputFileStateList = $reader->downloadFiles(
@@ -511,36 +486,36 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
                 $this->workspaceCredentials['container'],
                 "download-adaptive/upload/" . $id1
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 'download-adaptive/upload/' . $id1 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 $root . 'download-adaptive/upload/' . $id2
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         try {
             $this->blobClient->getBlob(
                 $this->workspaceCredentials['container'],
                 "download-adaptive/uppload/" . $id2 . '.manifest'
             );
-            $this->fail('should have thrown 404');
+            self::fail('should have thrown 404');
         } catch (ServiceException $exception) {
-            $this->assertEquals(404, $exception->getCode());
+            self::assertEquals(404, $exception->getCode());
         }
         $this->assertBlobNotEmpty(
             'download-adaptive/upload/' . $id3

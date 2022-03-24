@@ -4,8 +4,8 @@ namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 
 class TagsHelperTest extends TestCase
@@ -28,20 +28,9 @@ class TagsHelperTest extends TestCase
 
     public function testRewriteTags()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
+        $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
         $storageConfig = $this->getStorageConfig();
         $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals(
@@ -58,21 +47,9 @@ class TagsHelperTest extends TestCase
 
     public function testRewriteEmptyTags()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-
+        $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
-        $clientWrapper->setBranchId($branchId);
+        $clientWrapper = $this->getClientWrapper($branchId);
         $storageConfig = $this->getStorageConfig();
         $storageConfig['tags'] = [];
         $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
@@ -82,21 +59,16 @@ class TagsHelperTest extends TestCase
         self::assertEquals($storageConfig, $expectedConfig);
     }
 
+    protected function getClientWrapper(?string $branchId): ClientWrapper
+    {
+        return new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+        );
+    }
+
     public function testRewriteNoBranch()
     {
-        $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-        $clientWrapper->setBranchId('');
+        $clientWrapper = $this->getClientWrapper(null);
         $storageConfig = $this->getStorageConfig();
         $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
         self::assertEquals(

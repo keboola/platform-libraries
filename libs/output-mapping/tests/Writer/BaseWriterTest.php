@@ -6,25 +6,18 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
 abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var ClientWrapper
-     */
-    protected $clientWrapper;
-
-    /**
-     * @var Temp
-     */
-    protected $tmp;
+    protected ClientWrapper $clientWrapper;
+    protected Temp $tmp;
 
     protected function clearBuckets($buckets)
     {
@@ -63,21 +56,24 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         $this->initClient();
     }
 
-    protected function initClient($branchId = '')
+    protected function initClient(?string $branchId = null)
     {
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN,
+                $branchId,
+                null,
+                null,
+                null,
+                1,
+                null,
+                null,
+                function () {
                     return 1;
-                },
-            ]),
-            null,
-            null
+                }
+            )
         );
-        $this->clientWrapper->setBranchId($branchId);
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
@@ -155,7 +151,5 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
     {
         $this->clearBuckets(['out.c-output-mapping-test']);
         $this->clearFileUploads(['output-mapping-test']);
-        // Delete local files
-        $this->tmp = null;
     }
 }

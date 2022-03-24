@@ -8,10 +8,10 @@ use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\FileWriter;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class StorageApiFileWriterTest extends BaseWriterTest
 {
@@ -147,21 +147,22 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesOutputMappingDevMode()
     {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN_MASTER,
+                null
+            )
+        );
+        $branchId = $this->createBranch($clientWrapper, 'dev-123');
         $this->clearFileUploads(['dev-123-output-mapping-test']);
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN,
+                $branchId
+            )
         );
-        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
-        $this->clientWrapper->setBranchId($branchId);
 
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/file1", "test");

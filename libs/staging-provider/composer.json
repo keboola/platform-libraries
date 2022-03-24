@@ -25,9 +25,10 @@
     },
     "require": {
         "php": ">=7.4",
-        "keboola/input-mapping": "^14.0",
-        "keboola/output-mapping": "^16.0",
-        "keboola/storage-api-client": "^12.0"
+        "keboola/input-mapping": "dev-odin-PS-3098",
+        "keboola/output-mapping": "dev-odin-PS-3098",
+        "keboola/storage-api-client": "^12.0",
+        "keboola/storage-api-php-client-branch-wrapper": "dev-odin-PS-3098"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7",

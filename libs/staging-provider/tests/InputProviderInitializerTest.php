@@ -16,14 +16,13 @@ use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
 use Keboola\InputMapping\Table\Strategy\Exasol as InputTableExasol;
-use Keboola\StagingProvider\AbstractProviderInitializer;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -31,21 +30,18 @@ class InputProviderInitializerTest extends TestCase
 {
     public function testInitializeInputLocal()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -68,21 +64,18 @@ class InputProviderInitializerTest extends TestCase
 
     public function testInitializeInputRedshift()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -113,21 +106,17 @@ class InputProviderInitializerTest extends TestCase
 
     public function testInitializeInputSnowflake()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
-
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -158,21 +147,18 @@ class InputProviderInitializerTest extends TestCase
 
     public function testInitializeInputSynapse()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -203,21 +189,18 @@ class InputProviderInitializerTest extends TestCase
 
     public function testInitializeInputAbs()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -248,21 +231,18 @@ class InputProviderInitializerTest extends TestCase
 
     public function testInitializeInputExasol()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new InputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)

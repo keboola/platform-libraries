@@ -148,6 +148,7 @@ class TagsRewriteHelperTest extends TestCase
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
         $testLogger = new TestLogger();
+        sleep(2); // wait for storage files cleanup to take effect
         $expectedConfiguration = TagsRewriteHelper::rewriteFileTags(
             $configuration,
             self::getClientWrapper(self::$branchId),

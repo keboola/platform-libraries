@@ -58,22 +58,15 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
 
     protected function initClient(?string $branchId = null)
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                STORAGE_API_URL,
-                STORAGE_API_TOKEN,
-                $branchId,
-                null,
-                null,
-                null,
-                1,
-                null,
-                null,
-                function () {
-                    return 1;
-                }
-            )
-        );
+        $clientOptions = (new ClientOptions())
+            ->setUrl(STORAGE_API_URL)
+            ->setToken(STORAGE_API_TOKEN)
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            });
+        $this->clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

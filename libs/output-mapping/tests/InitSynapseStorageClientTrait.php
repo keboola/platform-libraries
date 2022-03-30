@@ -25,8 +25,7 @@ trait InitSynapseStorageClientTrait
     protected function getSynapseClientWrapper(): ClientWrapper
     {
         $clientOptions = (new ClientOptions())
-            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),)
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
             ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {

@@ -2,6 +2,7 @@
 
 namespace Keboola\StagingProvider\Tests;
 
+use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
@@ -10,7 +11,6 @@ use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -18,6 +18,7 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StagingProvider\OutputProviderInitializer;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -25,21 +26,18 @@ class OutputProviderInitializerTest extends TestCase
 {
     public function testInitializeOutputLocal()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -60,21 +58,18 @@ class OutputProviderInitializerTest extends TestCase
 
     public function testInitializeOutputRedshift()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -104,21 +99,18 @@ class OutputProviderInitializerTest extends TestCase
 
     public function testInitializeOutputSnowflake()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -148,21 +140,18 @@ class OutputProviderInitializerTest extends TestCase
 
     public function testInitializeOutputSynapse()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)
@@ -197,16 +186,14 @@ class OutputProviderInitializerTest extends TestCase
             self::markTestSkipped('Synapse test is disabled.');
         }
 
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL_SYNAPSE'),
+                (string) getenv('STORAGE_API_TOKEN_SYNAPSE'),
+            )
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                new Client([
-                    'url' => getenv('STORAGE_API_URL_SYNAPSE'),
-                    'token' => getenv('STORAGE_API_TOKEN_SYNAPSE'),
-                ]),
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
@@ -259,21 +246,18 @@ class OutputProviderInitializerTest extends TestCase
 
     public function testInitializeOutputExasol()
     {
-        $storageApiClient = new Client(['token' => 'foo', 'url' => 'bar']);
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
         $stagingFactory = new OutputStrategyFactory(
-            new ClientWrapper(
-                $storageApiClient,
-                null,
-                new NullLogger(),
-                ''
-            ),
+            $clientWrapper,
             new NullLogger(),
             'json'
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($storageApiClient),
-            new Workspaces($storageApiClient),
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
             new WorkspaceBackendConfig(null)

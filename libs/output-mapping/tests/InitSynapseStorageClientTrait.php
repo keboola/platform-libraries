@@ -8,11 +8,7 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 trait InitSynapseStorageClientTrait
 {
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    protected function checkSynapseTests()
+    protected function checkSynapseTests(): bool
     {
         if (!getenv('RUN_SYNAPSE_TESTS')) {
             return false;
@@ -26,27 +22,17 @@ trait InitSynapseStorageClientTrait
         return true;
     }
 
-    /**
-     * @return ClientWrapper
-     */
-    protected function getSynapseClientWrapper()
+    protected function getSynapseClientWrapper(): ClientWrapper
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-                null,
-                null,
-                null,
-                null,
-                1,
-                null,
-                null,
-                function () {
-                    return 1;
-                }
-            )
-        );
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),)
+            ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            });
+        $clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

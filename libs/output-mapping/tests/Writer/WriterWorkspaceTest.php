@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -364,24 +365,27 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
     public function testWriteTableOutputMappingDevMode()
     {
-        $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN_MASTER,
+                null,
+            )
         );
+        $branchId = $this->createBranch($clientWrapper, 'dev-123');
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                STORAGE_API_URL,
+                STORAGE_API_TOKEN_MASTER,
+                $branchId,
+            )
+        );
+
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
-        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
-        $this->clientWrapper->setBranchId($branchId);
+
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
         $configs = [
             [

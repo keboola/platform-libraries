@@ -10,8 +10,8 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -20,10 +20,7 @@ class StrategyFactoryTest extends TestCase
     public function testAccessors()
     {
         $clientWrapper = new ClientWrapper(
-            new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-            null,
-            new NullLogger(),
-            ''
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
         );
         $logger = new NullLogger();
         $factory = new StrategyFactory($clientWrapper, $logger, 'json');
@@ -40,10 +37,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'
@@ -57,10 +51,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'
@@ -76,10 +67,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'
@@ -93,10 +81,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'
@@ -112,10 +97,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'
@@ -129,10 +111,7 @@ class StrategyFactoryTest extends TestCase
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new Client(["token" => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]),
-                null,
-                new NullLogger(),
-                ''
+                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
             ),
             new NullLogger(),
             'json'

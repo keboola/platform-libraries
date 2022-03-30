@@ -2,17 +2,13 @@
 
 namespace Keboola\OutputMapping\Tests;
 
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 trait InitSynapseStorageClientTrait
 {
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    protected function checkSynapseTests()
+    protected function checkSynapseTests(): bool
     {
         if (!getenv('RUN_SYNAPSE_TESTS')) {
             return false;
@@ -26,24 +22,16 @@ trait InitSynapseStorageClientTrait
         return true;
     }
 
-    /**
-     * @return ClientWrapper
-     */
-    protected function getSynapseClientWrapper()
+    protected function getSynapseClientWrapper(): ClientWrapper
     {
-        $clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                'token' => (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
-        );
-        $clientWrapper->setBranchId('');
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
+            ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            });
+        $clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

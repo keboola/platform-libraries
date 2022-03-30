@@ -13,7 +13,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
 
 class StorageApiLocalTableWriterTest extends BaseWriterTest
@@ -56,11 +56,11 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables('upload', ['mapping' => $configs], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
@@ -120,7 +120,8 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             ->getMock();
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
-        $clientWrapper = new ClientWrapper($client, null, new NullLogger(), '');
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->method('getBasicClient')->willReturn($client);
         $writer = new TableWriter($this->getStagingFactory($clientWrapper));
 
         $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
@@ -143,19 +144,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     public function testWriteTableOutputMappingDevMode()
     {
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
         $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
-        $this->clientWrapper->setBranchId($branchId);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+        );
 
         $root = $this->tmp->getTmpFolder();
         $this->tmp->initRunFolder();
@@ -961,19 +955,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
         $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
-        $this->clientWrapper->setBranchId($branchId);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+        );
 
         file_put_contents($root . '/upload/table21.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
@@ -1022,19 +1009,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN_MASTER,
-                'backoffMaxTries' => 1,
-                'jobPollRetryDelay' => function () {
-                    return 1;
-                },
-            ]),
-            null,
-            null
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
         $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
-        $this->clientWrapper->setBranchId($branchId);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+        );
 
         file_put_contents($root . '/upload/table21.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 

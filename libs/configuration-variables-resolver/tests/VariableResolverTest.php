@@ -13,6 +13,7 @@ use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
@@ -32,17 +33,11 @@ class VariableResolverTest extends TestCase
 
     private function getClientWrapper(): ClientWrapper
     {
-        $storageClient = new StorageClient([
-            'token' => getenv('STORAGE_API_TOKEN'),
-            'url' => getenv('STORAGE_API_URL'),
-            'userAgent' => 'variables-resolver-tests',
-        ]);
-
         return new ClientWrapper(
-            $storageClient,
-            null,
-            new NullLogger(),
-            ''
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN'),
+            )
         );
     }
 
@@ -68,9 +63,9 @@ class VariableResolverTest extends TestCase
         return [$configId, $rowId];
     }
 
-    public function createBranch(string $branchName): int
+    public function createBranch(string $branchName, ClientWrapper $clientWrapper): int
     {
-        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === $branchName) {
                 $branches->deleteBranch($branch['id']);
@@ -504,22 +499,26 @@ class VariableResolverTest extends TestCase
 
     public function testResolveVariablesValuesBranch(): void
     {
-        $client = new StorageClient([
-            'url' => getenv('STORAGE_API_URL'),
-            'token' => getenv('STORAGE_API_TOKEN_MASTER'),
-        ]);
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $client,
+            $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
             ['values' => [['name' => 'foo', 'value' => 'bar']]]
         );
-        $this->clientWrapper = new ClientWrapper(
-            $client,
-            null,
-            new NullLogger()
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            )
         );
-        $branchId = $this->createBranch('my-dev-branch');
-        $this->clientWrapper->setBranchId($branchId);
+
+        $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                (string) $branchId
+            )
+        );
 
         // modify the dev branch variable configuration to "dev-bar"
         $components = new Components($this->clientWrapper->getBranchClient());

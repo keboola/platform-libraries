@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver;
 
-use Keboola\ConfigurationVariablesResolver\Configuration\SharedCodeRow;
-use Keboola\ConfigurationVariablesResolver\Exception\UserException;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Mustache_Engine;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class SharedCodeResolver
 {

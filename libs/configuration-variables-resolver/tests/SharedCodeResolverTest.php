@@ -13,6 +13,7 @@ use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
@@ -28,13 +29,10 @@ class SharedCodeResolverTest extends TestCase
         parent::setUp();
 
         $this->clientWrapper = new ClientWrapper(
-            new Client([
-                'url' => getenv('STORAGE_API_URL'),
-                'token' => getenv('STORAGE_API_TOKEN'),
-            ]),
-            null,
-            new NullLogger(),
-            ''
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN'),
+            )
         );
         $components = new Components($this->clientWrapper->getBasicClient());
         $listOptions = new ListComponentConfigurationsOptions();
@@ -72,9 +70,9 @@ class SharedCodeResolverTest extends TestCase
         return new SharedCodeResolver($this->clientWrapper, $this->testLogger);
     }
 
-    public function createBranch(string $branchName): int
+    public function createBranch(string $branchName, ClientWrapper $clientWrapper): int
     {
-        $branches = new DevBranches($this->clientWrapper->getBasicClient());
+        $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
             if ($branch['name'] === $branchName) {
                 $branches->deleteBranch($branch['id']);
@@ -302,11 +300,6 @@ class SharedCodeResolverTest extends TestCase
 
     public function testResolveSharedCodeBranch(): void
     {
-        $client = new Client([
-            'url' => getenv('STORAGE_API_URL'),
-            'token' => getenv('STORAGE_API_TOKEN_MASTER'),
-        ]);
-
         list ($sharedConfigurationId, $sharedCodeRowIds) = $this->createSharedCodeConfiguration(
             $this->clientWrapper->getBasicClient(),
             [
@@ -314,13 +307,20 @@ class SharedCodeResolverTest extends TestCase
                 'secondCode' => ['code_content' => ['bar']],
             ]
         );
-        $this->clientWrapper = new ClientWrapper(
-            $client,
-            null,
-            new NullLogger()
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            )
         );
-        $branchId = $this->createBranch('my-dev-branch');
-        $this->clientWrapper->setBranchId($branchId);
+        $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN'),
+                (string) $branchId
+            )
+        );
 
         // modify the dev branch shared code configuration to "dev-bar"
         $components = new Components($this->clientWrapper->getBranchClient());

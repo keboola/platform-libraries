@@ -53,6 +53,11 @@ class StrategyFactory extends InputMappingStrategyFactory
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
+                self::WORKSPACE_TERADATA => new Definition(
+                    self::WORKSPACE_TERADATA,
+                    Local::class,
+                    SqlWorkspaceTableStrategy::class
+                ),
             ];
         }
         return $this->strategyMap;

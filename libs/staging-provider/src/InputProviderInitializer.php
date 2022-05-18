@@ -71,6 +71,17 @@ class InputProviderInitializer extends AbstractProviderInitializer
             );
         }
 
+        if ($stagingType === InputStrategyFactory::WORKSPACE_TERADATA &&
+            $tokenInfo['owner']['hasTeradata']
+        ) {
+            $this->addWorkspaceProvider(
+                ExasolWorkspaceStaging::class,
+                [
+                    InputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::TABLE_DATA]),
+                ]
+            );
+        }
+
         $this->addLocalProvider(
             [
                 InputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
@@ -82,6 +93,7 @@ class InputProviderInitializer extends AbstractProviderInitializer
                 InputStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
                 InputStrategyFactory::WORKSPACE_ABS => new Scope([Scope::TABLE_METADATA]),
                 InputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
+                InputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
             ]
         );
     }

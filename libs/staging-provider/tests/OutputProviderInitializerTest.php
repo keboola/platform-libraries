@@ -285,4 +285,47 @@ class OutputProviderInitializerTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
     }
+
+    public function testInitializeOutputTeradata()
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
+        $stagingFactory = new OutputStrategyFactory(
+            $clientWrapper,
+            new NullLogger(),
+            'json'
+        );
+
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
+            'my-test-component',
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
+        );
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+
+        $init->initializeProviders(
+            OutputStrategyFactory::WORKSPACE_TERADATA,
+            [
+                'owner' => [
+                    'hasSynapse' => true,
+                    'hasRedshift' => true,
+                    'hasExasol' => true,
+                    'hasSnowflake' => true,
+                    'hasTeradata' => true,
+                    'fileStorageProvider' => 'azure',
+                ],
+            ]
+        );
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(LocalTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_TERADATA));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_TERADATA));
+
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
+        $this->expectException(InvalidOutputException::class);
+        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
+    }
 }

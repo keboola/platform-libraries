@@ -8,6 +8,7 @@ use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\TeradataWorkspaceStaging;
 use PHPUnit\Framework\TestCase;
 
 class WorkspaceStagingTest extends TestCase
@@ -38,6 +39,7 @@ class WorkspaceStagingTest extends TestCase
         yield 'redshift' => [RedshiftWorkspaceStaging::class, 'redshift'];
         yield 'abs' => [AbsWorkspaceStaging::class, 'abs'];
         yield 'exasol' => [ExasolWorkspaceStaging::class, 'exasol'];
+        yield 'teradata' => [TeradataWorkspaceStaging::class, 'teradata'];
     }
 
     public function testWorkspaceIdIsReturned()

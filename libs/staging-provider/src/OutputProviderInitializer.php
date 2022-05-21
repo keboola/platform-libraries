@@ -11,6 +11,7 @@ use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SynapseWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\TeradataWorkspaceStaging;
 use Keboola\StagingProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInterface;
 
 class OutputProviderInitializer extends AbstractProviderInitializer
@@ -98,7 +99,7 @@ class OutputProviderInitializer extends AbstractProviderInitializer
             $tokenInfo['owner']['hasTeradata']
         ) {
             $this->addWorkspaceProvider(
-                ExasolWorkspaceStaging::class,
+                TeradataWorkspaceStaging::class,
                 [
                     OutputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::TABLE_DATA]),
                 ]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Helper;
 
+use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -22,7 +23,7 @@ class ManifestCreator
         array $tableInfo,
         string $destination,
         array $columns,
-        string $format = 'json'
+        string $format = Adapter::FORMAT_JSON
     ): void {
         $manifest = [
             'id' => $tableInfo['id'],

@@ -10,6 +10,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class Adapter
 {
+    public const FORMAT_YAML = 'yaml';
+    public const FORMAT_JSON = 'json';
+
     /**
      * @var array
      */
@@ -30,7 +33,7 @@ class Adapter
      *
      * @param string $format Configuration file format ('yaml', 'json')
      */
-    public function __construct($format = 'json')
+    public function __construct($format = self::FORMAT_JSON)
     {
         $this->setFormat($format);
     }
@@ -61,9 +64,9 @@ class Adapter
     public function getFileExtension()
     {
         switch ($this->format) {
-            case 'yaml':
+            case self::FORMAT_YAML:
                 return '.yml';
-            case 'json':
+            case self::FORMAT_JSON:
                 return '.json';
             default:
                 throw new InputOperationException("Invalid configuration format {$this->format}.");
@@ -77,7 +80,7 @@ class Adapter
      */
     public function setFormat($format)
     {
-        if (!in_array($format, ['yaml', 'json'])) {
+        if (!in_array($format, [self::FORMAT_YAML, self::FORMAT_JSON])) {
             throw new InputOperationException("Configuration format '{$format}' not supported");
         }
         $this->format = $format;
@@ -98,12 +101,12 @@ class Adapter
 
     public function serialize()
     {
-        if ($this->getFormat() === 'yaml') {
+        if ($this->isYamlFormat()) {
             $serialized = Yaml::dump($this->getConfig(), 10);
             if ($serialized === 'null') {
                 $serialized = '{}';
             }
-        } elseif ($this->getFormat() === 'json') {
+        } elseif ($this->isJsonFormat()) {
             $encoder = new JsonEncoder();
             $serialized = $encoder->encode(
                 $this->getConfig(),
@@ -133,9 +136,9 @@ class Adapter
 
         $serialized = $this->getContents($file);
 
-        if ($this->getFormat() === 'yaml') {
+        if ($this->isYamlFormat()) {
             $data = Yaml::parse($serialized);
-        } elseif ($this->getFormat() === 'json') {
+        } elseif ($this->isJsonFormat()) {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
@@ -153,12 +156,12 @@ class Adapter
      */
     public function writeToFile($file)
     {
-        if ($this->getFormat() === 'yaml') {
+        if ($this->isYamlFormat()) {
             $serialized = Yaml::dump($this->getConfig(), 10);
             if ($serialized === 'null') {
                 $serialized = '{}';
             }
-        } elseif ($this->getFormat() === 'json') {
+        } elseif ($this->isJsonFormat()) {
             $encoder = new JsonEncoder();
             $serialized = $encoder->encode(
                 $this->getConfig(),
@@ -188,5 +191,15 @@ class Adapter
         } else {
             throw new InputOperationException("File" . $file . " not found.");
         }
+    }
+
+    private function isYamlFormat(): bool
+    {
+        return $this->getFormat() === 'yaml';
+    }
+
+    private function isJsonFormat(): bool
+    {
+        return $this->getFormat() === 'json';
     }
 }

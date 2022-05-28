@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Configuration;
 
 use Keboola\InputMapping\Exception\InputOperationException;
@@ -13,55 +15,32 @@ class Adapter
     public const FORMAT_YAML = 'yaml';
     public const FORMAT_JSON = 'json';
 
-    /**
-     * @var array
-     */
-    protected $config;
+    private array $config;
+    private string $format;
+    protected string $configClass = '';
 
     /**
-     * @var string
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    protected $configClass = '';
-
-    /**
-     * @var string data format, 'yaml' or 'json'
-     */
-    protected $format;
-
-    /**
-     * Constructor.
-     *
-     * @param string $format Configuration file format ('yaml', 'json')
-     */
-    public function __construct($format = self::FORMAT_JSON)
+    public function __construct(string $format = self::FORMAT_JSON)
     {
         $this->setFormat($format);
     }
 
-
-    /**
-     * @return array
-     */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
     }
 
-    /**
-     * @return string
-     */
-    public function getFormat()
+    public function getFormat(): string
     {
         return $this->format;
     }
 
-
     /**
      * Get configuration file suffix.
-     *
-     * @return string File extension.
      */
-    public function getFileExtension()
+    public function getFileExtension(): string
     {
         switch ($this->format) {
             case self::FORMAT_YAML:
@@ -74,11 +53,9 @@ class Adapter
     }
 
     /**
-     * @param $format
-     * @return $this
-     * @throws InputOperationException
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    public function setFormat($format)
+    public function setFormat(string $format): self
     {
         if (!in_array($format, [self::FORMAT_YAML, self::FORMAT_JSON])) {
             throw new InputOperationException("Configuration format '{$format}' not supported");
@@ -87,19 +64,14 @@ class Adapter
         return $this;
     }
 
-
-    /**
-     * @param array $config
-     * @return $this
-     */
-    public function setConfig($config)
+    public function setConfig(array $config): self
     {
         $className = $this->configClass;
-        $this->config = (new $className())->parse(["config" => $config]);
+        $this->config = (new $className())->parse(['config' => $config]);
         return $this;
     }
 
-    public function serialize()
+    public function serialize(): string
     {
         if ($this->isYamlFormat()) {
             $serialized = Yaml::dump($this->getConfig(), 10);
@@ -120,14 +92,9 @@ class Adapter
     }
 
     /**
-     *
      * Read configuration from file
-     *
-     * @param $file
-     * @return array
-     * @throws InputOperationException
      */
-    public function readFromFile($file)
+    public function readFromFile(string $file): array
     {
         $fs = new Filesystem();
         if (!$fs->exists($file)) {
@@ -144,17 +111,14 @@ class Adapter
         } else {
             throw new InputOperationException("Invalid configuration format {$this->format}.");
         }
-        $this->setConfig($data);
+        $this->setConfig((array) $data);
         return $this->getConfig();
     }
 
     /**
-     *
      * Write configuration to file in given format
-     *
-     * @param $file
      */
-    public function writeToFile($file)
+    public function writeToFile(string $file): void
     {
         if ($this->isYamlFormat()) {
             $serialized = Yaml::dump($this->getConfig(), 10);
@@ -175,22 +139,12 @@ class Adapter
         $fs->dumpFile($file, $serialized);
     }
 
-    /**
-     * @param $file
-     * @return mixed
-     * @throws InputOperationException
-     */
-    public function getContents($file)
+    public function getContents(string $file): string
     {
         if (!(new Filesystem())->exists($file)) {
-            throw new InputOperationException("File" . $file . " not found.");
+            throw new InputOperationException(sprintf('File %s not found.', $file));
         }
-        $fileHandler = new SplFileInfo($file, "", basename($file));
-        if ($fileHandler) {
-            return $fileHandler->getContents();
-        } else {
-            throw new InputOperationException("File" . $file . " not found.");
-        }
+        return (new SplFileInfo($file, "", basename($file)))->getContents();
     }
 
     private function isYamlFormat(): bool

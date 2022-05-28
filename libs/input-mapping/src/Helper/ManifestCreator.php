@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
@@ -9,46 +11,43 @@ use Keboola\StorageApi\Client;
 
 class ManifestCreator
 {
-    /** @var Client */
-    protected $storageClient;
+    protected Client $storageClient;
 
     public function __construct(Client $storageClient)
     {
         $this->storageClient = $storageClient;
     }
 
-    /**
-     * @param array $tableInfo
-     * @param string $destination
-     * @param array $columns
-     * @param string $format
-     */
-    public function writeTableManifest($tableInfo, $destination, $columns, $format = 'json')
-    {
+    public function writeTableManifest(
+        array $tableInfo,
+        string $destination,
+        array $columns,
+        string $format = 'json'
+    ): void {
         $manifest = [
-            "id" => $tableInfo["id"],
-            "uri" => $tableInfo["uri"],
-            "name" => $tableInfo["name"],
-            "primary_key" => $tableInfo["primaryKey"],
-            "distribution_key" => $tableInfo['distributionKey'],
-            "created" => $tableInfo["created"],
-            "last_change_date" => $tableInfo["lastChangeDate"],
-            "last_import_date" => $tableInfo["lastImportDate"],
+            'id' => $tableInfo['id'],
+            'uri' => $tableInfo['uri'],
+            'name' => $tableInfo['name'],
+            'primary_key' => $tableInfo['primaryKey'],
+            'distribution_key' => $tableInfo['distributionKey'],
+            'created' => $tableInfo['created'],
+            'last_change_date' => $tableInfo['lastChangeDate'],
+            'last_import_date' => $tableInfo['lastImportDate'],
         ];
-        if (isset($tableInfo["s3"])) {
-            $manifest["s3"] = $tableInfo["s3"];
+        if (isset($tableInfo['s3'])) {
+            $manifest['s3'] = $tableInfo['s3'];
         }
-        if (isset($tableInfo["abs"])) {
-            $manifest["abs"] = $tableInfo["abs"];
+        if (isset($tableInfo['abs'])) {
+            $manifest['abs'] = $tableInfo['abs'];
         }
         if (!$columns) {
-            $columns = $tableInfo["columns"];
+            $columns = $tableInfo['columns'];
         }
-        $manifest["columns"] = $columns;
+        $manifest['columns'] = $columns;
 
         $manifest['metadata'] = $tableInfo['metadata'];
         foreach ($columns as $column) {
-            $columnMetadata = isset($tableInfo['columnMetadata'][$column]) ? $tableInfo['columnMetadata'][$column] : [];
+            $columnMetadata = $tableInfo['columnMetadata'][$column] ?? [];
             $manifest['column_metadata'][$column] = $columnMetadata;
         }
 
@@ -58,30 +57,28 @@ class ManifestCreator
             $adapter->writeToFile($destination);
         } catch (InvalidInputException $e) {
             throw new InputOperationException(
-                "Failed to write manifest for table {$tableInfo['id']} - {$tableInfo['name']}.",
+                sprintf(
+                    'Failed to write manifest for table %s - %s.',
+                    $tableInfo['id'],
+                    $tableInfo['name']
+                ),
                 $e
             );
         }
     }
 
-    /**
-     * @param $fileInfo
-     * @param $destination
-     * @return array manifest
-     */
-    public function createFileManifest($fileInfo)
+    public function createFileManifest(array $fileInfo): array
     {
-        $manifest = [
-            "id" => $fileInfo["id"],
-            "name" => $fileInfo["name"],
-            "created" => $fileInfo["created"],
-            "is_public" => $fileInfo["isPublic"],
-            "is_encrypted" => $fileInfo["isEncrypted"],
-            "is_sliced" => $fileInfo["isSliced"],
-            "tags" => $fileInfo["tags"],
-            "max_age_days" => $fileInfo["maxAgeDays"],
-            "size_bytes" => intval($fileInfo["sizeBytes"])
+        return [
+            'id' => $fileInfo['id'],
+            'name' => $fileInfo['name'],
+            'created' => $fileInfo['created'],
+            'is_public' => $fileInfo['isPublic'],
+            'is_encrypted' => $fileInfo['isEncrypted'],
+            'is_sliced' => $fileInfo['isSliced'],
+            'tags' => $fileInfo['tags'],
+            'max_age_days' => $fileInfo['maxAgeDays'],
+            'size_bytes' => (int) $fileInfo['sizeBytes'],
         ];
-        return $manifest;
     }
 }

@@ -98,12 +98,12 @@ class Adapter
 
     public function serialize()
     {
-        if ($this->getFormat() == 'yaml') {
+        if ($this->getFormat() === 'yaml') {
             $serialized = Yaml::dump($this->getConfig(), 10);
-            if ($serialized == 'null') {
+            if ($serialized === 'null') {
                 $serialized = '{}';
             }
-        } elseif ($this->getFormat() == 'json') {
+        } elseif ($this->getFormat() === 'json') {
             $encoder = new JsonEncoder();
             $serialized = $encoder->encode(
                 $this->getConfig(),
@@ -133,9 +133,9 @@ class Adapter
 
         $serialized = $this->getContents($file);
 
-        if ($this->getFormat() == 'yaml') {
+        if ($this->getFormat() === 'yaml') {
             $data = Yaml::parse($serialized);
-        } elseif ($this->getFormat() == 'json') {
+        } elseif ($this->getFormat() === 'json') {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
@@ -153,12 +153,12 @@ class Adapter
      */
     public function writeToFile($file)
     {
-        if ($this->getFormat() == 'yaml') {
+        if ($this->getFormat() === 'yaml') {
             $serialized = Yaml::dump($this->getConfig(), 10);
-            if ($serialized == 'null') {
+            if ($serialized === 'null') {
                 $serialized = '{}';
             }
-        } elseif ($this->getFormat() == 'json') {
+        } elseif ($this->getFormat() === 'json') {
             $encoder = new JsonEncoder();
             $serialized = $encoder->encode(
                 $this->getConfig(),

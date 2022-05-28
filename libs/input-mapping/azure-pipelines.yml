@@ -8,18 +8,18 @@ stages:
       vmImage: ubuntu-latest
     jobs:
       - job: build_php74
-        displayName: 'Build & Check (PHP 7.4)'
+        displayName: 'Build & Check'
         steps:
         - script: docker info
           displayName: 'Info'
 
         - script: |
             docker-compose down
-            docker-compose build --pull tests74
-          displayName: 'Build Tests (PHP 7.4)'
+            docker-compose build --pull tests
+          displayName: 'Build Tests'
 
-        - script: docker-compose run tests74 /code/vendor/bin/phpcs --standard=psr2 --ignore=vendor -n -v /code/
-          displayName: 'CS Check (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpcs --standard=psr2 --ignore=vendor -n -v /code/
+          displayName: 'CS Check'
 
   - stage: PHP74
     pool:
@@ -29,8 +29,8 @@ stages:
         displayName: 'Test on AWS backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonPart1
-          displayName: 'Run Common Test Suite (Part 1) on AWS (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonPart1
+          displayName: 'Run Common Test Suite (Part 1) on AWS'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
             STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
@@ -39,8 +39,8 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN:
             SYNAPSE_STORAGE_API_URL:
 
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Aws
-          displayName: 'Run AWS Test Suite on AWS (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite Aws
+          displayName: 'Run AWS Test Suite on AWS'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
             STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
@@ -53,8 +53,8 @@ stages:
         displayName: 'Common Tests (Part 2) on AWS backend'
         timeoutInMinutes: 60
         steps:
-          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonPart2
-            displayName: 'Run Common Test Suite (Part 2) on AWS (PHP 7.4)'
+          - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonPart2
+            displayName: 'Run Common Test Suite (Part 2) on AWS'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
               STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
@@ -67,8 +67,8 @@ stages:
         displayName: 'Files Tests on AWS backend'
         timeoutInMinutes: 60
         steps:
-          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonFiles
-            displayName: 'Run Common Files Test Suite on AWS (PHP 7.4)'
+          - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files Test Suite on AWS'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
               STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
@@ -82,8 +82,8 @@ stages:
         displayName: 'Tests on Azure backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonPart1
-          displayName: 'Run Common Test Suite (Part 1) on Azure (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonPart1
+          displayName: 'Run Common Test Suite (Part 1) on Azure'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
@@ -92,8 +92,8 @@ stages:
             SYNAPSE_STORAGE_API_TOKEN:
             SYNAPSE_STORAGE_API_URL:
 
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite Azure
-          displayName: 'Run Azure Test Suite on Azure (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite Azure
+          displayName: 'Run Azure Test Suite on Azure'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
@@ -106,8 +106,8 @@ stages:
         displayName: 'Common Tests (Part 2) on Azure backend'
         timeoutInMinutes: 60
         steps:
-          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonPart2
-            displayName: 'Run Common Test Suite (Part 2) on Azure (PHP 7.4)'
+          - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonPart2
+            displayName: 'Run Common Test Suite (Part 2) on Azure'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
               STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
@@ -120,8 +120,8 @@ stages:
         displayName: 'Files Tests on Azure backend'
         timeoutInMinutes: 60
         steps:
-          - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite CommonFiles
-            displayName: 'Run Common Files Test Suite on Azure (PHP 7.4)'
+          - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite CommonFiles
+            displayName: 'Run Common Files Test Suite on Azure'
             env:
               STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
               STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
@@ -134,8 +134,8 @@ stages:
         displayName: 'Test on Azure Synapse backend'
         timeoutInMinutes: 60
         steps:
-        - script: docker-compose run tests74 /code/vendor/bin/phpunit --testsuite AzureSynapse
-          displayName: 'Run Azure Test Suite on Azure w. Synapse (PHP 7.4)'
+        - script: docker-compose run tests /code/vendor/bin/phpunit --testsuite AzureSynapse
+          displayName: 'Run Azure Test Suite on Azure w. Synapse'
           env:
             STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
             STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)

@@ -1,9 +1,8 @@
 version: "2"
 services:
   tests: &tests
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile74
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
@@ -18,9 +17,3 @@ services:
     <<: *tests
     volumes:
       - ./:/code
-
-  tests74:
-    <<: *tests
-    build: 
-      context: .
-      dockerfile: Dockerfile74

@@ -62,6 +62,7 @@ class ManifestCreator
                     $tableInfo['id'],
                     $tableInfo['name']
                 ),
+                0,
                 $e
             );
         }

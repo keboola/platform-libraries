@@ -27,3 +27,7 @@ Run tests:
 ```
 docker-compose run --rm tests-local composer run-script ci
 ```
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.

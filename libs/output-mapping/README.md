@@ -24,3 +24,7 @@ docker-compose run dev composer ci
 ```
 
 To run Synapse tests, set RUN_SYNAPSE_TESTS to 1 and supply a Storage API token to a project with Synapse backend. Synapse tests are by default skipped (unless the above env is set).
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.

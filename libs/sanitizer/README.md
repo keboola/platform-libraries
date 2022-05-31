@@ -21,3 +21,7 @@ use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 $sanitized = ColumnNameSanitizer::toAscii('test-vn-đá cuội');
 echo $sanitized; // prints 'test_vn_da_cuoi'
 ```
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.

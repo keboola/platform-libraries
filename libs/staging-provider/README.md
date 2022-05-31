@@ -110,3 +110,7 @@ To develop locally, use `dev` service. Following will install Composer dependenc
 ```bash
 docker-compose run --rm dev composer install
 ```
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.

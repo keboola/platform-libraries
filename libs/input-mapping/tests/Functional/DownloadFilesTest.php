@@ -614,8 +614,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         self::assertEquals("test", file_get_contents($root . "/download/" . $id . '_upload'));
 
-        $adapter = new Adapter();
-        $adapter->setFormat('yaml');
+        $adapter = new Adapter('yaml');
         $manifest = $adapter->readFromFile($root . "/download/" . $id . "_upload.manifest");
         self::assertArrayHasKey('id', $manifest);
         self::assertArrayHasKey('name', $manifest);

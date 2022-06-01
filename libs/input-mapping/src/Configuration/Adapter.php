@@ -10,7 +10,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Yaml\Yaml;
 
-class Adapter
+abstract class Adapter
 {
     public const FORMAT_YAML = 'yaml';
     public const FORMAT_JSON = 'json';
@@ -24,7 +24,8 @@ class Adapter
      */
     public function __construct(string $format = self::FORMAT_JSON)
     {
-        $this->setFormat($format);
+        $this->validateFormat($format);
+        $this->format = $format;
     }
 
     public function getConfig(): array
@@ -48,20 +49,23 @@ class Adapter
             case self::FORMAT_JSON:
                 return '.json';
             default:
-                throw new InputOperationException("Invalid configuration format {$this->format}.");
+                $this->throwInvalidConfigurationFormatException();
         }
+    }
+
+    private function throwInvalidConfigurationFormatException(): void
+    {
+        throw new InputOperationException("Invalid configuration format {$this->format}.");
     }
 
     /**
      * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    public function setFormat(string $format): self
+    private function validateFormat(string $format): void
     {
         if (!in_array($format, [self::FORMAT_YAML, self::FORMAT_JSON])) {
             throw new InputOperationException("Configuration format '{$format}' not supported");
         }
-        $this->format = $format;
-        return $this;
     }
 
     public function setConfig(array $config): self
@@ -86,7 +90,7 @@ class Adapter
                 ['json_encode_options' => JSON_PRETTY_PRINT]
             );
         } else {
-            throw new InputOperationException("Invalid configuration format {$this->format}.");
+            $this->throwInvalidConfigurationFormatException();
         }
         return $serialized;
     }
@@ -109,7 +113,7 @@ class Adapter
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
-            throw new InputOperationException("Invalid configuration format {$this->format}.");
+            $this->throwInvalidConfigurationFormatException();
         }
         $this->setConfig((array) $data);
         return $this->getConfig();
@@ -133,7 +137,7 @@ class Adapter
                 ['json_encode_options' => JSON_PRETTY_PRINT]
             );
         } else {
-            throw new InputOperationException("Invalid configuration format {$this->format}.");
+            $this->throwInvalidConfigurationFormatException();
         }
         $fs = new Filesystem();
         $fs->dumpFile($file, $serialized);
@@ -144,7 +148,7 @@ class Adapter
         if (!(new Filesystem())->exists($file)) {
             throw new InputOperationException(sprintf('File %s not found.', $file));
         }
-        return (new SplFileInfo($file, "", basename($file)))->getContents();
+        return (new SplFileInfo($file, '', basename($file)))->getContents();
     }
 
     private function isYamlFormat(): bool

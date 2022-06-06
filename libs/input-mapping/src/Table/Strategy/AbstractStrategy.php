@@ -55,7 +55,7 @@ abstract class AbstractStrategy implements StrategyInterface
         $this->metadataStorage = $metadataStorage;
         $this->tablesState = $tablesState;
         $this->destination = $destination;
-        $this->manifestCreator = new ManifestCreator($this->clientWrapper->getBasicClient());
+        $this->manifestCreator = new ManifestCreator();
         $this->format = $format;
     }
 

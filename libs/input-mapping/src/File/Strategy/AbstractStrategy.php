@@ -53,7 +53,7 @@ abstract class AbstractStrategy implements StrategyInterface
     ) {
         $this->clientWrapper = $storageClient;
         $this->logger = $logger;
-        $this->manifestCreator = new ManifestCreator($this->clientWrapper->getBasicClient());
+        $this->manifestCreator = new ManifestCreator();
         $this->dataStorage = $dataStorage;
         $this->metadataStorage = $metadataStorage;
         $this->fileStateList = $fileStateList;

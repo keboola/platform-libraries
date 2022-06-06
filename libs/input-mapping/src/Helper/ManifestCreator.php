@@ -8,17 +8,9 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\StorageApi\Client;
 
 class ManifestCreator
 {
-    protected Client $storageClient;
-
-    public function __construct(Client $storageClient)
-    {
-        $this->storageClient = $storageClient;
-    }
-
     public function writeTableManifest(
         array $tableInfo,
         string $destination,

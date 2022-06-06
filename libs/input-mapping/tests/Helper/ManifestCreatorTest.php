@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Tests\Helper;
 
 use Generator;
 use Keboola\InputMapping\Helper\ManifestCreator;
-use Keboola\StorageApi\Client;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 
@@ -51,7 +50,7 @@ class ManifestCreatorTest extends TestCase
             'maxAgeDays' => 15,
         ];
 
-        $manifestCreator = new ManifestCreator(self::createMock(Client::class));
+        $manifestCreator = new ManifestCreator();
 
         $manifest = $manifestCreator->createFileManifest($fileInfo);
 
@@ -318,7 +317,7 @@ EOF,
             ],
         ];
 
-        $manifestCreator = new ManifestCreator(self::createMock(Client::class));
+        $manifestCreator = new ManifestCreator();
         $manifestCreator->writeTableManifest($tableInfo, $filePathname, $columns, $format);
 
         self::assertSame($expectedData, file_get_contents($filePathname));

@@ -9,16 +9,19 @@
             "email": "devel@keboola.com"
         }
     ],
+    "config": {
+        "sort-packages": true
+    },
     "require": {
-        "symfony/config": "^4.4|^5.4",
-        "symfony/yaml": "^4.4|^5.4",
-        "symfony/finder": "^4.4|^5.4",
-        "symfony/serializer": "^4.4|^5.4",
+        "php": ">=7.4",
+        "ext-json": "*",
+        "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/storage-api-client": "^12.7",
         "keboola/storage-api-php-client-branch-wrapper": "^2.0",
-        "ext-json": "*",
-        "php": ">=7.4",
-        "keboola/php-file-storage-utils": "^0.2.2"
+        "symfony/config": "^4.4|^5.4",
+        "symfony/finder": "^4.4|^5.4",
+        "symfony/serializer": "^4.4|^5.4",
+        "symfony/yaml": "^4.4|^5.4"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.6.1",

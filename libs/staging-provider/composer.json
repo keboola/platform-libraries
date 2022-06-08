@@ -25,10 +25,10 @@
     },
     "require": {
         "php": ">=7.4",
-        "keboola/input-mapping": "^15.1",
-        "keboola/output-mapping": "^17.1",
-        "keboola/storage-api-client": "^12.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^2.0"
+        "keboola/input-mapping": "^16.0",
+        "keboola/output-mapping": "^18.0",
+        "keboola/storage-api-client": "^13.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7",

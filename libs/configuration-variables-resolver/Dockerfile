@@ -1,6 +1,7 @@
 FROM php:7.4-cli
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
+ENV XDEBUG_MODE=coverage
 
 WORKDIR /code
 

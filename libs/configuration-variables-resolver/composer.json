@@ -41,7 +41,6 @@
     "require-dev": {
         "infection/infection": "^0.18.2",
         "keboola/coding-standard": ">=7.0.2",
-        "php-parallel-lint/php-parallel-lint": "^1.2",
         "phpstan/phpstan": "^0.12.51",
         "phpunit/phpunit": "^9.3"
     },
@@ -50,13 +49,12 @@
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
         "phpcs": "phpcs --extensions=php src tests",
         "phpcbf": "phpcbf --extensions=php src tests",
-        "phplint": "parallel-lint -j 10 --exclude vendor .",
         "infection": "infection --threads=2 --min-covered-msi=90 --coverage=build/logs",
         "build": [
-            "@phplint",
             "@phpcs",
             "@phpstan",
-            "@tests"
+            "@tests",
+            "@infection"
         ],
         "ci": [
             "@composer validate --no-check-all --strict",

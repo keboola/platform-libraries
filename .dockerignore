@@ -1,0 +1,12 @@
+.idea/
+.git/
+.phpunit.result.cache
+
+**/provisioning/
+**/var/
+**/vendor/
+
+**/.env*
+!docker/.env.local.php
+**/.gitignore
+**/azure-pipelines*

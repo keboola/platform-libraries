@@ -1,0 +1,19 @@
+version: "3.4"
+
+services:
+  dev-input-mapping:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/input-mapping
+    volumes:
+      - .:/code
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL
+

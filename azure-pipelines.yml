@@ -49,6 +49,31 @@ stages:
   - stage: tests_input_mapping
     displayName: Tests - Input Mapping
     dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_input-mapping'])
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
+
+  - stage: testsResults
+    displayName: Wait for tests results
+    dependsOn: [ tests_input_mapping ]
+    condition: |
+      and(
+        in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped')
+      )
+    jobs:
+      - job:
+        steps:
+          - script: echo "Tests passed"
+
+  - stage: publishLibraries
+    displayName: Publish Libraries
+    dependsOn: [ build, testsResults ]
+    condition: succeeded('testsResults')
+    jobs:
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_input-mapping'])
+          sourceRepo: input-mapping
+          targetRepo: input-mapping
+          libraryPath: libs/input-mapping
+          tagPrefix: input-mapping/

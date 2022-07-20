@@ -27,9 +27,13 @@ RUN pecl channel-update pecl.php.net \
 
 FROM base AS input-mapping
 
-WORKDIR /code
+ENV LIB_NAME=input-mapping
+ENV LIB_HOME=/code/libs/${LIB_NAME}
 
-COPY composer.* ./
+WORKDIR ${LIB_HOME}
+
+COPY libs/${LIB_NAME}/composer.* ./
 RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
-COPY . .
+COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
+

@@ -53,7 +53,9 @@ stages:
     jobs:
       - job: cs
         displayName: "Code Style"
-        script: docker-compose run --rm ci-input-mapping composer phpcs
+        steps:
+          - script: docker-compose run --rm ci-input-mapping composer phpcs
+            displayName: "IM CS"
       - template: libs/input-mapping/azure-pipelines.tests.yml
 
   - stage: testsResults

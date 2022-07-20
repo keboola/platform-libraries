@@ -58,7 +58,8 @@ stages:
     dependsOn: [ tests_input_mapping ]
     condition: |
       and(
-        in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        true
       )
     jobs:
       - job:

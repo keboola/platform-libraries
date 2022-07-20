@@ -8,8 +8,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
       parameters:
@@ -20,8 +20,8 @@ jobs:
         variables:
           STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         secrets:
-          STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
-          STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+          STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+          STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
       parameters:
@@ -32,8 +32,8 @@ jobs:
         variables:
           STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         secrets:
-          STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
-          STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+          STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+          STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -44,8 +44,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -56,8 +56,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -68,8 +68,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -80,8 +80,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -92,8 +92,8 @@ jobs:
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
@@ -105,6 +105,6 @@ jobs:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
         RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
       secrets:
-        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
-        SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
+        SYNAPSE_STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_SYNAPSE)

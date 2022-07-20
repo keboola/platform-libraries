@@ -1,0 +1,126 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: aws_tests_php74_commonPart1
+      displayName: Test on AWS backend CommonPart1 (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonPart1
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+      parameters:
+        jobName: aws_tests_php74_aws_testsuite
+        displayName: Test on AWS backend Aws testsuite (PHP 7.4)
+        serviceName: ci-input-mapping
+        testCommand: /code/vendor/bin/phpunit --testsuite Aws
+        secrets:
+          STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+          STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+          STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+          RUN_SYNAPSE_TESTS: 0
+          SYNAPSE_STORAGE_API_TOKEN:
+          SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+      parameters:
+        jobName: aws_tests_php74_commonPart2
+        displayName: Common Tests (Part 2) on AWS backend (PHP 7.4)
+        serviceName: ci-input-mapping
+        testCommand: /code/vendor/bin/phpunit --testsuite CommonPart2
+        secrets:
+          STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+          STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+          STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+          RUN_SYNAPSE_TESTS: 0
+          SYNAPSE_STORAGE_API_TOKEN:
+          SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: aws_tests_php74_commonFiles
+      displayName: Files Tests on AWS backend (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonFiles
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AWS)
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_commonPart1
+      displayName: Run Common Test Suite (Part 1) on Azure (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonPart1
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_azure_testsuite
+      displayName: Run Azure Test Suite on Azure (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite Azure
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_commonPart2
+      displayName: Run Common Test Suite (Part 2) on Azure (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonPart2
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_commonFiles
+      displayName: Run CommonFiles Test Suite on Azure (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonFiles
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        RUN_SYNAPSE_TESTS: 0
+        SYNAPSE_STORAGE_API_TOKEN:
+        SYNAPSE_STORAGE_API_URL:
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_synapse
+      displayName: Run Azure Testsuite on Azure with Synapse (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite AzureSynapse
+      secrets:
+        STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(STORAGE_API_TOKEN_MASTER_AZURE)
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        RUN_SYNAPSE_TESTS: $(RUN_SYNAPSE_TESTS)
+        SYNAPSE_STORAGE_API_TOKEN: $(STORAGE_API_TOKEN_SYNAPSE)
+        SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_SYNAPSE)

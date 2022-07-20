@@ -1,0 +1,47 @@
+parameters:
+  - name: displayName
+    type: string
+
+  - name: awsCredentials
+    type: string
+    default: aws-production
+
+  - name: awsRegionName
+    type: string
+    default: us-east-1
+
+  - name: acrRegistry
+    type: string
+    default: keboola.azurecr.io
+
+  - name: sourceImage
+    type: string
+
+  - name: targetImage
+    type: string
+
+  - name: condition
+    type: string
+    default: True
+
+steps:
+- template: push-ecr.yml
+  parameters:
+    displayName: Push Production ECR - ${{ parameters.displayName }}
+    condition: ${{ parameters.condition }}
+    awsCredentials: ${{ parameters.awsCredentials }}
+    awsRegionName: ${{ parameters.awsRegionName }}
+    sourceImage: ${{ parameters.sourceImage }}
+    targetImage: keboola/${{ parameters.targetImage }}
+    tags:
+      - production-$(Build.SourceVersion)
+
+- template: push-acr.yml
+  parameters:
+    displayName: Push Production ACR - ${{ parameters.displayName }}
+    condition: ${{ parameters.condition }}
+    acrRegistry: ${{ parameters.acrRegistry }}
+    sourceImage: ${{ parameters.sourceImage }}
+    targetImage: ${{ parameters.targetImage }}
+    tags:
+      - production-$(Build.SourceVersion)

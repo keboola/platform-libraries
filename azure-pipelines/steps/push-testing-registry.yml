@@ -1,0 +1,55 @@
+parameters:
+  - name: displayName
+    type: string
+
+  - name: awsCredentials
+    type: string
+    default: aws-testing
+
+  - name: awsRegionName
+    type: string
+    default: eu-central-1
+
+  - name: acrRegistry
+    type: string
+    default: keboolapes.azurecr.io
+
+  - name: sourceImage
+    type: string
+
+  - name: targetImage
+    type: string
+
+  - name: mainBranch
+    type: string
+    default: refs/heads/main
+
+  - name: condition
+    type: string
+    default: True
+
+steps:
+- template: push-ecr.yml
+  parameters:
+    displayName: Push Testing ECR - ${{ parameters.displayName }}
+    condition: ${{ parameters.condition }}
+    awsCredentials: ${{ parameters.awsCredentials }}
+    awsRegionName: ${{ parameters.awsRegionName }}
+    sourceImage: ${{ parameters.sourceImage }}
+    targetImage: keboola/${{ parameters.targetImage }}
+    tags:
+      - build-$(Build.SourceVersion)
+      - ${{ if eq(variables['Build.SourceBranch'], parameters.mainBranch) }}:
+        - latest
+
+- template: push-acr.yml
+  parameters:
+    displayName: Push Testing ACR - ${{ parameters.displayName }}
+    condition: ${{ parameters.condition }}
+    acrRegistry: ${{ parameters.acrRegistry }}
+    sourceImage: ${{ parameters.sourceImage }}
+    targetImage: ${{ parameters.targetImage }}
+    tags:
+      - build-$(Build.SourceVersion)
+      - ${{ if eq(variables['Build.SourceBranch'], parameters.mainBranch) }}:
+        - latest

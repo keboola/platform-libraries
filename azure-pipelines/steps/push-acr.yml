@@ -1,0 +1,36 @@
+parameters:
+  - name: displayName
+    type: string
+
+  - name: condition
+    type: string
+    default: True
+
+  - name: acrRegistry
+    type: string
+
+  - name: sourceImage
+    type: string
+
+  - name: targetImage
+    type: string
+
+  - name: tags
+    type: object
+    default: [latest]
+
+steps:
+- ${{ each tag in parameters.tags }}:
+  - script: docker tag ${{ parameters.sourceImage }} ${{ parameters.acrRegistry }}/${{ parameters.targetImage }}:${{ tag }}
+    displayName: ${{ parameters.displayName }} - Tag ${{ tag }}
+
+- task: Docker@2
+  displayName: ${{ parameters.displayName }} - Login
+  inputs:
+    command: login
+    containerRegistry: ${{ parameters.acrRegistry }}
+  condition: gt(${{ length(parameters.tags) }}, 0)
+
+- script: docker push -a ${{ parameters.acrRegistry }}/${{ parameters.targetImage }}
+  displayName: ${{ parameters.displayName }} - Push
+  condition: gt(${{ length(parameters.tags) }}, 0)

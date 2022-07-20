@@ -1,0 +1,54 @@
+trigger:
+  branches:
+    include:
+      - '*'
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+    - repository: input-mapping
+      type: github
+      endpoint: keboola
+      name: keboola/input-mapping
+
+variables:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+stages:
+  - stage: build
+    displayName: Build
+    dependsOn: []
+    jobs:
+      - job: checkChanges
+        displayName: 'Check changes'
+        steps:
+          - script: |
+              ./bin/ci-find-changes.sh \
+                input-mapping:libs/input-mapping
+            displayName: 'Find changes'
+            name: findChanges
+
+      - job: build
+        displayName: Build Docker Images
+        steps:
+          - script: docker-compose --profile ci build
+            displayName: Build Docker images
+
+          - script: docker image save $(docker image ls --filter 'reference=keboola/*' --format '{{.Repository}}:latest') -o $(Build.ArtifactStagingDirectory)/docker-images.tar
+            displayName: Save images as artifact
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: docker-images
+            displayName: Publish artifacts
+
+  - stage: tests_input_mapping
+    displayName: Tests - Input Mapping
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
+    jobs:
+      - template: libs/input-mapping/azure-pipelines.tests.yml

@@ -12,28 +12,28 @@ jobs:
         STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
-      parameters:
-        jobName: aws_tests_php74_aws_testsuite
-        displayName: Test on AWS backend Aws testsuite (PHP 7.4)
-        serviceName: ci-input-mapping
-        testCommand: /code/vendor/bin/phpunit --testsuite Aws
-        variables:
-          STORAGE_API_URL: $(STORAGE_API_URL_AWS)
-        secrets:
-          STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
-          STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+    parameters:
+      jobName: aws_tests_php74_aws_testsuite
+      displayName: Test on AWS backend Aws testsuite (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite Aws
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+      secrets:
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
-      parameters:
-        jobName: aws_tests_php74_commonPart2
-        displayName: Common Tests (Part 2) on AWS backend (PHP 7.4)
-        serviceName: ci-input-mapping
-        testCommand: /code/vendor/bin/phpunit --testsuite CommonPart2
-        variables:
-          STORAGE_API_URL: $(STORAGE_API_URL_AWS)
-        secrets:
-          STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
-          STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+    parameters:
+      jobName: aws_tests_php74_commonPart2
+      displayName: Common Tests (Part 2) on AWS backend (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/vendor/bin/phpunit --testsuite CommonPart2
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+      secrets:
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:

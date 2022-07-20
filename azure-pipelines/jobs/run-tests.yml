@@ -39,6 +39,7 @@ jobs:
     dependsOn: ${{ parameters.dependsOn }}
     displayName: ${{ parameters.displayName }}
     variables: ${{ parameters.variables }}
+    timeoutInMinutes: 60
     steps:
       - template: ../steps/restore-docker-artifacts.yml
 

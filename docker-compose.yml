@@ -22,7 +22,7 @@ services:
     image: keboola/input-mapping
     build:
       context: .
-      target: lib-input-mapping
+      target: input-mapping
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER

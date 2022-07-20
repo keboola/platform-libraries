@@ -10,10 +10,10 @@ pool:
 
 resources:
   repositories:
-    - repository: input-mapping
+    - repository: platform-libraries-input-mapping
       type: github
       endpoint: keboola
-      name: keboola/input-mapping
+      name: keboola/platform-libraries-input-mapping
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -73,7 +73,7 @@ stages:
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_input-mapping'])
-          sourceRepo: input-mapping
-          targetRepo: input-mapping
+          sourceRepo: platform-libraries
+          targetRepo: platform-libraries-input-mapping
           libraryPath: libs/input-mapping
           tagPrefix: input-mapping/

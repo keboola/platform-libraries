@@ -27,6 +27,8 @@ FROM base AS input-mapping
 ENV LIB_NAME=input-mapping
 ENV LIB_HOME=/code/libs/${LIB_NAME}
 
+ARG COMPOSER_MIRROR_PATH_REPOS=1
+
 WORKDIR ${LIB_HOME}
 
 COPY libs/${LIB_NAME}/composer.json ./

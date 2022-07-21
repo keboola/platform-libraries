@@ -27,4 +27,4 @@ jobs:
       targetRepo: platform-libraries-input-mapping
       libraryPath: libs/input-mapping
       tagPrefix: input-mapping/
-      
+

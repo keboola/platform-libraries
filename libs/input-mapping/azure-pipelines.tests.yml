@@ -13,8 +13,20 @@ jobs:
       dependsOn: [cs]
       displayName: Test on AWS backend CommonPart1 (PHP 7.4)
       serviceName: ci-input-mapping
-      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite CommonPart1; \
-        /code/libs/input-mapping/vendor/bin/phpunit --testsuite Aws
+      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite CommonPart1
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+      secrets:
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: aws_tests_php74_aws_testsuite
+      dependsOn: [ cs, aws_tests_php74_commonPart1 ]
+      displayName: Test on AWS backend CommonPart1 (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite Aws
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
       secrets:
@@ -53,8 +65,20 @@ jobs:
       dependsOn: [cs]
       displayName: Run Common Test Suite (Part 1) on Azure (PHP 7.4)
       serviceName: ci-input-mapping
-      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite CommonPart1; \
-        /code/libs/input-mapping/vendor/bin/phpunit --testsuite Azure
+      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite CommonPart1
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+      secrets:
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: azure_tests_php74_azure_testsuite
+      dependsOn: [ cs, azure_tests_php74_commonPart1 ]
+      displayName: Run Common Test Suite (Part 1) on Azure (PHP 7.4)
+      serviceName: ci-input-mapping
+      testCommand: /code/libs/input-mapping/vendor/bin/phpunit --testsuite Azure
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:

@@ -29,7 +29,7 @@ stages:
         steps:
           - script: |
               ./bin/ci-find-changes.sh \
-                input-mapping:libs/input-mapping
+                inputMapping:libs/input-mapping
             displayName: 'Find changes'
             name: findChanges
 
@@ -49,7 +49,7 @@ stages:
   - stage: tests_input_mapping
     displayName: Tests - Input Mapping
     dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_input-mapping'])
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
 

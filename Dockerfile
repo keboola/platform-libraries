@@ -14,7 +14,7 @@ COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 RUN apt update -q \
  && apt install -y --no-install-recommends git zip unzip libzip4 libzip-dev zlib1g-dev \
  && docker-php-ext-install zip \
- && apt-get remove --autoremove -y libzip-dev \
+ && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer

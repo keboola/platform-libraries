@@ -1,0 +1,39 @@
+parameters:
+  - name: displayName
+    type: string
+
+  - name: condition
+    type: string
+    default: True
+
+  - name: awsCredentials
+    type: string
+    default: aws-testing
+
+  - name: awsRegionName
+    type: string
+    default: eu-central-1
+
+  - name: sourceImage
+    type: string
+
+  - name: targetImage
+    type: string
+
+  - name: tags
+    type: object
+    default: [latest]
+
+steps:
+- ${{ each tag in parameters.tags }}:
+  - task: ECRPushImage@1
+    displayName: ${{ parameters.displayName }} - ${{ tag }}
+    inputs:
+      awsCredentials: ${{ parameters.awsCredentials }}
+      regionName: ${{ parameters.awsRegionName }}
+      imageSource: imagename
+      sourceImageName: ${{ parameters.sourceImage }}
+      repositoryName: ${{ parameters.targetImage }}
+      pushTag: ${{ tag }}
+      autoCreateRepository: true
+    condition: ${{ parameters.condition }}

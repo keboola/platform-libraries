@@ -1,0 +1,8 @@
+/vendor
+/config.php
+/.idea
+/composer.lock
+/composer.phar
+.kdev4
+*.kdev4
+.env

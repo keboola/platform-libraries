@@ -1,0 +1,80 @@
+trigger:
+  branches:
+    include:
+      - '*'
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+    - repository: platform-libraries-input-mapping
+      type: github
+      endpoint: keboola
+      name: keboola/platform-libraries-input-mapping
+
+variables:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+stages:
+  - stage: build
+    displayName: Build
+    dependsOn: []
+    jobs:
+      - job: checkChanges
+        displayName: 'Check changes'
+        steps:
+          - script: |
+              ./bin/ci-find-changes.sh \
+                inputMapping:libs/input-mapping
+            displayName: 'Find changes'
+            name: findChanges
+
+      - job: build
+        displayName: Build Docker Images
+        steps:
+          - script: docker-compose --profile ci build
+            displayName: Build Docker images
+
+          - script: docker image save $(docker image ls --filter 'reference=keboola/*' --format '{{.Repository}}:latest') -o $(Build.ArtifactStagingDirectory)/docker-images.tar
+            displayName: Save images as artifact
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: docker-images
+            displayName: Publish artifacts
+
+  - stage: tests_input_mapping
+    displayName: Tests - Input Mapping
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
+    jobs:
+      - template: libs/input-mapping/azure-pipelines.tests.yml
+
+  - stage: testsResults
+    displayName: Wait for tests results
+    dependsOn: [ tests_input_mapping ]
+    condition: |
+      and(
+        in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        true
+      )
+    jobs:
+      - job:
+        steps:
+          - script: echo "Tests passed"
+
+  - stage: publishLibraries
+    displayName: Publish Libraries
+    dependsOn: [ build, testsResults ]
+    condition: succeeded('testsResults')
+    jobs:
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_input-mapping'])
+          sourceRepo: platform-libraries
+          targetRepo: platform-libraries-input-mapping
+          libraryPath: libs/input-mapping
+          tagPrefix: input-mapping/

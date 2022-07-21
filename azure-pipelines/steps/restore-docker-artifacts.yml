@@ -1,0 +1,17 @@
+parameters:
+  - name: dockerArtifactName
+    type: string
+    default: docker-images
+
+  - name: dockerArtifactFile
+    type: string
+    default: docker-images.tar
+
+
+steps:
+  - download: current
+    artifact: ${{ parameters.dockerArtifactName }}
+    displayName: Download artifacts
+
+  - script: docker load --input $(Pipeline.Workspace)/${{ parameters.dockerArtifactName }}/${{ parameters.dockerArtifactFile }}
+    displayName: Load images

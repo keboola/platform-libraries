@@ -1,0 +1,52 @@
+parameters:
+  - name: jobName
+    type: string
+    default:
+
+  - name: dependsOn
+    type: object
+    default: []
+
+  - name: displayName
+    type: string
+    default: Tests
+
+  - name: serviceName
+    type: string
+
+  - name: testCommand
+    type: string
+    default: composer ci
+
+  - name: variables
+    type: object
+    default: {}
+
+  - name: secrets
+    type: object
+    default: {}
+
+  - name: dockerArtifactName
+    type: string
+    default: docker-images
+
+  - name: dockerArtifactFile
+    type: string
+    default: docker-images.tar
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    dependsOn: ${{ parameters.dependsOn }}
+    displayName: ${{ parameters.displayName }}
+    variables: ${{ parameters.variables }}
+    timeoutInMinutes: 60
+    steps:
+      - template: ../steps/restore-docker-artifacts.yml
+
+      - script: docker-compose --profile ci run --rm ${{ parameters.serviceName }} ${{ parameters.testCommand }}
+        displayName: Run tests
+        env: ${{ parameters.secrets }}
+
+      - script: docker-compose logs
+        displayName: Show logs
+        condition: failed()

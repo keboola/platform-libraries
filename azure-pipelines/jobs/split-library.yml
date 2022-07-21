@@ -1,0 +1,48 @@
+parameters:
+  - name: condition
+    type: string
+    default: true
+
+  - name: sourceRepo
+    type: string
+
+  - name: targetRepo
+    type: string
+
+  - name: libraryPath
+    type: string
+
+  - name: tagPrefix
+    type: string
+
+jobs:
+- job:
+  displayName: Split libs
+  container: fedora:34 # fedora contains sudo out-of-box
+  condition: ${{ parameters.condition }}
+  steps:
+    - checkout: self
+    - checkout: ${{ parameters.targetRepo }}
+      persistCredentials: true
+
+    - script: sudo dnf install -y git git-filter-repo findutils
+      displayName: Install Deps
+
+    - script: |
+        cd "$(Build.SourcesDirectory)/${{ parameters.targetRepo }}"
+
+        # split-repo.sh pushes directly to the repo, so it needs it's URL, not local clone path
+        TARGET_REPO_URL=$(git remote get-url origin)
+        echo "TARGET_REPO_URL: ${TARGET_REPO_URL}"
+
+        # make Git globally authorized to the target repo, split-repo.sh does not handle authorization
+        git config --global "http.${TARGET_REPO_URL}.extraheader" "$(git config "http.${TARGET_REPO_URL}.extraheader")"
+
+        cd "$(Build.SourcesDirectory)/${{ parameters.sourceRepo }}"
+
+        ./bin/split-repo.sh \
+          "$(Build.SourcesDirectory)/${{ parameters.sourceRepo }}" \
+          "${TARGET_REPO_URL}" \
+          "${{ parameters.libraryPath }}" \
+          "${{ parameters.tagPrefix }}"
+      displayName: Split lib

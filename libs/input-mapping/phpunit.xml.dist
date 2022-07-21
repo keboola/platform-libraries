@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="false"
+         bootstrap="bootstrap.php">
+
+    <testsuites>
+        <testsuite name="CommonPart1">
+            <directory>tests</directory>
+            <exclude>tests/Functional/DownloadFilesAbsWorkspaceTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesAdaptiveTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesRedshiftTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesRedshiftTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesDefaultTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesS3DefaultTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesABSDefaultTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesWorkspaceAbsTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesWorkspaceRedshiftTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesSynapseTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</exclude>
+        </testsuite>
+        <testsuite name="CommonPart2">
+            <file>tests/Functional/DownloadTablesDefaultTest.php</file>
+        </testsuite>
+        <testsuite name="CommonFiles">
+            <file>tests/Functional/DownloadFilesTest.php</file>
+            <file>tests/Functional/DownloadFilesAdaptiveTest.php</file>
+        </testsuite>
+        <testsuite name="Aws">
+            <file>tests/Functional/DownloadFilesRedshiftTest.php</file>
+            <file>tests/Functional/DownloadTablesRedshiftTest.php</file>
+            <file>tests/Functional/DownloadTablesWorkspaceRedshiftTest.php</file>
+            <file>tests/Functional/DownloadTablesS3DefaultTest.php</file>
+        </testsuite>
+        <testsuite name="Azure">
+            <file>tests/Functional/DownloadTablesABSDefaultTest.php</file>
+        </testsuite>
+        <testsuite name="AzureSynapse">
+            <file>tests/Functional/DownloadTablesSynapseTest.php</file>
+            <file>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</file>
+            <file>tests/Functional/DownloadTablesWorkspaceAbsTest.php</file>
+            <file>tests/Functional/DownloadFilesAbsWorkspaceTest.php</file>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">.</directory>
+            <exclude>
+                <directory suffix=".php">vendor</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+
+</phpunit>

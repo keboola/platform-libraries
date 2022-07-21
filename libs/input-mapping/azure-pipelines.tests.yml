@@ -1,6 +1,13 @@
 jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
+      jobName: cs
+      displayName: Code Style
+      serviceName: ci-input-mapping
+      testCommand: composer phpcs
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
       jobName: aws_tests_php74_commonPart1
       displayName: Test on AWS backend CommonPart1 (PHP 7.4)
       serviceName: ci-input-mapping

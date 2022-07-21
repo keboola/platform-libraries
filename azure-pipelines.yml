@@ -51,11 +51,6 @@ stages:
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_input-mapping'])
     jobs:
-      - job: cs
-        displayName: "Code Style"
-        steps:
-          - script: docker-compose run --rm ci-input-mapping composer phpcs
-            displayName: "IM CS"
       - template: libs/input-mapping/azure-pipelines.tests.yml
 
   - stage: testsResults

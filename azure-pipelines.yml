@@ -73,7 +73,7 @@ stages:
     jobs:
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_input-mapping'])
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_inputMapping'])
           sourceRepo: platform-libraries
           targetRepo: platform-libraries-input-mapping
           libraryPath: libs/input-mapping

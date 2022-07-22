@@ -1,0 +1,30 @@
+trigger:
+  tags:
+    include:
+      - '*'
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+    - repository: platform-libraries-input-mapping
+      type: github
+      endpoint: keboola
+      name: keboola/platform-libraries-input-mapping
+
+variables:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/input-mapping/')
+      sourceRepo: platform-libraries
+      targetRepo: platform-libraries-input-mapping
+      libraryPath: libs/input-mapping
+      tagPrefix: input-mapping/
+

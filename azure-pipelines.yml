@@ -10,10 +10,10 @@ pool:
 
 resources:
   repositories:
-    - repository: platform-libraries-input-mapping
+    - repository: input-mapping
       type: github
       endpoint: keboola
-      name: keboola/platform-libraries-input-mapping
+      name: keboola/input-mapping
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -75,6 +75,6 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_inputMapping'])
           sourceRepo: platform-libraries
-          targetRepo: platform-libraries-input-mapping
+          targetRepo: input-mapping
           libraryPath: libs/input-mapping
           tagPrefix: input-mapping/

@@ -1,0 +1,22 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: cs
+      displayName: Code Style
+      serviceName: ci-staging-provider
+      testCommand: composer phpcs
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: aws_tests_php74_stagingProvider
+      dependsOn: [cs]
+      displayName: Test on AWS backend (PHP 7.4)
+      serviceName: ci-staging-provider
+      testCommand: composer ci
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 1
+      secrets:
+        STORAGE_API_TOKEN: $(STAGING_PROVIDER__STORAGE_API_TOKEN_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(STAGING_PROVIDER__SYNAPSE_STORAGE_API_TOKEN)

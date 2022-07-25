@@ -84,6 +84,7 @@ stages:
     condition: |
       and(
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped')
       )
     jobs:

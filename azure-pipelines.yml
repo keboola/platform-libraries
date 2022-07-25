@@ -38,7 +38,9 @@ stages:
           - script: |
               ./bin/ci-find-changes.sh \
                 inputMapping:libs/input-mapping \
-                stagingProvider:libs/staging-provider
+                stagingProvider:libs/staging-provider \
+                outputMapping:libs/output-mapping
+
             displayName: 'Find changes'
             name: findChanges
 

@@ -188,8 +188,8 @@ class OutputProviderInitializerTest extends TestCase
 
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
-                (string) getenv('STORAGE_API_URL_SYNAPSE'),
-                (string) getenv('STORAGE_API_TOKEN_SYNAPSE'),
+                (string) getenv('SYNAPSE_STORAGE_API_URL'),
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
             )
         );
         $stagingFactory = new OutputStrategyFactory(

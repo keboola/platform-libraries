@@ -10,9 +10,6 @@
             "email": "devel@keboola.com"
         }
     ],
-    "config": {
-        "sort-packages": true
-    },
     "autoload": {
         "psr-4": {
             "Keboola\\StagingProvider\\": "src/"
@@ -48,7 +45,7 @@
     },
     "scripts": {
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n src/",
-        "phpunit": "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml",
+        "phpunit": "phpunit",
         "build": [
             "@phpcs",
             "@phpunit"

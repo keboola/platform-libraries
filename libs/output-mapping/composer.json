@@ -19,10 +19,22 @@
             "Keboola\\OutputMapping\\Tests\\": "tests/"
         }
     },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": false
+        }
+    },
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
-        "keboola/input-mapping": "^16.0",
+        "keboola/input-mapping": "dev-main",
         "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/sanitizer": "^0.1",
         "keboola/storage-api-client": "^13.0",
@@ -53,8 +65,5 @@
             "@composer validate --no-check-all --strict",
             "@build"
         ]
-    },
-    "config": {
-        "sort-packages": true
     }
 }

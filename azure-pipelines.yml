@@ -18,6 +18,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider-erik
+    - repository: output-mapping-erik
+      type: github
+      endpoint: keboola
+      name: keboola/output-mapping-erik
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -58,6 +62,13 @@ stages:
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
 
+  - stage: tests_output_mapping
+    displayName: Tests - Output Mapping
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_outputMapping'])
+    jobs:
+      - template: libs/output-mapping/azure-pipelines.tests.yml
+
   - stage: tests_staging_provider
     displayName: Tests - Staging Provider
     dependsOn: build
@@ -67,7 +78,7 @@ stages:
 
   - stage: testsResults
     displayName: Wait for tests results
-    dependsOn: [ tests_input_mapping, tests_staging_provider ]
+    dependsOn: [ tests_input_mapping, tests_output_mapping, tests_staging_provider ]
     condition: |
       and(
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
@@ -90,3 +101,10 @@ stages:
           targetRepo: input-mapping
           libraryPath: libs/input-mapping
           tagPrefix: input-mapping/
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
+          sourceRepo: platform-libraries
+          targetRepo: output-mapping-erik
+          libraryPath: libs/output-mapping
+          tagPrefix: output-mapping/

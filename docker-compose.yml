@@ -30,3 +30,33 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+
+  dev-staging-provider:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/staging-provider
+    volumes:
+      - .:/code
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL
+
+  ci-staging-provider:
+    profiles: [ci]
+    image: keboola/staging-provider
+    build:
+      context: .
+      target: staging-provider
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL

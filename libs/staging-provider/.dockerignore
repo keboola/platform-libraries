@@ -1,0 +1,6 @@
+/.git/
+/.idea/
+/build/
+/vendor/
+README.md
+composer.lock

@@ -1,0 +1,58 @@
+{
+    "name": "keboola/staging-provider",
+    "license": "MIT",
+    "type": "library",
+    "description": "",
+    "keywords": ["keboola", "staging-provider"],
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\StagingProvider\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\StagingProvider\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": false
+        }
+    },
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "keboola/input-mapping": "dev-main as 16.0.1",
+        "keboola/output-mapping": "^18.0",
+        "keboola/storage-api-client": "^13.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7",
+        "squizlabs/php_codesniffer": "^3.5"
+    },
+    "scripts": {
+        "phpcs": "phpcs --standard=psr2 --ignore=vendor -n src/",
+        "phpunit": "phpunit",
+        "build": [
+            "@phpcs",
+            "@phpunit"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    }
+}

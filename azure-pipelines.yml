@@ -18,10 +18,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider-erik
-    - repository: output-mapping-erik
+    - repository: output-mapping-erik2
       type: github
       endpoint: keboola
-      name: keboola/output-mapping-erik
+      name: keboola/output-mapping-erik2
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -108,6 +108,6 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
           sourceRepo: platform-libraries
-          targetRepo: output-mapping-erik
+          targetRepo: output-mapping-erik2
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/

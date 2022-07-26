@@ -14,10 +14,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/input-mapping
-    - repository: staging-provider-erik
+    - repository: staging-provider-miro
       type: github
       endpoint: keboola
-      name: keboola/staging-provider-erik
+      name: keboola/staging-provider-miro
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -35,6 +35,6 @@ jobs:
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/staging-provider/')
       sourceRepo: platform-libraries
-      targetRepo: staging-provider-erik
+      targetRepo: staging-provider-miro
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/

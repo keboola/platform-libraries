@@ -49,7 +49,7 @@
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
         "phpcs": "phpcs --extensions=php src tests",
         "phpcbf": "phpcbf --extensions=php src tests",
-        "infection": "infection --threads=2 --xdebug.mode=coverage --min-covered-msi=90 --coverage=build/logs",
+        "infection": "XDEBUG_MODE=coverage infection --threads=2 --min-covered-msi=90 --coverage=build/logs",
         "build": [
             "@phpcs",
             "@phpstan",

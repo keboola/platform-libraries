@@ -18,10 +18,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider-erik
-    - repository: output-mapping-erik2
+    - repository: output-mapping-erik
       type: github
       endpoint: keboola
-      name: keboola/output-mapping-erik2
+      name: keboola/output-mapping-erik
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -45,6 +45,6 @@ jobs:
   - template: azure-pipelines/jobs/split-library.yml
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/output-mapping/')
       sourceRepo: platform-libraries
-      targetRepo: output-mapping-erik2
+      targetRepo: output-mapping-erik
       libraryPath: libs/output-mapping
       tagPrefix: output-mapping/

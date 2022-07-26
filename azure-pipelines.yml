@@ -18,6 +18,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider-erik
+    - repository: output-mapping-erik
+      type: github
+      endpoint: keboola
+      name: keboola/output-mapping-erik
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -34,7 +38,9 @@ stages:
           - script: |
               ./bin/ci-find-changes.sh \
                 inputMapping:libs/input-mapping \
-                stagingProvider:libs/staging-provider
+                stagingProvider:libs/staging-provider \
+                outputMapping:libs/output-mapping
+
             displayName: 'Find changes'
             name: findChanges
 
@@ -58,6 +64,13 @@ stages:
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
 
+  - stage: tests_output_mapping
+    displayName: Tests - Output Mapping
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_outputMapping'])
+    jobs:
+      - template: libs/output-mapping/azure-pipelines.tests.yml
+
   - stage: tests_staging_provider
     displayName: Tests - Staging Provider
     dependsOn: build
@@ -67,10 +80,11 @@ stages:
 
   - stage: testsResults
     displayName: Wait for tests results
-    dependsOn: [ tests_input_mapping, tests_staging_provider ]
+    dependsOn: [ tests_input_mapping, tests_output_mapping, tests_staging_provider ]
     condition: |
       and(
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped')
       )
     jobs:

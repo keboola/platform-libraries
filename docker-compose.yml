@@ -46,6 +46,22 @@ services:
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
 
+  dev-output-mapping:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/output-mapping
+    volumes:
+      - .:/code
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL
+
   ci-staging-provider:
     profiles: [ci]
     image: keboola/staging-provider
@@ -54,6 +70,20 @@ services:
       target: staging-provider
     environment:
       - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL
+
+  ci-output-mapping:
+    profiles: [ci]
+    image: keboola/output-mapping
+    build:
+      context: .
+      target: output-mapping
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN

@@ -130,6 +130,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
 
     public function testMetadataWritingErrorTest()
     {
+        $this->markTestSkipped('Temporary skipped due bug in KBC');
         $root = $this->tmp->getTmpFolder();
         file_put_contents($root . "/upload/table55a.csv", "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
 

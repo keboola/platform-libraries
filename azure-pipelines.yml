@@ -44,7 +44,7 @@ stages:
                 inputMapping:libs/input-mapping \
                 stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
-                configucrationVariablesResolver:libs/configuration-variables-resolver
+                configurationVariablesResolver:libs/configuration-variables-resolver
             displayName: 'Find changes'
             name: findChanges
 

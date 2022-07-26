@@ -55,6 +55,6 @@ git update-ref -d refs/tags/SKIP
 
 echo ">> Push to target repo '${TARGET_REPO_URL}'"
 git remote add origin "${TARGET_REPO_URL}"
-git push -v origin --mirror
+git push -v -f origin --mirror
 
 echo ">> Done"

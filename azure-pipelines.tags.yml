@@ -27,7 +27,6 @@ resources:
       endpoint: keboola
       name: keboola/configuration-variables-resolver-new
 
-
 variables:
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
@@ -50,7 +49,7 @@ jobs:
   - template: azure-pipelines/jobs/split-library.yml
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/output-mapping/')
       sourceRepo: platform-libraries
-      targetRepo: output-mapping-erik
+      targetRepo: output-mapping-erik2
       libraryPath: libs/output-mapping
       tagPrefix: output-mapping/
   - template: azure-pipelines/jobs/split-library.yml

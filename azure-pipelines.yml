@@ -131,6 +131,6 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
           sourceRepo: platform-libraries
-          targetRepo: output-mapping-erik
+          targetRepo: output-mapping-erik2
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/

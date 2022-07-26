@@ -88,3 +88,25 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+
+  dev-configuration-variables-resolver:
+    profiles: [ dev ]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/configuration-variables-resolver
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+
+  ci-configuration-variables-resolver:
+    profiles: [ ci ]
+    image: keboola/configuration-variables-resolver
+    build:
+      context: .
+      target: configuration-variables-resolver
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL

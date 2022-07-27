@@ -22,10 +22,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/output-mapping
-    - repository: configuration-variables-resolver-new
+    - repository: configuration-variables-resolver
       type: github
       endpoint: keboola
-      name: keboola/configuration-variables-resolver-new
+      name: keboola/configuration-variables-resolver
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -134,3 +134,10 @@ stages:
           targetRepo: output-mapping
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_configurationVariablesResolver'])
+          sourceRepo: platform-libraries
+          targetRepo: configuration-variables-resolver
+          libraryPath: libs/configuration-variables-resolver
+          tagPrefix: configuration-variables-resolver/

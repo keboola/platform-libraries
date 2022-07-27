@@ -22,10 +22,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/output-mapping
-    - repository: configuration-variables-resolver-new
+    - repository: configuration-variables-resolver
       type: github
       endpoint: keboola
-      name: keboola/configuration-variables-resolver-new
+      name: keboola/configuration-variables-resolver
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -57,6 +57,6 @@ jobs:
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/configuration-variables-resolver/')
       sourceRepo: platform-libraries
-      targetRepo: configuration-variables-resolver-new
+      targetRepo: configuration-variables-resolver
       libraryPath: libs/configuration-variables-resolver
       tagPrefix: configuration-variables-resolver/

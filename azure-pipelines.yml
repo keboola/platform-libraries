@@ -134,3 +134,10 @@ stages:
           targetRepo: output-mapping
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_configurationVariablesResolver'])
+          sourceRepo: platform-libraries
+          targetRepo: configuration-variables-resolver
+          libraryPath: libs/configuration-variables-resolver
+          tagPrefix: configuration-variables-resolver/

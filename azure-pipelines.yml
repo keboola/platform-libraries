@@ -129,8 +129,6 @@ stages:
           tagPrefix: staging-provider/
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
           sourceRepo: platform-libraries
           targetRepo: output-mapping-erik

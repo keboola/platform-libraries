@@ -14,14 +14,14 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/input-mapping
-    - repository: staging-provider-erik
+    - repository: staging-provider
       type: github
       endpoint: keboola
-      name: keboola/staging-provider-erik
-    - repository: output-mapping-erik
+      name: keboola/staging-provider
+    - repository: output-mapping
       type: github
       endpoint: keboola
-      name: keboola/output-mapping-erik
+      name: keboola/output-mapping
     - repository: configuration-variables-resolver-new
       type: github
       endpoint: keboola
@@ -43,14 +43,14 @@ jobs:
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/staging-provider/')
       sourceRepo: platform-libraries
-      targetRepo: staging-provider-erik
+      targetRepo: staging-provider
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/output-mapping/')
       sourceRepo: platform-libraries
-      targetRepo: output-mapping-erik
+      targetRepo: output-mapping
       libraryPath: libs/output-mapping
       tagPrefix: output-mapping/
   - template: azure-pipelines/jobs/split-library.yml

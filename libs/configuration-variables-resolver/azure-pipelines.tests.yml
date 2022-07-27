@@ -1,0 +1,12 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: configuration_variables_resolver_tests
+      displayName: Configuration Variables Resolver Tests
+      serviceName: ci-configuration-variables-resolver
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+      secrets:
+        STORAGE_API_TOKEN: $(VARIABLES_RESOLVER__STORAGE_API_TOKEN)
+        STORAGE_API_TOKEN_MASTER: $(VARIABLES_RESOLVER__STORAGE_API_TOKEN_MASTER)

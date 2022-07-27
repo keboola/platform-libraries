@@ -22,6 +22,11 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/output-mapping-erik
+    - repository: configuration-variables-resolver-new
+      type: github
+      endpoint: keboola
+      name: keboola/configuration-variables-resolver-new
+
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -48,3 +53,10 @@ jobs:
       targetRepo: output-mapping-erik
       libraryPath: libs/output-mapping
       tagPrefix: output-mapping/
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/configuration-variables-resolver/')
+      sourceRepo: platform-libraries
+      targetRepo: configuration-variables-resolver-new
+      libraryPath: libs/configuration-variables-resolver
+      tagPrefix: configuration-variables-resolver/

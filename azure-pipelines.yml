@@ -22,6 +22,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/output-mapping-erik
+    - repository: configuration-variables-resolver-new
+      type: github
+      endpoint: keboola
+      name: keboola/configuration-variables-resolver-new
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -39,8 +43,8 @@ stages:
               ./bin/ci-find-changes.sh \
                 inputMapping:libs/input-mapping \
                 stagingProvider:libs/staging-provider \
-                outputMapping:libs/output-mapping
-
+                outputMapping:libs/output-mapping \
+                configurationVariablesResolver:libs/configuration-variables-resolver
             displayName: 'Find changes'
             name: findChanges
 
@@ -78,14 +82,26 @@ stages:
     jobs:
       - template: libs/staging-provider/azure-pipelines.tests.yml
 
+  - stage: tests_configuration_variables_resolver
+    displayName: Tests - Variables Resolver
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_configurationVariablesResolver'])
+    jobs:
+      - template: libs/configuration-variables-resolver/azure-pipelines.tests.yml
+
   - stage: testsResults
     displayName: Wait for tests results
-    dependsOn: [ tests_input_mapping, tests_output_mapping, tests_staging_provider ]
+    dependsOn:
+      - tests_input_mapping
+      - tests_output_mapping
+      - tests_staging_provider
+      - tests_configuration_variables_resolver
     condition: |
       and(
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_configuration_variables_resolver.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:

@@ -34,8 +34,8 @@
     },
     "require": {
         "php": ">=7.4",
-        "keboola/input-mapping": "dev-main as 16.0.1",
-        "keboola/output-mapping": "^18.0",
+        "keboola/input-mapping": "*@dev",
+        "keboola/output-mapping": "*@dev",
         "keboola/storage-api-client": "^13.0",
         "keboola/storage-api-php-client-branch-wrapper": "^3.0"
     },

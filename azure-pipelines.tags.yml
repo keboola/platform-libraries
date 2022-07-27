@@ -48,6 +48,7 @@ jobs:
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
   - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/output-mapping/')
       sourceRepo: platform-libraries
       targetRepo: output-mapping-erik

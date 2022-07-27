@@ -104,3 +104,10 @@ stages:
           targetRepo: input-mapping
           libraryPath: libs/input-mapping
           tagPrefix: input-mapping/
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_stagingProvider'])
+          sourceRepo: platform-libraries
+          targetRepo: staging-provider-erik
+          libraryPath: libs/staging-provider
+          tagPrefix: staging-provider/

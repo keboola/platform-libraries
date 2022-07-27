@@ -34,7 +34,7 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
-        "keboola/input-mapping": "dev-main",
+        "keboola/input-mapping": "*@dev",
         "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/sanitizer": "^0.1",
         "keboola/storage-api-client": "^13.0",

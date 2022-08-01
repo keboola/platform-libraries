@@ -78,6 +78,7 @@ class TableWriter extends AbstractWriter
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
+        $typedTableEnabled = $configuration['typedTableEnabled'];
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
 
         $loadTableTasks = [];
@@ -93,7 +94,8 @@ class TableWriter extends AbstractWriter
                     $strategy,
                     $mappingSource->getSource(),
                     $config,
-                    $systemMetadata
+                    $systemMetadata,
+                    $typedTableEnabled
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -122,7 +124,8 @@ class TableWriter extends AbstractWriter
         StrategyInterface $strategy,
         SourceInterface $source,
         array $config,
-        array $systemMetadata
+        array $systemMetadata,
+        bool $typedTableEnabled
     ) {
         $hasColumns = !empty($config['columns']);
         if (!$hasColumns && $source->isSliced()) {
@@ -195,7 +198,11 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if (!$destinationTableExists && $hasColumns) {
-            $this->createTable($destination, $config['columns'], $loadOptions);
+            if ($typedTableEnabled) {
+
+            } else {
+                $this->createTable($destination, $config['columns'], $loadOptions);
+            }
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
         } elseif ($destinationTableExists) {
@@ -277,6 +284,15 @@ class TableWriter extends AbstractWriter
             $destination->getTableName(),
             $headerCsvFile,
             $loadOptions
+        );
+    }
+
+    private function createTableDefinition(MappingDestination $destination, array $columnMetadata, array $loadOptions)
+    {
+        $data = $columnMetadata;
+        $this->clientWrapper->getBasicClient()->createTableDefinition(
+            $destination->getBucketId(),
+            $data
         );
     }
 

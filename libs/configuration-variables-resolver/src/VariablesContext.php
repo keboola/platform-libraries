@@ -29,7 +29,7 @@ class VariablesContext
 
     public function __get(string $name): string
     {
-        return $this->values[$name];
+        return (string) $this->values[$name];
     }
 
     public function getMissingVariables(): array

@@ -39,10 +39,12 @@
         "symfony/config": "^4.4|^5.2"
     },
     "require-dev": {
-        "infection/infection": "^0.18.2",
+        "infection/infection": "^0.26",
         "keboola/coding-standard": ">=7.0.2",
-        "phpstan/phpstan": "^0.12.51",
-        "phpunit/phpunit": "^9.5"
+        "phpstan/phpstan": "^1.8",
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/dotenv": "^5.4"
     },
     "scripts": {
         "tests": "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml",
@@ -62,6 +64,7 @@
     },
     "config": {
         "sort-packages": true,
+        "lock": false,
         "process-timeout": 3600,
         "allow-plugins": {
             "infection/extension-installer": true,

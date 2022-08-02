@@ -2,7 +2,8 @@ vendor/
 .idea/
 composer.lock
 /.php_cs.cache
-/.env
+/.env.*.local
+/.env.local
 /build/logs
 /infection.log
 /.phpunit.result.cache

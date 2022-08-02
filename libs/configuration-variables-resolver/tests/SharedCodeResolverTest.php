@@ -58,7 +58,7 @@ class SharedCodeResolverTest extends TestCase
         foreach ($rowsData as $index => $rowData) {
             $row = new ConfigurationRow($configuration);
             $row->setName('runner-test');
-            $row->setRowId($index);
+            $row->setRowId((string) $index);
             $row->setConfiguration($rowData);
             $rowIds[] = $components->addConfigurationRow($row)['id'];
         }

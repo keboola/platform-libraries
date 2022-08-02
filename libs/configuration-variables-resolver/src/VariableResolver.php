@@ -102,6 +102,6 @@ class VariableResolver
             ));
         }
 
-        return $newConfiguration;
+        return (array) $newConfiguration;
     }
 }

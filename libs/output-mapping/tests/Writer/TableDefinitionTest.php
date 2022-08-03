@@ -1,13 +1,11 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-
 use Keboola\Datatype\Definition\GenericStorage;
-use Keboola\DatatypeTest\GenericStorageDatatypeTest;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Exception;
 
 class TableDefinitionTest extends BaseWriterTest
 {
@@ -33,8 +31,8 @@ class TableDefinitionTest extends BaseWriterTest
             $root . "/upload/tableDefinition.csv",
             <<< EOT
             "Id","Name", "birthday", "created"
-            "1","bob","1-1-2001","12-12-2021T16:45:21"
-            "2","alice","2-2-2002","12-12-2020T15:45:21"
+            "1","bob","2001-1-1","2021-12-12 16:45:21"
+            "2","alice","2002-2-2","2020-12-12 15:45:21"
             EOT
         );
         $writer = new TableWriter($this->getStagingFactory());
@@ -46,7 +44,8 @@ class TableDefinitionTest extends BaseWriterTest
                 'mapping' => $config
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            true
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);

@@ -213,7 +213,7 @@ class TableWriter extends AbstractWriter
             foreach ($config['column_metadata'] as $columnName => $metadata) {
                 $tableDefinition->addColumn($columnName, $metadata);
             }
-            $this->createTableDefinition($tableDefinition);
+            $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
         } elseif (!$destinationTableExists && $hasColumns) {

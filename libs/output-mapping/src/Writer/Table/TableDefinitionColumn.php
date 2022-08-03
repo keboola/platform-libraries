@@ -12,16 +12,16 @@ class TableDefinitionColumn
 
     private string $name;
 
-    private ?DefinitionInterface $dataTypeDefinition;
+    private ?DefinitionInterface $dataTypeDefinition = null;
 
     private string $baseType;
 
     public function __construct(string $name, array $metadata)
     {
         $this->name = $name;
-        foreach ($metadata as $key => $value) {
-            if ($key === Common::KBC_METADATA_KEY_BASETYPE) {
-                $this->baseType = $value;
+        foreach ($metadata as $metadatum) {
+            if ($metadatum['key'] === Common::KBC_METADATA_KEY_BASETYPE) {
+                $this->baseType = $metadatum['value'];
             }
         }
     }
@@ -51,8 +51,8 @@ class TableDefinitionColumn
     {
         return [
             'name' => $this->name,
-            'baseType' => $this->baseType,
-            'definition' => $this->dataTypeDefinition ?: $this->dataTypeDefinition->toArray()
+            'basetype' => $this->baseType,
+            'definition' => $this->dataTypeDefinition ? $this->dataTypeDefinition->toArray() : null
         ];
     }
 }

@@ -548,4 +548,34 @@ class VariableResolverTest extends TestCase
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
     }
+
+    public function testResolveVariablesIntegerNameAndValue(): void
+    {
+        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
+            $this->clientWrapper->getBasicClient(),
+            ['variables' => [['name' => 4321, 'type' => 'string']]],
+            []
+        );
+        $configuration = [
+            'variables_id' => $vConfigurationId,
+            'parameters' => ['some_parameter' => 'foo is {{ 4321 }}'],
+        ];
+        $variableResolver = $this->getVariableResolver();
+        $newConfiguration = $variableResolver->resolveVariables(
+            $configuration,
+            null,
+            ['values' => [['name' => 4321, 'value' => 1234]]]
+        );
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'some_parameter' => 'foo is 1234',
+                ],
+                'variables_id' => $vConfigurationId,
+            ],
+            $newConfiguration
+        );
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "4321".'));
+    }
 }

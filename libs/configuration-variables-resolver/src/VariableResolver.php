@@ -75,7 +75,7 @@ class VariableResolver
         $variableNames = [];
         foreach ($variablesConfiguration['variables'] as $variable) {
             $variableNames[] = $variable['name'];
-            if (!$context->__isset($variable['name'])) {
+            if (!$context->__isset((string) $variable['name'])) {
                 throw new UserException(sprintf('No value provided for variable "%s".', $variable['name']));
             }
         }
@@ -102,6 +102,6 @@ class VariableResolver
             ));
         }
 
-        return $newConfiguration;
+        return (array) $newConfiguration;
     }
 }

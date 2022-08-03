@@ -34,6 +34,7 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
+        "keboola/php-datatypes": "^6.0",
         "keboola/input-mapping": "*@dev",
         "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/sanitizer": "^0.1",
@@ -55,7 +56,7 @@
     "scripts": {
         "phplint": "parallel-lint -j 10 --exclude vendor .",
         "phpcs": "phpcs --standard=psr2 --ignore=vendor -n /code",
-        "tests": "phpunit",
+        "tests": "phpunit --filter testCreateTableDefinition",
         "build": [
             "@phplint",
             "@phpcs",

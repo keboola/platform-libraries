@@ -4,10 +4,12 @@ namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\AbstractLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -18,6 +20,8 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
+use Keboola\OutputMapping\Writer\Table\TableDefinition;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -67,18 +71,23 @@ class TableWriter extends AbstractWriter
      * @param array $configuration
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
+     * @param bool $typedTableEnabled
      * @return LoadTableQueue
      * @throws \Exception
      */
-    public function uploadTables($sourcePathPrefix, array $configuration, array $systemMetadata, $stagingStorageOutput)
-    {
+    public function uploadTables(
+        $sourcePathPrefix,
+        array $configuration,
+        array $systemMetadata,
+        $stagingStorageOutput,
+        $typedTableEnabled = false
+    ) {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
-        $typedTableEnabled = $configuration['typedTableEnabled'];
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
 
         $loadTableTasks = [];
@@ -140,8 +149,7 @@ class TableWriter extends AbstractWriter
                 $config['destination']
             ), 0, $e);
         }
-
-        $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
+        $destinationBucketDetails = $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
         try {
@@ -151,7 +159,6 @@ class TableWriter extends AbstractWriter
             if ($e->getCode() !== 404) {
                 throw $e;
             }
-
             $destinationTableInfo = null;
             $destinationTableExists = false;
         }
@@ -197,12 +204,21 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if (!$destinationTableExists && $hasColumns) {
-            if ($typedTableEnabled) {
-
-            } else {
-                $this->createTable($destination, $config['columns'], $loadOptions);
-            }
+        if ($typedTableEnabled && !$destinationTableExists) {
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                $systemMetadata['componentId'],
+                $destinationBucketDetails['backend']
+            );
+            $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+                $destination->getTableName(),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
+                $config['column_metadata']
+            );
+            $this->createTableDefinition($destination, $tableDefinition);
+            $loadTask = new LoadTableTask($destination, $loadOptions);
+            $tableCreated = true;
+        } elseif (!$destinationTableExists && $hasColumns) {
+            $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
         } elseif ($destinationTableExists) {
@@ -246,21 +262,30 @@ class TableWriter extends AbstractWriter
         return $loadTask;
     }
 
-    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata)
+    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata): array
     {
         $destinationBucketId = $destination->getBucketId();
-        $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
+        try {
+            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            $destinationBucketExists = true;
+        } catch (ClientException $e) {
+            if ($e->getCode() == 404) {
+                $destinationBucketExists = false;
+            }
+            throw $e;
+        }
 
         if (!$destinationBucketExists) {
-            $this->createDestinationBucket($destination, $systemMetadata);
+            $destinationBucketDetails = $this->createDestinationBucket($destination, $systemMetadata);
         } else {
             $this->checkDevBucketMetadata($destination);
         }
+        return $destinationBucketDetails;
     }
 
-    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata)
+    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): array
     {
-        $this->clientWrapper->getBasicClient()->createBucket(
+        $bucket = $this->clientWrapper->getBasicClient()->createBucket(
             $destination->getBucketName(),
             $destination->getBucketStage()
         );
@@ -270,6 +295,7 @@ class TableWriter extends AbstractWriter
             TableWriter::SYSTEM_METADATA_PROVIDER,
             $this->getCreatedMetadata($systemMetadata)
         );
+        return $bucket;
     }
 
     private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
@@ -287,12 +313,12 @@ class TableWriter extends AbstractWriter
         );
     }
 
-    private function createTableDefinition(MappingDestination $destination, array $columnMetadata, array $loadOptions)
+    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition)
     {
-        $data = $columnMetadata;
+        $requestData = $tableDefinition->getRequestData();
         $this->clientWrapper->getBasicClient()->createTableDefinition(
             $destination->getBucketId(),
-            $data
+            $requestData
         );
     }
 

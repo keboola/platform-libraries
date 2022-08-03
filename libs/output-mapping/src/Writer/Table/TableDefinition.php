@@ -7,7 +7,10 @@ namespace Keboola\OutputMapping\Writer\Table;
 class TableDefinition
 {
     private string $name;
+
+    /** @var TableDefinitionColumn[] $columns */
     private array $columns;
+
     private array $primaryKeysNames;
 
     public function setName(string $name): self
@@ -37,8 +40,23 @@ class TableDefinition
         return $this->columns;
     }
 
-    public function addColumn(string $name, array $metadata): void
+    public function addColumn(string $name, array $metadata): self
     {
+        $column = new TableDefinitionColumn($name, $metadata);
+        $this->columns[] = $column;
+        return $this;
+    }
 
+    public function getRequestData()
+    {
+        $columns = [];
+        foreach ($this->columns as $column) {
+            $columns[] = $column->toArray();
+        }
+        return [
+            'name' => $this->name,
+            'primaryKeysNames' => $this->primaryKeysNames,
+            'columns' => $columns
+        ];
     }
 }

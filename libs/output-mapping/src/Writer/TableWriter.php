@@ -207,7 +207,12 @@ class TableWriter extends AbstractWriter
         // - sliced files
         if ($typedTableEnabled && !$destinationTableExists) {
             $tableDefinition = (new TableDefinition())->setName($destination->getTableName());
-            $tableDefinition->setPr
+            $tableDefinition->setPrimaryKeysNames(
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])
+            );
+            foreach ($config['column_metadata'] as $columnName => $metadata) {
+                $tableDefinition->addColumn($columnName, $metadata);
+            }
             $this->createTableDefinition($tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
@@ -297,16 +302,12 @@ class TableWriter extends AbstractWriter
         );
     }
 
-    private function createTableDefinition(MappingDestination $destination, array $config)
+    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition)
     {
-        $requestBody = new TableDefinition();
-        $requestBody->setName($destination->getTableName());
-        foreach ($config['column_metadata'] as $columnName => $metadata) {
-            $requestBody->addColumn($metadata);
-        }
+        $requestData = $tableDefinition->getRequestData();
         $this->clientWrapper->getBasicClient()->createTableDefinition(
             $destination->getBucketId(),
-            $config
+            $requestData
         );
     }
 

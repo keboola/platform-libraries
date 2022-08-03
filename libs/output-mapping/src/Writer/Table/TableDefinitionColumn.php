@@ -46,4 +46,13 @@ class TableDefinitionColumn
     {
         return $this->dataTypeDefinition;
     }
+
+    public function toArray()
+    {
+        return [
+            'name' => $this->name,
+            'baseType' => $this->baseType,
+            'definition' => $this->dataTypeDefinition ?: $this->dataTypeDefinition->toArray()
+        ];
+    }
 }

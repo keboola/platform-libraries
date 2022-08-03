@@ -37,7 +37,7 @@
         "keboola/input-mapping": "*@dev",
         "keboola/php-file-storage-utils": "^0.2.2",
         "keboola/sanitizer": "^0.1",
-        "keboola/storage-api-client": "^13.0",
+        "keboola/storage-api-client": "^13.4",
         "keboola/storage-api-php-client-branch-wrapper": "^3.0",
         "microsoft/azure-storage-blob": "^1.5",
         "monolog/monolog": "^1.25.5|^2.0",

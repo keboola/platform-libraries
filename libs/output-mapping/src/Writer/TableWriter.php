@@ -4,10 +4,12 @@ namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\AbstractLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -18,6 +20,7 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
+use Keboola\OutputMapping\Writer\Table\TableDefinition;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -67,18 +70,23 @@ class TableWriter extends AbstractWriter
      * @param array $configuration
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
+     * @param bool $typedTableEnabled
      * @return LoadTableQueue
      * @throws \Exception
      */
-    public function uploadTables($sourcePathPrefix, array $configuration, array $systemMetadata, $stagingStorageOutput)
-    {
+    public function uploadTables(
+        $sourcePathPrefix,
+        array $configuration,
+        array $systemMetadata,
+        $stagingStorageOutput,
+        $typedTableEnabled = false
+    ) {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
-        $typedTableEnabled = $configuration['typedTableEnabled'];
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
 
         $loadTableTasks = [];
@@ -197,12 +205,14 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if (!$destinationTableExists && $hasColumns) {
-            if ($typedTableEnabled) {
-
-            } else {
-                $this->createTable($destination, $config['columns'], $loadOptions);
-            }
+        if ($typedTableEnabled && !$destinationTableExists) {
+            $tableDefinition = (new TableDefinition())->setName($destination->getTableName());
+            $tableDefinition->setPr
+            $this->createTableDefinition($tableDefinition);
+            $loadTask = new LoadTableTask($destination, $loadOptions);
+            $tableCreated = true;
+        } elseif (!$destinationTableExists && $hasColumns) {
+            $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
         } elseif ($destinationTableExists) {
@@ -287,12 +297,16 @@ class TableWriter extends AbstractWriter
         );
     }
 
-    private function createTableDefinition(MappingDestination $destination, array $columnMetadata, array $loadOptions)
+    private function createTableDefinition(MappingDestination $destination, array $config)
     {
-        $data = $columnMetadata;
+        $requestBody = new TableDefinition();
+        $requestBody->setName($destination->getTableName());
+        foreach ($config['column_metadata'] as $columnName => $metadata) {
+            $requestBody->addColumn($metadata);
+        }
         $this->clientWrapper->getBasicClient()->createTableDefinition(
             $destination->getBucketId(),
-            $data
+            $config
         );
     }
 

@@ -64,6 +64,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
      */
     protected function combineSourcesWithMappingsFromConfiguration(array $mappingSources, array $mappings)
     {
+        var_dump($mappings);
         $mappingsBySource = [];
         foreach ($mappings as $mapping) {
             $mappingsBySource[$mapping['source']][] = $mapping;

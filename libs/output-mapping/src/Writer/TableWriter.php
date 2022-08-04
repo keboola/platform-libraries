@@ -21,6 +21,7 @@ use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -204,6 +205,15 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if ($typedTableEnabled && !$destinationTableExists) {
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                $systemMetadata['componentId'],
+                $destinationBucketDetails['backend']
+            );
+            $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+                $destination->getTableName(),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
+                $config['column_metadata']
+            );
             $tableDefinition = (new TableDefinition(
                 $systemMetadata['componentId'],
                 $destinationBucketDetails['backend'])
@@ -211,9 +221,6 @@ class TableWriter extends AbstractWriter
             $tableDefinition->setPrimaryKeysNames(
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])
             );
-            foreach ($config['column_metadata'] as $columnName => $metadata) {
-                $tableDefinition->addColumn($columnName, $metadata);
-            }
             $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;

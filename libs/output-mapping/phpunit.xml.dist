@@ -10,10 +10,16 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
 
-    <testsuite name="Test Suite">
+    <testsuite name="main">
         <directory>tests</directory>
+        <exclude>
+            <file>tests/Writer/TableDefinitionTest.php</file>
+        </exclude>
     </testsuite>
 
+    <testsuite name="native-types">
+        <file>tests/Writer/TableDefinitionTest.php</file>
+    </testsuite>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">.</directory>

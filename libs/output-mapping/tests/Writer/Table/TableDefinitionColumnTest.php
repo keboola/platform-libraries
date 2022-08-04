@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
-use Keboola\OutputMapping\Writer\Table\TableDefinitionColumn;
+use Keboola\Datatype\Definition\Common;
+use Keboola\Datatype\Definition\Exasol;
+use Keboola\Datatype\Definition\MySQL;
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumn;
 use PHPUnit\Framework\TestCase;
 
 class TableDefinitionColumnTest extends TestCase
 {
     /** @dataProvider createTableDefinitionColumnProvider */
-    public function testCreateTableDefinitionColumn(string $name, array $metadata, array $expectedSerialisation): void
-    {
+    public function testCreateTableDefinitionColumn(
+        string $name,
+        ?string $baseType,
+        array $expectedSerialisation
+    ): void {
         self::assertSame(
-            (new TableDefinitionColumn($name, $metadata))->toArray(),
+            (new TableDefinitionColumn($name, $baseType))->toArray(),
             $expectedSerialisation
         );
     }
@@ -22,11 +29,18 @@ class TableDefinitionColumnTest extends TestCase
     {
         yield [
             'testNoMetadata',
-            [],
+            null,
             [
                 'name' => 'testNoMetadata',
                 'basetype' => null,
-                'definition' => null,
+            ],
+        ];
+        yield [
+            'testSnowflakeNative',
+            'STRING',
+            [
+                'name' => 'testSnowflakeNative',
+                'basetype' => 'STRING',
             ],
         ];
     }

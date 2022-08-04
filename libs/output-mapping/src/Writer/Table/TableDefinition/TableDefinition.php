@@ -2,24 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Table;
-
+namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 class TableDefinition
 {
     private string $name;
 
     /** @var TableDefinitionColumn[] $columns */
-    private array $columns;
+    private array $columns = [];
 
     private array $primaryKeysNames;
-
-    private ?string $nativeTypeClass;
-
-    public function __construct(?string $nativeTypeClass)
-    {
-        $this->nativeTypeClass = $nativeTypeClass;
-    }
 
     public function setName(string $name): self
     {
@@ -45,7 +37,7 @@ class TableDefinition
 
     public function addColumn(string $name, array $metadata): self
     {
-        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($this->nativeTypeClass);
+        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory();
         $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $metadata);
         $this->columns[] = $column;
         return $this;

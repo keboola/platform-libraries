@@ -20,8 +20,8 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
-use Keboola\OutputMapping\Writer\Table\TableDefinition;
-use Keboola\OutputMapping\Writer\Table\TableDefinitionFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -149,7 +149,7 @@ class TableWriter extends AbstractWriter
                 $config['destination']
             ), 0, $e);
         }
-        $destinationBucketDetails = $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
+        $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
         try {
@@ -205,10 +205,7 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if ($typedTableEnabled && !$destinationTableExists) {
-            $tableDefinitionFactory = new TableDefinitionFactory(
-                $systemMetadata['componentId'],
-                $destinationBucketDetails['backend']
-            );
+            $tableDefinitionFactory = new TableDefinitionFactory();
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
@@ -262,25 +259,16 @@ class TableWriter extends AbstractWriter
         return $loadTask;
     }
 
-    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata): array
+    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata)
     {
         $destinationBucketId = $destination->getBucketId();
-        try {
-            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
-            $destinationBucketExists = true;
-        } catch (ClientException $e) {
-            if ($e->getCode() == 404) {
-                $destinationBucketExists = false;
-            }
-            throw $e;
-        }
+        $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
 
         if (!$destinationBucketExists) {
-            $destinationBucketDetails = $this->createDestinationBucket($destination, $systemMetadata);
+            $this->createDestinationBucket($destination, $systemMetadata);
         } else {
             $this->checkDevBucketMetadata($destination);
         }
-        return $destinationBucketDetails;
     }
 
     private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): array

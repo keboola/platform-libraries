@@ -4,14 +4,46 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\Datatype\Definition\Synapse;
+
 class TableDefinition
 {
+    public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
+        'snowflake' => Snowflake::class,
+        'synapse' => Synapse::class,
+    ];
+
+    public const BACKEND_COMPONENTS_MAP = [
+        'snowflake' => [
+            'keboola.ex-db-snowflake',
+            'keboola.snowflake-transformation-v2',
+        ],
+        'synapse' => [
+            'keboola.ex-db-synapse',
+            'keboola.synapse-transformation',
+        ],
+        'exasol' => [
+            'keboola.ex-db-exasol',
+            'keboola.exasol-transformation',
+        ],
+    ];
+
     private string $name;
 
     /** @var TableDefinitionColumn[] $columns */
     private array $columns;
 
     private array $primaryKeysNames;
+
+    private ?string $nativeTypeClass;
+
+    public function __construct(string $componentId, string $bucketBackend)
+    {
+        if (in_array($componentId, self::BACKEND_COMPONENTS_MAP[$bucketBackend])) {
+            $this->nativeTypeClass = self::NATIVE_BACKEND_TYPE_CLASS_MAP[$bucketBackend];
+        }
+    }
 
     public function setName(string $name): self
     {
@@ -42,7 +74,7 @@ class TableDefinition
 
     public function addColumn(string $name, array $metadata): self
     {
-        $column = new TableDefinitionColumn($name, $metadata);
+        $column = new TableDefinitionColumn($name, $metadata, $this->nativeTypeClass);
         $this->columns[] = $column;
         return $this;
     }

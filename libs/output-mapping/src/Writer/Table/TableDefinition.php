@@ -36,7 +36,7 @@ class TableDefinition
 
     private array $primaryKeysNames;
 
-    private ?string $nativeTypeClass;
+    private ?string $nativeTypeClass = null;
 
     public function __construct(string $componentId, string $bucketBackend)
     {
@@ -54,11 +54,6 @@ class TableDefinition
     public function getName(): string
     {
         return $this->name;
-    }
-
-    public function getPrimaryKeysNames(): array
-    {
-        return $this->primaryKeysNames;
     }
 
     public function setPrimaryKeysNames(array $primaryKeys): self

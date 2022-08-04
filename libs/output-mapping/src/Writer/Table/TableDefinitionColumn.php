@@ -20,34 +20,39 @@ class TableDefinitionColumn
     {
         $this->name = $name;
         if ($nativeTypeClass) {
-            $type = null;
-            $options = [];
-            foreach ($metadata as $metadatum) {
-                switch ($metadatum['key']) {
-                    case Common::KBC_METADATA_KEY_TYPE:
-                        $type = $metadatum['value'];
-                        break;
-                    case Common::KBC_METADATA_KEY_LENGTH:
-                        $options['length'] = $metadatum['value'];
-                        break;
-                    case Common::KBC_METADATA_KEY_DEFAULT:
-                        $options['default'] = $metadatum['value'];
-                        break;
-                    case Common::KBC_METADATA_KEY_NULLABLE:
-                        $options['nullable'] = $metadatum['value'];
-                        break;
-                    default:
-                        break;
-                }
-            }
-            if ($type) {
-                $this->dataTypeDefinition = new $nativeTypeClass($type, $options);
-            }
+            $this->dataTypeDefinition = $this->getNativeDataType($nativeTypeClass, $metadata);
         }
         foreach ($metadata as $metadatum) {
             if ($metadatum['key'] === Common::KBC_METADATA_KEY_BASETYPE) {
                 $this->baseType = $metadatum['value'];
             }
+        }
+    }
+
+    private function getNativeDataType(string $nativeTypeClass, array $metadata): DefinitionInterface
+    {
+        $type = null;
+        $options = [];
+        foreach ($metadata as $metadatum) {
+            switch ($metadatum['key']) {
+                case Common::KBC_METADATA_KEY_TYPE:
+                    $type = $metadatum['value'];
+                    break;
+                case Common::KBC_METADATA_KEY_LENGTH:
+                    $options['length'] = $metadatum['value'];
+                    break;
+                case Common::KBC_METADATA_KEY_DEFAULT:
+                    $options['default'] = $metadatum['value'];
+                    break;
+                case Common::KBC_METADATA_KEY_NULLABLE:
+                    $options['nullable'] = $metadatum['value'];
+                    break;
+                default:
+                    break;
+            }
+        }
+        if ($type) {
+            return new $nativeTypeClass($type, $options);
         }
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
+use Keboola\Datatype\Definition\Exasol;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\Datatype\Definition\Synapse;
 
@@ -12,6 +13,7 @@ class TableDefinition
     public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
         'snowflake' => Snowflake::class,
         'synapse' => Synapse::class,
+        'exasol' => Exasol::class,
     ];
 
     public const BACKEND_COMPONENTS_MAP = [
@@ -40,7 +42,10 @@ class TableDefinition
 
     public function __construct(string $componentId, string $bucketBackend)
     {
-        if (in_array($componentId, self::BACKEND_COMPONENTS_MAP[$bucketBackend])) {
+        if (
+            array_key_exists($bucketBackend, self::BACKEND_COMPONENTS_MAP) &&
+            in_array($componentId, self::BACKEND_COMPONENTS_MAP[$bucketBackend])
+        ) {
             $this->nativeTypeClass = self::NATIVE_BACKEND_TYPE_CLASS_MAP[$bucketBackend];
         }
     }
@@ -65,6 +70,11 @@ class TableDefinition
     public function getColumns(): array
     {
         return $this->columns;
+    }
+
+    public function getNativeTypeClass(): ?string
+    {
+        return $this->nativeTypeClass;
     }
 
     public function addColumn(string $name, array $metadata): self

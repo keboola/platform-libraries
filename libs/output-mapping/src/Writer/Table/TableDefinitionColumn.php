@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\DefinitionInterface;
-use Keboola\Datatype\Definition\Snowflake;
 
 class TableDefinitionColumn
 {
@@ -15,7 +14,7 @@ class TableDefinitionColumn
 
     private ?DefinitionInterface $dataTypeDefinition = null;
 
-    private string $baseType;
+    private ?string $baseType = null;
 
     public function __construct(string $name, array $metadata, string $nativeTypeClass = null)
     {
@@ -57,7 +56,7 @@ class TableDefinitionColumn
         return $this->name;
     }
 
-    public function getBaseType(): string
+    public function getBaseType(): ?string
     {
         return $this->baseType;
     }

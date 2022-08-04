@@ -55,8 +55,18 @@ class TableDefinitionTest extends TestCase
         ];
     }
 
-    public function testAddColumn(): void
+    public function testAddColumn(TableDefinition $definition, string $columnName, array $metadata): void
     {
+        $definition->addColumn($columnName, $metadata);
+    }
 
+    public function addColumnProvider(): \Generator
+    {
+        yield [
+            new TableDefinition('keboola.ex-db-snowflake', 'snowflake'),
+        ];
+        yield [
+            new TableDefinition('keboola.exasol-transformation', 'exasol'),
+        ];
     }
 }

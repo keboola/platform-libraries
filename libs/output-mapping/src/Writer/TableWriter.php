@@ -214,13 +214,6 @@ class TableWriter extends AbstractWriter
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
                 $config['column_metadata']
             );
-            $tableDefinition = (new TableDefinition(
-                $systemMetadata['componentId'],
-                $destinationBucketDetails['backend'])
-            )->setName($destination->getTableName());
-            $tableDefinition->setPrimaryKeysNames(
-                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])
-            );
             $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;

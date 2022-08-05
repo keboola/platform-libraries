@@ -22,6 +22,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
+
+FROM base AS dev
+WORKDIR /code
+
+
 FROM base AS input-mapping
 
 ENV LIB_NAME=input-mapping
@@ -35,6 +40,7 @@ COPY libs/${LIB_NAME}/composer.json ./
 RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
+
 
 FROM base AS staging-provider
 
@@ -50,6 +56,7 @@ RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
 
+
 FROM base AS output-mapping
 
 ENV LIB_NAME=output-mapping
@@ -63,6 +70,7 @@ COPY libs/${LIB_NAME}/composer.json ./
 RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
+
 
 FROM base AS configuration-variables-resolver
 
@@ -78,5 +86,17 @@ RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
 
-FROM base AS dev
-WORKDIR /code
+
+FROM base AS logging-bundle
+
+ENV LIB_NAME=logging-bundle
+ENV LIB_HOME=/code/libs/${LIB_NAME}
+
+ARG COMPOSER_MIRROR_PATH_REPOS=1
+
+WORKDIR ${LIB_HOME}
+
+COPY libs/${LIB_NAME}/composer.json ./
+RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
+COPY libs/${LIB_NAME} ./
+RUN composer install $COMPOSER_FLAGS

@@ -1,0 +1,12 @@
+parameters:
+    level: max
+    checkMissingIterableValueType: false
+    paths:
+        - src
+        - tests
+
+    ignoreErrors:
+        - '#^Used function DDTrace\\[\w\\]+ not found\.$#'
+
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon

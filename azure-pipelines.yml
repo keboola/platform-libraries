@@ -42,6 +42,7 @@ stages:
           - script: |
               ./bin/ci-find-changes.sh \
                 inputMapping:libs/input-mapping \
+                loggingBundle:libs/logging-bundle \
                 stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
                 configurationVariablesResolver:libs/configuration-variables-resolver
@@ -67,6 +68,13 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
+
+  - stage: tests_loggingBundle
+    displayName: Tests - Logging Bundle
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_loggingBundle'])
+    jobs:
+      - template: libs/logging-bundle/azure-pipelines.tests.yml
 
   - stage: tests_output_mapping
     displayName: Tests - Output Mapping
@@ -99,6 +107,7 @@ stages:
     condition: |
       and(
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_configuration_variables_resolver.result, 'Succeeded', 'Skipped')

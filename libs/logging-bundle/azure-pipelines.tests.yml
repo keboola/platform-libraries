@@ -1,0 +1,4 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      serviceName: ci-logging-bundle

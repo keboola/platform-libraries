@@ -1,0 +1,49 @@
+{
+    "name": "keboola/logging-bundle",
+    "description": "Keboola Logging Bundle",
+    "type": "symfony-bundle",
+    "require": {
+        "symfony/monolog-bundle": "^3.8",
+        "symfony/http-kernel": "^5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-phpunit": "^1.1",
+        "keboola/coding-standard": "^14.0",
+        "sempro/phpunit-pretty-print": "^1.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Keboola\\LoggingBundle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "lock": false
+    },
+    "scripts": {
+        "tests": "phpunit",
+        "phpstan": "phpstan analyse -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "build": [
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    }
+}

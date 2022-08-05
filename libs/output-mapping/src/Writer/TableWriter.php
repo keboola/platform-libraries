@@ -271,9 +271,9 @@ class TableWriter extends AbstractWriter
         }
     }
 
-    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): array
+    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata)
     {
-        $bucket = $this->clientWrapper->getBasicClient()->createBucket(
+        $this->clientWrapper->getBasicClient()->createBucket(
             $destination->getBucketName(),
             $destination->getBucketStage()
         );
@@ -283,7 +283,6 @@ class TableWriter extends AbstractWriter
             TableWriter::SYSTEM_METADATA_PROVIDER,
             $this->getCreatedMetadata($systemMetadata)
         );
-        return $bucket;
     }
 
     private function createTable(MappingDestination $destination, array $columns, array $loadOptions)

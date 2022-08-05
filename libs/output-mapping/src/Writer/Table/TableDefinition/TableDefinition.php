@@ -11,7 +11,7 @@ class TableDefinition
     /** @var TableDefinitionColumn[] $columns */
     private array $columns = [];
 
-    private array $primaryKeysNames;
+    private array $primaryKeysNames = [];
 
     public function setName(string $name): self
     {

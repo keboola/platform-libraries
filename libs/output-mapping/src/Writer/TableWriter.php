@@ -204,7 +204,7 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($typedTableEnabled && !$destinationTableExists) {
+        if ($typedTableEnabled && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
             $tableDefinitionFactory = new TableDefinitionFactory();
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),

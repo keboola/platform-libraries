@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\LoggingBundle;
+namespace Keboola\LoggingBundle\Monolog;
 
 use Monolog\Processor\ProcessorInterface;
 
@@ -12,10 +12,6 @@ class DataDogContextProcessor implements ProcessorInterface
 {
     public function __invoke(array $record): array
     {
-        if (!function_exists('DDTrace\current_context')) {
-            return $record;
-        }
-
         $context = current_context();
 
         $record['dd'] = [

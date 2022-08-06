@@ -18,7 +18,7 @@
   <php>
     <ini name="error_reporting" value="-1"/>
     <server name="SHELL_VERBOSITY" value="-1"/>
-    <server name="KERNEL_CLASS" value="\App\Kernel"/>
+    <server name="KERNEL_CLASS" value="\Keboola\LoggingBundle\Tests\KeboolaLoggingBundleTestingKernel"/>
     <env name="APP_ENV" value="test" force="true"/>
   </php>
   <testsuites>

@@ -127,6 +127,8 @@ services:
       context: .
       target: dev
     working_dir: /code/libs/logging-bundle
+    volumes:
+      - .:/code
 
   ci-logging-bundle:
     profiles: [ ci ]

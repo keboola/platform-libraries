@@ -3,20 +3,27 @@
     "description": "Keboola Logging Bundle",
     "type": "symfony-bundle",
     "require": {
-        "symfony/monolog-bundle": "^3.8",
-        "symfony/http-kernel": "^5.4"
+        "symfony/dependency-injection": "^5.4",
+        "symfony/monolog-bundle": "^3.8"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
+        "keboola/coding-standard": "^14.0",
         "phpstan/phpstan": "^1.8",
         "phpstan/phpstan-phpunit": "^1.1",
-        "keboola/coding-standard": "^14.0",
-        "sempro/phpunit-pretty-print": "^1.4"
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/framework-bundle": "^5.4",
+        "symfony/yaml": "^5.4"
     },
     "license": "MIT",
     "autoload": {
         "psr-4": {
             "Keboola\\LoggingBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\LoggingBundle\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -29,6 +36,7 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
+        "sort-packages": true,
         "lock": false
     },
     "scripts": {

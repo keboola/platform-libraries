@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Tests\Writer\Table;
+namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\Exasol;

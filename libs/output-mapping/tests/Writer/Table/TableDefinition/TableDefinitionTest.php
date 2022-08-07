@@ -10,9 +10,11 @@ use PHPUnit\Framework\TestCase;
 
 class TableDefinitionTest extends TestCase
 {
+    /** @dataProvider addColumnProvider */
     public function testAddColumn(TableDefinition $definition, string $columnName, array $metadata): void
     {
         $definition->addColumn($columnName, $metadata);
+        $this->assertEquals();
     }
 
     public function addColumnProvider(): \Generator

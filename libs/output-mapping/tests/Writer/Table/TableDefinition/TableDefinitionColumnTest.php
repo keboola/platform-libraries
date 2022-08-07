@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
-use Keboola\Datatype\Definition\Common;
-use Keboola\Datatype\Definition\Exasol;
-use Keboola\Datatype\Definition\MySQL;
-use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumn;
 use PHPUnit\Framework\TestCase;
 

@@ -4,10 +4,12 @@ namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\AbstractLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -18,6 +20,8 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -67,11 +71,17 @@ class TableWriter extends AbstractWriter
      * @param array $configuration
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
+     * @param bool $createTypedTables
      * @return LoadTableQueue
      * @throws \Exception
      */
-    public function uploadTables($sourcePathPrefix, array $configuration, array $systemMetadata, $stagingStorageOutput)
-    {
+    public function uploadTables(
+        $sourcePathPrefix,
+        array $configuration,
+        array $systemMetadata,
+        $stagingStorageOutput,
+        $createTypedTables = false
+    ) {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
@@ -93,7 +103,8 @@ class TableWriter extends AbstractWriter
                     $strategy,
                     $mappingSource->getSource(),
                     $config,
-                    $systemMetadata
+                    $systemMetadata,
+                    $createTypedTables
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -122,7 +133,8 @@ class TableWriter extends AbstractWriter
         StrategyInterface $strategy,
         SourceInterface $source,
         array $config,
-        array $systemMetadata
+        array $systemMetadata,
+        bool $createTypedTables
     ) {
         $hasColumns = !empty($config['columns']);
         if (!$hasColumns && $source->isSliced()) {
@@ -137,7 +149,6 @@ class TableWriter extends AbstractWriter
                 $config['destination']
             ), 0, $e);
         }
-
         $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
@@ -148,7 +159,6 @@ class TableWriter extends AbstractWriter
             if ($e->getCode() !== 404) {
                 throw $e;
             }
-
             $destinationTableInfo = null;
             $destinationTableExists = false;
         }
@@ -194,7 +204,17 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if (!$destinationTableExists && $hasColumns) {
+        if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
+            $tableDefinitionFactory = new TableDefinitionFactory();
+            $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+                $destination->getTableName(),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
+                $config['column_metadata']
+            );
+            $this->createTableDefinition($destination, $tableDefinition);
+            $loadTask = new LoadTableTask($destination, $loadOptions);
+            $tableCreated = true;
+        } elseif (!$destinationTableExists && $hasColumns) {
             $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
@@ -277,6 +297,15 @@ class TableWriter extends AbstractWriter
             $destination->getTableName(),
             $headerCsvFile,
             $loadOptions
+        );
+    }
+
+    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition)
+    {
+        $requestData = $tableDefinition->getRequestData();
+        $this->clientWrapper->getBasicClient()->createTableDefinition(
+            $destination->getBucketId(),
+            $requestData
         );
     }
 

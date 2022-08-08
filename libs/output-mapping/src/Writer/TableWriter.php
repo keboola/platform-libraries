@@ -71,7 +71,7 @@ class TableWriter extends AbstractWriter
      * @param array $configuration
      * @param array $systemMetadata
      * @param string $stagingStorageOutput
-     * @param bool $typedTableEnabled
+     * @param bool $createTypedTables
      * @return LoadTableQueue
      * @throws \Exception
      */
@@ -80,7 +80,7 @@ class TableWriter extends AbstractWriter
         array $configuration,
         array $systemMetadata,
         $stagingStorageOutput,
-        $typedTableEnabled = false
+        $createTypedTables = false
     ) {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
@@ -104,7 +104,7 @@ class TableWriter extends AbstractWriter
                     $mappingSource->getSource(),
                     $config,
                     $systemMetadata,
-                    $typedTableEnabled
+                    $createTypedTables
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -134,7 +134,7 @@ class TableWriter extends AbstractWriter
         SourceInterface $source,
         array $config,
         array $systemMetadata,
-        bool $typedTableEnabled
+        bool $createTypedTables
     ) {
         $hasColumns = !empty($config['columns']);
         if (!$hasColumns && $source->isSliced()) {
@@ -204,7 +204,7 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($typedTableEnabled && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
+        if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
             $tableDefinitionFactory = new TableDefinitionFactory();
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),

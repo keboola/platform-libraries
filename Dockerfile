@@ -85,18 +85,3 @@ COPY libs/${LIB_NAME}/composer.json ./
 RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 COPY libs/${LIB_NAME} ./
 RUN composer install $COMPOSER_FLAGS
-
-
-FROM base AS logging-bundle
-
-ENV LIB_NAME=logging-bundle
-ENV LIB_HOME=/code/libs/${LIB_NAME}
-
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
-COPY libs/${LIB_NAME} ./
-RUN composer install $COMPOSER_FLAGS

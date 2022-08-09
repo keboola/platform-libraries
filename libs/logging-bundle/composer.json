@@ -3,6 +3,7 @@
     "description": "Keboola Logging Bundle",
     "type": "symfony-bundle",
     "require": {
+        "monolog/monolog": "^2.0",
         "symfony/dependency-injection": "^5.4|^6.0",
         "symfony/monolog-bundle": "^3.8"
     },

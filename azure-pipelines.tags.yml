@@ -14,6 +14,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/input-mapping
+    - repository: logging-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/logging-bundle
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -39,6 +43,15 @@ jobs:
       targetRepo: input-mapping
       libraryPath: libs/input-mapping
       tagPrefix: input-mapping/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/logging-bundle/')
+      sourceRepo: platform-libraries
+      targetRepo: logging-bundle
+      libraryPath: libs/logging-bundle
+      tagPrefix: logging-bundle/
+
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/staging-provider/')
@@ -46,6 +59,7 @@ jobs:
       targetRepo: staging-provider
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
+
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/output-mapping/')
@@ -53,6 +67,7 @@ jobs:
       targetRepo: output-mapping
       libraryPath: libs/output-mapping
       tagPrefix: output-mapping/
+
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/configuration-variables-resolver/')

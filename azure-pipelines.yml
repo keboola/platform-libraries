@@ -14,6 +14,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/input-mapping
+    - repository: logging-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/logging-bundle
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -129,6 +133,15 @@ stages:
           targetRepo: input-mapping
           libraryPath: libs/input-mapping
           tagPrefix: input-mapping/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_loggingBundle'])
+          sourceRepo: platform-libraries
+          targetRepo: logging-bundle
+          libraryPath: libs/logging-bundle
+          tagPrefix: logging-bundle/
+
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_stagingProvider'])
@@ -136,6 +149,7 @@ stages:
           targetRepo: staging-provider
           libraryPath: libs/staging-provider
           tagPrefix: staging-provider/
+
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
@@ -143,6 +157,7 @@ stages:
           targetRepo: output-mapping
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/
+
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_configurationVariablesResolver'])

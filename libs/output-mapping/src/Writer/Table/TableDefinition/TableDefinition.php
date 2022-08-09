@@ -13,6 +13,13 @@ class TableDefinition
 
     private array $primaryKeysNames = [];
 
+    private ?string $nativeTypeClass;
+
+    public function __construct(?string $nativeTypeClass)
+    {
+        $this->nativeTypeClass = $nativeTypeClass;
+    }
+
     public function setName(string $name): self
     {
         $this->name = $name;
@@ -37,7 +44,7 @@ class TableDefinition
 
     public function addColumn(string $name, array $metadata): self
     {
-        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory();
+        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($this->nativeTypeClass);
         $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $metadata);
         $this->columns[] = $column;
         return $this;

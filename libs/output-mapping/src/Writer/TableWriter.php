@@ -149,7 +149,8 @@ class TableWriter extends AbstractWriter
                 $config['destination']
             ), 0, $e);
         }
-        $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
+
+        $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
         try {
@@ -205,7 +206,10 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
-            $tableDefinitionFactory = new TableDefinitionFactory();
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                array_key_exists('metadata', $config) ? $config['metadata'] : [],
+                $destinationBucket['backend']
+            );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
@@ -259,21 +263,29 @@ class TableWriter extends AbstractWriter
         return $loadTask;
     }
 
-    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata)
+    private function ensureDestinationBucket(MappingDestination $destination, array $systemMetadata): array
     {
         $destinationBucketId = $destination->getBucketId();
-        $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
 
+        try {
+            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            $destinationBucketExists = true;
+        } catch (ClientException $e) {
+            if ($e->getCode() == 404) {
+                $destinationBucketExists = false;
+            }
+        }
         if (!$destinationBucketExists) {
-            $this->createDestinationBucket($destination, $systemMetadata);
+            $destinationBucketDetails = $this->createDestinationBucket($destination, $systemMetadata);
         } else {
             $this->checkDevBucketMetadata($destination);
         }
+        return $destinationBucketDetails;
     }
 
-    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata)
+    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): array
     {
-        $this->clientWrapper->getBasicClient()->createBucket(
+        $bucketId = $this->clientWrapper->getBasicClient()->createBucket(
             $destination->getBucketName(),
             $destination->getBucketStage()
         );
@@ -283,6 +295,8 @@ class TableWriter extends AbstractWriter
             TableWriter::SYSTEM_METADATA_PROVIDER,
             $this->getCreatedMetadata($systemMetadata)
         );
+
+        return $this->clientWrapper->getBasicClient()->getBucket($bucketId);
     }
 
     private function createTable(MappingDestination $destination, array $columns, array $loadOptions)

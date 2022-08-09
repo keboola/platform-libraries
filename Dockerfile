@@ -17,10 +17,12 @@ RUN apt update -q \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer \
+ && composer global config allow-plugins.symfony/flex true \
+ && composer global require --no-progress --no-scripts --no-plugins symfony/flex
 
 RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+ && docker-php-ext-enable xdebug
 
 
 FROM base AS dev

@@ -55,8 +55,8 @@ class TableDefinitionColumnFactory
                     break;
             }
         }
-        if ($type) {
-            return new $this->nativDatatypeClass($type, $options);
+        if ($type && $this->nativeDatatypeClass) {
+            return new $this->nativeDatatypeClass($type, $options);
         }
         return null;
     }

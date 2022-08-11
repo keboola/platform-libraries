@@ -11,7 +11,7 @@ class TableDefinitionColumn
 
     private string $name;
 
-    private DefinitionInterface $dataTypeDefinition;
+    private ?DefinitionInterface $dataTypeDefinition;
 
     private ?string $baseType;
 
@@ -39,10 +39,14 @@ class TableDefinitionColumn
 
     public function toArray()
     {
-        return [
+        $output = [
             'name' => $this->name,
-            'basetype' => $this->baseType,
-            'definition' => $this->dataTypeDefinition ? $this->dataTypeDefinition->toArray() : null
         ];
+        if ($this->dataTypeDefinition) {
+            $output['dataTypeDefinition'] = $this->dataTypeDefinition->toArray()
+        } elseif ($this->baseType) {
+            $output['basetype'] = $this->baseType;
+        }
+        return $output;
     }
 }

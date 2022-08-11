@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Keboola\Datatype\Definition\GenericStorage;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumn;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +27,7 @@ class TableDefinitionTest extends TestCase
     public function addColumnProvider(): \Generator
     {
         yield [
-            new TableDefinition(),
+            new TableDefinition(Snowflake::class),
             'testColumn',
             (new GenericStorage('varchar', ['length' => '25']))->toMetadata(),
             new TableDefinitionColumn('testColumn', 'STRING'),

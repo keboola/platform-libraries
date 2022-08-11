@@ -43,7 +43,7 @@ class TableDefinitionColumn
             'name' => $this->name,
         ];
         if ($this->dataTypeDefinition) {
-            $output['dataTypeDefinition'] = $this->dataTypeDefinition->toArray()
+            $output['definition'] = $this->dataTypeDefinition->toArray();
         } elseif ($this->baseType) {
             $output['basetype'] = $this->baseType;
         }

@@ -72,8 +72,7 @@ class TableDefinitionTest extends BaseWriterTest
                     'birthday' => (new GenericStorage('date'))->toMetadata(),
                     'created' => (new GenericStorage('timestamp'))->toMetadata(),
                 ],
-                // FIXME: Enable this once https://keboola.atlassian.net/browse/KBC-2850 is fixed
-                // 'primary_key' => ['Id', 'Name'],
+                'primary_key' => ['Id', 'Name'],
             ],
             true,
             [

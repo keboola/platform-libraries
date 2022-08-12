@@ -206,6 +206,7 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
+
             $tableDefinitionFactory = new TableDefinitionFactory(
                 array_key_exists('metadata', $config) ? $config['metadata'] : [],
                 $destinationBucket['backend']
@@ -263,29 +264,35 @@ class TableWriter extends AbstractWriter
         return $loadTask;
     }
 
+    /**
+     * @param MappingDestination $destination
+     * @param array $systemMetadata
+     * @return array{id: string, backend: string}
+     * @throws ClientException
+     */
     private function ensureDestinationBucket(MappingDestination $destination, array $systemMetadata): array
     {
         $destinationBucketId = $destination->getBucketId();
-
         try {
             $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
-            $destinationBucketExists = true;
         } catch (ClientException $e) {
             if ($e->getCode() == 404) {
-                $destinationBucketExists = false;
+                // bucket doesn't exist so we need to create it
+                $this->createDestinationBucket($destination, $systemMetadata);
+                $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
             }
         }
-        if (!$destinationBucketExists) {
-            $destinationBucketDetails = $this->createDestinationBucket($destination, $systemMetadata);
-        } else {
-            $this->checkDevBucketMetadata($destination);
-        }
-        return $destinationBucketDetails;
+        $this->checkDevBucketMetadata($destination);
+
+        return [
+            'id' => $destinationBucketDetails['id'],
+            'backend' => $destinationBucketDetails['backend'],
+        ];
     }
 
-    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): array
+    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): void
     {
-        $bucketId = $this->clientWrapper->getBasicClient()->createBucket(
+        $this->clientWrapper->getBasicClient()->createBucket(
             $destination->getBucketName(),
             $destination->getBucketStage()
         );
@@ -295,8 +302,6 @@ class TableWriter extends AbstractWriter
             TableWriter::SYSTEM_METADATA_PROVIDER,
             $this->getCreatedMetadata($systemMetadata)
         );
-
-        return $this->clientWrapper->getBasicClient()->getBucket($bucketId);
     }
 
     private function createTable(MappingDestination $destination, array $columns, array $loadOptions)

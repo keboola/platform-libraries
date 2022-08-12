@@ -6,11 +6,18 @@ namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\DefinitionInterface;
+use phpDocumentor\Reflection\Types\ClassString;
 
 class TableDefinitionColumnFactory
 {
+    /**
+     * @var class-string<DefinitionInterface>|null
+     */
     private ?string $nativeDatatypeClass;
 
+    /**
+     * @param class-string<DefinitionInterface>|null $nativeDataTypeClass
+     */
     public function __construct(?string $nativeDataTypeClass)
     {
         $this->nativeDatatypeClass = $nativeDataTypeClass;

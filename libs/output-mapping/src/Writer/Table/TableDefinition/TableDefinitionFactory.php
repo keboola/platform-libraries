@@ -10,7 +10,7 @@ use Keboola\Datatype\Definition\Synapse;
 
 class TableDefinitionFactory
 {
-    public const NATIVE_TYPE_METADATA_KEY = 'kbc.datatype.source';
+    public const NATIVE_TYPE_METADATA_KEY = 'kbc.datatype.backend';
 
     public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
         'snowflake' => Snowflake::class,

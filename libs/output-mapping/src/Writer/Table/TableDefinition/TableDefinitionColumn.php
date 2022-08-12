@@ -37,7 +37,7 @@ class TableDefinitionColumn
         return $this->dataTypeDefinition;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         $output = [
             'name' => $this->name,

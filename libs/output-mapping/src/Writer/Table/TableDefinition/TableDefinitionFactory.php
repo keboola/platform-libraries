@@ -10,14 +10,6 @@ use Keboola\Datatype\Definition\Synapse;
 
 class TableDefinitionFactory
 {
-    public const NATIVE_TYPE_METADATA_KEY = 'kbc.datatype.backend';
-
-    public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
-        'snowflake' => Snowflake::class,
-        'synapse' => Synapse::class,
-        'exasol' => Exasol::class,
-    ];
-
     private array $tableMetadata;
 
     private string $backendType;
@@ -30,34 +22,17 @@ class TableDefinitionFactory
 
     public function createTableDefinition(string $tableName, array $primaryKeys, array $columnMetadata): TableDefinition
     {
-
-        $tableDefinition = new TableDefinition($this->getNativeDatatypeClass());
+        $tableDefinition = new TableDefinition();
         $tableDefinition->setName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
         foreach ($columnMetadata as $columnName => $metadata) {
-            $tableDefinition->addColumn($columnName, $metadata);
+            $tableDefinition->addColumn(
+                $columnName,
+                $columnMetadata,
+                $this->tableMetadata,
+                $this->backendType
+            );
         }
         return $tableDefinition;
-    }
-
-    private function getNativeDatatypeClass(): ?string
-    {
-        $dataTypeSource = $this->getDatatypeSourceFromMetadata($this->tableMetadata);
-        if ($dataTypeSource === $this->backendType &&
-            array_key_exists($dataTypeSource, self::NATIVE_BACKEND_TYPE_CLASS_MAP)
-        ) {
-            return self::NATIVE_BACKEND_TYPE_CLASS_MAP[$this->backendType];
-        }
-        return null;
-    }
-
-    private function getDatatypeSourceFromMetadata(array $metadata): ?string
-    {
-        foreach ($metadata as $metadatum) {
-            if ($metadatum['key'] === self::NATIVE_TYPE_METADATA_KEY) {
-                return $metadatum['value'];
-            }
-        }
-        return null;
     }
 }

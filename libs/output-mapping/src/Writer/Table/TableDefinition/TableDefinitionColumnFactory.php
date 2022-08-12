@@ -6,28 +6,42 @@ namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\DefinitionInterface;
-use phpDocumentor\Reflection\Types\ClassString;
+use Keboola\Datatype\Definition\Exasol;
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\Datatype\Definition\Synapse;
 
 class TableDefinitionColumnFactory
 {
+    public const NATIVE_TYPE_METADATA_KEY = 'KBC.datatype.backend';
+
+    public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
+        'snowflake' => Snowflake::class,
+        'synapse' => Synapse::class,
+        'exasol' => Exasol::class,
+    ];
+
     /**
      * @var class-string<DefinitionInterface>|null
      */
     private ?string $nativeDatatypeClass;
 
-    /**
-     * @param class-string<DefinitionInterface>|null $nativeDataTypeClass
-     */
-    public function __construct(?string $nativeDataTypeClass)
+    public function __construct(array $tableMetadata, string $backend)
     {
-        $this->nativeDatatypeClass = $nativeDataTypeClass;
+        $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
     }
 
-    public function createTableDefinitionColumn($columnName, $metadata): TableDefinitionColumn
+    public function createTableDefinitionColumn($columnName, $metadata): TableDefinitionColumnInterface
     {
-        $baseType = $this->getBaseTypeFromMetadata($metadata);
-        $nativeDataType = $this->getNativeDataType($metadata);
-        return new TableDefinitionColumn($columnName, $nativeDataType, $baseType);
+        if ($this->nativeDatatypeClass) {
+            return new NativeTableDefinitionColumn(
+                $columnName,
+                $this->getNativeDataType($metadata)
+            );
+        }
+        return new BaseTypeTableDefinitionColumn(
+            $columnName,
+            $this->getBaseTypeFromMetadata($metadata)
+        );
     }
 
     private function getBaseTypeFromMetadata(array $metadata): ?string
@@ -62,8 +76,29 @@ class TableDefinitionColumnFactory
                     break;
             }
         }
-        if ($type && $this->nativeDatatypeClass) {
+        if ($type) {
             return new $this->nativeDatatypeClass($type, $options);
+        }
+        return null;
+    }
+
+    private function getNativeDatatypeClass(array $tableMetadata, string $backend): ?string
+    {
+        $dataTypeBackend = $this->getDatatypeBackendFromMetadata($tableMetadata);
+        if ($dataTypeBackend === $backend &&
+            array_key_exists($dataTypeBackend, self::NATIVE_BACKEND_TYPE_CLASS_MAP)
+        ) {
+            return self::NATIVE_BACKEND_TYPE_CLASS_MAP[$backend];
+        }
+        return null;
+    }
+
+    private function getDatatypeBackendFromMetadata(array $metadata): ?string
+    {
+        foreach ($metadata as $metadatum) {
+            if ($metadatum['key'] === self::NATIVE_TYPE_METADATA_KEY) {
+                return $metadatum['value'];
+            }
         }
         return null;
     }

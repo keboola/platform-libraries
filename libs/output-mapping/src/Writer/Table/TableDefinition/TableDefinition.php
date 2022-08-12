@@ -8,17 +8,10 @@ class TableDefinition
 {
     private string $name;
 
-    /** @var TableDefinitionColumn[] $columns */
+    /** @var TableDefinitionColumnInterface[] $columns */
     private array $columns = [];
 
     private array $primaryKeysNames = [];
-
-    private ?string $nativeTypeClass;
-
-    public function __construct(?string $nativeTypeClass)
-    {
-        $this->nativeTypeClass = $nativeTypeClass;
-    }
 
     public function setName(string $name): self
     {
@@ -42,10 +35,14 @@ class TableDefinition
         return $this->columns;
     }
 
-    public function addColumn(string $name, array $metadata): self
-    {
-        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($this->nativeTypeClass);
-        $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $metadata);
+    public function addColumn(
+        string $name,
+        array $columnMetadata,
+        array $tableMetadata,
+        string $backendType
+    ): self {
+        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
+        $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $columnMetadata);
         $this->columns[] = $column;
         return $this;
     }

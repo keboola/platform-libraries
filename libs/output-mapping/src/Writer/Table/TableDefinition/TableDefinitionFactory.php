@@ -42,9 +42,9 @@ class TableDefinitionFactory
 
     private function getNativeDatatypeClass(): ?string
     {
-        $dataTupeSource = $this->getDatatypeSourceFromMetadata($this->tableMetadata);
-        if ($dataTupeSource === $this->backendType &&
-            array_key_exists($dataTupeSource, self::NATIVE_BACKEND_TYPE_CLASS_MAP)
+        $dataTypeSource = $this->getDatatypeSourceFromMetadata($this->tableMetadata);
+        if ($dataTypeSource === $this->backendType &&
+            array_key_exists($dataTypeSource, self::NATIVE_BACKEND_TYPE_CLASS_MAP)
         ) {
             return self::NATIVE_BACKEND_TYPE_CLASS_MAP[$this->backendType];
         }

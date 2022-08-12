@@ -207,7 +207,7 @@ class TableWriter extends AbstractWriter
         // - sliced files
         if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
             $tableDefinitionFactory = new TableDefinitionFactory(
-                array_key_exists('metadata', $config) ? $config['metadata'] : [],
+                $config['metadata'] ?? [],
                 $destinationBucket['backend']
             );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Result;
 
 use Keboola\OutputMapping\Table\Result\Metrics;
@@ -8,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class MetricsTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $jobResults = [
             [

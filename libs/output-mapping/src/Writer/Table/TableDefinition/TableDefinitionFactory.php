@@ -28,7 +28,7 @@ class TableDefinitionFactory
         foreach ($columnMetadata as $columnName => $metadata) {
             $tableDefinition->addColumn(
                 $columnName,
-                $columnMetadata,
+                $metadata,
                 $this->tableMetadata,
                 $this->backendType
             );

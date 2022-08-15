@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\TableWriter;
 
@@ -91,7 +92,7 @@ class TableDefinitionTest extends BaseWriterTest
                 'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'metadata' => [
                     [
-                        'key' => TableDefinitionFactory::NATIVE_TYPE_METADATA_KEY,
+                        'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
                         'value' => 'snowflake',
                     ],
                 ],

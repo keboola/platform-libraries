@@ -12,7 +12,11 @@ class TableMetrics
 
     public function __construct(array $jobResult)
     {
-        $this->tableId = (string) $jobResult['tableId'];
+        $this->tableId = $jobResult['operationName'] === 'tableCreate'
+            ? (string) $jobResult['results']['id']
+            : (string) $jobResult['tableId']
+        ;
+
         $this->compressedBytes = (int) $jobResult['metrics']['inBytes'];
         $this->uncompressedBytes = (int) $jobResult['metrics']['inBytesUncompressed'];
     }

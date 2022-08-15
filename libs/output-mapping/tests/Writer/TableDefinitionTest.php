@@ -8,7 +8,6 @@ use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends BaseWriterTest
@@ -54,15 +53,19 @@ class TableDefinitionTest extends BaseWriterTest
         $this->assertEquals($shouldBeTypedTable, $tableDetails['isTyped']);
         if (!empty($expectedTypes)) {
             self::assertDataType($tableDetails['columnMetadata']['Id'], $expectedTypes['Id']);
+            self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], $expectedTypes['Id']);
             self::assertDataType($tableDetails['columnMetadata']['Name'], $expectedTypes['Name']);
+            self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], $expectedTypes['Name']);
             self::assertDataType($tableDetails['columnMetadata']['birthweight'], $expectedTypes['birthweight']);
+            self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], $expectedTypes['birthweight']);
             self::assertDataType($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
+            self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
         }
     }
 
     public function configProvider(): \Generator
     {
-        yield [
+        yield 'base types' => [
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => 'out.c-output-mapping.tableDefinition',
@@ -84,8 +87,7 @@ class TableDefinitionTest extends BaseWriterTest
             ],
         ];
 
-        // test native snowflake types
-        yield [
+        yield 'native snowflake types' => [
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => 'out.c-output-mapping.tableDefinition',
@@ -137,7 +139,8 @@ class TableDefinitionTest extends BaseWriterTest
                 ],
             ],
         ];
-        yield [
+
+        yield 'no types' => [
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => 'out.c-output-mapping.tableDefinition',
@@ -150,16 +153,22 @@ class TableDefinitionTest extends BaseWriterTest
         ];
     }
 
-    private static function assertDataType($metadata, $expectedType): void
+    private static function assertDataType(array $metadata, array $expectedType): void
     {
-        $typeFound = false;
         foreach ($metadata as $metadatum) {
             if ($metadatum['key'] === Common::KBC_METADATA_KEY_TYPE
                 && $metadatum['provider'] === 'storage'
             ) {
                 self::assertSame($expectedType['type'], $metadatum['value']);
-                $typeFound = true;
+                return;
             }
+        }
+        self::fail('Metadata key ' . Common::KBC_METADATA_KEY_TYPE . ' not found');
+    }
+
+    private static function assertDataTypeDefinition(array $metadata, array $expectedType): void
+    {
+        foreach ($metadata as $metadatum) {
             if ($metadatum['key'] === Common::KBC_METADATA_KEY_LENGTH
                 && array_key_exists('length', $expectedType)
                 && $metadatum['provider'] === 'storage'
@@ -172,9 +181,6 @@ class TableDefinitionTest extends BaseWriterTest
             ) {
                 self::assertEquals($expectedType['nullable'], $metadatum['value']);
             }
-        }
-        if (!$typeFound) {
-            self::fail('Metadata key ' . Common::KBC_METADATA_KEY_TYPE . ' not found');
         }
     }
 }

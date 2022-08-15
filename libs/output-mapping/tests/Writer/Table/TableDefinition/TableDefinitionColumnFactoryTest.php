@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
-use Keboola\Datatype\Definition\DefinitionInterface;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
@@ -14,11 +13,12 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
     /** @dataProvider createTableDefinitionColumnProfider */
     public function testFactoryCreateTableDefinitionColumn(
         string $columnName,
-        ?string $nativeTypeClass,
         array $columnMetadata,
+        array $tableMetadata,
+        string $backendType,
         array $expectedSerialisation
     ): void {
-        $columnFactory = new TableDefinitionColumnFactory($nativeTypeClass);
+        $columnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
         $column = $columnFactory->createTableDefinitionColumn($columnName, $columnMetadata);
         $this->assertSame($expectedSerialisation, $column->toArray());
     }
@@ -27,6 +27,7 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
     {
         yield [
             'testNoDefinitionUseBaseType',
+            [],
             null,
             (new GenericStorage('varchar'))->toMetadata(),
             [

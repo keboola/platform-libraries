@@ -13,6 +13,7 @@ class MetricsTest extends TestCase
         $jobResults = [
             [
                 'tableId' => 'in.c-output-mapping-test.test',
+                'operationName' => 'tableImport',
                 'metrics' => [
                     'inBytesUncompressed' => 123,
                     'inBytes' => 0,
@@ -20,6 +21,7 @@ class MetricsTest extends TestCase
             ],
             [
                 'tableId' => 'in.c-output-mapping-test.test',
+                'operationName' => 'tableImport',
                 'metrics' => [
                     'inBytesUncompressed' => 0,
                     'inBytes' => 321,

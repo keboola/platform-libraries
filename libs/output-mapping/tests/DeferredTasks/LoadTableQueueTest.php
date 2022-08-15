@@ -6,6 +6,7 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use PHPUnit\Framework\TestCase;
@@ -83,15 +84,24 @@ class LoadTableQueueTest extends TestCase
             );
         }
 
-        $tables = $loadQueue->getTableResult()->getTables();
+        $tablesResult = $loadQueue->getTableResult();
+
+        $tables = $tablesResult->getTables();
         self::assertCount(0, iterator_to_array($tables));
+
+        $tablesMetrics = $tablesResult->getMetrics()->getTableMetrics();
+        self::assertCount(0, iterator_to_array($tablesMetrics));
     }
 
     /**
      * @dataProvider waitForAllData
      */
-    public function testWaitForAll($expectedTableId, $jobResult)
-    {
+    public function testWaitForAll(
+        array $jobResult,
+        string $expectedTableId,
+        int $expectedCompressedBytes,
+        int $expectedUncompressedBytes
+    ): void {
         $storageApiMock = $this->createMock(Client::class);
 
         $storageApiMock->expects($this->once())
@@ -117,7 +127,7 @@ class LoadTableQueueTest extends TestCase
             ->method('startImport')
         ;
 
-        $loadTask->expects($this->atLeastOnce())
+        $loadTask->expects($this->once())
             ->method('getStorageJobId')
             ->willReturn(123)
         ;
@@ -133,34 +143,58 @@ class LoadTableQueueTest extends TestCase
         $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
         $loadQueue->waitForAll();
 
-        /** @var TableInfo $table */
-        $tables = iterator_to_array($loadQueue->getTableResult()->getTables());
+        $tablesResult = $loadQueue->getTableResult();
+
+        $tables = iterator_to_array($tablesResult->getTables());
         self::assertCount(1, $tables);
 
+        /** @var TableInfo $table */
         $table = reset($tables);
         self::assertSame($expectedTableId, $table->getId());
+
+        $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        self::assertCount(1, $tablesMetrics);
+
+        /** @var TableMetrics $tableMetric */
+        $tableMetric = reset($tablesMetrics);
+        self::assertSame($expectedTableId, $tableMetric->getTableId());
+        self::assertSame($expectedCompressedBytes, $tableMetric->getCompressedBytes());
+        self::assertSame($expectedUncompressedBytes, $tableMetric->getUncompressedBytes());
     }
 
     public function waitForAllData()
     {
         yield [
-            'in.c-myBucket.tableImported',
             [
                 'operationName' => 'tableImport',
                 'status' => 'success',
                 'tableId' => 'in.c-myBucket.tableImported',
+                'metrics' => [
+                    'inBytes' => 123,
+                    'inBytesUncompressed' => 0,
+                ]
             ],
+            'in.c-myBucket.tableImported',
+            123,
+            0,
         ];
 
         yield [
-            'in.c-myBucket.tableCreated',
             [
                 'operationName' => 'tableCreate',
+                'tableId' => null,
                 'status' => 'success',
                 'results' => [
                     'id' => 'in.c-myBucket.tableCreated',
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 5,
                 ]
             ],
+            'in.c-myBucket.tableCreated',
+            0,
+            5,
         ];
     }
 }

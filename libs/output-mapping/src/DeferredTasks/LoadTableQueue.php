@@ -42,9 +42,11 @@ class LoadTableQueue
 
         $jobIds = [];
         $errors = [];
+        $jobResults = [];
         foreach ($this->loadTableTasks as $task) {
-            $jobIds[] = $task->getStorageJobId();
-            $jobResult = $this->client->waitForJob($task->getStorageJobId());
+            $jobId = $task->getStorageJobId();
+            $jobIds[] = $jobId;
+            $jobResult = $this->client->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
@@ -54,13 +56,18 @@ class LoadTableQueue
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
                         $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
+                        $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
                         $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['results']['id'])));
+                        $jobResults[] = $jobResult;
                         break;
                 }
             }
         }
+
+        $this->tableResult->setMetrics($jobResults);
+
         if ($errors) {
             throw new InvalidOutputException(implode("\n", $errors));
         }

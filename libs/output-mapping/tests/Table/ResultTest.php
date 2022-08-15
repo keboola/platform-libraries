@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Table;
 
 use Keboola\InputMapping\Table\Result\TableInfo;
@@ -8,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class ResultTest extends TestCase
 {
-    public function testAddTable()
+    public function testAddTable(): void
     {
         $tablesResult = new Result();
 
@@ -68,5 +70,49 @@ class ResultTest extends TestCase
         $table1 = array_pop($tables);
         self::assertSame('in.c-main.table', $table1->getId());
         self::assertSame($expectedImportData, $table1->getLastImportDate());
+    }
+
+    public function testSetResults(): void
+    {
+        $tablesResult = new Result();
+
+        $tablesResult->setMetrics([
+            [
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => 'in.c-myBucket.tableImported',
+                'metrics' => [
+                    'inBytes' => 123,
+                    'inBytesUncompressed' => 0,
+                ]
+            ],
+            [
+                'operationName' => 'tableCreate',
+                'tableId' => null,
+                'status' => 'success',
+                'results' => [
+                    'id' => 'in.c-myBucket.tableCreated',
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 5,
+                ]
+            ],
+        ]);
+
+        /** @var Result\TableMetrics[] $tablesMetrics */
+        $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        self::assertCount(2, $tablesMetrics);
+
+        [$table1Metrics, $table2Metrics] = $tablesMetrics;
+
+        self::assertSame('in.c-myBucket.tableImported', $table1Metrics->getTableId());
+        self::assertSame(123, $table1Metrics->getCompressedBytes());
+        self::assertSame(0, $table1Metrics->getUncompressedBytes());
+
+        self::assertSame('in.c-myBucket.tableCreated', $table2Metrics->getTableId());
+        self::assertSame(0, $table2Metrics->getCompressedBytes());
+        self::assertSame(5, $table2Metrics->getUncompressedBytes());
+
     }
 }

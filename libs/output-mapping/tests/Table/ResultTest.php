@@ -113,6 +113,5 @@ class ResultTest extends TestCase
         self::assertSame('in.c-myBucket.tableCreated', $table2Metrics->getTableId());
         self::assertSame(0, $table2Metrics->getCompressedBytes());
         self::assertSame(5, $table2Metrics->getUncompressedBytes());
-
     }
 }

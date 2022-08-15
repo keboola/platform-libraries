@@ -82,6 +82,9 @@ class TableDefinitionColumnFactory
         return null;
     }
 
+    /**
+     * @return class-string<DefinitionInterface>|null
+     */
     private function getNativeDatatypeClass(array $tableMetadata, string $backend): ?string
     {
         $dataTypeBackend = $this->getDatatypeBackendFromMetadata($tableMetadata);

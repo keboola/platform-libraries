@@ -25,22 +25,28 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
 
     public function createTableDefinitionColumnProfider(): \Generator
     {
-        yield [
-            'testNoDefinitionUseBaseType',
-            [],
-            null,
-            (new GenericStorage('varchar'))->toMetadata(),
-            [
+        yield 'simple basetype' =>[
+            'columnName' => 'testNoDefinitionUseBaseType',
+            'columnMetadata' => (new GenericStorage('varchar'))->toMetadata(),
+            'tableMetadata' => [],
+            'backendType' => 'snowflake',
+            'expectedSerialisation' => [
                 'name' => 'testNoDefinitionUseBaseType',
                 'basetype' => 'STRING',
             ],
         ];
 
-        yield [
-            'testTime',
-            Snowflake::class,
-            (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
-            [
+        yield 'snowflake native' => [
+            'columnName' => 'testTime',
+            'columnMetadata' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+            'tableMetadata' => [
+                [
+                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'value' => 'snowflake',
+                ],
+            ],
+            'backendType' => 'snowflake',
+            'expectedSerialisation' => [
                 'name' => 'testTime',
                 'definition' => [
                     'type' => Snowflake::TYPE_TIME,
@@ -50,25 +56,28 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
             ],
         ];
 
-        yield [
-            'testPreferNativeType',
-            Snowflake::class,
-            (new Snowflake(Snowflake::TYPE_TEXT, ['nullable' => false, 'length' => '123']))->toMetadata(),
-            [
-                'name' => 'testPreferNativeType',
-                'definition' => [
-                    'type' => Snowflake::TYPE_TEXT, // in snowflake, Text is just an alias for Varchar.
-                    'length' => '123',
-                    'nullable' => false,
-                ],
+        yield 'snowflake native missing tableMetadata' => [
+            'columnName' => 'testNativeToBaseType',
+            'columnMetadata' => (new Snowflake(Snowflake::TYPE_TEXT, ['nullable' => false, 'length' => '123']))->toMetadata(),
+            'tableMetadata' => [],
+            'backendType' => 'snowflake',
+            'expectedSerialisation' => [
+                'name' => 'testNativeToBaseType',
+                'basetype' => 'STRING',
             ],
         ];
 
-        yield [
-            'testDecimalWithLength',
-            Snowflake::class,
-            (new Snowflake(Snowflake::TYPE_DECIMAL, ['nullable' => false, 'length' => '10,2']))->toMetadata(),
-            [
+        yield 'full native type definition' => [
+            'columnName' => 'testDecimalWithLength',
+            'columnMetadata' => (new Snowflake(Snowflake::TYPE_DECIMAL, ['nullable' => false, 'length' => '10,2']))->toMetadata(),
+            'tableMetadata' => [
+                [
+                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'value' => 'snowflake',
+                ],
+            ],
+            'backendType' => 'snowflake',
+            'expectedSerialisation' => [
                 'name' => 'testDecimalWithLength',
                 'definition' => [
                     'type' => Snowflake::TYPE_DECIMAL,

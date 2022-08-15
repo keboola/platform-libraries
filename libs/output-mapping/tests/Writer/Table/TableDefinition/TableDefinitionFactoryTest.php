@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use PhpUnit\Framework\TestCase;
 
@@ -67,7 +68,7 @@ class TableDefinitionFactoryTest extends TestCase
         yield [
             [
                 [
-                    'key' => TableDefinitionFactory::NATIVE_TYPE_METADATA_KEY,
+                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
                     'value' => 'snowflake',
                 ],
             ],

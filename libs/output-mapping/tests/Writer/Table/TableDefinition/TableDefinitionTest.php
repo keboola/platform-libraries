@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
-use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
-use Keboola\Datatype\Definition\Snowflake;
 use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\NativeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnInterface;
 use PHPUnit\Framework\TestCase;

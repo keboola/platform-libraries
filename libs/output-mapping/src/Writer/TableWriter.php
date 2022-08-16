@@ -149,7 +149,8 @@ class TableWriter extends AbstractWriter
                 $config['destination']
             ), 0, $e);
         }
-        $this->ensureValidDestinationBucketExists($destination, $systemMetadata);
+
+        $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
 
         $storageApiClient = $this->clientWrapper->getBasicClient();
         try {
@@ -205,7 +206,10 @@ class TableWriter extends AbstractWriter
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
         if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
-            $tableDefinitionFactory = new TableDefinitionFactory();
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                $config['metadata'] ?? [],
+                $destinationBucket['backend']
+            );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
@@ -259,19 +263,33 @@ class TableWriter extends AbstractWriter
         return $loadTask;
     }
 
-    private function ensureValidDestinationBucketExists(MappingDestination $destination, array $systemMetadata)
+    /**
+     * @param MappingDestination $destination
+     * @param array $systemMetadata
+     * @return array{id: string, backend: string}
+     * @throws ClientException
+     */
+    private function ensureDestinationBucket(MappingDestination $destination, array $systemMetadata): array
     {
         $destinationBucketId = $destination->getBucketId();
-        $destinationBucketExists = $this->clientWrapper->getBasicClient()->bucketExists($destinationBucketId);
-
-        if (!$destinationBucketExists) {
-            $this->createDestinationBucket($destination, $systemMetadata);
-        } else {
+        try {
+            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
             $this->checkDevBucketMetadata($destination);
+        } catch (ClientException $e) {
+            if ($e->getCode() == 404) {
+                // bucket doesn't exist so we need to create it
+                $this->createDestinationBucket($destination, $systemMetadata);
+                $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            }
         }
+
+        return [
+            'id' => $destinationBucketDetails['id'],
+            'backend' => $destinationBucketDetails['backend'],
+        ];
     }
 
-    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata)
+    private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): void
     {
         $this->clientWrapper->getBasicClient()->createBucket(
             $destination->getBucketName(),

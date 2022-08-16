@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\GenericStorage;
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use PhpUnit\Framework\TestCase;
 
@@ -12,30 +14,34 @@ class TableDefinitionFactoryTest extends TestCase
 {
     /** @dataProvider createTableDefinitionProvider */
     public function testFactoryCreateTableDefinition(
+        array $tableMetadata,
+        string $backendType,
         string $tableName,
         array $primaryKeyNames,
         array $columnMetadata,
         array $expectedSerialization
     ): void {
-        $tableDefinitionFactory = new TableDefinitionFactory();
+        $tableDefinitionFactory = new TableDefinitionFactory($tableMetadata, $backendType);
         $tableDefinition = $tableDefinitionFactory->createTableDefinition($tableName, $primaryKeyNames, $columnMetadata);
         $this->assertSame($expectedSerialization, $tableDefinition->getRequestData());
     }
 
     public function createTableDefinitionProvider(): \Generator
     {
-        yield [
-            'basicTable',
-            [
+        yield 'base type test' => [
+            'tableMetadata' => [],
+            'backendType' => 'snowflake',
+            'tableName' => 'basicTable',
+            'primaryKeyNames' => [
                 'one', 'two',
             ],
-            [
+            'columnMetadata' => [
                 'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
                 'Name' => (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
                 'birthday' => (new GenericStorage('date'))->toMetadata(),
                 'created' => (new GenericStorage('timestamp'))->toMetadata(),
             ],
-            [
+            'expectedSerialisation' => [
                 'name' => 'basicTable',
                 'primaryKeysNames' => ['one', 'two'],
                 'columns' => [
@@ -54,6 +60,64 @@ class TableDefinitionFactoryTest extends TestCase
                     [
                         'name' => 'created',
                         'basetype' => 'TIMESTAMP'
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'test using native types' => [
+            'tableMetadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'snowflake',
+                ],
+            ],
+            'backendType' => 'snowflake',
+            'tableName' => 'snowflakeNativeTable',
+            'primaryKeyNames' => [
+                'one', 'two',
+            ],
+            'columnMetadata' => [
+                'Id' => (new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]))->toMetadata(),
+                'Name' => (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
+                'birthtime' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
+            ],
+            'expectedSerialisation' => [
+                'name' => 'snowflakeNativeTable',
+                'primaryKeysNames' => ['one', 'two'],
+                'columns' => [
+                    [
+                        'name' => 'Id',
+                        'definition' => [
+                            'type' => 'INTEGER',
+                            'length' => null,
+                            'nullable' => false,
+                        ]
+                    ],
+                    [
+                        'name' => 'Name',
+                        'definition' => [
+                            'type' => 'TEXT',
+                            'length' => '127',
+                            'nullable' => true,
+                        ]
+                    ],
+                    [
+                        'name' => 'birthtime',
+                        'definition' => [
+                            'type' => 'TIME',
+                            'length' => null,
+                            'nullable' => true,
+                        ]
+                    ],
+                    [
+                        'name' => 'created',
+                        'definition' => [
+                            'type' => 'TIMESTAMP_TZ',
+                            'length' => null,
+                            'nullable' => true,
+                        ]
                     ],
                 ],
             ],

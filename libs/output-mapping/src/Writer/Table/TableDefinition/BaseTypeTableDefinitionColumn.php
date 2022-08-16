@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
-class TableDefinitionColumn
+use Keboola\Datatype\Definition\DefinitionInterface;
+
+class BaseTypeTableDefinitionColumn implements TableDefinitionColumnInterface
 {
+    private string $baseType;
 
     private string $name;
 
-    private ?string $baseType;
-
-    public function __construct(string $name, ?string $baseType)
+    public function __construct(string $name, string $baseType)
     {
         $this->name = $name;
         $this->baseType = $baseType;
@@ -22,12 +23,12 @@ class TableDefinitionColumn
         return $this->name;
     }
 
-    public function getBaseType(): ?string
+    public function getBaseType(): string
     {
         return $this->baseType;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'name' => $this->name,

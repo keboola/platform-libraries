@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends BaseWriterTest
 {
-    /**
-     * @dataProvider configProvider
-     */
-    public function testWriterCreateTableDefinition(array $config, bool $shouldBeTypedTable): void
+    public function testNotCreateTableDefinition(): void
     {
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => 'out.c-output-mapping.tableDefinition',
+            'columns' => ['Id', 'Name', 'birthweight', 'created'],
+            'column_metadata' => [],
+            'primary_key' => ['Id', 'Name'],
+        ];
         try {
             $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
         } catch (\Throwable $exception) {
@@ -25,8 +31,8 @@ class TableDefinitionTest extends BaseWriterTest
         file_put_contents(
             $root . "/upload/tableDefinition.csv",
             <<< EOT
-            "1","bob","2001-1-1","2021-12-12 16:45:21"
-            "2","alice","2002-2-2","2020-12-12 15:45:21"
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
             EOT
         );
         $writer = new TableWriter($this->getStagingFactory());
@@ -42,38 +48,169 @@ class TableDefinitionTest extends BaseWriterTest
             true
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
         $tableDetails = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
-        $this->assertEquals($shouldBeTypedTable, $tableDetails['isTyped']);
+        self::assertFalse($tableDetails['isTyped']);
+    }
+
+    /**
+     * @dataProvider configProvider
+     */
+    public function testWriterCreateTableDefinition(
+        array $config,
+        array $expectedTypes
+    ): void {
+        try {
+            $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
+        } catch (\Throwable $exception) {
+            if ($exception->getCode() !== 404) {
+                throw $exception;
+            }
+        }
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents(
+            $root . "/upload/tableDefinition.csv",
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT
+        );
+        $writer = new TableWriter($this->getStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'typedTableEnabled' => true,
+                'mapping' => [$config]
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            true
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], $expectedTypes['Id']);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], $expectedTypes['Name']);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], $expectedTypes['birthweight']);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
     }
 
     public function configProvider(): \Generator
     {
-        yield [
+        yield 'base types' => [
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => 'out.c-output-mapping.tableDefinition',
-                'columns' => ['Id', 'Name', 'birthday', 'created'],
+                'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'column_metadata' => [
                     'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
                     'Name' => (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
-                    'birthday' => (new GenericStorage('date'))->toMetadata(),
+                    'birthweight' => (new GenericStorage('decimal', ['length' => '5,2']))->toMetadata(),
                     'created' => (new GenericStorage('timestamp'))->toMetadata(),
                 ],
-                // FIXME: Enable this once https://keboola.atlassian.net/browse/KBC-2850 is fixed
-                // 'primary_key' => ['Id', 'Name'],
+                'primary_key' => ['Id', 'Name'],
             ],
-            true,
+            [
+                'Id' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,0', // default integer length
+                    'nullable' => false,
+                ],
+                'Name' => [
+                    'type' => Snowflake::TYPE_VARCHAR,
+                    'length' => '16777216', // default varchar length
+                    'nullable' => false,
+                ],
+                'birthweight' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,0',
+                    'nullable' => true,
+                ],
+                'created' => [
+                    'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+                    'length' => '9',
+                    'nullable' => true,
+                ],
+            ],
         ];
-        yield [
+
+        yield 'native snowflake types' => [
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => 'out.c-output-mapping.tableDefinition',
-                'columns' => ['Id', 'Name', 'birthday', 'created'],
-                'column_metadata' => [],
+                'columns' => ['Id', 'Name', 'birthweight', 'created'],
+                'metadata' => [
+                    [
+                        'key' => 'KBC.datatype.backend',
+                        'value' => 'snowflake',
+                    ],
+                ],
+                'column_metadata' => [
+                    'Id' => (new Snowflake(
+                        Snowflake::TYPE_INTEGER,
+                        ['nullable' => false]
+                    ))->toMetadata(),
+                    'Name' => (new Snowflake(
+                        Snowflake::TYPE_TEXT,
+                        ['length' => '17', 'nullable' => false]
+                    ))->toMetadata(),
+                    'birthweight' => (new Snowflake(Snowflake::TYPE_DECIMAL, ['length' => '10,2']))->toMetadata(),
+                    'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
+                ],
                 'primary_key' => ['Id', 'Name'],
             ],
-            false,
+            [
+                // INTEGER is an alias of NUMBER in snflk and describe returns the root type
+                'Id' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,0', // default integer length
+                    'nullable' => false,
+                ],
+                // likewise TEXT is an alias of VARCHAR
+                'Name' => [
+                    'type' => Snowflake::TYPE_VARCHAR,
+                    'length' => '17',
+                    'nullable' => false,
+                ],
+                'birthweight' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '10,2',
+                    'nullable' => true,
+                ],
+                // this one stays the same because it is not an alias
+                'created' => [
+                    'type' => Snowflake::TYPE_TIMESTAMP_TZ,
+                    'length' => '9', // timestamp_tz has length 9 apparently
+                    'nullable' => true,
+                ],
+            ],
         ];
+    }
+
+    private static function assertDataTypeDefinition(array $metadata, array $expectedType): void
+    {
+        $typeMetadata = array_values(array_filter($metadata, function ($metadatum) {
+            return $metadatum['key'] === Common::KBC_METADATA_KEY_TYPE
+                && $metadatum['provider'] === 'storage';
+        }));
+        self::assertCount(1, $typeMetadata);
+        self::assertSame($expectedType['type'], $typeMetadata[0]['value']);
+
+        $lengthMetadata = array_values(array_filter($metadata, function ($metadatum) {
+            return $metadatum['key'] === Common::KBC_METADATA_KEY_LENGTH
+                && $metadatum['provider'] === 'storage';
+        }));
+        self::assertCount(1, $lengthMetadata);
+        self::assertSame($expectedType['length'], $lengthMetadata[0]['value']);
+
+        $nullableMetadata = array_values(array_filter($metadata, function ($metadatum) {
+            return $metadatum['key'] === Common::KBC_METADATA_KEY_NULLABLE
+            && $metadatum['provider'] === 'storage';
+        }));
+        self::assertCount(1, $nullableMetadata);
+        self::assertEquals($expectedType['nullable'], $nullableMetadata[0]['value']);
     }
 }

@@ -5,31 +5,56 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Keboola\Datatype\Definition\GenericStorage;
+use Keboola\Datatype\Definition\Synapse;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\NativeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumn;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnInterface;
 use PHPUnit\Framework\TestCase;
 
 class TableDefinitionTest extends TestCase
 {
-    /** @dataProvider addColumnProvider */
+    /** @dataProvider addTableDefinitionColumnProvider */
     public function testAddTableDefinitionColumn(
         TableDefinition $definition,
+        array $tableMetadata,
         string $columnName,
-        array $metadata,
-        TableDefinitionColumn $expectedColumn
+        array $columnMetadata,
+        string $backendType,
+        TableDefinitionColumnInterface $expectedColumn
     ): void {
-        $definition->addColumn($columnName, $metadata);
-        $this->assertCount(1, $definition->getColumns());
-        $this->assertEquals($expectedColumn, $definition->getColumns()[0]);
+        $definition->addColumn($columnName, $columnMetadata, $tableMetadata, $backendType);
+        self::assertCount(1, $definition->getColumns());
+        self::assertEquals($expectedColumn, $definition->getColumns()[0]);
     }
 
-    public function addColumnProvider(): \Generator
+    public function addTableDefinitionColumnProvider(): \Generator
     {
-        yield [
-            new TableDefinition(),
-            'testColumn',
-            (new GenericStorage('varchar', ['length' => '25']))->toMetadata(),
-            new TableDefinitionColumn('testColumn', 'STRING'),
+        yield 'basetype test' => [
+            'tableDefinition' => new TableDefinition(),
+            'tableMetadata' => [],
+            'columnName' => 'testColumn',
+            'columnMetadata' => (new GenericStorage('varchar', ['length' => '25']))->toMetadata(),
+            'backendType' => 'snowflake',
+            'expectedColumn' => new BaseTypeTableDefinitionColumn('testColumn', 'STRING'),
+        ];
+
+        yield 'native type test' => [
+            'tableDefinition' => new TableDefinition(),
+            'tableMetadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'synapse',
+                ],
+            ],
+            'columnName' => 'testColumn',
+            'columnMetadata' => (new Synapse('varchar', ['length' => '25']))->toMetadata(),
+            'backendType' => 'synapse',
+            'expectedColumn' => new NativeTableDefinitionColumn(
+                'testColumn',
+                new Synapse('varchar', ['length' => '25'])
+            ),
         ];
     }
 }

@@ -8,7 +8,7 @@ class TableDefinition
 {
     private string $name;
 
-    /** @var TableDefinitionColumn[] $columns */
+    /** @var TableDefinitionColumnInterface[] $columns */
     private array $columns = [];
 
     private array $primaryKeysNames = [];
@@ -35,10 +35,14 @@ class TableDefinition
         return $this->columns;
     }
 
-    public function addColumn(string $name, array $metadata): self
-    {
-        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory();
-        $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $metadata);
+    public function addColumn(
+        string $name,
+        array $columnMetadata,
+        array $tableMetadata,
+        string $backendType
+    ): self {
+        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
+        $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $columnMetadata);
         $this->columns[] = $column;
         return $this;
     }

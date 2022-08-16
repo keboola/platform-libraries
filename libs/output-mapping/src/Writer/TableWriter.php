@@ -274,6 +274,7 @@ class TableWriter extends AbstractWriter
         $destinationBucketId = $destination->getBucketId();
         try {
             $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            $this->checkDevBucketMetadata($destination);
         } catch (ClientException $e) {
             if ($e->getCode() == 404) {
                 // bucket doesn't exist so we need to create it
@@ -281,7 +282,6 @@ class TableWriter extends AbstractWriter
                 $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
             }
         }
-        $this->checkDevBucketMetadata($destination);
 
         return [
             'id' => $destinationBucketDetails['id'],

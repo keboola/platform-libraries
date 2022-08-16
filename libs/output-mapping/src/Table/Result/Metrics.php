@@ -9,12 +9,10 @@ use Generator;
 class Metrics
 {
     /** @var TableMetrics[] */
-    private array $metrics;
+    private array $metrics = [];
 
     public function __construct(array $jobResults)
     {
-        $this->metrics = [];
-
         foreach ($jobResults as $jobResult) {
             $this->metrics[] = new TableMetrics($jobResult);
         }

@@ -76,7 +76,7 @@ class ResultTest extends TestCase
     {
         $tablesResult = new Result();
 
-        $tablesResult->setMetrics([
+        $tablesResult->setMetrics(new Result\Metrics([
             [
                 'operationName' => 'tableImport',
                 'status' => 'success',
@@ -98,7 +98,7 @@ class ResultTest extends TestCase
                     'inBytesUncompressed' => 5,
                 ]
             ],
-        ]);
+        ]));
 
         /** @var Result\TableMetrics[] $tablesMetrics */
         $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());

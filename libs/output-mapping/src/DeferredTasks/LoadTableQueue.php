@@ -5,6 +5,7 @@ namespace Keboola\OutputMapping\DeferredTasks;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
+use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
@@ -66,7 +67,7 @@ class LoadTableQueue
             }
         }
 
-        $this->tableResult->setMetrics($jobResults);
+        $this->tableResult->setMetrics(new Metrics($jobResults));
 
         if ($errors) {
             throw new InvalidOutputException(implode("\n", $errors));

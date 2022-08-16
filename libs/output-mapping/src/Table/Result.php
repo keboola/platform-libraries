@@ -27,9 +27,9 @@ class Result
         }
     }
 
-    public function setMetrics(array $jobResults): void
+    public function setMetrics(Metrics $metrics): void
     {
-        $this->metrics = new Metrics($jobResults);
+        $this->metrics = $metrics;
     }
 
     public function getMetrics(): Metrics

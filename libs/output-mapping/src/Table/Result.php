@@ -32,7 +32,7 @@ class Result
         $this->metrics = $metrics;
     }
 
-    public function getMetrics(): Metrics
+    public function getMetrics(): ?Metrics
     {
         return $this->metrics;
     }

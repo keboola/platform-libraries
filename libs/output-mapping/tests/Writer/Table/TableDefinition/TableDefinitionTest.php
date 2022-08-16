@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 class TableDefinitionTest extends TestCase
 {
-    /** @dataProvider addColumnProvider */
+    /** @dataProvider addTableDefinitionColumnProvider */
     public function testAddTableDefinitionColumn(
         TableDefinition $definition,
         array $tableMetadata,
@@ -25,11 +25,11 @@ class TableDefinitionTest extends TestCase
         TableDefinitionColumnInterface $expectedColumn
     ): void {
         $definition->addColumn($columnName, $columnMetadata, $tableMetadata, $backendType);
-        $this->assertCount(1, $definition->getColumns());
-        $this->assertEquals($expectedColumn, $definition->getColumns()[0]);
+        self::assertCount(1, $definition->getColumns());
+        self::assertEquals($expectedColumn, $definition->getColumns()[0]);
     }
 
-    public function addColumnProvider(): \Generator
+    public function addTableDefinitionColumnProvider(): \Generator
     {
         yield 'basetype test' => [
             'tableDefinition' => new TableDefinition(),
@@ -44,7 +44,7 @@ class TableDefinitionTest extends TestCase
             'tableDefinition' => new TableDefinition(),
             'tableMetadata' => [
                 [
-                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'key' => 'KBC.datatype.backend',
                     'value' => 'synapse',
                 ],
             ],

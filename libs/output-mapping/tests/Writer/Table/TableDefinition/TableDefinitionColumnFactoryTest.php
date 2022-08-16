@@ -38,10 +38,10 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
 
         yield 'snowflake native' => [
             'columnName' => 'testTime',
-            'columnMetadata' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+            'columnMetadata' => (new Snowflake('TIME'))->toMetadata(),
             'tableMetadata' => [
                 [
-                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'key' => 'KBC.datatype.backend',
                     'value' => 'snowflake',
                 ],
             ],
@@ -49,7 +49,7 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
             'expectedSerialisation' => [
                 'name' => 'testTime',
                 'definition' => [
-                    'type' => Snowflake::TYPE_TIME,
+                    'type' => 'TIME',
                     'length' => null,
                     'nullable' => true,
                 ],
@@ -58,7 +58,7 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
 
         yield 'snowflake native missing tableMetadata' => [
             'columnName' => 'testNativeToBaseType',
-            'columnMetadata' => (new Snowflake(Snowflake::TYPE_TEXT, ['nullable' => false, 'length' => '123']))->toMetadata(),
+            'columnMetadata' => (new Snowflake('TEXT', ['nullable' => false, 'length' => '123']))->toMetadata(),
             'tableMetadata' => [],
             'backendType' => 'snowflake',
             'expectedSerialisation' => [
@@ -69,10 +69,10 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
 
         yield 'full native type definition' => [
             'columnName' => 'testDecimalWithLength',
-            'columnMetadata' => (new Snowflake(Snowflake::TYPE_DECIMAL, ['nullable' => false, 'length' => '10,2']))->toMetadata(),
+            'columnMetadata' => (new Snowflake('DECIMAL', ['nullable' => false, 'length' => '10,2']))->toMetadata(),
             'tableMetadata' => [
                 [
-                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'key' => 'KBC.datatype.backend',
                     'value' => 'snowflake',
                 ],
             ],
@@ -80,7 +80,7 @@ class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
             'expectedSerialisation' => [
                 'name' => 'testDecimalWithLength',
                 'definition' => [
-                    'type' => Snowflake::TYPE_DECIMAL,
+                    'type' => 'DECIMAL',
                     'length' => '10,2',
                     'nullable' => false,
                 ],

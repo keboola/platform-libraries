@@ -68,7 +68,7 @@ class TableDefinitionFactoryTest extends TestCase
         yield 'test using native types' => [
             'tableMetadata' => [
                 [
-                    'key' => TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY,
+                    'key' => 'KBC.datatype.backend',
                     'value' => 'snowflake',
                 ],
             ],

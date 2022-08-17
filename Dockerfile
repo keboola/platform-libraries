@@ -17,10 +17,12 @@ RUN apt update -q \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer \
+ && composer global config allow-plugins.symfony/flex true \
+ && composer global require --no-progress --no-scripts --no-plugins symfony/flex
 
 RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+ && docker-php-ext-enable xdebug
 
 
 FROM base AS dev
@@ -75,21 +77,6 @@ RUN composer install $COMPOSER_FLAGS
 FROM base AS configuration-variables-resolver
 
 ENV LIB_NAME=configuration-variables-resolver
-ENV LIB_HOME=/code/libs/${LIB_NAME}
-
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
-COPY libs/${LIB_NAME} ./
-RUN composer install $COMPOSER_FLAGS
-
-
-FROM base AS logging-bundle
-
-ENV LIB_NAME=logging-bundle
 ENV LIB_HOME=/code/libs/${LIB_NAME}
 
 ARG COMPOSER_MIRROR_PATH_REPOS=1

@@ -1,15 +1,31 @@
 version: "3.4"
 
 services:
-  dev:
-    profiles: [ dev ]
-    build:
+  dev: &dev
+    profiles: [ ci, dev ]
+    build: &dev-build
       context: .
       target: dev
     working_dir: /code
     command: [/bin/bash]
     volumes:
       - .:/code
+
+  dev74:
+    <<: *dev
+    image: keboola/platform-libraries-74
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "7.4"
+
+  dev81:
+    <<: *dev
+    image: keboola/platform-libraries-81
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.1"
 
   dev-input-mapping:
     profiles: [dev]
@@ -120,19 +136,3 @@ services:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
-
-  dev-logging-bundle:
-    profiles: [ dev ]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/logging-bundle
-    volumes:
-      - .:/code
-
-  ci-logging-bundle:
-    profiles: [ ci ]
-    image: keboola/logging-bundle
-    build:
-      context: .
-      target: logging-bundle

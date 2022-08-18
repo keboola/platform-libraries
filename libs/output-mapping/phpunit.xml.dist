@@ -10,13 +10,21 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
 
-    <testsuite name="main">
-        <directory>tests</directory>
+    <testsuite name="unit-tests">
+        <directory>tests/Configuration</directory>
+        <directory>tests/DeferredTasks</directory>
+        <directory>tests/Staging</directory>
+        <directory>tests/Table</directory>
         <exclude>
             <file>tests/Writer/TableDefinitionTest.php</file>
         </exclude>
     </testsuite>
-
+    <testsuite name="writer-tests">?
+        <directory>tests/Writer</directory>
+        <exclude>
+            <file>tests/Writer/TableDefinitionTest.php</file>
+        </exclude>
+    </testsuite>
     <testsuite name="native-types">
         <file>tests/Writer/TableDefinitionTest.php</file>
     </testsuite>

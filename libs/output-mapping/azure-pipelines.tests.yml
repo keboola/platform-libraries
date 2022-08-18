@@ -9,7 +9,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter
+      jobName: tests_php74_unitTests
       dependsOn: [cs]
       displayName: Run Unit Tests Suite
       serviceName: ci-output-mapping

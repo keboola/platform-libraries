@@ -15,16 +15,19 @@ use Psr\Log\NullLogger;
 
 class StorageApiSlicedWriterTest extends BaseWriterTest
 {
+    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+    private const FILE_TAG = self::class;
+
     public function setUp()
     {
         parent::setUp();
-        $this->clearBuckets(['out.c-output-mapping-test']);
-        $this->clearFileUploads(['output-mapping-test']);
+        $this->clearBuckets([self::OUTPUT_BUCKET]);
+        $this->clearFileUploads([self::FILE_TAG]);
     }
 
     public function initBucket($backendType)
     {
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'out', null, $backendType);
+        $this->clientWrapper->getBasicClient()->createBucket(self::class, 'out', null, $backendType);
     }
 
     /**
@@ -41,7 +44,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -51,14 +54,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -81,7 +84,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -104,14 +107,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -138,7 +141,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -148,12 +151,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -167,7 +170,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->clientWrapper->getBasicClient()->createTable('out.c-output-mapping-test', 'table16', $csv);
+        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table16', $csv);
 
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table16");
@@ -175,7 +178,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table16",
-                "destination" => "out.c-output-mapping-test.table16",
+                "destination" => self::OUTPUT_BUCKET . ".table16",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -185,12 +188,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table16");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table16");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table16', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table16', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -207,7 +210,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table15",
-                "destination" => "out.c-output-mapping-test.table15",
+                "destination" => self::OUTPUT_BUCKET . ".table15",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -217,12 +220,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table15");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table15");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table15', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table15', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -236,7 +239,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->clientWrapper->getBasicClient()->createTable('out.c-output-mapping-test', 'table17', $csv);
+        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table17', $csv);
 
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table17");
@@ -244,7 +247,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table17",
-                "destination" => "out.c-output-mapping-test.table17",
+                "destination" => self::OUTPUT_BUCKET . ".table17",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -254,12 +257,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table17");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table17");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table17', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table17', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(0, $table);
     }
@@ -276,7 +279,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table",
-                "destination" => "out.c-output-mapping-test.table"
+                "destination" => self::OUTPUT_BUCKET . ".table"
             ]
         ];
 
@@ -297,10 +300,10 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $this->initBucket($backendType);
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
         $csvFile->writeRow(["Id", "Name"]);
-        $this->clientWrapper->getBasicClient()->createTable("out.c-output-mapping-test", "table", $csvFile);
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, "table", $csvFile);
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $root = $this->tmp->getTmpFolder();
@@ -311,7 +314,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -322,14 +325,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -350,7 +353,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"],
                 "delimiter" => "|",
                 "enclosure" => "'"
@@ -363,14 +366,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -392,12 +395,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table.csv",
-                "destination" => "out.c-output-mapping-test.table",
+                "destination" => self::OUTPUT_BUCKET . ".table",
                 "columns" => ["Id","Name"]
             ],
             [
                 "source" => "table2.csv",
-                "destination" => "out.c-output-mapping-test.table2",
+                "destination" => self::OUTPUT_BUCKET . ".table2",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -407,16 +410,16 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(2, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table2");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table2");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -424,7 +427,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table2', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table2', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);
@@ -447,7 +450,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "table18.csv",
-                "destination" => "out.c-output-mapping-test.table18",
+                "destination" => self::OUTPUT_BUCKET . ".table18",
                 "columns" => ["Id","Name"]
             ]
         ];
@@ -458,14 +461,14 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable("out.c-output-mapping-test.table18");
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table18");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
-        $exporter->exportTable('out.c-output-mapping-test.table18', $downloadedFile, []);
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table18', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
         $this->assertCount(2, $table);
         $this->assertContains(["Id" => "test", "Name" => "test"], $table);

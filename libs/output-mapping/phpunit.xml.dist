@@ -15,13 +15,16 @@
         <directory>tests/DeferredTasks</directory>
         <directory>tests/Staging</directory>
         <directory>tests/Table</directory>
-        <exclude>
-            <file>tests/Writer/TableDefinitionTest.php</file>
-        </exclude>
+        <directory>tests/Writer/File</directory>
+        <directory>tests/Writer/Table</directory>
+        <directory>tests/Writer/Helper</directory>
     </testsuite>
-    <testsuite name="writer-tests">?
+    <testsuite name="writer-tests-others">?
         <directory>tests/Writer</directory>
         <exclude>
+            <directory>tests/Writer/File</directory>
+            <directory>tests/Writer/Helper</directory>
+            <directory>tests/Writer/Table</directory>
             <file>tests/Writer/TableDefinitionTest.php</file>
         </exclude>
     </testsuite>

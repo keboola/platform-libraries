@@ -20,18 +20,21 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 {
     use CreateBranchTrait;
 
+    private const INPUT_BUCKET = 'in.c-' . self::class;
+    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+    private const BRANCH_BUCKET = 'out.c-dev-123' . self::class;
+    private const FILE_TAG = self::class;
+
     const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
     public function setUp()
     {
         parent::setUp();
-        $this->clearFileUploads(['output-mapping-bundle-test']);
+        $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([
-            'out.c-output-mapping-test',
-            'out.c-output-mapping-default-test',
-            'out.c-output-mapping-redshift-test',
-            'in.c-output-mapping-test',
-            'out.c-dev-123-output-mapping-test'
+            self::INPUT_BUCKET,
+            self::OUTPUT_BUCKET,
+            self::BRANCH_BUCKET
         ]);
         $this->clientWrapper->getBasicClient()->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
         $this->clientWrapper->getBasicClient()->createBucket('output-mapping-default-test', 'out');

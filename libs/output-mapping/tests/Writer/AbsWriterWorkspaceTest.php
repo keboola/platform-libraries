@@ -19,6 +19,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use InitSynapseStorageClientTrait;
 
+    private const INPUT_BUCKET = 'in.c-' . self::class;
+    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+
     /** @var array */
     protected $workspace;
 
@@ -28,10 +31,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-        $this->clearBuckets([
-            'in.c-output-mapping-test',
-            'out.c-output-mapping-test',
-        ]);
+        $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
     }
 
     protected function initClient($branchId = '')
@@ -109,7 +109,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
             ],
         ];
         $fs = new Filesystem();
@@ -131,16 +131,16 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.table1a', $tables[0]['id']);
 
         $this->assertJobParamsMatches([
             'incremental' => false,
             'columns' => ['Id', 'Name'],
         ], $jobIds[0]);
 
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"Id","Name"',
             '"aabb","ccdd"',
             '"test","test"',
@@ -162,7 +162,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a.csv',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
             ]
         ];
         $fs = new Filesystem();
@@ -184,9 +184,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-output-mapping-test.table1a', $tables[0]['id']);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.table1a', $tables[0]['id']);
         $this->assertNotEmpty($jobIds[0]);
 
         $this->assertJobParamsMatches([
@@ -194,7 +194,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['First column', 'Second column'],
         ], $jobIds[0]);
 
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"First_column","Second_column"',
             '"first value","second value"',
             '"secondRow1","secondRow2"',
@@ -216,13 +216,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a.csv',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
                 'incremental' => true,
                 'columns' => ['first column'],
             ],
             [
                 'source' => 'table1a.csv2',
-                'destination' => 'out.c-output-mapping-test.table2a',
+                'destination' => self::OUTPUT_BUCKET . '.table2a',
             ],
         ];
         $fs = new Filesystem();
@@ -262,13 +262,16 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['first column', 'second column'],
         ], $jobIds[1]);
 
-        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTablesExists([
+            self::OUTPUT_BUCKET . '.table1a',
+            self::OUTPUT_BUCKET . '.table2a'
+        ]);
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"first_column"',
             '"first value"',
             '"secondRow1"',
         ]);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table2a', [
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table2a', [
             '"first_column","second_column"',
             '"first","second"',
             '"third","fourth"',

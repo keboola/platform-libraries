@@ -25,17 +25,14 @@
     </testsuite>
     <testsuite name="main-writer-tests-2">
         <directory>tests/Writer</directory>
-        <exclude>
-            <directory>tests/Writer/File</directory>
-            <directory>tests/Writer/Helper</directory>
-            <directory>tests/Writer/Table</directory>
-            <directory>tests/Writer/Redshift</directory>
-            <directory>tests/Writer/Workspace</directory>
-            <file>tests/Writer/TableDefinitionTest.php</file>
-            <file>tests/Writer/StorageApiFileWriterTest.php</file>
-            <file>tests/Writer/StorageApiWriterMetadataTest.php</file>
-            <file>tests/Writer/TableDefinitionTest.php</file>
-        </exclude>
+        <exclude>tests/Writer/File</exclude>
+        <exclude>tests/Writer/Helper</exclude>
+        <exclude>tests/Writer/Table</exclude>
+        <exclude>tests/Writer/Redshift</exclude>
+        <exclude>tests/Writer/Workspace</exclude>
+        <exclude>tests/Writer/TableDefinitionTest.php</exclude>
+        <exclude>tests/Writer/StorageApiFileWriterTest.php</exclude>
+        <exclude>tests/Writer/StorageApiWriterMetadataTest.php</exclude>
     </testsuite>
     <testsuite name="redshift-writer-tests">
         <directory>tests/Writer/Redshift</directory>

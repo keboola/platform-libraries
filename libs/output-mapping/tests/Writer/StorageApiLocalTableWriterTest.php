@@ -323,11 +323,11 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-default-test.table3c.csv",
+            $root . DIRECTORY_SEPARATOR . "upload/" . self::OUTPUT_BUCKET . ".table3c.csv",
             "'Id'\t'Name'\n'test'\t'test''s'\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-default-test.table3c.csv.manifest",
+            $root . DIRECTORY_SEPARATOR . "upload/" . self::OUTPUT_BUCKET . ".table3c.csv.manifest",
             '{"destination": "' . self::OUTPUT_BUCKET . '.table3c","delimiter": "\t","enclosure": "\'"}'
         );
 
@@ -606,7 +606,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals(
-                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "out.c-output-mapping-test.table14".',
+                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "' . self::OUTPUT_BUCKET . '.table14".',
                 $e->getMessage()
             );
         }
@@ -655,7 +655,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $this->fail("Exception not caught");
         } catch (InvalidOutputException $e) {
             $this->assertEquals(
-                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "out.c-output-mapping-test.table13".',
+                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "' . self::OUTPUT_BUCKET . '.table13".',
                 $e->getMessage()
             );
         }
@@ -743,7 +743,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertCount(1, $jobIds);
         $this->assertFalse(
             $testLogger->hasWarningThatContains(
-                "Output mapping does not match destination table: primary key '' does not match '' in 'out.c-output-mapping-test.table9'."
+                "Output mapping does not match destination table: primary key '' does not match '' in '" . self::OUTPUT_BUCKET . ".table9'."
             )
         );
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table11");
@@ -753,12 +753,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     public function testWriteTableColumnsOverwrite()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/" . self::OUTPUT_BUCKET . ".table10.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         $writer = new TableWriter($this->getStagingFactory());
         $configuration = [
             'mapping' => [
                 [
-                    'source' => 'out.c-output-mapping-test.table10.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10',
                 ]
             ]
@@ -773,12 +773,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table10');
         $this->assertEquals(["Id", "Name"], $tableInfo["columns"]);
 
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+        file_put_contents($root . "/upload/" . self::OUTPUT_BUCKET . ".table10.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
         $writer = new TableWriter($this->getStagingFactory());
         $configuration = [
             'mapping' => [
                 [
-                    'source' => 'out.c-output-mapping-test.table10.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10',
                     'columns' => ['Boing', 'Tschak']
                 ]
@@ -794,17 +794,17 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     public function testWriteMultipleErrors()
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/out.c-output-mapping-test.table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
+        file_put_contents($root . "/upload/" . self::OUTPUT_BUCKET . ".table10a.csv", "\"id\",\"name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . "/upload/" . self::OUTPUT_BUCKET . ".table10b.csv", "\"foo\",\"bar\"\n\"baz\",\"bat\"\n");
         $writer = new TableWriter($this->getStagingFactory());
         $configuration = [
             'mapping' => [
                 [
-                    'source' => 'out.c-output-mapping-test.table10a.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10a.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10a',
                 ],
                 [
-                    'source' => 'out.c-output-mapping-test.table10b.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10b.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10b',
                 ],
             ]
@@ -824,12 +824,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $configuration = [
             'mapping' => [
                 [
-                    'source' => 'out.c-output-mapping-test.table10a.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10a.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10a',
                     'columns' => ['Boing', 'Tschak'],
                 ],
                 [
-                    'source' => 'out.c-output-mapping-test.table10b.csv',
+                    'source' => self::OUTPUT_BUCKET . '.table10b.csv',
                     'destination' => self::OUTPUT_BUCKET . '.table10b',
                     'columns' => ['bum', 'tschak'],
                 ],
@@ -989,7 +989,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $queue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
         $queue->waitForAll();
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $tablesIds = array_map(function (array $table) {
             return $table['id'];
         }, $tables);
@@ -1125,7 +1125,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         self::assertTrue($logger->hasWarningThatContains('This behaviour was DEPRECATED and will be removed in the future.'));
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
 
         $this->assertEquals($expectedTableName, $tables[0]['id']);

@@ -101,7 +101,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . "upload/table2.csv.manifest",
-            "{\"destination\": \"out.c-output-mapping-test.table2\",\"primary_key\":[\"Id\"],\"columns\":[\"a\",\"b\"]}"
+            "{\"destination\": \"" . self::OUTPUT_BUCKET . ".table2\",\"primary_key\":[\"Id\"],\"columns\":[\"a\",\"b\"]}"
         );
 
         $configs = [
@@ -119,7 +119,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.table', $tables[0]["id"]);
         $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["columns"]);
 
@@ -135,11 +135,11 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table.csv",
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table.csv',
             "\"test\",\"test\"\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . 'upload/out.c-output-mapping-test.table.csv.manifest',
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table.csv.manifest',
             '{"destination": "' . self::OUTPUT_BUCKET . '.table","primary_key":["Id","Name"],"columns":["Id","Name"]}'
         );
 
@@ -150,7 +150,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $this->assertEquals('out.c-output-mapping-test.table', $tables[0]["id"]);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.table', $tables[0]["id"]);
         $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
         $this->assertEquals(["Id", "Name"], $table["primaryKey"]);
         $this->assertEquals(["Id", "Name"], $table["columns"]);

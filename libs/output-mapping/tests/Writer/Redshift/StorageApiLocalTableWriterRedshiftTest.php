@@ -19,7 +19,7 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
             self::OUTPUT_BUCKET,
             self::BRANCH_BUCKET
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket(self::class, 'out', '', 'redshift');
+        $this->clientWrapper->getBasicClient()->createBucket('StorageApiLocalTableWriterRedshiftTest', 'out', '', 'redshift');
     }
 
     public function testWriteTableManifestCsvRedshift()

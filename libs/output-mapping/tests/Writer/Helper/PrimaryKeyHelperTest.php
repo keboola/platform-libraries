@@ -33,7 +33,7 @@ class PrimaryKeyHelperTest extends TestCase
     private function createTable(array $columns, $primaryKey)
     {
         if (!$this->client->bucketExists(self::TEST_BUCKET_ID)) {
-            $this->client->createBucket(self::class, 'out');
+            $this->client->createBucket('PrimaryKeyHelperTest', 'out');
         }
         try {
             $this->client->dropTable(self::TEST_TABLE_ID);

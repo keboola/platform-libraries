@@ -389,18 +389,18 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["output-mapping-test"])
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["12345-output-mapping-test"])
+            (new FileUploadOptions())->setTags(['12345-' . self::FILE_TAG])
         );
         sleep(1);
         // set it to use a branch
         $this->initClient('12345');
 
         $writer = new FileWriter($this->getStagingFactory());
-        $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
+        $configuration = [["tags" => [self::FILE_TAG], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         // first file shouldn't be marked as processed because a branch file exists
@@ -408,7 +408,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $this->assertTrue(!in_array('12345-downloaded', $file1['tags']));
         $file2 = $this->clientWrapper->getBasicClient()->getFile($id2);
         $this->assertTrue(in_array('12345-downloaded', $file2['tags']));
-        $this->assertTrue(in_array('12345-output-mapping-test', $file2['tags']));
+        $this->assertTrue(in_array('12345-' . self::FILE_TAG, $file2['tags']));
     }
 
     public function testTableFiles()
@@ -428,7 +428,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'runId' => '999',
         ];
         $tableFiles = [
-            'tags' => ['output-mapping-test', 'another-tag'],
+            'tags' => [self::FILE_TAG, 'another-tag'],
             'is_permanent' => true,
         ];
 
@@ -444,7 +444,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 

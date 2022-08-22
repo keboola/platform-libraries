@@ -8,7 +8,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
-use Keboola\OutputMapping\Tests\Writer\BaseWriterWorkspaceTest;
+use Keboola\OutputMapping\Tests\Writer\Workspace\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;

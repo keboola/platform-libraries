@@ -1,12 +1,13 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\Temp\Temp;

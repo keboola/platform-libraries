@@ -1,10 +1,7 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
-use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\TableWriter;

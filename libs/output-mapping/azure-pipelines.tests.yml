@@ -11,7 +11,7 @@ jobs:
     parameters:
       jobName: tests_php74_unitTests
       dependsOn: [cs]
-      displayName: Run Unit Tests Suite
+      displayName: Unit Tests
       serviceName: ci-output-mapping
       testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite unit-tests
       variables:
@@ -26,7 +26,7 @@ jobs:
     parameters:
       jobName: tests_php74_mainWriter
       dependsOn: [ cs ]
-      displayName: Run Main Writer Test Suite
+      displayName: Main Writer Tests
       serviceName: ci-output-mapping
       testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite main-writer-tests
       variables:
@@ -41,7 +41,7 @@ jobs:
     parameters:
       jobName: tests_php74_workspaceWriter
       dependsOn: [ cs ]
-      displayName: Run Workspace Writer Test Suite
+      displayName: Workspace Writer Tests
       serviceName: ci-output-mapping
       testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite workspace-writer-tests
       variables:
@@ -56,7 +56,7 @@ jobs:
     parameters:
       jobName: tests_php74_redshiftWriter
       dependsOn: [ cs ]
-      displayName: Run Redshift Writer Test Suite
+      displayName: Redshift Writer Tests
       serviceName: ci-output-mapping
       testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite redshift-writer-tests
       variables:
@@ -71,7 +71,7 @@ jobs:
     parameters:
       jobName: tests_php74_tableWriter_nativeTypes
       dependsOn: [ cs ]
-      displayName: Run Test Suite for native types support
+      displayName: Native types tests
       serviceName: ci-output-mapping
       testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite native-types
       variables:

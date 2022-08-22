@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\NullProvider;

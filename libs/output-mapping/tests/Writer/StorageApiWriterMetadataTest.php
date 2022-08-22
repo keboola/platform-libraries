@@ -35,7 +35,7 @@ class StorageApiWriterMetadataTest extends BaseWriterTest
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
-        $this->clientWrapper->getBasicClient()->createBucket(self::class, "in", '', 'snowflake');
+        $this->clientWrapper->getBasicClient()->createBucket('StorageApiWriterMetadataTest', "in", '', 'snowflake');
     }
 
     public function testMetadataWritingTest()

@@ -14,7 +14,7 @@ use Psr\Log\Test\TestLogger;
 
 class PrimaryKeyHelperTest extends TestCase
 {
-    const TEST_BUCKET_ID = 'out.c-' . self::class;
+    const TEST_BUCKET_ID = 'out.c-PrimaryKeyHelperTest';
     const TEST_TABLE_NAME = 'test-table';
     const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
     /**
@@ -22,7 +22,7 @@ class PrimaryKeyHelperTest extends TestCase
      */
     protected $client;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->client = new Client([
             'url' => STORAGE_API_URL,

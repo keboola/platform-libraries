@@ -24,7 +24,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: main-writer-tests
+      jobName: tests_php74_mainWriter
       dependsOn: [ cs ]
       displayName: Run Main Writer Test Suite
       serviceName: ci-output-mapping
@@ -39,7 +39,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: workspace-writer-tests
+      jobName: tests_php74_workspaceWriter
       dependsOn: [ cs ]
       displayName: Run Workspace Writer Test Suite
       serviceName: ci-output-mapping
@@ -54,7 +54,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: redshift-writer-tests
+      jobName: tests_php74_redshiftWriter
       dependsOn: [ cs ]
       displayName: Run Redshift Writer Test Suite
       serviceName: ci-output-mapping

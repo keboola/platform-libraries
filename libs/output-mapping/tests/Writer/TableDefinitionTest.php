@@ -11,7 +11,7 @@ use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends BaseWriterTest
 {
-    private const OUTPUT_BUCKET = 'TableDefinitionTest';
+    private const OUTPUT_BUCKET = 'out.c-TableDefinitionTest';
 
     public function testNotCreateTableDefinition(): void
     {

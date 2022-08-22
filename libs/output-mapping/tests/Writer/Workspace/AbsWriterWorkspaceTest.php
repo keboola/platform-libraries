@@ -19,8 +19,8 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use InitSynapseStorageClientTrait;
 
-    private const INPUT_BUCKET = 'in.c-' . self::class;
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+    private const INPUT_BUCKET = 'in.c-AbsWriterWorkspaceTest';
+    private const OUTPUT_BUCKET = 'out.c-AbsWriterWorkspaceTest';
 
     /** @var array */
     protected $workspace;
@@ -104,7 +104,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('abs','AbsWriterWorkspaceTest', 'someday/');
+        $this->prepareWorkspaceWithTables('abs', 'AbsWriterWorkspaceTest', 'someday/');
 
         $configs = [
             [

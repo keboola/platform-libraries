@@ -7,8 +7,8 @@ use Keboola\StorageApi\TableExporter;
 
 class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
 {
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
-    private const BRANCH_BUCKET = 'out.c-dev-123' . self::class;
+    private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterRedshiftTest';
+    private const BRANCH_BUCKET = 'out.c-dev-123-StorageApiLocalTableWriterRedshiftTest';
 
     const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
@@ -26,11 +26,11 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-redshift-test.table3d.csv",
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3d.csv',
             "'Id'\t'Name'\n'test'\t'test''s'\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-redshift-test.table3d.csv.manifest",
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3d.csv.manifest',
             '{"destination": "' . self::OUTPUT_BUCKET . '.table3d","delimiter": "' . "\t" . '","enclosure": "\'"}'
         );
 

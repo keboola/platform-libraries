@@ -5,7 +5,6 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 
 class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
@@ -98,7 +97,7 @@ class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
         $this->assertEquals($expectedColumnMetadata, $this->getMetadataValues($FooColMetadata));
     }
 
-    public function testMetadataWritingTestColumnChangeSpecialDelimiter($backend)
+    public function testMetadataWritingTestColumnChangeSpecialDelimiter()
     {
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . "/table88a.csv");

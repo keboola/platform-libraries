@@ -17,7 +17,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
 {
     use CreateBranchTrait;
 
-    private const FILE_TAG = self::class;
+    private const FILE_TAG = 'StorageApiFileWriterTest';
+
+    private const OUTPUT_BUCKET = 'out.c-StorageApiFileWriterTest';
 
     private const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
@@ -26,13 +28,8 @@ class StorageApiFileWriterTest extends BaseWriterTest
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([
-            'out.c-output-mapping-test',
-            'out.c-output-mapping-default-test',
-            'out.c-output-mapping-redshift-test',
-            'in.c-output-mapping-test',
-            'out.c-dev-123-output-mapping-test'
+            self::OUTPUT_BUCKET,
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-default-test', 'out');
     }
 
     public function testWriteBasicFiles()
@@ -159,7 +156,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             )
         );
         $branchId = $this->createBranch($clientWrapper, 'dev-123');
-        $this->clearFileUploads(['dev-123-output-mapping-test']);
+        $this->clearFileUploads(['dev-123-' . self::FILE_TAG]);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 STORAGE_API_URL,
@@ -174,7 +171,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test"]
+                "tags" => [self::FILE_TAG]
             ]
         ];
 

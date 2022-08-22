@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-class StorageApiFileWriterTestRedshift extends BaseWriterTest
+class StorageApiFileWriterRedshiftTest extends BaseWriterTest
 {
     use CreateBranchTrait;
 

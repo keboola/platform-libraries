@@ -20,9 +20,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 {
     use CreateBranchTrait;
 
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+    private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterTest';
     private const TEST_BRANCH = 'dev-123';
-    private const BRANCH_BUCKET = 'out.c-' . self::TEST_BRANCH . '-' . self::class;
+    private const BRANCH_BUCKET = 'out.c-' . self::TEST_BRANCH . '-StorageApiLocalTableWriterTest';
 
     const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
@@ -33,7 +33,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             self::OUTPUT_BUCKET,
             self::BRANCH_BUCKET
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket(self::class, 'out');
+        $this->clientWrapper->getBasicClient()->createBucket(StorageApiLocalTableWriterTest, 'out');
     }
 
     public function testWriteTableOutputMapping()

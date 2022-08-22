@@ -5,7 +5,7 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;
 
-class StorageApiLocalTableWriterTestRedshift extends BaseWriterTest
+class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
 {
     private const OUTPUT_BUCKET = 'out.c-' . self::class;
     private const BRANCH_BUCKET = 'out.c-dev-123' . self::class;

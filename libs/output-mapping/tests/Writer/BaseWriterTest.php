@@ -139,10 +139,4 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         $job = $this->clientWrapper->getBasicClient()->getJob($jobId);
         self::assertArraySubset($expectedParams, $job['operationParams']['params']);
     }
-
-    public function tearDown()
-    {
-        $this->clearBuckets(['out.c-output-mapping-test']);
-        $this->clearFileUploads(['output-mapping-test']);
-    }
 }

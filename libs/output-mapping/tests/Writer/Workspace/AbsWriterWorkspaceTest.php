@@ -104,7 +104,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('abs', 'someday/');
+        $this->prepareWorkspaceWithTables('abs','AbsWriterWorkspaceTest', 'someday/');
 
         $configs = [
             [

@@ -10,15 +10,15 @@ use Keboola\StorageApi\TableExporter;
 
 class StorageApiHeadlessWriterTest extends BaseWriterTest
 {
-    private const FILE_TAG = self::class;
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
+    private const FILE_TAG = 'StorageApiHeadlessWriterTest';
+    private const OUTPUT_BUCKET = 'out.c-StorageApiHeadlessWriterTest';
 
     public function setUp()
     {
         parent::setUp();
         $this->clearBuckets([self::OUTPUT_BUCKET]);
         $this->clearFileUploads([self::FILE_TAG]);
-        $this->clientWrapper->getBasicClient()->createBucket(self::class, 'out');
+        $this->clientWrapper->getBasicClient()->createBucket('StorageApiHeadlessWriterTest', 'out');
     }
 
     public function testWriteTableOutputMapping()

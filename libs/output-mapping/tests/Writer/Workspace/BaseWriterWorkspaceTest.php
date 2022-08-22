@@ -87,28 +87,29 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         return $stagingFactory;
     }
 
-    protected function prepareWorkspaceWithTables($type, $tablePrefix = '')
+    protected function prepareWorkspaceWithTables($type, $bucketName, $tablePrefix = '')
     {
         $temp = new Temp();
         $temp->initRunFolder();
         $root = $temp->getTmpFolder();
         $backendType = $type;
+        $bucketId = 'in.c-' . $bucketName;
         // abs is a workspace type, but not a backendType
         if ($type === 'abs') {
             $backendType = 'synapse';
         }
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'in', '', $backendType);
+        $this->clientWrapper->getBasicClient()->createBucket($bucketName, 'in', '', $backendType);
         // Create tables
         $csv1a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table1a.csv');
         $csv1a->writeRow(['Id', 'Name']);
         $csv1a->writeRow(['test', 'test']);
         $csv1a->writeRow(['aabb', 'ccdd']);
-        $this->clientWrapper->getBasicClient()->createTable('in.c-output-mapping-test', 'table1a', $csv1a);
+        $this->clientWrapper->getBasicClient()->createTable($bucketId, 'table1a', $csv1a);
         $csv2a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table2a.csv');
         $csv2a->writeRow(['Id2', 'Name2']);
         $csv2a->writeRow(['test2', 'test2']);
         $csv2a->writeRow(['aabb2', 'ccdd2']);
-        $this->clientWrapper->getBasicClient()->createTable('in.c-output-mapping-test', 'table2a', $csv2a);
+        $this->clientWrapper->getBasicClient()->createTable($bucketId, 'table2a', $csv2a);
 
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
         $workspaces->loadWorkspaceData(
@@ -116,11 +117,11 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
             [
                 'input' => [
                     [
-                        'source' => 'in.c-output-mapping-test.table1a',
+                        'source' => $bucketId . '.table1a',
                         'destination' => $tablePrefix . 'table1a',
                     ],
                     [
-                        'source' => 'in.c-output-mapping-test.table2a',
+                        'source' => $bucketId . '.table2a',
                         'destination' => $tablePrefix . 'table2a',
                     ],
                 ],

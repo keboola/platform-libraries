@@ -12,9 +12,9 @@ use Keboola\StorageApi\Metadata;
 
 class StorageApiWriterMetadataTest extends BaseWriterTest
 {
-    private const INPUT_BUCKET = 'in.c-' . self::class;
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
-    private const FILE_TAG = self::class;
+    private const INPUT_BUCKET = 'in.c-StorageApiWriterMetadataTest';
+    private const OUTPUT_BUCKET = 'out.c-StorageApiWriterMetadataTest';
+    private const FILE_TAG = 'StorageApiWriterMetadataTest';
 
     /**
      * Transform metadata into a key-value array

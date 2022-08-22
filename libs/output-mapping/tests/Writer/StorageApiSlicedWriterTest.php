@@ -15,8 +15,8 @@ use Psr\Log\NullLogger;
 
 class StorageApiSlicedWriterTest extends BaseWriterTest
 {
-    private const OUTPUT_BUCKET = 'out.c-' . self::class;
-    private const FILE_TAG = self::class;
+    private const OUTPUT_BUCKET = 'out.c-StorageApiSlicedWriterTest';
+    private const FILE_TAG = 'StorageApiSlicedWriterTest';
 
     public function setUp()
     {

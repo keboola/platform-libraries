@@ -14,7 +14,7 @@ use Psr\Log\Test\TestLogger;
 
 class PrimaryKeyHelperTest extends TestCase
 {
-    const TEST_BUCKET_ID = 'out.c-output-mapping-test';
+    const TEST_BUCKET_ID = 'out.c-' . self::class;
     const TEST_TABLE_NAME = 'test-table';
     const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
     /**
@@ -33,7 +33,7 @@ class PrimaryKeyHelperTest extends TestCase
     private function createTable(array $columns, $primaryKey)
     {
         if (!$this->client->bucketExists(self::TEST_BUCKET_ID)) {
-            $this->client->createBucket('output-mapping-test', 'out');
+            $this->client->createBucket(self::class, 'out');
         }
         try {
             $this->client->dropTable(self::TEST_TABLE_ID);
@@ -63,7 +63,7 @@ class PrimaryKeyHelperTest extends TestCase
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-output-mapping-test.table',
+                'destination' => self::TEST_BUCKET_ID . '.table',
                 'primary_key' => ['Id'],
             ]
         );
@@ -79,7 +79,7 @@ class PrimaryKeyHelperTest extends TestCase
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-output-mapping-test.table',
+                'destination' => self::TEST_BUCKET_ID . '.table',
                 'primary_key' => [],
             ]
         );
@@ -93,14 +93,14 @@ class PrimaryKeyHelperTest extends TestCase
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
             'Output mapping does not match destination table: primary key "Id, Name" ' .
-            'does not match "Id" in "out.c-output-mapping-test.table".'
+            'does not match "Id" in "' . self::TEST_BUCKET_ID . '.table".'
         );
         PrimaryKeyHelper::validatePrimaryKeyAgainstTable(
             new NullLogger(),
             $tableInfo,
             [
                 'source' => 'table.csv',
-                'destination' => 'out.c-output-mapping-test.table',
+                'destination' => self::TEST_BUCKET_ID . '.table',
                 'primary_key' => ['Id', 'Name'],
             ]
         );

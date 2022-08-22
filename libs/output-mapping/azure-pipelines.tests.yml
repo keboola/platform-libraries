@@ -24,11 +24,41 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter
+      jobName: main-writer-tests
       dependsOn: [ cs ]
-      displayName: Run Writer Test Suite
+      displayName: Run Main Writer Test Suite
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite writer-tests
+      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite main-writer-tests
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 1
+      secrets:
+        STORAGE_API_TOKEN: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: workspace-writer-tests
+      dependsOn: [ cs ]
+      displayName: Run Workspace Writer Test Suite
+      serviceName: ci-output-mapping
+      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite workspace-writer-tests
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 1
+      secrets:
+        STORAGE_API_TOKEN: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: redshift-writer-tests
+      dependsOn: [ cs ]
+      displayName: Run Redshift Writer Test Suite
+      serviceName: ci-output-mapping
+      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite redshift-writer-tests
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 1

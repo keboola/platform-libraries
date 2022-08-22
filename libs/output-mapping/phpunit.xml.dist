@@ -19,14 +19,22 @@
         <directory>tests/Writer/Table</directory>
         <directory>tests/Writer/Helper</directory>
     </testsuite>
-    <testsuite name="writer-tests-others">?
+    <testsuite name="main-writer-tests">?
         <directory>tests/Writer</directory>
         <exclude>
             <directory>tests/Writer/File</directory>
             <directory>tests/Writer/Helper</directory>
             <directory>tests/Writer/Table</directory>
+            <directory>tests/Writer/Redshift</directory>
+            <directory>tests/Writer/Workspace</directory>
             <file>tests/Writer/TableDefinitionTest.php</file>
         </exclude>
+    </testsuite>
+    <testsuite name="redshift-writer-tests">
+        <directory>tests/Writer/Redshift</directory>
+    </testsuite>
+    <testsuite name="workspace-writer-tests">
+        <directory>tests/Writer/Workspace</directory>
     </testsuite>
     <testsuite name="native-types">
         <file>tests/Writer/TableDefinitionTest.php</file>

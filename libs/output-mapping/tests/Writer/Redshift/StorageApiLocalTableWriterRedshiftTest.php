@@ -31,7 +31,7 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3d.csv.manifest',
-            '{"destination": "' . self::OUTPUT_BUCKET . '.table3d","delimiter": "' . "\t" . '","enclosure": "\'"}'
+            '{"destination": "' . self::OUTPUT_BUCKET . '.table3d","delimiter": "' . "\\t" . '","enclosure": "\'"}'
         );
 
         $writer = new TableWriter($this->getStagingFactory());

@@ -22,6 +22,8 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
     private const INPUT_BUCKET = 'in.c-AbsWriterWorkspaceTest';
     private const OUTPUT_BUCKET = 'out.c-AbsWriterWorkspaceTest';
 
+    private const FILE_TAG = 'AbsWriterWorkspaceTest';
+
     /** @var array */
     protected $workspace;
 
@@ -262,10 +264,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['first column', 'second column'],
         ], $jobIds[1]);
 
-        $this->assertTablesExists([
-            self::OUTPUT_BUCKET . '.table1a',
-            self::OUTPUT_BUCKET . '.table2a'
-        ]);
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table2a',
+            ]
+        );
         $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"first_column"',
             '"first value"',
@@ -289,7 +294,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'upload/file2.manifest',
-            '{"tags": ["output-mapping-test", "xxx"],"is_public": false}'
+            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}'
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
@@ -299,16 +304,16 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'upload/file3.manifest',
-            '{"tags": ["output-mapping-test"],"is_permanent": true}'
+            '{"tags": ["' . self::FILE_TAG . '"],"is_permanent": true}'
         );
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => ['output-mapping-test']
+                'tags' => [self::FILE_TAG]
             ],
             [
                 'source' => 'file2',
-                'tags' => ['output-mapping-test', 'another-tag'],
+                'tags' => [self::FILE_TAG, 'another-tag'],
                 'is_permanent' => true
             ]
         ];
@@ -325,7 +330,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(['output-mapping-test']);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(3, $files);
 
@@ -343,7 +348,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         }
 
         $expectedTags = [
-            'output-mapping-test',
+            self::FILE_TAG,
             'componentId: testComponent',
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',

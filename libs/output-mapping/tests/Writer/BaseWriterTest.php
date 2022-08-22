@@ -106,9 +106,9 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         return $stagingFactory;
     }
 
-    protected function assertTablesExists(array $expectedTables)
+    protected function assertTablesExists(string $bucketId, array $expectedTables)
     {
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId);
         $tableIds = array_column($tables, 'id');
 
         // order of listed tables is not guaranteed

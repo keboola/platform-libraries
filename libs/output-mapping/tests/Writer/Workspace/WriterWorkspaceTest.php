@@ -89,7 +89,13 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['Id2', 'Name2'],
         ], $jobIds[1]);
 
-        $this->assertTablesExists([self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table2a']);
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table2a',
+            ]
+        );
         $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',
@@ -321,54 +327,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ]);
     }
 
-    public function testRedshiftTableOutputMapping()
-    {
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']);
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_REDSHIFT)->getDataStorage()->getWorkspaceId();
-
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('redshift', 'WriterWorkspaceTest');
-        // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->clientWrapper->getBasicClient()->createBucket('WriterWorkspaceTest', 'out', '', 'redshift');
-        $configs = [
-            [
-                'source' => 'table1a',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
-            ],
-            [
-                'source' => 'table2a',
-                'destination' => self::OUTPUT_BUCKET . '.table2a',
-            ],
-        ];
-        file_put_contents(
-            $root . '/table1a.manifest',
-            json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
-        );
-        file_put_contents(
-            $root . '/table2a.manifest',
-            json_encode(
-                ['columns' => ['Id2', 'Name2']]
-            )
-        );
-        $writer = new TableWriter($factory);
-
-        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
-
-        $this->assertTablesExists([self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table2a']);
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
-            '"id","name"',
-            '"test","test"',
-            '"aabb","ccdd"',
-        ]);
-    }
-
     public function testWriteTableOutputMappingDevMode()
     {
         $clientWrapper = new ClientWrapper(
@@ -429,7 +387,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf(self::BRANCH_BUCKET, $branchId));
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::BRANCH_BUCKET);
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
@@ -475,7 +433,13 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $this->assertTablesExists([self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table1a_2']);
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table1a_2',
+            ]
+        );
         $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',

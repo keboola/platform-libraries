@@ -91,7 +91,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         }
 
         $expectedTags = [
-            'output-mapping-test',
+            self::FILE_TAG,
             'componentId: testComponent',
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',
@@ -189,7 +189,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([sprintf('%s-output-mapping-test', $branchId)]);
+        $options->setTags([sprintf('%s-' . self::FILE_TAG, $branchId)]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -201,7 +201,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         }
 
         $expectedTags = [
-            sprintf('%s-output-mapping-test', $branchId),
+            sprintf('%s-' . self::FILE_TAG, $branchId),
             sprintf('%s-componentId: testComponent', $branchId),
             sprintf('%s-configurationId: metadata-write-test', $branchId),
             sprintf('%s-configurationRowId: 12345', $branchId),
@@ -220,7 +220,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/file1", "test");
         file_put_contents(
             $root . "/upload/file1.manifest",
-            "{\"tags\": [\"output-mapping-test\", \"xxx\"],\"is_public\": true}"
+            "{\"tags\": [\"" . self::FILE_TAG . "\", \"xxx\"],\"is_public\": true}"
         );
 
         $configs = [
@@ -236,7 +236,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -446,7 +446,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $this->assertCount(1, $files);
 
         $expectedTags = [
-            'output-mapping-test',
+            self::FILE_TAG,
             'another-tag',
             'componentId: testComponent',
             'configurationId: metadata-write-test',

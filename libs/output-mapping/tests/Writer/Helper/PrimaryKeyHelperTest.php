@@ -226,7 +226,7 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "id, name" to "id, foo".'
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, name" to "id, foo".'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -247,7 +247,7 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "" to "id, foo".'
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "" to "id, foo".'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -268,11 +268,11 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-output-mapping-test.test-table-non-existent" from "id, name" to "id, foo".'
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table-non-existent" from "id, name" to "id, foo".'
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error deleting primary key of table out.c-output-mapping-test.test-table-non-existent: The ' .
-            'table "test-table-non-existent" was not found in the bucket "out.c-output-mapping-test" in the project'
+            'Error deleting primary key of table ' . self::TEST_BUCKET_ID . '.test-table-non-existent: The ' .
+            'table "test-table-non-existent" was not found in the bucket "' . self::TEST_BUCKET_ID . '" in the project'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -293,10 +293,10 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'bar']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "out.c-output-mapping-test.test-table" from "id, name" to "id, bar".'
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, name" to "id, bar".'
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error changing primary key of table out.c-output-mapping-test.test-table: Primary key ' .
+            'Error changing primary key of table ' . self::TEST_BUCKET_ID . '.test-table: Primary key ' .
             'columns "bar" not found in "id, name, foo"'
         ));
         $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);

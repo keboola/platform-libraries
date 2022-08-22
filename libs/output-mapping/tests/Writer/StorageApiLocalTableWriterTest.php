@@ -33,7 +33,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             self::OUTPUT_BUCKET,
             self::BRANCH_BUCKET
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket(StorageApiLocalTableWriterTest, 'out');
+        $this->clientWrapper->getBasicClient()->createBucket('StorageApiLocalTableWriterTest', 'out');
     }
 
     public function testWriteTableOutputMapping()
@@ -129,7 +129,13 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $this->assertTablesExists([self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table2a']);
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table2a',
+            ]
+        );
 
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
@@ -236,7 +242,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables("out.c-output-mapping-test");
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
         $this->assertEquals(self::OUTPUT_BUCKET . '.table31', $tables[0]["id"]);
     }
@@ -292,39 +298,15 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertEquals(['Id'], $tables[0]["primaryKey"]);
     }
 
-    public function testWriteTableManifest()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table3a.csv",
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
-        );
-        file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table3a.csv.manifest",
-            '{"destination": "' . self::OUTPUT_BUCKET . '.table3a","primary_key": ["Id","Name"]}'
-        );
-
-        $writer = new TableWriter($this->getStagingFactory());
-
-        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $this->assertEquals(self::OUTPUT_BUCKET . '.table3a', $tables[0]["id"]);
-        $this->assertEquals(["Id", "Name"], $tables[0]["primaryKey"]);
-    }
-
     public function testWriteTableInvalidManifest()
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table3b.csv",
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3b.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . "upload/out.c-output-mapping-test.table3b.csv.manifest",
+            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3b.csv.manifest',
             '{"destination": "' . self::OUTPUT_BUCKET . '.table3","primary_key": "Id"}'
         );
 

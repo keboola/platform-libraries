@@ -34,6 +34,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         }
         parent::setUp();
         $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
+        $this->clearFileUploads([self::FILE_TAG]);
     }
 
     protected function initClient($branchId = '')

@@ -13,10 +13,10 @@ use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
-class StorageApiSlicedWriterTest extends BaseWriterTest
+class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
 {
-    private const OUTPUT_BUCKET = 'out.c-StorageApiSlicedWriterTest';
-    private const FILE_TAG = 'StorageApiSlicedWriterTest';
+    private const OUTPUT_BUCKET = 'out.c-StorageApiSlicedWriterRedshiftTest';
+    private const FILE_TAG = 'StorageApiSlicedWriterRedshiftTest';
 
     public function setUp()
     {
@@ -27,12 +27,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function initBucket($backendType)
     {
-        $this->clientWrapper->getBasicClient()->createBucket('StorageApiSlicedWriterTest', 'out', null, $backendType);
+        $this->clientWrapper->getBasicClient()->createBucket('StorageApiSlicedWriterRedshiftTest', 'out', null, $backendType);
     }
 
     public function testWriteTableOutputMapping()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -42,12 +42,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -72,7 +72,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableTagStagingFile()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -82,7 +82,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
@@ -100,7 +100,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $clientWrapper->method('getBasicClient')->willReturn($client);
         $writer = new TableWriter($this->getStagingFactory($clientWrapper));
 
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -128,7 +128,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingEmptySlice()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
         file_put_contents($root . "/upload/table/part1", "");
@@ -136,12 +136,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -157,7 +157,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingEmptySliceExistingTable()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
@@ -170,12 +170,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table16",
                 "destination" => self::OUTPUT_BUCKET . ".table16",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -191,7 +191,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingEmptyDir()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table15");
 
@@ -199,12 +199,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table15",
                 "destination" => self::OUTPUT_BUCKET . ".table15",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -220,7 +220,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingEmptyDirExistingTable()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
@@ -233,12 +233,12 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table17",
                 "destination" => self::OUTPUT_BUCKET . ".table17",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -254,7 +254,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingMissingHeaders()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table");
 
@@ -276,7 +276,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingExistingTable()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
         $csvFile->writeRow(["Id", "Name"]);
         $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, "table", $csvFile);
@@ -294,13 +294,13 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -320,7 +320,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingDifferentDelimiterEnclosure()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "'test'|'test'\n");
@@ -330,7 +330,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"],
+                "columns" => ["Id", "Name"],
                 "delimiter" => "|",
                 "enclosure" => "'"
             ]
@@ -338,7 +338,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 
@@ -358,7 +358,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingCombination()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table.csv");
         file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
@@ -369,17 +369,17 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ],
             [
                 "source" => "table2.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table2",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
@@ -409,7 +409,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
 
     public function testWriteTableOutputMappingCompression()
     {
-        $this->initBucket('snowflake');
+        $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
         mkdir($root . "/upload/table18.csv");
         file_put_contents($root . "/upload/table18.csv/part1", "\"test\",\"test\"\n");
@@ -421,13 +421,13 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
             [
                 "source" => "table18.csv",
                 "destination" => self::OUTPUT_BUCKET . ".table18",
-                "columns" => ["Id","Name"]
+                "columns" => ["Id", "Name"]
             ]
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
 

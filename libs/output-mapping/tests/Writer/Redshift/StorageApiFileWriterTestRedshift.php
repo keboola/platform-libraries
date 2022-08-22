@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Keboola\OutputMapping\Tests\Writer;
-
 
 class StorageApiFileWriterTestRedshift extends BaseWriterTest
 {

@@ -20,7 +20,7 @@
         <directory>tests/Writer/Helper</directory>
     </testsuite>
     <testsuite name="main-writer-tests-1">
-        <file>tests/Writer/StorageApiLocalWriterTest.php</file>
+        <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
     </testsuite>
     <testsuite name="main-writer-tests-2">
         <directory>tests/Writer</directory>
@@ -30,6 +30,7 @@
         <exclude>tests/Writer/Redshift</exclude>
         <exclude>tests/Writer/Workspace</exclude>
         <exclude>tests/Writer/TableDefinitionTest.php</exclude>
+        <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
     </testsuite>
     <testsuite name="redshift-writer-tests">
         <directory>tests/Writer/Redshift</directory>

@@ -22,6 +22,7 @@
     <testsuite name="main-writer-tests-1">
         <file>tests/Writer/StorageApiFileWriterTest.php</file>
         <file>tests/Writer/StorageApiWriterMetadataTest.php</file>
+        <file>tests/Writer/StorageApiSlicedWriterTest.php</file>
     </testsuite>
     <testsuite name="main-writer-tests-2">
         <directory>tests/Writer</directory>
@@ -32,6 +33,7 @@
         <exclude>tests/Writer/Workspace</exclude>
         <exclude>tests/Writer/TableDefinitionTest.php</exclude>
         <exclude>tests/Writer/StorageApiFileWriterTest.php</exclude>
+        <exclude>tests/Writer/StorageApiSlicedWriterTest.php</exclude>
         <exclude>tests/Writer/StorageApiWriterMetadataTest.php</exclude>
     </testsuite>
     <testsuite name="redshift-writer-tests">

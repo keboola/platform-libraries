@@ -21,8 +21,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     use CreateBranchTrait;
 
     private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterTest';
-    private const TEST_BRANCH = 'dev-123';
-    private const BRANCH_BUCKET = 'out.c-' . self::TEST_BRANCH . '-StorageApiLocalTableWriterTest';
+    private const BUCKET_NAME = 'StorageApiLocalTableWriterTest';
 
     const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
@@ -31,7 +30,6 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         parent::setUp();
         $this->clearBuckets([
             self::OUTPUT_BUCKET,
-            self::BRANCH_BUCKET
         ]);
         $this->clientWrapper->getBasicClient()->createBucket('StorageApiLocalTableWriterTest', 'out');
     }
@@ -151,7 +149,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, self::TEST_BRANCH);
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -180,14 +178,16 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::BRANCH_BUCKET);
+        $tables = $this->clientWrapper->getBasicClient()->listTables(
+            sprintf('out.c-%s-' . self::BUCKET_NAME, $branchId),
+        );
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
         $this->assertEquals(
             [
-                self::BRANCH_BUCKET . '.table11a',
-                self::BRANCH_BUCKET . '.table21a',
+                sprintf('out.c-%s-' . self::BUCKET_NAME . '.table11a', $branchId),
+                sprintf('out.c-%s-' . self::BUCKET_NAME . '.table21a', $branchId),
             ],
             $tableIds
         );
@@ -861,7 +861,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, self::TEST_BRANCH);
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -887,15 +887,16 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         // drop the dev branch metadata
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
-        foreach ($metadata->listBucketMetadata(self::BRANCH_BUCKET) as $metadatum) {
+        $branchBucketId = sprintf('out.c-%s-%s', $branchId, self::BUCKET_NAME);
+        foreach ($metadata->listBucketMetadata($branchBucketId) as $metadatum) {
             if (($metadatum['key'] === 'KBC.createdBy.branch.id') || ($metadatum['key'] === 'KBC.lastUpdatedBy.branch.id')) {
-                $metadata->deleteBucketMetadata(self::BRANCH_BUCKET, $metadatum['id']);
+                $metadata->deleteBucketMetadata($branchBucketId, $metadatum['id']);
             }
         }
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . self::BRANCH_BUCKET . '" on branch "' . self::TEST_BRANCH . '" (ID "%s"), but the bucket is not assigned ' .
+            '"' . $branchBucketId . '" on branch "dev-123" (ID "%s"), but the bucket is not assigned ' .
             'to any development branch.',
             $branchId
         ));
@@ -913,7 +914,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, self::TEST_BRANCH);
+        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -939,12 +940,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         // drop the dev branch metadata and create bucket metadata referencing a different branch
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
-        $bucketId = self::BRANCH_BUCKET;
-        foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
+        $branchBucketId = sprintf('out.c-%s-%s', $branchId, self::BUCKET_NAME);
+        foreach ($metadata->listBucketMetadata($branchBucketId) as $metadatum) {
             if (($metadatum['key'] === 'KBC.createdBy.branch.id') || ($metadatum['key'] === 'KBC.lastUpdatedBy.branch.id')) {
-                $metadata->deleteBucketMetadata($bucketId, $metadatum['id']);
+                $metadata->deleteBucketMetadata($branchBucketId, $metadatum['id']);
                 $metadata->postBucketMetadata(
-                    $bucketId,
+                    $branchBucketId,
                     'system',
                     [
                         [
@@ -959,9 +960,8 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . self::BRANCH_BUCKET . '" on branch "' . self::TEST_BRANCH . '" (ID "%s"). ' .
+            '"' . $branchBucketId . '" on branch "dev-123" (ID "%s"). ' .
             'The bucket metadata marks it as assigned to branch with ID "12345".',
-            $branchId,
             $branchId
         ));
         $writer->uploadTables(

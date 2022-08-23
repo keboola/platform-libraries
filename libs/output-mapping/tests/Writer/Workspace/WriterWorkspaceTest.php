@@ -17,8 +17,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
     private const INPUT_BUCKET = 'in.c-WriterWorkspaceTest';
     private const OUTPUT_BUCKET = 'out.c-WriterWorkspaceTest';
     private const FILE_TAG = 'WriterWorkspaceTest';
-    private const TEST_BRANCH = 'dev-123';
-    private const BRANCH_BUCKET = 'out.c-dev-123-WriterWorkspaceTest';
+    private const BUCKET_NAME = 'WriterWorkspaceTest';
 
     public function setUp()
     {
@@ -26,7 +25,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clearBuckets([
             self::INPUT_BUCKET,
             self::OUTPUT_BUCKET,
-            self::BRANCH_BUCKET,
         ]);
         $this->clearFileUploads([self::FILE_TAG]);
     }
@@ -336,7 +334,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
                 null,
             )
         );
-        $branchId = $this->createBranch($clientWrapper, self::TEST_BRANCH);
+        $branchId = $this->createBranch($clientWrapper, 'dev-123');
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 STORAGE_API_URL,
@@ -387,14 +385,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::BRANCH_BUCKET);
+
+        $branchBucketId = sprintf('out.c-%s-%s', $branchId, self::BUCKET_NAME);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($branchBucketId);
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
         $this->assertEquals(
             [
-                self::BRANCH_BUCKET . '.table1a',
-                self::BRANCH_BUCKET . '.table2a',
+                $branchBucketId . '.table1a',
+                $branchBucketId . '.table2a',
             ],
             $tableIds
         );

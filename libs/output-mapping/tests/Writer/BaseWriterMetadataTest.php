@@ -2,7 +2,7 @@
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\TableWriter;
 

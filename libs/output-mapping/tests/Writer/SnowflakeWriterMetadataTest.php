@@ -19,7 +19,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
-        $this->clientWrapper->getBasicClient()->createBucket('SnowflakeApiWriterMetadataTest', "in", '', 'snowflake');
+        $this->clientWrapper->getBasicClient()->createBucket('SnowflakeWriterMetadataTest', "in", '', 'snowflake');
 
         $this->backend = 'snowflake';
     }

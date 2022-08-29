@@ -5,6 +5,7 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Metadata;
 
 abstract class BaseWriterMetadataTest extends BaseWriterTest
 {

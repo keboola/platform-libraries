@@ -10,13 +10,35 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
 
-    <testsuite name="main">
-        <directory>tests</directory>
-        <exclude>
-            <file>tests/Writer/TableDefinitionTest.php</file>
-        </exclude>
+    <testsuite name="general-tests">
+        <directory>tests/Configuration</directory>
+        <directory>tests/DeferredTasks</directory>
+        <directory>tests/Staging</directory>
+        <directory>tests/Table</directory>
+        <directory>tests/Writer/File</directory>
+        <directory>tests/Writer/Table</directory>
+        <directory>tests/Writer/Helper</directory>
     </testsuite>
-
+    <testsuite name="main-writer-tests-1">
+        <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
+    </testsuite>
+    <testsuite name="main-writer-tests-2">
+        <!-- Any test added to tests/Writer will be run in this suite -->
+        <directory>tests/Writer</directory>
+        <exclude>tests/Writer/File</exclude>
+        <exclude>tests/Writer/Helper</exclude>
+        <exclude>tests/Writer/Table</exclude>
+        <exclude>tests/Writer/Redshift</exclude>
+        <exclude>tests/Writer/Workspace</exclude>
+        <exclude>tests/Writer/TableDefinitionTest.php</exclude>
+        <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
+    </testsuite>
+    <testsuite name="redshift-writer-tests">
+        <directory>tests/Writer/Redshift</directory>
+    </testsuite>
+    <testsuite name="workspace-writer-tests">
+        <directory>tests/Writer/Workspace</directory>
+    </testsuite>
     <testsuite name="native-types">
         <file>tests/Writer/TableDefinitionTest.php</file>
     </testsuite>

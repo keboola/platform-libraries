@@ -11,11 +11,13 @@ use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends BaseWriterTest
 {
+    private const OUTPUT_BUCKET = 'out.c-TableDefinitionTest';
+
     public function testNotCreateTableDefinition(): void
     {
         $config = [
             'source' => 'tableDefinition.csv',
-            'destination' => 'out.c-output-mapping.tableDefinition',
+            'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
             'columns' => ['Id', 'Name', 'birthweight', 'created'],
             'column_metadata' => [],
             'primary_key' => ['Id', 'Name'],
@@ -103,7 +105,7 @@ class TableDefinitionTest extends BaseWriterTest
         yield 'base types' => [
             [
                 'source' => 'tableDefinition.csv',
-                'destination' => 'out.c-output-mapping.tableDefinition',
+                'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
                 'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'column_metadata' => [
                     'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
@@ -140,7 +142,7 @@ class TableDefinitionTest extends BaseWriterTest
         yield 'native snowflake types' => [
             [
                 'source' => 'tableDefinition.csv',
-                'destination' => 'out.c-output-mapping.tableDefinition',
+                'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
                 'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'metadata' => [
                     [

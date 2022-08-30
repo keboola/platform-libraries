@@ -1,10 +1,7 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
-use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -14,6 +11,9 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use InitSynapseStorageClientTrait;
 
+    private const INPUT_BUCKET = 'in.c-SynapseWriterWorkspaceTest';
+    private const OUTPUT_BUCKET = 'out.c-SynapseWriterWorkspaceTest';
+
     public function setUp()
     {
         if (!$this->checkSynapseTests()) {
@@ -21,8 +21,8 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         }
         parent::setUp();
         $this->clearBuckets([
-            'in.c-output-mapping-test',
-            'out.c-output-mapping-test',
+            self::INPUT_BUCKET,
+            self::OUTPUT_BUCKET,
         ]);
     }
 
@@ -37,18 +37,18 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SYNAPSE)->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('synapse');
+        $this->prepareWorkspaceWithTables('synapse', 'SynapseWriterWorkspaceTest');
         // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'out', '', 'synapse');
+        $this->clientWrapper->getBasicClient()->createBucket('SynapseWriterWorkspaceTest', 'out', '', 'synapse');
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
                 'distribution_key' => [],
             ],
             [
                 'source' => 'table2a',
-                'destination' => 'out.c-output-mapping-test.table2a',
+                'destination' => self::OUTPUT_BUCKET . '.table2a',
                 'distribution_key' => ['Id2'],
             ],
         ];
@@ -75,22 +75,22 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables('out.c-output-mapping-test');
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(2, $tables);
         $sortedTables = [$tables[0]['id'] => $tables[0], $tables[1]['id'] => $tables[1]];
         ksort($sortedTables);
         $this->assertEquals(
-            ['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a'],
+            [self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table2a'],
             array_keys($sortedTables)
         );
-        $this->assertArrayHasKey('distributionKey', $sortedTables['out.c-output-mapping-test.table2a']);
-        $this->assertEquals(['Id2'], $sortedTables['out.c-output-mapping-test.table2a']['distributionKey']);
+        $this->assertArrayHasKey('distributionKey', $sortedTables[self::OUTPUT_BUCKET . '.table2a']);
+        $this->assertEquals(['Id2'], $sortedTables[self::OUTPUT_BUCKET . '.table2a']['distributionKey']);
         $this->assertCount(2, $jobIds);
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
         $te = new TableExporter($this->clientWrapper->getBasicClient());
-        $te->exportTable('out.c-output-mapping-test.table1a', $root . DIRECTORY_SEPARATOR . 'table1a-returned.csv', []);
+        $te->exportTable(self::OUTPUT_BUCKET . '.table1a', $root . DIRECTORY_SEPARATOR . 'table1a-returned.csv', []);
         $rows = explode("\n", trim(file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv')));
         sort($rows);
         $this->assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);

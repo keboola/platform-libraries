@@ -17,21 +17,19 @@ class StorageApiFileWriterTest extends BaseWriterTest
 {
     use CreateBranchTrait;
 
-    const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
+    private const FILE_TAG = 'StorageApiFileWriterTest';
+
+    private const OUTPUT_BUCKET = 'out.c-StorageApiFileWriterTest';
+
+    private const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
     public function setUp()
     {
         parent::setUp();
-        $this->clearFileUploads(['output-mapping-bundle-test']);
+        $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([
-            'out.c-output-mapping-test',
-            'out.c-output-mapping-default-test',
-            'out.c-output-mapping-redshift-test',
-            'in.c-output-mapping-test',
-            'out.c-dev-123-output-mapping-test'
+            self::OUTPUT_BUCKET,
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-redshift-test', 'out', '', 'redshift');
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-default-test', 'out');
     }
 
     public function testWriteBasicFiles()
@@ -41,10 +39,13 @@ class StorageApiFileWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/file2", "test");
         file_put_contents(
             $root . "/upload/file2.manifest",
-            "{\"tags\": [\"output-mapping-test\", \"xxx\"],\"is_public\": false}"
+            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}'
         );
         file_put_contents($root . "/upload/file3", "test");
-        file_put_contents($root . "/upload/file3.manifest", "{\"tags\": [\"output-mapping-test\"],\"is_public\": true}");
+        file_put_contents(
+            $root . "/upload/file3.manifest",
+            '{"tags": ["' . self::FILE_TAG . '"],"is_public": true}'
+        );
 
         $systemMetadata = [
             "componentId" => "testComponent",
@@ -57,11 +58,11 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test"]
+                "tags" => [self::FILE_TAG]
             ],
             [
                 "source" => "file2",
-                "tags" => ["output-mapping-test", "another-tag"],
+                "tags" => [self::FILE_TAG, "another-tag"],
                 "is_public" => true
             ]
         ];
@@ -72,7 +73,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(3, $files);
 
@@ -90,7 +91,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         }
 
         $expectedTags = [
-            'output-mapping-test',
+            self::FILE_TAG,
             'componentId: testComponent',
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',
@@ -119,7 +120,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test"]
+                "tags" => [self::FILE_TAG]
             ]
         ];
 
@@ -129,7 +130,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -142,7 +143,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $this->assertNotNull($file1);
         $this->assertEquals(4, $file1['sizeBytes']);
-        $this->assertEquals(['output-mapping-test'], $file1['tags']);
+        $this->assertEquals([self::FILE_TAG], $file1['tags']);
     }
 
     public function testWriteFilesOutputMappingDevMode()
@@ -155,7 +156,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             )
         );
         $branchId = $this->createBranch($clientWrapper, 'dev-123');
-        $this->clearFileUploads(['dev-123-output-mapping-test']);
+        $this->clearFileUploads(['dev-123-' . self::FILE_TAG]);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 STORAGE_API_URL,
@@ -170,7 +171,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test"]
+                "tags" => [self::FILE_TAG]
             ]
         ];
 
@@ -188,7 +189,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([sprintf('%s-output-mapping-test', $branchId)]);
+        $options->setTags([sprintf('%s-' . self::FILE_TAG, $branchId)]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -200,7 +201,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         }
 
         $expectedTags = [
-            sprintf('%s-output-mapping-test', $branchId),
+            sprintf('%s-' . self::FILE_TAG, $branchId),
             sprintf('%s-componentId: testComponent', $branchId),
             sprintf('%s-configurationId: metadata-write-test', $branchId),
             sprintf('%s-configurationRowId: 12345', $branchId),
@@ -219,13 +220,13 @@ class StorageApiFileWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/file1", "test");
         file_put_contents(
             $root . "/upload/file1.manifest",
-            "{\"tags\": [\"output-mapping-test\", \"xxx\"],\"is_public\": true}"
+            "{\"tags\": [\"" . self::FILE_TAG . "\", \"xxx\"],\"is_public\": true}"
         );
 
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test", "yyy"],
+                "tags" => [self::FILE_TAG, "yyy"],
                 "is_public" => false
             ]
         ];
@@ -235,7 +236,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
@@ -248,7 +249,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $this->assertNotNull($file1);
         $this->assertEquals(4, $file1["sizeBytes"]);
-        $this->assertEquals(["output-mapping-test", "yyy", "componentId: foo"], $file1["tags"]);
+        $this->assertEquals([self::FILE_TAG, "yyy", "componentId: foo"], $file1["tags"]);
         $this->assertFalse($file1["isPublic"]);
     }
 
@@ -261,7 +262,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test", "yyy"],
+                "tags" => [self::FILE_TAG, "yyy"],
                 "is_public" => false
             ]
         ];
@@ -285,7 +286,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $configs = [
             [
                 "source" => "file1",
-                "tags" => ["output-mapping-test", "yyy"],
+                "tags" => [self::FILE_TAG, "yyy"],
                 "is_public" => false
             ]
         ];
@@ -306,13 +307,13 @@ class StorageApiFileWriterTest extends BaseWriterTest
         file_put_contents($root . "/upload/file1", "test");
         file_put_contents(
             $root . "/upload/file1.manifest",
-            "{\"tags\": [\"output-mapping-test-xxx\"],\"is_public\": true}"
+            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}'
         );
 
         $configs = [
             [
                 "source" => "file2",
-                "tags" => ["output-mapping-test"],
+                "tags" => [self::FILE_TAG],
                 "is_public" => false
             ]
         ];
@@ -331,7 +332,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
             $root . "/upload/file1.manifest",
-            "{\"tags\": [\"output-mapping-test-xxx\"],\"is_public\": true}"
+            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}'
         );
         $writer = new FileWriter($this->getStagingFactory());
         try {
@@ -360,16 +361,16 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["output-mapping-test"])
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["output-mapping-test"])
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
         sleep(1);
 
         $writer = new FileWriter($this->getStagingFactory());
-        $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
+        $configuration = [["tags" => [self::FILE_TAG], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         $file = $this->clientWrapper->getBasicClient()->getFile($id1);
@@ -385,18 +386,18 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["output-mapping-test"])
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
         $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . "/upload/test",
-            (new FileUploadOptions())->setTags(["12345-output-mapping-test"])
+            (new FileUploadOptions())->setTags(['12345-' . self::FILE_TAG])
         );
         sleep(1);
         // set it to use a branch
         $this->initClient('12345');
 
         $writer = new FileWriter($this->getStagingFactory());
-        $configuration = [["tags" => ["output-mapping-test"], "processed_tags" => ['downloaded']]];
+        $configuration = [["tags" => [self::FILE_TAG], "processed_tags" => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         // first file shouldn't be marked as processed because a branch file exists
@@ -404,7 +405,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $this->assertTrue(!in_array('12345-downloaded', $file1['tags']));
         $file2 = $this->clientWrapper->getBasicClient()->getFile($id2);
         $this->assertTrue(in_array('12345-downloaded', $file2['tags']));
-        $this->assertTrue(in_array('12345-output-mapping-test', $file2['tags']));
+        $this->assertTrue(in_array('12345-' . self::FILE_TAG, $file2['tags']));
     }
 
     public function testTableFiles()
@@ -424,7 +425,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'runId' => '999',
         ];
         $tableFiles = [
-            'tags' => ['output-mapping-test', 'another-tag'],
+            'tags' => [self::FILE_TAG, 'another-tag'],
             'is_permanent' => true,
         ];
 
@@ -440,12 +441,12 @@ class StorageApiFileWriterTest extends BaseWriterTest
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags(["output-mapping-test"]);
+        $options->setTags([self::FILE_TAG]);
         $files = $this->clientWrapper->getBasicClient()->listFiles($options);
         $this->assertCount(1, $files);
 
         $expectedTags = [
-            'output-mapping-test',
+            self::FILE_TAG,
             'another-tag',
             'componentId: testComponent',
             'configurationId: metadata-write-test',

@@ -1,11 +1,11 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -14,15 +14,19 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
     use CreateBranchTrait;
 
+    private const INPUT_BUCKET = 'in.c-WriterWorkspaceTest';
+    private const OUTPUT_BUCKET = 'out.c-WriterWorkspaceTest';
+    private const FILE_TAG = 'WriterWorkspaceTest';
+    private const BUCKET_NAME = 'WriterWorkspaceTest';
+
     public function setUp()
     {
         parent::setUp();
         $this->clearBuckets([
-            'out.c-output-mapping-test',
-            'in.c-output-mapping-test',
-            'out.c-dev-123-output-mapping-test',
+            self::INPUT_BUCKET,
+            self::OUTPUT_BUCKET,
         ]);
-        $this->clearFileUploads(['output-mapping-test']);
+        $this->clearFileUploads([self::FILE_TAG]);
     }
 
     public function testSnowflakeTableOutputMapping()
@@ -34,18 +38,18 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
 
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
             ],
             [
                 'source' => 'table2a',
-                'destination' => 'out.c-output-mapping-test.table2a',
+                'destination' => self::OUTPUT_BUCKET . '.table2a',
             ],
         ];
         file_put_contents(
@@ -83,8 +87,14 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['Id2', 'Name2'],
         ], $jobIds[1]);
 
-        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table2a',
+            ]
+        );
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',
             '"aabb","ccdd"',
@@ -97,7 +107,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
             ],
         ];
         file_put_contents(
@@ -109,7 +119,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($this->getStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to load table "out.c-output-mapping-test.table1a": Table "table1a" not found in schema "WORKSPACE_');
+        $this->expectExceptionMessage('Failed to load table "' . self::OUTPUT_BUCKET . '.table1a": Table "table1a" not found in schema "WORKSPACE_');
 
         $tableQueue = $writer->uploadTables(
             '/',
@@ -125,12 +135,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
             ],
         ];
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/^Failed to load table "out\.c-output-mapping-test\.table1a": Table "table1a" not found in schema "WORKSPACE_\d+"$/');
+        $this->expectExceptionMessageRegExp('/Table "table1a" not found in schema "WORKSPACE_\d+"$/');
 
         $tableQueue = $writer->uploadTables(
             '/',
@@ -151,12 +161,12 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
 
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
                 'metadata' => [
                     [
                         'key' => 'foo',
@@ -195,7 +205,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertCount(1, $jobIds);
 
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
-        $tableMetadata = $metadata->listTableMetadata('out.c-output-mapping-test.table1a');
+        $tableMetadata = $metadata->listTableMetadata(self::OUTPUT_BUCKET . '.table1a');
         $tableMetadataValues = [];
         self::assertCount(4, $tableMetadata);
         foreach ($tableMetadata as $item) {
@@ -280,7 +290,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
 
         $configs = [
             [
@@ -297,7 +307,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 
         $tableQueue = $writer->uploadTables(
             '/',
-            ['mapping' => $configs, 'bucket' => 'out.c-output-mapping-test'],
+            ['mapping' => $configs, 'bucket' => self::OUTPUT_BUCKET],
             ['componentId' => 'foo'],
             'workspace-snowflake'
         );
@@ -308,55 +318,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['Id', 'Name'],
         ], $jobIds[0]);
 
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
-            '"id","name"',
-            '"test","test"',
-            '"aabb","ccdd"',
-        ]);
-    }
-
-    public function testRedshiftTableOutputMapping()
-    {
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']);
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_REDSHIFT)->getDataStorage()->getWorkspaceId();
-
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('redshift');
-        // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->clientWrapper->getBasicClient()->createBucket('output-mapping-test', 'out', '', 'redshift');
-        $configs = [
-            [
-                'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
-            ],
-            [
-                'source' => 'table2a',
-                'destination' => 'out.c-output-mapping-test.table2a',
-            ],
-        ];
-        file_put_contents(
-            $root . '/table1a.manifest',
-            json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
-        );
-        file_put_contents(
-            $root . '/table2a.manifest',
-            json_encode(
-                ['columns' => ['Id2', 'Name2']]
-            )
-        );
-        $writer = new TableWriter($factory);
-
-        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
-
-        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table2a']);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',
             '"aabb","ccdd"',
@@ -386,17 +348,17 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
 
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
             ],
             [
                 'source' => 'table2a',
-                'destination' => 'out.c-output-mapping-test.table2a',
+                'destination' => self::OUTPUT_BUCKET . '.table2a',
             ],
         ];
         $root = $this->tmp->getTmpFolder();
@@ -423,14 +385,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(2, $jobIds);
-        $tables = $this->clientWrapper->getBasicClient()->listTables(sprintf('out.c-%s-output-mapping-test', $branchId));
+
+        $branchBucketId = sprintf('out.c-%s-%s', $branchId, self::BUCKET_NAME);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($branchBucketId);
         $this->assertCount(2, $tables);
         $tableIds = [$tables[0]["id"], $tables[1]["id"]];
         sort($tableIds);
         $this->assertEquals(
             [
-                sprintf('out.c-%s-output-mapping-test.table1a', $branchId),
-                sprintf('out.c-%s-output-mapping-test.table2a', $branchId),
+                $branchBucketId . '.table1a',
+                $branchBucketId . '.table2a',
             ],
             $tableIds
         );
@@ -448,16 +412,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
-        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend']);
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
 
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
             ],
             [
                 'source' => 'table1a',
-                'destination' => 'out.c-output-mapping-test.table1a_2',
+                'destination' => self::OUTPUT_BUCKET . '.table1a_2',
             ],
         ];
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
@@ -469,13 +433,19 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertNotEmpty($jobIds[0]);
         $this->assertNotEmpty($jobIds[1]);
 
-        $this->assertTablesExists(['out.c-output-mapping-test.table1a', 'out.c-output-mapping-test.table1a_2']);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a', [
+        $this->assertTablesExists(
+            self::OUTPUT_BUCKET,
+            [
+                self::OUTPUT_BUCKET . '.table1a',
+                self::OUTPUT_BUCKET . '.table1a_2',
+            ]
+        );
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',
             '"aabb","ccdd"',
         ]);
-        $this->assertTableRowsEquals('out.c-output-mapping-test.table1a_2', [
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a_2', [
             '"id","name"',
             '"test","test"',
             '"aabb","ccdd"',

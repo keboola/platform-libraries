@@ -11,9 +11,9 @@ jobs:
     parameters:
       jobName: tests_php74_unitTests
       dependsOn: [cs]
-      displayName: Unit Tests
+      displayName: General Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite unit-tests
+      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite general-tests
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0

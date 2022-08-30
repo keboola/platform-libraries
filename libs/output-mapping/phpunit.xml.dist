@@ -10,7 +10,7 @@
          syntaxCheck="false"
          bootstrap="bootstrap.php">
 
-    <testsuite name="unit-tests">
+    <testsuite name="general-tests">
         <directory>tests/Configuration</directory>
         <directory>tests/DeferredTasks</directory>
         <directory>tests/Staging</directory>
@@ -23,6 +23,7 @@
         <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
     </testsuite>
     <testsuite name="main-writer-tests-2">
+        <!-- Any test added to tests/Writer will be run in this suite -->
         <directory>tests/Writer</directory>
         <exclude>tests/Writer/File</exclude>
         <exclude>tests/Writer/Helper</exclude>

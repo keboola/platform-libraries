@@ -13,7 +13,7 @@ jobs:
       dependsOn: [cs]
       displayName: General Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite general-tests
+      testCommand: vendor/bin/phpunit --testsuite general-tests
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0
@@ -28,7 +28,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: First Main Writer Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite main-writer-tests-1
+      testCommand: vendor/bin/phpunit --testsuite main-writer-tests-1
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0
@@ -43,7 +43,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: Second Main Writer Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite main-writer-tests-2
+      testCommand: vendor/bin/phpunit --testsuite main-writer-tests-2
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0
@@ -59,7 +59,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: Workspace Writer Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite workspace-writer-tests
+      testCommand: vendor/bin/phpunit --testsuite workspace-writer-tests
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 1
@@ -74,7 +74,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: Redshift Writer Tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite redshift-writer-tests
+      testCommand: vendor/bin/phpunit --testsuite redshift-writer-tests
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0
@@ -89,7 +89,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: Native types tests
       serviceName: ci-output-mapping
-      testCommand: /code/libs/output-mapping/vendor/bin/phpunit --testsuite native-types
+      testCommand: vendor/bin/phpunit --testsuite native-types
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0

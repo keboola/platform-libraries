@@ -13,6 +13,27 @@ class TableDefinitionTest extends BaseWriterTest
 {
     private const OUTPUT_BUCKET = 'out.c-TableDefinitionTest';
 
+    public function setUp()
+    {
+        parent::setUp();
+
+        $requiredFeatures = [
+            'native-types',
+            'tables-definition',
+        ];
+
+        $tokenData = $this->clientWrapper->getBasicClient()->verifyToken();
+        foreach ($requiredFeatures as $requiredFeature) {
+            if (!in_array($requiredFeature, $tokenData['owner']['features'])) {
+                $this->fail(sprintf(
+                    '%s is not enabled for project "%s".',
+                    ucfirst(str_replace('-', ' ', $requiredFeature)),
+                    $tokenData['owner']['id']
+                ));
+            }
+        }
+    }
+
     public function testNotCreateTableDefinition(): void
     {
         $config = [

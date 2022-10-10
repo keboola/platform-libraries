@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends BaseWriterTest
@@ -74,6 +75,46 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertCount(1, $jobIds);
         $tableDetails = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
         self::assertFalse($tableDetails['isTyped']);
+    }
+
+    public function testCreateTableDefinitionErrorHandling(): void
+    {
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => self::OUTPUT_BUCKET . '.tableDefinitionWithInvalidDataTypes',
+            'columns' => ['Id', 'Name'],
+            'column_metadata' => [
+                'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
+            ],
+            'primary_key' => ['Id', 'Name'],
+        ];
+
+        try {
+            $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
+        } catch (\Throwable $exception) {
+            if ($exception->getCode() !== 404) {
+                throw $exception;
+            }
+        }
+
+        touch(sprintf('%s/upload/tableDefinition.csv', $this->tmp->getTmpFolder()));
+        $writer = new TableWriter($this->getStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionCode(400);
+        $this->expectExceptionMessageRegExp('/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u');
+        $this->expectExceptionMessage('Selected columns are not included in table definition');
+
+        $writer->uploadTables(
+            'upload',
+            [
+                'typedTableEnabled' => true,
+                'mapping' => [$config]
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            true
+        );
     }
 
     /**

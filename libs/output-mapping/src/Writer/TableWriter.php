@@ -4,12 +4,10 @@ namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
-use Keboola\OutputMapping\DeferredTasks\TableWriter\AbstractLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -318,13 +316,26 @@ class TableWriter extends AbstractWriter
         );
     }
 
-    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition)
+    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition): void
     {
         $requestData = $tableDefinition->getRequestData();
-        $this->clientWrapper->getBasicClient()->createTableDefinition(
-            $destination->getBucketId(),
-            $requestData
-        );
+
+        try {
+            $this->clientWrapper->getBasicClient()->createTableDefinition(
+                $destination->getBucketId(),
+                $requestData
+            );
+        } catch (ClientException $e) {
+            throw new InvalidOutputException(
+                sprintf(
+                    'Cannot create table "%s" definition in Storage API: %s',
+                    $destination->getTableName(),
+                    json_encode((array) $e->getContextParams())
+                ),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     private function checkDevBucketMetadata(MappingDestination $destination)

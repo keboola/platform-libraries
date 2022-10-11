@@ -1,26 +1,79 @@
 #!/usr/bin/env bash
 set -e
 
-if [ "$#" -lt "1" ]; then
-    echo 'Usage: ci-find-changes.sh <varName>:<path>'
-    echo 'Example: ci-find-changes.sh input-mapping:libs/input-mapping output-mapping:libs/output-mapping'
-    exit
+VERBOSE=false
+
+help () {
+  echo "Syntax: ci-find-changes.sh [-v,--verbose] <targetBranch> <varName>:<path>"
+  echo "Options:"
+  echo "  -v|--verbose    Output extra information"
+  echo ""
+  echo "Example: ci-find-changes.sh main internalApi:apps/internal-api internalApiPhpClient:libs/internal-api-php-client"
+  echo ""
+}
+
+POSITIONAL_ARGS=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -v|--verbose)
+      VERBOSE=true
+      shift
+      ;;
+    -h|--help)
+      help
+      exit 0
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      echo ""
+      help
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
+TARGET_BRANCH=${1:-}
+if [[ $TARGET_BRANCH = "" ]]; then
+    echo "Missing <targetBranch> argument"
+    echo ""
+    help
+    exit 1
 fi
 
 ALL_CHANGES=
-
-for PROJECT in $@; do
+for PROJECT in ${@:2}; do
   PROJECT_CONFIG=(${PROJECT//:/ })
   PROJECT_VAR_NAME=${PROJECT_CONFIG[0]}
   PROJECT_DIR=${PROJECT_CONFIG[1]}
 
   echo -n "Checking ${PROJECT_DIR} ... "
-  PROJECT_CHANGES_COUNT=$(git diff --name-only origin/main $PROJECT_DIR | wc -l)
-
-  if [[ $PROJECT_CHANGES_COUNT -eq 0 ]]; then
-    echo "no changes"
+  DIR_EXISTS_IN_TARGET_BRANCH=$(git ls-tree -d "origin/${TARGET_BRANCH}:${PROJECT_DIR}" >/dev/null 2>&1 && echo 1 || echo 0)
+  if [[ $DIR_EXISTS_IN_TARGET_BRANCH -eq 0 ]]; then
+    HAS_CHANGES=1
+    echo "does not exists in ${TARGET_BRANCH}"
   else
-    echo "has changes"
+    PROJECT_CHANGES=$(git diff --name-only "origin/${TARGET_BRANCH}" "${PROJECT_DIR}")
+
+    if [[ $(echo -n "${PROJECT_CHANGES}" | wc -l) -gt 0 ]]; then
+      HAS_CHANGES=1
+      echo "has changes"
+
+      if [ "${VERBOSE}" = true ]; then
+        echo "${PROJECT_CHANGES}"
+        echo ""
+      fi
+    else
+      HAS_CHANGES=0
+      echo "no changes"
+    fi
+  fi
+
+  if [[ $HAS_CHANGES -eq 1 ]]; then
     echo "##vso[task.setvariable variable=changedProjects_${PROJECT_VAR_NAME};isOutput=true]1"
     ALL_CHANGES="${ALL_CHANGES} \"${PROJECT_VAR_NAME}\""
   fi

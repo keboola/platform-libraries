@@ -44,7 +44,7 @@ stages:
         displayName: 'Check changes'
         steps:
           - script: |
-              ./bin/ci-find-changes.sh \
+              ./bin/ci-find-changes.sh main \
                 inputMapping:libs/input-mapping \
                 loggingBundle:libs/logging-bundle \
                 stagingProvider:libs/staging-provider \

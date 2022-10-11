@@ -14,6 +14,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/input-mapping
+    - repository: k8s-client
+      type: github
+      endpoint: keboola
+      name: keboola/k8s-client
     - repository: logging-bundle
       type: github
       endpoint: keboola
@@ -43,6 +47,14 @@ jobs:
       targetRepo: input-mapping
       libraryPath: libs/input-mapping
       tagPrefix: input-mapping/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/k8s-client/')
+      sourceRepo: platform-libraries
+      targetRepo: k8s-client
+      libraryPath: libs/k8s-client
+      tagPrefix: k8s-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

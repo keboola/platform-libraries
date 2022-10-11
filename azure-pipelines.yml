@@ -46,6 +46,7 @@ stages:
           - script: |
               ./bin/ci-find-changes.sh main \
                 inputMapping:libs/input-mapping \
+                k8sClient:libs/k8s-client \
                 loggingBundle:libs/logging-bundle \
                 stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
@@ -72,6 +73,13 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
     jobs:
       - template: libs/input-mapping/azure-pipelines.tests.yml
+
+  - stage: tests_k8s_client
+    displayName: Tests - K8S Client
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_k8sClient'])
+    jobs:
+      - template: libs/k8s-client/azure-pipelines.tests.yml
 
   - stage: tests_loggingBundle
     displayName: Tests - Logging Bundle

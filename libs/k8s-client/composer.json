@@ -1,0 +1,52 @@
+{
+    "name": "keboola/k8s-client",
+    "type": "library",
+    "license": "MIT",
+    "description": "Keboola K8S client library",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\K8sClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\K8sClient\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "keboola/retry": "^0.5.1",
+        "kubernetes/php-client": "^1.20"
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^14.0",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-phpunit": "^1.1",
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4"
+    },
+    "config": {
+        "sort-packages": true,
+        "lock": false,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ],
+        "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "tests": "phpunit"
+    }
+}

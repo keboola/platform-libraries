@@ -1,0 +1,59 @@
+<?php
+
+namespace Kubernetes\Model\Io\K8s\Api\Core\V1
+{
+    use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ListMeta;
+
+    class ContainerStatus
+    {
+
+    }
+
+    class ContainerStateTerminated
+    {
+        /** @var string|null */
+        public $finishedAt;
+    }
+
+    class Pod
+    {
+        /** @var PodStatus|null  */
+        public $status;
+    }
+
+    class PodList
+    {
+        /** @var ListMeta|null */
+        public $metadata;
+    }
+
+    class PodStatus
+    {
+        /** @var string|null */
+        public $phase;
+
+        /** @var ContainerStatus[]|null */
+        public $containerStatuses;
+    }
+
+    class Secret
+    {
+        /** @var array<string, string>|null */
+        public $data;
+    }
+}
+
+namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
+{
+    class ListMeta
+    {
+        /** @var string|null */
+        public $continue;
+    }
+
+    class ObjectMeta
+    {
+        /** @var array<string, string>|null */
+        public $annotations;
+    }
+}

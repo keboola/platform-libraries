@@ -19,7 +19,7 @@ services:
       args:
         PHP_VERSION: "7.4"
 
-  dev81:
+  dev81: &dev81
     <<: *dev
     image: keboola/platform-libraries-81
     build:
@@ -56,6 +56,16 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+
+  dev-k8s-client:
+    profiles: [dev]
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.1"
+    working_dir: /code/libs/k8s-client
+    volumes:
+      - .:/code
 
   dev-staging-provider:
     profiles: [dev]

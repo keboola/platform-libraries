@@ -1,33 +1,39 @@
 <?php
 
+namespace KubernetesRuntime
+{
+    class AbstractModel {}
+}
+
 namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 {
     use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ListMeta;
+    use KubernetesRuntime\AbstractModel;
 
-    class ContainerStatus
+    class ContainerStatus extends AbstractModel
     {
 
     }
 
-    class ContainerStateTerminated
+    class ContainerStateTerminated extends AbstractModel
     {
         /** @var string|null */
         public $finishedAt;
     }
 
-    class Pod
+    class Pod extends AbstractModel
     {
         /** @var PodStatus|null  */
         public $status;
     }
 
-    class PodList
+    class PodList extends AbstractModel
     {
         /** @var ListMeta|null */
         public $metadata;
     }
 
-    class PodStatus
+    class PodStatus extends AbstractModel
     {
         /** @var string|null */
         public $phase;
@@ -36,7 +42,7 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
         public $containerStatuses;
     }
 
-    class Secret
+    class Secret extends AbstractModel
     {
         /** @var array<string, string>|null */
         public $data;
@@ -45,7 +51,9 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 
 namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
 {
-    class ListMeta
+    use KubernetesRuntime\AbstractModel;
+
+    class ListMeta extends AbstractModel
     {
         /** @var string|null */
         public $continue;

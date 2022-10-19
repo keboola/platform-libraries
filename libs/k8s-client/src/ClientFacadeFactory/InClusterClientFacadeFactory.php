@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Keboola\K8sClient\ClientFacadeFactory;
+
+use Keboola\K8sClient\Exception\ConfigurationException;
+use Keboola\K8sClient\KubernetesApiClientFacade;
+
+class InClusterClientFacadeFactory
+{
+    private const IN_CLUSTER_AUTH_PATH = '/var/run/secrets/kubernetes.io/serviceaccount';
+    private const IN_CLUSTER_API_URL = 'https://kubernetes.default.svc';
+
+    private GenericClientFacadeFactory $genericFactory;
+    private string $credentialsPath;
+
+    public function __construct(
+        GenericClientFacadeFactory $genericFactory,
+        string $credentialsPath = self::IN_CLUSTER_AUTH_PATH
+    ) {
+        $this->genericFactory = $genericFactory;
+        $this->credentialsPath = $credentialsPath;
+    }
+
+    public function createClusterClient(): KubernetesApiClientFacade
+    {
+        return $this->genericFactory->createClusterClient(
+            self::IN_CLUSTER_API_URL,
+            $this->readInClusterConfigFile('token'),
+            $this->findInClusterConfigFile('ca.crt'),
+            $this->readInClusterConfigFile('namespace'),
+        );
+    }
+
+    private function readInClusterConfigFile(string $file): string
+    {
+        $filePath = $this->findInClusterConfigFile($file);
+        $fileContents = @file_get_contents($filePath);
+
+        if ($fileContents === false) {
+            throw new ConfigurationException(sprintf(
+                'Failed to read contents of in-cluster configuration file %s',
+                $filePath,
+            ));
+        }
+
+        return $fileContents;
+    }
+
+    private function findInClusterConfigFile(string $file): string
+    {
+        $filePath = $this->credentialsPath.'/'.$file;
+
+        if (!file_exists($filePath)) {
+            throw new ConfigurationException(sprintf(
+                'In-cluster configuration file %s does not exist',
+                $filePath,
+            ));
+        }
+
+        return $filePath;
+    }
+}

@@ -1,0 +1,6 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests
+      serviceName: dev81
+      testCommand: bash -c 'cd libs/k8s-client && composer install && composer ci'

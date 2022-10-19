@@ -1,0 +1,10 @@
+parameters:
+    checkMissingIterableValueType: false
+    level: max
+    paths:
+        - src
+        - tests
+    stubFiles:
+        - tests/stubs/K8s.stub
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon

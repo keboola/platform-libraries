@@ -77,6 +77,7 @@ class WorkspaceStagingTest extends TestCase
             'schema' => 'schema',
             'user' => 'user',
             'password' => 'password',
+            'account' => 'host',
         ];
 
         $workspace = new SnowflakeWorkspaceStaging([

@@ -27,6 +27,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
                 'database' => 'someDatabase',
                 'schema' => 'someSchema',
                 'user' => 'someUser',
+                'account' => 'someHost',
             ],
         ]);
 
@@ -48,6 +49,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
                 'schema' => 'someSchema',
                 'user' => 'someUser',
                 'warehouse' => 'someWarehouse',
+                'account' => 'someHost',
             ],
             $credentials
         );

@@ -43,6 +43,7 @@ class WorkspaceStagingProviderTest extends TestCase
             'schema' => 'schema',
             'user' => 'user',
             'password' => 'password',
+            'account' => 'host',
         ];
 
         $workspacesApiClient = $this->createMock(Workspaces::class);

@@ -4,6 +4,7 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\StorageApi\Workspaces;
 
 abstract class AbstractDatabaseStrategy extends AbstractStrategy
 {
@@ -46,7 +47,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 $workspaceTables[] = $table;
             }
             if ($export['type'] === 'copy') {
-                list ($table, $exportOptions) = $export['table'];
+                [$table, $exportOptions] = $export['table'];
                 $copyInput = array_merge(
                     [
                         'source' => $table->getSource(),
@@ -67,6 +68,9 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         $cloneJobResult = [];
         $copyJobResult = [];
         $hasBeenCleaned = false;
+
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+
         if ($cloneInputs) {
             $this->logger->info(
                 sprintf('Cloning %s tables to workspace.', count($cloneInputs))
@@ -75,15 +79,14 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             // We need to process clone and copy jobs separately because there is no lock on the table and there is a race between the
             // clone and copy jobs which can end in an error that the table already exists.
             // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
-                'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load-clone',
+            $jobId = $workspaces->queueWorkspaceCloneInto(
+                $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $cloneInputs,
                     'preserve' => $preserve ? 1 : 0,
-                ],
-                false
+                ]
             );
-            $cloneJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$job['id']]);
+            $cloneJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$jobId]);
             if (!$preserve) {
                 $hasBeenCleaned = true;
             }
@@ -93,15 +96,14 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Copying %s tables to workspace.', count($copyInputs))
             );
-            $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
-                'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
+            $jobId = $workspaces->queueWorkspaceLoadData(
+                $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $copyInputs,
                     'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
-                ],
-                false
+                ]
             );
-            $copyJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$job['id']]);
+            $copyJobResult = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$jobId]);
         }
         $jobResults = array_merge($cloneJobResult, $copyJobResult);
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');

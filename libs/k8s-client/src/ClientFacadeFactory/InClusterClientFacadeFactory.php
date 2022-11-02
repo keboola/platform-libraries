@@ -23,13 +23,13 @@ class InClusterClientFacadeFactory
         $this->credentialsPath = $credentialsPath;
     }
 
-    public function createClusterClient(): KubernetesApiClientFacade
+    public function createClusterClient(?string $namespace = null): KubernetesApiClientFacade
     {
         return $this->genericFactory->createClusterClient(
             self::IN_CLUSTER_API_URL,
             $this->readInClusterConfigFile('token'),
             $this->findInClusterConfigFile('ca.crt'),
-            $this->readInClusterConfigFile('namespace'),
+            $namespace ?? $this->readInClusterConfigFile('namespace'),
         );
     }
 
@@ -40,7 +40,7 @@ class InClusterClientFacadeFactory
 
         if ($fileContents === false) {
             throw new ConfigurationException(sprintf(
-                'Failed to read contents of in-cluster configuration file %s',
+                'Failed to read contents of in-cluster configuration file "%s"',
                 $filePath,
             ));
         }
@@ -54,7 +54,7 @@ class InClusterClientFacadeFactory
 
         if (!file_exists($filePath)) {
             throw new ConfigurationException(sprintf(
-                'In-cluster configuration file %s does not exist',
+                'In-cluster configuration file "%s" does not exist',
                 $filePath,
             ));
         }

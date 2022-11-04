@@ -3,6 +3,7 @@
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\StorageApi\Workspaces;
 
 class ABSWorkspace extends AbstractStrategy
 {
@@ -22,7 +23,7 @@ class ABSWorkspace extends AbstractStrategy
         $workspaceTables = [];
 
         foreach ($exports as $export) {
-            list ($table, $exportOptions) = $export['table'];
+            [$table, $exportOptions] = $export['table'];
             $destination = $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table);
             $copyInput = array_merge(
                 [
@@ -42,15 +43,14 @@ class ABSWorkspace extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->apiPost(
-            'workspaces/' . $this->dataStorage->getWorkspaceId() . '/load',
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaceJobId = $workspaces->queueWorkspaceLoadData(
+            $this->dataStorage->getWorkspaceId(),
             [
                 'input' => $copyInputs,
                 'preserve' => 1,
-            ],
-            false
+            ]
         );
-        $workspaceJobId = $job['id'];
 
         $jobResults = [];
         if ($workspaceJobId) {

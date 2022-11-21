@@ -19,6 +19,8 @@ class LoadTableTask extends AbstractLoadTableTask
                     $exception
                 );
             }
+
+            throw $exception;
         }
     }
 }

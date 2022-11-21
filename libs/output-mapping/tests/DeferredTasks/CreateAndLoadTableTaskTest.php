@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
@@ -11,7 +13,24 @@ use PHPUnit\Framework\TestCase;
 
 class CreateAndLoadTableTaskTest extends TestCase
 {
-    public function testAccessPermissionError()
+    public function testClientErrorsArePropagated(): void
+    {
+        $mappingDestination = new MappingDestination('out.c-test.test-table');
+        $createAndLoadTableTask = new CreateAndLoadTableTask($mappingDestination, []);
+        $storageApiMock = $this->createMock(Client::class);
+
+        $storageApiMock->expects($this->once())
+            ->method('queueTableCreate')
+            ->willThrowException(
+                new ClientException("Bad Params.", 400)
+            );
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage("Bad Params.");
+        $this->expectExceptionCode(400);
+        $createAndLoadTableTask->startImport($storageApiMock);
+    }
+
+    public function testAccessPermissionErrorIsConvertedToOutputOperationException(): void
     {
         $mappingDestination = new MappingDestination('out.c-test.test-table');
         $createAndLoadTableTask = new CreateAndLoadTableTask($mappingDestination, []);

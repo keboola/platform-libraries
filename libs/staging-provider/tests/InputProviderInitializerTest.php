@@ -13,6 +13,7 @@ use Keboola\InputMapping\Table\Strategy\ABSWorkspace as InputTableABSWorkspace;
 use Keboola\InputMapping\Table\Strategy\Local as InputTableLocal;
 use Keboola\InputMapping\Table\Strategy\Redshift as InputTableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
+use Keboola\InputMapping\Table\Strategy\BigQuery as InputTableBigQuery;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
 use Keboola\InputMapping\Table\Strategy\Exasol as InputTableExasol;
@@ -311,6 +312,46 @@ class InputProviderInitializerTest extends TestCase
         self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
         self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_TERADATA, new InputFileStateList([])));
         self::assertInstanceOf(InputTableTeradata::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_TERADATA, '', new InputTableStateList([])));
+
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
+        $this->expectException(InvalidInputException::class);
+        $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_SNOWFLAKE, '', new InputTableStateList([]));
+    }
+
+    public function testInitializeInputBigQuery()
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
+        $stagingFactory = new InputStrategyFactory(
+            $clientWrapper,
+            new NullLogger(),
+            'json'
+        );
+
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
+            'my-test-component',
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
+        );
+        $init = new InputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+
+        $init->initializeProviders(
+            InputStrategyFactory::WORKSPACE_BIGQUERY,
+            [
+                'owner' => [
+                    'hasBigquery' => true,
+                    'fileStorageProvider' => 'aws',
+                ],
+            ]
+        );
+
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::LOCAL, new InputFileStateList([])));
+        self::assertInstanceOf(InputTableLocal::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::LOCAL, '', new InputTableStateList([])));
+        self::assertInstanceOf(InputFileLocal::class, $stagingFactory->getFileInputStrategy(InputStrategyFactory::WORKSPACE_BIGQUERY, new InputFileStateList([])));
+        self::assertInstanceOf(InputTableBigQuery::class, $stagingFactory->getTableInputStrategy(InputStrategyFactory::WORKSPACE_BIGQUERY, '', new InputTableStateList([])));
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
         $this->expectException(InvalidInputException::class);

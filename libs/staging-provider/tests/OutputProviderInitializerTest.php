@@ -328,4 +328,43 @@ class OutputProviderInitializerTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
     }
+
+    public function testInitializeOutputBigQuery()
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+        );
+        $stagingFactory = new OutputStrategyFactory(
+            $clientWrapper,
+            new NullLogger(),
+            'json'
+        );
+
+        $providerFactory = new ComponentWorkspaceProviderFactory(
+            new Components($clientWrapper->getBasicClient()),
+            new Workspaces($clientWrapper->getBasicClient()),
+            'my-test-component',
+            'my-test-config',
+            new WorkspaceBackendConfig(null)
+        );
+        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+
+        $init->initializeProviders(
+            OutputStrategyFactory::WORKSPACE_BIGQUERY,
+            [
+                'owner' => [
+                    'hasBigquery' => true,
+                    'fileStorageProvider' => 'aws',
+                ],
+            ]
+        );
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(LocalTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::LOCAL));
+        self::assertInstanceOf(OutputFileLocal::class, $stagingFactory->getFileOutputStrategy(OutputStrategyFactory::WORKSPACE_BIGQUERY));
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_BIGQUERY));
+
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
+        $this->expectException(InvalidOutputException::class);
+        $stagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
+    }
 }

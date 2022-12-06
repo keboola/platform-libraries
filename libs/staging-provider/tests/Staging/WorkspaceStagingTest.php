@@ -4,6 +4,7 @@ namespace Keboola\StagingProvider\Tests\Staging;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\BigQueryWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
@@ -40,6 +41,7 @@ class WorkspaceStagingTest extends TestCase
         yield 'abs' => [AbsWorkspaceStaging::class, 'abs'];
         yield 'exasol' => [ExasolWorkspaceStaging::class, 'exasol'];
         yield 'teradata' => [TeradataWorkspaceStaging::class, 'teradata'];
+        yield 'bigquery' => [BigQueryWorkspaceStaging::class, 'bigquery'];
     }
 
     public function testWorkspaceIdIsReturned()

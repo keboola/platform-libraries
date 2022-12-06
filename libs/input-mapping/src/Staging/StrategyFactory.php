@@ -11,6 +11,7 @@ use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as TableABS;
 use Keboola\InputMapping\Table\Strategy\ABSWorkspace as TableABSWorkspace;
+use Keboola\InputMapping\Table\Strategy\BigQuery as TableBigQuery;
 use Keboola\InputMapping\Table\Strategy\Local as TableLocal;
 use Keboola\InputMapping\Table\Strategy\Redshift as TableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
@@ -33,6 +34,7 @@ class StrategyFactory
     const WORKSPACE_SYNAPSE = 'workspace-synapse';
     const WORKSPACE_EXASOL = 'workspace-exasol';
     const WORKSPACE_TERADATA = 'workspace-teradata';
+    const WORKSPACE_BIGQUERY = 'workspace-bigquery';
 
     /** @var Definition[] */
     protected $strategyMap;
@@ -104,6 +106,11 @@ class StrategyFactory
                     self::WORKSPACE_TERADATA,
                     FileLocal::class,
                     TableTeradata::class
+                ),
+                self::WORKSPACE_BIGQUERY => new Definition(
+                    self::WORKSPACE_BIGQUERY,
+                    FileLocal::class,
+                    TableBigQuery::class
                 ),
             ];
         }

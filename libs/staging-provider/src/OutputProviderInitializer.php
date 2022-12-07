@@ -7,6 +7,7 @@ use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\BigQueryWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\RedshiftWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
@@ -106,6 +107,17 @@ class OutputProviderInitializer extends AbstractProviderInitializer
             );
         }
 
+        if ($stagingType === OutputStrategyFactory::WORKSPACE_BIGQUERY &&
+            $tokenInfo['owner']['hasBigquery']
+        ) {
+            $this->addWorkspaceProvider(
+                BigQueryWorkspaceStaging::class,
+                [
+                    OutputStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::TABLE_DATA]),
+                ]
+            );
+        }
+
         $this->addLocalProvider(
             [
                 OutputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
@@ -115,6 +127,7 @@ class OutputProviderInitializer extends AbstractProviderInitializer
                 OutputStrategyFactory::WORKSPACE_ABS => new Scope([Scope::TABLE_METADATA]),
                 OutputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
                 OutputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
+                OutputStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
             ]
         );
     }

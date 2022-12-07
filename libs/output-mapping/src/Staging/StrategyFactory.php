@@ -58,6 +58,11 @@ class StrategyFactory extends InputMappingStrategyFactory
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
+                self::WORKSPACE_BIGQUERY => new Definition(
+                    self::WORKSPACE_BIGQUERY,
+                    Local::class,
+                    SqlWorkspaceTableStrategy::class
+                ),
             ];
         }
         return $this->strategyMap;

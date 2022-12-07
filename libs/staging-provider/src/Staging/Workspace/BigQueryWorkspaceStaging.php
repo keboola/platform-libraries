@@ -8,4 +8,14 @@ class BigQueryWorkspaceStaging extends WorkspaceStaging
     {
         return 'bigquery';
     }
+
+    public function getCredentials()
+    {
+        $connection = $this->data['connection'];
+
+        return [
+            'schema' => $connection['schema'],
+            'credentials' => $connection['credentials'],
+        ];
+    }
 }

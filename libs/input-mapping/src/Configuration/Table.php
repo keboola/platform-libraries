@@ -69,6 +69,7 @@ class Table extends Configuration
                 ->end()
                 ->booleanNode("overwrite")->defaultValue(false)->end()
                 ->booleanNode("use_view")->defaultValue(false)->end()
+                ->scalarNode("format")->defaultValue("rfc")->end()
             ->end()
             ->validate()
             ->ifTrue(function ($v) {

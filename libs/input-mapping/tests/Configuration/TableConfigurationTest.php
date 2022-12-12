@@ -34,6 +34,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'DaysNullConfiguration' => [
@@ -57,6 +58,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'DaysConfiguration' => [
@@ -80,6 +82,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'ChangedSinceNullConfiguration' => [
@@ -103,6 +106,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'ChangedSinceConfiguration' => [
@@ -126,6 +130,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'SearchSourceConfiguration' => [
@@ -155,6 +160,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'DataTypesConfiguration' => [
@@ -194,6 +200,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "where_operator" => "ne",
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'FullDataTypesConfiguration' => [
@@ -232,6 +239,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     ],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             'FullDataTypesConfigurationEmptyLength' => [
@@ -270,6 +278,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     ],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
             "OverwriteConfiguration" => [
@@ -285,6 +294,23 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => true,
                     "use_view" => false,
+                    "format" => "rfc",
+                ],
+            ],
+            "ParquetFormatConfiguration" => [
+                [
+                    "source" => "in.c-main.test",
+                    "format" => "parquet",
+                ],
+                'expected' => [
+                    "source" => "in.c-main.test",
+                    "columns" => [],
+                    "where_values" => [],
+                    "where_operator" => "eq",
+                    "column_types" => [],
+                    "overwrite" => false,
+                    "use_view" => false,
+                    "format" => "parquet",
                 ],
             ],
             "BasicConfiguration" => [
@@ -299,6 +325,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
                     "column_types" => [],
                     "overwrite" => false,
                     "use_view" => false,
+                    "format" => "rfc",
                 ],
             ],
         ];
@@ -392,6 +419,7 @@ class TableConfigurationTest extends \PHPUnit_Framework_TestCase
         $expectedArray["column_types"] = [];
         $expectedArray["overwrite"] = false;
         $expectedArray["use_view"] = false;
+        $expectedArray["format"] = "rfc";
         $processedConfiguration = (new Table())->parse(["config" => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
     }

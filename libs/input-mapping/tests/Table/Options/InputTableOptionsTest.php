@@ -48,6 +48,7 @@ class InputTableOptionsTest extends TestCase
                 'column_types' => [],
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
         ];
         yield 'simple columns' => [
@@ -68,6 +69,7 @@ class InputTableOptionsTest extends TestCase
                 ],
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
         ];
         yield 'complex columns' => [
@@ -101,6 +103,7 @@ class InputTableOptionsTest extends TestCase
                 ],
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
         ];
     }
@@ -134,7 +137,13 @@ class InputTableOptionsTest extends TestCase
     public function testGetExportOptionsEmptyValue()
     {
         $definition = new InputTableOptions(['source' => 'test']);
-        self::assertEquals(['overwrite' => false], $definition->getStorageApiExportOptions(new InputTableStateList([])));
+        self::assertEquals(
+            [
+                'overwrite' => false,
+                'format' => 'rfc',
+            ],
+            $definition->getStorageApiExportOptions(new InputTableStateList([]))
+        );
     }
 
     public function testGetExportOptionsSimpleColumns()
@@ -157,6 +166,7 @@ class InputTableOptionsTest extends TestCase
             'whereOperator' => 'ne',
             'limit' => 100,
             'overwrite' => false,
+            'format' => 'rfc',
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -195,6 +205,7 @@ class InputTableOptionsTest extends TestCase
             'whereOperator' => 'ne',
             'limit' => 100,
             'overwrite' => false,
+            'format' => 'rfc',
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -338,6 +349,19 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals([
             'changedSince' => '-2 days',
             'overwrite' => false,
+            'format' => 'rfc',
+        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
+    }
+
+    public function testGetExportOptionsFormat()
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'format' => 'parquet',
+        ]);
+        self::assertEquals([
+            'overwrite' => false,
+            'format' => 'parquet',
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
@@ -356,6 +380,7 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals([
             'changedSince' => '1989-11-17T21:00:00+0200',
             'overwrite' => false,
+            'format' => 'rfc',
         ], $definition->getStorageApiExportOptions($tablesState));
     }
 
@@ -366,7 +391,13 @@ class InputTableOptionsTest extends TestCase
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
         $tablesState = new InputTableStateList([]);
-        self::assertEquals(['overwrite' => false], $definition->getStorageApiExportOptions($tablesState));
+        self::assertEquals(
+            [
+                'overwrite' => false,
+                'format' => 'rfc',
+            ],
+            $definition->getStorageApiExportOptions($tablesState)
+        );
     }
 
     public function testGetLoadOptionsAdaptiveInputMapping()

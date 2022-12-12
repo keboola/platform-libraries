@@ -132,6 +132,10 @@ class InputTableOptions
             $exportOptions['limit'] = $this->definition['limit'];
         }
         $exportOptions['overwrite'] = $this->definition['overwrite'];
+
+        if (isset($this->definition['format'])) {
+            $exportOptions['format'] = $this->definition['format'];
+        }
         return $exportOptions;
     }
 

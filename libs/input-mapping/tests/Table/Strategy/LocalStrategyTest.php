@@ -50,6 +50,7 @@ class LocalStrategyTest extends AbstractStrategyTest
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
+                    'format' => 'rfc',
                 ],
             ],
             $result
@@ -92,6 +93,7 @@ class LocalStrategyTest extends AbstractStrategyTest
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
+                    'format' => 'rfc',
                 ],
             ],
             $result

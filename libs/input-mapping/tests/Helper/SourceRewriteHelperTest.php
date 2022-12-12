@@ -102,6 +102,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -120,6 +121,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -185,6 +187,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -203,6 +206,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -256,6 +260,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -275,6 +280,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'format' => 'rfc',
             ],
             $destinations->getTables()[1]->getDefinition()
         );

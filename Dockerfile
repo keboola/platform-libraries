@@ -21,7 +21,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
  && composer global config allow-plugins.symfony/flex true \
  && composer global require --no-progress --no-scripts --no-plugins symfony/flex
 
-RUN pecl install xdebug \
+RUN pecl install xdebug-3.1.6 \
  && docker-php-ext-enable xdebug
 
 

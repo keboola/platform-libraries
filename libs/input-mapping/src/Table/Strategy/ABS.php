@@ -12,7 +12,9 @@ class ABS extends AbstractStrategy
     public function downloadTable(InputTableOptions $table)
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
-        $exportOptions['gzip'] = true;
+        if (!isset($exportOptions['format']) || $exportOptions['format'] !== 'parquet') {
+            $exportOptions['gzip'] = true;
+        }
         $jobId = $this->clientWrapper->getBasicClient()->queueTableExport($table->getSource(), $exportOptions);
         return [$jobId, $table];
     }

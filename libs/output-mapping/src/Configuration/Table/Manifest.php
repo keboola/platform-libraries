@@ -71,6 +71,7 @@ class Manifest extends Configuration
                         ->end()
                     ->end()
                 ->end()
+                ->booleanNode("write_always")->defaultValue(false)->end()
             ;
     }
 }

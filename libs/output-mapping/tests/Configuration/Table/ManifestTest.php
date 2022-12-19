@@ -24,6 +24,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
 
         $processedConfiguration = (new Table\Manifest())->parse(['config' => $config]);
@@ -48,6 +49,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'enclosure' => '\'',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
 
         $expectedArray = $config;
@@ -97,6 +99,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'delimiter' => ',',
             'enclosure' => '"',
             'column_metadata' => [],
+            'write_always' => false,
         ];
         $expectedArray['metadata'] = $config['metadata'];
 
@@ -143,6 +146,7 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
             'delimiter' => ',',
             'enclosure' => '"',
             'metadata' => [],
+            'write_always' => false,
         ];
 
         $expectedArray['column_metadata'] = $config['column_metadata'];

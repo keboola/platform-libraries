@@ -96,6 +96,7 @@ class TableWriter extends AbstractWriter
                 $defaultBucket,
                 $systemMetadata
             );
+            // If it is a failed job, we only want to upload if the table has write_always = true
             if ($isFailedJob && !$config['write_always']) {
                 continue;
             }

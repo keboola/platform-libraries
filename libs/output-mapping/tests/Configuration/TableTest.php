@@ -28,6 +28,7 @@ class TableTest extends PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
@@ -50,6 +51,7 @@ class TableTest extends PHPUnit_Framework_TestCase
             'enclosure' => '\'',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
 
         $expectedArray = $config;
@@ -101,6 +103,7 @@ class TableTest extends PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         $this->assertEquals($expectedArray, $processedConfiguration);
@@ -127,6 +130,7 @@ class TableTest extends PHPUnit_Framework_TestCase
             'enclosure' => '"',
             'metadata' => [],
             'column_metadata' => [],
+            'write_always' => false,
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);

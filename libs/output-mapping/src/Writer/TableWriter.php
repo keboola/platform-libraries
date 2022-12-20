@@ -78,7 +78,8 @@ class TableWriter extends AbstractWriter
         array $configuration,
         array $systemMetadata,
         $stagingStorageOutput,
-        $createTypedTables = false
+        $createTypedTables = false,
+        $isFailedJob = false
     ) {
         if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
@@ -86,8 +87,8 @@ class TableWriter extends AbstractWriter
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
-        $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
 
+        $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
         $loadTableTasks = [];
         foreach ($mappingSources as $mappingSource) {
             $config = $this->tableConfigurationResolver->resolveTableConfiguration(
@@ -95,7 +96,10 @@ class TableWriter extends AbstractWriter
                 $defaultBucket,
                 $systemMetadata
             );
-
+            // If it is a failed job, we only want to upload if the table has write_always = true
+            if ($isFailedJob && !$config['write_always']) {
+                continue;
+            }
             try {
                 $loadTableTasks[] = $this->createLoadTableTask(
                     $strategy,

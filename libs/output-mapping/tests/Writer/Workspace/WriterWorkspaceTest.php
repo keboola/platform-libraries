@@ -451,4 +451,49 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '"aabb","ccdd"',
         ]);
     }
+
+    public function testWriteOnlyOnJobFailure(): void
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $root = $this->tmp->getTmpFolder();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+        $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'write_always' => false,
+            ],
+            [
+                'source' => 'table2a',
+                'destination' => self::OUTPUT_BUCKET . '.table2a',
+                'write_always' => true,
+            ],
+        ];
+        file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
+        file_put_contents($root . '/table2a.manifest', json_encode(['columns' => ['Id2', 'Name2']]));
+
+        $writer = new TableWriter($factory);
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake',
+            false,
+            true
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $this->assertNotEmpty($jobIds[0]);
+        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table2a', [
+            '"id","name"',
+            '"test2","test2"',
+            '"aabb2","ccdd2"',
+        ]);
+    }
 }

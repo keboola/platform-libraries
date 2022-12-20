@@ -975,8 +975,13 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     /**
      * @dataProvider provideAllowedDestinationConfigurations
      */
-    public function testAllowedDestinationConfigurations($manifest, $defaultBucket, $mapping, $expectedTables)
-    {
+    public function testAllowedDestinationConfigurations(
+        $manifest,
+        $defaultBucket,
+        $mapping,
+        $expectedTables,
+        $isFailedJob = false
+    ) {
         $root = $this->tmp->getTmpFolder() . '/upload/';
 
         file_put_contents($root . 'table.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
@@ -986,7 +991,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         $tableWriter = new TableWriter($this->getStagingFactory());
 
-        $queue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+        $queue = $tableWriter->uploadTables(
+            'upload',
+            ['bucket' => $defaultBucket, 'mapping' => $mapping],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            $isFailedJob
+        );
         $queue->waitForAll();
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
@@ -1046,6 +1058,17 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                     ['source' => 'table.csv', 'destination' => self::OUTPUT_BUCKET . '.table2']
                 ],
                 'expectedTables' => [self::OUTPUT_BUCKET . '.table1', self::OUTPUT_BUCKET . '.table2'],
+            ],
+
+            'failed job with write-alwways flag' => [
+                'manifest' => null,
+                'defaultBucket' => null,
+                'mapping' => [
+                    ['source' => 'table.csv', 'destination' => self::OUTPUT_BUCKET . '.table1', 'write_always' => false],
+                    ['source' => 'table.csv', 'destination' => self::OUTPUT_BUCKET . '.table2', 'write_always' => true]
+                ],
+                'expectedTables' => [self::OUTPUT_BUCKET . '.table2'],
+                true
             ],
         ];
     }

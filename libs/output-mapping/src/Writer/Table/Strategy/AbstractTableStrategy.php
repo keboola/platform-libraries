@@ -26,6 +26,9 @@ abstract class AbstractTableStrategy implements StrategyInterface
     /** @var string */
     protected $format;
 
+    /** @var boolean */
+    protected $isFailedJob;
+
     /**
      * @param ClientWrapper $storageClient
      * @param LoggerInterface $logger
@@ -38,13 +41,15 @@ abstract class AbstractTableStrategy implements StrategyInterface
         LoggerInterface $logger,
         ProviderInterface $dataStorage,
         ProviderInterface $metadataStorage,
-        $format
+        $format,
+        $isFailedJob = false
     ) {
         $this->clientWrapper = $storageClient;
         $this->logger = $logger;
         $this->dataStorage = $dataStorage;
         $this->metadataStorage = $metadataStorage;
         $this->format = $format;
+        $this->isFailedJob = $isFailedJob;
     }
 
     public function getDataStorage()
@@ -94,10 +99,14 @@ abstract class AbstractTableStrategy implements StrategyInterface
                 return sprintf('"%s"', $source);
             }, $invalidSources);
 
-            throw new InvalidOutputException(
-                sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
-                404
-            );
+            // we don't care about missing sources if the job is failed
+            // well, we probably should care about missing write-always sources :-/
+            if (!$this->isFailedJob) {
+                throw new InvalidOutputException(
+                    sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
+                    404
+                );
+            }
         }
 
         return $sourcesWithMapping;

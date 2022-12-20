@@ -97,9 +97,10 @@ class StrategyFactory extends InputMappingStrategyFactory
 
     /**
      * @param string $stagingType
+     * @param string $isFailedJob
      * @return TableStrategyInterface
      */
-    public function getTableOutputStrategy($stagingType)
+    public function getTableOutputStrategy($stagingType, $isFailedJob)
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
@@ -118,7 +119,8 @@ class StrategyFactory extends InputMappingStrategyFactory
             $this->logger,
             $stagingDefinition->getTableDataProvider(),
             $stagingDefinition->getTableMetadataProvider(),
-            $this->format
+            $this->format,
+            $isFailedJob
         );
     }
 }

@@ -1246,4 +1246,35 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             ]
         ], ['componentId' => 'foo'], 'local');
     }
+
+    public function testLocalTableUploadChecksForWriteAlwaysMappingEntries()
+    {
+        $tableWriter = new TableWriter($this->getStagingFactory());
+        $root = $this->tmp->getTmpFolder() . '/upload/';
+        file_put_contents($root . 'write-always.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $queue = $tableWriter->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'never-created.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.never-created',
+                    ], [
+                        'source' => 'write-always.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.write-always',
+                        'write_always' => true,
+                    ]
+                ]
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            true
+        );
+        $queue->waitForAll();
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        $this->assertCount(1, $tables);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.write-always', $tables[0]['id']);
+    }
 }

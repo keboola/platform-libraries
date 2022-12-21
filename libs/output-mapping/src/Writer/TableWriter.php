@@ -85,7 +85,7 @@ class TableWriter extends AbstractWriter
             throw new OutputOperationException('Component Id must be set');
         }
 
-        $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput);
+        $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
 
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;

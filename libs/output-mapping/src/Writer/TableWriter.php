@@ -91,15 +91,23 @@ class TableWriter extends AbstractWriter
         $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
         $loadTableTasks = [];
         foreach ($mappingSources as $mappingSource) {
-            $config = $this->tableConfigurationResolver->resolveTableConfiguration(
-                $mappingSource,
-                $defaultBucket,
-                $systemMetadata
-            );
+            try {
+                $config = $this->tableConfigurationResolver->resolveTableConfiguration(
+                    $mappingSource,
+                    $defaultBucket,
+                    $systemMetadata
+                );
+            } catch (\Throwable $e) {
+                if (!$isFailedJob) {
+                    throw $e;
+                }
+            }
+
             // If it is a failed job, we only want to upload if the table has write_always = true
             if ($isFailedJob && !$config['write_always']) {
                 continue;
             }
+
             try {
                 $loadTableTasks[] = $this->createLoadTableTask(
                     $strategy,

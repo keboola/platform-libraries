@@ -53,8 +53,7 @@ class TableConfigurationResolver
     public function resolveTableConfiguration(
         MappingSource $mappingSource,
         $defaultBucket,
-        array $systemMetadata,
-        $isFailedJob
+        array $systemMetadata
     ) {
         $configFromManifest = [];
         $configFromMapping = [];

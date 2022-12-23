@@ -1307,6 +1307,6 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $queue->waitForAll();
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
-        $this->assertEquals(self::OUTPUT_BUCKET . '.write-always', $tables[0]['id']);
+        $this->assertEquals(self::OUTPUT_BUCKET . '.write-always-2', $tables[0]['id']);
     }
 }

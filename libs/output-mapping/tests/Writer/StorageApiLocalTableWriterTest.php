@@ -1282,7 +1282,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     {
         $tableWriter = new TableWriter($this->getStagingFactory());
         $root = $this->tmp->getTmpFolder() . '/upload/';
-        file_put_contents($root . 'write-always.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . 'write-always-2.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . 'something-unexpected.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $queue = $tableWriter->uploadTables(
@@ -1293,8 +1293,8 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                         'source' => 'never-created.csv',
                         'destination' => self::OUTPUT_BUCKET . '.never-created',
                     ], [
-                        'source' => 'write-always.csv',
-                        'destination' => self::OUTPUT_BUCKET . '.write-always',
+                        'source' => 'write-always-2.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.write-always-2',
                         'write_always' => true,
                     ]
                 ]

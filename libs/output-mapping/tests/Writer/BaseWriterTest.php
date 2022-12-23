@@ -23,7 +23,7 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
     {
         foreach ($buckets as $bucket) {
             try {
-                $this->clientWrapper->getBasicClient()->dropBucket($bucket, ['force' => true]);
+                $this->clientWrapper->getBasicClient()->dropBucket($bucket, ['force' => true, 'async' => false]);
             } catch (ClientException $e) {
                 if ($e->getCode() != 404) {
                     throw $e;

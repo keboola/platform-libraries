@@ -50,8 +50,11 @@ class TableConfigurationResolver
      * @return array
      * @throws InvalidOutputException
      */
-    public function resolveTableConfiguration(MappingSource $mappingSource, $defaultBucket, array $systemMetadata)
-    {
+    public function resolveTableConfiguration(
+        MappingSource $mappingSource,
+        $defaultBucket,
+        array $systemMetadata
+    ) {
         $configFromManifest = [];
         $configFromMapping = [];
 

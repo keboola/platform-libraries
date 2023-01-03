@@ -1,3 +1,4 @@
 .idea/
 .env
 .phpunit.result.cache
+/libs/output-mapping/.env.local

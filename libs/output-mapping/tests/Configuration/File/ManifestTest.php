@@ -3,8 +3,9 @@
 namespace Keboola\OutputMapping\Tests\Configuration\File;
 
 use Keboola\OutputMapping\Configuration\File\Manifest;
+use PHPUnit\Framework\TestCase;
 
-class ManifestTest extends \PHPUnit_Framework_TestCase
+class ManifestTest extends TestCase
 {
 
     public function testConfiguration()

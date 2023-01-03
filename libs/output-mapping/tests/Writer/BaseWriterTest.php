@@ -11,10 +11,12 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Util\Test;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
+abstract class BaseWriterTest extends TestCase
 {
     protected ClientWrapper $clientWrapper;
     protected Temp $tmp;
@@ -44,7 +46,7 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->tmp = new Temp();
@@ -65,7 +67,8 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {
                 return 1;
-            });
+            })
+            ->setUserAgent(implode('::', Test::describe($this)));
         $this->clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
@@ -137,6 +140,8 @@ abstract class BaseWriterTest extends \PHPUnit_Framework_TestCase
     protected function assertJobParamsMatches(array $expectedParams, $jobId)
     {
         $job = $this->clientWrapper->getBasicClient()->getJob($jobId);
-        self::assertArraySubset($expectedParams, $job['operationParams']['params']);
+        foreach ($expectedParams as $expectedParam) {
+            self::assertContains($expectedParam, $job['operationParams']['params']);
+        }
     }
 }

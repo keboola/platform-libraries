@@ -14,7 +14,7 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
     private const INPUT_BUCKET = 'in.c-RedshiftWriterWorkspaceTest';
     private const OUTPUT_BUCKET = 'out.c-RedshiftWriterWorkspaceTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([

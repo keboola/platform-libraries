@@ -14,7 +14,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
     private const INPUT_BUCKET = 'in.c-SynapseWriterWorkspaceTest';
     private const OUTPUT_BUCKET = 'out.c-SynapseWriterWorkspaceTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         if (!$this->checkSynapseTests()) {
             self::markTestSkipped('Synapse tests disabled.');

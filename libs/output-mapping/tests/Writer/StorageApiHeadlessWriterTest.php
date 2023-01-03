@@ -13,7 +13,7 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
     private const FILE_TAG = 'StorageApiHeadlessWriterTest';
     private const OUTPUT_BUCKET = 'out.c-StorageApiHeadlessWriterTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([self::OUTPUT_BUCKET]);

@@ -7,7 +7,7 @@ class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
     private const INPUT_BUCKET = 'in.c-StorageApiSlicedWriterRedshiftTest';
     private const FILE_TAG = 'StorageApiSlicedWriterRedshiftTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([self::INPUT_BUCKET]);

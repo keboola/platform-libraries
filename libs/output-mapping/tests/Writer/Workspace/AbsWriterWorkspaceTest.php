@@ -27,7 +27,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
     /** @var array */
     protected $workspace;
 
-    public function setUp()
+    public function setUp(): void
     {
         if (!$this->checkSynapseTests()) {
             self::markTestSkipped('Synapse tests disabled.');

@@ -14,7 +14,7 @@ class TableDefinitionTest extends BaseWriterTest
 {
     private const OUTPUT_BUCKET = 'out.c-TableDefinitionTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -102,7 +102,7 @@ class TableDefinitionTest extends BaseWriterTest
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionCode(400);
-        $this->expectExceptionMessageRegExp('/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u');
+        $this->expectExceptionMessageMatches('/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u');
         $this->expectExceptionMessage('Selected columns are not included in table definition');
 
         $writer->uploadTables(

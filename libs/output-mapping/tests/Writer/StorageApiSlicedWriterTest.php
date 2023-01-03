@@ -18,7 +18,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
     private const OUTPUT_BUCKET = 'out.c-StorageApiSlicedWriterTest';
     private const FILE_TAG = 'StorageApiSlicedWriterTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([self::OUTPUT_BUCKET]);

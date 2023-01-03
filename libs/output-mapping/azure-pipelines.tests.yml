@@ -1,5 +1,10 @@
 
 jobs:
+  - template: ../../azure-pipelines/jobs/lock.yml
+    parameters:
+      jobName: output_mapping_lock
+      lockName: output-mapping-lock
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: cs

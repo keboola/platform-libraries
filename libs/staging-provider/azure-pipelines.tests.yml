@@ -2,15 +2,7 @@
 jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: cs
-      displayName: Code Style
-      serviceName: ci-staging-provider
-      testCommand: composer phpcs
-
-  - template: ../../azure-pipelines/jobs/run-tests.yml
-    parameters:
       jobName: aws_tests_php74_stagingProvider
-      dependsOn: [cs]
       displayName: Test on AWS backend (PHP 7.4)
       serviceName: ci-staging-provider
       testCommand: composer ci

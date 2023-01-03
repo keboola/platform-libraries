@@ -23,7 +23,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     private const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
@@ -155,8 +155,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
                 null
             )
         );
-        $branchId = $this->createBranch($clientWrapper, 'dev-123');
-        $this->clearFileUploads(['dev-123-' . self::FILE_TAG]);
+        $branchName = self::class;
+        $branchId = $this->createBranch($clientWrapper, $branchName);
+        $this->clearFileUploads([$branchName . '-' . self::FILE_TAG]);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 STORAGE_API_URL,
@@ -273,7 +274,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             $writer->uploadFiles('/upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Invalid manifest must raise exception.');
         } catch (InvalidOutputException $e) {
-            $this->assertContains('json', $e->getMessage());
+            $this->assertStringContainsString('json', $e->getMessage());
         }
     }
 
@@ -297,7 +298,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             $writer->uploadFiles('upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Invalid manifest must raise exception.');
         } catch (InvalidOutputException $e) {
-            $this->assertContains('json', $e->getMessage());
+            $this->assertStringContainsString('json', $e->getMessage());
         }
     }
 
@@ -322,7 +323,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             $writer->uploadFiles('upload', ['mapping' => $configs], [], StrategyFactory::LOCAL);
             $this->fail('Missing file must fail');
         } catch (InvalidOutputException $e) {
-            $this->assertContains("File 'file2' not found", $e->getMessage());
+            $this->assertStringContainsString("File 'file2' not found", $e->getMessage());
             $this->assertEquals(404, $e->getCode());
         }
     }
@@ -339,7 +340,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             $writer->uploadFiles('/upload', [], [], StrategyFactory::LOCAL);
             $this->fail('Orphaned manifest must cause exception.');
         } catch (InvalidOutputException $e) {
-            $this->assertContains("Found orphaned file manifest: 'file1.manifest'", $e->getMessage());
+            $this->assertStringContainsString("Found orphaned file manifest: 'file1.manifest'", $e->getMessage());
         }
     }
 
@@ -350,7 +351,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             $writer->uploadFiles('/upload', [], ['configurationId' => '123'], StrategyFactory::LOCAL);
             $this->fail('Missing componentId must cause exception.');
         } catch (OutputOperationException $e) {
-            $this->assertContains('Component Id must be set', $e->getMessage());
+            $this->assertStringContainsString('Component Id must be set', $e->getMessage());
         }
     }
 

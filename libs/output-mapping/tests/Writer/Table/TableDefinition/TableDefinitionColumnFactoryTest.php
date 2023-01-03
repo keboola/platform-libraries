@@ -7,8 +7,9 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
+use PHPUnit\Framework\TestCase;
 
-class TableDefinitionColumnFactoryTest extends \PHPUnit\Framework\TestCase
+class TableDefinitionColumnFactoryTest extends TestCase
 {
     /** @dataProvider createTableDefinitionColumnProfider */
     public function testFactoryCreateTableDefinitionColumn(

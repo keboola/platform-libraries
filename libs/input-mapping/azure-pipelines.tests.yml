@@ -1,5 +1,10 @@
 
 jobs:
+  - template: ../../azure-pipelines/jobs/lock.yml
+    parameters:
+      jobName: input_mapping_lock
+      lockName: input-mapping-lock
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: cs

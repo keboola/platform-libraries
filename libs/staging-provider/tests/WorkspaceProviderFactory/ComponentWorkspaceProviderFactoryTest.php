@@ -57,7 +57,8 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         $workspaceApi->expects(self::once())->method('createWorkspace')->with(
             [
                 'backend' => $stagingClass::getType(),
-            ]
+            ],
+            true
         )->willReturn([
             'id' => 'test-workspace',
             'connection' => [

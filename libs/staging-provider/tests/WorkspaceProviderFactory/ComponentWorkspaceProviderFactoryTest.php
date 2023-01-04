@@ -137,4 +137,40 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
 
         // no assert, just check the $workspaceApi mock expectations were met
     }
+
+    public function testReadOnlyRoleFlag()
+    {
+        $componentId = 'my.component';
+        $configId = null;
+        $stagingClass = SnowflakeWorkspaceStaging::class;
+
+
+        $componentsApi = $this->createMock(Components::class);
+        $componentsApi->expects(self::never())->method(self::anything());
+
+        $workspaceApi = $this->createMock(Workspaces::class);
+        $workspaceApi->expects(self::once())->method('createWorkspace')->with([
+            'backend' => $stagingClass::getType(),
+            'readOnlyStorageAccess' => true,
+        ])->willReturn([
+            'id' => 'test-workspace',
+            'connection' => [
+                'backend' => $stagingClass::getType(),
+            ],
+        ]);
+
+        $factory = new ComponentWorkspaceProviderFactory(
+            $componentsApi,
+            $workspaceApi,
+            $componentId,
+            $configId,
+            new WorkspaceBackendConfig(null),
+            true
+        );
+
+        $provider = $factory->getProvider($stagingClass);
+        $provider->getWorkspaceId();
+
+        // no assert, just check the $workspaceApi mock expectations were met
+    }
 }

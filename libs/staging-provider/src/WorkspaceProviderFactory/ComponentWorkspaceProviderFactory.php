@@ -23,7 +23,7 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
     /** @var WorkspaceBackendConfig */
     private $workspaceBackendConfig;
 
-    /** @var null|bool  */
+    /** @var ?bool  */
     private $useWorkspaceWithReadonlyRole;
 
     public function __construct(
@@ -32,7 +32,7 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
         $componentId,
         $configId,
         WorkspaceBackendConfig $workspaceBackendConfig,
-        $useWorkspaceWithReadonlyRole = null
+        ?bool $useWorkspaceWithReadonlyRole = null
     ) {
         parent::__construct($workspacesApiClient);
 
@@ -55,7 +55,7 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
             $options['backendSize'] = $requestedBackendType;
         }
 
-        if (isset($this->useWorkspaceWithReadonlyRole)) {
+        if ($this->useWorkspaceWithReadonlyRole !== null) {
             $options['readOnlyStorageAccess'] = $this->useWorkspaceWithReadonlyRole;
         }
 

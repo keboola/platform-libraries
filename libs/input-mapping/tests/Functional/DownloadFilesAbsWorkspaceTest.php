@@ -69,7 +69,7 @@ class DownloadFilesAbsWorkspaceTest extends DownloadFilesTestAbstract
             function () use ($clientWrapper) {
                 if (empty($this->workspaceId)) {
                     $workspaces = new Workspaces($clientWrapper->getBranchClientIfAvailable());
-                    $workspace = $workspaces->createWorkspace(['backend' => 'abs']);
+                    $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
                 }

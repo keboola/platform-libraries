@@ -54,7 +54,8 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
             return $this->componentsApiClient->createConfigurationWorkspace(
                 $this->componentId,
                 $this->configId,
-                $options
+                $options,
+                true
             );
         }
 

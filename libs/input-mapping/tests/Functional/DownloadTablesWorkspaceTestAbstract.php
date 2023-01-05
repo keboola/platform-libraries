@@ -81,7 +81,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
             function () use ($backend) {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]]);
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
                 }

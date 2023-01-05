@@ -8,16 +8,12 @@ use Keboola\StorageApi\TableExporter;
 class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
 {
     private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterRedshiftTest';
-    private const BRANCH_BUCKET = 'out.c-dev-123-StorageApiLocalTableWriterRedshiftTest';
 
-    const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
-
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([
-            self::OUTPUT_BUCKET,
-            self::BRANCH_BUCKET
+            self::OUTPUT_BUCKET
         ]);
         $this->clientWrapper->getBasicClient()->createBucket('StorageApiLocalTableWriterRedshiftTest', 'out', '', 'redshift');
     }

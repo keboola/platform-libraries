@@ -3,9 +3,10 @@
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\TableFile;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class TableFileTest extends \PHPUnit_Framework_TestCase
+class TableFileTest extends TestCase
 {
 
     public function testConfiguration()

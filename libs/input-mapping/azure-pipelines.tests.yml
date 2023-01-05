@@ -1,11 +1,17 @@
 
 jobs:
+  - template: ../../azure-pipelines/jobs/lock.yml
+    parameters:
+      jobName: input_mapping_lock
+      lockName: input-mapping-lock
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: cs
       displayName: Code Style
       serviceName: ci-input-mapping
       testCommand: composer phpcs
+      dependsOn: [input_mapping_lock]
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:

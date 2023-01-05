@@ -14,7 +14,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
     private const OUTPUT_BUCKET = 'out.c-SnowflakeWriterMetadataTest';
     private const FILE_TAG = 'SnowflakeWriterMetadataTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);

@@ -3,8 +3,10 @@
 namespace Keboola\OutputMapping\Tests\Configuration\Table;
 
 use Keboola\OutputMapping\Configuration\Table;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class ManifestTest extends \PHPUnit_Framework_TestCase
+class ManifestTest extends TestCase
 {
     public function testBasicConfiguration()
     {
@@ -58,17 +60,14 @@ class ManifestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedArray, $processedConfiguration);
     }
 
-
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path "table.delete_where_operator": Invalid operator in delete_where_operator "abc"
-     */
     public function testInvalidWhereOperator()
     {
         $config = [
             'destination' => 'in.c-main.test',
             'delete_where_operator' => 'abc',
         ];
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Invalid configuration for path "table.delete_where_operator": Invalid operator in delete_where_operator "abc"');
         (new Table\Manifest())->parse(['config' => $config]);
     }
 

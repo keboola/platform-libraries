@@ -66,7 +66,7 @@ class DestinationRewriterTest extends TestCase
     public function testRewriteInvalidName()
     {
         $clientWrapper = $this->getClientWrapper(null);
-        $branchId = $this->createBranch($clientWrapper, 'dev-123');
+        $branchId = $this->createBranch($clientWrapper, self::class);
         $clientWrapper = $this->getClientWrapper($branchId);
         $config = $this->getConfig();
         $config['destination'] = 'in.c-main-table';

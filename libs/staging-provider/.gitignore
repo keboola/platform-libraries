@@ -1,4 +1,6 @@
 /build/
 /vendor/
 composer.lock
-.env
+/.env.local
+/.env.local.php
+/.env.*.local

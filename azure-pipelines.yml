@@ -73,6 +73,7 @@ stages:
 
   - stage: tests_input_mapping
     displayName: Tests - Input Mapping
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_inputMapping'])
     jobs:
@@ -80,6 +81,7 @@ stages:
 
   - stage: tests_k8sClient
     displayName: Tests - K8S Client
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_k8sClient'])
     jobs:
@@ -87,6 +89,7 @@ stages:
 
   - stage: tests_loggingBundle
     displayName: Tests - Logging Bundle
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_loggingBundle'])
     jobs:
@@ -94,6 +97,7 @@ stages:
 
   - stage: tests_output_mapping
     displayName: Tests - Output Mapping
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_outputMapping'])
     jobs:
@@ -101,6 +105,7 @@ stages:
 
   - stage: tests_staging_provider
     displayName: Tests - Staging Provider
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_stagingProvider'])
     jobs:
@@ -108,6 +113,7 @@ stages:
 
   - stage: tests_configuration_variables_resolver
     displayName: Tests - Variables Resolver
+    lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_configurationVariablesResolver'])
     jobs:

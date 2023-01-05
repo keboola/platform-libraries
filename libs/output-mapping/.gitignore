@@ -1,7 +1,6 @@
-/vendor
-/config.php
-/.idea
-/composer.lock
-/composer.phar
-.env
-.php_cs.cache
+/build/
+/vendor/
+composer.lock
+/.env.local
+/.env.local.php
+/.env.*.local

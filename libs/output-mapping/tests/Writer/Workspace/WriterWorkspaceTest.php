@@ -19,7 +19,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
     private const FILE_TAG = 'WriterWorkspaceTest';
     private const BUCKET_NAME = 'WriterWorkspaceTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([
@@ -140,7 +140,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ];
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/Table "table1a" not found in schema "WORKSPACE_\d+"$/');
+        $this->expectExceptionMessageMatches('/Table "table1a" not found in schema "WORKSPACE_\d+"$/');
 
         $tableQueue = $writer->uploadTables(
             '/',
@@ -334,7 +334,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
                 null,
             )
         );
-        $branchId = $this->createBranch($clientWrapper, 'dev-123');
+        $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 STORAGE_API_URL,

@@ -18,7 +18,7 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
     private const OUTPUT_BUCKET = 'out.c-StorageApiSlicedWriterRedshiftTest';
     private const FILE_TAG = 'StorageApiSlicedWriterRedshiftTest';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([self::OUTPUT_BUCKET]);

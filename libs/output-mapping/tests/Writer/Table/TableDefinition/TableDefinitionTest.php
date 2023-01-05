@@ -9,7 +9,6 @@ use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\NativeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnInterface;
 use PHPUnit\Framework\TestCase;
 

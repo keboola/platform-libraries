@@ -28,7 +28,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         if (!$this->checkSynapseTests()) {
             self::markTestSkipped('Synapse tests disabled.');

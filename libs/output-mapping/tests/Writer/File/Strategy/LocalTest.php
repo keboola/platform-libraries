@@ -19,7 +19,7 @@ class LocalTest extends BaseWriterTest
 {
     private Temp $temp;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->temp = new Temp();

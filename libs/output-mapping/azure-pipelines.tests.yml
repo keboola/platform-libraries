@@ -1,8 +1,14 @@
 
 jobs:
+  - template: ../../azure-pipelines/jobs/lock.yml
+    parameters:
+      jobName: output_mapping_lock
+      lockName: output-mapping-lock
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: cs
+      dependsOn: [output_mapping_lock]
       displayName: Code Style
       serviceName: ci-output-mapping
       testCommand: composer phpcs

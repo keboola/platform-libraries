@@ -45,16 +45,13 @@ class LocalStagingProviderTest extends TestCase
 
         self::assertSame($localPath, $workspaceProvider->getPath());
     }
-
-    /**
-     * @doesNotPerformAssertion
-     */
     public function testCleanupDeletedWorkspaceStaging()
     {
         $workspaceProvider = new LocalStagingProvider(function () {
             return new LocalStaging('/data');
         });
         $workspaceProvider->cleanup();
+        $this->expectNotToPerformAssertions();
     }
 
     public function testWorkspaceStagingIsCreatedLazily()

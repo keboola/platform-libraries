@@ -23,9 +23,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
     private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterTest';
     private const BUCKET_NAME = 'StorageApiLocalTableWriterTest';
 
-    const DEFAULT_SYSTEM_METADATA = ['componentId' => 'foo'];
+    private const BRANCH_NAME = self::class;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->clearBuckets([
@@ -149,7 +149,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+        $branchId = $this->createBranch($this->clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -315,7 +315,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
             $this->fail('Invalid table manifest must cause exception');
         } catch (InvalidOutputException $e) {
-            $this->assertContains('Invalid type for path', $e->getMessage());
+            $this->assertStringContainsString('Invalid type for path', $e->getMessage());
         }
     }
 
@@ -364,7 +364,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
             $this->fail("Orphaned manifest must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains('Found orphaned table manifest: "table.csv.manifest"', $e->getMessage());
+            $this->assertStringContainsString('Found orphaned table manifest: "table.csv.manifest"', $e->getMessage());
         }
     }
 
@@ -381,7 +381,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
             $this->fail("Missing table file must fail");
         } catch (InvalidOutputException $e) {
-            $this->assertContains('Table sources not found: "table81.csv"', $e->getMessage());
+            $this->assertStringContainsString('Table sources not found: "table81.csv"', $e->getMessage());
             $this->assertEquals(404, $e->getCode());
         }
     }
@@ -393,7 +393,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $writer->uploadTables('/upload', [], [], 'local');
             self::fail("Missing metadata must fail.");
         } catch (OutputOperationException $e) {
-            self::assertContains('Component Id must be set', $e->getMessage());
+            self::assertStringContainsString('Component Id must be set', $e->getMessage());
         }
     }
 
@@ -787,7 +787,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $tableQueue = $writer->uploadTables('upload', $configuration, ['componentId' => 'foo'], 'local');
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageRegExp('/Some columns are missing in the csv file. Missing columns: id,name./i');
+        $this->expectExceptionMessageMatches('/Some columns are missing in the csv file. Missing columns: id,name./i');
         $tableQueue->waitForAll();
     }
 
@@ -840,13 +840,13 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $tableQueue->waitForAll();
             $this->fail("Must raise exception");
         } catch (InvalidOutputException $e) {
-            $this->assertContains(
+            $this->assertStringContainsString(
                 'Failed to load table "' . self::OUTPUT_BUCKET . '.table10a": Some columns are ' .
                 'missing in the csv file. Missing columns: id,name. Expected columns: id,name. Please check if the ' .
                 'expected delimiter "," is used in the csv file.',
                 $e->getMessage()
             );
-            $this->assertContains(
+            $this->assertStringContainsString(
                 'Failed to load table "' . self::OUTPUT_BUCKET . '.table10b": Some columns are ' .
                 'missing in the csv file. Missing columns: foo,bar. Expected columns: foo,bar. Please check if the ' .
                 'expected delimiter "," is used in the csv file.',
@@ -861,7 +861,8 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+
+        $branchId = $this->createBranch($this->clientWrapper, self::BRANCH_NAME);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -896,7 +897,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . $branchBucketId . '" on branch "dev-123" (ID "%s"), but the bucket is not assigned ' .
+            '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME . '" (ID "%s"), but the bucket is not assigned ' .
             'to any development branch.',
             $branchId
         ));
@@ -914,7 +915,8 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, null),
         );
-        $branchId = $this->createBranch($this->clientWrapper, 'dev-123');
+
+        $branchId = $this->createBranch($this->clientWrapper, self::BRANCH_NAME);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
         );
@@ -960,7 +962,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . $branchBucketId . '" on branch "dev-123" (ID "%s"). ' .
+            '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME . '" (ID "%s"). ' .
             'The bucket metadata marks it as assigned to branch with ID "12345".',
             $branchId
         ));
@@ -1090,7 +1092,12 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedError);
 
-        $tableQueue = $tableWriter->uploadTables('upload', ['bucket' => $defaultBucket, 'mapping' => $mapping], ['componentId' => 'foo'], 'local');
+        $tableQueue = $tableWriter->uploadTables(
+            'upload',
+            ['bucket' => $defaultBucket, 'mapping' => $mapping],
+            ['componentId' => 'foo'],
+            'local'
+        );
         $tableQueue->waitForAll();
     }
 

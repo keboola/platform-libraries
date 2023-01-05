@@ -1,0 +1,19 @@
+parameters:
+  - name: lockName
+    type: string
+    default:
+
+  - name: jobName
+    type: string
+    default:
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: Lock Stage ${{ parameters.lockName }}
+    steps:
+      - checkout: none
+      - task: Docker@2
+        displayName: Acquire Lock
+        inputs:
+          containerRegistry: ${{ parameters.lockName }}
+          command: login

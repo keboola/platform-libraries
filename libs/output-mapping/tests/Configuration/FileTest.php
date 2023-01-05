@@ -3,8 +3,9 @@
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\File;
+use PHPUnit\Framework\TestCase;
 
-class FileTest extends \PHPUnit_Framework_TestCase
+class FileTest extends TestCase
 {
 
     public function testConfiguration()

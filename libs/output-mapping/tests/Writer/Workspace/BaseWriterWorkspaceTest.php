@@ -24,7 +24,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
     /** @var array */
     protected $workspace;
 
-    public function tearDown()
+    public function tearDown(): void
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());

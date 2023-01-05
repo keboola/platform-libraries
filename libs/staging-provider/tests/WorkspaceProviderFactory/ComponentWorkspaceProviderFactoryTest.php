@@ -54,9 +54,11 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         $componentsApi->expects(self::never())->method(self::anything());
 
         $workspaceApi = $this->createMock(Workspaces::class);
-        $workspaceApi->expects(self::once())->method('createWorkspace')->with([
-            'backend' => $stagingClass::getType(),
-        ])->willReturn([
+        $workspaceApi->expects(self::once())->method('createWorkspace')->with(
+            [
+                'backend' => $stagingClass::getType(),
+            ]
+        )->willReturn([
             'id' => 'test-workspace',
             'connection' => [
                 'backend' => $stagingClass::getType(),

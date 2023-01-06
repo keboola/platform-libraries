@@ -11,6 +11,7 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use PHPUnit\Framework\TestCase;
 
@@ -44,6 +45,37 @@ class LoadTableQueueTest extends TestCase
 
         $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
         $loadQueue->start();
+    }
+
+    public function testStartFailureWithSapiErrorThrowsInvalidOutputException(): void
+    {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $clientException = new ClientException('Hi', 444);
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->once())
+            ->method('startImport')
+            ->with($this->callback(function ($client) {
+                self::assertInstanceOf(Client::class, $client);
+                return true;
+            }))
+            ->willThrowException($clientException)
+        ;
+        $loadTask->expects($this->once())
+            ->method('getDestinationTableName')
+            ->willReturn('out.c-test.test-table')
+        ;
+
+        try {
+            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue->start();
+            $this->fail('LoadTableQueue should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertSame('Hi [out.c-test.test-table]', $e->getMessage());
+            self::assertSame(444, $e->getCode());
+            self::assertSame($clientException, $e->getPrevious());
+        }
     }
 
     public function testWaitForAllWithError(): void

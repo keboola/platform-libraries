@@ -18,9 +18,14 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         $stagingClass = SnowflakeWorkspaceStaging::class;
 
         $componentsApi = $this->createMock(Components::class);
-        $componentsApi->expects(self::once())->method('createConfigurationWorkspace')->with($componentId, $configId, [
-            'backend' => $stagingClass::getType(),
-        ])->willReturn([
+        $componentsApi->expects(self::once())->method('createConfigurationWorkspace')->with(
+            $componentId,
+            $configId,
+            [
+                'backend' => $stagingClass::getType(),
+            ],
+            true
+        )->willReturn([
             'id' => '1',
             'connection' => [
                 'backend' => $stagingClass::getType(),
@@ -57,7 +62,8 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         $workspaceApi->expects(self::once())->method('createWorkspace')->with(
             [
                 'backend' => $stagingClass::getType(),
-            ]
+            ],
+            true
         )->willReturn([
             'id' => 'test-workspace',
             'connection' => [

@@ -2,7 +2,6 @@
 
 namespace Keboola\StagingProvider\Tests;
 
-use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;

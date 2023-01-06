@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
+use Generator;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
@@ -13,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 class LoadTableQueueTest extends TestCase
 {
-    public function testTaskCount()
+    public function testTaskCount(): void
     {
         $loadQueue = new LoadTableQueue(
             $this->createMock(Client::class),
@@ -26,7 +29,7 @@ class LoadTableQueueTest extends TestCase
         self::assertSame(2, $loadQueue->getTaskCount());
     }
 
-    public function testStart()
+    public function testStart(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -43,7 +46,7 @@ class LoadTableQueueTest extends TestCase
         $loadQueue->start();
     }
 
-    public function testWaitForAllWithError()
+    public function testWaitForAllWithError(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -162,7 +165,7 @@ class LoadTableQueueTest extends TestCase
         self::assertSame($expectedUncompressedBytes, $tableMetric->getUncompressedBytes());
     }
 
-    public function waitForAllData()
+    public function waitForAllData(): Generator
     {
         yield [
             [

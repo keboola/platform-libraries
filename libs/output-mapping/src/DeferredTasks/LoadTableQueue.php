@@ -37,11 +37,15 @@ class LoadTableQueue
             try {
                 $loadTableTask->startImport($this->client);
             } catch (ClientException $e) {
-                throw new InvalidOutputException(
-                    sprintf('%s [%s]', $e->getMessage(), $loadTableTask->getDestinationTableName()),
-                    $e->getCode(),
-                    $e
-                );
+                if ($e->getCode() < 500) {
+                    throw new InvalidOutputException(
+                        sprintf('%s [%s]', $e->getMessage(), $loadTableTask->getDestinationTableName()),
+                        $e->getCode(),
+                        $e
+                    );
+                }
+
+                throw $e;
             }
         }
     }

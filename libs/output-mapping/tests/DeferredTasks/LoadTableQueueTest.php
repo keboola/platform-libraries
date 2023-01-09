@@ -47,7 +47,7 @@ class LoadTableQueueTest extends TestCase
         $loadQueue->start();
     }
 
-    public function testStartFailureWithSapiErrorThrowsInvalidOutputException(): void
+    public function testStartFailureWithSapiUserErrorThrowsInvalidOutputException(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -75,6 +75,31 @@ class LoadTableQueueTest extends TestCase
             self::assertSame('Hi [out.c-test.test-table]', $e->getMessage());
             self::assertSame(444, $e->getCode());
             self::assertSame($clientException, $e->getPrevious());
+        }
+    }
+
+    public function testStartFailureWithSapiAppErrorArePropagated(): void
+    {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $clientException = new ClientException('Hi', 500);
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->once())
+            ->method('startImport')
+            ->with($this->callback(function ($client) {
+                self::assertInstanceOf(Client::class, $client);
+                return true;
+            }))
+            ->willThrowException($clientException)
+        ;
+
+        try {
+            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue->start();
+            $this->fail('LoadTableQueue should fail with ClientException');
+        } catch (ClientException $e) {
+            self::assertSame($clientException, $e);
         }
     }
 

@@ -7,6 +7,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 
 class LoadTableQueue
@@ -33,7 +34,19 @@ class LoadTableQueue
     public function start()
     {
         foreach ($this->loadTableTasks as $loadTableTask) {
-            $loadTableTask->startImport($this->client);
+            try {
+                $loadTableTask->startImport($this->client);
+            } catch (ClientException $e) {
+                if ($e->getCode() < 500) {
+                    throw new InvalidOutputException(
+                        sprintf('%s [%s]', $e->getMessage(), $loadTableTask->getDestinationTableName()),
+                        $e->getCode(),
+                        $e
+                    );
+                }
+
+                throw $e;
+            }
         }
     }
 

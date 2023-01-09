@@ -1,29 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
-use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
 use PHPUnit\Framework\TestCase;
 
 class CreateAndLoadTableTaskTest extends TestCase
 {
-    public function testAccessPermissionError()
+    public function testStartImport(): void
     {
-        $mappingDestination = new MappingDestination('out.c-test.test-table');
-        $createAndLoadTableTask = new CreateAndLoadTableTask($mappingDestination, []);
-        $storageApiMock = $this->createMock(Client::class);
+        $destinationMock = $this->createMock(MappingDestination::class);
+        $destinationMock->expects(self::once())
+            ->method('getTableName')
+            ->willReturn('test-table');
+        $destinationMock->expects(self::once())
+            ->method('getBucketId')
+            ->willReturn('out.c-test');
 
+        $storageApiMock = $this->createMock(Client::class);
         $storageApiMock->expects($this->once())
             ->method('queueTableCreate')
-            ->willThrowException(
-                new ClientException("You don't have access to the resource.", 403)
-            );
-        $this->expectException(OutputOperationException::class);
-        $this->expectExceptionMessage("You don't have access to the resource. [{$mappingDestination->getBucketId()}]");
-        $createAndLoadTableTask->startImport($storageApiMock);
+            ->with(
+                'out.c-test',
+                [
+                    'foo' => 'bar',
+                    'name' => 'test-table',
+                ]
+            )
+            ->willReturn('123456')
+        ;
+
+        $loadTableTask = new CreateAndLoadTableTask($destinationMock, ['foo' => 'bar']);
+        $loadTableTask->startImport($storageApiMock);
+
+        self::assertSame('123456', $loadTableTask->getStorageJobId());
     }
 }

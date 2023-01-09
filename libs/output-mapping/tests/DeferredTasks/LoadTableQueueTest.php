@@ -1,19 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
+use Generator;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use PHPUnit\Framework\TestCase;
 
 class LoadTableQueueTest extends TestCase
 {
-    public function testTaskCount()
+    public function testTaskCount(): void
     {
         $loadQueue = new LoadTableQueue(
             $this->createMock(Client::class),
@@ -26,7 +30,7 @@ class LoadTableQueueTest extends TestCase
         self::assertSame(2, $loadQueue->getTaskCount());
     }
 
-    public function testStart()
+    public function testStart(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -43,7 +47,63 @@ class LoadTableQueueTest extends TestCase
         $loadQueue->start();
     }
 
-    public function testWaitForAllWithError()
+    public function testStartFailureWithSapiUserErrorThrowsInvalidOutputException(): void
+    {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $clientException = new ClientException('Hi', 444);
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->once())
+            ->method('startImport')
+            ->with($this->callback(function ($client) {
+                self::assertInstanceOf(Client::class, $client);
+                return true;
+            }))
+            ->willThrowException($clientException)
+        ;
+        $loadTask->expects($this->once())
+            ->method('getDestinationTableName')
+            ->willReturn('out.c-test.test-table')
+        ;
+
+        try {
+            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue->start();
+            $this->fail('LoadTableQueue should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertSame('Hi [out.c-test.test-table]', $e->getMessage());
+            self::assertSame(444, $e->getCode());
+            self::assertSame($clientException, $e->getPrevious());
+        }
+    }
+
+    public function testStartFailureWithSapiAppErrorArePropagated(): void
+    {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $clientException = new ClientException('Hi', 500);
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->once())
+            ->method('startImport')
+            ->with($this->callback(function ($client) {
+                self::assertInstanceOf(Client::class, $client);
+                return true;
+            }))
+            ->willThrowException($clientException)
+        ;
+
+        try {
+            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue->start();
+            $this->fail('LoadTableQueue should fail with ClientException');
+        } catch (ClientException $e) {
+            self::assertSame($clientException, $e);
+        }
+    }
+
+    public function testWaitForAllWithError(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -162,7 +222,7 @@ class LoadTableQueueTest extends TestCase
         self::assertSame($expectedUncompressedBytes, $tableMetric->getUncompressedBytes());
     }
 
-    public function waitForAllData()
+    public function waitForAllData(): Generator
     {
         yield [
             [

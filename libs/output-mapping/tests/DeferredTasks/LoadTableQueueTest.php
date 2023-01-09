@@ -78,7 +78,7 @@ class LoadTableQueueTest extends TestCase
         }
     }
 
-    public function testStartFailureWithSapiAppErrorArePropagated(): void
+    public function testStartFailureWithSapiAppErrorPropagatesErrorFromClient(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -103,7 +103,7 @@ class LoadTableQueueTest extends TestCase
         }
     }
 
-    public function testWaitForAllWithError(): void
+    public function testWaitForAllWithErrorThrowsInvalidOutputException(): void
     {
         $storageApiMock = $this->createMock(Client::class);
 
@@ -136,7 +136,57 @@ class LoadTableQueueTest extends TestCase
 
         try {
             $loadQueue->waitForAll();
-            self::fail('waitForAll shoud fail with InvalidOutputException-');
+            self::fail('WaitForAll shoud fail with InvalidOutputException.');
+        } catch (InvalidOutputException $e) {
+            self::assertSame(
+                'Failed to load table "myTable": Table with displayName "test" already exists.',
+                $e->getMessage()
+            );
+        }
+
+        $tablesResult = $loadQueue->getTableResult();
+
+        $tables = $tablesResult->getTables();
+        self::assertCount(0, iterator_to_array($tables));
+
+        $tablesMetrics = $tablesResult->getMetrics()->getTableMetrics();
+        self::assertCount(0, iterator_to_array($tablesMetrics));
+    }
+
+    public function testWaitForAllWithSapiUserErrorOnMetadataApplyThrowsInvalidOutputException(): void
+    {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $storageApiMock->expects($this->once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn([
+                'status' => 'error',
+                'error' => [
+                    'message' => 'Table with displayName "test" already exists.'
+                ]
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->never())
+            ->method('startImport')
+        ;
+
+        $loadTask->expects($this->once())
+            ->method('getDestinationTableName')
+            ->willReturn('myTable');
+
+        $loadTask->expects($this->atLeastOnce())
+            ->method('getStorageJobId')
+            ->willReturn(123)
+        ;
+
+        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+
+        try {
+            $loadQueue->waitForAll();
+            self::fail('WaitForAll shoud fail with InvalidOutputException.');
         } catch (InvalidOutputException $e) {
             self::assertSame(
                 'Failed to load table "myTable": Table with displayName "test" already exists.',
@@ -220,6 +270,52 @@ class LoadTableQueueTest extends TestCase
         self::assertSame($expectedTableId, $tableMetric->getTableId());
         self::assertSame($expectedCompressedBytes, $tableMetric->getCompressedBytes());
         self::assertSame($expectedUncompressedBytes, $tableMetric->getUncompressedBytes());
+    }
+
+    /**
+     * @dataProvider waitForAllData
+     */
+    public function testWaitForAllWithSapiAppErrorPropagatesErrorFromClient(
+        array $jobResult,
+        string $expectedTableId,
+        int $expectedCompressedBytes,
+        int $expectedUncompressedBytes
+    ): void {
+        $storageApiMock = $this->createMock(Client::class);
+
+        $storageApiMock->expects($this->once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn($jobResult)
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects($this->never())
+            ->method('startImport')
+        ;
+        $loadTask->expects($this->once())
+            ->method('getStorageJobId')
+            ->willReturn(123)
+        ;
+
+        $clientException = new ClientException('Hi', 500);
+
+        $loadTask->expects($this->once())
+            ->method('applyMetadata')
+            ->willThrowException($clientException)
+        ;
+
+        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        try {
+            $loadQueue->waitForAll();
+            self::fail('WaitForAll shoud fail with ClientException.');
+        } catch (ClientException $e) {
+            self::assertSame($clientException, $e);
+        }
+
+        $tablesResult = $loadQueue->getTableResult();
+        self::assertCount(0, iterator_to_array($tablesResult->getTables()));
+        self::assertNull($tablesResult->getMetrics());
     }
 
     public function waitForAllData(): Generator

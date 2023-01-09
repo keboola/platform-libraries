@@ -65,7 +65,15 @@ class LoadTableQueue
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
             } else {
-                $task->applyMetadata($metadataApiClient);
+                try {
+                    $task->applyMetadata($metadataApiClient);
+                } catch (ClientException $e) {
+                    if ($e->getCode() >= 500) {
+                        throw $e;
+                    }
+
+                    $errors[] = sprintf('Failed to update metadata for table "%s": %s', $task->getDestinationTableName(), $e->getMessage());
+                }
 
                 switch ($jobResult['operationName']) {
                     case 'tableImport':

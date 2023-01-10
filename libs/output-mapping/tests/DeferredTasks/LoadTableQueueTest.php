@@ -106,7 +106,6 @@ class LoadTableQueueTest extends TestCase
     public function testWaitForAllWithErrorThrowsInvalidOutputException(): void
     {
         $storageApiMock = $this->createMock(Client::class);
-
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)
@@ -122,11 +121,10 @@ class LoadTableQueueTest extends TestCase
         $loadTask->expects($this->never())
             ->method('startImport')
         ;
-
         $loadTask->expects($this->once())
             ->method('getDestinationTableName')
-            ->willReturn('myTable');
-
+            ->willReturn('myTable')
+        ;
         $loadTask->expects($this->atLeastOnce())
             ->method('getStorageJobId')
             ->willReturn(123)
@@ -156,7 +154,6 @@ class LoadTableQueueTest extends TestCase
     public function testWaitForAllWithSapiUserErrorOnMetadataApplyThrowsInvalidOutputException(): void
     {
         $storageApiMock = $this->createMock(Client::class);
-
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)
@@ -172,11 +169,10 @@ class LoadTableQueueTest extends TestCase
         $loadTask->expects($this->never())
             ->method('startImport')
         ;
-
         $loadTask->expects($this->once())
             ->method('getDestinationTableName')
-            ->willReturn('myTable');
-
+            ->willReturn('myTable')
+        ;
         $loadTask->expects($this->atLeastOnce())
             ->method('getStorageJobId')
             ->willReturn(123)
@@ -213,7 +209,6 @@ class LoadTableQueueTest extends TestCase
         int $expectedUncompressedBytes
     ): void {
         $storageApiMock = $this->createMock(Client::class);
-
         $storageApiMock->expects($this->once())
             ->method('getTable')
             ->with($expectedTableId)
@@ -224,8 +219,8 @@ class LoadTableQueueTest extends TestCase
                 'columns' => [],
                 'lastImportDate' => null,
                 'lastChangeDate' => null,
-            ]);
-
+            ])
+        ;
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)
@@ -236,12 +231,10 @@ class LoadTableQueueTest extends TestCase
         $loadTask->expects($this->never())
             ->method('startImport')
         ;
-
         $loadTask->expects($this->once())
             ->method('getStorageJobId')
             ->willReturn(123)
         ;
-
         $loadTask->expects($this->once())
             ->method('applyMetadata')
             ->with($this->callback(function ($client) {
@@ -282,7 +275,6 @@ class LoadTableQueueTest extends TestCase
         int $expectedUncompressedBytes
     ): void {
         $storageApiMock = $this->createMock(Client::class);
-
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)

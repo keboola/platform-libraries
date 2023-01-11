@@ -153,15 +153,32 @@ class LoadTableQueueTest extends TestCase
 
     public function testWaitForAllWithSapiUserErrorOnMetadataApplyThrowsInvalidOutputException(): void
     {
+        $tableName = 'myTable';
+        $expectedTableId = 'in.c-myBucket.' . $tableName;
         $storageApiMock = $this->createMock(Client::class);
         $storageApiMock->expects($this->once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn([
-                'status' => 'error',
-                'error' => [
-                    'message' => 'Table with displayName "test" already exists.'
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => $expectedTableId,
+                'metrics' => [
+                    'inBytes' => 123,
+                    'inBytesUncompressed' => 456,
                 ]
+            ])
+        ;
+        $storageApiMock->expects($this->once())
+            ->method('getTable')
+            ->with($expectedTableId)
+            ->willReturn([
+                'id' => $expectedTableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => [],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
             ])
         ;
 
@@ -173,11 +190,17 @@ class LoadTableQueueTest extends TestCase
             ->method('getDestinationTableName')
             ->willReturn('myTable')
         ;
-        $loadTask->expects($this->atLeastOnce())
+        $loadTask->expects($this->once())
             ->method('getStorageJobId')
             ->willReturn(123)
         ;
 
+        $clientException = new ClientException('Hi', 444);
+
+        $loadTask->expects($this->once())
+            ->method('applyMetadata')
+            ->willThrowException($clientException)
+        ;
         $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
 
         try {
@@ -185,18 +208,28 @@ class LoadTableQueueTest extends TestCase
             self::fail('WaitForAll shoud fail with InvalidOutputException.');
         } catch (InvalidOutputException $e) {
             self::assertSame(
-                'Failed to load table "myTable": Table with displayName "test" already exists.',
+                'Failed to update metadata for table "myTable": Hi',
                 $e->getMessage()
             );
         }
 
         $tablesResult = $loadQueue->getTableResult();
 
-        $tables = $tablesResult->getTables();
-        self::assertCount(0, iterator_to_array($tables));
+        $tables = iterator_to_array($tablesResult->getTables());
+        self::assertCount(1, $tables);
 
-        $tablesMetrics = $tablesResult->getMetrics()->getTableMetrics();
-        self::assertCount(0, iterator_to_array($tablesMetrics));
+        /** @var TableInfo $table */
+        $table = reset($tables);
+        self::assertSame($expectedTableId, $table->getId());
+
+        $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        self::assertCount(1, $tablesMetrics);
+
+        /** @var TableMetrics $tableMetric */
+        $tableMetric = reset($tablesMetrics);
+        self::assertSame($expectedTableId, $tableMetric->getTableId());
+        self::assertSame(123, $tableMetric->getCompressedBytes());
+        self::assertSame(456, $tableMetric->getUncompressedBytes());
     }
 
     /**
@@ -268,7 +301,7 @@ class LoadTableQueueTest extends TestCase
     /**
      * @dataProvider waitForAllData
      */
-    public function testWaitForAllWithSapiAppErrorPropagatesErrorFromClient(
+    public function testWaitForAllWithSapiAppErrorOnMetadataApplyPropagatesErrorFromClient(
         array $jobResult,
         string $expectedTableId,
         int $expectedCompressedBytes,

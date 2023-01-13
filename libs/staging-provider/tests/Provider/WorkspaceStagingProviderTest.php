@@ -1,18 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Tests\Provider;
 
-use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\WorkspaceStagingProvider;
-use Keboola\StagingProvider\Staging\LocalStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
 
 class WorkspaceStagingProviderTest extends TestCase
 {
-    public function testWorkspaceIdIsReturned()
+    public function testWorkspaceIdIsReturned(): void
     {
         $workspaceId = 'test';
         $backendSize = 'large';
@@ -20,21 +20,24 @@ class WorkspaceStagingProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () use ($workspaceId, $backendSize) {
-            return new SnowflakeWorkspaceStaging([
-                'id' => $workspaceId,
-                'backendSize' => $backendSize,
-                'connection' => [
-                    'backend' => SnowflakeWorkspaceStaging::getType(),
-                ],
-            ]);
-        });
+        $workspaceProvider = new WorkspaceStagingProvider(
+            $workspacesApiClient,
+            function () use ($workspaceId, $backendSize) {
+                return new SnowflakeWorkspaceStaging([
+                    'id' => $workspaceId,
+                    'backendSize' => $backendSize,
+                    'connection' => [
+                        'backend' => SnowflakeWorkspaceStaging::getType(),
+                    ],
+                ]);
+            }
+        );
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
         self::assertSame($backendSize, $workspaceProvider->getBackendSize());
     }
 
-    public function testCredentialsAreReturnedForWorkspaceStaging()
+    public function testCredentialsAreReturnedForWorkspaceStaging(): void
     {
         $credentials = [
             'host' => 'host',
@@ -60,7 +63,7 @@ class WorkspaceStagingProviderTest extends TestCase
         self::assertSame($credentials, $workspaceProvider->getCredentials());
     }
 
-    public function testPathThrowsExceptionOnRemoteProvider()
+    public function testPathThrowsExceptionOnRemoteProvider(): void
     {
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
@@ -69,7 +72,7 @@ class WorkspaceStagingProviderTest extends TestCase
             return new SnowflakeWorkspaceStaging([
                 'connection' => [
                     'backend' => SnowflakeWorkspaceStaging::getType(),
-                ]
+                ],
             ]);
         });
 
@@ -79,7 +82,7 @@ class WorkspaceStagingProviderTest extends TestCase
         $workspaceProvider->getPath();
     }
 
-    public function testCleanupDeletedWorkspaceStaging()
+    public function testCleanupDeletedWorkspaceStaging(): void
     {
         $workspaceId = '1';
 
@@ -97,31 +100,36 @@ class WorkspaceStagingProviderTest extends TestCase
         $workspaceProvider->cleanup();
     }
 
-    public function testWorkspaceStagingIsCreatedLazily()
+    public function testWorkspaceStagingIsCreatedLazily(): void
     {
         $callCounter = 0;
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () use (&$callCounter) {
-            $callCounter += 1;
-            return new SnowflakeWorkspaceStaging([
-                'id' => 'test',
-                'backendSize' => 'medium',
-                'connection' => [
-                    'backend' => SnowflakeWorkspaceStaging::getType(),
-                    'host' => 'host',
-                    'warehouse' => 'warehouse',
-                    'database' => 'database',
-                    'schema' => 'schema',
-                    'user' => 'user',
-                    'password' => 'password',
-                ],
-            ]);
-        });
+        $workspaceProvider = new WorkspaceStagingProvider(
+            $workspacesApiClient,
+            function () use (&$callCounter): SnowflakeWorkspaceStaging {
+                $callCounter += 1;
+                return new SnowflakeWorkspaceStaging([
+                    'id' => 'test',
+                    'backendSize' => 'medium',
+                    'connection' => [
+                        'backend' => SnowflakeWorkspaceStaging::getType(),
+                        'host' => 'host',
+                        'warehouse' => 'warehouse',
+                        'database' => 'database',
+                        'schema' => 'schema',
+                        'user' => 'user',
+                        'password' => 'password',
+                    ],
+                ]);
+            }
+        );
 
-        self::assertSame(0, $callCounter, 'Check getter was not called after construction');
+        /* intentionally assertEquals instead of assertSame because otherwise phpstan is confused and things
+            that $callCounter is constant === 0 */
+        self::assertEquals(0, $callCounter, 'Check getter was not called after construction');
 
         $workspaceProvider->getWorkspaceId();
         self::assertSame(1, $callCounter, 'Check getter was called once after getWorkspaceId');
@@ -134,24 +142,5 @@ class WorkspaceStagingProviderTest extends TestCase
 
         $workspaceProvider->getBackendSize();
         self::assertSame(1, $callCounter, 'Check getter is called at most once within any method');
-    }
-
-    public function testStagingGetterResultTypeIsChecked()
-    {
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::never())->method(self::anything());
-
-        $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () {
-            return new LocalStaging('/data');
-        });
-
-        $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage(sprintf(
-            'Staging getter must return instance of %s, %s returned.',
-            WorkspaceStagingInterface::class,
-            LocalStaging::class
-        ));
-
-        $workspaceProvider->getWorkspaceId();
     }
 }

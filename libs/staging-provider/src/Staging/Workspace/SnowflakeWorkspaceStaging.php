@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Staging\Workspace;
 
 class SnowflakeWorkspaceStaging extends WorkspaceStaging
 {
-    public static function getType()
+    public static function getType(): string
     {
         return 'snowflake';
     }
 
-    public function getCredentials()
+    public function getCredentials(): array
     {
         $credentials = parent::getCredentials();
         $credentials['account'] = $this->parseAccount($credentials['host']);
@@ -35,6 +37,6 @@ class SnowflakeWorkspaceStaging extends WorkspaceStaging
             return $hostParts[0];
         }
 
-        return substr($hostParts[0], 0, strrpos($hostParts[0], '-'));
+        return substr($hostParts[0], 0, (int) strrpos($hostParts[0], '-'));
     }
 }

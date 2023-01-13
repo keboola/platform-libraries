@@ -1,28 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Staging\Workspace;
 
 use Keboola\StagingProvider\Staging\StagingInterface;
 
 interface WorkspaceStagingInterface extends StagingInterface
 {
-    /**
-     * @param array $data
-     */
     public function __construct(array $data);
 
-    /**
-     * @return string
-     */
-    public function getWorkspaceId();
+    public function getWorkspaceId(): string;
 
-    /**
-     * @return array
-     */
-    public function getCredentials();
+    public function getCredentials(): array;
 
-    /**
-     * @return ?string
-     */
-    public function getBackendSize();
+    public function getBackendSize(): ?string;
 }

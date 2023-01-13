@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Provider;
 
-use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StorageApi\Workspaces;
 
 /**
  * @extends AbstractStagingProvider<WorkspaceStagingInterface>
  */
 class WorkspaceStagingProvider extends AbstractStagingProvider
 {
-    /** @var Workspaces */
-    private $workspacesApiClient;
+    private Workspaces $workspacesApiClient;
 
     /**
      * @param Workspaces $workspacesApiClient
@@ -20,32 +21,32 @@ class WorkspaceStagingProvider extends AbstractStagingProvider
      */
     public function __construct(Workspaces $workspacesApiClient, callable $stagingGetter)
     {
-        parent::__construct($stagingGetter, WorkspaceStagingInterface::class);
+        parent::__construct($stagingGetter);
 
         $this->workspacesApiClient = $workspacesApiClient;
     }
 
-    public function getWorkspaceId()
+    public function getWorkspaceId(): string
     {
         return $this->getStaging()->getWorkspaceId();
     }
 
-    public function getCredentials()
+    public function getCredentials(): array
     {
         return $this->getStaging()->getCredentials();
     }
 
-    public function getPath()
+    public function getPath(): string
     {
         throw new StagingProviderException('Workspace staging provider does not support path.');
     }
 
-    public function cleanup()
+    public function cleanup(): void
     {
         $this->workspacesApiClient->deleteWorkspace($this->getWorkspaceId(), ['async' => true]);
     }
 
-    public function getBackendSize()
+    public function getBackendSize(): ?string
     {
         return $this->getStaging()->getBackendSize();
     }

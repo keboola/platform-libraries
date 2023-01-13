@@ -1,17 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Staging\Workspace;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 
 abstract class WorkspaceStaging implements WorkspaceStagingInterface
 {
-    /** @var array */
-    protected $data;
+    protected array $data;
 
-    /**
-     * @param array $data
-     */
     public function __construct(array $data)
     {
         if ($data['connection']['backend'] !== static::getType()) {
@@ -25,12 +23,12 @@ abstract class WorkspaceStaging implements WorkspaceStagingInterface
         $this->data = $data;
     }
 
-    public function getWorkspaceId()
+    public function getWorkspaceId(): string
     {
-        return $this->data['id'];
+        return (string) $this->data['id'];
     }
 
-    public function getCredentials()
+    public function getCredentials(): array
     {
         $connection = $this->data['connection'];
 
@@ -44,10 +42,7 @@ abstract class WorkspaceStaging implements WorkspaceStagingInterface
         ];
     }
 
-    /**
-     * @return ?string
-     */
-    public function getBackendSize()
+    public function getBackendSize(): ?string
     {
         return $this->data['backendSize'];
     }

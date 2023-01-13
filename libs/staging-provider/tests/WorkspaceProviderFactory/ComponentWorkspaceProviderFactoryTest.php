@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use PHPUnit\Framework\TestCase;
 
 class ComponentWorkspaceProviderFactoryTest extends TestCase
 {
-    public function testNewWorkspaceIsCreatedWithConfigIdProvided()
+    public function testNewWorkspaceIsCreatedWithConfigIdProvided(): void
     {
         $componentId = 'my.component';
         $configId = 'some-config';
@@ -49,7 +51,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         // no assert, just check the mock expectations were met
     }
 
-    public function testNewWorkspaceIsCreatedWithoutConfigIdProvided()
+    public function testNewWorkspaceIsCreatedWithoutConfigIdProvided(): void
     {
         $componentId = 'my.component';
         $configId = null;
@@ -85,7 +87,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         // no assert, just check the mock expectations were met
     }
 
-    public function testStagingInstanceIsCached()
+    public function testStagingInstanceIsCached(): void
     {
         $componentId = 'my.component';
         $configId = null;
@@ -111,7 +113,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         self::assertSame($provider1, $provider2);
     }
 
-    public function testSnowflakeWorkspaceReceivesBackendSize()
+    public function testSnowflakeWorkspaceReceivesBackendSize(): void
     {
         $componentId = 'my.component';
         $configId = null;
@@ -146,12 +148,11 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         // no assert, just check the $workspaceApi mock expectations were met
     }
 
-    public function testReadOnlyRoleFlagTrue()
+    public function testReadOnlyRoleFlagTrue(): void
     {
         $componentId = 'my.component';
         $configId = null;
         $stagingClass = SnowflakeWorkspaceStaging::class;
-
 
         $componentsApi = $this->createMock(Components::class);
         $componentsApi->expects(self::never())->method(self::anything());
@@ -182,12 +183,11 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
         // no assert, just check the $workspaceApi mock expectations were met
     }
 
-    public function testReadOnlyRoleFlagFalse()
+    public function testReadOnlyRoleFlagFalse(): void
     {
         $componentId = 'my.component';
         $configId = null;
         $stagingClass = SnowflakeWorkspaceStaging::class;
-
 
         $componentsApi = $this->createMock(Components::class);
         $componentsApi->expects(self::never())->method(self::anything());

@@ -1,11 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Staging;
 
 interface StagingInterface
 {
-    /**
-     * @return string
-     */
-    public static function getType();
+    public static function getType(): string;
 }

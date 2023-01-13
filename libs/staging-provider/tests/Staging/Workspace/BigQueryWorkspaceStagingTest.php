@@ -22,7 +22,6 @@ class BigQueryWorkspaceStagingTest extends TestCase
             ],
         ]);
 
-        $credentials = $staging->getCredentials();
         self::assertSame(
             [
                 'schema' => 'schema',

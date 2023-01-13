@@ -1,26 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Staging;
 
 class LocalStaging implements StagingInterface
 {
-    /** @var string */
-    private $path;
-
-    /**
-     * @param string $path
-     */
-    public function __construct($path)
+    public function __construct(private readonly string $path)
     {
-        $this->path = $path;
     }
 
-    public static function getType()
+    public static function getType(): string
     {
         return 'local';
     }
 
-    public function getPath()
+    public function getPath(): string
     {
         return $this->path;
     }

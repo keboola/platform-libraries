@@ -10,6 +10,10 @@ pool:
 
 resources:
   repositories:
+    - repository: azure-api-client
+      type: github
+      endpoint: keboola
+      name: keboola/azure-api-client
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -49,6 +53,7 @@ stages:
         steps:
           - script: |
               ./bin/ci-find-changes.sh main \
+                azureApiClient:libs/azure-api-client \
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
                 loggingBundle:libs/logging-bundle \
@@ -70,6 +75,14 @@ stages:
           - publish: $(Build.ArtifactStagingDirectory)
             artifact: docker-images
             displayName: Publish artifacts
+
+  - stage: tests_azureApiClient
+    displayName: Tests - Azure API Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_azureApiClient'])
+    jobs:
+      - template: libs/azure-api-client/azure-pipelines.tests.yml
 
   - stage: tests_input_mapping
     displayName: Tests - Input Mapping
@@ -122,6 +135,7 @@ stages:
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
+      - tests_azureApiClient
       - tests_input_mapping
       - tests_k8sClient
       - tests_loggingBundle
@@ -130,6 +144,7 @@ stages:
       - tests_configuration_variables_resolver
     condition: |
       and(
+        in(dependencies.tests_azureApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
@@ -147,6 +162,14 @@ stages:
     dependsOn: [ build, testsResults ]
     condition: succeeded('testsResults')
     jobs:
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_azureApiClient'])
+          sourceRepo: platform-libraries
+          targetRepo: azure-api-client
+          libraryPath: libs/azure-api-client
+          tagPrefix: azure-api-client/
+
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_inputMapping'])

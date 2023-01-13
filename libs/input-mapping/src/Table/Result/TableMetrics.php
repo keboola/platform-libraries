@@ -1,48 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Result;
 
 class TableMetrics
 {
-    /** @var int */
-    private $compressedBytes;
+    private int $compressedBytes;
+    private int $uncompressedBytes;
+    private string $tableId;
 
-    /** @var int */
-    private $uncompressedBytes;
-
-    /** @var string */
-    private $tableId;
-
-    /**
-     * @param array $jobResult
-     */
     public function __construct(array $jobResult)
     {
-        $this->tableId = $jobResult['tableId'];
-        $this->compressedBytes = $jobResult['metrics']['outBytes'];
-        $this->uncompressedBytes = $jobResult['metrics']['outBytesUncompressed'];
+        $this->tableId = (string) $jobResult['tableId'];
+        $this->compressedBytes = (int) $jobResult['metrics']['outBytes'];
+        $this->uncompressedBytes = (int) $jobResult['metrics']['outBytesUncompressed'];
     }
 
-    /**
-     * @return int
-     */
-    public function getUncompressedBytes()
+    public function getUncompressedBytes(): int
     {
         return $this->uncompressedBytes;
     }
 
-    /**
-     * @return int
-     */
-    public function getCompressedBytes()
+    public function getCompressedBytes(): int
     {
         return $this->compressedBytes;
     }
 
-    /**
-     * @return string
-     */
-    public function getTableId()
+    public function getTableId(): string
     {
         return $this->tableId;
     }

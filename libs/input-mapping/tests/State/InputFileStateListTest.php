@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\State;
 
 use Keboola\InputMapping\Exception\FileNotFoundException;
@@ -8,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class InputFileStateListTest extends TestCase
 {
-    public function testGetFile()
+    public function testGetFile(): void
     {
         $configuration = [
             [
@@ -59,17 +61,17 @@ class InputFileStateListTest extends TestCase
         );
     }
 
-    public function testGetFileNotFound()
+    public function testGetFileNotFound(): void
     {
         $states = new InputFileStateList([]);
-        self::expectException(FileNotFoundException::class);
-        self::expectExceptionMessage(
+        $this->expectException(FileNotFoundException::class);
+        $this->expectExceptionMessage(
             'State for files defined by "[{"name":"test","match":"include"}]" not found.'
         );
         $states->getFile([['name' => 'test', 'match' => 'include']]);
     }
 
-    public function testJsonSerialize()
+    public function testJsonSerialize(): void
     {
         $configuration = [
             [

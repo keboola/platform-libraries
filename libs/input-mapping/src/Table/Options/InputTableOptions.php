@@ -1,26 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Options;
 
+use Keboola\InputMapping\Configuration\Table;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\TableNotFoundException;
 use Keboola\InputMapping\State\InputTableStateList;
 
+/** @phpstan-type ColumnType = array{
+ *     source: string,
+ *     type?: string,
+ *     destination?: string,
+ *     length?: integer,
+ *     nullable?: bool,
+ *     convertEmptyValuesToNull?: bool,
+ * }
+ * @phpstan-type ColumnDefinition = array{
+ *     source: string,
+ * }
+*/
 class InputTableOptions
 {
-    const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
+    public const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
 
-    /**
-     * @var array
-     */
-    private $definition;
+    private array $definition;
 
     public function __construct(array $configuration)
     {
         if (!empty($configuration['changed_since']) && !empty($configuration['days'])) {
             throw new InvalidInputException('Cannot set both parameters "days" and "changed_since".');
         }
-        $tableConfiguration = new \Keboola\InputMapping\Configuration\Table();
+        $tableConfiguration = new Table();
         $this->definition = $tableConfiguration->parse(['table' => $configuration]);
         $this->validateColumns();
         if (empty($this->definition['column_types'])) {
@@ -31,7 +43,7 @@ class InputTableOptions
         $this->definition['columns'] = $this->getColumnNamesFromTypes();
     }
 
-    private function validateColumns()
+    private function validateColumns(): void
     {
         $colNamesFromTypes = $this->getColumnNamesFromTypes();
         // if both columns and column_types are entered, verify that the columns listed do match
@@ -46,7 +58,8 @@ class InputTableOptions
             $diff = array_diff($colNamesFromTypes, $this->definition['columns']);
             if ($diff) {
                 throw new InvalidInputException(sprintf(
-                    'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "%s".',
+                    'Both "columns" and "column_types" are specified, ' .
+                    '"column_types" field contains surplus columns: "%s".',
                     implode(', ', $diff)
                 ));
             }
@@ -56,28 +69,22 @@ class InputTableOptions
     /**
      * @return array
      */
-    public function getDefinition()
+    public function getDefinition(): array
     {
         return $this->definition;
     }
 
-    /**
-     * @return string
-     */
-    public function getSource()
+    public function getSource(): string
     {
         return $this->definition['source'];
     }
 
-    public function setSource($newSource)
+    public function setSource(string $newSource): void
     {
         $this->definition['source'] = $newSource;
     }
 
-    /**
-     * @return string
-     */
-    public function getDestination()
+    public function getDestination(): string
     {
         if (isset($this->definition['destination'])) {
             return $this->definition['destination'];
@@ -85,23 +92,31 @@ class InputTableOptions
         return '';
     }
 
-    public function getOverwrite()
+    public function getOverwrite(): bool
     {
-        return $this->definition['overwrite'];
+        return (bool) $this->definition['overwrite'];
     }
 
     /**
-     * @return array
+     * @return array<string>
      */
-    public function getColumnNamesFromTypes()
+    public function getColumnNamesFromTypes(): array
     {
         return array_column($this->definition['column_types'], 'source');
     }
 
     /**
-     * @return array
+     * @return array{
+     *     columns?: array<string>,
+     *     changedSince?: string,
+     *     whereColumn?: string,
+     *     whereValues?: array<string>,
+     *     whereOperator?: string,
+     *     limit?: integer,
+     *     overwrite?: bool,
+     * }
      */
-    public function getStorageApiExportOptions(InputTableStateList $states)
+    public function getStorageApiExportOptions(InputTableStateList $states): array
     {
         $exportOptions = [];
         if (count($this->definition['column_types'])) {
@@ -116,26 +131,29 @@ class InputTableOptions
                     $exportOptions['changedSince'] = $states
                         ->getTable($this->getSource())
                         ->getLastImportDate();
-                } catch (TableNotFoundException $e) {
+                } catch (TableNotFoundException) {
                     // intentionally blank
                 }
             } else {
-                $exportOptions['changedSince'] = $this->definition['changed_since'];
+                $exportOptions['changedSince'] = (string) $this->definition['changed_since'];
             }
         }
         if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
-            $exportOptions['whereColumn'] = $this->definition['where_column'];
-            $exportOptions['whereValues'] = $this->definition['where_values'];
-            $exportOptions['whereOperator'] = $this->definition['where_operator'];
+            $exportOptions['whereColumn'] = (string) $this->definition['where_column'];
+            $exportOptions['whereValues'] = (array) $this->definition['where_values'];
+            $exportOptions['whereOperator'] = (string) $this->definition['where_operator'];
         }
         if (isset($this->definition['limit'])) {
-            $exportOptions['limit'] = $this->definition['limit'];
+            $exportOptions['limit'] = (int) $this->definition['limit'];
         }
-        $exportOptions['overwrite'] = $this->definition['overwrite'];
+        $exportOptions['overwrite'] = (bool) $this->definition['overwrite'];
         return $exportOptions;
     }
 
-    private function getColumnTypes()
+    /**
+     * @return array<int, ColumnType>
+     */
+    private function getColumnTypes(): array
     {
         if ($this->definition['column_types']) {
             $ret = [];
@@ -167,9 +185,17 @@ class InputTableOptions
     }
 
     /**
-     * @return array
+     * @return array{
+     *     columns?: array<int, ColumnType>,
+     *     seconds?: integer,
+     *     whereColumn?: string,
+     *     whereValues?: array<string>,
+     *     whereOperator?: string,
+     *     rows?: integer,
+     *     overwrite: bool,
+     * }
      */
-    public function getStorageApiLoadOptions(InputTableStateList $states)
+    public function getStorageApiLoadOptions(InputTableStateList $states): array
     {
         $exportOptions = [];
         if ($this->definition['column_types']) {
@@ -206,8 +232,8 @@ class InputTableOptions
         return $exportOptions;
     }
 
-    public function isUseView()
+    public function isUseView(): bool
     {
-        return $this->definition['use_view'];
+        return (bool) $this->definition['use_view'];
     }
 }

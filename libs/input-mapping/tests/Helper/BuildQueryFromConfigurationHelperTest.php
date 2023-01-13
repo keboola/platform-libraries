@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Helper;
 
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
@@ -7,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class BuildQueryFromConfigurationHelperTest extends TestCase
 {
-    public function testGetTagsFromSourceTags()
+    public function testGetTagsFromSourceTags(): void
     {
         self::assertEquals(
             ['componentId: keboola.ex-gmail', 'configurationId: 123'],
@@ -22,7 +24,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testGetSourceTagsFromTags()
+    public function testGetSourceTagsFromTags(): void
     {
         self::assertEquals(
             [
@@ -40,7 +42,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryForTags()
+    public function testBuildQueryForTags(): void
     {
         self::assertEquals(
             'tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123"',
@@ -51,7 +53,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryForTagsExclude()
+    public function testBuildQueryForTagsExclude(): void
     {
         self::assertEquals(
             'tags:"componentId: keboola.ex-gmail" AND NOT tags:"configurationId: 123"',
@@ -62,7 +64,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryOnlyQuery()
+    public function testBuildQueryOnlyQuery(): void
     {
         self::assertEquals(
             'tag:123',
@@ -72,7 +74,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryOnlySourceTags()
+    public function testBuildQueryOnlySourceTags(): void
     {
         self::assertEquals(
             'tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123"',
@@ -93,7 +95,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQuerySourceTagsAndQuery()
+    public function testBuildQuerySourceTagsAndQuery(): void
     {
         self::assertEquals(
             'tag:123 AND (tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123")',
@@ -115,7 +117,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testChangedSinceQueryPortion()
+    public function testChangedSinceQueryPortion(): void
     {
         self::assertEquals(
             sprintf('created:["%s" TO *]', date('c', strtotime('-5 days'))),
@@ -123,9 +125,9 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryChangedSinceWithQueryNoSourceTags()
+    public function testBuildQueryChangedSinceWithQueryNoSourceTags(): void
     {
-        self::assertContains(
+        self::assertStringContainsString(
             'tag:123',
             BuildQueryFromConfigurationHelper::buildQuery([
                 'query' => 'tag:123',
@@ -134,7 +136,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryChangedSinceNoQuerySourceTags()
+    public function testBuildQueryChangedSinceNoQuerySourceTags(): void
     {
         self::assertEquals(
             sprintf(
@@ -159,10 +161,11 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryChangedSinceExcludeSourceTags()
+    public function testBuildQueryChangedSinceExcludeSourceTags(): void
     {
         self::assertEquals(
             sprintf(
+                // phpcs:ignore Generic.Files.LineLength
                 '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:["%s" TO *]',
                 date('c', strtotime('-5 days'))
             ),
@@ -188,10 +191,11 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         );
     }
 
-    public function testBuildQueryChangedSinceAndOnlyExcludedSourceTags()
+    public function testBuildQueryChangedSinceAndOnlyExcludedSourceTags(): void
     {
-        self::assertContains(
+        self::assertStringContainsString(
             sprintf(
+                // phpcs:ignore Generic.Files.LineLength
                 '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:["%s" TO *]',
                 date('c', strtotime('-5 days'))
             ),

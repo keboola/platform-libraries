@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Helper;
 
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
@@ -14,20 +16,18 @@ use Psr\Log\Test\TestLogger;
 
 class TagsRewriteHelperTest extends TestCase
 {
-    const TEST_REWRITE_BASE_TAG = 'im-files-test';
+    private const TEST_REWRITE_BASE_TAG = 'im-files-test';
 
     private static string $branchId;
     private static string $branchTag;
     protected string $tmpDir;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
         // Create folders
         $temp = new Temp('docker');
-        $temp->initRunFolder();
-        $this->temp = $temp;
         $this->tmpDir = $temp->getTmpFolder();
         sleep(2);
         $clientWrapper = self::getClientWrapper(null);
@@ -39,29 +39,33 @@ class TagsRewriteHelperTest extends TestCase
         }
     }
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
         $branchesApi = new DevBranches(self::getClientWrapper(null)->getBasicClient());
-        self::$branchId = $branchesApi->createBranch(uniqid('TagsRewriteHelperTest'))['id'];
+        self::$branchId = (string) $branchesApi->createBranch(uniqid('TagsRewriteHelperTest'))['id'];
         self::$branchTag = sprintf('%s-' . self::TEST_REWRITE_BASE_TAG, self::$branchId);
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         $branchesApi = new DevBranches(self::getClientWrapper(null)->getBasicClient());
-        $branchesApi->deleteBranch(self::$branchId);
+        $branchesApi->deleteBranch((int) self::$branchId);
         parent::tearDownAfterClass();
     }
 
     private static function getClientWrapper(?string $branchId): ClientWrapper
     {
         return new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                $branchId
+            ),
         );
     }
 
-    public function testNoBranch()
+    public function testNoBranch(): void
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
 
@@ -75,7 +79,7 @@ class TagsRewriteHelperTest extends TestCase
         self::assertSame($configuration, $expectedConfiguration);
     }
 
-    public function testBranchRewriteFilesExists()
+    public function testBranchRewriteFilesExists(): void
     {
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -98,7 +102,7 @@ class TagsRewriteHelperTest extends TestCase
         self::assertEquals([self::$branchTag], $expectedConfiguration['tags']);
     }
 
-    public function testBranchRewriteSourceTagsFilesExists()
+    public function testBranchRewriteSourceTagsFilesExists(): void
     {
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
@@ -144,7 +148,7 @@ class TagsRewriteHelperTest extends TestCase
         );
     }
 
-    public function testBranchRewriteNoFiles()
+    public function testBranchRewriteNoFiles(): void
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
         $testLogger = new TestLogger();
@@ -162,7 +166,7 @@ class TagsRewriteHelperTest extends TestCase
         self::assertEquals($configuration, $expectedConfiguration);
     }
 
-    public function testBranchRewriteSourceTagsNoFiles()
+    public function testBranchRewriteSourceTagsNoFiles(): void
     {
         $configuration = [
             'source' => [
@@ -191,7 +195,7 @@ class TagsRewriteHelperTest extends TestCase
         self::assertEquals($configuration, $expectedConfiguration);
     }
 
-    public function testBranchRewriteExcludedProcessedSourceTagFilesExist()
+    public function testBranchRewriteExcludedProcessedSourceTagFilesExist(): void
     {
         $branchProcessedTag = sprintf('%s-processed', self::$branchId);
         file_put_contents($this->tmpDir . '/upload', 'test');
@@ -212,7 +216,7 @@ class TagsRewriteHelperTest extends TestCase
                     ],
                     [
                         'name' => 'processed',
-                        'match' => 'exclude'
+                        'match' => 'exclude',
                     ],
                 ],
             ],
@@ -234,7 +238,7 @@ class TagsRewriteHelperTest extends TestCase
         );
     }
 
-    public function testBranchRewriteExcludedProcessedSourceTagBranchFileDoesNotExist()
+    public function testBranchRewriteExcludedProcessedSourceTagBranchFileDoesNotExist(): void
     {
         $branchProcessedTag = sprintf('%s-processed', self::$branchId);
         file_put_contents($this->tmpDir . '/upload', 'test');
@@ -255,7 +259,7 @@ class TagsRewriteHelperTest extends TestCase
                     ],
                     [
                         'name' => 'processed',
-                        'match' => 'exclude'
+                        'match' => 'exclude',
                     ],
                 ],
             ],

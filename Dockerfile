@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 
-ARG PHP_VERSION=7.4
+ARG PHP_VERSION=8.1
 
 FROM php:${PHP_VERSION}-cli AS base
 

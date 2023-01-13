@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\Local as LocalFile;
-use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
@@ -18,10 +21,10 @@ use Psr\Log\NullLogger;
 
 class StrategyFactoryTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $logger = new NullLogger();
         $factory = new StrategyFactory($clientWrapper, $logger, 'json');
@@ -30,89 +33,95 @@ class StrategyFactoryTest extends TestCase
         self::assertEquals(
             ['abs', 'local', 's3', 'workspace-abs', 'workspace-redshift',
                 'workspace-snowflake', 'workspace-synapse', 'workspace-exasol', 'workspace-teradata',
-                'workspace-bigquery'
+                'workspace-bigquery',
             ],
             array_keys($factory->getStrategyMap())
         );
     }
 
-    public function testGetFileStrategyFail()
+    public function testGetFileStrategyFail(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" file input backend.');
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('The project does not support "local" file input backend.');
         $factory->getFileInputStrategy(
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([])
         );
     }
 
-    public function testGetFileStrategySuccess()
+    public function testGetFileStrategySuccess(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]);
+        $factory->addProvider(
+            new NullProvider(),
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]
+        );
         self::assertInstanceOf(
             LocalFile::class,
             $factory->getFileInputStrategy(
-                StrategyFactory::LOCAL,
+                AbstractStrategyFactory::LOCAL,
                 new InputFileStateList([])
             )
         );
     }
 
-    public function testGetTableStrategyFail()
+    public function testGetTableStrategyFail(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('The project does not support "local" table input backend.');
-        $factory->getTableInputStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]));
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('The project does not support "local" table input backend.');
+        $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([]));
     }
 
-    public function testGetTableStrategySuccess()
+    public function testGetTableStrategySuccess(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
+        $factory->addProvider(
+            new NullProvider(),
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]
+        );
         self::assertInstanceOf(
             LocalTable::class,
-            $factory->getTableInputStrategy(StrategyFactory::LOCAL, 'test', new InputTableStateList([]))
+            $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([]))
         );
     }
 
-    public function testAddProviderInvalidStaging()
+    public function testAddProviderInvalidStaging(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage(
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage(
             'Staging "0" is unknown. Known types are "abs, local, s3, workspace-abs, ' .
             'workspace-redshift, workspace-snowflake, workspace-synapse, workspace-exasol, workspace-teradata, ' .
             'workspace-bigquery'
@@ -120,17 +129,19 @@ class StrategyFactoryTest extends TestCase
         $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
     }
 
-    public function testGetTableStrategyInvalid()
+    public function testGetTableStrategyInvalid(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
             'json'
         );
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('Input mapping on type "invalid" is not supported. Supported types are "abs, local,');
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
+            'Input mapping on type "invalid" is not supported. Supported types are "abs, local,'
+        );
         $factory->getTableInputStrategy('invalid', 'test', new InputTableStateList([]));
     }
 }

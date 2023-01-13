@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\State;
 
 use JsonSerializable;
@@ -10,7 +12,7 @@ class InputTableStateList implements JsonSerializable
     /**
      * @var InputTableState[]
      */
-    private $tables = [];
+    private array $tables = [];
 
     public function __construct(array $configurations)
     {
@@ -20,11 +22,9 @@ class InputTableStateList implements JsonSerializable
     }
 
     /**
-     * @param $tableName
-     * @return InputTableState
      * @throws TableNotFoundException
      */
-    public function getTable($tableName)
+    public function getTable(string $tableName): InputTableState
     {
         foreach ($this->tables as $table) {
             if ($table->getSource() === $tableName) {
@@ -34,10 +34,7 @@ class InputTableStateList implements JsonSerializable
         throw new TableNotFoundException('State for table "' . $tableName . '" not found.');
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return array_map(function (InputTableState $table) {
             return $table->jsonSerialize();

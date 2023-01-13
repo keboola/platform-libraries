@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 
 class BuildQueryFromConfigurationHelper
 {
-    public static function buildQuery($configuration)
+    public static function buildQuery(array $configuration): string
     {
         if (isset($configuration['query']) && isset($configuration['source']['tags'])) {
             return sprintf(
@@ -18,13 +20,13 @@ class BuildQueryFromConfigurationHelper
         if (isset($configuration['source']['tags'])) {
             return self::buildQueryForSourceTags(
                 $configuration['source']['tags'],
-                isset($configuration['changed_since']) ? $configuration['changed_since'] : null
+                $configuration['changed_since'] ?? null
             );
         }
         return $configuration['query'];
     }
 
-    public static function buildQueryForSourceTags(array $tags, $changedSince = null)
+    public static function buildQueryForSourceTags(array $tags, ?string $changedSince = null): string
     {
         $query = implode(
             ' AND ',
@@ -42,26 +44,26 @@ class BuildQueryFromConfigurationHelper
         return $query;
     }
 
-    public static function getChangedSinceQueryPortion($changedSince)
+    public static function getChangedSinceQueryPortion(string $changedSince): string
     {
         return sprintf(
             'created:["%s" TO *]',
-            date('c', strtotime($changedSince))
+            date('c', (int) strtotime($changedSince))
         );
     }
 
-    public static function getTagsFromSourceTags(array $tags)
+    public static function getTagsFromSourceTags(array $tags): array
     {
         return array_map(function ($tag) {
             return $tag['name'];
         }, $tags);
     }
 
-    public static function getSourceTagsFromTags(array $tags)
+    public static function getSourceTagsFromTags(array $tags): array
     {
         return array_map(function ($tag) {
             return [
-                'name' => $tag
+                'name' => $tag,
             ];
         }, $tags);
     }

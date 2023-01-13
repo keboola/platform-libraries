@@ -15,9 +15,10 @@ abstract class Adapter
     public const FORMAT_YAML = 'yaml';
     public const FORMAT_JSON = 'json';
 
-    private array $config;
+    private ?array $config = null;
     private string $format;
-    protected string $configClass = '';
+    /** @var class-string<Configuration> */
+    protected string $configClass;
 
     /**
      * @param self::FORMAT_YAML | self::FORMAT_JSON $format
@@ -28,7 +29,7 @@ abstract class Adapter
         $this->format = $format;
     }
 
-    public function getConfig(): array
+    public function getConfig(): ?array
     {
         return $this->config;
     }
@@ -49,13 +50,13 @@ abstract class Adapter
             case self::FORMAT_JSON:
                 return '.json';
             default:
-                $this->throwInvalidConfigurationFormatException();
+                throw $this->getInvalidConfigurationFormatException();
         }
     }
 
-    private function throwInvalidConfigurationFormatException(): void
+    private function getInvalidConfigurationFormatException(): InputOperationException
     {
-        throw new InputOperationException("Invalid configuration format {$this->format}.");
+        return new InputOperationException("Invalid configuration format {$this->format}.");
     }
 
     /**
@@ -90,7 +91,7 @@ abstract class Adapter
                 ['json_encode_options' => JSON_PRETTY_PRINT]
             );
         } else {
-            $this->throwInvalidConfigurationFormatException();
+            throw $this->getInvalidConfigurationFormatException();
         }
         return $serialized;
     }
@@ -113,10 +114,10 @@ abstract class Adapter
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
-            $this->throwInvalidConfigurationFormatException();
+            throw $this->getInvalidConfigurationFormatException();
         }
         $this->setConfig((array) $data);
-        return $this->getConfig();
+        return (array) $this->getConfig();
     }
 
     /**
@@ -137,7 +138,7 @@ abstract class Adapter
                 ['json_encode_options' => JSON_PRETTY_PRINT]
             );
         } else {
-            $this->throwInvalidConfigurationFormatException();
+            throw $this->getInvalidConfigurationFormatException();
         }
         $fs = new Filesystem();
         $fs->dumpFile($file, $serialized);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table;
 
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -7,40 +9,41 @@ use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApi\Client;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Throwable;
 
 class TableDefinitionResolverTest extends TestCase
 {
-    private function getSingleTableSearchOptionsList()
+    private function getSingleTableSearchOptionsList(): InputTableOptionsList
     {
         return new InputTableOptionsList(
             [
                 [
-                    "source_search" => [
-                        "key" => "bdm.scaffold.tag",
-                        "value" => "test_table",
+                    'source_search' => [
+                        'key' => 'bdm.scaffold.tag',
+                        'value' => 'test_table',
                     ],
-                    "destination" => "test",
+                    'destination' => 'test',
                 ],
             ]
         );
     }
 
-    public function testResolveNoTableFound()
+    public function testResolveNoTableFound(): void
     {
-        /** @var Client|\PHPUnit_Framework_MockObject_MockObject $client */
-        $client = $this->createMock(Client::class);
+        $client = self::createMock(Client::class);
         $client->method('searchTables')->willReturn([]);
         $resolver = new TableDefinitionResolver($client, new NullLogger());
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Table with metadata key: "bdm.scaffold.tag" and value: "test_table" was not found.');
+        $this->expectException(Throwable::class);
+        $this->expectExceptionMessage(
+            'Table with metadata key: "bdm.scaffold.tag" and value: "test_table" was not found.'
+        );
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }
 
-    public function testResolveMoreThanOneTableFound()
+    public function testResolveMoreThanOneTableFound(): void
     {
-        /** @var Client|\PHPUnit_Framework_MockObject_MockObject $client */
-        $client = $this->createMock(Client::class);
+        $client = self::createMock(Client::class);
         $client->method('searchTables')->willReturn([
             [
                 'id' => 'table1',
@@ -51,15 +54,17 @@ class TableDefinitionResolverTest extends TestCase
         ]);
         $resolver = new TableDefinitionResolver($client, new NullLogger());
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('More than one table with metadata key: "bdm.scaffold.tag" and value: "test_table" was found: table1,table1.');
+        $this->expectException(Throwable::class);
+        $this->expectExceptionMessage(
+            'More than one table with metadata key: "bdm.scaffold.tag" ' .
+            'and value: "test_table" was found: table1,table1.'
+        );
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }
 
-    public function testResolveTableFound()
+    public function testResolveTableFound(): void
     {
-        /** @var Client|\PHPUnit_Framework_MockObject_MockObject $client */
-        $client = $this->createMock(Client::class);
+        $client = self::createMock(Client::class);
         $client->method('searchTables')->willReturn([
             [
                 'id' => 'table1',
@@ -68,20 +73,20 @@ class TableDefinitionResolverTest extends TestCase
         $resolver = new TableDefinitionResolver($client, new NullLogger());
 
         $result = $resolver->resolve($this->getSingleTableSearchOptionsList());
-        $this->assertInstanceOf(InputTableOptionsList::class, $result);
-        $this->assertSame([
-            "source_search" => [
-                "key" => "bdm.scaffold.tag",
-                "value" => "test_table"
+        self::assertInstanceOf(InputTableOptionsList::class, $result);
+        self::assertSame([
+            'source_search' => [
+                'key' => 'bdm.scaffold.tag',
+                'value' => 'test_table',
             ],
-            "destination" => "test",
+            'destination' => 'test',
             'columns' => [],
             'column_types' => [],
             'where_values' => [],
             'where_operator' => 'eq',
             'overwrite' => false,
             'use_view' => false,
-            "source" => "table1",
+            'source' => 'table1',
         ], $result->getTables()[0]->getDefinition());
     }
 }

@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
@@ -11,7 +13,7 @@ use Psr\Log\NullLogger;
 
 class LocalStrategyTest extends AbstractStrategyTest
 {
-    private function getProvider()
+    private function getProvider(): ProviderInterface
     {
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
@@ -25,7 +27,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         return $mockLocal;
     }
 
-    public function testColumns()
+    public function testColumns(): void
     {
         $strategy = new Local(
             $this->clientWrapper,
@@ -39,7 +41,7 @@ class LocalStrategyTest extends AbstractStrategyTest
             [
                 'source' => 'in.c-input-mapping-test-strategy.test1',
                 'destination' => 'some-table.csv',
-                'columns' => ['Id', 'Name']
+                'columns' => ['Id', 'Name'],
             ]
         );
         $result = $strategy->downloadTable($tableOptions);
@@ -56,7 +58,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         );
     }
 
-    public function testColumnsExtended()
+    public function testColumnsExtended(): void
     {
         $strategy = new Local(
             $this->clientWrapper,
@@ -74,12 +76,12 @@ class LocalStrategyTest extends AbstractStrategyTest
                     [
                         'source' => 'Id',
                         'destination' => 'myid',
-                        'type' => 'VARCHAR'
+                        'type' => 'VARCHAR',
                     ],
                     [
                         'source' => 'Name',
                         'destination' => 'myname',
-                        'type' => 'NUMERIC'
+                        'type' => 'NUMERIC',
                     ],
                 ],
             ]

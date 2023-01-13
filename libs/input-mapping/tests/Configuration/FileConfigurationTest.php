@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Configuration;
 
 use Keboola\InputMapping\Configuration\File;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class FileConfigurationTest extends \PHPUnit_Framework_TestCase
+class FileConfigurationTest extends TestCase
 {
-    public function testConfiguration()
+    public function testConfiguration(): void
     {
         $config = [
             'tags' => ['tag1', 'tag2'],
@@ -22,7 +25,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testEmptyTagsRemoved()
+    public function testEmptyTagsRemoved(): void
     {
         $config = [
             'tags' => [],
@@ -40,7 +43,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testEmptyProcessedTagsRemoved()
+    public function testEmptyProcessedTagsRemoved(): void
     {
         $config = [
             'tags' => ['tag3'],
@@ -58,7 +61,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testEmptyQueryRemoved()
+    public function testEmptyQueryRemoved(): void
     {
         $config = [
             'tags' => ['tag1'],
@@ -76,7 +79,7 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testConfigurationWithSourceTags()
+    public function testConfigurationWithSourceTags(): void
     {
         $config = [
             'query' => 'esquery',
@@ -98,41 +101,42 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
             'overwrite' => true,
         ];
         $expectedResponse = $config;
-        $processedConfiguration = (new File())->parse(["config" => $config]);
+        $processedConfiguration = (new File())->parse(['config' => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path "file": At least one of "tags", "source.tags" or "query" parameters must be defined.
-     */
-    public function testEmptyConfiguration()
+    public function testEmptyConfiguration(): void
     {
-        (new File())->parse(["config" => []]);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
+            'Invalid configuration for path "file": ' .
+            'At least one of "tags", "source.tags" or "query" parameters must be defined.'
+        );
+        (new File())->parse(['config' => []]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.
-     */
-    public function testConfigurationWithTagsAndSourceTags()
+    public function testConfigurationWithTagsAndSourceTags(): void
     {
-        (new File())->parse(["config" => [
-            "tags" => ["tag1"],
-            "source" => [
-                "tags" => [
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
+            'Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.'
+        );
+        (new File())->parse(['config' => [
+            'tags' => ['tag1'],
+            'source' => [
+                'tags' => [
                     [
-                        "name" => "tag1"
+                        'name' => 'tag1',
                     ],
                     [
-                        "name" => "tag2"
-                    ]
-                ]
+                        'name' => 'tag2',
+                    ],
+                ],
             ],
         ]]);
     }
 
-    public function testValidAdaptiveInputConfigurationWithTags()
+    public function testValidAdaptiveInputConfigurationWithTags(): void
     {
         $config = [
             'tags' => ['tag'],
@@ -140,11 +144,11 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
             'overwrite' => true,
         ];
         $expectedResponse = $config;
-        $processedConfiguration = (new File())->parse(["config" => $config]);
+        $processedConfiguration = (new File())->parse(['config' => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testOverwriteDefault()
+    public function testOverwriteDefault(): void
     {
         $config = [
             'tags' => ['tag'],
@@ -152,11 +156,11 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
         ];
         $expectedResponse = $config;
         $expectedResponse['overwrite'] = true;
-        $processedConfiguration = (new File())->parse(["config" => $config]);
+        $processedConfiguration = (new File())->parse(['config' => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testValidAdaptiveInputConfigurationWithSourceTags()
+    public function testValidAdaptiveInputConfigurationWithSourceTags(): void
     {
         $config = [
             'source' => [
@@ -171,24 +175,24 @@ class FileConfigurationTest extends \PHPUnit_Framework_TestCase
             'overwrite' => true,
         ];
         $expectedResponse = $config;
-        $processedConfiguration = (new File())->parse(["config" => $config]);
+        $processedConfiguration = (new File())->parse(['config' => $config]);
         self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testConfigurationWithQueryAndChangedSince()
+    public function testConfigurationWithQueryAndChangedSince(): void
     {
-        self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('The changed_since parameter is not supported for query configurations');
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The changed_since parameter is not supported for query configurations');
         (new File())->parse(['config' => [
             'query' => 'some query',
             'changed_since' => 'adaptive',
         ]]);
     }
 
-    public function testConfigurationWithInvalidChangedSince()
+    public function testConfigurationWithInvalidChangedSince(): void
     {
-        self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('The value provided for changed_since could not be converted to a timestamp');
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The value provided for changed_since could not be converted to a timestamp');
         (new File())->parse(['config' => [
             'tags' => ['tag123'],
             'changed_since' => '-1 light year',

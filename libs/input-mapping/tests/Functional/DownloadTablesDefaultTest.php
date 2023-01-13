@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -19,52 +22,52 @@ use Psr\Log\Test\TestLogger;
 
 class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket("in.c-input-mapping-test-default", ["force" => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket('in.c-input-mapping-test-default', ['force' => true]);
         } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
+            if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
         $this->clientWrapper->getBasicClient()->createBucket(
-            "input-mapping-test-default",
+            'input-mapping-test-default',
             Client::STAGE_IN,
-            "Input Mapping Testsuite"
+            'Input Mapping Testsuite'
         );
 
         // Create table
-        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
-        $csv->writeRow(["Id", "Name", "foo", "bar"]);
-        $csv->writeRow(["id1", "name1", "foo1", "bar1"]);
-        $csv->writeRow(["id2", "name2", "foo2", "bar2"]);
-        $csv->writeRow(["id3", "name3", "foo3", "bar3"]);
-        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-input-mapping-test-default", "test", $csv);
-        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-input-mapping-test-default", "test2", $csv);
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test-default', 'test', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test-default', 'test2', $csv);
     }
 
-    public function testReadTablesDefaultBackend()
+    public function testReadTablesDefaultBackend(): void
     {
         $logger = new TestLogger();
         $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv"
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
             ],
             [
-                "source" => "in.c-input-mapping-test-default.test2",
-                "destination" => "test2.csv"
-            ]
+                'source' => 'in.c-input-mapping-test-default.test2',
+                'destination' => 'test2.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
@@ -73,89 +76,89 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
 
         self::assertCSVEquals(
             $expectedCSVContent,
-            $this->temp->getTmpFolder() . "/download/test.csv"
+            $this->temp->getTmpFolder() . '/download/test.csv'
         );
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test', $manifest['id']);
 
         self::assertCSVEquals(
             $expectedCSVContent,
-            $this->temp->getTmpFolder() . "/download/test2.csv"
+            $this->temp->getTmpFolder() . '/download/test2.csv'
         );
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test2.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test2", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test2', $manifest['id']);
         self::assertTrue($logger->hasInfoThatContains('Processing 2 local table exports.'));
     }
 
-    public function testReadTablesEmptyDaysFilter()
+    public function testReadTablesEmptyDaysFilter(): void
     {
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv",
-                "days" => 0,
-            ]
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
+                'days' => 0,
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
         );
     }
 
-    public function testReadTablesEmptyChangedSinceFilter()
+    public function testReadTablesEmptyChangedSinceFilter(): void
     {
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv",
-                "changed_since" => "",
-            ]
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
+                'changed_since' => '',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
         );
     }
 
-    public function testReadTablesMetadata()
+    public function testReadTablesMetadata(): void
     {
         $tableMetadata = [
             [
                 'key' => 'foo',
-                'value' => 'bar'
+                'value' => 'bar',
             ],
             [
                 'key' => 'fooBar',
-                'value' => 'baz'
-            ]
+                'value' => 'baz',
+            ],
         ];
         $columnMetadata = [
             [
                 'key' => 'someKey',
-                'value' => 'someValue'
-            ]
+                'value' => 'someValue',
+            ],
         ];
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
@@ -163,22 +166,22 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv",
-            ]
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test', $manifest['id']);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -210,38 +213,38 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertEquals('someValue', $manifest['column_metadata']['Name'][0]['value']);
     }
 
-    public function testReadTablesWithSourceSearch()
+    public function testReadTablesWithSourceSearch(): void
     {
         $tableMetadata = [
             [
                 'key' => 'foo',
-                'value' => 'bar'
-            ]
+                'value' => 'bar',
+            ],
         ];
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source_search" => [
+                'source_search' => [
                     'key' => 'foo',
                     'value' => 'bar',
                 ],
-                "destination" => "test.csv",
-            ]
+                'destination' => 'test.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test', $manifest['id']);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(1, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -254,17 +257,17 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertEquals('bar', $manifest['metadata'][0]['value']);
     }
 
-    public function testReadTableColumns()
+    public function testReadTableColumns(): void
     {
         $tableMetadata = [
             [
                 'key' => 'foo',
-                'value' => 'bar'
+                'value' => 'bar',
             ],
             [
                 'key' => 'fooBar',
-                'value' => 'baz'
-            ]
+                'value' => 'baz',
+            ],
         ];
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postTableMetadata('in.c-input-mapping-test-default.test', 'dataLoaderTest', $tableMetadata);
@@ -274,8 +277,8 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             [
                 [
                     'key' => 'someKey',
-                    'value' => 'someValue'
-                ]
+                    'value' => 'someValue',
+                ],
             ]
         );
         $metadata->postColumnMetadata(
@@ -284,38 +287,38 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             [
                 [
                     'key' => 'someBarKey',
-                    'value' => 'someBarValue'
-                ]
+                    'value' => 'someBarValue',
+                ],
             ]
         );
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "columns" => ["bar", "foo", "Id"],
-                "destination" => "test.csv",
-            ]
+                'source' => 'in.c-input-mapping-test-default.test',
+                'columns' => ['bar', 'foo', 'Id'],
+                'destination' => 'test.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
         self::assertCSVEquals(
             "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .
             "\n\"bar2\",\"foo2\",\"id2\"\n\"bar3\",\"foo3\",\"id3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
         );
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test', $manifest['id']);
         self::assertArrayHasKey('columns', $manifest);
-        self::assertEquals(['bar', 'foo', "Id"], $manifest['columns']);
+        self::assertEquals(['bar', 'foo', 'Id'], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);
         self::assertCount(2, $manifest['metadata']);
         self::assertArrayHasKey('id', $manifest['metadata'][0]);
@@ -349,43 +352,43 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertEquals('someBarValue', $manifest['column_metadata']['bar'][0]['value']);
     }
 
-    public function testReadTableColumnsDataTypes()
+    public function testReadTableColumnsDataTypes(): void
     {
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "column_types" => [
+                'source' => 'in.c-input-mapping-test-default.test',
+                'column_types' => [
                      [
-                         "source" => "bar",
-                         "type" => "NUMERIC",
+                         'source' => 'bar',
+                         'type' => 'NUMERIC',
                      ],
                      [
-                         "source" => "foo",
-                         "type" => "VARCHAR",
+                         'source' => 'foo',
+                         'type' => 'VARCHAR',
                      ],
                 ],
-                "destination" => "test.csv",
-            ]
+                'destination' => 'test.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
         self::assertCSVEquals(
             "\"bar\",\"foo\"\n\"bar1\",\"foo1\"" .
             "\n\"bar2\",\"foo2\"\n\"bar3\",\"foo3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "download/test.csv"
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
         );
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test.csv.manifest");
-        self::assertEquals("in.c-input-mapping-test-default.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
+        self::assertEquals('in.c-input-mapping-test-default.test', $manifest['id']);
         self::assertArrayHasKey('columns', $manifest);
         self::assertEquals(['bar', 'foo'], $manifest['columns']);
         self::assertArrayHasKey('metadata', $manifest);
@@ -395,7 +398,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         self::assertCount(0, $manifest['column_metadata']['foo']);
     }
 
-    public function testReadTableLimitTest()
+    public function testReadTableLimitTest(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $tokenInfo['owner']['limits'][Local::EXPORT_SIZE_LIMIT_NAME] = [
@@ -404,7 +407,9 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         ];
         $client = self::getMockBuilder(Client::class)
             ->setMethods(['verifyToken'])
-            ->setConstructorArgs([['token' => STORAGE_API_TOKEN, "url" => STORAGE_API_URL]])
+            ->setConstructorArgs([
+                ['token' => (string) getenv('STORAGE_API_TOKEN'), 'url' => (string) getenv('STORAGE_API_URL')],
+            ])
             ->getMock();
         $client->method('verifyToken')->willReturn($tokenInfo);
         /** @var Client $client */
@@ -414,13 +419,13 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->getStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv"
-            ]
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
+            ],
         ]);
 
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessageRegExp(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessageMatches(
             '#Table "in\.c-input-mapping-test-default\.test" with size [0-9]+ bytes exceeds the input mapping limit ' .
             'of 10 bytes\. Please contact support to raise this limit$#'
         );
@@ -428,24 +433,24 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
     }
 
-    public function testReadTablesDevBucket()
+    public function testReadTablesDevBucket(): void
     {
         $logger = new TestLogger();
         $reader = new Reader($this->getStagingFactory(null, 'json', $logger));
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-input-mapping-test-default.test",
-                "destination" => "test.csv"
+                'source' => 'in.c-input-mapping-test-default.test',
+                'destination' => 'test.csv',
             ],
             [
-                "source" => "in.c-input-mapping-test-default.test2",
-                "destination" => "test2.csv"
-            ]
+                'source' => 'in.c-input-mapping-test-default.test2',
+                'destination' => 'test2.csv',
+            ],
         ]);
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $metadata->postBucketMetadata(
@@ -464,13 +469,13 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(false)
         );
 
         // with the check it fails
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
             'The buckets "in.c-input-mapping-test-default" come from a development ' .
             'branch and must not be used directly in input mapping.'
         );
@@ -478,7 +483,7 @@ class DownloadTablesDefaultTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
     }

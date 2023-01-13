@@ -1,34 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Result;
 
 use Generator;
 
 class TableInfo
 {
-    /** @var string */
-    private $id;
+    private string $id;
     /** @var Column[] */
-    private $columns;
-    /** @var ?string */
-    private $sourceTableId;
-    /** @var string */
-    private $lastImportDate;
-    /** @var string */
-    private $lastChangeDate;
-    /** @var string */
-    private $displayName;
-    /** @var string */
-    private $name;
+    private array $columns;
+    private ?string $sourceTableId;
+    private ?string $lastImportDate;
+    private ?string $lastChangeDate;
+    private string $displayName;
+    private string $name;
 
     public function __construct(array $tableInfo)
     {
-        $this->id = $tableInfo['id'];
-        $this->displayName = $tableInfo['displayName'];
-        $this->name = $tableInfo['name'];
-        $this->lastImportDate = $tableInfo['lastImportDate'];
-        $this->lastChangeDate = $tableInfo['lastChangeDate'];
-        $this->sourceTableId = !empty($tableInfo['sourceTable']) ? $tableInfo['sourceTable']['id'] : null;
+        $this->id = (string) $tableInfo['id'];
+        $this->displayName = (string) $tableInfo['displayName'];
+        $this->name = (string) $tableInfo['name'];
+        $this->lastImportDate = !empty($tableInfo['lastImportDate']) ? (string) $tableInfo['lastImportDate'] : null;
+        $this->lastChangeDate = !empty($tableInfo['lastChangeDate']) ? (string) $tableInfo['lastChangeDate'] : null;
+        $this->sourceTableId = !empty($tableInfo['sourceTable']) ? (string) $tableInfo['sourceTable']['id'] : null;
         foreach ($tableInfo['columns'] as $columnId) {
             $metadata = !empty($tableInfo['columnMetadata'][$columnId]) ? $tableInfo['columnMetadata'][$columnId] :
                 (!empty($tableInfo['sourceTable']['columnMetadata'][$columnId]) ?
@@ -37,60 +33,39 @@ class TableInfo
         }
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
-    public function getDisplayName()
+    public function getDisplayName(): ?string
     {
         return $this->displayName;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastChangeDate()
+    public function getLastChangeDate(): ?string
     {
         return $this->lastChangeDate;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastImportDate()
+    public function getLastImportDate(): ?string
     {
         return $this->lastImportDate;
     }
 
-    /**
-     * @return string
-     */
-    public function getSourceTableId()
+    public function getSourceTableId(): ?string
     {
         return $this->sourceTableId;
     }
 
-    /**
-     * @return Generator
-     */
-    public function getColumns()
+    public function getColumns(): Generator
     {
         foreach ($this->columns as $column) {
             yield $column;
         }
     }
 
-    /**
-     * @return string
-     */
-    public function getId()
+    public function getId(): string
     {
         return $this->id;
     }

@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Exception;
 
-class StagingException extends \RuntimeException
+use RuntimeException;
+
+class StagingException extends RuntimeException
 {
 }

@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Configuration\File\Manifest;
 
 use Generator;
+use Keboola\InputMapping\Configuration\Adapter as BaseAdapter;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Tests\Configuration\AbstractManifestAdapterTest;
@@ -11,20 +14,20 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class AdapterTest extends AbstractManifestAdapterTest
 {
-    private function createAdapter(?string $format): Adapter
+    /**
+     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
+     */
+    private function createAdapter(string $format): Adapter
     {
-        if ($format) {
-            return new Adapter($format);
-        }
-
-        return new Adapter();
+        return new Adapter($format);
     }
 
     /**
+     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider initWithFormatData
      */
     public function testInitWithFormat(
-        ?string $format,
+        string $format,
         string $expectedFormat,
         string $expectedExtension
     ): void {
@@ -36,18 +39,6 @@ class AdapterTest extends AbstractManifestAdapterTest
 
     public function setConfigAndSerializeData(): Generator
     {
-        yield 'default format' => [
-            'format' => null,
-            'expectedData' => <<<'EOF'
-{
-    "id": 12345678,
-    "is_public": false,
-    "is_encrypted": false,
-    "is_sliced": false,
-    "tags": []
-}
-EOF,
-        ];
         yield 'json format' => [
             'format' => 'json',
             'expectedData' => <<<'EOF'
@@ -74,10 +65,11 @@ EOF,
     }
 
     /**
+     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider setConfigAndSerializeData
      */
     public function testSetConfigAndSerialize(
-        ?string $format,
+        string $format,
         string $expectedData
     ): void {
         $adapter = $this->createAdapter($format);
@@ -98,18 +90,6 @@ EOF,
 
     public function fileOperationsData(): Generator
     {
-        yield 'default format' => [
-            'format' => null,
-            'expectedData' => <<<'EOF'
-{
-    "id": 12345678,
-    "is_public": false,
-    "is_encrypted": false,
-    "is_sliced": false,
-    "tags": []
-}
-EOF,
-        ];
         yield 'json format' => [
             'format' => 'json',
             'expectedData' => <<<'EOF'
@@ -136,22 +116,17 @@ EOF,
     }
 
     /**
+     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider fileOperationsData
      */
     public function testFileOperations(
-        ?string $format,
+        string $format,
         string $expectedData
     ): void {
         $temp = new Temp('docker');
-        $temp->initRunFolder();
 
         $filePathname = (string) $temp->createTmpFile();
-
-        if ($format) {
-            $adapter = new Adapter($format);
-        } else {
-            $adapter = new Adapter();
-        }
+        $adapter = new Adapter($format);
 
         $adapter->setConfig(['id' => 12345678]);
         $adapter->writeToFile($filePathname);

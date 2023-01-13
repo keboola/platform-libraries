@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Result;
 
+use Generator;
 use Keboola\InputMapping\Table\Result\Column;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use PHPUnit\Framework\TestCase;
 
 class TableInfoTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $tableInfoArray = [
             'id' => 'in.c-application-testing.cashier-data',
@@ -43,7 +46,7 @@ class TableInfoTest extends TestCase
     /**
      * @dataProvider metadataTableInfoProvider
      */
-    public function testMetadata(array $tableInfoArray, array $expected)
+    public function testMetadata(array $tableInfoArray, array $expected): void
     {
         $tableInfo = new TableInfo($tableInfoArray);
         self::assertEquals(
@@ -52,7 +55,7 @@ class TableInfoTest extends TestCase
         );
     }
 
-    public function testMetadataSource()
+    public function testMetadataSource(): void
     {
         $tableInfo = [
             'id' => 'in.c-application-testing.cashier-data',
@@ -104,7 +107,7 @@ class TableInfoTest extends TestCase
         );
     }
 
-    public function metadataTableInfoProvider()
+    public function metadataTableInfoProvider(): Generator
     {
         yield 'base' => [
             'tableInfo' => [

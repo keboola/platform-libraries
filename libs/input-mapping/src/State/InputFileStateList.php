@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\State;
 
 use JsonSerializable;
@@ -11,7 +13,7 @@ class InputFileStateList implements JsonSerializable
     /**
      * @var InputFileState[]
      */
-    private $files = [];
+    private array $files = [];
 
     public function __construct(array $configurations)
     {
@@ -20,19 +22,17 @@ class InputFileStateList implements JsonSerializable
         }
     }
 
-    public function getFileConfigurationIdentifier(array $fileConfiguration)
+    public function getFileConfigurationIdentifier(array $fileConfiguration): array
     {
         return (isset($fileConfiguration['tags']))
             ? BuildQueryFromConfigurationHelper::getSourceTagsFromTags($fileConfiguration['tags'])
-            : (isset($fileConfiguration['source']['tags']) ? $fileConfiguration['source']['tags'] : []);
+            : ($fileConfiguration['source']['tags'] ?? []);
     }
 
     /**
-     * @param $fileTags
-     * @return InputFileState
      * @throws FileNotFoundException
      */
-    public function getFile($fileTags)
+    public function getFile(array $fileTags): InputFileState
     {
         foreach ($this->files as $file) {
             if ($file->getTags() === $fileTags) {
@@ -42,10 +42,7 @@ class InputFileStateList implements JsonSerializable
         throw new FileNotFoundException('State for files defined by "' . json_encode($fileTags) . '" not found.');
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return array_map(function (InputFileState $file) {
             return $file->jsonSerialize();

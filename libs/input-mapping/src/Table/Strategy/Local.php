@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -8,10 +10,10 @@ use Keboola\StorageApi\TableExporter;
 
 class Local extends AbstractStrategy
 {
-    const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
-    const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';
+    public const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
+    public const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';
 
-    public function downloadTable(InputTableOptions $table)
+    public function downloadTable(InputTableOptions $table): array
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
@@ -35,18 +37,18 @@ class Local extends AbstractStrategy
         $this->manifestCreator->writeTableManifest(
             $tableInfo,
             $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . ".manifest",
+                $this->getDestinationFilePath($this->destination, $table) . '.manifest',
             $table->getColumnNamesFromTypes(),
             $this->format
         );
         return [
-            "tableId" => $table->getSource(),
-            "destination" => $file,
-            "exportOptions" => $table->getStorageApiExportOptions($this->tablesState),
+            'tableId' => $table->getSource(),
+            'destination' => $file,
+            'exportOptions' => $table->getStorageApiExportOptions($this->tablesState),
         ];
     }
 
-    public function handleExports($exports, $preserve)
+    public function handleExports(array $exports, bool $preserve): array
     {
         if (!$preserve) {
             $this->logger->warning(
@@ -54,7 +56,7 @@ class Local extends AbstractStrategy
             );
         }
         $tableExporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $this->logger->info("Processing " . count($exports) . " local table exports.");
+        $this->logger->info('Processing ' . count($exports) . ' local table exports.');
         return $tableExporter->exportTables($exports);
     }
 }

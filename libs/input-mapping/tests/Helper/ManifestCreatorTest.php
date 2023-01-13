@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Helper;
 
 use Generator;
+use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
@@ -263,15 +264,14 @@ EOF,
 
     /**
      * @dataProvider writeTableManifestData
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
     public function testWriteTableManifest(
-        ?string $format,
+        string $format,
         array $columns,
         string $expectedData
     ): void {
         $temp = new Temp('docker');
-        $temp->initRunFolder();
-
         $filePathname = (string) $temp->createTmpFile();
 
         $tableInfo = [

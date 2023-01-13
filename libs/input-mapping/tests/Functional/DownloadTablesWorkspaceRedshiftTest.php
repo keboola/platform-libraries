@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -14,10 +17,17 @@ use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbstract
 {
-    public function testTablesRedshiftBackend()
+    public function testTablesRedshiftBackend(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -45,7 +55,7 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_REDSHIFT,
+            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
             new ReaderOptions(true)
         );
 
@@ -85,26 +95,35 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
         self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
-    public function testUseViewFails()
+    public function testUseViewFails(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
                 'destination' => 'test1',
                 'use_view' => true,
-            ]
+            ],
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('View load for table "test1" using backend "redshift" can\'t be used, only Synapse is supported.');
+        $this->expectExceptionMessage(
+            'View load for table "test1" using backend "redshift" can\'t be used, only Synapse is supported.'
+        );
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_REDSHIFT,
+            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
             new ReaderOptions(true)
         );
     }

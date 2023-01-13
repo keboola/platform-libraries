@@ -1,20 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
+use Keboola\InputMapping\File\Strategy\ABSWorkspace;
+use Keboola\InputMapping\Staging\AbstractDefinition;
 use Keboola\InputMapping\Staging\Definition;
 use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Table\Strategy\Local;
 use PHPUnit\Framework\TestCase;
 
 class DefinitionTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba');
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class);
         self::assertSame('foo', $definition->getName());
-        self::assertSame('bar', $definition->getFileStagingClass());
-        self::assertSame('kochba', $definition->getTableStagingClass());
+        self::assertSame(ABSWorkspace::class, $definition->getFileStagingClass());
+        self::assertSame(Local::class, $definition->getTableStagingClass());
         self::assertNull($definition->getFileDataProvider());
         self::assertNull($definition->getFileMetadataProvider());
         self::assertNull($definition->getTableDataProvider());
@@ -29,73 +34,73 @@ class DefinitionTest extends TestCase
         self::assertNotNull($definition->getTableMetadataProvider());
     }
 
-    public function testFileValidationInvalidName()
+    public function testFileValidationInvalidData(): void
     {
-        $definition = new Definition('foo', '', 'kochba', new NullProvider(), new NullProvider(), null, null);
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined file class in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_FILE);
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class, null, new NullProvider(), null, null);
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage('Undefined file data provider in "foo" staging.');
+        $definition->validateFor(AbstractDefinition::STAGING_FILE);
     }
 
-    public function testFileValidationInvalidData()
+    public function testFileValidationInvalidMetadata(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba', null, new NullProvider(), null, null);
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined file data provider in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_FILE);
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class, new NullProvider(), null, null, null);
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage('Undefined file metadata provider in "foo" staging.');
+        $definition->validateFor(AbstractDefinition::STAGING_FILE);
     }
 
-    public function testFileValidationInvalidMetadata()
+    public function testFileValidation(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba', new NullProvider(), null, null, null);
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined file metadata provider in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_FILE);
-    }
-
-    public function testFileValidation()
-    {
-        $definition = new Definition('foo', 'bar', 'kochba', new NullProvider(), new NullProvider(), null, null);
-        $definition->validateFor(Definition::STAGING_FILE);
+        $definition = new Definition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            new NullProvider(),
+            new NullProvider(),
+            null,
+            null
+        );
+        $definition->validateFor(AbstractDefinition::STAGING_FILE);
         self::assertTrue(true);
     }
 
-    public function testTableValidationInvalidName()
+    public function testTableValidationInvalidData(): void
     {
-        $definition = new Definition('foo', 'bar', '', null, null, new NullProvider(), new NullProvider());
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined table class in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_TABLE);
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class, null, null, null, new NullProvider());
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage('Undefined table data provider in "foo" staging.');
+        $definition->validateFor(AbstractDefinition::STAGING_TABLE);
     }
 
-    public function testTableValidationInvalidData()
+    public function testTableValidationInvalidMetadata(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba', null, null, null, new NullProvider());
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined table data provider in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_TABLE);
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class, null, null, new NullProvider(), null);
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage('Undefined table metadata provider in "foo" staging.');
+        $definition->validateFor(AbstractDefinition::STAGING_TABLE);
     }
 
-    public function testTableValidationInvalidMetadata()
+    public function testTableValidation(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba', null, null, new NullProvider(), null);
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Undefined table metadata provider in "foo" staging.');
-        $definition->validateFor(Definition::STAGING_TABLE);
-    }
-
-    public function testTableValidation()
-    {
-        $definition = new Definition('foo', 'bar', 'kochba', null, null, new NullProvider(), new NullProvider());
-        $definition->validateFor(Definition::STAGING_TABLE);
+        $definition = new Definition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            null,
+            null,
+            new NullProvider(),
+            new NullProvider()
+        );
+        $definition->validateFor(AbstractDefinition::STAGING_TABLE);
         self::assertTrue(true);
     }
 
-    public function testTableValidationInvalidStagingType()
+    public function testTableValidationInvalidStagingType(): void
     {
-        $definition = new Definition('foo', 'bar', 'kochba', null, null, new NullProvider(), null);
-        self::expectException(StagingException::class);
-        self::expectExceptionMessage('Unknown staging type: "invalid".');
+        $definition = new Definition('foo', ABSWorkspace::class, Local::class, null, null, new NullProvider(), null);
+        $this->expectException(StagingException::class);
+        $this->expectExceptionMessage('Unknown staging type: "invalid".');
         $definition->validateFor('invalid');
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Helper;
 
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -8,14 +10,14 @@ use Psr\Log\LoggerInterface;
 
 class TagsRewriteHelper
 {
-    const MATCH_TYPE_EXCLUDE = 'exclude';
-    const MATCH_TYPE_INCLUDE = 'include';
+    public const MATCH_TYPE_EXCLUDE = 'exclude';
+    public const MATCH_TYPE_INCLUDE = 'include';
 
     public static function rewriteFileTags(
         array $fileConfiguration,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ) {
+    ): array {
         if (!$clientWrapper->hasBranch()) {
             return $fileConfiguration;
         }
@@ -51,7 +53,7 @@ class TagsRewriteHelper
             // the reasoning behind this:
             // https://keboola.atlassian.net/wiki/spaces/TECH/pages/1116012545/New+File+Mapping#Processed-Tags-%26-Dev-Prod-Mode-%5BinlineCard%5D
             // here prefix NOT tags only if they are in processed_tags
-            $processedTags = isset($fileConfiguration['processed_tags']) ? $fileConfiguration['processed_tags'] : [];
+            $processedTags = $fileConfiguration['processed_tags'] ?? [];
             if (!empty($processedTags)) {
                 $processedExcludeTags = array_filter($excludeTags, function ($tag) use ($processedTags) {
                     return in_array($tag['name'], $processedTags);
@@ -82,14 +84,14 @@ class TagsRewriteHelper
         return $fileConfiguration;
     }
 
-    private static function overwriteTags($prefix, array $tags)
+    private static function overwriteTags(string $prefix, array $tags): array
     {
-        return array_map(function ($tag) use ($prefix) {
+        return array_map(function (string $tag) use ($prefix) {
             return $prefix . '-' . $tag;
         }, $tags);
     }
 
-    private static function hasFilesWithTags($clientWrapper, array $tags)
+    private static function hasFilesWithTags(ClientWrapper $clientWrapper, array $tags): bool
     {
         $options = new ListFilesOptions();
         $options->setTags($tags);
@@ -98,7 +100,7 @@ class TagsRewriteHelper
         return count($clientWrapper->getBasicClient()->listFiles($options)) > 0;
     }
 
-    private static function overwriteSourceTags($prefix, array $tags)
+    private static function overwriteSourceTags(string $prefix, array $tags): array
     {
         return array_map(function (array $tag) use ($prefix) {
             $tag['name'] = $prefix . '-' . $tag['name'];
@@ -106,7 +108,7 @@ class TagsRewriteHelper
         }, $tags);
     }
 
-    private static function hasFilesWithSourceTags($clientWrapper, array $tags)
+    private static function hasFilesWithSourceTags(ClientWrapper $clientWrapper, array $tags): bool
     {
         $options = new ListFilesOptions();
         $options->setQuery(BuildQueryFromConfigurationHelper::buildQueryForSourceTags($tags));

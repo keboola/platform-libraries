@@ -1,70 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
+use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
-use Keboola\InputMapping\Table\Result\ResultTableList;
 use Keboola\InputMapping\Table\StrategyInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Test\Common\TablesListingTest;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
+    protected ManifestCreator $manifestCreator;
 
-    /** LoggerInterface */
-    protected $logger;
-
-    /** @var ProviderInterface */
-    protected $dataStorage;
-
-    /** @var ProviderInterface */
-    protected $metadataStorage;
-
-    /** @var InputTableStateList */
-    protected $tablesState;
-
-    /** string */
-    protected $destination;
-
-    /** @var ManifestCreator */
-    protected $manifestCreator;
-
-    /** @var string */
-    protected $format;
-
+    /**
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     */
     public function __construct(
-        ClientWrapper $storageClient,
-        LoggerInterface $logger,
-        ProviderInterface $dataStorage,
-        ProviderInterface $metadataStorage,
-        InputTableStateList $tablesState,
-        $destination,
-        $format = 'json'
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        protected readonly ProviderInterface $dataStorage,
+        protected readonly ProviderInterface $metadataStorage,
+        protected readonly InputTableStateList $tablesState,
+        protected readonly string $destination,
+        protected readonly string $format = 'json'
     ) {
-        $this->clientWrapper = $storageClient;
-        $this->logger = $logger;
-        $this->dataStorage = $dataStorage;
-        $this->metadataStorage = $metadataStorage;
-        $this->tablesState = $tablesState;
-        $this->destination = $destination;
         $this->manifestCreator = new ManifestCreator();
-        $this->format = $format;
     }
 
-    protected function ensurePathDelimiter($path)
+    protected function ensurePathDelimiter(string $path): string
     {
         return $this->ensureNoPathDelimiter($path) . '/';
     }
 
-    protected function ensureNoPathDelimiter($path)
+    protected function ensureNoPathDelimiter(string $path): string
     {
         return rtrim($path, '\\/');
     }
@@ -74,36 +49,30 @@ abstract class AbstractStrategy implements StrategyInterface
      * @param bool $preserve
      * @return Result
      */
-    public function downloadTables($tables, $preserve)
+    public function downloadTables(array $tables, bool $preserve): Result
     {
         $outputStateConfiguration = [];
         $exports = [];
         $result = new Result();
-        /** @var InputTableOptions $table */
         foreach ($tables as $table) {
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $outputStateConfiguration[] = [
                 'source' => $table->getSource(),
-                'lastImportDate' => $tableInfo['lastImportDate']
+                'lastImportDate' => $tableInfo['lastImportDate'],
             ];
             $exports[] = $this->downloadTable($table);
-            $this->logger->info("Fetched table " . $table->getSource() . ".");
+            $this->logger->info('Fetched table ' . $table->getSource() . '.');
             $result->addTable(new TableInfo($tableInfo));
         }
 
         $result->setMetrics($this->handleExports($exports, $preserve));
         $result->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
-        $this->logger->info("All tables were fetched.");
+        $this->logger->info('All tables were fetched.');
 
         return $result;
     }
 
-    /**
-     * @param string $destination
-     * @param InputTableOptions $table
-     * @return string
-     */
-    protected function getDestinationFilePath($destination, InputTableOptions $table)
+    protected function getDestinationFilePath(string $destination, InputTableOptions $table): string
     {
         if (!$table->getDestination()) {
             return $destination . '/' . $table->getSource();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table;
 
 use Generator;
@@ -10,55 +12,39 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 class Result
 {
     /** @var TableInfo[] */
-    private $tables = [];
+    private array $tables = [];
 
-    /** @var InputTableStateList */
-    private $inputTableStateList;
+    private InputTableStateList $inputTableStateList;
+    private Metrics $metrics;
 
-    /** @var Metrics */
-    private $metrics;
-
-    public function __construct()
-    {
-    }
-
-    public function addTable(TableInfo $table)
+    public function addTable(TableInfo $table): void
     {
         $this->tables[] = $table;
     }
 
-    /**
-     * @return Generator
-     */
-    public function getTables()
+    public function getTables(): Generator
     {
         foreach ($this->tables as $table) {
             yield $table;
         }
     }
 
-    public function setMetrics(array $jobResults)
+    public function setMetrics(array $jobResults): void
     {
         $this->metrics = new Metrics($jobResults);
     }
 
-    public function setInputTableStateList(InputTableStateList $inputTableStateList)
+    public function setInputTableStateList(InputTableStateList $inputTableStateList): void
     {
         $this->inputTableStateList = $inputTableStateList;
     }
 
-    /**
-     * @return InputTableStateList
-     */
-    public function getInputTableStateList()
+    public function getInputTableStateList(): InputTableStateList
     {
         return $this->inputTableStateList;
     }
 
-    /**
-     * @return Metrics
-     */
-    public function getMetrics()
+    public function getMetrics(): Metrics
     {
         return $this->metrics;
     }

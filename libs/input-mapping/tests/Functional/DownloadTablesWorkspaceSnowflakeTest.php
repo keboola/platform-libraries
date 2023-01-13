@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -14,10 +17,17 @@ use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAbstract
 {
-    public function testTablesSnowflakeBackend()
+    public function testTablesSnowflakeBackend(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -40,12 +50,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
 
         // there were 2 jobs, clone and copy, so should have 2 metrics entries
-        $this->assertCount(2, $result->getMetrics()->getTableMetrics());
+        self::assertCount(2, $result->getMetrics()->getTableMetrics());
 
         $adapter = new Adapter();
 
@@ -60,7 +70,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
-            self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
+            self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
 
         // this is copy, so it doesn't contain the _timestamp column
@@ -82,7 +92,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
-            self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
+            self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
@@ -106,9 +116,16 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertEquals('test3', $params['input'][1]['destination']);
     }
 
-    public function testTablesInvalidMapping()
+    public function testTablesInvalidMapping(): void
     {
-        $reader = new Reader($this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                null,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -118,24 +135,31 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             [
                 'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2',
-            ]
+            ],
         ]);
 
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
     }
 
-    public function testTablesSnowflakeDataTypes()
+    public function testTablesSnowflakeDataTypes(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test2',
@@ -150,14 +174,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
                         'convert_empty_values_to_null' => true,
                     ],
                 ],
-            ]
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
 
@@ -181,9 +205,16 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
-    public function testTablesSnowflakeDataTypesInvalid()
+    public function testTablesSnowflakeDataTypesInvalid(): void
     {
-        $reader = new Reader($this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                null,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test2',
@@ -197,26 +228,33 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
                         'type' => 'NUMERIC',
                     ],
                 ],
-            ]
+            ],
         ]);
 
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage(
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
             'Likely datatype conversion: odbc_execute(): SQL error: Numeric value \'id2\' is not recognized'
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
     }
 
-    public function testTablesSnowflakeOverwrite()
+    public function testTablesSnowflakeOverwrite(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test2',
@@ -228,7 +266,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
         $configuration = new InputTableOptionsList([
@@ -245,7 +283,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
         $adapter = new Adapter();
@@ -279,7 +317,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
         $adapter = new Adapter();
@@ -299,7 +337,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
-            self::assertContains('Invalid columns: _timestamp:', $e->getMessage());
+            self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be cloned.'));
@@ -307,37 +345,53 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
-    public function testUseViewFails()
+    public function testUseViewFails(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
                 'destination' => 'test1',
                 'limit' => 100,
                 'use_view' => true,
-            ]
+            ],
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.');
+        $this->expectExceptionMessage(
+            'View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.'
+        );
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
     }
 
-    public function testDownloadTablesPreserveFalse()
+    public function testDownloadTablesPreserveFalse(): void
     {
         // first we create the workspace and load there some data.
         // then we will do a new load with preserve=false to make sure that the old data was removed
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test2',
@@ -352,7 +406,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true)
         );
         $configuration = new InputTableOptionsList([
@@ -372,28 +426,39 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true, false)
         );
         // the initial_table should not be present in the workspace anymore
         try {
             $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
                 'out.c-input-mapping-test',
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'initial_table', 'name' => 'initial_table']
+                [
+                    'dataWorkspaceId' => $this->workspaceId,
+                    'dataTableName' => 'initial_table',
+                    'name' => 'initial_table',
+                ]
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {
-            self::assertContains('Table "initial_table" not found in schema', $exception->getMessage());
+            self::assertStringContainsString(
+                'Table "initial_table" not found in schema',
+                $exception->getMessage()
+            );
         }
 
         // check that the tables exist in the workspace. the cloned table will throw the _timestamp col error
         try {
             $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
                 'out.c-input-mapping-test',
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_clone_table', 'name' => 'new_clone_table']
+                [
+                    'dataWorkspaceId' => $this->workspaceId,
+                    'dataTableName' => 'new_clone_table',
+                    'name' => 'new_clone_table',
+                ]
             );
         } catch (ClientException $exception) {
-            self::assertContains('Invalid columns: _timestamp:', $exception->getMessage());
+            self::assertStringContainsString('Invalid columns: _timestamp:', $exception->getMessage());
         }
 
         $this->clientWrapper->getBasicClient()->createTableAsyncDirect(

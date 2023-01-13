@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
@@ -19,6 +21,7 @@ use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -27,7 +30,7 @@ class ReaderTest extends TestCase
 {
     private Temp $temp;
 
-    public function setUp()
+    public function setUp(): void
     {
         // Create folders
         $this->temp = new Temp('docker');
@@ -48,15 +51,22 @@ class ReaderTest extends TestCase
     private function getClientWrapper(?string $branchId): ClientWrapper
     {
         return new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                $branchId
+            ),
         );
     }
 
-    protected function getStagingFactory($clientWrapper, $format = 'json', $logger = null)
-    {
+    protected function getStagingFactory(
+        ClientWrapper $clientWrapper,
+        string $format = 'json',
+        ?LoggerInterface $logger = null
+    ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
             $clientWrapper,
-            $logger ? $logger : new NullLogger(),
+            $logger ?: new NullLogger(),
             $format
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
@@ -67,83 +77,44 @@ class ReaderTest extends TestCase
                 return $this->temp->getTmpFolder();
             }
         );
-        /** @var ProviderInterface $mockLocal */
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Scope([
+                AbstractStrategyFactory::LOCAL => new Scope([
                     Scope::TABLE_DATA, Scope::TABLE_METADATA,
-                    Scope::FILE_DATA, Scope::FILE_METADATA
-                ])
+                    Scope::FILE_DATA, Scope::FILE_METADATA,
+                ]),
             ]
         );
         return $stagingFactory;
     }
 
-    public function testParentId()
+    public function testParentId(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $clientWrapper->getBasicClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId($clientWrapper->getBasicClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getBasicClient()->getRunId())
         );
         $clientWrapper->getBasicClient()->setRunId('123456789.98765432');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId($clientWrapper->getBasicClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getBasicClient()->getRunId())
         );
         $clientWrapper->getBasicClient()->setRunId('123456789.98765432.4563456');
         self::assertEquals(
             '123456789.98765432',
-            Reader::getParentRunId($clientWrapper->getBasicClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getBasicClient()->getRunId())
         );
         $clientWrapper->getBasicClient()->setRunId(null);
         self::assertEquals(
             '',
-            Reader::getParentRunId($clientWrapper->getBasicClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getBasicClient()->getRunId())
         );
     }
 
-    public function testReadInvalidConfiguration1()
-    {
-        // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
-        $configuration = null;
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            StrategyFactory::LOCAL,
-            new InputFileStateList([])
-        );
-        $finder = new Finder();
-        $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-        self::assertEmpty($files);
-    }
-
-    public function testReadInvalidConfiguration2()
-    {
-        // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
-        $configuration = 'foobar';
-        try {
-            /** @noinspection PhpParamsInspection */
-            $reader->downloadFiles(
-                $configuration,
-                'download',
-                StrategyFactory::LOCAL,
-                new InputFileStateList([])
-            );
-            self::fail('Invalid configuration should fail.');
-        } catch (InvalidInputException $e) {
-            self::assertContains('File download configuration is not an array', $e->getMessage());
-        }
-        $finder = new Finder();
-        $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-        self::assertEmpty($files);
-    }
-
-    public function testReadInvalidConfiguration3()
+    public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
@@ -152,7 +123,7 @@ class ReaderTest extends TestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
         $finder = new Finder();
@@ -160,7 +131,7 @@ class ReaderTest extends TestCase
         self::assertEmpty($files);
     }
 
-    public function testReadInvalidConfigurationNoQueryNoTagsNoSource()
+    public function testReadInvalidConfigurationNoQueryNoTagsNoSource(): void
     {
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
         $configurations = [[]];
@@ -168,12 +139,12 @@ class ReaderTest extends TestCase
             $reader->downloadFiles(
                 $configurations,
                 'download',
-                StrategyFactory::LOCAL,
+                AbstractStrategyFactory::LOCAL,
                 new InputFileStateList([])
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
-            self::assertContains(
+            self::assertStringContainsString(
                 "Invalid file mapping, 'tags', 'query' and 'source.tags' are all empty.",
                 $e->getMessage()
             );
@@ -183,7 +154,7 @@ class ReaderTest extends TestCase
         self::assertEmpty($files);
     }
 
-    public function testReadInvalidConfigurationBothTagsAndSourceTags()
+    public function testReadInvalidConfigurationBothTagsAndSourceTags(): void
     {
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
         $configurations = [
@@ -191,47 +162,50 @@ class ReaderTest extends TestCase
                 'source' => [
                     'tags' => [
                         [
-                            'name' => 'tag'
-                        ]
-                    ]
+                            'name' => 'tag',
+                        ],
+                    ],
                 ],
                 'tags' => [
-                    'tag'
-                ]
-            ]
+                    'tag',
+                ],
+            ],
         ];
         try {
             $reader->downloadFiles(
                 $configurations,
                 'download',
-                StrategyFactory::LOCAL,
+                AbstractStrategyFactory::LOCAL,
                 new InputFileStateList([])
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
-            self::assertContains("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.", $e->getMessage());
+            self::assertStringContainsString(
+                'Invalid file mapping, both \'tags\' and \'source.tags\' cannot be set.',
+                $e->getMessage()
+            );
         }
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);
     }
 
-    public function testReadTablesDefaultBackend()
+    public function testReadTablesDefaultBackend(): void
     {
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',
-                'destination' => 'test.csv'
+                'destination' => 'test.csv',
             ],
             [
                 'source' => 'in.c-docker-test.test2',
-                'destination' => 'test2.csv'
-            ]
+                'destination' => 'test2.csv',
+            ],
         ]);
 
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
             'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, workspace-abs,'
         );
         $reader->downloadTables(
@@ -243,10 +217,9 @@ class ReaderTest extends TestCase
         );
     }
 
-    public function testReadTablesDefaultBackendBranchRewrite()
+    public function testReadTablesDefaultBackendBranchRewrite(): void
     {
         $temp = new Temp(uniqid('input-mapping'));
-        $temp->initRunFolder();
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
 
@@ -266,7 +239,7 @@ class ReaderTest extends TestCase
             }
         }
         foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
-            if (preg_match('/^c\-[0-9]+\-docker\-test$/ui', $bucket['name'])) {
+            if (preg_match('/^c-[0-9]+-docker-test$/ui', $bucket['name'])) {
                 $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
             }
         }
@@ -276,15 +249,18 @@ class ReaderTest extends TestCase
                 $branchesApi->deleteBranch($branch['id']);
             }
         }
-        $branchId = $branchesApi->createBranch('my-branch')['id'];
+        $branchId = (string) $branchesApi->createBranch('my-branch')['id'];
 
-        $branchBucketId = $clientWrapper->getBasicClient()->createBucket(sprintf('%s-docker-test', $branchId), 'in');
+        $branchBucketId = $clientWrapper->getBasicClient()->createBucket(
+            sprintf('%s-docker-test', $branchId),
+            'in'
+        );
         $clientWrapper->getBasicClient()->createTable($branchBucketId, 'test', $csvFile);
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper($branchId)));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test.test',
-                'destination' => 'test.csv'
+                'destination' => 'test.csv',
             ],
         ]);
         $state = new InputTableStateList([
@@ -297,12 +273,12 @@ class ReaderTest extends TestCase
             $configuration,
             $state,
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
-        self::assertContains(
+        self::assertStringContainsString(
             "\"foo\",\"bar\"\n\"1\",\"2\"",
-            file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
+            (string) file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
         );
         $data = $result->getInputTableStateList()->jsonSerialize();
         self::assertEquals(sprintf('%s.test', $branchBucketId), $data[0]['source']);

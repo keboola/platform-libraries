@@ -1,60 +1,56 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
 {
-    private $runSynapseTests;
+    private bool $runSynapseTests = false;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
+        $this->runSynapseTests = (bool) getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
             return;
         }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
-        }
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket("in.c-docker-test-synapse", ["force" => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket('in.c-docker-test-synapse', ['force' => true]);
         } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
+            if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
         $this->clientWrapper->getBasicClient()->createBucket(
-            "docker-test-synapse",
+            'docker-test-synapse',
             Client::STAGE_IN,
-            "Docker Testsuite",
-            "synapse"
+            'Docker Testsuite',
+            'synapse'
         );
 
         // Create table
-        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . "upload.csv");
-        $csv->writeRow(["Id", "Name"]);
-        $csv->writeRow(["test", "test"]);
-        $this->clientWrapper->getBasicClient()->createTableAsync("in.c-docker-test-synapse", "test", $csv);
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name']);
+        $csv->writeRow(['test', 'test']);
+        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test-synapse', 'test', $csv);
     }
 
-    protected function initClient()
+    protected function initClient(): void
     {
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
@@ -74,7 +70,7 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         ));
     }
 
-    public function testReadTablesSynapse()
+    public function testReadTablesSynapse(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
@@ -82,31 +78,31 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test-synapse.test",
-                "destination" => "test-synapse.csv"
-            ]
+                'source' => 'in.c-docker-test-synapse.test',
+                'destination' => 'test-synapse.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
 
         self::assertEquals(
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
-            file_get_contents($this->temp->getTmpFolder(). "/download/test-synapse.csv")
+            file_get_contents($this->temp->getTmpFolder(). '/download/test-synapse.csv')
         );
 
         $adapter = new Adapter();
 
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-synapse.csv.manifest");
-        self::assertEquals("in.c-docker-test-synapse.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-synapse.csv.manifest');
+        self::assertEquals('in.c-docker-test-synapse.test', $manifest['id']);
     }
 
-    public function testReadTablesABSSynapse()
+    public function testReadTablesABSSynapse(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
@@ -114,26 +110,26 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test-synapse.test",
-                "destination" => "test-synapse.csv"
-            ]
+                'source' => 'in.c-docker-test-synapse.test',
+                'destination' => 'test-synapse.csv',
+            ],
         ]);
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::ABS,
+            AbstractStrategyFactory::ABS,
             new ReaderOptions(true)
         );
         $adapter = new Adapter();
 
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/test-synapse.csv.manifest");
-        self::assertEquals("in.c-docker-test-synapse.test", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-synapse.csv.manifest');
+        self::assertEquals('in.c-docker-test-synapse.test', $manifest['id']);
         $this->assertABSinfo($manifest);
     }
 
-    public function testReadTablesEmptySlices()
+    public function testReadTablesEmptySlices(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
@@ -146,7 +142,12 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test-synapse', 'empty', $headerCsvFile, []);
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            'in.c-docker-test-synapse',
+            'empty',
+            $headerCsvFile,
+            []
+        );
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
@@ -155,8 +156,8 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                "source" => "in.c-docker-test-synapse.empty",
-                "destination" => "empty.csv",
+                'source' => 'in.c-docker-test-synapse.empty',
+                'destination' => 'empty.csv',
             ],
         ]);
 
@@ -164,14 +165,14 @@ class DownloadTablesSynapseTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
-        $file = file_get_contents($this->temp->getTmpFolder() . "/download/empty.csv");
+        $file = file_get_contents($this->temp->getTmpFolder() . '/download/empty.csv');
         self::assertEquals("\"Id\",\"Name\"\n", $file);
 
         $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . "/download/empty.csv.manifest");
-        self::assertEquals("in.c-docker-test-synapse.empty", $manifest["id"]);
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/empty.csv.manifest');
+        self::assertEquals('in.c-docker-test-synapse.empty', $manifest['id']);
     }
 }

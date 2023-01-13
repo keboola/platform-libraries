@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Options;
 
+use Generator;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -11,13 +14,13 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 class InputTableOptionsTest extends TestCase
 {
 
-    public function testGetSource()
+    public function testGetSource(): void
     {
         $definition = new InputTableOptions(['source' => 'test']);
         self::assertEquals('test', $definition->getSource());
     }
 
-    public function testGetDestination()
+    public function testGetDestination(): void
     {
         $definition = new InputTableOptions(['source' => 'test', 'destination' => 'dest']);
         self::assertEquals('dest', $definition->getDestination());
@@ -26,18 +29,18 @@ class InputTableOptionsTest extends TestCase
     /**
      * @dataProvider definitionProvider
      */
-    public function testGetDefinition(array $input, array $expected)
+    public function testGetDefinition(array $input, array $expected): void
     {
         $definition = new InputTableOptions($input);
         self::assertEquals($expected, $definition->getDefinition());
     }
 
-    public function definitionProvider()
+    public function definitionProvider(): Generator
     {
         yield 'no columns' => [
             [
                 'source' => 'test',
-                'destination' => 'dest'
+                'destination' => 'dest',
             ],
             [
                 'source' => 'test',
@@ -105,39 +108,44 @@ class InputTableOptionsTest extends TestCase
         ];
     }
 
-    public function testGetColumns()
+    public function testGetColumns(): void
     {
         $definition = new InputTableOptions(['source' => 'test', 'columns' => ['col1', 'col2']]);
         self::assertEquals(['col1', 'col2'], $definition->getColumnNamesFromTypes());
     }
 
-    public function testGetColumnsExtended()
+    public function testGetColumnsExtended(): void
     {
-        $definition = new InputTableOptions(['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]]);
+        $definition = new InputTableOptions(
+            ['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]]
+        );
         self::assertEquals(['col1', 'col2'], $definition->getColumnNamesFromTypes());
     }
 
-    public function testConstructorMissingSource()
+    public function testConstructorMissingSource(): void
     {
-        self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('Either "source" or "source_search" must be configured.');
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Either "source" or "source_search" must be configured.');
         new InputTableOptions([]);
     }
 
-    public function testConstructorDaysAndChangedSince()
+    public function testConstructorDaysAndChangedSince(): void
     {
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage('Cannot set both parameters "days" and "changed_since".');
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Cannot set both parameters "days" and "changed_since".');
         new InputTableOptions(['source' => 'test', 'days' => 1, 'changed_since' => '-2 days']);
     }
 
-    public function testGetExportOptionsEmptyValue()
+    public function testGetExportOptionsEmptyValue(): void
     {
         $definition = new InputTableOptions(['source' => 'test']);
-        self::assertEquals(['overwrite' => false], $definition->getStorageApiExportOptions(new InputTableStateList([])));
+        self::assertEquals(
+            ['overwrite' => false],
+            $definition->getStorageApiExportOptions(new InputTableStateList([]))
+        );
     }
 
-    public function testGetExportOptionsSimpleColumns()
+    public function testGetExportOptionsSimpleColumns(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -160,7 +168,7 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
-    public function testGetExportOptionsExtendColumns()
+    public function testGetExportOptionsExtendColumns(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -198,7 +206,7 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
-    public function testGetLoadOptionsSimpleColumns()
+    public function testGetLoadOptionsSimpleColumns(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -224,7 +232,7 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
     }
 
-    public function testGetLoadOptionsExtendedColumns()
+    public function testGetLoadOptionsExtendedColumns(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -277,10 +285,10 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
     }
 
-    public function testInvalidColumnsMissing()
+    public function testInvalidColumnsMissing(): void
     {
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
             'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "col1".'
         );
         new InputTableOptions([
@@ -301,10 +309,10 @@ class InputTableOptionsTest extends TestCase
         ]);
     }
 
-    public function testInvalidColumnSurplus()
+    public function testInvalidColumnSurplus(): void
     {
-        self::expectException(InvalidInputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
             'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "col2".'
         );
         new InputTableOptions([
@@ -329,7 +337,7 @@ class InputTableOptionsTest extends TestCase
         ]);
     }
 
-    public function testGetExportOptionsDays()
+    public function testGetExportOptionsDays(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -341,17 +349,17 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
-    public function testGetExportOptionsAdaptiveInputMapping()
+    public function testGetExportOptionsAdaptiveInputMapping(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
-            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
+            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
         $tablesState = new InputTableStateList([
             [
                 'source' => 'test',
                 'lastImportDate' => '1989-11-17T21:00:00+0200',
-            ]
+            ],
         ]);
         self::assertEquals([
             'changedSince' => '1989-11-17T21:00:00+0200',
@@ -359,7 +367,7 @@ class InputTableOptionsTest extends TestCase
         ], $definition->getStorageApiExportOptions($tablesState));
     }
 
-    public function testGetExportOptionsAdaptiveInputMappingMissingTable()
+    public function testGetExportOptionsAdaptiveInputMappingMissingTable(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -369,35 +377,29 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals(['overwrite' => false], $definition->getStorageApiExportOptions($tablesState));
     }
 
-    public function testGetLoadOptionsAdaptiveInputMapping()
+    public function testGetLoadOptionsAdaptiveInputMapping(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
-            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
+            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
-        $tablesState = new InputTableStateList([
-            [
-                'source' => 'test',
-                'lastImportDate' => '1989-11-17T21:00:00+0200'
-            ]
-        ]);
-        self::expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
-        self::expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
+        $this->expectException(InvalidInputException::class);
         $definition->getStorageApiLoadOptions(new InputTableStateList([]));
     }
 
-    public function testGetLoadOptionsDaysMapping()
+    public function testGetLoadOptionsDaysMapping(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
             'days' => 2,
         ]);
-        self::expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
-        self::expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
+        $this->expectException(InvalidInputException::class);
         $definition->getStorageApiLoadOptions(new InputTableStateList([]));
     }
 
-    public function testIsUseView()
+    public function testIsUseView(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',

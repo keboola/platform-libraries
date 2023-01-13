@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Options;
 
 class InputTableOptionsList
@@ -7,7 +9,7 @@ class InputTableOptionsList
     /**
      * @var InputTableOptions[]
      */
-    private $tables = [];
+    private array $tables = [];
 
     public function __construct(array $configurations)
     {
@@ -19,7 +21,7 @@ class InputTableOptionsList
     /**
      * @returns InputTableOptions[]
      */
-    public function getTables()
+    public function getTables(): array
     {
         return $this->tables;
     }

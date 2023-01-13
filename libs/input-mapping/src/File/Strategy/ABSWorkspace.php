@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\FileStorage\Abs\ClientFactory;
@@ -7,48 +9,48 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
+use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StorageApi\Workspaces;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 
 class ABSWorkspace extends AbstractFileStrategy
 {
-    /** @var BlobRestProxy */
-    private $blobClient;
+    private ?BlobRestProxy $blobClient = null;
 
-    /** @var array container, connectionString */
-    private $credentials;
+    /** @var ?array{container: string, connectionString: string} */
+    private ?array $credentials = null;
 
-    protected $inputs = [];
+    protected array $inputs = [];
 
     /**
-     * @return array credentials
+     * @return array{container: string, connectionString: string}
      */
-    private function getCredentials()
+    private function getCredentials(): array
     {
         if (!$this->credentials) {
-            $this->credentials = $this->dataStorage->getCredentials();
-            if (empty($this->credentials['connectionString']) || empty($this->credentials['container'])) {
+            $credentials = $this->dataStorage->getCredentials();
+            if (empty($credentials['connectionString']) || empty($credentials['container'])) {
                 throw new InputOperationException(
-                    'Invalid credentials received: ' . implode(', ', array_keys($this->credentials))
+                    'Invalid credentials received: ' . implode(', ', array_keys($credentials))
                 );
             }
+            $this->credentials = $credentials;
         }
         return $this->credentials;
     }
 
-    /**
-     * @return BlobRestProxy
-     */
-    private function getBlobClient()
+    private function getBlobClient(): BlobRestProxy
     {
         if (!$this->blobClient) {
-            $this->blobClient = ClientFactory::createClientFromConnectionString($this->getCredentials()['connectionString']);
+            $this->blobClient = ClientFactory::createClientFromConnectionString(
+                $this->getCredentials()['connectionString']
+            );
         }
         return $this->blobClient;
     }
 
-    public function downloadFile($fileInfo, $destinationPath, $overwrite)
+    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite): void
     {
         $this->inputs[] = [
             'dataFileId' => $fileInfo['id'],
@@ -62,12 +64,7 @@ class ABSWorkspace extends AbstractFileStrategy
         $this->writeFile($serializedManifest, $manifestDestination);
     }
 
-    /**
-     * @param array $fileConfigurations
-     * @param string $destination
-     * @return \Keboola\InputMapping\State\InputFileStateList
-     */
-    public function downloadFiles($fileConfigurations, $destination)
+    public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList
     {
         $inputFileStateList = parent::downloadFiles($fileConfigurations, $destination);
         if ($this->inputs) {
@@ -84,7 +81,7 @@ class ABSWorkspace extends AbstractFileStrategy
         return $inputFileStateList;
     }
 
-    private function writeFile($contents, $destination)
+    private function writeFile(string $contents, string $destination): void
     {
         try {
             $blobClient = $this->getBlobClient();
@@ -106,8 +103,11 @@ class ABSWorkspace extends AbstractFileStrategy
         }
     }
 
-    protected function getFileDestinationPath($destinationPath, $fileId, $fileName)
-    {
+    protected function getFileDestinationPath(
+        string $destinationPath,
+        int $fileId,
+        string $fileName
+    ): string {
         /* Contrary to local strategy, in case of ABSWorkspace, the path is always a directory to which a
             file is exported with the name being fileId. */
         return sprintf(

@@ -1,57 +1,43 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Result;
 
 class MetadataItem
 {
-    /** @var string */
-    private $key;
-    /** @var string */
-    private $value;
-    /** @var string */
-    private $provider;
-    /** @var string */
-    private $timestamp;
+    private string $key;
+    private string $value;
+    private string $provider;
+    private string $timestamp;
 
     /**
      * @param array $metadataItem
      */
     public function __construct(array $metadataItem)
     {
-        $this->key = $metadataItem['key'];
-        $this->value = $metadataItem['value'];
-        $this->provider = $metadataItem['provider'];
-        $this->timestamp = $metadataItem['timestamp'];
+        $this->key = (string) $metadataItem['key'];
+        $this->value = (string) $metadataItem['value'];
+        $this->provider = (string) $metadataItem['provider'];
+        $this->timestamp = (string) $metadataItem['timestamp'];
     }
 
-    /**
-     * @return string
-     */
-    public function getProvider()
+    public function getProvider(): string
     {
         return $this->provider;
     }
 
-    /**
-     * @return string
-     */
-    public function getValue()
+    public function getValue(): string
     {
         return $this->value;
     }
 
-    /**
-     * @return string
-     */
-    public function getKey()
+    public function getKey(): string
     {
         return $this->key;
     }
 
-    /**
-     * @return string
-     */
-    public function getTimestamp()
+    public function getTimestamp(): string
     {
         return $this->timestamp;
     }

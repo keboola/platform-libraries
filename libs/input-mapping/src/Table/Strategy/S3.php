@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -8,7 +10,7 @@ use Keboola\StorageApi\Options\GetFileOptions;
 
 class S3 extends AbstractStrategy
 {
-    public function downloadTable(InputTableOptions $table)
+    public function downloadTable(InputTableOptions $table): array
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
@@ -16,30 +18,29 @@ class S3 extends AbstractStrategy
         return ['jobId' => $jobId, 'table' => $table];
     }
 
-    public function handleExports($exports, $preserve)
+    public function handleExports(array $exports, bool $preserve): array
     {
-        $this->logger->info("Processing " . count($exports) . " S3 table exports.");
+        $this->logger->info('Processing ' . count($exports) . ' S3 table exports.');
         $jobIds = array_map(function ($export) {
             return $export['jobId'];
         }, $exports);
         $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($jobResults as $result) {
-            $keyedResults[$result["id"]] = $result;
+            $keyedResults[$result['id']] = $result;
         }
 
-        /** @var InputTableOptions $table */
         foreach ($exports as $export) {
             $table = $export['table'];
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $fileInfo = $this->clientWrapper->getBasicClient()->getFile(
-                $keyedResults[$export['jobId']]["results"]["file"]["id"],
+                $keyedResults[$export['jobId']]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true)
             )
             ;
-            $tableInfo["s3"] = $this->getS3Info($fileInfo);
+            $tableInfo['s3'] = $this->getS3Info($fileInfo);
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,
@@ -50,21 +51,34 @@ class S3 extends AbstractStrategy
         return $jobResults;
     }
 
-    protected function getS3Info($fileInfo)
+    /**
+     * @return array {
+     *      isSliced: bool,
+     *      region: string,
+     *      bucket: string,
+     *      key: string,
+     *      credentials: array {
+     *          access_key_id: string,
+     *          secret_access_key: string,
+     *          session_token: string,
+     *      }
+     * }
+     */
+    protected function getS3Info(array $fileInfo): array
     {
-        if (empty($fileInfo["credentials"]["AccessKeyId"])) {
+        if (empty($fileInfo['credentials']['AccessKeyId'])) {
             throw new InvalidInputException('This project does not have S3 backend.');
         }
         return [
-            "isSliced" => $fileInfo["isSliced"],
-            "region" => $fileInfo["region"],
-            "bucket" => $fileInfo["s3Path"]["bucket"],
-            "key" => $fileInfo["isSliced"] ? $fileInfo["s3Path"]["key"] . "manifest" : $fileInfo["s3Path"]["key"],
-            "credentials" => [
-                "access_key_id" => $fileInfo["credentials"]["AccessKeyId"],
-                "secret_access_key" => $fileInfo["credentials"]["SecretAccessKey"],
-                "session_token" => $fileInfo["credentials"]["SessionToken"]
-            ]
+            'isSliced' => $fileInfo['isSliced'],
+            'region' => $fileInfo['region'],
+            'bucket' => $fileInfo['s3Path']['bucket'],
+            'key' => $fileInfo['isSliced'] ? $fileInfo['s3Path']['key'] . 'manifest' : $fileInfo['s3Path']['key'],
+            'credentials' => [
+                'access_key_id' => $fileInfo['credentials']['AccessKeyId'],
+                'secret_access_key' => $fileInfo['credentials']['SecretAccessKey'],
+                'session_token' => $fileInfo['credentials']['SessionToken'],
+            ],
         ];
     }
 }

@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
 
 class Scope
 {
-    const TABLE_DATA = 'tableData';
-    const TABLE_METADATA = 'tableMetadata';
-    const FILE_DATA = 'fileData';
-    const FILE_METADATA = 'fileMetadata';
+    public const TABLE_DATA = 'tableData';
+    public const TABLE_METADATA = 'tableMetadata';
+    public const FILE_DATA = 'fileData';
+    public const FILE_METADATA = 'fileMetadata';
 
-    /** @var array */
-    private $scopeTypes;
+    private array $scopeTypes;
 
     public function __construct(array $scopeTypes)
     {
@@ -20,9 +21,10 @@ class Scope
             self::TABLE_DATA,
             self::TABLE_METADATA,
             self::FILE_DATA,
-            self::FILE_METADATA
+            self::FILE_METADATA,
         ];
-        if ($diff = array_diff($scopeTypes, $allowedScopeTypes)) {
+        $diff = array_diff($scopeTypes, $allowedScopeTypes);
+        if ($diff) {
             throw new StagingException(sprintf('Unknown scope types "%s".', implode(', ', $diff)));
         }
         $this->scopeTypes = $scopeTypes;
@@ -31,7 +33,7 @@ class Scope
     /**
      * @return string[]
      */
-    public function getScopeTypes()
+    public function getScopeTypes(): array
     {
         return $this->scopeTypes;
     }

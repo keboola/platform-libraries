@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
-use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -18,19 +22,19 @@ class DownloadTablesTestAbstract extends TestCase
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->temp = new Temp('docker');
         $fs = new Filesystem();
-        $fs->mkdir($this->temp->getTmpFolder() . "/download");
+        $fs->mkdir($this->temp->getTmpFolder() . '/download');
         $this->initClient();
     }
 
-    protected function initClient()
+    protected function initClient(): void
     {
         $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
@@ -43,54 +47,44 @@ class DownloadTablesTestAbstract extends TestCase
         ));
     }
 
-    /**
-     * @param array $manifest
-     */
-    protected function assertS3info(array $manifest)
+    protected function assertS3info(array $manifest): void
     {
-        self::assertArrayHasKey("s3", $manifest);
-        self::assertArrayHasKey("isSliced", $manifest["s3"]);
-        self::assertArrayHasKey("region", $manifest["s3"]);
-        self::assertArrayHasKey("bucket", $manifest["s3"]);
-        self::assertArrayHasKey("key", $manifest["s3"]);
-        self::assertArrayHasKey("credentials", $manifest["s3"]);
-        self::assertArrayHasKey("access_key_id", $manifest["s3"]["credentials"]);
-        self::assertArrayHasKey("secret_access_key", $manifest["s3"]["credentials"]);
-        self::assertArrayHasKey("session_token", $manifest["s3"]["credentials"]);
-        self::assertContains("gz", $manifest["s3"]["key"]);
+        self::assertArrayHasKey('s3', $manifest);
+        self::assertArrayHasKey('isSliced', $manifest['s3']);
+        self::assertArrayHasKey('region', $manifest['s3']);
+        self::assertArrayHasKey('bucket', $manifest['s3']);
+        self::assertArrayHasKey('key', $manifest['s3']);
+        self::assertArrayHasKey('credentials', $manifest['s3']);
+        self::assertArrayHasKey('access_key_id', $manifest['s3']['credentials']);
+        self::assertArrayHasKey('secret_access_key', $manifest['s3']['credentials']);
+        self::assertArrayHasKey('session_token', $manifest['s3']['credentials']);
+        self::assertStringContainsString('gz', $manifest['s3']['key']);
 
-        if ($manifest["s3"]["isSliced"]) {
-            self::assertContains("manifest", $manifest["s3"]["key"]);
+        if ($manifest['s3']['isSliced']) {
+            self::assertStringContainsString('manifest', $manifest['s3']['key']);
         }
     }
 
-    /**
-     * @param array $manifest
-     */
-    protected function assertABSinfo(array $manifest)
+    protected function assertABSinfo(array $manifest): void
     {
-        self::assertArrayHasKey("abs", $manifest);
-        self::assertArrayHasKey("is_sliced", $manifest["abs"]);
-        self::assertArrayHasKey("region", $manifest["abs"]);
-        self::assertArrayHasKey("container", $manifest["abs"]);
-        self::assertArrayHasKey("name", $manifest["abs"]);
-        self::assertArrayHasKey("credentials", $manifest["abs"]);
-        self::assertArrayHasKey("sas_connection_string", $manifest["abs"]['credentials']);
-        self::assertArrayHasKey("expiration", $manifest["abs"]['credentials']);
+        self::assertArrayHasKey('abs', $manifest);
+        self::assertArrayHasKey('is_sliced', $manifest['abs']);
+        self::assertArrayHasKey('region', $manifest['abs']);
+        self::assertArrayHasKey('container', $manifest['abs']);
+        self::assertArrayHasKey('name', $manifest['abs']);
+        self::assertArrayHasKey('credentials', $manifest['abs']);
+        self::assertArrayHasKey('sas_connection_string', $manifest['abs']['credentials']);
+        self::assertArrayHasKey('expiration', $manifest['abs']['credentials']);
 
-        if ($manifest["abs"]["is_sliced"]) {
-            self::assertStringEndsWith("manifest", $manifest["abs"]["name"]);
+        if ($manifest['abs']['is_sliced']) {
+            self::assertStringEndsWith('manifest', $manifest['abs']['name']);
         }
     }
 
-    /**
-     * @param $expectedString
-     * @param $path
-     */
-    public static function assertCSVEquals($expectedString, $path)
+    public static function assertCSVEquals(string $expectedString, string $path): void
     {
         $expectedArray = explode("\n", $expectedString);
-        $actualArray = explode("\n", file_get_contents($path));
+        $actualArray = explode("\n", (string) file_get_contents($path));
 
         // compare length
         self::assertEquals(count($expectedArray), count($actualArray));
@@ -104,11 +98,14 @@ class DownloadTablesTestAbstract extends TestCase
         }
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
-    {
+    protected function getStagingFactory(
+        ?ClientWrapper $clientWrapper = null,
+        string $format = 'json',
+        ?LoggerInterface $logger = null
+    ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
-            $logger ? $logger : new NullLogger(),
+            $clientWrapper ?: $this->clientWrapper,
+            $logger ?: new NullLogger(),
             $format
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
@@ -123,9 +120,9 @@ class DownloadTablesTestAbstract extends TestCase
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-                StrategyFactory::ABS => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-                StrategyFactory::S3 => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+                AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+                AbstractStrategyFactory::ABS => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+                AbstractStrategyFactory::S3 => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
             ]
         );
         return $stagingFactory;

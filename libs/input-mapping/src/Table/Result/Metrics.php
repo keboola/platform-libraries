@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Result;
 
 use Generator;
@@ -7,7 +9,7 @@ use Generator;
 class Metrics
 {
     /** @var TableMetrics[] */
-    private $metrics;
+    private array $metrics;
 
     public function __construct(array $jobResults)
     {
@@ -16,10 +18,7 @@ class Metrics
         }
     }
 
-    /**
-     * @return Generator
-     */
-    public function getTableMetrics()
+    public function getTableMetrics(): Generator
     {
         foreach ($this->metrics as $metric) {
             yield $metric;

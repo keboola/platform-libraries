@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
@@ -9,20 +11,19 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class Local extends AbstractStrategy implements StrategyInterface
 {
-    public function downloadFile($fileInfo, $destinationPath, $overwrite)
+    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite): void
     {
         if ($overwrite === false) {
             throw new InvalidInputException('Overwrite cannot be turned off for local mapping.');
         }
+        $fs = new Filesystem();
         if ($fileInfo['isSliced']) {
-            $fs = new Filesystem();
             $fs->mkdir($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath);
             $this->clientWrapper->getBasicClient()->downloadSlicedFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         } else {
-            $fs = new Filesystem();
             $fs->mkdir(dirname($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath));
             $this->clientWrapper->getBasicClient()->downloadFile(
                 $fileInfo['id'],
@@ -37,13 +38,13 @@ class Local extends AbstractStrategy implements StrategyInterface
         $this->writeFile($serializedManifest, $manifestDestination);
     }
 
-    private function writeFile($contents, $destination)
+    private function writeFile(string $contents, string $destination): void
     {
         $fs = new Filesystem();
         $fs->dumpFile($destination, $contents);
     }
 
-    protected function getFileDestinationPath($destinationPath, $fileId, $fileName)
+    protected function getFileDestinationPath(string $destinationPath, int $fileId, string $fileName): string
     {
         /* this is the actual file name being used by the export, hence it contains file id + file name */
         return sprintf(

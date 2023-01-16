@@ -12,7 +12,7 @@ class Subscription
         public readonly string $offerId,
         public readonly string $planId,
         public readonly string $name,
-        public readonly ?int $quantity,
+        public readonly null|string|int|float $quantity,
         public readonly string $saasSubscriptionStatus,
     ) {
     }

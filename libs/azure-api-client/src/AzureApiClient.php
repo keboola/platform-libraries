@@ -51,8 +51,15 @@ class AzureApiClient
     /**
      * @return ($expectResponse is true ? array : null)
      */
-    public function sendRequest(Request $request, bool $expectResponse = true): ?array
-    {
+    public function sendRequest(
+        string $method,
+        string $uri,
+        array $headers = [],
+        $body = null,
+        bool $expectResponse = true
+    ): ?array {
+        $request = new Request($method, $uri, $headers, $body);
+
         try {
             if (empty($this->token)) {
                 $this->token = $this->authenticator->getAuthenticationToken($this->resource);

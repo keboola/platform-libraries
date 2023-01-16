@@ -37,6 +37,14 @@ class GuzzleClientFactory
         return $this->logger;
     }
 
+    /**
+     * @param array{
+     *     backoffMaxTries?: null|int<0, max>,
+     *     userAgent?: null|string,
+     *     handler?: null|callable,
+     *     logger?: null|LoggerInterface,
+     * }  $options
+     */
     public function getClient(string $baseUrl, array $options = []): GuzzleClient
     {
         $validator = Validation::createValidator();
@@ -55,7 +63,7 @@ class GuzzleClientFactory
 
         if (!empty($options['backoffMaxTries'])) {
             $errors->addAll($validator->validate($options['backoffMaxTries'], [new Range(['min' => 0, 'max' => 100])]));
-            $options['backoffMaxTries'] = intval($options['backoffMaxTries']);
+            $options['backoffMaxTries'] = (int) $options['backoffMaxTries'];
         } else {
             $options['backoffMaxTries'] = self::DEFAULT_BACKOFF_RETRIES;
         }
@@ -122,14 +130,15 @@ class GuzzleClientFactory
         $handlerStack->push(Middleware::retry($this->createDefaultDecider($options['backoffMaxTries'])));
 
         // Set client logger
-        $handlerStack->push(Middleware::log(
-            $this->logger,
-            new MessageFormatter(
-                '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
-                ' {code} {res_header_Content-Length}'
-            )
-        ));
-
+        if (isset($options['logger']) && $options['logger'] instanceof LoggerInterface) {
+            $handlerStack->push(Middleware::log(
+                $options['logger'],
+                new MessageFormatter(
+                    '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
+                    ' {code} {res_header_Content-Length}'
+                )
+            ));
+        }
         // finally create the instance
         return new GuzzleClient([
             'base_uri' => $baseUrl,

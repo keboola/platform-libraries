@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Configuration;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -7,13 +9,11 @@ use Symfony\Component\Config\Definition\Processor;
 
 abstract class Configuration implements ConfigurationInterface
 {
-    /**
-     * Shortcut method for processing configurations
-     *
-     * @param $configurations
-     * @return array
-     */
-    public function parse($configurations)
+    final public function __construct()
+    {
+    }
+
+    public function parse(array $configurations): array
     {
         $processor = new Processor();
         $definition = new static();

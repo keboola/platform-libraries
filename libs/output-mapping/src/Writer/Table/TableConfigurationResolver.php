@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table;
 
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -18,43 +21,29 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class TableConfigurationResolver
 {
-    /** @var ClientWrapper */
-    private $clientWrapper;
-
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var string */
-    private $format;
-
     /**
-     * @param string $format
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, $format = 'json')
-    {
-        $this->clientWrapper = $clientWrapper;
-        $this->logger = $logger;
-        $this->format = $format;
+    public function __construct(
+        private readonly ClientWrapper $clientWrapper,
+        private readonly LoggerInterface $logger,
+        private string $format = 'json'
+    ) {
     }
 
     /**
-     * @param string $format
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
-    public function setFormat($format)
+    public function setFormat(string $format): void
     {
         $this->format = $format;
     }
 
-    /**
-     * @param null|string $defaultBucket
-     * @return array
-     * @throws InvalidOutputException
-     */
     public function resolveTableConfiguration(
         MappingSource $mappingSource,
-        $defaultBucket,
+        ?string $defaultBucket,
         array $systemMetadata
-    ) {
+    ): array {
         $configFromManifest = [];
         $configFromMapping = [];
 
@@ -62,7 +51,7 @@ class TableConfigurationResolver
             $configFromManifest = $this->loadTableManifest($mappingSource->getManifestFile());
 
             $configFromManifest['destination'] = $this->normalizeManifestDestination(
-                isset($configFromManifest['destination']) ? $configFromManifest['destination'] : null,
+                $configFromManifest['destination'] ?? null,
                 $mappingSource->getSource(),
                 $defaultBucket
             );
@@ -77,7 +66,8 @@ class TableConfigurationResolver
 
         if (!isset($config['destination'])) {
             $this->logger->warning(sprintf(
-                'Source table "%s" has neither manifest file nor mapping set, falling back to the source name as a destination.'.
+                'Source table "%s" has neither manifest file nor mapping set, ' .
+                'falling back to the source name as a destination.' .
                 'This behaviour was DEPRECATED and will be removed in the future.',
                 $mappingSource->getSourceName()
             ));
@@ -106,11 +96,7 @@ class TableConfigurationResolver
         return $config;
     }
 
-    /**
-     * @return array
-     * @throws InvalidOutputException
-     */
-    private function loadTableManifest(SplFileInfo $manifestFile)
+    private function loadTableManifest(SplFileInfo $manifestFile): array
     {
         $adapter = new TableAdapter($this->format);
 
@@ -118,23 +104,24 @@ class TableConfigurationResolver
             return $adapter->deserialize($manifestFile->getContents());
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
-                sprintf('Failed to read table manifest from file %s %s', $manifestFile->getBasename(), $e->getMessage()),
+                sprintf(
+                    'Failed to read table manifest from file %s %s',
+                    $manifestFile->getBasename(),
+                    $e->getMessage()
+                ),
                 0,
                 $e
             );
         }
     }
 
-    /**
-     * @param null|string $destination
-     * @param SourceInterface $source
-     * @param null|string $defaultBucket
-     * @return string
-     */
-    private function normalizeManifestDestination($destination, $source, $defaultBucket)
-    {
+    private function normalizeManifestDestination(
+        ?string $destination,
+        SourceInterface $source,
+        ?string $defaultBucket
+    ): string {
         if (MappingDestination::isTableId($destination)) {
-            return $destination;
+            return (string) $destination;
         }
 
         if ($destination === null || $destination === '') {
@@ -154,18 +141,17 @@ class TableConfigurationResolver
         return $destination;
     }
 
-    /**
-     * @param array $config
-     * @param MappingSource $source
-     * @return array
-     */
-    private function normalizeConfig(array $config, MappingSource $source)
+    private function normalizeConfig(array $config, MappingSource $source): array
     {
         try {
             $config = (new TableManifest())->parse([$config]);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
-                sprintf("Failed to prepare mapping configuration for table %s: %s", $source->getSourceName(), $e->getMessage()),
+                sprintf(
+                    'Failed to prepare mapping configuration for table %s: %s',
+                    $source->getSourceName(),
+                    $e->getMessage()
+                ),
                 0,
                 $e
             );

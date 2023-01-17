@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
-use Exception;
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Configuration\Adapter as ConfigurationAdapter;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -18,26 +20,27 @@ use MicrosoftAzure\Storage\Blob\Models\Blob;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
 {
     /* Maximum limit is 5000 https://docs.microsoft.com/en-us/rest/api/storageservices/list-blobs,
         Since paging is not implemented, leave this at lower value so that it can be raised as a quick fix before
         paging needs to be implemented. */
-    const MAX_RESULTS = 1000;
+    private const MAX_RESULTS = 1000;
 
-    /** @var BlobRestProxy */
-    private $blobClient;
+    private BlobRestProxy $blobClient;
+    private string $container;
 
-    /** @var string */
-    private $container;
-
+    /**
+     * @param ConfigurationAdapter::FORMAT_YAML | ConfigurationAdapter::FORMAT_JSON $format
+     */
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
         ProviderInterface $dataStorage,
         ProviderInterface $metadataStorage,
-        $format
+        string $format
     ) {
         parent::__construct($clientWrapper, $logger, $dataStorage, $metadataStorage, $format);
         $credentials = $this->dataStorage->getCredentials();
@@ -51,10 +54,9 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
     }
 
     /**
-     * @param $dir
      * @return Blob[]
      */
-    private function listBlobs($dir)
+    private function listBlobs(string $dir): array
     {
         $dir = trim($dir, '/') . '/';
         try {
@@ -76,32 +78,37 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         }
     }
 
-    /** @inheritDoc */
-    public function listFiles($dir)
+    public function listFiles(string $dir): array
     {
         $files = [];
         foreach ($this->listBlobs($dir) as $blob) {
-            if (substr($blob->getName(), -strlen('.manifest')) !== '.manifest') {
-                $files[$blob->getName()] = new FileItem($blob->getName(), dirname($blob->getName()), basename($blob->getName()));
+            if (!str_ends_with($blob->getName(), '.manifest')) {
+                $files[$blob->getName()] = new FileItem(
+                    $blob->getName(),
+                    dirname($blob->getName()),
+                    basename($blob->getName())
+                );
             }
         }
         return $files;
     }
 
-    /** @inheritDoc */
-    public function listManifests($dir)
+    public function listManifests(string $dir): array
     {
         $manifestFileNames = [];
         foreach ($this->listBlobs($dir) as $blob) {
-            if (substr($blob->getName(), -strlen('.manifest')) === '.manifest') {
-                $manifestFileNames[$blob->getName()] = new FileItem($blob->getName(), dirname($blob->getName()), basename($blob->getName()));
+            if (str_ends_with($blob->getName(), '.manifest')) {
+                $manifestFileNames[$blob->getName()] = new FileItem(
+                    $blob->getName(),
+                    dirname($blob->getName()),
+                    basename($blob->getName())
+                );
             }
         }
         return $manifestFileNames;
     }
 
-    /** @inheritDoc */
-    public function loadFileToStorage($file, array $storageConfig)
+    public function loadFileToStorage(string $file, array $storageConfig): string
     {
         // Since we do not yet have the ability to load files directly from ABS workspace to Sapi
         // we will first download it locally and then upload
@@ -120,11 +127,11 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         }
 
         $tmp = new Temp();
-        $tmp->initRunFolder();
         $tmpFileName = $tmp->getTmpFolder()  . '/' . basename($file);
-        if (($destination = fopen($tmpFileName, 'w')) !== false) {
+        $destination = fopen($tmpFileName, 'w');
+        if ($destination !== false) {
             if (stream_copy_to_stream($blobResult->getContentStream(), $destination) === false) {
-                throw new OutputOperationException(sprintf('Failed to copy stream to "%s"', $destination));
+                throw new OutputOperationException(sprintf('Failed to copy stream to "%s"', $tmpFileName));
             }
             fclose($destination);
         } else {
@@ -139,11 +146,10 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             ->setIsEncrypted($storageConfig['is_encrypted'])
             ->setIsPublic($storageConfig['is_public'])
             ->setNotify($storageConfig['notify']);
-        return $this->clientWrapper->getBasicClient()->uploadFile($tmpFileName, $options);
+        return (string) $this->clientWrapper->getBasicClient()->uploadFile($tmpFileName, $options);
     }
 
-    /** @inheritDoc */
-    public function readFileManifest($manifestFile)
+    public function readFileManifest(string $manifestFile): array
     {
         $adapter = new Adapter($this->format);
         try {
@@ -157,8 +163,8 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         }
         try {
             $contents = stream_get_contents($blobResult->getContentStream());
-            return $adapter->deserialize($contents);
-        } catch (Exception $e) {
+            return $adapter->deserialize((string) $contents);
+        } catch (Throwable $e) {
             throw new InvalidOutputException(
                 sprintf(
                     'Failed to parse manifest file "%s" as "%s": %s',

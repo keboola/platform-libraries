@@ -1,10 +1,11 @@
 <?php
 
-namespace Keboola\DockerBundle\Tests;
+declare(strict_types=1);
 
+namespace Keboola\OutputMapping\Tests\Writer;
+
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\OutputMapping\Tests\Writer\BaseWriterMetadataTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
@@ -19,66 +20,71 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
         $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
-        $this->clientWrapper->getBasicClient()->createBucket('SnowflakeWriterMetadataTest', "in", '', 'snowflake');
+        $this->clientWrapper->getBasicClient()->createBucket('SnowflakeWriterMetadataTest', 'in', '', 'snowflake');
 
         $this->backend = 'snowflake';
     }
 
-    public function testMetadataWritingTest()
+    public function testMetadataWritingTest(): void
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table55.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . '/upload/table55.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
-            "mapping" => [
+            'mapping' => [
                 [
-                    "source" => "table55.csv",
-                    "destination" => self::INPUT_BUCKET . ".table55",
-                    "metadata" => [
+                    'source' => 'table55.csv',
+                    'destination' => self::INPUT_BUCKET . '.table55',
+                    'metadata' => [
                         [
-                            "key" => "table.key.one",
-                            "value" => "table value one"
+                            'key' => 'table.key.one',
+                            'value' => 'table value one',
                         ],
                         [
-                            "key" => "table.key.two",
-                            "value" => "table value two"
-                        ]
+                            'key' => 'table.key.two',
+                            'value' => 'table value two',
+                        ],
                     ],
-                    "column_metadata" => [
-                        "Id" => [
+                    'column_metadata' => [
+                        'Id' => [
                             [
-                                "key" => "column.key.one",
-                                "value" => "column value one id"
+                                'key' => 'column.key.one',
+                                'value' => 'column value one id',
                             ],
                             [
-                                "key" => "column.key.two",
-                                "value" => "column value two id"
-                            ]
+                                'key' => 'column.key.two',
+                                'value' => 'column value two id',
+                            ],
                         ],
-                        "Name" => [
+                        'Name' => [
                             [
-                                "key" => "column.key.one",
-                                "value" => "column value one text"
+                                'key' => 'column.key.one',
+                                'value' => 'column value one text',
                             ],
                             [
-                                "key" => "column.key.two",
-                                "value" => "column value two text"
-                            ]
-                        ]
-                    ]
-                ]
+                                'key' => 'column.key.two',
+                                'value' => 'column value two text',
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ];
         $systemMetadata = [
-            "componentId" => "testComponent",
-            "configurationId" => "metadata-write-test",
-            "branchId" => "1234",
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'branchId' => '1234',
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            $config,
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
         $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table55');
@@ -93,8 +99,8 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',
-                'table.key.two' => 'table value two'
-            ]
+                'table.key.two' => 'table value two',
+            ],
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
@@ -103,14 +109,14 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'testComponent' => [
                 'column.key.one' => 'column value one id',
                 'column.key.two' => 'column value two id',
-            ]
+            ],
         ];
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
         $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
@@ -118,32 +124,38 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
 
-    public function testMetadataWritingErrorTest()
+    public function testMetadataWritingErrorTest(): void
     {
-        $this->markTestSkipped('Temporary skipped due bug in KBC');
+        self::markTestSkipped('Temporary skipped due bug in KBC');
+        // @phpstan-ignore-next-line
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table55a.csv", "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
+        file_put_contents($root . '/upload/table55a.csv', "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
 
         $config = [
-            "mapping" => [
+            'mapping' => [
                 [
-                    "source" => "table55a.csv",
-                    "destination" => self::INPUT_BUCKET . ".table55a",
-                    "column_metadata" => [
-                        "NonExistent" => [
+                    'source' => 'table55a.csv',
+                    'destination' => self::INPUT_BUCKET . '.table55a',
+                    'column_metadata' => [
+                        'NonExistent' => [
                             [
-                                "key" => "column.key.one",
-                                "value" => "column value one id",
+                                'key' => 'column.key.one',
+                                'value' => 'column value one id',
                             ],
                         ],
                     ],
                 ],
             ],
         ];
-        $systemMetadata = ["componentId" => "testComponent"];
+        $systemMetadata = ['componentId' => 'testComponent'];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            $config,
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL
+        );
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table ' . self::INPUT_BUCKET . '".table55a": Load error: ' .
             'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
@@ -151,61 +163,66 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         $tableQueue->waitForAll();
     }
 
-    public function testConfigRowMetadataWritingTest()
+    public function testConfigRowMetadataWritingTest(): void
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table66.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . '/upload/table66.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
-            "mapping" => [
+            'mapping' => [
                 [
-                    "source" => "table66.csv",
-                    "destination" => self::INPUT_BUCKET . ".table66",
-                    "metadata" => [
+                    'source' => 'table66.csv',
+                    'destination' => self::INPUT_BUCKET . '.table66',
+                    'metadata' => [
                         [
-                            "key" => "table.key.one",
-                            "value" => "table value one"
+                            'key' => 'table.key.one',
+                            'value' => 'table value one',
                         ],
                         [
-                            "key" => "table.key.two",
-                            "value" => "table value two"
-                        ]
+                            'key' => 'table.key.two',
+                            'value' => 'table value two',
+                        ],
                     ],
-                    "column_metadata" => [
-                        "Id" => [
+                    'column_metadata' => [
+                        'Id' => [
                             [
-                                "key" => "column.key.one",
-                                "value" => "column value one id"
+                                'key' => 'column.key.one',
+                                'value' => 'column value one id',
                             ],
                             [
-                                "key" => "column.key.two",
-                                "value" => "column value two id"
-                            ]
+                                'key' => 'column.key.two',
+                                'value' => 'column value two id',
+                            ],
                         ],
-                        "Name" => [
+                        'Name' => [
                             [
-                                "key" => "column.key.one",
-                                "value" => "column value one text"
+                                'key' => 'column.key.one',
+                                'value' => 'column value one text',
                             ],
                             [
-                                "key" => "column.key.two",
-                                "value" => "column value two text"
-                            ]
-                        ]
-                    ]
-                ]
+                                'key' => 'column.key.two',
+                                'value' => 'column value two text',
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ];
         $systemMetadata = [
-            "componentId" => "testComponent",
-            "configurationId" => "metadata-write-test",
-            "configurationRowId" => "row-1"
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => 'row-1',
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('/upload', $config, $systemMetadata, StrategyFactory::LOCAL);
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            $config,
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
@@ -221,8 +238,8 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             ],
             'testComponent' => [
                 'table.key.one' => 'table value one',
-                'table.key.two' => 'table value two'
-            ]
+                'table.key.two' => 'table value two',
+            ],
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
@@ -231,14 +248,14 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'testComponent' => [
                 'column.key.one' => 'column value one id',
                 'column.key.two' => 'column value two id',
-            ]
+            ],
         ];
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
         $tableQueue =  $writer->uploadTables('/upload', $config, $systemMetadata, 'local');
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table66');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';
@@ -247,22 +264,22 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
 
-    public function testMetadataWritingTestColumnChange()
+    public function testMetadataWritingTestColumnChange(): void
     {
         $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeSpecialDelimiter()
+    public function testMetadataWritingTestColumnChangeSpecialDelimiter(): void
     {
         $this->metadataWritingTestColumnChangeSpecialDelimiter(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeSpecialChars()
+    public function testMetadataWritingTestColumnChangeSpecialChars(): void
     {
         $this->metadataWritingTestColumnChangeSpecialChars(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeHeadless()
+    public function testMetadataWritingTestColumnChangeHeadless(): void
     {
         $this->metadataWritingTestColumnChangeHeadless(self::INPUT_BUCKET);
     }

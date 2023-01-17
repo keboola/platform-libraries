@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
-use Keboola\Datatype\Definition\Exasol;
-use Keboola\Datatype\Definition\Snowflake;
-use Keboola\Datatype\Definition\Synapse;
-
 class TableDefinitionFactory
 {
     private array $tableMetadata;

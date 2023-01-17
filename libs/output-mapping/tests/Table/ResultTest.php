@@ -47,6 +47,8 @@ class ResultTest extends TestCase
         $table2 = array_pop($tables);
         $table1 = array_pop($tables);
 
+        self::assertInstanceOf(TableInfo::class, $table1);
+        self::assertInstanceOf(TableInfo::class, $table2);
         self::assertSame('in.c-main.table', $table1->getId());
         self::assertNull($table1->getLastImportDate());
         self::assertSame('in.c-main.other-table', $table2->getId());
@@ -68,6 +70,7 @@ class ResultTest extends TestCase
         self::assertCount(3, $tables);
 
         $table1 = array_pop($tables);
+        self::assertInstanceOf(TableInfo::class, $table1);
         self::assertSame('in.c-main.table', $table1->getId());
         self::assertSame($expectedImportData, $table1->getLastImportDate());
     }
@@ -84,7 +87,7 @@ class ResultTest extends TestCase
                 'metrics' => [
                     'inBytes' => 123,
                     'inBytesUncompressed' => 0,
-                ]
+                ],
             ],
             [
                 'operationName' => 'tableCreate',
@@ -96,12 +99,14 @@ class ResultTest extends TestCase
                 'metrics' => [
                     'inBytes' => 0,
                     'inBytesUncompressed' => 5,
-                ]
+                ],
             ],
         ]));
 
+        $metrics = $tablesResult->getMetrics();
+        self::assertInstanceOf(Result\Metrics::class, $metrics);
         /** @var Result\TableMetrics[] $tablesMetrics */
-        $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        $tablesMetrics = iterator_to_array($metrics->getTableMetrics());
         self::assertCount(2, $tablesMetrics);
 
         [$table1Metrics, $table2Metrics] = $tablesMetrics;

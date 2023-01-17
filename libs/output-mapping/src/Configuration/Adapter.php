@@ -1,65 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Configuration;
 
-use Keboola\InputMapping\Reader\NullWorkspaceProvider;
-use Keboola\InputMapping\Reader\WorkspaceProviderInterface;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Yaml\Yaml;
 
 class Adapter
 {
+    public const FORMAT_YAML = 'yaml';
+    public const FORMAT_JSON = 'json';
+
+    protected ?array $config = null;
+    /** @var class-string<Configuration> */
+    protected string $configClass;
     /**
-     * @var array
+     * @var self::FORMAT_YAML | self::FORMAT_JSON
      */
-    protected $config;
+    protected string $format;
 
     /**
-     * @var string
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    protected $configClass = '';
-
-    /**
-     * @var string data format, 'yaml' or 'json'
-     */
-    protected $format;
-
-    /**
-     * Constructor.
-     *
-     * @param string $format Configuration file format ('yaml', 'json')
-     */
-    public function __construct($format = 'json')
+    public function __construct(string $format = 'json')
     {
         $this->setFormat($format);
     }
 
-    /**
-     * @return array
-     */
-    public function getConfig()
+    public function getConfig(): ?array
     {
         return $this->config;
     }
 
     /**
-     * @return string
+     * @return self::FORMAT_YAML | self::FORMAT_JSON
      */
-    public function getFormat()
+    public function getFormat(): string
     {
         return $this->format;
     }
 
-
-    /**
-     * Get configuration file suffix.
-     *
-     * @return string File extension.
-     */
-    public function getFileExtension()
+    public function getFileExtension(): string
     {
         switch ($this->format) {
             case 'yaml':
@@ -72,49 +55,38 @@ class Adapter
     }
 
     /**
-     * @param $format
-     * @return $this
-     * @throws OutputOperationException
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    public function setFormat($format)
+    public function setFormat(string $format): Adapter
     {
-        if (!in_array($format, ['yaml', 'json'])) {
-            throw new OutputOperationException("Configuration format '{$format}' not supported");
-        }
         $this->format = $format;
         return $this;
     }
 
-
-    /**
-     * @param array $config
-     * @return $this
-     */
-    public function setConfig($config)
+    public function setConfig(array $config): Adapter
     {
         $className = $this->configClass;
-        $this->config = (new $className())->parse(["config" => $config]);
+        $this->config = (new $className())->parse(['config' => $config]);
         return $this;
     }
 
     /**
      * Read configuration from data
      *
-     * @param string $serialized
      * @return array Configuration data
      * @throws OutputOperationException
      */
-    public function deserialize($serialized)
+    public function deserialize(string $serialized): array
     {
-        if ($this->getFormat() == 'yaml') {
+        if ($this->getFormat() === 'yaml') {
             $data = Yaml::parse($serialized);
-        } elseif ($this->getFormat() == 'json') {
+        } elseif ($this->getFormat() === 'json') {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {
             throw new OutputOperationException(sprintf('Invalid configuration format "%s".', $this->format));
         }
-        $this->setConfig($data);
-        return $this->getConfig();
+        $this->setConfig((array) $data);
+        return (array) $this->getConfig();
     }
 }

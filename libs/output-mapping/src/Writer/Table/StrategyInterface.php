@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
@@ -7,25 +9,14 @@ use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
 interface StrategyInterface
 {
-    /**
-     * @return ProviderInterface
-     */
-    public function getDataStorage();
+    public function getDataStorage(): ProviderInterface;
+
+    public function getMetadataStorage(): ProviderInterface;
 
     /**
-     * @return ProviderInterface
-     */
-    public function getMetadataStorage();
-
-    /**
-     * @param string$sourcePathPrefix
-     * @param array $configuration
      * @return MappingSource[]
      */
-    public function resolveMappingSources($sourcePathPrefix, array $configuration);
+    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array;
 
-    /**
-     * @return array
-     */
-    public function prepareLoadTaskOptions(SourceInterface $source, array $config);
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config): array;
 }

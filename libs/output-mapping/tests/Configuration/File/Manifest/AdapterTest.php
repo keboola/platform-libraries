@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Configuration\File\Manifest;
 
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
-use Keboola\OutputMapping\Exception\OutputOperationException;
 use PHPUnit\Framework\TestCase;
 
 class AdapterTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $adapter = new Adapter('json');
         self::assertEquals('json', $adapter->getFormat());
@@ -30,22 +31,7 @@ class AdapterTest extends TestCase
         );
     }
 
-    public function testInvalidFormat()
-    {
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('Configuration format \'invalid\' not supported');
-        new Adapter('invalid');
-    }
-
-    public function testInvalidSetFormat()
-    {
-        $adapter = new Adapter('json');
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('Configuration format \'invalid\' not supported');
-        $adapter->setFormat('invalid');
-    }
-
-    public function testDeserializeJson()
+    public function testDeserializeJson(): void
     {
         $adapter = new Adapter('json');
         $data = $adapter->deserialize('{"is_permanent": false}');
@@ -61,7 +47,7 @@ class AdapterTest extends TestCase
         );
     }
 
-    public function testDeserializeYaml()
+    public function testDeserializeYaml(): void
     {
         $adapter = new Adapter('yaml');
         $data = $adapter->deserialize('is_permanent: true');

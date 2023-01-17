@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -8,14 +10,7 @@ use Keboola\StorageApiBranch\ClientWrapper;
 
 class DestinationRewriter
 {
-    /**
-     * @param array $config
-     * @param ClientWrapper $clientWrapper
-     * @return array
-     *
-     * @throws ClientException
-     */
-    public static function rewriteDestination(array $config, ClientWrapper $clientWrapper)
+    public static function rewriteDestination(array $config, ClientWrapper $clientWrapper): array
     {
         if (!$clientWrapper->hasBranch()) {
             return $config;
@@ -27,15 +22,21 @@ class DestinationRewriter
         }
 
         $bucketId = $tableIdParts[1];
-        if (substr($bucketId, 0, 2) === 'c-') {
+        if (str_starts_with($bucketId, 'c-')) {
             $bucketId = substr($bucketId, 2);
         }
 
         try {
-            $webalizeResult = $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId());
+            $webalizeResult = $clientWrapper->getBasicClient()->webalizeDisplayName(
+                (string) $clientWrapper->getBranchId()
+            );
         } catch (ClientException $e) {
             throw new InvalidOutputException(
-                sprintf('Cannot upload file to table "%s" in Storage API: %s', $config["destination"], $e->getMessage()),
+                sprintf(
+                    'Cannot upload file to table "%s" in Storage API: %s',
+                    $config['destination'],
+                    $e->getMessage()
+                ),
                 $e->getCode(),
                 $e
             );

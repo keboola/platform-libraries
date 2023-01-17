@@ -1,38 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer;
 
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractWriter
 {
-    const SYSTEM_KEY_COMPONENT_ID = 'componentId';
-    const SYSTEM_KEY_CONFIGURATION_ID = 'configurationId';
-    const SYSTEM_KEY_CONFIGURATION_ROW_ID = 'configurationRowId';
-    const SYSTEM_KEY_BRANCH_ID = 'branchId';
-    const SYSTEM_KEY_RUN_ID = 'runId';
+    public const SYSTEM_KEY_COMPONENT_ID = 'componentId';
+    public const SYSTEM_KEY_CONFIGURATION_ID = 'configurationId';
+    public const SYSTEM_KEY_CONFIGURATION_ROW_ID = 'configurationRowId';
+    public const SYSTEM_KEY_BRANCH_ID = 'branchId';
+    public const SYSTEM_KEY_RUN_ID = 'runId';
+
+    protected ClientWrapper $clientWrapper;
+    protected LoggerInterface $logger;
 
     /**
-     * @var ClientWrapper
+     * @var Adapter::FORMAT_YAML | Adapter::FORMAT_JSON
      */
-    protected $clientWrapper;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var string
-     */
-    protected $format = 'json';
-
-    /**
-     * @var StrategyFactory
-     */
-    protected $strategyFactory;
+    protected string $format = 'json';
+    protected StrategyFactory $strategyFactory;
 
     public function __construct(StrategyFactory $strategyFactory)
     {
@@ -42,9 +34,9 @@ abstract class AbstractWriter
     }
 
     /**
-     * @param string $format
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
-    public function setFormat($format)
+    public function setFormat(string $format): void
     {
         $this->format = $format;
     }

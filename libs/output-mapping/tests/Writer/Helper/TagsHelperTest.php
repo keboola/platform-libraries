@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
@@ -12,12 +14,12 @@ class TagsHelperTest extends TestCase
 {
     use CreateBranchTrait;
 
-    private function getStorageConfig()
+    private function getStorageConfig(): array
     {
         return [
             'tags' => [
                 'first-tag',
-                'secondary-tag'
+                'secondary-tag',
             ],
             'is_public' => true,
             'is_permanent' => false,
@@ -26,7 +28,7 @@ class TagsHelperTest extends TestCase
         ];
     }
 
-    public function testRewriteTags()
+    public function testRewriteTags(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
@@ -45,7 +47,7 @@ class TagsHelperTest extends TestCase
         self::assertEquals($storageConfig, $expectedConfig);
     }
 
-    public function testRewriteEmptyTags()
+    public function testRewriteEmptyTags(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
@@ -62,11 +64,15 @@ class TagsHelperTest extends TestCase
     protected function getClientWrapper(?string $branchId): ClientWrapper
     {
         return new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId),
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                $branchId
+            ),
         );
     }
 
-    public function testRewriteNoBranch()
+    public function testRewriteNoBranch(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $storageConfig = $this->getStorageConfig();

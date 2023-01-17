@@ -1,7 +1,10 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+declare(strict_types=1);
 
+namespace Keboola\OutputMapping\Tests\Writer\Redshift;
+
+use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;
 
@@ -13,12 +16,17 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
     {
         parent::setUp();
         $this->clearBuckets([
-            self::OUTPUT_BUCKET
+            self::OUTPUT_BUCKET,
         ]);
-        $this->clientWrapper->getBasicClient()->createBucket('StorageApiLocalTableWriterRedshiftTest', 'out', '', 'redshift');
+        $this->clientWrapper->getBasicClient()->createBucket(
+            'StorageApiLocalTableWriterRedshiftTest',
+            'out',
+            '',
+            'redshift'
+        );
     }
 
-    public function testWriteTableManifestCsvRedshift()
+    public function testWriteTableManifestCsvRedshift(): void
     {
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
@@ -33,65 +41,84 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         $writer = new TableWriter($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $this->assertEquals(self::OUTPUT_BUCKET . '.table3d', $tables[0]["id"]);
+        self::assertCount(1, $tables);
+        self::assertEquals(self::OUTPUT_BUCKET . '.table3d', $tables[0]['id']);
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $root . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table3d', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(1, $table);
-        $this->assertCount(2, $table[0]);
-        $this->assertArrayHasKey('Id', $table[0]);
-        $this->assertArrayHasKey('Name', $table[0]);
-        $this->assertEquals('test', $table[0]['Id']);
-        $this->assertEquals('test\'s', $table[0]['Name']);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(1, $table);
+        self::assertCount(2, $table[0]);
+        self::assertArrayHasKey('Id', $table[0]);
+        self::assertArrayHasKey('Name', $table[0]);
+        self::assertEquals('test', $table[0]['Id']);
+        self::assertEquals('test\'s', $table[0]['Name']);
     }
 
-    public function testWriteTableIncrementalWithDeleteRedshift()
+    public function testWriteTableIncrementalWithDeleteRedshift(): void
     {
         $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table61.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        file_put_contents(
+            $root . '/upload/table61.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+        );
 
         $configs = [
             [
-                "source" => "table61.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table61",
-                "delete_where_column" => "Id",
-                "delete_where_values" => ["aabb"],
-                "delete_where_operator" => "eq",
-                "incremental" => true
-            ]
+                'source' => 'table61.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table61',
+                'delete_where_column' => 'Id',
+                'delete_where_values' => ['aabb'],
+                'delete_where_operator' => 'eq',
+                'incremental' => true,
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local'
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         // And again, check first incremental table
-        $tableQueue =  $writer->uploadTables('/upload', ["mapping" => $configs], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local'
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $exporter->exportTable(self::OUTPUT_BUCKET . ".table61", $root . DIRECTORY_SEPARATOR . "download.csv", []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($root . DIRECTORY_SEPARATOR . "download.csv"));
+        $exporter->exportTable(
+            self::OUTPUT_BUCKET . '.table61',
+            $root . DIRECTORY_SEPARATOR . 'download.csv',
+            []
+        );
+        $table = $this->clientWrapper->getBasicClient()->parseCsv(
+            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv')
+        );
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
         });
-        $this->assertCount(3, $table);
-        $this->assertCount(2, $table[0]);
-        $this->assertArrayHasKey('Id', $table[0]);
-        $this->assertArrayHasKey('Name', $table[0]);
-        $this->assertEquals('aabb', $table[0]['Id']);
-        $this->assertEquals('ccdd', $table[0]['Name']);
-        $this->assertEquals('test', $table[1]['Id']);
-        $this->assertEquals('test', $table[1]['Name']);
-        $this->assertEquals('test', $table[2]['Id']);
-        $this->assertEquals('test', $table[2]['Name']);
+        self::assertCount(3, $table);
+        self::assertCount(2, $table[0]);
+        self::assertArrayHasKey('Id', $table[0]);
+        self::assertArrayHasKey('Name', $table[0]);
+        self::assertEquals('aabb', $table[0]['Id']);
+        self::assertEquals('ccdd', $table[0]['Name']);
+        self::assertEquals('test', $table[1]['Id']);
+        self::assertEquals('test', $table[1]['Name']);
+        self::assertEquals('test', $table[2]['Id']);
+        self::assertEquals('test', $table[2]['Name']);
     }
 }

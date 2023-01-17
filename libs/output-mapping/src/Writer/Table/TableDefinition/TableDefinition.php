@@ -47,7 +47,7 @@ class TableDefinition
         return $this;
     }
 
-    public function getRequestData()
+    public function getRequestData(): array
     {
         $columns = [];
         foreach ($this->columns as $column) {
@@ -56,7 +56,7 @@ class TableDefinition
         return [
             'name' => $this->name,
             'primaryKeysNames' => $this->primaryKeysNames,
-            'columns' => $columns
+            'columns' => $columns,
         ];
     }
 }

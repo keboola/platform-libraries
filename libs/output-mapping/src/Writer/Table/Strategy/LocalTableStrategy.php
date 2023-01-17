@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
@@ -9,14 +11,16 @@ use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use SplFileInfo;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
-    public function resolveMappingSources($sourcePathPrefix, array $configuration)
+    /**
+     * @return array|MappingSource[]
+     */
+    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array
     {
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
         $dataFiles = FilesHelper::getDataFiles($sourcesPath);
@@ -42,11 +46,11 @@ class LocalTableStrategy extends AbstractTableStrategy
 
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
-            isset($configuration['mapping']) ? $configuration['mapping'] : []
+            $configuration['mapping'] ?? []
         );
     }
 
-    public function prepareLoadTaskOptions(SourceInterface $source, array $config)
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config): array
     {
         if (!$source instanceof LocalFileSource) {
             throw new InvalidArgumentException(sprintf(
@@ -72,11 +76,7 @@ class LocalTableStrategy extends AbstractTableStrategy
         return $loadOptions;
     }
 
-    /**
-     * @return string
-     * @throws ClientException
-     */
-    private function uploadSlicedFile(SplFileInfo $source, array $tags)
+    private function uploadSlicedFile(SplFileInfo $source, array $tags): string
     {
         $finder = new Finder();
         $slices = $finder->files()->in($source->getPathname())->depth(0);
@@ -95,11 +95,7 @@ class LocalTableStrategy extends AbstractTableStrategy
         return (string) $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
     }
 
-    /**
-     * @return string
-     * @throws ClientException
-     */
-    private function uploadRegularFile(SplFileInfo $source, $tags)
+    private function uploadRegularFile(SplFileInfo $source, array $tags): string
     {
         $fileUploadOptions = (new FileUploadOptions())
             ->setCompress(true)

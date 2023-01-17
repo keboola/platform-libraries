@@ -9,6 +9,7 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -23,7 +24,7 @@ class LoadTableQueueTest extends TestCase
             $this->createMock(Client::class),
             [
                 $this->createMock(LoadTableTask::class),
-                $this->createMock(LoadTableTask::class)
+                $this->createMock(LoadTableTask::class),
             ]
         );
 
@@ -70,7 +71,7 @@ class LoadTableQueueTest extends TestCase
         try {
             $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
             $loadQueue->start();
-            $this->fail('LoadTableQueue should fail with InvalidOutputException');
+            self::fail('LoadTableQueue should fail with InvalidOutputException');
         } catch (InvalidOutputException $e) {
             self::assertSame('Hi [out.c-test.test-table]', $e->getMessage());
             self::assertSame(444, $e->getCode());
@@ -97,7 +98,7 @@ class LoadTableQueueTest extends TestCase
         try {
             $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
             $loadQueue->start();
-            $this->fail('LoadTableQueue should fail with ClientException');
+            self::fail('LoadTableQueue should fail with ClientException');
         } catch (ClientException $e) {
             self::assertSame($clientException, $e);
         }
@@ -112,8 +113,8 @@ class LoadTableQueueTest extends TestCase
             ->willReturn([
                 'status' => 'error',
                 'error' => [
-                    'message' => 'Table with displayName "test" already exists.'
-                ]
+                    'message' => 'Table with displayName "test" already exists.',
+                ],
             ])
         ;
 
@@ -127,7 +128,7 @@ class LoadTableQueueTest extends TestCase
         ;
         $loadTask->expects($this->atLeastOnce())
             ->method('getStorageJobId')
-            ->willReturn(123)
+            ->willReturn('123')
         ;
 
         $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
@@ -143,11 +144,13 @@ class LoadTableQueueTest extends TestCase
         }
 
         $tablesResult = $loadQueue->getTableResult();
+        self::assertInstanceOf(Result::class, $tablesResult);
 
         $tables = $tablesResult->getTables();
         self::assertCount(0, iterator_to_array($tables));
 
-        $tablesMetrics = $tablesResult->getMetrics()->getTableMetrics();
+        $tablesMetrics = $tablesResult->getMetrics()?->getTableMetrics();
+        self::assertNotNull($tablesMetrics);
         self::assertCount(0, iterator_to_array($tablesMetrics));
     }
 
@@ -266,11 +269,11 @@ class LoadTableQueueTest extends TestCase
         ;
         $loadTask->expects($this->once())
             ->method('getStorageJobId')
-            ->willReturn(123)
+            ->willReturn('123')
         ;
         $loadTask->expects($this->once())
             ->method('applyMetadata')
-            ->with($this->callback(function ($client) {
+            ->with($this->callback(function ($client): bool {
                 self::assertInstanceOf(Metadata::class, $client);
                 return true;
             }))
@@ -288,6 +291,7 @@ class LoadTableQueueTest extends TestCase
         $table = reset($tables);
         self::assertSame($expectedTableId, $table->getId());
 
+        self::assertNotNull($tablesResult->getMetrics());
         $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
         self::assertCount(1, $tablesMetrics);
 
@@ -353,7 +357,7 @@ class LoadTableQueueTest extends TestCase
                 'metrics' => [
                     'inBytes' => 123,
                     'inBytesUncompressed' => 0,
-                ]
+                ],
             ],
             'in.c-myBucket.tableImported',
             123,
@@ -371,7 +375,7 @@ class LoadTableQueueTest extends TestCase
                 'metrics' => [
                     'inBytes' => 0,
                     'inBytesUncompressed' => 5,
-                ]
+                ],
             ],
             'in.c-myBucket.tableCreated',
             0,

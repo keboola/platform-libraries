@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
@@ -23,34 +26,29 @@ use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
+use Throwable;
 
 class TableWriter extends AbstractWriter
 {
-    const SYSTEM_METADATA_PROVIDER = 'system';
-    const KBC_LAST_UPDATED_BY_BRANCH_ID = 'KBC.lastUpdatedBy.branch.id';
-    const KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID = 'KBC.lastUpdatedBy.configurationRow.id';
-    const KBC_LAST_UPDATED_BY_CONFIGURATION_ID = 'KBC.lastUpdatedBy.configuration.id';
-    const KBC_LAST_UPDATED_BY_COMPONENT_ID = 'KBC.lastUpdatedBy.component.id';
-    const KBC_CREATED_BY_BRANCH_ID = 'KBC.createdBy.branch.id';
-    const KBC_CREATED_BY_CONFIGURATION_ROW_ID = 'KBC.createdBy.configurationRow.id';
-    const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
-    const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
-    const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
+    public const SYSTEM_METADATA_PROVIDER = 'system';
+    public const KBC_LAST_UPDATED_BY_BRANCH_ID = 'KBC.lastUpdatedBy.branch.id';
+    public const KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID = 'KBC.lastUpdatedBy.configurationRow.id';
+    public const KBC_LAST_UPDATED_BY_CONFIGURATION_ID = 'KBC.lastUpdatedBy.configuration.id';
+    public const KBC_LAST_UPDATED_BY_COMPONENT_ID = 'KBC.lastUpdatedBy.component.id';
+    public const KBC_CREATED_BY_BRANCH_ID = 'KBC.createdBy.branch.id';
+    public const KBC_CREATED_BY_CONFIGURATION_ROW_ID = 'KBC.createdBy.configurationRow.id';
+    public const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
+    public const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
+    public const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
 
-    /** @var StrategyFactory */
-    protected $strategyFactory;
+    private Metadata $metadataClient;
 
-    /** @var Metadata */
-    private $metadataClient;
-
-    /** @var TableConfigurationResolver */
-    private $tableConfigurationResolver;
+    private TableConfigurationResolver $tableConfigurationResolver;
 
     public function __construct(StrategyFactory $strategyFactory)
     {
         parent::__construct($strategyFactory);
 
-        $this->strategyFactory = $strategyFactory;
         $this->metadataClient = new Metadata($this->clientWrapper->getBasicClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
             $strategyFactory->getClientWrapper(),
@@ -59,45 +57,40 @@ class TableWriter extends AbstractWriter
         $this->logger = $strategyFactory->getLogger();
     }
 
-    public function setFormat($format)
+    /**
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     */
+    public function setFormat(string $format): void
     {
         $this->tableConfigurationResolver->setFormat($format);
     }
 
-    /**
-     * @param string $sourcePathPrefix
-     * @param array $configuration
-     * @param array $systemMetadata
-     * @param string $stagingStorageOutput
-     * @param bool $createTypedTables
-     * @return LoadTableQueue
-     * @throws \Exception
-     */
     public function uploadTables(
-        $sourcePathPrefix,
+        string $sourcePathPrefix,
         array $configuration,
         array $systemMetadata,
-        $stagingStorageOutput,
-        $createTypedTables = false,
-        $isFailedJob = false
-    ) {
-        if (empty($systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID])) {
+        string $stagingStorageOutput,
+        bool $createTypedTables = false,
+        bool $isFailedJob = false
+    ): LoadTableQueue {
+        if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
 
-        $defaultBucket = isset($configuration['bucket']) ? $configuration['bucket'] : null;
+        $defaultBucket = $configuration['bucket'] ?? null;
         $loadTableTasks = [];
         foreach ($mappingSources as $mappingSource) {
+            $config = [];
             try {
                 $config = $this->tableConfigurationResolver->resolveTableConfiguration(
                     $mappingSource,
                     $defaultBucket,
                     $systemMetadata
                 );
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 if (!$isFailedJob) {
                     throw $e;
                 }
@@ -121,7 +114,7 @@ class TableWriter extends AbstractWriter
                     sprintf(
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
                         $mappingSource->getSourceName(),
-                        $config["destination"],
+                        $config['destination'],
                         $e->getMessage()
                     ),
                     $e->getCode(),
@@ -135,20 +128,18 @@ class TableWriter extends AbstractWriter
         return $tableQueue;
     }
 
-    /**
-     * @return LoadTableTaskInterface
-     * @throws ClientException
-     */
     private function createLoadTableTask(
         StrategyInterface $strategy,
         SourceInterface $source,
         array $config,
         array $systemMetadata,
         bool $createTypedTables
-    ) {
+    ): LoadTableTaskInterface {
         $hasColumns = !empty($config['columns']);
         if (!$hasColumns && $source->isSliced()) {
-            throw new InvalidOutputException(sprintf('Sliced file "%s" columns specification missing.', $source->getName()));
+            throw new InvalidOutputException(
+                sprintf('Sliced file "%s" columns specification missing.', $source->getName())
+            );
         }
 
         try {
@@ -203,7 +194,10 @@ class TableWriter extends AbstractWriter
         ];
 
         if (!$destinationTableExists && isset($config['distribution_key'])) {
-            $loadOptions['distributionKey'] = implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']));
+            $loadOptions['distributionKey'] = implode(
+                ',',
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
+            );
         }
 
         $loadOptions = array_merge(
@@ -256,7 +250,7 @@ class TableWriter extends AbstractWriter
         if (!empty($config['metadata'])) {
             $loadTask->addMetadata(new TableMetadata(
                 $destination->getTableId(),
-                $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
                 $config['metadata']
             ));
         }
@@ -264,7 +258,7 @@ class TableWriter extends AbstractWriter
         if (!empty($config['column_metadata'])) {
             $loadTask->addMetadata(new ColumnMetadata(
                 $destination->getTableId(),
-                $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+                $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
                 $config['column_metadata']
             ));
         }
@@ -285,11 +279,12 @@ class TableWriter extends AbstractWriter
             $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
             $this->checkDevBucketMetadata($destination);
         } catch (ClientException $e) {
-            if ($e->getCode() == 404) {
-                // bucket doesn't exist so we need to create it
-                $this->createDestinationBucket($destination, $systemMetadata);
-                $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            if ($e->getCode() !== 404) {
+                throw $e;
             }
+            // bucket doesn't exist so we need to create it
+            $this->createDestinationBucket($destination, $systemMetadata);
+            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
         }
 
         return [
@@ -312,7 +307,7 @@ class TableWriter extends AbstractWriter
         );
     }
 
-    private function createTable(MappingDestination $destination, array $columns, array $loadOptions)
+    private function createTable(MappingDestination $destination, array $columns, array $loadOptions): void
     {
         $tmp = new Temp();
 
@@ -349,7 +344,7 @@ class TableWriter extends AbstractWriter
         }
     }
 
-    private function checkDevBucketMetadata(MappingDestination $destination)
+    private function checkDevBucketMetadata(MappingDestination $destination): void
     {
         if (!$this->clientWrapper->hasBranch()) {
             return;
@@ -391,63 +386,55 @@ class TableWriter extends AbstractWriter
         ));
     }
 
-    /**
-     * @param array $systemMetadata
-     * @return array
-     */
-    private function getCreatedMetadata(array $systemMetadata)
+    private function getCreatedMetadata(array $systemMetadata): array
     {
         $metadata[] = [
             'key' => TableWriter::KBC_CREATED_BY_COMPONENT_ID,
-            'value' => $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+            'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
         ];
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_BRANCH_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_CREATED_BY_BRANCH_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_BRANCH_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
             ];
         }
         return $metadata;
     }
 
-    /**
-     * @param array $systemMetadata
-     * @return array
-     */
-    private function getUpdatedMetadata(array $systemMetadata)
+    private function getUpdatedMetadata(array $systemMetadata): array
     {
         $metadata[] = [
             'key' => TableWriter::KBC_LAST_UPDATED_BY_COMPONENT_ID,
-            'value' => $systemMetadata[TableWriter::SYSTEM_KEY_COMPONENT_ID],
+            'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
         ];
         if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_BRANCH_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID,
-                'value' => $systemMetadata[TableWriter::SYSTEM_KEY_BRANCH_ID],
+                'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
             ];
         }
         return $metadata;

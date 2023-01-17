@@ -1,0 +1,11 @@
+parameters:
+    level: max
+    checkMissingIterableValueType: false
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\File;
@@ -8,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 class FileTest extends TestCase
 {
 
-    public function testConfiguration()
+    public function testConfiguration(): void
     {
         $config = [
                 'source' => 'file',
@@ -23,6 +25,6 @@ class FileTest extends TestCase
             'tags' => ['tag1', 'tag2'],
         ];
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        $this->assertEquals($expectedResponse, $processedConfiguration);
+        self::assertEquals($expectedResponse, $processedConfiguration);
     }
 }

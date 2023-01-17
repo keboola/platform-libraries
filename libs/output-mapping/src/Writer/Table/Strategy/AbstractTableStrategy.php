@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
@@ -11,53 +13,22 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractTableStrategy implements StrategyInterface
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
-    /** @var ProviderInterface */
-    protected $dataStorage;
-
-    /** @var ProviderInterface */
-    protected $metadataStorage;
-
-    /** @var string */
-    protected $format;
-
-    /** @var boolean */
-    protected $isFailedJob;
-
-    /**
-     * @param ClientWrapper $storageClient
-     * @param LoggerInterface $logger
-     * @param ProviderInterface $dataStorage
-     * @param ProviderInterface $metadataStorage
-     * @param string $format
-     */
     public function __construct(
-        ClientWrapper $storageClient,
-        LoggerInterface $logger,
-        ProviderInterface $dataStorage,
-        ProviderInterface $metadataStorage,
-        $format,
-        $isFailedJob = false
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        protected readonly ProviderInterface $dataStorage,
+        protected readonly ProviderInterface $metadataStorage,
+        protected readonly string $format,
+        protected readonly bool $isFailedJob = false
     ) {
-        $this->clientWrapper = $storageClient;
-        $this->logger = $logger;
-        $this->dataStorage = $dataStorage;
-        $this->metadataStorage = $metadataStorage;
-        $this->format = $format;
-        $this->isFailedJob = $isFailedJob;
     }
 
-    public function getDataStorage()
+    public function getDataStorage(): ProviderInterface
     {
         return $this->dataStorage;
     }
 
-    public function getMetadataStorage()
+    public function getMetadataStorage(): ProviderInterface
     {
         return $this->metadataStorage;
     }
@@ -67,7 +38,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
      * @param array<array{source: string}> $mappings
      * @return MappingSource[]
      */
-    protected function combineSourcesWithMappingsFromConfiguration(array $mappingSources, array $mappings)
+    protected function combineSourcesWithMappingsFromConfiguration(array $mappingSources, array $mappings): array
     {
         $mappingsBySource = [];
         foreach ($mappings as $mapping) {
@@ -78,7 +49,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
         foreach ($mappingSources as $source) {
             $sourceName = $source->getSourceName();
 
-            $sourceMappings = isset($mappingsBySource[$sourceName]) ? $mappingsBySource[$sourceName] : [];
+            $sourceMappings = $mappingsBySource[$sourceName] ?? [];
             unset($mappingsBySource[$sourceName]);
 
             if (count($sourceMappings) === 0) {

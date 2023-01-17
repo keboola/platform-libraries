@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Configuration\Table;
 
 use Keboola\OutputMapping\Configuration\Table;
@@ -8,7 +10,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class ManifestTest extends TestCase
 {
-    public function testBasicConfiguration()
+    public function testBasicConfiguration(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -30,13 +32,10 @@ class ManifestTest extends TestCase
         ];
 
         $processedConfiguration = (new Table\Manifest())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-    /**
-     *
-     */
-    public function testComplexConfiguration()
+    public function testComplexConfiguration(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -57,21 +56,24 @@ class ManifestTest extends TestCase
         $expectedArray = $config;
 
         $processedConfiguration = (new Table\Manifest())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-    public function testInvalidWhereOperator()
+    public function testInvalidWhereOperator(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
             'delete_where_operator' => 'abc',
         ];
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Invalid configuration for path "table.delete_where_operator": Invalid operator in delete_where_operator "abc"');
+        $this->expectExceptionMessage(
+            'Invalid configuration for path "table.delete_where_operator": ' .
+            'Invalid operator in delete_where_operator "abc"'
+        );
         (new Table\Manifest())->parse(['config' => $config]);
     }
 
-    public function testTableMetadataConfiguration()
+    public function testTableMetadataConfiguration(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -103,10 +105,10 @@ class ManifestTest extends TestCase
         $expectedArray['metadata'] = $config['metadata'];
 
         $parsedConfig = (new Table\Manifest())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $parsedConfig);
+        self::assertEquals($expectedArray, $parsedConfig);
     }
 
-    public function testColumnMetadataConfiguration()
+    public function testColumnMetadataConfiguration(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -152,6 +154,6 @@ class ManifestTest extends TestCase
 
         $parsedConfig = (new Table\Manifest())->parse(['config' => $config]);
 
-        $this->assertEquals($expectedArray, $parsedConfig);
+        self::assertEquals($expectedArray, $parsedConfig);
     }
 }

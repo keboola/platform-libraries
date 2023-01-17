@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\InputMapping\Table\Result\TableInfo;
@@ -12,14 +14,11 @@ use Keboola\StorageApi\Metadata;
 
 class LoadTableQueue
 {
-    /** @var Client */
-    private $client;
+    private Client $client;
 
     /** @var LoadTableTaskInterface[] */
-    private $loadTableTasks;
-
-    /** @var Result */
-    private $tableResult;
+    private array $loadTableTasks;
+    private Result $tableResult;
 
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
@@ -31,7 +30,7 @@ class LoadTableQueue
         $this->tableResult = new Result();
     }
 
-    public function start()
+    public function start(): void
     {
         foreach ($this->loadTableTasks as $loadTableTask) {
             try {
@@ -50,7 +49,7 @@ class LoadTableQueue
         }
     }
 
-    public function waitForAll()
+    public function waitForAll(): array
     {
         $metadataApiClient = new Metadata($this->client);
 
@@ -60,10 +59,15 @@ class LoadTableQueue
         foreach ($this->loadTableTasks as $task) {
             $jobId = $task->getStorageJobId();
             $jobIds[] = $jobId;
+            /** @var array $jobResult */
             $jobResult = $this->client->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
-                $errors[] = sprintf('Failed to load table "%s": %s', $task->getDestinationTableName(), $jobResult['error']['message']);
+                $errors[] = sprintf(
+                    'Failed to load table "%s": %s',
+                    $task->getDestinationTableName(),
+                    $jobResult['error']['message']
+                );
             } else {
                 try {
                     $task->applyMetadata($metadataApiClient);
@@ -81,7 +85,9 @@ class LoadTableQueue
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
-                        $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['results']['id'])));
+                        $this->tableResult->addTable(
+                            new TableInfo($this->client->getTable($jobResult['results']['id']))
+                        );
                         $jobResults[] = $jobResult;
                         break;
                 }
@@ -96,12 +102,12 @@ class LoadTableQueue
         return $jobIds;
     }
 
-    public function getTaskCount()
+    public function getTaskCount(): int
     {
         return count($this->loadTableTasks);
     }
 
-    public function getTableResult()
+    public function getTableResult(): Result
     {
         return $this->tableResult;
     }

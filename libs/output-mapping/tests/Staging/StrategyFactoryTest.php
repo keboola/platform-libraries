@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -17,10 +20,13 @@ use Psr\Log\NullLogger;
 
 class StrategyFactoryTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN')
+            ),
         );
         $logger = new NullLogger();
         $factory = new StrategyFactory($clientWrapper, $logger, 'json');
@@ -33,71 +39,92 @@ class StrategyFactoryTest extends TestCase
         );
     }
 
-    public function testGetFileStrategyFail()
+    public function testGetFileStrategyFail(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('The project does not support "local" file output backend.');
-        $factory->getFileOutputStrategy(StrategyFactory::LOCAL);
+        $factory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL);
     }
 
-    public function testGetFileStrategySuccess()
+    public function testGetFileStrategySuccess(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'
         );
-        $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]);
+        $factory->addProvider(
+            new NullProvider(),
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]
+        );
         self::assertInstanceOf(
             Local::class,
-            $factory->getFileOutputStrategy(StrategyFactory::LOCAL)
+            $factory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
         );
     }
 
-    public function testGetTableStrategyFail()
+    public function testGetTableStrategyFail(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('The project does not support "local" table output backend.');
-        $factory->getTableOutputStrategy(StrategyFactory::LOCAL);
+        $factory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL);
     }
 
-    public function testGetTableStrategySuccess()
+    public function testGetTableStrategySuccess(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'
         );
-        $factory->addProvider(new NullProvider(), [StrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
+        $factory->addProvider(
+            new NullProvider(),
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]
+        );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $factory->getTableOutputStrategy(StrategyFactory::LOCAL)
+            $factory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
         );
     }
 
-    public function testAddProviderInvalidStaging()
+    public function testAddProviderInvalidStaging(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'
@@ -107,11 +134,14 @@ class StrategyFactoryTest extends TestCase
         $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
     }
 
-    public function testGetTableStrategyInvalid()
+    public function testGetTableStrategyInvalid(): void
     {
         $factory = new StrategyFactory(
             new ClientWrapper(
-                new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN, null),
+                new ClientOptions(
+                    (string) getenv('STORAGE_API_URL'),
+                    (string) getenv('STORAGE_API_TOKEN')
+                ),
             ),
             new NullLogger(),
             'json'

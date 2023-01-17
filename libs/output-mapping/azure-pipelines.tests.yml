@@ -11,7 +11,7 @@ jobs:
       dependsOn: [output_mapping_lock]
       displayName: Code Style
       serviceName: ci-output-mapping
-      testCommand: composer phpcs
+      testCommand: composer build
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:

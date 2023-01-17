@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\StorageApi\Client;
@@ -7,17 +9,11 @@ use Keboola\StorageApi\Metadata;
 
 interface LoadTableTaskInterface
 {
-    public function startImport(Client $client);
+    public function startImport(Client $client): void;
 
-    public function applyMetadata(Metadata $metadataApiClient);
+    public function applyMetadata(Metadata $metadataApiClient): void;
 
-    /**
-     * @return string
-     */
-    public function getDestinationTableName();
+    public function getDestinationTableName(): string;
 
-    /**
-     * @return null|string
-     */
-    public function getStorageJobId();
+    public function getStorageJobId(): ?string;
 }

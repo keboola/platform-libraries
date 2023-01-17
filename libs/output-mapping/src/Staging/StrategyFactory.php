@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Staging;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\Staging\Definition;
-use Keboola\InputMapping\Staging\StrategyFactory as InputMappingStrategyFactory;
+use Keboola\InputMapping\Staging\AbstractDefinition;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
@@ -13,13 +17,17 @@ use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
+use Keboola\OutputMapping\Writer\TableWriter;
 
-class StrategyFactory extends InputMappingStrategyFactory
+class StrategyFactory extends AbstractStrategyFactory
 {
+    /** @var Definition[] */
+    protected array $strategyMap = [];
+
     /**
      * @return Definition[]
      */
-    public function getStrategyMap()
+    public function getStrategyMap(): array
     {
         if (empty($this->strategyMap)) {
             $this->strategyMap = [
@@ -68,15 +76,25 @@ class StrategyFactory extends InputMappingStrategyFactory
         return $this->strategyMap;
     }
 
-    /**
-     * @param string $stagingType
-     * @return FileStrategyInterface
-     */
-    public function getFileOutputStrategy($stagingType)
+    protected function getStagingDefinition(string $stagingType): Definition
+    {
+        if (!isset($this->getStrategyMap()[$stagingType])) {
+            throw new InvalidInputException(
+                sprintf(
+                    'Input mapping on type "%s" is not supported. Supported types are "%s".',
+                    $stagingType,
+                    implode(', ', array_keys($this->getStrategyMap()))
+                )
+            );
+        }
+        return $this->getStrategyMap()[$stagingType];
+    }
+
+    public function getFileOutputStrategy(string $stagingType): FileStrategyInterface
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_FILE);
+            $stagingDefinition->validateFor(AbstractDefinition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
@@ -95,16 +113,11 @@ class StrategyFactory extends InputMappingStrategyFactory
         );
     }
 
-    /**
-     * @param string $stagingType
-     * @param string $isFailedJob
-     * @return TableStrategyInterface
-     */
-    public function getTableOutputStrategy($stagingType, $isFailedJob = false)
+    public function getTableOutputStrategy(string $stagingType, bool $isFailedJob = false): TableStrategyInterface
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_TABLE);
+            $stagingDefinition->validateFor(AbstractDefinition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),

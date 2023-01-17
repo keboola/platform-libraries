@@ -20,7 +20,7 @@ class TableMetricsTest extends TestCase
                 'metrics' => [
                     'inBytes' => 123,
                     'inBytesUncompressed' => 0,
-                ]
+                ],
             ],
             'in.c-myBucket.tableImported',
             123,
@@ -38,7 +38,7 @@ class TableMetricsTest extends TestCase
                 'metrics' => [
                     'inBytes' => 0,
                     'inBytesUncompressed' => 5,
-                ]
+                ],
             ],
             'in.c-myBucket.tableCreated',
             0,

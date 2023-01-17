@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Keboola\OutputMapping\Writer\Table\MappingSource;
@@ -9,7 +11,7 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSourceTest extends TestCase
 {
-    public function testGetters()
+    public function testGetters(): void
     {
         $source = new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false);
         $manifestFile = new SplFileInfo('', '', '');
@@ -27,7 +29,7 @@ class MappingSourceTest extends TestCase
         self::assertSame($mapping, $mappingSource->getMapping());
     }
 
-    public function testSetManifestFile()
+    public function testSetManifestFile(): void
     {
         $source = new MappingSource(new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false));
         self::assertNull($source->getManifestFile());
@@ -38,7 +40,7 @@ class MappingSourceTest extends TestCase
         self::assertSame($manifestFile, $source->getManifestFile());
     }
 
-    public function testSetMapping()
+    public function testSetMapping(): void
     {
         $source = new MappingSource(new WorkspaceItemSource('source-name', 'workspace-id', 'data-object', false));
         self::assertNull($source->getMapping());

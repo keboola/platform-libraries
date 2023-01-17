@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
-use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use PHPUnit\Framework\TestCase;
 
@@ -11,12 +12,12 @@ class PathTest extends TestCase
     /**
      * @dataProvider provideNoTrailingSlashTestData
      */
-    public function testNoTrailingSlash($path, $expectedResult)
+    public function testNoTrailingSlash(string $path, string $expectedResult): void
     {
         self::assertSame($expectedResult, Path::noTrailingSlash($path));
     }
 
-    public function provideNoTrailingSlashTestData()
+    public function provideNoTrailingSlashTestData(): array
     {
         return [
             ['', ''],
@@ -28,23 +29,15 @@ class PathTest extends TestCase
         ];
     }
 
-    public function testNoTrailingSlashRequiresString()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $path must be a string, boolean given');
-
-        Path::noTrailingSlash(false);
-    }
-
     /**
      * @dataProvider provideEnsureTrailingSlashTestData
      */
-    public function testEnsureTrailingSlash($path, $expectedResult)
+    public function testEnsureTrailingSlash(string $path, string $expectedResult): void
     {
         self::assertSame($expectedResult, Path::ensureTrailingSlash($path));
     }
 
-    public function provideEnsureTrailingSlashTestData()
+    public function provideEnsureTrailingSlashTestData(): array
     {
         return [
             ['', ''],
@@ -56,23 +49,15 @@ class PathTest extends TestCase
         ];
     }
 
-    public function testEnsureTrailingSlashRequiresString()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $path must be a string, boolean given');
-
-        Path::ensureTrailingSlash(false);
-    }
-
     /**
      * @dataProvider provideJoinTestData
      */
-    public function testJoin($paths, $expectedResult)
+    public function testJoin(array $paths, string $expectedResult): void
     {
         self::assertSame($expectedResult, Path::join(...$paths));
     }
 
-    public function provideJoinTestData()
+    public function provideJoinTestData(): array
     {
         return [
             [[], ''],
@@ -89,13 +74,5 @@ class PathTest extends TestCase
             [['aa', '', 'bb'], 'aa/bb'],
             [['aa', 'bb', ''], 'aa/bb'],
         ];
-    }
-
-    public function testJoinRequiresStringParts()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $path must be a string, integer given');
-
-        Path::join(1);
     }
 }

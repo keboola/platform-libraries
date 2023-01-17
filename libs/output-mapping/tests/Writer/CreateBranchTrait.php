@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\StorageApi\DevBranches;
+use Keboola\StorageApiBranch\ClientWrapper;
 
 trait CreateBranchTrait
 {
-
-    public function createBranch($clientWrapper, $branchName)
+    public function createBranch(ClientWrapper $clientWrapper, string $branchName): string
     {
         $branches = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -15,6 +17,6 @@ trait CreateBranchTrait
                 $branches->deleteBranch($branch['id']);
             }
         }
-        return $branches->createBranch($branchName)['id'];
+        return (string) $branches->createBranch($branchName)['id'];
     }
 }

@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
 use Keboola\StorageApi\Client;
 
 class LoadTableTask extends AbstractLoadTableTask
 {
-    public function startImport(Client $client)
+    public function startImport(Client $client): void
     {
-        $this->storageJobId = $client->queueTableImport($this->destination->getTableId(), $this->options);
+        $this->storageJobId = (string) $client->queueTableImport($this->destination->getTableId(), $this->options);
     }
 }

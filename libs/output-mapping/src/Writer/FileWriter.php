@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer;
 
 use Keboola\InputMapping\Reader;
@@ -23,8 +25,13 @@ class FileWriter extends AbstractWriter
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      * @param array $tableFiles For the use file storage only case, tags etc are provided here
      */
-    public function uploadFiles($source, $configuration, $systemMetadata, $storage, $tableFiles = [])
-    {
+    public function uploadFiles(
+        string $source,
+        array $configuration,
+        array $systemMetadata,
+        string $storage,
+        array $tableFiles = []
+    ): void {
         if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
@@ -57,7 +64,9 @@ class FileWriter extends AbstractWriter
         // Check for manifest orphans
         foreach ($manifests as $manifest) {
             if (!in_array(substr(basename($manifest->getName()), 0, -9), $fileNames)) {
-                throw new InvalidOutputException('Found orphaned file manifest: \'' . basename($manifest->getName()) . "'");
+                throw new InvalidOutputException(
+                    'Found orphaned file manifest: \'' . basename($manifest->getName()) . "'"
+                );
             }
         }
 
@@ -125,7 +134,7 @@ class FileWriter extends AbstractWriter
      * Add tags to processed input files.
      * @param $configuration array
      */
-    public function tagFiles(array $configuration)
+    public function tagFiles(array $configuration): void
     {
         $prefix = null;
         if ($this->clientWrapper->hasBranch()) {

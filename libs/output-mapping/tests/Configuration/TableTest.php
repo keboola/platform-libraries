@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\Table;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class TableTest extends TestCase
 {
-    public function testBasicConfiguration()
+    public function testBasicConfiguration(): void
     {
         $config = [
             'source' => 'data.csv',
@@ -33,10 +34,10 @@ class TableTest extends TestCase
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-    public function testComplexConfiguration()
+    public function testComplexConfiguration(): void
     {
         $config = [
             'source' => 'test',
@@ -58,10 +59,10 @@ class TableTest extends TestCase
         $expectedArray = $config;
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-    public function testInvalidWhereOperator()
+    public function testInvalidWhereOperator(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -69,11 +70,14 @@ class TableTest extends TestCase
         ];
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Invalid configuration for path "table.delete_where_operator": Invalid operator in delete_where_operator "abc"');
+        $this->expectExceptionMessage(
+            'Invalid configuration for path "table.delete_where_operator": ' .
+            'Invalid operator in delete_where_operator "abc"'
+        );
         (new Table())->parse(['config' => $config]);
     }
 
-    public function testEmptyConfiguration()
+    public function testEmptyConfiguration(): void
     {
         self::expectException(InvalidConfigurationException::class);
         self::expectExceptionMessage('The child config "source" under "table" must be configured.');
@@ -81,7 +85,7 @@ class TableTest extends TestCase
         (new Table())->parse(['config' => []]);
     }
 
-    public function testPrimaryKeyEmptyString()
+    public function testPrimaryKeyEmptyString(): void
     {
         $config = [
             'source' => 'test',
@@ -105,10 +109,10 @@ class TableTest extends TestCase
             'write_always' => false,
         ];
         $processedConfiguration = (new Table())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 
-    public function testEmptyDeleteWhereOp()
+    public function testEmptyDeleteWhereOp(): void
     {
         $config = [
             'source' => 'data.csv',
@@ -133,6 +137,6 @@ class TableTest extends TestCase
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
-        $this->assertEquals($expectedArray, $processedConfiguration);
+        self::assertEquals($expectedArray, $processedConfiguration);
     }
 }

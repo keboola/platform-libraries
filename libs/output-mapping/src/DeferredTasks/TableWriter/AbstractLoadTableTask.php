@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
@@ -9,17 +11,11 @@ use Keboola\StorageApi\Metadata;
 
 abstract class AbstractLoadTableTask implements LoadTableTaskInterface
 {
-    /** @var MappingDestination */
-    protected $destination;
-
-    /** @var array */
-    protected $options;
-
-    /** @var null|string */
-    protected $storageJobId;
-
+    protected MappingDestination $destination;
+    protected array $options;
+    protected ?string $storageJobId;
     /** @var MetadataInterface[] */
-    protected $metadata = [];
+    protected array $metadata = [];
 
     public function __construct(MappingDestination $destination, array $options)
     {
@@ -27,24 +23,24 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         $this->options = $options;
     }
 
-    public function addMetadata(MetadataInterface $metadataDefinition)
+    public function addMetadata(MetadataInterface $metadataDefinition): void
     {
         $this->metadata[] = $metadataDefinition;
     }
 
-    public function applyMetadata(Metadata $metadataApiClient)
+    public function applyMetadata(Metadata $metadataApiClient): void
     {
         foreach ($this->metadata as $metadataDefinition) {
             $metadataDefinition->apply($metadataApiClient);
         }
     }
 
-    public function getDestinationTableName()
+    public function getDestinationTableName(): string
     {
         return $this->destination->getTableId();
     }
 
-    public function getStorageJobId()
+    public function getStorageJobId(): ?string
     {
         return $this->storageJobId;
     }

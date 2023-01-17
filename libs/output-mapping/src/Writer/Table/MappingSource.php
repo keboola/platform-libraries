@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
@@ -7,69 +9,39 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSource
 {
-    /** @var SourceInterface */
-    private $source;
-
-    /** @var null|SplFileInfo */
-    private $manifestFile;
-
-    /** @var null|array */
-    private $mapping;
-
     public function __construct(
-        SourceInterface $source,
-        SplFileInfo $manifestFile = null,
-        array $mapping = null
+        private readonly SourceInterface $source,
+        private ?SplFileInfo $manifestFile = null,
+        private ?array $mapping = null
     ) {
-        $this->source = $source;
-        $this->manifestFile = $manifestFile;
-        $this->mapping = $mapping;
     }
 
-    /**
-     * @return SourceInterface
-     */
-    public function getSource()
+    public function getSource(): SourceInterface
     {
         return $this->source;
     }
 
-    /**
-     * @return string
-     */
-    public function getSourceName()
+    public function getSourceName(): string
     {
         return $this->source->getName();
     }
 
-    /**
-     * @param SplFileInfo|null $file
-     */
-    public function setManifestFile($file)
+    public function setManifestFile(?SplFileInfo $file): void
     {
         $this->manifestFile = $file;
     }
 
-    /**
-     * @return SplFileInfo|null
-     */
-    public function getManifestFile()
+    public function getManifestFile(): ?SplFileInfo
     {
         return $this->manifestFile;
     }
 
-    /**
-     * @param array|null $mapping
-     */
-    public function setMapping($mapping)
+    public function setMapping(?array $mapping): void
     {
         $this->mapping = $mapping;
     }
 
-    /**
-     * @return array|null
-     */
-    public function getMapping()
+    public function getMapping(): ?array
     {
         return $this->mapping;
     }

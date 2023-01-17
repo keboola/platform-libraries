@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Helper;
 
 class ConfigurationMerger
 {
-    public static function mergeConfigurations(array $configFromManifest, array $configFromMapping)
+    public static function mergeConfigurations(array $configFromManifest, array $configFromMapping): array
     {
         $defaults = ['incremental' => false, 'delete_where_operator' => 'eq', 'delimiter' => ',', 'enclosure' => '"'];
         $config = $configFromManifest;
@@ -40,7 +42,7 @@ class ConfigurationMerger
         return $config;
     }
 
-    private static function mergeMetadata($target, $source)
+    private static function mergeMetadata(array $target, array $source): array
     {
         $metadataMap = [];
         foreach ($target as $metadataItem) {

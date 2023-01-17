@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Configuration;
 
-use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 class Table extends Configuration
 {
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('table');
         $root = $treeBuilder->getRootNode();
@@ -15,9 +17,9 @@ class Table extends Configuration
         return $treeBuilder;
     }
 
-    public static function configureNode(NodeDefinition $node)
+    public static function configureNode(ArrayNodeDefinition $node): void
     {
         Table\Manifest::configureNode($node);
-        $node->children()->scalarNode("source")->isRequired()->end();
+        $node->children()->scalarNode('source')->isRequired()->end();
     }
 }

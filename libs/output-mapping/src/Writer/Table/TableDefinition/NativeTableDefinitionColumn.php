@@ -8,11 +8,11 @@ use Keboola\Datatype\Definition\DefinitionInterface;
 
 class NativeTableDefinitionColumn implements TableDefinitionColumnInterface
 {
-    private DefinitionInterface $dataTypeDefinition;
+    private ?DefinitionInterface $dataTypeDefinition;
 
     private string $name;
 
-    public function __construct(string $name, DefinitionInterface $dataTypeDefinition)
+    public function __construct(string $name, ?DefinitionInterface $dataTypeDefinition)
     {
         $this->name = $name;
         $this->dataTypeDefinition = $dataTypeDefinition;
@@ -23,7 +23,7 @@ class NativeTableDefinitionColumn implements TableDefinitionColumnInterface
         return $this->name;
     }
 
-    public function getDataTypeDefinition(): DefinitionInterface
+    public function getDataTypeDefinition(): ?DefinitionInterface
     {
         return $this->dataTypeDefinition;
     }
@@ -32,7 +32,7 @@ class NativeTableDefinitionColumn implements TableDefinitionColumnInterface
     {
         return [
             'name' => $this->name,
-            'definition' => $this->dataTypeDefinition->toArray(),
+            'definition' => $this->dataTypeDefinition?->toArray(),
         ];
     }
 }

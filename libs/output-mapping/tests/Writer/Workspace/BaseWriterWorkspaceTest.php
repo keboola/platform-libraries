@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
@@ -10,19 +13,16 @@ use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 abstract class BaseWriterWorkspaceTest extends BaseWriterTest
 {
-    /** @var string */
-    protected $workspaceId;
-
-    /** @var array */
-    protected $workspaceCredentials;
-
-    /** @var array */
-    protected $workspace;
+    protected ?string $workspaceId = null;
+    protected array $workspaceCredentials;
+    protected array $workspace;
 
     public function tearDown(): void
     {
@@ -40,22 +40,26 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         parent::tearDown();
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
-    {
+    protected function getStagingFactory(
+        ?ClientWrapper $clientWrapper = null,
+        string $format = 'json',
+        ?LoggerInterface $logger = null,
+        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+    ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
-            $logger ? $logger : new NullLogger(),
+            $clientWrapper ?: $this->clientWrapper,
+            $logger ?: new NullLogger(),
             $format
         );
         $mockWorkspace = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend) {
+            function () use ($backend): string {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $workspace;
                     $this->workspaceCredentials = $workspace['connection'];
                 }
@@ -66,7 +70,7 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
             ->setMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
+            function (): string {
                 return $this->tmp->getTmpFolder();
             }
         );
@@ -81,16 +85,15 @@ abstract class BaseWriterWorkspaceTest extends BaseWriterTest
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                $backend[0] => new Scope([Scope::TABLE_DATA])
+                $backend[0] => new Scope([Scope::TABLE_DATA]),
             ]
         );
         return $stagingFactory;
     }
 
-    protected function prepareWorkspaceWithTables($type, $bucketName, $tablePrefix = '')
+    protected function prepareWorkspaceWithTables(string $type, string $bucketName, string $tablePrefix = ''): void
     {
         $temp = new Temp();
-        $temp->initRunFolder();
         $root = $temp->getTmpFolder();
         $backendType = $type;
         $bucketId = 'in.c-' . $bucketName;

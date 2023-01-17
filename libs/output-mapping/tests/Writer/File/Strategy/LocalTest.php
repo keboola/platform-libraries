@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
 use Keboola\InputMapping\Staging\NullProvider;
@@ -23,10 +25,9 @@ class LocalTest extends BaseWriterTest
     {
         parent::setUp();
         $this->temp = new Temp();
-        $this->temp->initRunFolder();
     }
 
-    private function getProvider()
+    private function getProvider(): ProviderInterface
     {
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
@@ -40,33 +41,69 @@ class LocalTest extends BaseWriterTest
         return $mockLocal;
     }
 
-    public function testListFilesNoFiles()
+    public function testListFilesNoFiles(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $files = $strategy->listFiles('');
         self::assertSame([], $files);
     }
 
-    public function testListFilesNonExistentDir()
+    public function testListFilesNonExistentDir(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listFiles('non-existent-directory/and-file');
     }
 
-    public function testListFiles()
+    public function testListFiles(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file', 'my-contents');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file.manifest', 'manifest data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-second-file', 'second file');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest', '2nd manifest data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/tables/my-file', 'my-contents');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest', 'table manifest');
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file',
+            'my-contents'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file.manifest',
+            'manifest data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-second-file',
+            'second file'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest',
+            '2nd manifest data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/tables/my-file',
+            'my-contents'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest',
+            'table manifest'
+        );
         $files = $strategy->listFiles('/data/out/files');
         $fileNames = [];
         foreach ($files as $file) {
@@ -78,26 +115,56 @@ class LocalTest extends BaseWriterTest
         self::assertStringEndsWith('data/out/files/', $fileNames['my-file']);
     }
 
-    public function testListManifestsNonExistentDir()
+    public function testListManifestsNonExistentDir(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listManifests('non-existent-directory/and-file');
     }
 
-    public function testListManifests()
+    public function testListManifests(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file', 'my-contents');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file.manifest', 'manifest data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-second-file', 'second file');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest', '2nd manifest data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/tables/my-file', 'my-contents');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest', 'table manifest');
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file',
+            'my-contents'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file.manifest',
+            'manifest data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-second-file',
+            'second file'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest',
+            '2nd manifest data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/tables/my-file',
+            'my-contents'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest',
+            'table manifest'
+        );
         $files = $strategy->listManifests('data/out/files');
         $fileNames = [];
         foreach ($files as $file) {
@@ -109,13 +176,25 @@ class LocalTest extends BaseWriterTest
         self::assertStringEndsWith('data/out/files/', $fileNames['my-file.manifest']);
     }
 
-    public function testLoadFileToStorageEmptyConfig()
+    public function testLoadFileToStorageEmptyConfig(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest', 'manifest data');
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one',
+            'my-data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
+            'manifest data'
+        );
         $fileId = $strategy->loadFileToStorage('/data/out/files/my-file_one', []);
         $this->clientWrapper->getBasicClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
@@ -132,13 +211,25 @@ class LocalTest extends BaseWriterTest
         self::assertEquals(15, $file['maxAgeDays']);
     }
 
-    public function testLoadFileToStorageFullConfig()
+    public function testLoadFileToStorageFullConfig(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest', 'manifest data');
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one',
+            'my-data'
+        );
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
+            'manifest data'
+        );
         $fileId = $strategy->loadFileToStorage(
             'data/out/files/my-file_one',
             [
@@ -152,7 +243,7 @@ class LocalTest extends BaseWriterTest
         $this->clientWrapper->getBasicClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
         $this->clientWrapper->getBasicClient()->downloadFile($fileId, $destination);
-        $contents = (string)file_get_contents($destination);
+        $contents = (string) file_get_contents($destination);
         self::assertEquals('my-data', $contents);
 
         $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
@@ -164,9 +255,15 @@ class LocalTest extends BaseWriterTest
         self::assertEquals(null, $file['maxAgeDays']);
     }
 
-    public function testLoadFileToStorageFileDoesNotExist()
+    public function testLoadFileToStorageFileDoesNotExist(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         self::expectException(ClientException::class);
@@ -174,9 +271,15 @@ class LocalTest extends BaseWriterTest
         $strategy->loadFileToStorage('/data/out/files/non-existent', []);
     }
 
-    public function testReadFileManifestFull()
+    public function testReadFileManifestFull(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -187,8 +290,8 @@ class LocalTest extends BaseWriterTest
             'notify' => false,
             'tags' => [
                 'my-first-tag',
-                'second-tag'
-            ]
+                'second-tag',
+            ],
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
@@ -201,9 +304,15 @@ class LocalTest extends BaseWriterTest
         );
     }
 
-    public function testReadFileManifestFullYaml()
+    public function testReadFileManifestFullYaml(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'yaml');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'yaml'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -214,8 +323,8 @@ class LocalTest extends BaseWriterTest
             'notify' => false,
             'tags' => [
                 'my-first-tag',
-                'second-tag'
-            ]
+                'second-tag',
+            ],
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
@@ -228,9 +337,15 @@ class LocalTest extends BaseWriterTest
         );
     }
 
-    public function testReadFileManifestEmpty()
+    public function testReadFileManifestEmpty(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one', 'my-data');
@@ -239,7 +354,7 @@ class LocalTest extends BaseWriterTest
             'is_permanent' => false,
             'is_encrypted' => true,
             'notify' => false,
-            'tags' => []
+            'tags' => [],
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
@@ -252,9 +367,15 @@ class LocalTest extends BaseWriterTest
         );
     }
 
-    public function testReadFileManifestNotExists()
+    public function testReadFileManifestNotExists(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         self::expectException(InvalidOutputException::class);
@@ -264,12 +385,21 @@ class LocalTest extends BaseWriterTest
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 
-    public function testReadFileManifestInvalid()
+    public function testReadFileManifestInvalid(): void
     {
-        $strategy = new Local($this->clientWrapper, new TestLogger(), $this->getProvider(), $this->getProvider(), 'json');
+        $strategy = new Local(
+            $this->clientWrapper,
+            new TestLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            'json'
+        );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        file_put_contents($this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest', 'not a valid json');
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
+            'not a valid json'
+        );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
             'data/out/files/my-file_one.manifest" as "json": Syntax error'

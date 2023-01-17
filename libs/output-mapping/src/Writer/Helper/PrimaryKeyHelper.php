@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\StorageApi\Client;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class PrimaryKeyHelper
 {
@@ -30,13 +33,7 @@ class PrimaryKeyHelper
         );
     }
 
-    /**
-     * @param array $tableInfo
-     * @param array $config
-     * @param LoggerInterface $logger
-     * @return bool
-     */
-    public static function modifyPrimaryKeyDecider(LoggerInterface $logger, array $tableInfo, array $config)
+    public static function modifyPrimaryKeyDecider(LoggerInterface $logger, array $tableInfo, array $config): bool
     {
         $configPK = self::normalizeKeyArray($logger, $config['primary_key']);
         if (count($tableInfo['primaryKey']) !== count($configPK)) {
@@ -48,18 +45,13 @@ class PrimaryKeyHelper
         return false;
     }
 
-    /**
-     * @param string $tableId
-     * @param array $tablePrimaryKey
-     * @param array $configPrimaryKey
-     */
     public static function modifyPrimaryKey(
         LoggerInterface $logger,
         Client $client,
-        $tableId,
+        string $tableId,
         array $tablePrimaryKey,
         array $configPrimaryKey
-    ) {
+    ): void {
         $logger->warning(sprintf(
             'Modifying primary key of table "%s" from "%s" to "%s".',
             $tableId,
@@ -72,7 +64,7 @@ class PrimaryKeyHelper
                 if (count($configPrimaryKey)) {
                     $client->createTablePrimaryKey($tableId, $configPrimaryKey);
                 }
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 // warn and try to rollback to original state
                 $logger->warning(
                     "Error changing primary key of table {$tableId}: " . $e->getMessage()
@@ -84,19 +76,16 @@ class PrimaryKeyHelper
         }
     }
 
-    /**
-     * @param LoggerInterface $logger
-     * @param Client $client
-     * @param string $tableId
-     * @param array $tablePrimaryKey
-     * @return bool
-     */
-    private static function removePrimaryKey(LoggerInterface $logger, Client $client, $tableId, array $tablePrimaryKey)
-    {
+    private static function removePrimaryKey(
+        LoggerInterface $logger,
+        Client $client,
+        string $tableId,
+        array $tablePrimaryKey
+    ): bool {
         if (count($tablePrimaryKey) > 0) {
             try {
                 $client->removeTablePrimaryKey($tableId);
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 // warn and go on
                 $logger->warning(
                     "Error deleting primary key of table {$tableId}: " . $e->getMessage()

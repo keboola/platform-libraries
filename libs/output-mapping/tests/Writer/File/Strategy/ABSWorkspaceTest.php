@@ -44,7 +44,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
             ->setMethods(['getWorkspaceId', 'getCredentials'])
             ->getMock();
         $mock->method('getWorkspaceId')->willReturnCallback(
-            function () use ($data): array {
+            function () use ($data): string {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);

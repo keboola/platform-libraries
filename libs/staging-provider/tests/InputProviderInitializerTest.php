@@ -195,7 +195,10 @@ class InputProviderInitializerTest extends TestCase
         );
         self::assertInstanceOf(
             InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, new InputFileStateList([]))
+            $stagingFactory->getFileInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+                new InputFileStateList([])
+            )
         );
         self::assertInstanceOf(
             InputTableSnowflake::class,
@@ -253,11 +256,18 @@ class InputProviderInitializerTest extends TestCase
         );
         self::assertInstanceOf(
             InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([]))
+            $stagingFactory->getTableInputStrategy(
+                AbstractStrategyFactory::LOCAL,
+                '',
+                new InputTableStateList([])
+            )
         );
         self::assertInstanceOf(
             InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE, new InputFileStateList([]))
+            $stagingFactory->getFileInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_SYNAPSE,
+                new InputFileStateList([])
+            )
         );
         self::assertInstanceOf(
             InputTableSynapse::class,
@@ -442,11 +452,18 @@ class InputProviderInitializerTest extends TestCase
         );
         self::assertInstanceOf(
             InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([]))
+            $stagingFactory->getTableInputStrategy(
+                AbstractStrategyFactory::LOCAL,
+                '',
+                new InputTableStateList([])
+            )
         );
         self::assertInstanceOf(
             InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_TERADATA, new InputFileStateList([]))
+            $stagingFactory->getFileInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_TERADATA,
+                new InputFileStateList([])
+            )
         );
         self::assertInstanceOf(
             InputTableTeradata::class,
@@ -502,11 +519,18 @@ class InputProviderInitializerTest extends TestCase
         );
         self::assertInstanceOf(
             InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([]))
+            $stagingFactory->getTableInputStrategy(
+                AbstractStrategyFactory::LOCAL,
+                '',
+                new InputTableStateList([])
+            )
         );
         self::assertInstanceOf(
             InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_BIGQUERY, new InputFileStateList([]))
+            $stagingFactory->getFileInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_BIGQUERY,
+                new InputFileStateList([])
+            )
         );
         self::assertInstanceOf(
             InputTableBigQuery::class,

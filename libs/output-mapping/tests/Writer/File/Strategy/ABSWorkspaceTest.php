@@ -48,7 +48,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
-                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
                 }
                 return $this->workspaceId;
@@ -59,7 +59,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
-                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
                 }
                 return $this->workspace['connection'];

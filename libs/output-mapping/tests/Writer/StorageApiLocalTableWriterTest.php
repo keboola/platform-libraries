@@ -563,104 +563,6 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
     }
 
-    public function testWriteTableOutputMappingWithPkMismatch()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table14.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                "mapping" => [
-                    [
-                        "source" => "table14.csv",
-                        "destination" => self::OUTPUT_BUCKET . ".table14",
-                        "primary_key" => ["Id"]
-                    ]
-                ]
-            ],
-            ['componentId' => 'foo'],
-            'local'
-        );
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table14");
-        $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
-
-        $writer = new TableWriter($this->getStagingFactory());
-        try {
-            $writer->uploadTables(
-                'upload',
-                [
-                    "mapping" => [
-                        [
-                            "source" => "table14.csv",
-                            "destination" => self::OUTPUT_BUCKET . ".table14",
-                            "primary_key" => ["Id", "Name"]
-                        ]
-                    ]
-                ],
-                ['componentId' => 'foo'],
-                'local'
-            );
-            $this->fail("Exception not caught");
-        } catch (InvalidOutputException $e) {
-            $this->assertEquals(
-                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "' . self::OUTPUT_BUCKET . '.table14".',
-                $e->getMessage()
-            );
-        }
-    }
-
-    public function testWriteTableOutputMappingWithPkMismatchWhitespace()
-    {
-        $root = $this->tmp->getTmpFolder();
-        file_put_contents($root . "/upload/table13.csv", "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                "mapping" => [
-                    [
-                        "source" => "table13.csv",
-                        "destination" => self::OUTPUT_BUCKET . ".table13",
-                        "primary_key" => ["Id "]
-                    ]
-                ]
-            ],
-            ['componentId' => 'foo'],
-            'local'
-        );
-        $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table13");
-        $this->assertEquals(["Id"], $tableInfo["primaryKey"]);
-
-        $writer = new TableWriter($this->getStagingFactory());
-        try {
-            $writer->uploadTables(
-                'upload',
-                [
-                    "mapping" => [
-                        [
-                            "source" => "table13.csv",
-                            "destination" => self::OUTPUT_BUCKET . ".table13",
-                            "primary_key" => ["Id ", "Name "]
-                        ]
-                    ]
-                ],
-                ['componentId' => 'foo'],
-                'local'
-            );
-            $this->fail("Exception not caught");
-        } catch (InvalidOutputException $e) {
-            $this->assertEquals(
-                'Output mapping does not match destination table: primary key "Id, Name" does not match "Id" in "' . self::OUTPUT_BUCKET . '.table13".',
-                $e->getMessage()
-            );
-        }
-    }
-
     public function testWriteTableOutputMappingWithEmptyStringPk()
     {
         $root = $this->tmp->getTmpFolder();
@@ -1315,5 +1217,94 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         $this->assertCount(1, $tables);
         $this->assertEquals(self::OUTPUT_BUCKET . '.write-always-2', $tables[0]['id']);
+    }
+
+    public function testWriteTableOutputMappingWithPkUpdate(): void
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/table14.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table14.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.table14',
+                        'primary_key' => ['Id']
+                    ]
+                ]
+            ],
+            ['componentId' => 'foo'],
+            'local'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table14');
+        $this->assertEquals(['Id'], $tableInfo['primaryKey']);
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table14.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.table14',
+                        'primary_key' => ['Id', 'Name']
+                    ]
+                ]
+            ],
+            ['componentId' => 'foo'],
+            'local'
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table14');
+        $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
+    }
+
+    public function testWriteTableOutputMappingWithPkHavingWhitespaceUpdate(): void
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/table13.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        $writer = new TableWriter($this->getStagingFactory());
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table13.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.table13',
+                        'primary_key' => ['Id ']
+                    ]
+                ]
+            ],
+            ['componentId' => 'foo'],
+            'local'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table13');
+        $this->assertEquals(['Id'], $tableInfo['primaryKey']);
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table13.csv',
+                        'destination' => self::OUTPUT_BUCKET . '.table13',
+                        'primary_key' => ['Id ', 'Name ']
+                    ]
+                ]
+            ],
+            ['componentId' => 'foo'],
+            'local'
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table13');
+        $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
     }
 }

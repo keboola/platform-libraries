@@ -3,7 +3,6 @@
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\Csv\CsvFile;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Exception;
@@ -51,58 +50,6 @@ class PrimaryKeyHelperTest extends TestCase
             self::TEST_TABLE_NAME,
             $csv,
             ['primaryKey' => $primaryKey]
-        );
-    }
-
-    public function testValidateAgainstTable()
-    {
-        $tableInfo = ['primaryKey' => ['Id']];
-
-        PrimaryKeyHelper::validatePrimaryKeyAgainstTable(
-            new NullLogger(),
-            $tableInfo,
-            [
-                'source' => 'table.csv',
-                'destination' => self::TEST_BUCKET_ID . '.table',
-                'primary_key' => ['Id'],
-            ]
-        );
-        self::assertTrue(true);
-    }
-
-    public function testValidateAgainstTableEmptyPK()
-    {
-        $tableInfo = ['primaryKey' => []];
-
-        PrimaryKeyHelper::validatePrimaryKeyAgainstTable(
-            new NullLogger(),
-            $tableInfo,
-            [
-                'source' => 'table.csv',
-                'destination' => self::TEST_BUCKET_ID . '.table',
-                'primary_key' => [],
-            ]
-        );
-        self::assertTrue(true);
-    }
-
-    public function testValidateAgainstTableMismatch()
-    {
-        $tableInfo = ['primaryKey' => ['Id']];
-
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
-            'Output mapping does not match destination table: primary key "Id, Name" ' .
-            'does not match "Id" in "' . self::TEST_BUCKET_ID . '.table".'
-        );
-        PrimaryKeyHelper::validatePrimaryKeyAgainstTable(
-            new NullLogger(),
-            $tableInfo,
-            [
-                'source' => 'table.csv',
-                'destination' => self::TEST_BUCKET_ID . '.table',
-                'primary_key' => ['Id', 'Name'],
-            ]
         );
     }
 

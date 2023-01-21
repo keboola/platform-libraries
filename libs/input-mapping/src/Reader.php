@@ -6,7 +6,6 @@ namespace Keboola\InputMapping;
 
 use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\File\Strategy\AbstractStrategy as FileAbstractStrategy;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
@@ -54,7 +53,6 @@ class Reader
         if (!$configuration) {
             return new InputFileStateList([]);
         }
-        /** @var FileAbstractStrategy $strategy */
         return $strategy->downloadFiles($configuration, $destination);
     }
 

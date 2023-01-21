@@ -8,9 +8,9 @@ jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: cs
-      displayName: Code Style
+      displayName: Code Check
       serviceName: ci-input-mapping
-      testCommand: composer build
+      testCommand: composer check
       dependsOn: [input_mapping_lock]
 
   - template: ../../azure-pipelines/jobs/run-tests.yml

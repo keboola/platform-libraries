@@ -196,7 +196,7 @@ class LoadTableQueueTest extends TestCase
         ;
         $loadTask->expects($this->once())
             ->method('getStorageJobId')
-            ->willReturn(123)
+            ->willReturn('123')
         ;
 
         $clientException = new ClientException('Hi', 444);
@@ -327,7 +327,7 @@ class LoadTableQueueTest extends TestCase
         ;
         $loadTask->expects($this->once())
             ->method('getStorageJobId')
-            ->willReturn(123)
+            ->willReturn('123')
         ;
 
         $clientException = new ClientException('Hi', 500);

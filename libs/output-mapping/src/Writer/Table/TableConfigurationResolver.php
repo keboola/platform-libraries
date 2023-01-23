@@ -27,7 +27,7 @@ class TableConfigurationResolver
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
-        private string $format = 'json'
+        private string $format = Adapter::FORMAT_JSON
     ) {
     }
 

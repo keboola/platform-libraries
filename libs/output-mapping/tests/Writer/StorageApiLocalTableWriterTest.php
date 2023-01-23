@@ -1398,9 +1398,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                     [
                         'source' => 'table14.csv',
                         'destination' => self::OUTPUT_BUCKET . '.table14',
-                        'primary_key' => ['Id']
-                    ]
-                ]
+                        'primary_key' => ['Id'],
+                    ],
+                ],
             ],
             ['componentId' => 'foo'],
             'local'
@@ -1417,9 +1417,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                     [
                         'source' => 'table14.csv',
                         'destination' => self::OUTPUT_BUCKET . '.table14',
-                        'primary_key' => ['Id', 'Name']
-                    ]
-                ]
+                        'primary_key' => ['Id', 'Name'],
+                    ],
+                ],
             ],
             ['componentId' => 'foo'],
             'local'
@@ -1429,7 +1429,7 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table14');
         $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
-}
+    }
 
     public function testWriteTableOutputMappingWithPkHavingWhitespaceUpdate(): void
     {
@@ -1443,9 +1443,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                     [
                         'source' => 'table13.csv',
                         'destination' => self::OUTPUT_BUCKET . '.table13',
-                        'primary_key' => ['Id ']
-                    ]
-                ]
+                        'primary_key' => ['Id '],
+                    ],
+                ],
             ],
             ['componentId' => 'foo'],
             'local'
@@ -1462,9 +1462,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                     [
                         'source' => 'table13.csv',
                         'destination' => self::OUTPUT_BUCKET . '.table13',
-                        'primary_key' => ['Id ', 'Name ']
-                    ]
-                ]
+                        'primary_key' => ['Id ', 'Name '],
+                    ],
+                ],
             ],
             ['componentId' => 'foo'],
             'local'

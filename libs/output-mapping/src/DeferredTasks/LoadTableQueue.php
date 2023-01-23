@@ -76,7 +76,11 @@ class LoadTableQueue
                         throw $e;
                     }
 
-                    $errors[] = sprintf('Failed to update metadata for table "%s": %s', $task->getDestinationTableName(), $e->getMessage());
+                    $errors[] = sprintf(
+                        'Failed to update metadata for table "%s": %s',
+                        $task->getDestinationTableName(),
+                        $e->getMessage()
+                    );
                 }
 
                 switch ($jobResult['operationName']) {

@@ -18,7 +18,7 @@ use Symfony\Component\Finder\Finder;
 class LocalTableStrategy extends AbstractTableStrategy
 {
     /**
-     * @return array|MappingSource[]
+     * @return MappingSource[]
      */
     public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array
     {

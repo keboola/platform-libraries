@@ -9,7 +9,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
-class Definition extends AbstractDefinition
+class OutputMappingStagingDefinition extends AbstractDefinition
 {
     /** @var class-string<FileStrategyInterface> */
     protected string $fileStagingClass;

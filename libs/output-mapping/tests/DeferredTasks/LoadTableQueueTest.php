@@ -10,6 +10,7 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
+use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -169,7 +170,7 @@ class LoadTableQueueTest extends TestCase
                 'metrics' => [
                     'inBytes' => 123,
                     'inBytesUncompressed' => 456,
-                ]
+                ],
             ])
         ;
         $storageApiMock->expects($this->once())
@@ -225,7 +226,9 @@ class LoadTableQueueTest extends TestCase
         $table = reset($tables);
         self::assertSame($expectedTableId, $table->getId());
 
-        $tablesMetrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        $metrics = $tablesResult->getMetrics();
+        self::assertInstanceOf(Metrics::class, $metrics);
+        $tablesMetrics = iterator_to_array($metrics->getTableMetrics());
         self::assertCount(1, $tablesMetrics);
 
         /** @var TableMetrics $tableMetric */

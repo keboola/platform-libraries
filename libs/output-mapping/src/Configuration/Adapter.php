@@ -45,9 +45,9 @@ class Adapter
     public function getFileExtension(): string
     {
         switch ($this->format) {
-            case 'yaml':
+            case self::FORMAT_YAML:
                 return '.yml';
-            case 'json':
+            case self::FORMAT_JSON:
                 return '.json';
             default:
                 throw new OutputOperationException("Invalid configuration format {$this->format}.");
@@ -57,13 +57,13 @@ class Adapter
     /**
      * @param self::FORMAT_YAML | self::FORMAT_JSON $format
      */
-    public function setFormat(string $format): Adapter
+    public function setFormat(string $format): static
     {
         $this->format = $format;
         return $this;
     }
 
-    public function setConfig(array $config): Adapter
+    public function setConfig(array $config): static
     {
         $className = $this->configClass;
         $this->config = (new $className())->parse(['config' => $config]);
@@ -78,9 +78,9 @@ class Adapter
      */
     public function deserialize(string $serialized): array
     {
-        if ($this->getFormat() === 'yaml') {
+        if ($this->getFormat() === self::FORMAT_YAML) {
             $data = Yaml::parse($serialized);
-        } elseif ($this->getFormat() === 'json') {
+        } elseif ($this->getFormat() === self::FORMAT_JSON) {
             $encoder = new JsonEncoder();
             $data = $encoder->decode($serialized, $encoder::FORMAT);
         } else {

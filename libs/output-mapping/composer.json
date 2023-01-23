@@ -56,13 +56,13 @@
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
         "phpcs": "phpcs --extensions=php src tests",
         "phpcbf": "phpcbf --extensions=php src tests",
-        "build": [
+        "check": [
             "@composer validate --no-check-all --strict",
             "@phpcs",
             "@phpstan"
         ],
         "ci": [
-            "@build",
+            "@check",
             "@tests"
         ]
     },

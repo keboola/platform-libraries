@@ -36,7 +36,15 @@ class InputMappingStagingDefinitionTest extends TestCase
 
     public function testFileValidationInvalidData(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class, null, new NullProvider(), null, null);
+        $definition = new InputMappingStagingDefinition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            null,
+            new NullProvider(),
+            null,
+            null
+        );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined file data provider in "foo" staging.');
         $definition->validateFor(AbstractStagingDefinition::STAGING_FILE);
@@ -44,7 +52,15 @@ class InputMappingStagingDefinitionTest extends TestCase
 
     public function testFileValidationInvalidMetadata(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class, new NullProvider(), null, null, null);
+        $definition = new InputMappingStagingDefinition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            new NullProvider(),
+            null,
+            null,
+            null
+        );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined file metadata provider in "foo" staging.');
         $definition->validateFor(AbstractStagingDefinition::STAGING_FILE);
@@ -67,7 +83,15 @@ class InputMappingStagingDefinitionTest extends TestCase
 
     public function testTableValidationInvalidData(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class, null, null, null, new NullProvider());
+        $definition = new InputMappingStagingDefinition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            null,
+            null,
+            null,
+            new NullProvider()
+        );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined table data provider in "foo" staging.');
         $definition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
@@ -75,7 +99,15 @@ class InputMappingStagingDefinitionTest extends TestCase
 
     public function testTableValidationInvalidMetadata(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class, null, null, new NullProvider(), null);
+        $definition = new InputMappingStagingDefinition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            null,
+            null,
+            new NullProvider(),
+            null
+        );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined table metadata provider in "foo" staging.');
         $definition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
@@ -98,7 +130,15 @@ class InputMappingStagingDefinitionTest extends TestCase
 
     public function testTableValidationInvalidStagingType(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class, null, null, new NullProvider(), null);
+        $definition = new InputMappingStagingDefinition(
+            'foo',
+            ABSWorkspace::class,
+            Local::class,
+            null,
+            null,
+            new NullProvider(),
+            null
+        );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Unknown staging type: "invalid".');
         $definition->validateFor('invalid');

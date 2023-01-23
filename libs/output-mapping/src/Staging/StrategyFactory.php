@@ -6,10 +6,9 @@ namespace Keboola\OutputMapping\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\Staging\AbstractDefinition;
+use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
@@ -17,7 +16,6 @@ use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\OutputMapping\Writer\TableWriter;
 
 class StrategyFactory extends AbstractStrategyFactory
 {
@@ -94,7 +92,7 @@ class StrategyFactory extends AbstractStrategyFactory
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(AbstractDefinition::STAGING_FILE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
@@ -117,7 +115,7 @@ class StrategyFactory extends AbstractStrategyFactory
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(AbstractDefinition::STAGING_TABLE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),

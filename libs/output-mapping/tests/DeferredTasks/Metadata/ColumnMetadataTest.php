@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\DeferredTasks\Metadata;
 
+use Generator;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
@@ -11,64 +12,115 @@ use PHPUnit\Framework\TestCase;
 
 class ColumnMetadataTest extends TestCase
 {
-    public function testApply(): void
+    private const TEST_TABLE_ID = 'in.c-testApply.table';
+    private const TEST_PROVIDER = 'keboola.sample-component';
+    private const TEST_METADATA = [
+        'id' => [
+            [
+                'key' => 'timestamp',
+                'value' => '1674226231',
+            ],
+        ],
+        'aa_caa' => [
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'STRING',
+            ],
+            [
+                'key' => '1',
+                'value' => '',
+            ],
+        ],
+    ];
+
+    public function applyDataProvider(): Generator
     {
-        $metadataClientMock = $this->createMock(Metadata::class);
-        $metadataClientMock->expects(self::once())
-            ->method('postTableMetadataWithColumns')
-            ->with(self::callback(function (TableMetadataUpdateOptions $options) {
-                self::assertSame('in.c-testApply.table', $options->getTableId());
-                self::assertSame(
-                    [
-                        'provider' => 'keboola.sample-component',
-                        'columnsMetadata' => [
-                            'id' => [
-                                [
-                                    'key' => 'timestamp',
-                                    'value' => '1674226231',
-                                ],
-                            ],
-                            'aa_caa' => [
-                                [
-                                    'key' => 'KBC.datatype.basetype',
-                                    'value' => 'STRING',
-                                ],
-                                [
-                                    'key' => '1',
-                                    'value' => '',
-                                ],
-                            ],
+        yield 'load at once' => [
+            'bulkSize' => null,
+            'expectedApiCalls' => 1,
+            'expectedColumnsMetadata' => [
+                [
+                    'id' => [
+                        [
+                            'key' => 'timestamp',
+                            'value' => '1674226231',
                         ],
                     ],
-                    $options->toParamsArray()
-                );
-                return true;
-            }))
+                    'aa_caa' => [
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'STRING',
+                        ],
+                        [
+                            'key' => '1',
+                            'value' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'load in chunks' => [
+            'bulkSize' => 1,
+            'expectedApiCalls' => 2,
+            'expectedColumnsMetadata' => [
+                [
+                    'id' => [
+                        [
+                            'key' => 'timestamp',
+                            'value' => '1674226231',
+                        ],
+                    ],
+                ],
+                [
+                    'aa_caa' => [
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'STRING',
+                        ],
+                        [
+                            'key' => '1',
+                            'value' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider applyDataProvider
+     */
+    public function testApply(?int $bulkSize, int $expectedApiCalls, array $expectedColumnsMetadata): void
+    {
+        $metadataClientMock = $this->createMock(Metadata::class);
+        $metadataClientMock->expects(self::exactly($expectedApiCalls))
+            ->method('postTableMetadataWithColumns')
+            ->withConsecutive(...array_map(function (array $columnsMetadata): array {
+                return [self::callback(function (TableMetadataUpdateOptions $options) use ($columnsMetadata) {
+                    self::assertSame('in.c-testApply.table', $options->getTableId());
+                    self::assertSame(
+                        [
+                            'provider' => 'keboola.sample-component',
+                            'columnsMetadata' => $columnsMetadata,
+                        ],
+                        $options->toParamsArray()
+                    );
+                    return true;
+                })];
+            }, $expectedColumnsMetadata))
         ;
 
         $columnMetadata = new ColumnMetadata(
-            'in.c-testApply.table',
-            'keboola.sample-component',
-            [
-                'id' => [
-                    [
-                        'key' => 'timestamp',
-                        'value' => 1674226231,
-                    ],
-                ],
-                'aa/čaa_' => [ // column name will be sanitized by ColumnNameSanitizer
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'STRING',
-                    ],
-                    [
-                        'key' => 1,
-                        'value' => '',
-                    ],
-                ],
-            ]
+            self::TEST_TABLE_ID,
+            self::TEST_PROVIDER,
+            self::TEST_METADATA
         );
 
-        $columnMetadata->apply($metadataClientMock);
+        if ($bulkSize) {
+            $columnMetadata->apply($metadataClientMock, $bulkSize);
+        } else {
+            $columnMetadata->apply($metadataClientMock);
+        }
     }
 }

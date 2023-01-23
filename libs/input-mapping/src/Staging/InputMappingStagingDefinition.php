@@ -7,7 +7,7 @@ namespace Keboola\InputMapping\Staging;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 
-class Definition extends AbstractDefinition
+class InputMappingStagingDefinition extends AbstractStagingDefinition
 {
     /** @var class-string<FileStrategyInterface> */
     protected string $fileStagingClass;

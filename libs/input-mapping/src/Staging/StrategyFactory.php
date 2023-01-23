@@ -25,62 +25,62 @@ use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 
 class StrategyFactory extends AbstractStrategyFactory
 {
-    /** @var Definition[] */
+    /** @var InputMappingStagingDefinition[] */
     protected array $strategyMap = [];
 
     /**
-     * @return Definition[]
+     * @return InputMappingStagingDefinition[]
      */
     public function getStrategyMap(): array
     {
         if (empty($this->strategyMap)) {
             $this->strategyMap = [
-                self::ABS => new Definition(
+                self::ABS => new InputMappingStagingDefinition(
                     self::ABS,
                     FileLocal::class,
                     TableABS::class
                 ),
-                self::LOCAL => new Definition(
+                self::LOCAL => new InputMappingStagingDefinition(
                     self::LOCAL,
                     FileLocal::class,
                     TableLocal::class
                 ),
-                self::S3 => new Definition(
+                self::S3 => new InputMappingStagingDefinition(
                     self::S3,
                     FileLocal::class,
                     TableS3::class
                 ),
-                self::WORKSPACE_ABS => new Definition(
+                self::WORKSPACE_ABS => new InputMappingStagingDefinition(
                     self::WORKSPACE_ABS,
                     FileABSWorkspace::class,
                     TableABSWorkspace::class
                 ),
-                self::WORKSPACE_REDSHIFT => new Definition(
+                self::WORKSPACE_REDSHIFT => new InputMappingStagingDefinition(
                     self::WORKSPACE_REDSHIFT,
                     FileLocal::class,
                     TableRedshift::class
                 ),
-                self::WORKSPACE_SNOWFLAKE => new Definition(
+                self::WORKSPACE_SNOWFLAKE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     FileLocal::class,
                     TableSnowflake::class
                 ),
-                self::WORKSPACE_SYNAPSE => new Definition(
+                self::WORKSPACE_SYNAPSE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SYNAPSE,
                     FileLocal::class,
                     TableSynapse::class
                 ),
-                self::WORKSPACE_EXASOL => new Definition(
+                self::WORKSPACE_EXASOL => new InputMappingStagingDefinition(
                     self::WORKSPACE_EXASOL,
                     FileLocal::class,
                     TableExasol::class
                 ),
-                self::WORKSPACE_TERADATA => new Definition(
+                self::WORKSPACE_TERADATA => new InputMappingStagingDefinition(
                     self::WORKSPACE_TERADATA,
                     FileLocal::class,
                     TableTeradata::class
                 ),
-                self::WORKSPACE_BIGQUERY => new Definition(
+                self::WORKSPACE_BIGQUERY => new InputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,
                     FileLocal::class,
                     TableBigQuery::class
@@ -90,7 +90,7 @@ class StrategyFactory extends AbstractStrategyFactory
         return $this->strategyMap;
     }
 
-    protected function getStagingDefinition(string $stagingType): Definition
+    protected function getStagingDefinition(string $stagingType): InputMappingStagingDefinition
     {
         if (!isset($this->getStrategyMap()[$stagingType])) {
             throw new InvalidInputException(
@@ -108,7 +108,7 @@ class StrategyFactory extends AbstractStrategyFactory
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(AbstractDefinition::STAGING_FILE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" file input backend.', $stagingDefinition->getName()),
@@ -135,7 +135,7 @@ class StrategyFactory extends AbstractStrategyFactory
     ): TableStrategyInterface {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(AbstractDefinition::STAGING_TABLE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" table input backend.', $stagingDefinition->getName()),

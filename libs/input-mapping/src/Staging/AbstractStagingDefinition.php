@@ -6,7 +6,7 @@ namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
 
-abstract class AbstractDefinition
+abstract class AbstractStagingDefinition
 {
     public const STAGING_FILE = 'file';
     public const STAGING_TABLE = 'table';
@@ -56,7 +56,7 @@ abstract class AbstractDefinition
         return $this->fileMetadataProvider;
     }
 
-    public function setFileMetadataProvider(?ProviderInterface $fileMetadataProvider): AbstractDefinition
+    public function setFileMetadataProvider(?ProviderInterface $fileMetadataProvider): AbstractStagingDefinition
     {
         $this->fileMetadataProvider = $fileMetadataProvider;
         return $this;

@@ -29,7 +29,7 @@ abstract class AbstractStrategyFactory
     }
 
     /**
-     * @return AbstractDefinition[]
+     * @return AbstractStagingDefinition[]
      */
     abstract public function getStrategyMap(): array;
 
@@ -78,5 +78,5 @@ abstract class AbstractStrategyFactory
         return $this->clientWrapper;
     }
 
-    abstract protected function getStagingDefinition(string $stagingType): AbstractDefinition;
+    abstract protected function getStagingDefinition(string $stagingType): AbstractStagingDefinition;
 }

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Staging;
 
-use Keboola\InputMapping\Staging\AbstractDefinition;
+use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-
-class OutputMappingStagingDefinition extends AbstractDefinition
+class OutputMappingStagingDefinition extends AbstractStagingDefinition
 {
     /** @var class-string<FileStrategyInterface> */
     protected string $fileStagingClass;

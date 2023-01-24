@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -12,102 +14,73 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as TableABS;
 use Keboola\InputMapping\Table\Strategy\ABSWorkspace as TableABSWorkspace;
 use Keboola\InputMapping\Table\Strategy\BigQuery as TableBigQuery;
+use Keboola\InputMapping\Table\Strategy\Exasol as TableExasol;
 use Keboola\InputMapping\Table\Strategy\Local as TableLocal;
 use Keboola\InputMapping\Table\Strategy\Redshift as TableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as TableSynapse;
-use Keboola\InputMapping\Table\Strategy\Exasol as TableExasol;
 use Keboola\InputMapping\Table\Strategy\Teradata as TableTeradata;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
 
-class StrategyFactory
+class StrategyFactory extends AbstractStrategyFactory
 {
-    const ABS = 'abs';
-    const LOCAL = 'local';
-    const S3 = 's3';
-    const WORKSPACE_ABS = 'workspace-abs';
-    const WORKSPACE_REDSHIFT = 'workspace-redshift';
-    const WORKSPACE_SNOWFLAKE = 'workspace-snowflake';
-    const WORKSPACE_SYNAPSE = 'workspace-synapse';
-    const WORKSPACE_EXASOL = 'workspace-exasol';
-    const WORKSPACE_TERADATA = 'workspace-teradata';
-    const WORKSPACE_BIGQUERY = 'workspace-bigquery';
-
-    /** @var Definition[] */
-    protected $strategyMap;
-    protected ClientWrapper $clientWrapper;
-    protected LoggerInterface $logger;
-    protected string $format;
+    /** @var InputMappingStagingDefinition[] */
+    protected array $strategyMap = [];
 
     /**
-     * StagingStrategyFactory constructor.
-     * @param ClientWrapper $clientWrapper
-     * @param LoggerInterface $logger
-     * @param string $format
+     * @return InputMappingStagingDefinition[]
      */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, $format)
-    {
-        $this->clientWrapper = $clientWrapper;
-        $this->logger = $logger;
-        $this->format = $format;
-    }
-
-    /**
-     * @return Definition[]
-     */
-    public function getStrategyMap()
+    public function getStrategyMap(): array
     {
         if (empty($this->strategyMap)) {
             $this->strategyMap = [
-                self::ABS => new Definition(
+                self::ABS => new InputMappingStagingDefinition(
                     self::ABS,
                     FileLocal::class,
                     TableABS::class
                 ),
-                self::LOCAL => new Definition(
+                self::LOCAL => new InputMappingStagingDefinition(
                     self::LOCAL,
                     FileLocal::class,
                     TableLocal::class
                 ),
-                self::S3 => new Definition(
+                self::S3 => new InputMappingStagingDefinition(
                     self::S3,
                     FileLocal::class,
                     TableS3::class
                 ),
-                self::WORKSPACE_ABS => new Definition(
+                self::WORKSPACE_ABS => new InputMappingStagingDefinition(
                     self::WORKSPACE_ABS,
                     FileABSWorkspace::class,
                     TableABSWorkspace::class
                 ),
-                self::WORKSPACE_REDSHIFT => new Definition(
+                self::WORKSPACE_REDSHIFT => new InputMappingStagingDefinition(
                     self::WORKSPACE_REDSHIFT,
                     FileLocal::class,
                     TableRedshift::class
                 ),
-                self::WORKSPACE_SNOWFLAKE => new Definition(
+                self::WORKSPACE_SNOWFLAKE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     FileLocal::class,
                     TableSnowflake::class
                 ),
-                self::WORKSPACE_SYNAPSE => new Definition(
+                self::WORKSPACE_SYNAPSE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SYNAPSE,
                     FileLocal::class,
                     TableSynapse::class
                 ),
-                self::WORKSPACE_EXASOL => new Definition(
+                self::WORKSPACE_EXASOL => new InputMappingStagingDefinition(
                     self::WORKSPACE_EXASOL,
                     FileLocal::class,
                     TableExasol::class
                 ),
-                self::WORKSPACE_TERADATA => new Definition(
+                self::WORKSPACE_TERADATA => new InputMappingStagingDefinition(
                     self::WORKSPACE_TERADATA,
                     FileLocal::class,
                     TableTeradata::class
                 ),
-                self::WORKSPACE_BIGQUERY => new Definition(
+                self::WORKSPACE_BIGQUERY => new InputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,
                     FileLocal::class,
                     TableBigQuery::class
@@ -117,63 +90,7 @@ class StrategyFactory
         return $this->strategyMap;
     }
 
-    /**
-     * @param ProviderInterface $provider
-     * @param Scope[] $scopes
-     */
-    public function addProvider(ProviderInterface $provider, $scopes)
-    {
-        foreach ($scopes as $stagingType => $scope) {
-            if (!isset($this->getStrategyMap()[$stagingType])) {
-                throw new StagingException(sprintf(
-                    'Staging "%s" is unknown. Known types are "%s".',
-                    $stagingType,
-                    implode(', ', array_keys($this->getStrategyMap()))
-                ));
-            }
-            $staging = $this->getStrategyMap()[$stagingType];
-            foreach ($scope->getScopeTypes() as $scopeType) {
-                switch ($scopeType) {
-                    case Scope::TABLE_DATA:
-                        $staging->setTableDataProvider($provider);
-                        break;
-                    case Scope::TABLE_METADATA:
-                        $staging->setTableMetadataProvider($provider);
-                        break;
-                    case Scope::FILE_DATA:
-                        $staging->setFileDataProvider($provider);
-                        break;
-                    case Scope::FILE_METADATA:
-                        $staging->setFileMetadataProvider($provider);
-                        break;
-                    default:
-                        throw new StagingException(sprintf('Invalid scope type: "%s". ', $scopeType));
-                }
-            }
-        }
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return ClientWrapper
-     */
-    public function getClientWrapper()
-    {
-        return $this->clientWrapper;
-    }
-
-    /**
-     * @param string $stagingType
-     * @return Definition
-     */
-    protected function getStagingDefinition($stagingType)
+    protected function getStagingDefinition(string $stagingType): InputMappingStagingDefinition
     {
         if (!isset($this->getStrategyMap()[$stagingType])) {
             throw new InvalidInputException(
@@ -187,16 +104,11 @@ class StrategyFactory
         return $this->getStrategyMap()[$stagingType];
     }
 
-    /**
-     * @param string $stagingType
-     * @param InputFileStateList $fileStateList
-     * @return FileStrategyInterface
-     */
-    public function getFileInputStrategy($stagingType, InputFileStateList $fileStateList)
+    public function getFileInputStrategy(string $stagingType, InputFileStateList $fileStateList): FileStrategyInterface
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_FILE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" file input backend.', $stagingDefinition->getName()),
@@ -216,17 +128,14 @@ class StrategyFactory
         );
     }
 
-    /**
-     * @param string $stagingType
-     * @param string $destination
-     * @param InputTableStateList $tablesState
-     * @return TableStrategyInterface
-     */
-    public function getTableInputStrategy($stagingType, $destination, InputTableStateList $tablesState)
-    {
+    public function getTableInputStrategy(
+        string $stagingType,
+        string $destination,
+        InputTableStateList $tablesState
+    ): TableStrategyInterface {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_TABLE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" table input backend.', $stagingDefinition->getName()),

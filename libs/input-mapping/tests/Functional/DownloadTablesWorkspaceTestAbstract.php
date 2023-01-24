@@ -1,24 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
-use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
 {
-    protected $workspaceId;
+    protected ?string $workspaceId = null;
+    protected array $workspaceCredentials;
 
-    protected $workspaceCredentials;
-
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         try {
@@ -57,7 +61,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test', 'test3', $csv);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
@@ -67,11 +71,15 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         parent::tearDown();
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null, $backend = [StrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'])
-    {
+    protected function getStagingFactory(
+        ?ClientWrapper $clientWrapper = null,
+        string $format = 'json',
+        ?LoggerInterface $logger = null,
+        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+    ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
-            $logger ? $logger : new NullLogger(),
+            $clientWrapper ?: $this->clientWrapper,
+            $logger ?: new NullLogger(),
             $format
         );
         $mockWorkspace = self::getMockBuilder(NullProvider::class)
@@ -82,7 +90,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = $workspace['id'];
+                    $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceId;
@@ -107,7 +115,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
-                $backend[0] => new Scope([Scope::TABLE_DATA])
+                $backend[0] => new Scope([Scope::TABLE_DATA]),
             ]
         );
         return $stagingFactory;

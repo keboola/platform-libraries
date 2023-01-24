@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Options;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -8,11 +10,11 @@ use PHPUnit\Framework\TestCase;
 
 class InputTableOptionsListTest extends TestCase
 {
-    public function testGetTables()
+    public function testGetTables(): void
     {
         $definitions = new InputTableOptionsList([
             ['source' => 'test1'],
-            ['source' => 'test2']
+            ['source' => 'test2'],
         ]);
         $tables = $definitions->getTables();
         self::assertCount(2, $tables);

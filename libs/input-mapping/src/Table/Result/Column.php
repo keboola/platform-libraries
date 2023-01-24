@@ -1,21 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Result;
 
 use Generator;
 
 class Column
 {
-    /** @var string */
-    private $name;
+    private string $name;
     /** @var MetadataItem[] */
-    private $metadata;
+    private array $metadata;
 
-    /**
-     * @param string $name
-     * @param array $metadata
-     */
-    public function __construct($name, array $metadata)
+    public function __construct(string $name, array $metadata)
     {
         $this->name = $name;
         foreach ($metadata as $metadatum) {
@@ -23,18 +20,12 @@ class Column
         }
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return Generator
-     */
-    public function getMetadata()
+    public function getMetadata(): Generator
     {
         foreach ($this->metadata as $metadatum) {
             yield $metadatum;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -7,7 +9,7 @@ use Keboola\StorageApi\Workspaces;
 
 class Synapse extends AbstractStrategy
 {
-    public function downloadTable(InputTableOptions $table)
+    public function downloadTable(InputTableOptions $table): array
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
@@ -17,7 +19,7 @@ class Synapse extends AbstractStrategy
         ];
     }
 
-    public function handleExports($exports, $preserve)
+    public function handleExports(array $exports, bool $preserve): array
     {
         $copyInputs = [];
         $workspaceTables = [];
@@ -47,7 +49,7 @@ class Synapse extends AbstractStrategy
         $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
 
         $workspaceJobs[] = $workspaces->queueWorkspaceLoadData(
-            $this->dataStorage->getWorkspaceId(),
+            (int) $this->dataStorage->getWorkspaceId(),
             [
                 'input' => $copyInputs,
                 'preserve' => $preserve,
@@ -58,7 +60,7 @@ class Synapse extends AbstractStrategy
         $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,

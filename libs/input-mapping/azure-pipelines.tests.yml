@@ -10,14 +10,14 @@ jobs:
       jobName: cs
       displayName: Code Style
       serviceName: ci-input-mapping
-      testCommand: composer phpcs
+      testCommand: composer build
       dependsOn: [input_mapping_lock]
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: aws_tests_php74_commonPart1
+      jobName: aws_tests_php8_commonPart1
       dependsOn: [cs]
-      displayName: Test on AWS backend CommonPart1 (PHP 7.4)
+      displayName: Test on AWS backend CommonPart1
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonPart1
       variables:
@@ -29,9 +29,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: aws_tests_php74_aws_testsuite
-      dependsOn: [ cs, aws_tests_php74_commonPart1 ]
-      displayName: Test on AWS backend CommonPart1 (PHP 7.4)
+      jobName: aws_tests_php8_aws_testsuite
+      dependsOn: [ cs, aws_tests_php8_commonPart1 ]
+      displayName: Test on AWS backend CommonPart1
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite Aws
       variables:
@@ -43,9 +43,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: aws_tests_php74_commonPart2
+      jobName: aws_tests_php8_commonPart2
       dependsOn: [cs]
-      displayName: Common Tests (Part 2) on AWS backend (PHP 7.4)
+      displayName: Common Tests (Part 2) on AWS backend
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonPart2
       variables:
@@ -57,9 +57,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: aws_tests_php74_commonFiles
+      jobName: aws_tests_php8_commonFiles
       dependsOn: [cs]
-      displayName: Files Tests on AWS backend (PHP 7.4)
+      displayName: Files Tests on AWS backend
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonFiles
       variables:
@@ -71,9 +71,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: azure_tests_php74_commonPart1
+      jobName: azure_tests_php8_commonPart1
       dependsOn: [cs]
-      displayName: Run Common Test Suite (Part 1) on Azure (PHP 7.4)
+      displayName: Run Common Test Suite (Part 1) on Azure
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonPart1
       variables:
@@ -85,9 +85,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: azure_tests_php74_azure_testsuite
-      dependsOn: [ cs, azure_tests_php74_commonPart1 ]
-      displayName: Run Common Test Suite (Part 1) on Azure (PHP 7.4)
+      jobName: azure_tests_php8_azure_testsuite
+      dependsOn: [ cs, azure_tests_php8_commonPart1 ]
+      displayName: Run Common Test Suite (Part 1) on Azure
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite Azure
       variables:
@@ -99,9 +99,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: azure_tests_php74_commonPart2
+      jobName: azure_tests_php8_commonPart2
       dependsOn: [cs]
-      displayName: Run Common Test Suite (Part 2) on Azure (PHP 7.4)
+      displayName: Run Common Test Suite (Part 2) on Azure
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonPart2
       variables:
@@ -113,9 +113,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: azure_tests_php74_commonFiles
+      jobName: azure_tests_php8_commonFiles
       dependsOn: [cs]
-      displayName: Run CommonFiles Test Suite on Azure (PHP 7.4)
+      displayName: Run CommonFiles Test Suite on Azure
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite CommonFiles
       variables:
@@ -127,9 +127,9 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: azure_tests_php74_synapse
+      jobName: azure_tests_php8_synapse
       dependsOn: [cs]
-      displayName: Run Azure Testsuite on Azure with Synapse (PHP 7.4)
+      displayName: Run Azure Testsuite on Azure with Synapse
       serviceName: ci-input-mapping
       testCommand: vendor/bin/phpunit --testsuite AzureSynapse
       variables:

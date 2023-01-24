@@ -1,89 +1,58 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\File\Strategy;
 
-use Exception;
-use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
+    protected string $destination;
+    protected ManifestCreator $manifestCreator;
 
-    /** @var LoggerInterface */
-    protected $logger;
-
-    /** @var string */
-    protected $destination;
-
-    /** @var ManifestCreator */
-    protected $manifestCreator;
-
-    /** @var ProviderInterface */
-    protected $dataStorage;
-
-    /** @var ProviderInterface */
-    protected $metadataStorage;
-
-    /** @var InputFileStateList */
-    protected $fileStateList;
-
-    /** @var string */
-    protected $format;
-
+    /**
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     */
     public function __construct(
-        ClientWrapper $storageClient,
-        LoggerInterface $logger,
-        ProviderInterface $dataStorage,
-        ProviderInterface $metadataStorage,
-        InputFileStateList $fileStateList,
-        $format = Adapter::FORMAT_JSON
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        protected readonly ProviderInterface $dataStorage,
+        protected readonly ProviderInterface $metadataStorage,
+        protected readonly InputFileStateList $fileStateList,
+        protected readonly string $format = Adapter::FORMAT_JSON
     ) {
-        $this->clientWrapper = $storageClient;
-        $this->logger = $logger;
         $this->manifestCreator = new ManifestCreator();
-        $this->dataStorage = $dataStorage;
-        $this->metadataStorage = $metadataStorage;
-        $this->fileStateList = $fileStateList;
-        $this->format = $format;
     }
 
-    protected function ensurePathDelimiter($path)
+    protected function ensurePathDelimiter(string $path): string
     {
         return $this->ensureNoPathDelimiter($path) . '/';
     }
 
-    protected function ensureNoPathDelimiter($path)
+    protected function ensureNoPathDelimiter(string $path): string
     {
         return rtrim($path, '\\/');
     }
 
-    /**
-     * @param string $destinationPath
-     * @param string $fileId
-     * @param string $fileName
-     * @return string
-     */
-    abstract protected function getFileDestinationPath($destinationPath, $fileId, $fileName);
+    abstract protected function getFileDestinationPath(
+        string $destinationPath,
+        int $fileId,
+        string $fileName
+    ): string;
 
-    /**
-     * @param array $fileConfigurations
-     * @param string $destination
-     * @return InputFileStateList
-     */
-    public function downloadFiles($fileConfigurations, $destination)
+    public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList
     {
         $fileOptions = new GetFileOptions();
         $fileOptions->setFederationToken(true);
@@ -99,7 +68,7 @@ abstract class AbstractStrategy implements StrategyInterface
                     'tags' => $currentState->getTags(),
                     'lastImportId' => $currentState->getLastImportId(),
                 ];
-            } catch (FileNotFoundException $e) {
+            } catch (FileNotFoundException) {
                 $outputStateConfiguration = [];
             }
             foreach ($files as $file) {
@@ -117,7 +86,7 @@ abstract class AbstractStrategy implements StrategyInterface
                 $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
                     $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     throw new InputOperationException(
                         sprintf(
                             'Failed to download file %s (%s): %s',

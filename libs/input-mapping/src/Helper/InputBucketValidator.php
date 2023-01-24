@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -10,7 +12,7 @@ use Keboola\StorageApiBranch\ClientWrapper;
 
 class InputBucketValidator
 {
-    public static function checkDevBuckets(InputTableOptionsList $tablesDefinitions, ClientWrapper $clientWrapper)
+    public static function checkDevBuckets(InputTableOptionsList $tablesDefinitions, ClientWrapper $clientWrapper): void
     {
         $buckets = [];
         foreach ($tablesDefinitions->getTables() as $tablesDefinition) {
@@ -30,7 +32,7 @@ class InputBucketValidator
         }
     }
 
-    private static function getBucketIdFromSource($source)
+    private static function getBucketIdFromSource(string $source): string
     {
         $parts = explode('.', $source);
         if (count($parts) < 3) {
@@ -39,7 +41,7 @@ class InputBucketValidator
         return $parts[0] . '.' . $parts[1];
     }
 
-    private static function isDevBucket($bucketId, ClientWrapper $clientWrapper)
+    private static function isDevBucket(string $bucketId, ClientWrapper $clientWrapper): bool
     {
         try {
             $metadata = new Metadata($clientWrapper->getBasicClient());

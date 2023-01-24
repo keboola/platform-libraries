@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Staging\NullProvider;
@@ -8,21 +10,21 @@ use PHPUnit\Framework\TestCase;
 
 class NullProviderTest extends TestCase
 {
-    public function testProvideSnowflakeWorkspace()
+    public function testProvideSnowflakeWorkspace(): void
     {
         $provider = new NullProvider();
         $provider->cleanup();
         self::assertSame([], $provider->getCredentials());
-        self::expectException(LogicException::class);
-        self::expectExceptionMessage('getWorkspaceId not implemented.');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('getWorkspaceId not implemented.');
         $provider->getWorkspaceId();
     }
 
-    public function testProvideSnowflakeWorkspacePath()
+    public function testProvideSnowflakeWorkspacePath(): void
     {
         $provider = new NullProvider();
-        self::expectException(LogicException::class);
-        self::expectExceptionMessage('getPath not implemented.');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('getPath not implemented.');
         $provider->getPath();
     }
 }

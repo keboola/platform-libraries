@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Configuration;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
-use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 class File extends Configuration
 {
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('file');
         $root = $treeBuilder->getRootNode();
@@ -16,7 +18,7 @@ class File extends Configuration
         return $treeBuilder;
     }
 
-    public static function configureNode(NodeDefinition $node)
+    public static function configureNode(ArrayNodeDefinition $node): void
     {
         $node
             ->children()
@@ -36,6 +38,7 @@ class File extends Configuration
                                         ->defaultValue('include')
                                         ->validate()
                                             ->ifNotInArray(['include', 'exclude'])
+                                            // phpcs:ignore Generic.Files.LineLength
                                             ->thenInvalid('Invalid match type "%s", allowed values are: "include", "exclude".')
                                         ->end()
                                     ->end()
@@ -69,8 +72,8 @@ class File extends Configuration
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
-                if ((!isset($v['tags']) || count($v['tags']) == 0) && !isset($v['query']) &&
-                    (!isset($v['source']['tags']) || count($v['source']['tags']) == 0)) {
+                if ((!isset($v['tags']) || count($v['tags']) === 0) && !isset($v['query']) &&
+                    (!isset($v['source']['tags']) || count($v['source']['tags']) === 0)) {
                     return true;
                 }
                 return false;

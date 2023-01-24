@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Result;
 
 use Keboola\InputMapping\Table\Result\TableMetrics;
@@ -7,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class TableMetricsTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $tableMetrics = new TableMetrics(
             [

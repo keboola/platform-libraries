@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Result\Column;
 use Keboola\InputMapping\Table\Result\MetadataItem;
-use Keboola\InputMapping\Table\Result\Metrics;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\InputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
@@ -19,13 +21,13 @@ use Keboola\StorageApi\Metadata;
 
 class DownloadTablesOutputTest extends DownloadTablesTestAbstract
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         try {
             $this->clientWrapper->getBasicClient()->dropBucket('in.c-input-mapping-test', ['force' => true]);
         } catch (ClientException $e) {
-            if ($e->getCode() != 404) {
+            if ($e->getCode() !== 404) {
                 throw $e;
             }
         }
@@ -50,7 +52,7 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
         );
     }
 
-    public function testDownloadTablesResult()
+    public function testDownloadTablesResult(): void
     {
         $reader = new Reader($this->getStagingFactory());
         $configuration = new InputTableOptionsList([
@@ -59,7 +61,7 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
                 'destination' => 'test.csv',
             ],
             [
-                'source' => "in.c-input-mapping-test.test2",
+                'source' => 'in.c-input-mapping-test.test2',
                 'destination' => 'test2.csv',
             ],
         ]);
@@ -68,7 +70,7 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::LOCAL,
+            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
         $test1TableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-input-mapping-test.test');

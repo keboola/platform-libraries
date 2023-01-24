@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\Csv\CsvFile;
@@ -14,14 +16,12 @@ abstract class AbstractStrategyTest extends TestCase
 {
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
-
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->temp = new Temp();
-        $this->temp->initRunFolder();
         $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
@@ -47,7 +47,6 @@ abstract class AbstractStrategyTest extends TestCase
 
         // Create table
         $temp = new Temp();
-        $temp->initRunFolder();
         $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);

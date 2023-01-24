@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\InputMapping\Staging\NullProvider;
@@ -12,10 +14,10 @@ use Psr\Log\NullLogger;
 
 class TeradataTest extends AbstractStrategyTest
 {
-    public function testTeradataDownloadTable()
+    public function testTeradataDownloadTable(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN),
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $strategy = new Teradata(
             $clientWrapper,
@@ -45,7 +47,7 @@ class TeradataTest extends AbstractStrategyTest
                     [
                         'columns' => [
                             ['source' => 'foo'],
-                            ['source' => 'bar']
+                            ['source' => 'bar'],
                         ],
                         'overwrite' => false,
                     ],

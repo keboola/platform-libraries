@@ -1,40 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
+use Throwable;
 
 class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbstract
 {
-    private $runSynapseTests;
+    private bool $runSynapseTests = false;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
+        $this->runSynapseTests = (bool) getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
             return;
-        }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
         parent::setUp();
     }
 
-    protected function initClient()
+    protected function initClient(): void
     {
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
@@ -53,13 +50,20 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
         ));
     }
 
-    public function testTablesSynapseBackend()
+    public function testTablesSynapseBackend(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_SYNAPSE, 'synapse']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -92,7 +96,7 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SYNAPSE,
+            AbstractStrategyFactory::WORKSPACE_SYNAPSE,
             new ReaderOptions(true)
         );
 
@@ -135,8 +139,8 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
             );
 
-            self::assertFalse(true, 'Exception was expected');
-        } catch (\Exception $e) {
+            self::fail('Exception was expected');
+        } catch (Throwable $e) {
             self::assertInstanceOf(ClientException::class, $e);
             self::assertStringStartsWith('Invalid columns: _timestamp', $e->getMessage());
         }
@@ -158,7 +162,7 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_SYNAPSE,
+            AbstractStrategyFactory::WORKSPACE_SYNAPSE,
             new ReaderOptions(true, false)
         );
         // the initially loaded tables should not be present in the workspace anymore
@@ -169,7 +173,7 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {
-            self::assertContains('Table "test2" not found in schema', $exception->getMessage());
+            self::assertStringContainsString('Table "test2" not found in schema', $exception->getMessage());
         }
         try {
             $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
@@ -178,7 +182,7 @@ class DownloadTablesWorkspaceSynapseTest extends DownloadTablesWorkspaceTestAbst
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {
-            self::assertContains('Table "test3" not found in schema', $exception->getMessage());
+            self::assertStringContainsString('Table "test3" not found in schema', $exception->getMessage());
         }
     }
 }

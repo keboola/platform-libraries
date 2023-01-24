@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Helper\LoadTypeDecider;
@@ -8,10 +10,9 @@ use Keboola\StorageApi\Workspaces;
 
 abstract class AbstractDatabaseStrategy extends AbstractStrategy
 {
-    /** @return string */
-    abstract protected function getWorkspaceType();
+    abstract protected function getWorkspaceType(): string;
 
-    public function downloadTable(InputTableOptions $table)
+    public function downloadTable(InputTableOptions $table): array
     {
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
@@ -19,7 +20,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return [
                 'table' => $table,
-                'type' => 'clone'
+                'type' => 'clone',
             ];
         }
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
@@ -29,7 +30,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         ];
     }
 
-    public function handleExports($exports, $preserve)
+    public function handleExports(array $exports, bool $preserve): array
     {
         $cloneInputs = [];
         $copyInputs = [];
@@ -51,7 +52,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 $copyInput = array_merge(
                     [
                         'source' => $table->getSource(),
-                        'destination' => $table->getDestination()
+                        'destination' => $table->getDestination(),
                     ],
                     $exportOptions
                 );
@@ -76,11 +77,11 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 sprintf('Cloning %s tables to workspace.', count($cloneInputs))
             );
             // here we are waiting for the jobs to finish. handleAsyncTask = true
-            // We need to process clone and copy jobs separately because there is no lock on the table and there is a race between the
-            // clone and copy jobs which can end in an error that the table already exists.
+            // We need to process clone and copy jobs separately because there is no lock on the table and there
+            // is a race between the clone and copy jobs which can end in an error that the table already exists.
             // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
             $jobId = $workspaces->queueWorkspaceCloneInto(
-                $this->dataStorage->getWorkspaceId(),
+                (int) $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $cloneInputs,
                     'preserve' => $preserve ? 1 : 0,
@@ -97,7 +98,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 sprintf('Copying %s tables to workspace.', count($copyInputs))
             );
             $jobId = $workspaces->queueWorkspaceLoadData(
-                $this->dataStorage->getWorkspaceId(),
+                (int) $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $copyInputs,
                     'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
@@ -110,7 +111,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
 
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,

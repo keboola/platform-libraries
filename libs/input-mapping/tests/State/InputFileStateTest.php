@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\State;
 
 use Keboola\InputMapping\State\InputFileState;
@@ -7,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class InputFileStateTest extends TestCase
 {
-    public function testGetTags()
+    public function testGetTags(): void
     {
         $configuration = [
             'tags' => [
@@ -22,7 +24,7 @@ class InputFileStateTest extends TestCase
         self::assertEquals([['name' => 'test', 'match' => 'include']], $state->getTags());
     }
 
-    public function testGetLastImportId()
+    public function testGetLastImportId(): void
     {
         $configuration = [
             'tags' => [
@@ -37,7 +39,7 @@ class InputFileStateTest extends TestCase
         self::assertEquals('12345', $state->getLastImportId());
     }
 
-    public function testJsonSerialize()
+    public function testJsonSerialize(): void
     {
         $configuration = [
             'tags' => [

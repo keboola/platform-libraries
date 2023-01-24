@@ -1,23 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Staging;
 
 interface ProviderInterface
 {
-    /**
-     * @return string
-     */
-    public function getWorkspaceId();
+    public function getWorkspaceId(): string;
 
-    public function cleanup();
+    public function cleanup(): void;
 
     /**
-     * @return array
+     * @return array{
+     *      container?: string,
+     *      connectionString?: string,
+     *      host?: string,
+     *      warehouse?: string,
+     *      database?: string,
+     *      schema?: string,
+     *      user?: string,
+     *      password?: string,
+     *      account?: string,
+     * }
      */
-    public function getCredentials();
+    public function getCredentials(): array;
 
-    /**
-     * @return string
-     */
-    public function getPath();
+    public function getPath(): string;
 }

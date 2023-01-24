@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\InputMapping\Staging\NullProvider;
@@ -10,7 +12,7 @@ use Psr\Log\NullLogger;
 
 class S3StrategyTest extends AbstractStrategyTest
 {
-    public function testColumns()
+    public function testColumns(): void
     {
         $strategy = new S3(
             $this->clientWrapper,
@@ -24,7 +26,7 @@ class S3StrategyTest extends AbstractStrategyTest
             [
                 'source' => 'in.c-input-mapping-test-strategy.test1',
                 'destination' => 'some-table.csv',
-                'columns' => ['Id', 'Name']
+                'columns' => ['Id', 'Name'],
             ]
         );
         $result = $strategy->downloadTable($tableOptions);
@@ -41,7 +43,7 @@ class S3StrategyTest extends AbstractStrategyTest
         );
     }
 
-    public function testColumnsExtended()
+    public function testColumnsExtended(): void
     {
         $strategy = new S3(
             $this->clientWrapper,
@@ -59,12 +61,12 @@ class S3StrategyTest extends AbstractStrategyTest
                     [
                         'source' => 'Id',
                         'destination' => 'myid',
-                        'type' => 'VARCHAR'
+                        'type' => 'VARCHAR',
                     ],
                     [
                         'source' => 'Name',
                         'destination' => 'myname',
-                        'type' => 'NUMERIC'
+                        'type' => 'NUMERIC',
                     ],
                 ],
             ]

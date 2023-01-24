@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping;
 
 use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\File\Strategy\AbstractStrategy as FileAbstractStrategy;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\SourceRewriteHelper;
@@ -15,6 +18,7 @@ use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Result;
+use Keboola\InputMapping\Table\Strategy\AbstractStrategy as TableAbstractStrategy;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -40,14 +44,17 @@ class Reader
      * @param InputFileStateList $filesState list of input mapping file states
      * @return InputFileStateList
      */
-    public function downloadFiles($configuration, $destination, $stagingType, InputFileStateList $filesState)
-    {
+    public function downloadFiles(
+        array $configuration,
+        string $destination,
+        string $stagingType,
+        InputFileStateList $filesState
+    ): InputFileStateList {
         $strategy = $this->strategyFactory->getFileInputStrategy($stagingType, $filesState);
         if (!$configuration) {
             return new InputFileStateList([]);
-        } elseif (!is_array($configuration)) {
-            throw new InvalidInputException("File download configuration is not an array.");
         }
+        /** @var FileAbstractStrategy $strategy */
         return $strategy->downloadFiles($configuration, $destination);
     }
 
@@ -62,10 +69,10 @@ class Reader
     public function downloadTables(
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
-        $destination,
-        $stagingType,
+        string $destination,
+        string $stagingType,
         ReaderOptions $readerOptions
-    ) {
+    ): Result {
         $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
             $tablesState,
@@ -85,6 +92,7 @@ class Reader
             $this->clientWrapper,
             $this->logger
         );
+        /** @var TableAbstractStrategy $strategy */
         return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
     }
 
@@ -93,10 +101,11 @@ class Reader
      * @param string $runId
      * @return string Parent part of hierarchical Id.
      */
-    public static function getParentRunId($runId)
+    public static function getParentRunId(string $runId): string
     {
         if (!empty($runId)) {
-            if (($pos = strrpos($runId, '.')) === false) {
+            $pos = strrpos($runId, '.');
+            if ($pos === false) {
                 // there is no parent
                 $parentRunId = $runId;
             } else {
@@ -122,7 +131,7 @@ class Reader
         );
         $storageClient = $clientWrapper->getBasicClient();
 
-        if (isset($fileConfigurationRewritten["query"]) && $clientWrapper->hasBranch()) {
+        if (isset($fileConfigurationRewritten['query']) && $clientWrapper->hasBranch()) {
             throw new InvalidInputException(
                 "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
             );
@@ -140,26 +149,26 @@ class Reader
             throw new InvalidInputException('Invalid file mapping, changed_since is not supported for query mappings');
         }
         if (!empty($fileConfigurationRewritten['filter_by_run_id'])) {
-            $options->setRunId(Reader::getParentRunId($storageClient->getRunId()));
+            $options->setRunId(Reader::getParentRunId((string) $storageClient->getRunId()));
         }
-        if (isset($fileConfigurationRewritten["tags"]) && count($fileConfigurationRewritten["tags"])) {
-            $options->setTags($fileConfigurationRewritten["tags"]);
+        if (isset($fileConfigurationRewritten['tags']) && count($fileConfigurationRewritten['tags'])) {
+            $options->setTags($fileConfigurationRewritten['tags']);
         }
-        if (isset($fileConfigurationRewritten["query"]) || isset($fileConfigurationRewritten['source']['tags'])) {
+        if (isset($fileConfigurationRewritten['query']) || isset($fileConfigurationRewritten['source']['tags'])) {
             $options->setQuery(
                 BuildQueryFromConfigurationHelper::buildQuery($fileConfigurationRewritten)
             );
-        } elseif (isset($fileConfigurationRewritten["changed_since"])
+        } elseif (isset($fileConfigurationRewritten['changed_since'])
             && $fileConfigurationRewritten['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
             // need to set the query for the case where query nor source tags are present, but changed_since is
             $options->setQuery(BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion(
                 $fileConfigurationRewritten['changed_since']
             ));
         }
-        if (empty($fileConfigurationRewritten["limit"])) {
-            $fileConfigurationRewritten["limit"] = 100;
+        if (empty($fileConfigurationRewritten['limit'])) {
+            $fileConfigurationRewritten['limit'] = 100;
         }
-        $options->setLimit($fileConfigurationRewritten["limit"]);
+        $options->setLimit($fileConfigurationRewritten['limit']);
 
         if (isset($fileConfigurationRewritten['changed_since'])
             && $fileConfigurationRewritten['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
@@ -171,7 +180,7 @@ class Reader
                         $fileStateList->getFileConfigurationIdentifier($fileConfiguration)
                     )->getLastImportId()
                 );
-            } catch (FileNotFoundException $e) {
+            } catch (FileNotFoundException) {
                 // intentionally blank, no state configuration
             }
         }

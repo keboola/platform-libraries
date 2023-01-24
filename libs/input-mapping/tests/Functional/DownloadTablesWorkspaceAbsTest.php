@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\Exception;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
@@ -18,24 +20,18 @@ use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
 {
-    private $runSynapseTests;
+    private bool $runSynapseTests;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $this->runSynapseTests = getenv('RUN_SYNAPSE_TESTS');
+        $this->runSynapseTests = (bool) getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
             return;
-        }
-        if (getenv('SYNAPSE_STORAGE_API_TOKEN') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-        }
-        if (getenv('SYNAPSE_STORAGE_API_URL') === false) {
-            throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
         }
         parent::setUp();
     }
 
-    protected function initClient()
+    protected function initClient(): void
     {
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
@@ -54,7 +50,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         ));
     }
 
-    protected function assertBlobs($basePath)
+    protected function assertBlobs(string $basePath): void
     {
         $blobListOptions = new ListBlobsOptions();
         $blobListOptions->setPrefix($basePath);
@@ -64,13 +60,20 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         self::assertGreaterThan(0, count($blobList->getBlobs()));
     }
 
-    public function testTablesAbsWorkspace()
+    public function testTablesAbsWorkspace(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_ABS, 'abs']));
+        $reader = new Reader(
+            $this->getStagingFactory(
+                null,
+                'json',
+                $logger,
+                [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            )
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -93,7 +96,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_ABS,
+            AbstractStrategyFactory::WORKSPACE_ABS,
             new ReaderOptions(true)
         );
 
@@ -122,13 +125,18 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         self::assertTrue($logger->hasInfoThatContains('Processing workspace export.'));
     }
 
-    public function testTablesAbsWorkspaceSlash()
+    public function testTablesAbsWorkspaceSlash(): void
     {
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_ABS, 'abs']));
+        $reader = new Reader($this->getStagingFactory(
+            null,
+            'json',
+            $logger,
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
@@ -140,7 +148,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
             $configuration,
             new InputTableStateList([]),
             'download/test/',
-            StrategyFactory::WORKSPACE_ABS,
+            AbstractStrategyFactory::WORKSPACE_ABS,
             new ReaderOptions(true)
         );
 
@@ -153,26 +161,33 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
     }
 
-    public function testUseViewFails()
+    public function testUseViewFails(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(null, 'json', $logger, [StrategyFactory::WORKSPACE_ABS, 'abs']));
+        $reader = new Reader($this->getStagingFactory(
+            null,
+            'json',
+            $logger,
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-input-mapping-test.test1',
                 'destination' => 'test1',
                 'use_view' => true,
-            ]
+            ],
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('View load for table "download/test1" using backend "abs" can\'t be used, only Synapse is supported.');
+        $this->expectExceptionMessage(
+            'View load for table "download/test1" using backend "abs" can\'t be used, only Synapse is supported.'
+        );
 
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            StrategyFactory::WORKSPACE_ABS,
+            AbstractStrategyFactory::WORKSPACE_ABS,
             new ReaderOptions(true)
         );
     }

@@ -1,21 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Tests\Configuration;
 
 use Generator;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-abstract class AbstractManifestAdapterTest extends PHPUnit_Framework_TestCase
+abstract class AbstractManifestAdapterTest extends TestCase
 {
     public function initWithFormatData(): Generator
     {
-        yield 'default format' => [
-            'format' => null,
-            'expectedFormat' => 'json',
-            'expectedExtension' => '.json',
-        ];
         yield 'json format' => [
             'format' => 'json',
             'expectedFormat' => 'json',
@@ -32,7 +29,7 @@ abstract class AbstractManifestAdapterTest extends PHPUnit_Framework_TestCase
     {
         $this->expectException(InputOperationException::class);
         $this->expectExceptionMessage('Configuration format \'test\' not supported');
-
+        // @phpstan-ignore-next-line Deliberately supplying invalid value
         new Adapter('test');
     }
 }

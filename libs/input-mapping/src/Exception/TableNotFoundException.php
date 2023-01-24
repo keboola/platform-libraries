@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Exception;
 
-class TableNotFoundException extends \Exception
+use Exception;
+
+class TableNotFoundException extends Exception
 {
 }

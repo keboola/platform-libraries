@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -13,27 +15,13 @@ use Psr\Log\LoggerInterface;
  */
 class TableDefinitionResolver
 {
-    /**
-     * @var Client
-     */
-    private $storageApiClient;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    public function __construct(Client $client, LoggerInterface $logger)
-    {
-        $this->storageApiClient = $client;
-        $this->logger = $logger;
+    public function __construct(
+        private readonly Client $storageApiClient,
+        private readonly LoggerInterface $logger
+    ) {
     }
 
-    /**
-     * @param InputTableOptionsList $tablesDefinition
-     * @return InputTableOptionsList
-     */
-    public function resolve(InputTableOptionsList $tablesDefinition)
+    public function resolve(InputTableOptionsList $tablesDefinition): InputTableOptionsList
     {
         $resolvedTables = [];
         foreach ($tablesDefinition->getTables() as $table) {
@@ -47,12 +35,7 @@ class TableDefinitionResolver
         return new InputTableOptionsList($resolvedTables);
     }
 
-    /**
-     * @param Options\InputTableOptions $table
-     * @return array
-     * @throws InvalidInputException
-     */
-    private function resolveSingleTable(Options\InputTableOptions $table)
+    private function resolveSingleTable(Options\InputTableOptions $table): array
     {
         $tableDefinition = $table->getDefinition();
         $searchSourceConfig = $tableDefinition['source_search'];
@@ -74,7 +57,6 @@ class TableDefinitionResolver
                     $searchSourceConfig['key'],
                     $searchSourceConfig['value']
                 ));
-                break;
             case 1:
                 // one table found
                 $this->logger->info(sprintf(

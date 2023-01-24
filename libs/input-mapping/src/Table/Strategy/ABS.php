@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -9,7 +11,7 @@ use Keboola\StorageApi\Options\GetFileOptions;
 class ABS extends AbstractStrategy
 {
 
-    public function downloadTable(InputTableOptions $table)
+    public function downloadTable(InputTableOptions $table): array
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
@@ -17,30 +19,30 @@ class ABS extends AbstractStrategy
         return [$jobId, $table];
     }
 
-    public function handleExports($exports, $preserve)
+    public function handleExports(array $exports, bool $preserve): array
     {
-        $this->logger->info("Processing " . count($exports) . " ABS table exports.");
+        $this->logger->info('Processing ' . count($exports) . ' ABS table exports.');
         $jobIds = array_map(function ($export) {
             return $export[0];
         }, $exports);
         $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($jobResults as $result) {
-            $keyedResults[$result["id"]] = $result;
+            $keyedResults[$result['id']] = $result;
         }
 
-        /** @var InputTableOptions $table */
         foreach ($exports as $export) {
+            /** @var InputTableOptions $table */
             list ($jobId, $table) = $export;
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . ".manifest";
+                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
             $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
             $fileInfo = $this->clientWrapper->getBasicClient()->getFile(
-                $keyedResults[$jobId]["results"]["file"]["id"],
+                $keyedResults[$jobId]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true)
             )
             ;
-            $tableInfo["abs"] = $this->getABSInfo($fileInfo);
+            $tableInfo['abs'] = $this->getABSInfo($fileInfo);
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,
@@ -51,7 +53,7 @@ class ABS extends AbstractStrategy
         return $jobResults;
     }
 
-    protected function getABSInfo($fileInfo)
+    protected function getABSInfo(array $fileInfo): array
     {
         if (empty($fileInfo['absPath'])) {
             throw new InvalidInputException('This project does not have ABS backend.');

@@ -1,35 +1,23 @@
 <?php
 
-namespace Keboola\InputMapping\Table\Options;
+declare(strict_types=1);
 
-use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Exception\TableNotFoundException;
-use Keboola\InputMapping\State\InputTableStateList;
+namespace Keboola\InputMapping\Table\Options;
 
 class ReaderOptions
 {
-    /**
-     * @var bool
-     */
-    private $devInputsDisabled;
-
-    /**
-     * @var bool
-     */
-    private $preserveWorkspace;
-
-    public function __construct($devInputsDisabled, $preserveWorkspace = true)
-    {
-        $this->devInputsDisabled = $devInputsDisabled;
-        $this->preserveWorkspace = $preserveWorkspace;
+    public function __construct(
+        private readonly bool $devInputsDisabled,
+        private readonly bool $preserveWorkspace = true
+    ) {
     }
 
-    public function devInputsDisabled()
+    public function devInputsDisabled(): bool
     {
         return $this->devInputsDisabled;
     }
 
-    public function preserveWorkspace()
+    public function preserveWorkspace(): bool
     {
         return $this->preserveWorkspace;
     }

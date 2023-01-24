@@ -1,51 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\InputMapping\State;
 
 use JsonSerializable;
 
 class InputFileState implements JsonSerializable
 {
-    /**
-     * @var array
-     */
-    private $tags;
-
-    /**
-     * @var string
-     */
-    private $lastImportId;
+    private array $tags;
+    private string $lastImportId;
 
     public function __construct(array $configuration)
     {
-        $this->tags = $configuration['tags'];
-        $this->lastImportId = $configuration['lastImportId'];
+        $this->tags = (array) $configuration['tags'];
+        $this->lastImportId = (string) $configuration['lastImportId'];
     }
 
-    /**
-     * @return string
-     */
-    public function getTags()
+    public function getTags(): array
     {
         return $this->tags;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastImportId()
+    public function getLastImportId(): string
     {
         return $this->lastImportId;
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'tags' => $this->getTags(),
-            'lastImportId' => $this->getLastImportId()
+            'lastImportId' => $this->getLastImportId(),
         ];
     }
 }

@@ -199,7 +199,7 @@ class LoadTableQueueTest extends TestCase
             ->willReturn('123')
         ;
 
-        $clientException = new ClientException('Hi', 444);
+        $clientException = new ClientException('Hi', 444, null, null, ['errors' => ['bar' => 'Kochba']]);
 
         $loadTask->expects($this->once())
             ->method('applyMetadata')
@@ -212,7 +212,7 @@ class LoadTableQueueTest extends TestCase
             self::fail('WaitForAll shoud fail with InvalidOutputException.');
         } catch (InvalidOutputException $e) {
             self::assertSame(
-                'Failed to update metadata for table "myTable": Hi',
+                'Failed to update metadata for table "myTable": Hi ({"bar":"Kochba"})',
                 $e->getMessage()
             );
         }

@@ -11,6 +11,7 @@
         processIsolation="false"
         stopOnFailure="false"
         bootstrap="tests/bootstrap.php"
+        printerClass="Sempro\PHPUnitPrettyPrinter\PrettyPrinterForPhpUnit9"
 >
     <coverage processUncoveredFiles="true">
         <include>

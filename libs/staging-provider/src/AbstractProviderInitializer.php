@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\Scope;
-use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
 use Keboola\StagingProvider\Staging\LocalStaging;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
@@ -11,36 +13,20 @@ use Keboola\StagingProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInt
 
 abstract class AbstractProviderInitializer
 {
-    /** @var InputStrategyFactory */
-    private $stagingFactory;
-
-    /** @var WorkspaceProviderFactoryInterface */
-    private $workspaceProviderFactory;
-    
-    /** @var string */
-    private $dataDirectory;
-
     public function __construct(
-        InputStrategyFactory $stagingFactory,
-        WorkspaceProviderFactoryInterface $workspaceProviderFactory,
-        $dataDirectory
+        private readonly AbstractStrategyFactory $stagingFactory,
+        private readonly WorkspaceProviderFactoryInterface $workspaceProviderFactory,
+        private readonly string $dataDirectory
     ) {
-        $this->stagingFactory = $stagingFactory;
-        $this->workspaceProviderFactory = $workspaceProviderFactory;
-        $this->dataDirectory = $dataDirectory;
     }
 
-    /**
-     * @param string $stagingType
-     * @param array $tokenInfo
-     */
-    abstract public function initializeProviders($stagingType, array $tokenInfo);
+    abstract public function initializeProviders(string $stagingType, array $tokenInfo): void;
 
     /**
      * @param class-string<WorkspaceStagingInterface> $workspaceClass
      * @param array<string, Scope> $scopes
      */
-    protected function addWorkspaceProvider($workspaceClass, $scopes)
+    protected function addWorkspaceProvider(string $workspaceClass, array $scopes): void
     {
         $stagingProvider = $this->workspaceProviderFactory->getProvider($workspaceClass);
         $this->stagingFactory->addProvider($stagingProvider, $scopes);
@@ -49,7 +35,7 @@ abstract class AbstractProviderInitializer
     /**
      * @param array<string, Scope> $scopes
      */
-    protected function addLocalProvider($scopes)
+    protected function addLocalProvider(array $scopes): void
     {
         $stagingProvider = new LocalStagingProvider(function () {
             return new LocalStaging($this->dataDirectory);

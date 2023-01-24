@@ -1,50 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 
 class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
 {
-    /** @var Components */
-    private $componentsApiClient;
-
-    /** @var Workspaces */
-    private $workspacesApiClient;
-
-    /** @var string */
-    private $componentId;
-
-    /** @var null|string */
-    private $configId;
-
-    /** @var WorkspaceBackendConfig */
-    private $workspaceBackendConfig;
-
-    /** @var ?bool  */
-    private $useWorkspaceWithReadonlyRole;
-
     public function __construct(
-        Components $componentsApiClient,
-        Workspaces $workspacesApiClient,
-        $componentId,
-        $configId,
-        WorkspaceBackendConfig $workspaceBackendConfig,
-        ?bool $useWorkspaceWithReadonlyRole = null
+        private readonly Components $componentsApiClient,
+        private readonly Workspaces $workspacesApiClient,
+        private readonly string $componentId,
+        private readonly ?string $configId,
+        private readonly WorkspaceBackendConfig $workspaceBackendConfig,
+        private readonly ?bool $useWorkspaceWithReadonlyRole = null
     ) {
         parent::__construct($workspacesApiClient);
-
-        $this->componentsApiClient = $componentsApiClient;
-        $this->workspacesApiClient = $workspacesApiClient;
-        $this->componentId = $componentId;
-        $this->configId = $configId;
-        $this->workspaceBackendConfig = $workspaceBackendConfig;
-        $this->useWorkspaceWithReadonlyRole = $useWorkspaceWithReadonlyRole;
     }
 
-    protected function getWorkspaceData($workspaceClass)
+    /**
+     * @param class-string<WorkspaceStagingInterface> $workspaceClass
+     * @return array
+     */
+    protected function getWorkspaceData(string $workspaceClass): array
     {
         $options = [
             'backend' => $workspaceClass::getType(),

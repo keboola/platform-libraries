@@ -1,36 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
-use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StorageApi\Workspaces;
 
 class ExistingDatabaseWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderFactory
 {
-    /** @var Workspaces */
-    private $workspacesApiClient;
-
-    /** @var string */
-    private $workspaceId;
-
-    /** @var string */
-    private $workspacePassword;
-
-    /**
-     * @param Workspaces $workspacesApiClient
-     * @param string $workspaceId
-     * @param string $workspacePassword
-     */
-    public function __construct(Workspaces $workspacesApiClient, $workspaceId, $workspacePassword)
-    {
+    public function __construct(
+        private readonly Workspaces $workspacesApiClient,
+        private readonly string $workspaceId,
+        private readonly string $workspacePassword
+    ) {
         parent::__construct($workspacesApiClient);
-
-        $this->workspacesApiClient = $workspacesApiClient;
-        $this->workspaceId = $workspaceId;
-        $this->workspacePassword = $workspacePassword;
     }
 
-    protected function getWorkspaceData($workspaceClass)
+    /**
+     * @param class-string<WorkspaceStagingInterface> $workspaceClass
+     */
+    protected function getWorkspaceData(string $workspaceClass): array
     {
         $data = $this->workspacesApiClient->getWorkspace($this->workspaceId);
         $data['connection']['password'] = $this->workspacePassword;

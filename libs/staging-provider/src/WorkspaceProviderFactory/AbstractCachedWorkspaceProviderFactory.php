@@ -1,25 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\WorkspaceProviderFactory;
 
-use Keboola\StorageApi\Workspaces;
 use Keboola\StagingProvider\Provider\WorkspaceStagingProvider;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use Keboola\StorageApi\Workspaces;
 
 abstract class AbstractCachedWorkspaceProviderFactory implements WorkspaceProviderFactoryInterface
 {
-    /** @var Workspaces */
-    private $workspacesApiClient;
-
     /** @var array<class-string<WorkspaceStagingInterface>, WorkspaceStagingProvider> */
-    private $providers;
+    private array $providers;
 
-    public function __construct(Workspaces $workspacesApiClient)
+    public function __construct(private readonly Workspaces $workspacesApiClient)
     {
-        $this->workspacesApiClient = $workspacesApiClient;
     }
 
-    public function getProvider($stagingClass)
+    public function getProvider($stagingClass): WorkspaceStagingProvider
     {
         if (isset($this->providers[$stagingClass])) {
             return $this->providers[$stagingClass];
@@ -37,5 +35,5 @@ abstract class AbstractCachedWorkspaceProviderFactory implements WorkspaceProvid
      * @param class-string<WorkspaceStagingInterface> $workspaceClass
      * @return array
      */
-    abstract protected function getWorkspaceData($workspaceClass);
+    abstract protected function getWorkspaceData(string $workspaceClass): array;
 }

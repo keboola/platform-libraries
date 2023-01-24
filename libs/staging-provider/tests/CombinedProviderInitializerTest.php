@@ -1,19 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Tests;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
+use Keboola\StagingProvider\InputProviderInitializer;
+use Keboola\StagingProvider\OutputProviderInitializer;
+use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\OutputProviderInitializer;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -21,7 +24,7 @@ use ReflectionProperty;
 
 class CombinedProviderInitializerTest extends TestCase
 {
-    public function testWorkspaceIsInitializedOnlyOnce()
+    public function testWorkspaceIsInitializedOnlyOnce(): void
     {
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
@@ -52,31 +55,45 @@ class CombinedProviderInitializerTest extends TestCase
             );
 
             $inputStagingFactory = new InputStrategyFactory($clientWrapper, $logger, 'json');
-            $inputInitializer = new InputProviderInitializer($inputStagingFactory, $providerFactory, '/tmp/random/data');
+            $inputInitializer = new InputProviderInitializer(
+                $inputStagingFactory,
+                $providerFactory,
+                '/tmp/random/data'
+            );
             $inputInitializer->initializeProviders(
-                InputStrategyFactory::WORKSPACE_SNOWFLAKE,
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
                 ]
             );
 
             $outputStagingFactory = new OutputStrategyFactory($clientWrapper, $logger, 'json');
-            $outputInitializer = new OutputProviderInitializer($outputStagingFactory, $providerFactory, '/tmp/random/data');
+            $outputInitializer = new OutputProviderInitializer(
+                $outputStagingFactory,
+                $providerFactory,
+                '/tmp/random/data'
+            );
             $outputInitializer->initializeProviders(
-                OutputStrategyFactory::WORKSPACE_SNOWFLAKE,
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
                 ]
             );
 
-            $inputStrategy = $inputStagingFactory->getTableInputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE, 'test', new InputTableStateList([]));
+            $inputStrategy = $inputStagingFactory->getTableInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+                'test',
+                new InputTableStateList([])
+            );
             $reflection = new ReflectionProperty($inputStrategy, 'dataStorage');
             $reflection->setAccessible(true);
             /** @var ProviderInterface $dataStorage */
             $dataStorage = $reflection->getValue($inputStrategy);
             $workspaceId1 = $dataStorage->getWorkspaceId();
 
-            $outputStrategy = $outputStagingFactory->getTableOutputStrategy(OutputStrategyFactory::WORKSPACE_SNOWFLAKE);
+            $outputStrategy = $outputStagingFactory->getTableOutputStrategy(
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            );
             $reflection = new ReflectionProperty($outputStrategy, 'dataStorage');
             $reflection->setAccessible(true);
             /** @var ProviderInterface $dataStorage */

@@ -1,24 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\WorkspaceProviderFactory\Configuration;
 
 class WorkspaceBackendConfig
 {
-    /** @var null|string */
-    private $type;
-
-    /**
-     * @param string|null $type
-     */
-    public function __construct($type)
+    public function __construct(private readonly ?string $type)
     {
-        $this->type = $type;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }

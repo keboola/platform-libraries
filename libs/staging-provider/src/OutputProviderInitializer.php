@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\Scope;
-use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
-use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\BigQueryWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\ExasolWorkspaceStaging;
@@ -18,18 +19,10 @@ use Keboola\StagingProvider\WorkspaceProviderFactory\WorkspaceProviderFactoryInt
 class OutputProviderInitializer extends AbstractProviderInitializer
 {
     public function __construct(
-        InputStrategyFactory $stagingFactory,
+        OutputStrategyFactory $stagingFactory,
         WorkspaceProviderFactoryInterface $workspaceProviderFactory,
-        $dataDirectory
+        string $dataDirectory
     ) {
-        if (!$stagingFactory instanceof OutputStrategyFactory) {
-            throw new StagingProviderException(sprintf(
-                'Given staging factory %s is not instance of %s',
-                get_class($stagingFactory),
-                OutputStrategyFactory::class
-            ));
-        }
-
         parent::__construct(
             $stagingFactory,
             $workspaceProviderFactory,
@@ -38,96 +31,114 @@ class OutputProviderInitializer extends AbstractProviderInitializer
     }
 
     public function initializeProviders(
-        $stagingType,
+        string $stagingType,
         array $tokenInfo
-    ) {
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_REDSHIFT &&
+    ): void {
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_REDSHIFT &&
             $tokenInfo['owner']['hasRedshift']
         ) {
             $this->addWorkspaceProvider(
                 RedshiftWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_REDSHIFT => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_REDSHIFT => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_SNOWFLAKE &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_SNOWFLAKE &&
             $tokenInfo['owner']['hasSnowflake']
         ) {
             $this->addWorkspaceProvider(
                 SnowflakeWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_SYNAPSE &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_SYNAPSE &&
             $tokenInfo['owner']['hasSynapse']
         ) {
             $this->addWorkspaceProvider(
                 SynapseWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_SYNAPSE => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_SYNAPSE => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_ABS &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_ABS &&
             $tokenInfo['owner']['fileStorageProvider'] === 'azure'
         ) {
             $this->addWorkspaceProvider(
                 AbsWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_ABS => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_ABS => new Scope(
+                        [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA]
+                    ),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_EXASOL &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_EXASOL &&
             $tokenInfo['owner']['hasExasol']
         ) {
             $this->addWorkspaceProvider(
                 ExasolWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_TERADATA &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_TERADATA &&
             $tokenInfo['owner']['hasTeradata']
         ) {
             $this->addWorkspaceProvider(
                 TeradataWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
-        if ($stagingType === OutputStrategyFactory::WORKSPACE_BIGQUERY &&
+        if ($stagingType === AbstractStrategyFactory::WORKSPACE_BIGQUERY &&
             $tokenInfo['owner']['hasBigquery']
         ) {
             $this->addWorkspaceProvider(
                 BigQueryWorkspaceStaging::class,
                 [
-                    OutputStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::TABLE_DATA]),
+                    AbstractStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::TABLE_DATA]),
                 ]
             );
         }
 
         $this->addLocalProvider(
             [
-                OutputStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_REDSHIFT => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_SYNAPSE => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_ABS => new Scope([Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-                OutputStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]),
+                AbstractStrategyFactory::LOCAL => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_REDSHIFT => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_SYNAPSE => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_ABS => new Scope(
+                    [Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_EXASOL => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_TERADATA => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
+                AbstractStrategyFactory::WORKSPACE_BIGQUERY => new Scope(
+                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA]
+                ),
             ]
         );
     }

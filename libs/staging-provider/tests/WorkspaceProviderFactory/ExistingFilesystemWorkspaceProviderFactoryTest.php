@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
+use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
+use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingFilesystemWorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
 {
-    public function testWorkspaceIsFetched()
+    public function testWorkspaceIsFetched(): void
     {
         $workspaceId = 'my.workspace';
         $workspaceConnectionString = 'someRandomString';
@@ -45,7 +46,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         );
     }
 
-    public function testWorkspaceBackendTypeIsChecked()
+    public function testWorkspaceBackendTypeIsChecked(): void
     {
         $workspaceId = 'my.workspace';
         $workspaceConnectionString = 'someRandomString';
@@ -76,7 +77,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $provider->getWorkspaceId();
     }
 
-    public function testStagingInstanceIsCached()
+    public function testStagingInstanceIsCached(): void
     {
         $workspaceId = 'my.workspace';
         $workspaceConnectionString = 'someRandomString';

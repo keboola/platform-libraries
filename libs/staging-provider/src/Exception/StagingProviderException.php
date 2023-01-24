@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Exception;
 
-class StagingProviderException extends \RuntimeException
+use RuntimeException;
+
+class StagingProviderException extends RuntimeException
 {
 
 }

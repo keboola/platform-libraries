@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\StagingProvider\Tests\Staging;
 
+use Generator;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\BigQueryWorkspaceStaging;
@@ -16,8 +19,9 @@ class WorkspaceStagingTest extends TestCase
 {
     /**
      * @dataProvider provideWorkspacesWithTypes
+     * @param class-string $workspaceClass
      */
-    public function testBackendTypeIsChecked($workspaceClass, $expectedType)
+    public function testBackendTypeIsChecked(string $workspaceClass, string $expectedType): void
     {
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage(sprintf(
@@ -33,7 +37,7 @@ class WorkspaceStagingTest extends TestCase
         ]);
     }
 
-    public function provideWorkspacesWithTypes()
+    public function provideWorkspacesWithTypes(): Generator
     {
         yield 'snowflake' => [SnowflakeWorkspaceStaging::class, 'snowflake'];
         yield 'synapse' => [SynapseWorkspaceStaging::class, 'synapse'];
@@ -44,33 +48,33 @@ class WorkspaceStagingTest extends TestCase
         yield 'bigquery' => [BigQueryWorkspaceStaging::class, 'bigquery'];
     }
 
-    public function testWorkspaceIdIsReturned()
+    public function testWorkspaceIdIsReturned(): void
     {
         $workspaceId = 'test';
         $workspace = new SnowflakeWorkspaceStaging([
             'id' => $workspaceId,
             'connection' => [
                 'backend' => SnowflakeWorkspaceStaging::getType(),
-            ]
+            ],
         ]);
 
         self::assertSame($workspaceId, $workspace->getWorkspaceId());
     }
 
-    public function testBackendSizeIsReturned()
+    public function testBackendSizeIsReturned(): void
     {
         $backendSize = 'large';
         $workspace = new SnowflakeWorkspaceStaging([
             'backendSize' => $backendSize,
             'connection' => [
                 'backend' => SnowflakeWorkspaceStaging::getType(),
-            ]
+            ],
         ]);
 
         self::assertSame($backendSize, $workspace->getBackendSize());
     }
 
-    public function testCredentialsAreReturned()
+    public function testCredentialsAreReturned(): void
     {
         $credentials = [
             'host' => 'host',
@@ -85,7 +89,7 @@ class WorkspaceStagingTest extends TestCase
         $workspace = new SnowflakeWorkspaceStaging([
             'connection' => $credentials + [
                 'backend' => SnowflakeWorkspaceStaging::getType(),
-                'extra' => 'dummy'
+                'extra' => 'dummy',
             ],
         ]);
 

@@ -75,11 +75,12 @@ class LoadTableQueue
                     if ($e->getCode() >= 500) {
                         throw $e;
                     }
-
+                    $extendedInfo = $e->getContextParams()['errors'] ?? [];
                     $errors[] = sprintf(
-                        'Failed to update metadata for table "%s": %s',
+                        'Failed to update metadata for table "%s": %s (%s)',
                         $task->getDestinationTableName(),
-                        $e->getMessage()
+                        $e->getMessage(),
+                        json_encode($extendedInfo)
                     );
                 }
 

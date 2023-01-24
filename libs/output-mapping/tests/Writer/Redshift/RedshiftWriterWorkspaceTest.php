@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Tests\Writer;
+namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
-use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Tests\Writer\Workspace\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 
@@ -23,11 +25,17 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
         ]);
     }
 
-    public function testRedshiftTableOutputMapping()
+    public function testRedshiftTableOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_REDSHIFT, 'redshift']);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_REDSHIFT)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT)
+            ->getDataStorage()->getWorkspaceId();
 
         $root = $this->tmp->getTmpFolder();
         $this->prepareWorkspaceWithTables('redshift', 'RedshiftWriterWorkspaceTest');
@@ -57,20 +65,25 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], StrategyFactory::WORKSPACE_REDSHIFT);
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::WORKSPACE_REDSHIFT
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
 
-        $this->assertTablesExists(
+        self::assertTablesExists(
             self::OUTPUT_BUCKET,
             [
                 self::OUTPUT_BUCKET . '.table1a',
                 self::OUTPUT_BUCKET . '.table2a',
             ]
         );
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
+        self::assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
             '"id","name"',
             '"test","test"',
             '"aabb","ccdd"',

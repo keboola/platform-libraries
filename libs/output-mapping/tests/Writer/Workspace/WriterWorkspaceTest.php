@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
@@ -29,12 +31,19 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clearFileUploads([self::FILE_TAG]);
     }
 
-    public function testSnowflakeTableOutputMapping()
+    public function testSnowflakeTableOutputMapping(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -73,9 +82,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'workspace-snowflake'
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
 
         $this->assertJobParamsMatches([
             'incremental' => true,
@@ -101,7 +110,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ]);
     }
 
-    public function testTableOutputMappingMissing()
+    public function testTableOutputMappingMissing(): void
     {
         $root = $this->tmp->getTmpFolder();
         $configs = [
@@ -119,7 +128,10 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $writer = new TableWriter($this->getStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to load table "' . self::OUTPUT_BUCKET . '.table1a": Table "table1a" not found in schema "WORKSPACE_');
+        $this->expectExceptionMessage(
+            'Failed to load table "' . self::OUTPUT_BUCKET .
+            '.table1a": Table "table1a" not found in schema "WORKSPACE_'
+        );
 
         $tableQueue = $writer->uploadTables(
             '/',
@@ -130,7 +142,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $tableQueue->waitForAll();
     }
 
-    public function testTableOutputMappingMissingManifest()
+    public function testTableOutputMappingMissingManifest(): void
     {
         $configs = [
             [
@@ -151,12 +163,19 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $tableQueue->waitForAll();
     }
 
-    public function testMappingMerge()
+    public function testMappingMerge(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
 
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -202,7 +221,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'workspace-snowflake'
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $metadata = new Metadata($this->clientWrapper->getBasicClient());
         $tableMetadata = $metadata->listTableMetadata(self::OUTPUT_BUCKET . '.table1a');
@@ -222,19 +241,26 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
     }
 
-    public function testTableOutputMappingMissingDestinationManifest()
+    public function testTableOutputMappingMissingDestinationManifest(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         $configs = [
             [
                 'source' => 'table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
-            ]
+            ],
         ];
         $writer = new TableWriter($factory);
         file_put_contents(
@@ -255,18 +281,25 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
     }
 
-    public function testTableOutputMappingMissingDestinationNoManifest()
+    public function testTableOutputMappingMissingDestinationNoManifest(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $configs = [
             [
                 'source' => 'table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
-            ]
+            ],
         ];
         $writer = new TableWriter($factory);
 
@@ -281,12 +314,19 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
     }
 
-    public function testSnowflakeTableOutputBucketNoDestination()
+    public function testSnowflakeTableOutputBucketNoDestination(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -295,7 +335,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a',
-            ]
+            ],
         ];
         file_put_contents(
             $root . '/table1a.manifest',
@@ -312,7 +352,7 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'workspace-snowflake'
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $this->assertJobParamsMatches([
             'columns' => ['Id', 'Name'],
@@ -325,28 +365,34 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         ]);
     }
 
-    public function testWriteTableOutputMappingDevMode()
+    public function testWriteTableOutputMappingDevMode(): void
     {
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
-                STORAGE_API_URL,
-                STORAGE_API_TOKEN_MASTER,
-                null,
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER')
             )
         );
         $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
-                STORAGE_API_URL,
-                STORAGE_API_TOKEN_MASTER,
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
                 $branchId,
             )
         );
 
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTables($tokenInfo['owner']['defaultBackend'], 'WriterWorkspaceTest');
         $configs = [
@@ -362,7 +408,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             ],
         ];
         $root = $this->tmp->getTmpFolder();
-        $this->tmp->initRunFolder();
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
@@ -384,31 +429,38 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             'workspace-snowflake'
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
+        self::assertCount(2, $jobIds);
 
         $branchBucketId = sprintf('out.c-%s-%s', $branchId, self::BUCKET_NAME);
         $tables = $this->clientWrapper->getBasicClient()->listTables($branchBucketId);
-        $this->assertCount(2, $tables);
-        $tableIds = [$tables[0]["id"], $tables[1]["id"]];
+        self::assertCount(2, $tables);
+        $tableIds = [$tables[0]['id'], $tables[1]['id']];
         sort($tableIds);
-        $this->assertEquals(
+        self::assertEquals(
             [
                 $branchBucketId . '.table1a',
                 $branchBucketId . '.table2a',
             ],
             $tableIds
         );
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
     }
 
-    public function testSnowflakeMultipleMappingOfSameSource()
+    public function testSnowflakeMultipleMappingOfSameSource(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -427,11 +479,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
 
         $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables('/', ['mapping' => $configs], ['componentId' => 'foo'], 'workspace-snowflake');
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake'
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
-        $this->assertNotEmpty($jobIds[1]);
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
 
         $this->assertTablesExists(
             self::OUTPUT_BUCKET,
@@ -455,9 +512,16 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
     public function testWriteOnlyOnJobFailure(): void
     {
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(null, 'json', null, [StrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]);
+        $factory = $this->getStagingFactory(
+            null,
+            'json',
+            null,
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+        );
         // initialize the workspace mock
-        $factory->getTableOutputStrategy(StrategyFactory::WORKSPACE_SNOWFLAKE)->getDataStorage()->getWorkspaceId();
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
         $root = $this->tmp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -488,8 +552,8 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             true
         );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
-        $this->assertNotEmpty($jobIds[0]);
+        self::assertCount(1, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
         $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table2a', [
             '"id","name"',
             '"test2","test2"',

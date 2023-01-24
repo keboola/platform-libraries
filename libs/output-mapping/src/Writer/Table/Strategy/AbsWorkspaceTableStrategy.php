@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Exception;
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use Throwable;
 
 class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    protected function createSource($sourcePathPrefix, $sourceName)
+    protected function createSource(string $sourcePathPrefix, string $sourceName): WorkspaceItemSource
     {
         $sourcePath = Path::join($sourcePathPrefix, $sourceName);
         $isSliced = $this->isDirectory($sourcePath);
@@ -22,18 +24,15 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 
         return new WorkspaceItemSource(
             $sourceName,
-            (string) $this->dataStorage->getWorkspaceId(),
+            $this->dataStorage->getWorkspaceId(),
             $sourcePath,
             $isSliced
         );
     }
 
-    /**
-     * @param string $sourcePath
-     * @return bool
-     */
-    private function isDirectory($sourcePath)
+    private function isDirectory(string $sourcePath): bool
     {
+        /** @var array{container: string, connectionString: string} $absCredentials */
         $absCredentials = $this->dataStorage->getCredentials();
         $blobClient = ClientFactory::createClientFromConnectionString($absCredentials['connectionString']);
 
@@ -45,11 +44,11 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
             foreach ($blobs->getBlobs() as $blob) {
                 /* there can be multiple blobs with the same prefix (e.g `my`, `my-file`, ...), we're checking
                     if there are blobs where the prefix is a directory. (e.g `my/` or `my-file/`) */
-                if (strpos($blob->getName(), $sourcePath.'/') === 0) {
+                if (str_starts_with($blob->getName(), $sourcePath . '/')) {
                     return true;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw new InvalidOutputException('Failed to list blobs ' . $e->getMessage(), 0, $e);
         }
 

@@ -1,81 +1,35 @@
 <?php
 
-namespace Keboola\OutputMapping\Writer\Table\Source;
+declare(strict_types=1);
 
-use InvalidArgumentException;
+namespace Keboola\OutputMapping\Writer\Table\Source;
 
 class WorkspaceItemSource implements SourceInterface
 {
-    /** @var string */
-    private $sourceName;
-
-    /** @var string */
-    private $workspaceId;
-
-    /** @var string */
-    private $dataObject;
-
-    /** @var bool */
-    private $isSliced;
-
-    /**
-     * @param string $sourceName
-     * @param string $workspaceId
-     * @param string $dataObject
-     * @param bool $isSliced
-     */
-    public function __construct($sourceName, $workspaceId, $dataObject, $isSliced)
-    {
-        if (!is_string($sourceName)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $sourceName must be a string, %s given',
-                is_object($sourceName) ? get_class($sourceName) : gettype($sourceName)
-            ));
-        }
-
-        if (!is_string($workspaceId)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $workspaceId must be a string, %s given',
-                is_object($workspaceId) ? get_class($workspaceId) : gettype($workspaceId)
-            ));
-        }
-
-        if (!is_string($dataObject)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $dataObject must be a string, %s given',
-                is_object($dataObject) ? get_class($dataObject) : gettype($dataObject)
-            ));
-        }
-
-        if (!is_bool($isSliced)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $isSliced must be a boolean, %s given',
-                is_object($isSliced) ? get_class($isSliced) : gettype($isSliced)
-            ));
-        }
-
-        $this->sourceName = $sourceName;
-        $this->workspaceId = $workspaceId;
-        $this->dataObject = $dataObject;
-        $this->isSliced = $isSliced;
+    public function __construct(
+        private readonly string $sourceName,
+        private readonly string $workspaceId,
+        private readonly string $dataObject,
+        private readonly bool $isSliced
+    ) {
     }
 
-    public function getName()
+    public function getName(): string
     {
         return $this->sourceName;
     }
 
-    public function getWorkspaceId()
+    public function getWorkspaceId(): string
     {
         return $this->workspaceId;
     }
 
-    public function getDataObject()
+    public function getDataObject(): string
     {
         return $this->dataObject;
     }
 
-    public function isSliced()
+    public function isSliced(): bool
     {
         return $this->isSliced;
     }

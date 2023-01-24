@@ -1,32 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table;
 
 use InvalidArgumentException;
 
 class MappingDestination
 {
-    /** @var string */
-    private $bucketStage;
+    private string $bucketStage;
+    private string $bucketName;
+    private string $tableName;
 
-    /** @var string */
-    private $bucketName;
-
-    /** @var string */
-    private $tableName;
-
-    /**
-     * @param string $value
-     */
-    public function __construct($value)
+    public function __construct(string $value)
     {
-        if (!is_string($value)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $value must be a string, %s given',
-                is_object($value) ? get_class($value) : gettype($value)
-            ));
-        }
-
         $parts = explode('.', $value);
         if (count($parts) !== 3) {
             throw new InvalidArgumentException('Value is not a valid table ID');
@@ -37,54 +24,35 @@ class MappingDestination
         $this->tableName = $parts[2];
     }
 
-    /**
-     * @param string $value
-     * @return bool
-     */
-    public static function isTableId($value)
+    public static function isTableId(?string $value): bool
     {
         return is_string($value) && substr_count($value, '.') === 2;
     }
 
-    /**
-     * @return string
-     */
-    public function getBucketId()
+    public function getBucketId(): string
     {
         return $this->bucketStage . '.' . $this->bucketName;
     }
 
-    /**
-     * @return string
-     */
-    public function getTableId()
+    public function getTableId(): string
     {
         return $this->getBucketId() . '.' . $this->tableName;
     }
 
-    /**
-     * @return string
-     */
-    public function getBucketStage()
+    public function getBucketStage(): string
     {
         return $this->bucketStage;
     }
 
-    /**
-     * @return string
-     */
-    public function getBucketName()
+    public function getBucketName(): string
     {
-        if (substr($this->bucketName, 0, 2) === 'c-') {
+        if (str_starts_with($this->bucketName, 'c-')) {
             return substr($this->bucketName, 2);
         }
         return $this->bucketName;
     }
 
-    /**
-     * @return string
-     */
-    public function getTableName()
+    public function getTableName(): string
     {
         return $this->tableName;
     }

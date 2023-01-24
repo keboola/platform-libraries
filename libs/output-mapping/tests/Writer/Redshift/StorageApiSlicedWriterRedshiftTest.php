@@ -1,17 +1,17 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests;
+declare(strict_types=1);
+
+namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
 
 class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
 {
@@ -25,44 +25,54 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         $this->clearFileUploads([self::FILE_TAG]);
     }
 
-    public function initBucket($backendType)
+    public function initBucket(string $backendType): void
     {
-        $this->clientWrapper->getBasicClient()->createBucket('StorageApiSlicedWriterRedshiftTest', 'out', null, $backendType);
+        $this->clientWrapper->getBasicClient()->createBucket(
+            'StorageApiSlicedWriterRedshiftTest',
+            'out',
+            '',
+            $backendType
+        );
     }
 
-    public function testWriteTableOutputMapping()
+    public function testWriteTableOutputMapping(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
@@ -70,27 +80,27 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         self::assertEquals([], $file['tags']);
     }
 
-    public function testWriteTableTagStagingFile()
+    public function testWriteTableTagStagingFile(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $client = $this->getMockBuilder(Client::class)
             ->setConstructorArgs([[
-                'url' => STORAGE_API_URL,
-                'token' => STORAGE_API_TOKEN,
+                'url' => (string) getenv('STORAGE_API_URL'),
+                'token' => (string) getenv('STORAGE_API_TOKEN'),
             ]])
             ->setMethods(['verifyToken'])
             ->getMock();
@@ -100,22 +110,27 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         $clientWrapper->method('getBasicClient')->willReturn($client);
         $writer = new TableWriter($this->getStagingFactory($clientWrapper));
 
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
         $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
@@ -126,36 +141,41 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         );
     }
 
-    public function testWriteTableOutputMappingEmptySlice()
+    public function testWriteTableOutputMappingEmptySlice(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table");
-        file_put_contents($root . "/upload/table/part1", "");
+        mkdir($root . '/upload/table');
+        file_put_contents($root . '/upload/table/part1', '');
         $configs = [
             [
-                "source" => "table",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(0, $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptySliceExistingTable()
+    public function testWriteTableOutputMappingEmptySliceExistingTable(): void
     {
         $this->initBucket('redshift');
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
@@ -164,61 +184,71 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table16', $csv);
 
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table16");
-        file_put_contents($root . "/upload/table16/part1", "");
+        mkdir($root . '/upload/table16');
+        file_put_contents($root . '/upload/table16/part1', '');
         $configs = [
             [
-                "source" => "table16",
-                "destination" => self::OUTPUT_BUCKET . ".table16",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table16',
+                'destination' => self::OUTPUT_BUCKET . '.table16',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table16");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table16');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table16', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(0, $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptyDir()
+    public function testWriteTableOutputMappingEmptyDir(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table15");
+        mkdir($root . '/upload/table15');
 
         $configs = [
             [
-                "source" => "table15",
-                "destination" => self::OUTPUT_BUCKET . ".table15",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table15',
+                'destination' => self::OUTPUT_BUCKET . '.table15',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table15");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table15');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table15', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(0, $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingEmptyDirExistingTable()
+    public function testWriteTableOutputMappingEmptyDirExistingTable(): void
     {
         $this->initBucket('redshift');
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
@@ -227,221 +257,248 @@ class StorageApiSlicedWriterRedshiftTest extends BaseWriterTest
         $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table17', $csv);
 
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table17");
+        mkdir($root . '/upload/table17');
 
         $configs = [
             [
-                "source" => "table17",
-                "destination" => self::OUTPUT_BUCKET . ".table17",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table17',
+                'destination' => self::OUTPUT_BUCKET . '.table17',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table17");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table17');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table17', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(0, $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(0, $table);
     }
 
-    public function testWriteTableOutputMappingMissingHeaders()
+    public function testWriteTableOutputMappingMissingHeaders(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table");
+        mkdir($root . '/upload/table');
 
         $configs = [
             [
-                "source" => "table",
-                "destination" => self::OUTPUT_BUCKET . ".table"
-            ]
+                'source' => 'table',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        try {
-            $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
-            $this->fail("Exception not caught");
-        } catch (InvalidOutputException $e) {
-            $this->assertEquals('Sliced file "table" columns specification missing.', $e->getMessage());
-        }
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Sliced file "table" columns specification missing.');
+        $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
     }
 
-    public function testWriteTableOutputMappingExistingTable()
+    public function testWriteTableOutputMappingExistingTable(): void
     {
         $this->initBucket('redshift');
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
-        $csvFile->writeRow(["Id", "Name"]);
-        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, "table", $csvFile);
+        $csvFile->writeRow(['Id', 'Name']);
+        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table', $csvFile);
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
     }
 
-    public function testWriteTableOutputMappingDifferentDelimiterEnclosure()
+    public function testWriteTableOutputMappingDifferentDelimiterEnclosure(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "'test'|'test'\n");
-        file_put_contents($root . "/upload/table.csv/part2", "'aabb'|'ccdd'\n");
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "'test'|'test'\n");
+        file_put_contents($root . '/upload/table.csv/part2', "'aabb'|'ccdd'\n");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"],
-                "delimiter" => "|",
-                "enclosure" => "'"
-            ]
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
+                'delimiter' => '|',
+                'enclosure' => "'",
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
     }
 
-    public function testWriteTableOutputMappingCombination()
+    public function testWriteTableOutputMappingCombination(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table.csv");
-        file_put_contents($root . "/upload/table.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table.csv/part2", "\"aabb\",\"ccdd\"\n");
-        file_put_contents($root . "/upload/table2.csv", "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . '/upload/table2.csv', "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
-                "source" => "table.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table",
-                "columns" => ["Id", "Name"]
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'columns' => ['Id', 'Name'],
             ],
             [
-                "source" => "table2.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table2",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table2.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table2',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(2, $jobIds);
+        self::assertCount(2, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(2, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table2");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(2, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table2');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table2', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
     }
 
-    public function testWriteTableOutputMappingCompression()
+    public function testWriteTableOutputMappingCompression(): void
     {
         $this->initBucket('redshift');
         $root = $this->tmp->getTmpFolder();
-        mkdir($root . "/upload/table18.csv");
-        file_put_contents($root . "/upload/table18.csv/part1", "\"test\",\"test\"\n");
-        file_put_contents($root . "/upload/table18.csv/part2", "\"aabb\",\"ccdd\"\n");
-        exec("gzip " . $root . "/upload/table18.csv/part1");
-        exec("gzip " . $root . "/upload/table18.csv/part2");
+        mkdir($root . '/upload/table18.csv');
+        file_put_contents($root . '/upload/table18.csv/part1', "\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table18.csv/part2', "\"aabb\",\"ccdd\"\n");
+        exec('gzip ' . $root . '/upload/table18.csv/part1');
+        exec('gzip ' . $root . '/upload/table18.csv/part2');
 
         $configs = [
             [
-                "source" => "table18.csv",
-                "destination" => self::OUTPUT_BUCKET . ".table18",
-                "columns" => ["Id", "Name"]
-            ]
+                'source' => 'table18.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table18',
+                'columns' => ['Id', 'Name'],
+            ],
         ];
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue = $writer->uploadTables('upload', ["mapping" => $configs], ['componentId' => 'foo'], StrategyFactory::LOCAL);
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL
+        );
         $jobIds = $tableQueue->waitForAll();
-        $this->assertCount(1, $jobIds);
+        self::assertCount(1, $jobIds);
 
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
-        $this->assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . ".table18");
-        $this->assertEquals(["Id", "Name"], $table["columns"]);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table18');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
-        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . "download.csv";
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable(self::OUTPUT_BUCKET . '.table18', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(file_get_contents($downloadedFile));
-        $this->assertCount(2, $table);
-        $this->assertContains(["Id" => "test", "Name" => "test"], $table);
-        $this->assertContains(["Id" => "aabb", "Name" => "ccdd"], $table);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
     }
 }

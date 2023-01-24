@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Configuration;
 
 use Keboola\OutputMapping\Configuration\TableFile;
@@ -8,8 +10,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class TableFileTest extends TestCase
 {
-
-    public function testConfiguration()
+    public function testConfiguration(): void
     {
         $config = [
             'tags' => ['tag1', 'tag2'],
@@ -19,10 +20,10 @@ class TableFileTest extends TestCase
             'tags' => ['tag1', 'tag2'],
         ];
         $processedConfiguration = (new TableFile())->parse(['config' => $config]);
-        $this->assertEquals($expectedResponse, $processedConfiguration);
+        self::assertEquals($expectedResponse, $processedConfiguration);
     }
 
-    public function testInvalidConfiguration()
+    public function testInvalidConfiguration(): void
     {
         $config = [
             'tags' => ['tag1', 'tag2'],

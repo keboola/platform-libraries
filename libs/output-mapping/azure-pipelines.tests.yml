@@ -9,9 +9,9 @@ jobs:
     parameters:
       jobName: cs
       dependsOn: [output_mapping_lock]
-      displayName: Code Style
+      displayName: Code Check
       serviceName: ci-output-mapping
-      testCommand: composer phpcs
+      testCommand: composer check
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:

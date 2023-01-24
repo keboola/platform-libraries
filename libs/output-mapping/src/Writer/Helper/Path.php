@@ -1,18 +1,17 @@
 <?php
 
-namespace Keboola\OutputMapping\Writer\Helper;
+declare(strict_types=1);
 
-use InvalidArgumentException;
+namespace Keboola\OutputMapping\Writer\Helper;
 
 class Path
 {
-    const SEPARATOR = '/';
+    private const SEPARATOR = '/';
 
     /**
      * @param string ...$parts
-     * @return string
      */
-    public static function join(...$parts)
+    public static function join(...$parts): string
     {
         if (count($parts) === 0) {
             return '';
@@ -41,19 +40,8 @@ class Path
         return self::noTrailingSlash($joined);
     }
 
-    /**
-     * @param string $path
-     * @return string
-     */
-    public static function ensureTrailingSlash($path)
+    public static function ensureTrailingSlash(string $path): string
     {
-        if (!is_string($path)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $path must be a string, %s given',
-                is_object($path) ? get_class($path) : gettype($path)
-            ));
-        }
-
         if ($path === '') {
             return $path;
         }
@@ -61,19 +49,8 @@ class Path
         return rtrim($path, self::SEPARATOR) . self::SEPARATOR;
     }
 
-    /**
-     * @param string $path
-     * @return string
-     */
-    public static function noTrailingSlash($path)
+    public static function noTrailingSlash(string $path): string
     {
-        if (!is_string($path)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $path must be a string, %s given',
-                is_object($path) ? get_class($path) : gettype($path)
-            ));
-        }
-
         if ($path === self::SEPARATOR) {
             return $path;
         }

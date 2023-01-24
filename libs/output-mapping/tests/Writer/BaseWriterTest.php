@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
@@ -13,6 +16,7 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Test;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -21,20 +25,20 @@ abstract class BaseWriterTest extends TestCase
     protected ClientWrapper $clientWrapper;
     protected Temp $tmp;
 
-    protected function clearBuckets($buckets)
+    protected function clearBuckets(array $buckets): void
     {
         foreach ($buckets as $bucket) {
             try {
                 $this->clientWrapper->getBasicClient()->dropBucket($bucket, ['force' => true, 'async' => false]);
             } catch (ClientException $e) {
-                if ($e->getCode() != 404) {
+                if ($e->getCode() !== 404) {
                     throw $e;
                 }
             }
         }
     }
 
-    protected function clearFileUploads($tags)
+    protected function clearFileUploads(array $tags): void
     {
         // Delete file uploads
         $options = new ListFilesOptions();
@@ -50,7 +54,6 @@ abstract class BaseWriterTest extends TestCase
     {
         parent::setUp();
         $this->tmp = new Temp();
-        $this->tmp->initRunFolder();
         $root = $this->tmp->getTmpFolder();
         $fs = new Filesystem();
         $fs->mkdir($root . DIRECTORY_SEPARATOR . 'upload');
@@ -58,11 +61,11 @@ abstract class BaseWriterTest extends TestCase
         $this->initClient();
     }
 
-    protected function initClient(?string $branchId = null)
+    protected function initClient(?string $branchId = null): void
     {
         $clientOptions = (new ClientOptions())
-            ->setUrl(STORAGE_API_URL)
-            ->setToken(STORAGE_API_TOKEN)
+            ->setUrl((string) getenv('STORAGE_API_URL'))
+            ->setToken((string) getenv('STORAGE_API_TOKEN'))
             ->setBranchId($branchId)
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {
@@ -81,18 +84,21 @@ abstract class BaseWriterTest extends TestCase
         ));
     }
 
-    protected function getStagingFactory($clientWrapper = null, $format = 'json', $logger = null)
-    {
+    protected function getStagingFactory(
+        ?ClientWrapper $clientWrapper = null,
+        string $format = 'json',
+        ?LoggerInterface $logger = null
+    ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ? $clientWrapper : $this->clientWrapper,
-            $logger ? $logger : new NullLogger(),
+            $clientWrapper ?: $this->clientWrapper,
+            $logger ?: new NullLogger(),
             $format
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
+            function (): string {
                 return $this->tmp->getTmpFolder();
             }
         );
@@ -100,16 +106,16 @@ abstract class BaseWriterTest extends TestCase
         $stagingFactory->addProvider(
             $mockLocal,
             [
-                StrategyFactory::LOCAL => new Scope([
+                AbstractStrategyFactory::LOCAL => new Scope([
                     Scope::TABLE_DATA, Scope::TABLE_METADATA,
-                    Scope::FILE_DATA, Scope::FILE_METADATA
-                ])
+                    Scope::FILE_DATA, Scope::FILE_METADATA,
+                ]),
             ]
         );
         return $stagingFactory;
     }
 
-    protected function assertTablesExists(string $bucketId, array $expectedTables)
+    protected function assertTablesExists(string $bucketId, array $expectedTables): void
     {
         $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId);
         $tableIds = array_column($tables, 'id');
@@ -118,10 +124,10 @@ abstract class BaseWriterTest extends TestCase
         sort($tableIds);
         sort($expectedTables);
 
-        $this->assertSame($expectedTables, $tableIds);
+        self::assertSame($expectedTables, $tableIds);
     }
 
-    protected function assertTableRowsEquals($tableName, array $expectedRows)
+    protected function assertTableRowsEquals(string $tableName, array $expectedRows): void
     {
         $data = $this->clientWrapper->getBasicClient()->getTableDataPreview($tableName);
 
@@ -134,10 +140,10 @@ abstract class BaseWriterTest extends TestCase
         $expectedRows = sort($expectedRows);
 
         // Both id and name columns are present because of https://keboola.atlassian.net/browse/KBC-865
-        $this->assertEquals($expectedRows, $rows);
+        self::assertEquals($expectedRows, $rows);
     }
 
-    protected function assertJobParamsMatches(array $expectedParams, $jobId)
+    protected function assertJobParamsMatches(array $expectedParams, string $jobId): void
     {
         $job = $this->clientWrapper->getBasicClient()->getJob($jobId);
         foreach ($expectedParams as $expectedParam) {

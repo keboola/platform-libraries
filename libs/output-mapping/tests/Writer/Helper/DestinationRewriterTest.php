@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -13,7 +15,7 @@ class DestinationRewriterTest extends TestCase
 {
     use CreateBranchTrait;
 
-    private function getConfig()
+    private function getConfig(): array
     {
         return [
             'source' => 'some-table.csv',
@@ -34,11 +36,19 @@ class DestinationRewriterTest extends TestCase
     protected function getClientWrapper(?string $branchId): ClientWrapper
     {
         return new ClientWrapper(
-            new ClientOptions(STORAGE_API_URL, STORAGE_API_TOKEN_MASTER, $branchId, null, null, null, 1),
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                $branchId,
+                null,
+                null,
+                null,
+                1
+            ),
         );
     }
 
-    public function testRewriteBranch()
+    public function testRewriteBranch(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, 'dev 123');
@@ -52,7 +62,7 @@ class DestinationRewriterTest extends TestCase
         self::assertEquals($config, $expectedConfig);
     }
 
-    public function testRewriteNoBranch()
+    public function testRewriteNoBranch(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $config = $this->getConfig();
@@ -63,7 +73,7 @@ class DestinationRewriterTest extends TestCase
         self::assertEquals($config, $expectedConfig);
     }
 
-    public function testRewriteInvalidName()
+    public function testRewriteInvalidName(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $branchId = $this->createBranch($clientWrapper, self::class);

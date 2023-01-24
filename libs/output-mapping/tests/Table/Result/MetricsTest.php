@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\InputMapping\Tests\Table\Result;
+namespace Keboola\OutputMapping\Tests\Table\Result;
 
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\OutputMapping\Table\Result\TableMetrics;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\Csv\CsvFile;
@@ -13,23 +15,20 @@ use Psr\Log\Test\TestLogger;
 
 class PrimaryKeyHelperTest extends TestCase
 {
-    const TEST_BUCKET_ID = 'out.c-PrimaryKeyHelperTest';
-    const TEST_TABLE_NAME = 'test-table';
-    const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
-    /**
-     * @var Client
-     */
-    protected $client;
+    private const TEST_BUCKET_ID = 'out.c-PrimaryKeyHelperTest';
+    private const TEST_TABLE_NAME = 'test-table';
+    private const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
+    protected Client $client;
 
     public function setUp(): void
     {
         $this->client = new Client([
-            'url' => STORAGE_API_URL,
-            'token' => STORAGE_API_TOKEN,
+            'url' => (string) getenv('STORAGE_API_URL'),
+            'token' => (string) getenv('STORAGE_API_TOKEN'),
         ]);
     }
 
-    private function createTable(array $columns, $primaryKey)
+    private function createTable(array $columns, string $primaryKey): void
     {
         if (!$this->client->bucketExists(self::TEST_BUCKET_ID)) {
             $this->client->createBucket('PrimaryKeyHelperTest', 'out');
@@ -42,7 +41,6 @@ class PrimaryKeyHelperTest extends TestCase
             }
         }
         $temp = new Temp();
-        $temp->initRunFolder();
         $csv = new CsvFile($temp->getTmpFolder() . '/import.csv');
         $csv->writeRow($columns);
         $this->client->createTableAsync(
@@ -58,15 +56,12 @@ class PrimaryKeyHelperTest extends TestCase
      * @param array $pkey
      * @param array $result
      */
-    public function testNormalizePrimaryKey(array $pkey, array $result)
+    public function testNormalizePrimaryKey(array $pkey, array $result): void
     {
         self::assertEquals($result, PrimaryKeyHelper::normalizeKeyArray(new NullLogger(), $pkey));
     }
 
-    /**
-     * @return array
-     */
-    public function normalizePrimaryKeyProvider()
+    public function normalizePrimaryKeyProvider(): array
     {
         return [
             [
@@ -86,11 +81,8 @@ class PrimaryKeyHelperTest extends TestCase
 
     /**
      * @dataProvider modifyPrimaryKeyDeciderOptionsProvider
-     * @param array $tableInfo
-     * @param array $config
-     * @param $result
      */
-    public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, $result)
+    public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, bool $result): void
     {
         self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(new NullLogger(), $tableInfo, $config));
     }
@@ -98,7 +90,7 @@ class PrimaryKeyHelperTest extends TestCase
     /**
      * @return array
      */
-    public function modifyPrimaryKeyDeciderOptionsProvider()
+    public function modifyPrimaryKeyDeciderOptionsProvider(): array
     {
         return [
             [
@@ -158,7 +150,7 @@ class PrimaryKeyHelperTest extends TestCase
         ];
     }
 
-    public function testModifyPrimaryKeyChange()
+    public function testModifyPrimaryKeyChange(): void
     {
         $logger = new TestLogger();
         $this->createTable(['id', 'name', 'foo'], 'id,name');
@@ -179,7 +171,7 @@ class PrimaryKeyHelperTest extends TestCase
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
-    public function testModifyPrimaryKeyChangeFromEmpty()
+    public function testModifyPrimaryKeyChangeFromEmpty(): void
     {
         $logger = new TestLogger();
         $this->createTable(['id', 'name', 'foo'], '');
@@ -200,7 +192,7 @@ class PrimaryKeyHelperTest extends TestCase
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
-    public function testModifyPrimaryKeyErrorRemove()
+    public function testModifyPrimaryKeyErrorRemove(): void
     {
         $logger = new TestLogger();
         $this->createTable(['id', 'name', 'foo'], 'id,name');
@@ -215,7 +207,8 @@ class PrimaryKeyHelperTest extends TestCase
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table-non-existent" from "id, name" to "id, foo".'
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID .
+            '.test-table-non-existent" from "id, name" to "id, foo".'
         ));
         self::assertTrue($logger->hasWarningThatContains(
             'Error deleting primary key of table ' . self::TEST_BUCKET_ID . '.test-table-non-existent: The ' .
@@ -225,7 +218,7 @@ class PrimaryKeyHelperTest extends TestCase
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
     }
 
-    public function testModifyPrimaryKeyErrorCreate()
+    public function testModifyPrimaryKeyErrorCreate(): void
     {
         $logger = new TestLogger();
         $this->createTable(['id', 'name', 'foo'], 'id,name');

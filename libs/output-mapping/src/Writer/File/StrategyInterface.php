@@ -1,31 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\File;
 
 interface StrategyInterface
 {
     /**
-     * @param string $dir
      * @return FileItem[]
      */
-    public function listFiles($dir);
+    public function listFiles(string $dir): array;
 
     /**
-     * @param string $dir
      * @return FileItem[] Indexed by file path.
      */
-    public function listManifests($dir);
+    public function listManifests(string $dir): array;
 
     /**
      * @param string $file - fully qualified path to file
      * @param array $storageConfig
      * @return string Storage File Id
      */
-    public function loadFileToStorage($file, array $storageConfig);
+    public function loadFileToStorage(string $file, array $storageConfig): string;
 
-    /**
-     * @param string $manifestFile
-     * @return array Manifest data
-     */
-    public function readFileManifest($manifestFile);
+    public function readFileManifest(string $manifestFile): array;
 }

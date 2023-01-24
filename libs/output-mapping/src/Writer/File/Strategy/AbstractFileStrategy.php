@@ -1,54 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class AbstractFileStrategy
 {
-    /** @var ClientWrapper */
-    protected $clientWrapper;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
-    /** @var ProviderInterface */
-    protected $dataStorage;
-
-    /** @var ProviderInterface */
-    protected $metadataStorage;
-
-    /** @var string */
-    protected $format;
-
     /**
-     * @param ClientWrapper $storageClient
-     * @param LoggerInterface $logger
-     * @param ProviderInterface $dataStorage
-     * @param ProviderInterface $metadataStorage
-     * @param string $format
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
     public function __construct(
-        ClientWrapper $storageClient,
-        LoggerInterface $logger,
-        ProviderInterface $dataStorage,
-        ProviderInterface $metadataStorage,
-        $format
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        protected readonly ProviderInterface $dataStorage,
+        protected readonly ProviderInterface $metadataStorage,
+        protected readonly string $format
     ) {
-        $this->clientWrapper = $storageClient;
-        $this->logger = $logger;
-        $this->dataStorage = $dataStorage;
-        $this->metadataStorage = $metadataStorage;
-        $this->format = $format;
     }
 
-    /**
-     * @param array $storageConfig
-     * @return array
-     */
-    protected function preProcessStorageConfig(array $storageConfig)
+    protected function preProcessStorageConfig(array $storageConfig): array
     {
         if (!isset($storageConfig['tags'])) {
             $storageConfig['tags'] = [];

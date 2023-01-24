@@ -1,6 +1,5 @@
 /build/
 /vendor/
-composer.lock
 /.env.local
 /.env.local.php
 /.env.*.local

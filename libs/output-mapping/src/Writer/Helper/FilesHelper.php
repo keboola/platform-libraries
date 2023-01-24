@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Symfony\Component\Finder\Finder;
@@ -10,10 +12,9 @@ class FilesHelper
     /**
      * Returns list of manifest files in the directory.
      *
-     * @param string $dir
      * @return array<SplFileInfo>
      */
-    public static function getManifestFiles($dir)
+    public static function getManifestFiles(string $dir): array
     {
         $files = (new Finder())->files()->name('*.manifest')->in($dir)->depth(0);
         return iterator_to_array($files);
@@ -24,10 +25,9 @@ class FilesHelper
      *
      * Data files may not be only regular files, but also directories, representing sliced files.
      *
-     * @param string $dir
      * @return array<SplFileInfo>
      */
-    public static function getDataFiles($dir)
+    public static function getDataFiles(string $dir): array
     {
         $files = (new Finder())->notName('*.manifest')->in($dir)->depth(0);
         return iterator_to_array($files);

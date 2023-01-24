@@ -1,16 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table\Source;
 
 interface SourceInterface
 {
-    /**
-     * @return string
-     */
-    public function getName();
+    public function getName(): string;
 
-    /**
-     * @return bool
-     */
-    public function isSliced();
+    public function isSliced(): bool;
 }

@@ -1,6 +1,10 @@
 <?php
 
-namespace Keboola\OutputMapping\Tests\Writer;
+declare(strict_types=1);
+
+namespace Keboola\OutputMapping\Tests\Writer\Redshift;
+
+use Keboola\OutputMapping\Tests\Writer\BaseWriterMetadataTest;
 
 class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
 {
@@ -14,28 +18,28 @@ class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
         $this->clearFileUploads([self::FILE_TAG]);
         $this->clientWrapper->getBasicClient()->createBucket(
             'StorageApiSlicedWriterRedshiftTest',
-            "in",
+            'in',
             '',
             'redshift'
         );
     }
 
-    public function testMetadataWritingTestColumnChange()
+    public function testMetadataWritingTestColumnChange(): void
     {
         $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeSpecialDelimiter()
+    public function testMetadataWritingTestColumnChangeSpecialDelimiter(): void
     {
         $this->metadataWritingTestColumnChangeSpecialDelimiter(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeSpecialChars()
+    public function testMetadataWritingTestColumnChangeSpecialChars(): void
     {
         $this->metadataWritingTestColumnChangeSpecialChars(self::INPUT_BUCKET);
     }
 
-    public function testMetadataWritingTestColumnChangeHeadless()
+    public function testMetadataWritingTestColumnChangeHeadless(): void
     {
         $this->metadataWritingTestColumnChangeHeadless(self::INPUT_BUCKET);
     }

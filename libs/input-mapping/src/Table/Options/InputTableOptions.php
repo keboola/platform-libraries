@@ -17,9 +17,6 @@ use Keboola\InputMapping\State\InputTableStateList;
  *     nullable?: bool,
  *     convertEmptyValuesToNull?: bool,
  * }
- * @phpstan-type ColumnDefinition = array{
- *     source: string,
- * }
 */
 class InputTableOptions
 {

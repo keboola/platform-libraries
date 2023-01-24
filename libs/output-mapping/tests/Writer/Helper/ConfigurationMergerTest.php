@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
@@ -13,13 +15,13 @@ class ConfigurationMergerTest extends TestCase
      * @param array $manifest
      * @param array $expected
      */
-    public function testMergeConfigurations(array $mapping, array $manifest, array $expected)
+    public function testMergeConfigurations(array $mapping, array $manifest, array $expected): void
     {
         $result = ConfigurationMerger::mergeConfigurations($manifest, $mapping);
         self::assertEquals($expected, $result);
     }
 
-    public function provideConfigurations()
+    public function provideConfigurations(): array
     {
         return [
             'empty-manifest' => [

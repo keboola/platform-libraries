@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
@@ -9,10 +11,9 @@ use SplFileInfo;
 
 class FilesHelperTest extends TestCase
 {
-    public function testGetManifestFiles()
+    public function testGetManifestFiles(): void
     {
         $temp = new Temp();
-        $temp->initRunFolder();
         mkdir($temp->getTmpFolder() . '/sub-dir');
         touch($temp->getTmpFolder() . '/my.csv');
         touch($temp->getTmpFolder() . '/my.csv.manifest');
@@ -35,10 +36,9 @@ class FilesHelperTest extends TestCase
         );
     }
 
-    public function testGetNonManifestFiles()
+    public function testGetNonManifestFiles(): void
     {
         $temp = new Temp();
-        $temp->initRunFolder();
         mkdir($temp->getTmpFolder() . '/sub-dir');
         touch($temp->getTmpFolder() . '/my.csv');
         touch($temp->getTmpFolder() . '/my.csv.manifest');

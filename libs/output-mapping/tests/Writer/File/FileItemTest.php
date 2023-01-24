@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\File;
 
 use Keboola\OutputMapping\Writer\File\FileItem;
@@ -7,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class FileItemTest extends TestCase
 {
-    public function testAccessors()
+    public function testAccessors(): void
     {
         $item = new FileItem('foo', 'bar', 'kochba');
         self::assertEquals('foo', $item->getPathName());

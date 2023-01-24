@@ -1,22 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
+use Generator;
 use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use PHPUnit\Framework\TestCase;
 
 class MappingDestinationTest extends TestCase
 {
-    public function testValueMustBeString()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument $value must be a string, boolean given');
-
-        new MappingDestination(false);
-    }
-
-    public function testValueMustHaveTableIdFormat()
+    public function testValueMustHaveTableIdFormat(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Value is not a valid table ID');
@@ -24,7 +19,7 @@ class MappingDestinationTest extends TestCase
         new MappingDestination('abc');
     }
 
-    public function destinationProvider()
+    public function destinationProvider(): Generator
     {
         yield 'c-prefixed' => [
             'value' => 'in.c-my-bucket.some-table',
@@ -53,16 +48,16 @@ class MappingDestinationTest extends TestCase
     }
 
     /**
-     * @param $value
-     * @param $tableId
-     * @param $bucketId
-     * @param $stageId
-     * @param $bucketName
-     * @param $tableName
      * @dataProvider destinationProvider
      */
-    public function testTableIdIsProperlyParsed($value, $tableId, $bucketId, $stageId, $bucketName, $tableName)
-    {
+    public function testTableIdIsProperlyParsed(
+        string $value,
+        string $tableId,
+        string $bucketId,
+        string $stageId,
+        string $bucketName,
+        string $tableName
+    ): void {
         $destination = new MappingDestination($value);
         self::assertSame($tableId, $destination->getTableId());
         self::assertSame($bucketId, $destination->getBucketId());

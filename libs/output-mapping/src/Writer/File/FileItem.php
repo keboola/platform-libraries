@@ -1,50 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\File;
 
 class FileItem
 {
-    /** @var string */
-    private $name;
-
-    /** @var string */
-    private $path;
-
-    /** @var string */
-    private $pathName;
-
     /**
-     * @param string $pathName
      * @param string $name Generalized name (for ABS this can include slashes)
      * @param string $path Generalized path (for ABS this can be an URL)
      */
-    public function __construct($pathName, $path, $name)
-    {
-        $this->pathName = $pathName;
-        $this->path = $path;
-        $this->name = $name;
+    public function __construct(
+        private readonly string $pathName,
+        private readonly string $path,
+        private readonly string $name
+    ) {
     }
 
-    /**
-     * @return string
-     */
-    public function getPathName()
+    public function getPathName(): string
     {
         return $this->pathName;
     }
 
-    /**
-     * @return string
-     */
-    public function getPath()
+    public function getPath(): string
     {
         return $this->path;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }

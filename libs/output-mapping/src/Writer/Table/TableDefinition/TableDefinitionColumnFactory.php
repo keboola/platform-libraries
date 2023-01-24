@@ -30,7 +30,7 @@ class TableDefinitionColumnFactory
         $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
     }
 
-    public function createTableDefinitionColumn($columnName, $metadata): TableDefinitionColumnInterface
+    public function createTableDefinitionColumn(string $columnName, array $metadata): TableDefinitionColumnInterface
     {
         if ($this->nativeDatatypeClass) {
             return new NativeTableDefinitionColumn(
@@ -76,7 +76,7 @@ class TableDefinitionColumnFactory
                     break;
             }
         }
-        if ($type) {
+        if ($type && $this->nativeDatatypeClass !== null) {
             return new $this->nativeDatatypeClass($type, $options);
         }
         return null;

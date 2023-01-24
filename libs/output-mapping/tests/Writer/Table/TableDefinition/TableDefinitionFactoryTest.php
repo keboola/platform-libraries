@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
+use Generator;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
-use PhpUnit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class TableDefinitionFactoryTest extends TestCase
 {
@@ -21,11 +22,15 @@ class TableDefinitionFactoryTest extends TestCase
         array $expectedSerialization
     ): void {
         $tableDefinitionFactory = new TableDefinitionFactory($tableMetadata, $backendType);
-        $tableDefinition = $tableDefinitionFactory->createTableDefinition($tableName, $primaryKeyNames, $columnMetadata);
-        $this->assertSame($expectedSerialization, $tableDefinition->getRequestData());
+        $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+            $tableName,
+            $primaryKeyNames,
+            $columnMetadata
+        );
+        self::assertSame($expectedSerialization, $tableDefinition->getRequestData());
     }
 
-    public function createTableDefinitionProvider(): \Generator
+    public function createTableDefinitionProvider(): Generator
     {
         yield 'base type test' => [
             'tableMetadata' => [],
@@ -46,19 +51,19 @@ class TableDefinitionFactoryTest extends TestCase
                 'columns' => [
                     [
                         'name' => 'Id',
-                        'basetype' => 'INTEGER'
+                        'basetype' => 'INTEGER',
                     ],
                     [
                         'name' => 'Name',
-                        'basetype' => 'STRING'
+                        'basetype' => 'STRING',
                     ],
                     [
                         'name' => 'birthday',
-                        'basetype' => 'DATE'
+                        'basetype' => 'DATE',
                     ],
                     [
                         'name' => 'created',
-                        'basetype' => 'TIMESTAMP'
+                        'basetype' => 'TIMESTAMP',
                     ],
                 ],
             ],
@@ -92,7 +97,7 @@ class TableDefinitionFactoryTest extends TestCase
                             'type' => 'INTEGER',
                             'length' => null,
                             'nullable' => false,
-                        ]
+                        ],
                     ],
                     [
                         'name' => 'Name',
@@ -100,7 +105,7 @@ class TableDefinitionFactoryTest extends TestCase
                             'type' => 'TEXT',
                             'length' => '127',
                             'nullable' => true,
-                        ]
+                        ],
                     ],
                     [
                         'name' => 'birthtime',
@@ -108,7 +113,7 @@ class TableDefinitionFactoryTest extends TestCase
                             'type' => 'TIME',
                             'length' => null,
                             'nullable' => true,
-                        ]
+                        ],
                     ],
                     [
                         'name' => 'created',
@@ -116,7 +121,7 @@ class TableDefinitionFactoryTest extends TestCase
                             'type' => 'TIMESTAMP_TZ',
                             'length' => null,
                             'nullable' => true,
-                        ]
+                        ],
                     ],
                 ],
             ],

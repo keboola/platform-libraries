@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Helper;
 
-use Keboola\OutputMapping\Writer\FileWriter;
+use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class TagsHelper
 {
-    public static function rewriteTags(array $storageConfig, ClientWrapper $clientWrapper)
+    public static function rewriteTags(array $storageConfig, ClientWrapper $clientWrapper): array
     {
         if (!empty($storageConfig['tags']) && $clientWrapper->hasBranch()) {
-            $prefix = $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName'];
+            $prefix = $clientWrapper->getBasicClient()->webalizeDisplayName(
+                (string) $clientWrapper->getBranchId()
+            )['displayName'];
             $storageConfig['tags'] = array_map(function ($tag) use ($prefix) {
                 return $prefix . '-' . $tag;
             }, $storageConfig['tags']);
@@ -20,15 +24,15 @@ class TagsHelper
         return $storageConfig;
     }
 
-    public static function addSystemTags(array $storageConfig, array $systemMetadata, LoggerInterface $logger)
+    public static function addSystemTags(array $storageConfig, array $systemMetadata, LoggerInterface $logger): array
     {
         foreach ($systemMetadata as $systemKey => $systemValue) {
             if (in_array($systemKey, [
-                FileWriter::SYSTEM_KEY_COMPONENT_ID,
-                FileWriter::SYSTEM_KEY_CONFIGURATION_ID,
-                FileWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
-                FileWriter::SYSTEM_KEY_BRANCH_ID,
-                FileWriter::SYSTEM_KEY_RUN_ID,
+                AbstractWriter::SYSTEM_KEY_COMPONENT_ID,
+                AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID,
+                AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
+                AbstractWriter::SYSTEM_KEY_BRANCH_ID,
+                AbstractWriter::SYSTEM_KEY_RUN_ID,
             ])) {
                 $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
             } else {

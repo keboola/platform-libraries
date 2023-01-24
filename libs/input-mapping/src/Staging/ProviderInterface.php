@@ -21,6 +21,7 @@ interface ProviderInterface
      *      user?: string,
      *      password?: string,
      *      account?: string,
+     *      credentials?: array,
      * }
      */
     public function getCredentials(): array;

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Staging;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\Staging\Definition;
-use Keboola\InputMapping\Staging\StrategyFactory as InputMappingStrategyFactory;
+use Keboola\InputMapping\Staging\AbstractStagingDefinition;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
@@ -14,51 +17,54 @@ use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
-class StrategyFactory extends InputMappingStrategyFactory
+class StrategyFactory extends AbstractStrategyFactory
 {
+    /** @var OutputMappingStagingDefinition[] */
+    protected array $strategyMap = [];
+
     /**
-     * @return Definition[]
+     * @return OutputMappingStagingDefinition[]
      */
-    public function getStrategyMap()
+    public function getStrategyMap(): array
     {
         if (empty($this->strategyMap)) {
             $this->strategyMap = [
-                self::LOCAL => new Definition(
+                self::LOCAL => new OutputMappingStagingDefinition(
                     self::LOCAL,
                     Local::class,
                     LocalTableStrategy::class
                 ),
-                self::WORKSPACE_ABS => new Definition(
+                self::WORKSPACE_ABS => new OutputMappingStagingDefinition(
                     self::WORKSPACE_ABS,
                     ABSWorkspace::class,
                     AbsWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_REDSHIFT => new Definition(
+                self::WORKSPACE_REDSHIFT => new OutputMappingStagingDefinition(
                     self::WORKSPACE_REDSHIFT,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_SNOWFLAKE => new Definition(
+                self::WORKSPACE_SNOWFLAKE => new OutputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_SYNAPSE => new Definition(
+                self::WORKSPACE_SYNAPSE => new OutputMappingStagingDefinition(
                     self::WORKSPACE_SYNAPSE,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_EXASOL => new Definition(
+                self::WORKSPACE_EXASOL => new OutputMappingStagingDefinition(
                     self::WORKSPACE_EXASOL,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_TERADATA => new Definition(
+                self::WORKSPACE_TERADATA => new OutputMappingStagingDefinition(
                     self::WORKSPACE_TERADATA,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
                 ),
-                self::WORKSPACE_BIGQUERY => new Definition(
+                self::WORKSPACE_BIGQUERY => new OutputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,
                     Local::class,
                     SqlWorkspaceTableStrategy::class
@@ -68,15 +74,25 @@ class StrategyFactory extends InputMappingStrategyFactory
         return $this->strategyMap;
     }
 
-    /**
-     * @param string $stagingType
-     * @return FileStrategyInterface
-     */
-    public function getFileOutputStrategy($stagingType)
+    protected function getStagingDefinition(string $stagingType): OutputMappingStagingDefinition
+    {
+        if (isset($this->getStrategyMap()[$stagingType])) {
+            return $this->getStrategyMap()[$stagingType];
+        }
+        throw new InvalidInputException(
+            sprintf(
+                'Input mapping on type "%s" is not supported. Supported types are "%s".',
+                $stagingType,
+                implode(', ', array_keys($this->getStrategyMap()))
+            )
+        );
+    }
+
+    public function getFileOutputStrategy(string $stagingType): FileStrategyInterface
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_FILE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_FILE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
@@ -95,16 +111,11 @@ class StrategyFactory extends InputMappingStrategyFactory
         );
     }
 
-    /**
-     * @param string $stagingType
-     * @param string $isFailedJob
-     * @return TableStrategyInterface
-     */
-    public function getTableOutputStrategy($stagingType, $isFailedJob = false)
+    public function getTableOutputStrategy(string $stagingType, bool $isFailedJob = false): TableStrategyInterface
     {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
-            $stagingDefinition->validateFor(Definition::STAGING_TABLE);
+            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         } catch (StagingException $e) {
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),

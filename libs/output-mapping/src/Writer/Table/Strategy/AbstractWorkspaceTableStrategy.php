@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
@@ -11,7 +13,7 @@ use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
-    public function resolveMappingSources($sourcePathPrefix, array $configuration)
+    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array
     {
         $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
         $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
@@ -21,7 +23,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 
         // Create MappingSource for each mapping row. This is workaround for not being able to list real list of tables
         // from workspace.
-        foreach (isset($configuration['mapping']) ? $configuration['mapping'] : [] as $mapping) {
+        foreach ($configuration['mapping'] ?? [] as $mapping) {
             $sourceName = $mapping['source'];
             $source = $this->createSource($sourcePathPrefix, $sourceName);
             $mappingSources[$sourceName] = new MappingSource($source);
@@ -40,18 +42,19 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
-            isset($configuration['mapping']) ? $configuration['mapping'] : []
+            $configuration['mapping'] ?? []
         );
     }
 
-    /**
-     * @param string $sourcePathPrefix
-     * @param string $sourceName
-     * @return WorkspaceItemSource
-     */
-    abstract protected function createSource($sourcePathPrefix, $sourceName);
+    abstract protected function createSource(string $sourcePathPrefix, string $sourceName): WorkspaceItemSource;
 
-    public function prepareLoadTaskOptions(SourceInterface $source, array $config)
+    /**
+     * @return array {
+     *      dataWorkspaceId: string,
+     *      dataObject: string
+     * }
+     */
+    public function prepareLoadTaskOptions(SourceInterface $source, array $config): array
     {
         if (!$source instanceof WorkspaceItemSource) {
             throw new InvalidArgumentException(sprintf(
@@ -62,8 +65,8 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         }
 
         return [
-            'dataWorkspaceId' => $source->getWorkspaceId(),
-            'dataObject' => $source->getDataObject(),
+            'dataWorkspaceId' => (string) $source->getWorkspaceId(),
+            'dataObject' => (string) $source->getDataObject(),
         ];
     }
 }

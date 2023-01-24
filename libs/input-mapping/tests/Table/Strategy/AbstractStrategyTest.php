@@ -46,8 +46,7 @@ abstract class AbstractStrategyTest extends TestCase
         );
 
         // Create table
-        $temp = new Temp();
-        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
         $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);

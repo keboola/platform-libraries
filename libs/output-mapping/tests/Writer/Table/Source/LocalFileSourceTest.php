@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Tests\Writer\Table\Source;
 
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
@@ -9,10 +11,9 @@ use SplFileInfo;
 
 class LocalFileSourceTest extends TestCase
 {
-    public function testRegularFile()
+    public function testRegularFile(): void
     {
         $temp = new Temp();
-        $temp->initRunFolder();
         touch($temp->getTmpFolder() . '/my.csv');
 
         $file = new SplFileInfo($temp->getTmpFolder() . '/my.csv');
@@ -23,10 +24,9 @@ class LocalFileSourceTest extends TestCase
         self::assertFalse($source->isSliced());
     }
 
-    public function testSlicedFile()
+    public function testSlicedFile(): void
     {
         $temp = new Temp();
-        $temp->initRunFolder();
         mkdir($temp->getTmpFolder() . '/my-slices');
         touch($temp->getTmpFolder() . '/my-slices/file1.csv');
 

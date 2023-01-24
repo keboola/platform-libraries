@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Tests\Writer\Table;
+namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
+use Generator;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
@@ -28,7 +29,7 @@ class TableDefinitionTest extends TestCase
         self::assertEquals($expectedColumn, $definition->getColumns()[0]);
     }
 
-    public function addTableDefinitionColumnProvider(): \Generator
+    public function addTableDefinitionColumnProvider(): Generator
     {
         yield 'basetype test' => [
             'tableDefinition' => new TableDefinition(),

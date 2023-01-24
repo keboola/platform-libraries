@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Generator;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Throwable;
 
 class TableDefinitionTest extends BaseWriterTest
 {
@@ -26,7 +28,7 @@ class TableDefinitionTest extends BaseWriterTest
         $tokenData = $this->clientWrapper->getBasicClient()->verifyToken();
         foreach ($requiredFeatures as $requiredFeature) {
             if (!in_array($requiredFeature, $tokenData['owner']['features'])) {
-                $this->fail(sprintf(
+                self::fail(sprintf(
                     '%s is not enabled for project "%s".',
                     ucfirst(str_replace('-', ' ', $requiredFeature)),
                     $tokenData['owner']['id']
@@ -46,14 +48,14 @@ class TableDefinitionTest extends BaseWriterTest
         ];
         try {
             $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             if ($exception->getCode() !== 404) {
                 throw $exception;
             }
         }
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . "/upload/tableDefinition.csv",
+            $root . '/upload/tableDefinition.csv',
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
@@ -65,7 +67,7 @@ class TableDefinitionTest extends BaseWriterTest
             'upload',
             [
                 'typedTableEnabled' => true,
-                'mapping' => [$config]
+                'mapping' => [$config],
             ],
             ['componentId' => 'foo'],
             'local',
@@ -91,7 +93,7 @@ class TableDefinitionTest extends BaseWriterTest
 
         try {
             $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             if ($exception->getCode() !== 404) {
                 throw $exception;
             }
@@ -102,14 +104,16 @@ class TableDefinitionTest extends BaseWriterTest
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionCode(400);
-        $this->expectExceptionMessageMatches('/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u');
+        $this->expectExceptionMessageMatches(
+            '/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u'
+        );
         $this->expectExceptionMessage('Selected columns are not included in table definition');
 
         $writer->uploadTables(
             'upload',
             [
                 'typedTableEnabled' => true,
-                'mapping' => [$config]
+                'mapping' => [$config],
             ],
             ['componentId' => 'foo'],
             'local',
@@ -126,14 +130,14 @@ class TableDefinitionTest extends BaseWriterTest
     ): void {
         try {
             $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             if ($exception->getCode() !== 404) {
                 throw $exception;
             }
         }
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
-            $root . "/upload/tableDefinition.csv",
+            $root . '/upload/tableDefinition.csv',
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
@@ -145,7 +149,7 @@ class TableDefinitionTest extends BaseWriterTest
             'upload',
             [
                 'typedTableEnabled' => true,
-                'mapping' => [$config]
+                'mapping' => [$config],
             ],
             ['componentId' => 'foo'],
             'local',
@@ -162,7 +166,7 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
     }
 
-    public function configProvider(): \Generator
+    public function configProvider(): Generator
     {
         yield 'base types' => [
             [

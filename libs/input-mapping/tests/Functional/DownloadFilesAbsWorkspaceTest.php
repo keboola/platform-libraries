@@ -71,7 +71,7 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->getClientWrapper(null)->getBranchClientIfAvailable());
-            $workspaces->deleteWorkspace($this->workspaceId);
+            $workspaces->deleteWorkspace($this->workspaceId, [], true);
             $this->workspaceId = null;
         }
         parent::tearDown();

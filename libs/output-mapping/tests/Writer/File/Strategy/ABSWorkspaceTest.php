@@ -105,7 +105,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
             'json'
         );
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-        $workspaces->deleteWorkspace($this->workspace['id']);
+        $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');
         $strategy->listFiles('data/out/files');
@@ -182,7 +182,7 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
             'json'
         );
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-        $workspaces->deleteWorkspace($this->workspace['id']);
+        $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');
         $strategy->listManifests('data/out/files');

@@ -65,7 +65,7 @@ class DownloadTablesWorkspaceTestAbstract extends DownloadTablesTestAbstract
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
-            $workspaces->deleteWorkspace($this->workspaceId);
+            $workspaces->deleteWorkspace($this->workspaceId, [], true);
             $this->workspaceId = null;
         }
         parent::tearDown();

@@ -87,7 +87,7 @@ class WorkspaceStagingProviderTest extends TestCase
         $workspaceId = '1';
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::once())->method('deleteWorkspace')->with($workspaceId, ['async' => true]);
+        $workspacesApiClient->expects(self::once())->method('deleteWorkspace')->with($workspaceId, [], true);
 
         $workspaceProvider = new WorkspaceStagingProvider($workspacesApiClient, function () use ($workspaceId) {
             return new SnowflakeWorkspaceStaging([

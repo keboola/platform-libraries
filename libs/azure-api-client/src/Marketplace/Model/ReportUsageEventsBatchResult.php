@@ -6,21 +6,18 @@ namespace Keboola\AzureApiClient\Marketplace\Model;
 
 use Keboola\AzureApiClient\ResponseModelInterface;
 
-final class UsageEventError implements ResponseModelInterface
+final class ReportUsageEventsBatchResult implements ResponseModelInterface
 {
     public function __construct(
-        public readonly string $code,
-        public readonly string $message,
-        public readonly ?array $additionalInfo,
+        /** @var UsageEventResult[] */
+        public readonly array $result,
     ) {
     }
 
     public static function fromResponseData(array $data): static
     {
         return new self(
-            $data['code'],
-            $data['message'],
-            $data['additionalInfo'] ?? null,
+            array_map(UsageEventResult::fromResponseData(...), $data['result']),
         );
     }
 }

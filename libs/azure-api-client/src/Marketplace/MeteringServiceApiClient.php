@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Marketplace;
 
+use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\AzureApiClient;
 use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
 
@@ -31,17 +33,18 @@ class MeteringServiceApiClient
      */
     public function reportUsageEventsBatch(array $events): array
     {
-        $responseData = $this->azureApiClient->sendRequest(
-            'POST',
-            'batchUsageEvent?api-version=2018-08-31',
-            [
-                'Content-Type' => 'application/json',
-            ],
-            json_encode([
-                'request' => $events,
-            ], JSON_THROW_ON_ERROR),
-        );
-
-        return array_map(UsageEventResult::fromResponseData(...), $responseData['result']);
+        return $this->azureApiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                'batchUsageEvent?api-version=2018-08-31',
+                [
+                    'Content-Type' => 'application/json',
+                ],
+                json_encode([
+                    'request' => $events,
+                ], JSON_THROW_ON_ERROR),
+            ),
+            ReportUsageEventsBatchResult::class,
+        )->result;
     }
 }

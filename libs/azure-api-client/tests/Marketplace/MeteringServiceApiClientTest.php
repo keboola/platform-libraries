@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Tests\Marketplace;
 
 use DateTimeImmutable;
+use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\AzureApiClient;
 use Keboola\AzureApiClient\AzureApiClientFactory;
 use Keboola\AzureApiClient\Marketplace\MeteringServiceApiClient;
+use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
 use Keboola\AzureApiClient\Tests\ReflectionPropertyAccessTestCase;
+use PHPUnit\Framework\Constraint\Callback;
 use PHPUnit\Framework\TestCase;
 
 class MeteringServiceApiClientTest extends TestCase
@@ -61,19 +64,19 @@ class MeteringServiceApiClientTest extends TestCase
                     'quantity' => 1.0,
                     'effectiveStartTime' => '2023-01-01T12:00:00Z',
                 ],
-            ]
+            ],
         ];
 
         $azureApiClient = $this->createMock(AzureApiClient::class);
         $azureApiClient->expects(self::once())
-            ->method('sendRequest')
-            ->with(
+            ->method('sendRequestAndMapResponse')
+            ->with(self::checkRequestEquals(
                 'POST',
                 'batchUsageEvent?api-version=2018-08-31',
                 [
-                    'Content-Type' => 'application/json',
+                    'Content-Type' => ['application/json'],
                 ],
-                json_encode([
+                (string) json_encode([
                     'request' => [
                         [
                             'resourceId' => 'resource-1',
@@ -89,10 +92,10 @@ class MeteringServiceApiClientTest extends TestCase
                             'quantity' => 2.5,
                             'effectiveStartTime' => '2023-01-02T12:00:00+00:00',
                         ],
-                    ]
-                ])
-            )
-            ->willReturn($apiResponse)
+                    ],
+                ]),
+            ))
+            ->willReturn(ReportUsageEventsBatchResult::fromResponseData($apiResponse))
         ;
 
         $client = new MeteringServiceApiClient($azureApiClient);
@@ -117,5 +120,23 @@ class MeteringServiceApiClientTest extends TestCase
             UsageEventResult::fromResponseData($apiResponse['result'][0]),
             UsageEventResult::fromResponseData($apiResponse['result'][1]),
         ], $result);
+    }
+
+    /**
+     * @return Callback<Request>
+     */
+    private static function checkRequestEquals(
+        string $method,
+        string $uri,
+        array $headers = [],
+        ?string $body = null
+    ): Callback {
+        return self::callback(function (Request $request) use ($method, $uri, $headers, $body) {
+            self::assertSame($method, $request->getMethod());
+            self::assertSame($uri, $request->getUri()->__toString());
+            self::assertSame($headers, $request->getHeaders());
+            self::assertSame($body ?? '', $request->getBody()->getContents());
+            return true;
+        });
     }
 }

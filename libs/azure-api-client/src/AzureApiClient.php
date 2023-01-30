@@ -9,13 +9,14 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
-use GuzzleHttp\Psr7\Request;
 use JsonException;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class AzureApiClient
 {
@@ -49,30 +50,48 @@ class AzureApiClient
     }
 
     /**
-     * @return ($expectResponse is true ? array : null)
+     * @template TResponseClass of ResponseModelInterface
+     * @param class-string<TResponseClass> $responseClass
+     * @return ($isArray is true ? list<TResponseClass> : TResponseClass)
      */
-    public function sendRequest(
-        string $method,
-        string $uri,
-        array $headers = [],
-        $body = null,
-        bool $expectResponse = true
-    ): ?array {
-        $request = new Request($method, $uri, $headers, $body);
+    public function sendRequestAndMapResponse(
+        RequestInterface $request,
+        string $responseClass,
+        bool $isArray = false,
+    ) {
+        $response = $this->doSendRequest($request);
 
+        try {
+            $responseData = (array) json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new ClientException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        try {
+            if ($isArray) {
+                return array_map($responseClass::fromResponseData(...), $responseData);
+            } else {
+                return $responseClass::fromResponseData($responseData);
+            }
+        } catch (Throwable $e) {
+            throw new ClientException('Failed to map response data: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    public function sendRequest(RequestInterface $request): void
+    {
+        $this->doSendRequest($request);
+    }
+
+    public function doSendRequest(RequestInterface $request): ResponseInterface
+    {
         try {
             if (empty($this->token)) {
                 $this->token = $this->authenticator->getAuthenticationToken($this->resource);
                 $this->logger->info('Successfully authenticated.');
             }
-            $response = $this->guzzle->send($request);
-
-            if (!$expectResponse) {
-                return null;
-            }
-
-            return (array) json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException | GuzzleException $e) {
+            return $this->guzzle->send($request);
+        } catch (GuzzleException $e) {
             if ($e instanceof RequestException) {
                 $this->handleRequestException($e);
             }

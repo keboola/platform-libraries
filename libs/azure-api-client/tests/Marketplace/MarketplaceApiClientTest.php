@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests\Marketplace;
 
+use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\AzureApiClient;
 use Keboola\AzureApiClient\AzureApiClientFactory;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
@@ -12,6 +13,7 @@ use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
 use Keboola\AzureApiClient\Marketplace\Model\Subscription;
 use Keboola\AzureApiClient\Marketplace\OperationStatus;
 use Keboola\AzureApiClient\Tests\ReflectionPropertyAccessTestCase;
+use PHPUnit\Framework\Constraint\Callback;
 use PHPUnit\Framework\TestCase;
 
 class MarketplaceApiClientTest extends TestCase
@@ -36,7 +38,7 @@ class MarketplaceApiClientTest extends TestCase
 
     public function testResolveSubscription(): void
     {
-        $apiResponse = [
+        $apiResponse = ResolveSubscriptionResult::fromResponseData([
             'id' => 'subscription-id',
             'subscriptionName' => 'subscription-name',
             'offerId' => 'offer-id',
@@ -50,30 +52,30 @@ class MarketplaceApiClientTest extends TestCase
                 'quantity' => 1,
                 'saasSubscriptionStatus' => 'status',
             ],
-        ];
+        ]);
 
         $azureApiClient = $this->createMock(AzureApiClient::class);
         $azureApiClient->expects(self::once())
-            ->method('sendRequest')
-            ->with(
+            ->method('sendRequestAndMapResponse')
+            ->with(self::checkRequestEquals(
                 'POST',
                 '/api/saas/subscriptions/resolve?api-version=2018-08-31',
                 [
-                    'x-ms-marketplace-token' => 'marketplace-token',
+                    'x-ms-marketplace-token' => ['marketplace-token'],
                 ]
-            )
+            ))
             ->willReturn($apiResponse)
         ;
 
         $client = new MarketplaceApiClient($azureApiClient);
         $result = $client->resolveSubscription('marketplace-token');
 
-        self::assertEquals(ResolveSubscriptionResult::fromResponseData($apiResponse), $result);
+        self::assertSame($apiResponse, $result);
     }
 
     public function testGetSubscription(): void
     {
-        $apiResponse = [
+        $apiResponse = Subscription::fromResponseData([
             'id' => 'subscription id',
             'publisherId' => 'publisher-id',
             'offerId' => 'offer-id',
@@ -81,22 +83,22 @@ class MarketplaceApiClientTest extends TestCase
             'name' => 'subscription-name',
             'quantity' => 1,
             'saasSubscriptionStatus' => 'status',
-        ];
+        ]);
 
         $azureApiClient = $this->createMock(AzureApiClient::class);
         $azureApiClient->expects(self::once())
-            ->method('sendRequest')
-            ->with(
+            ->method('sendRequestAndMapResponse')
+            ->with(self::checkRequestEquals(
                 'GET',
                 '/api/saas/subscriptions/subscription+id?api-version=2018-08-31',
-            )
+            ))
             ->willReturn($apiResponse)
         ;
 
         $client = new MarketplaceApiClient($azureApiClient);
         $result = $client->getSubscription('subscription id');
 
-        self::assertEquals(Subscription::fromResponseData($apiResponse), $result);
+        self::assertSame($apiResponse, $result);
     }
 
     public function testActivateSubscription(): void
@@ -104,18 +106,17 @@ class MarketplaceApiClientTest extends TestCase
         $azureApiClient = $this->createMock(AzureApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequest')
-            ->with(
+            ->with(self::checkRequestEquals(
                 'POST',
                 '/api/saas/subscriptions/subscription+id/activate?api-version=2018-08-31',
                 [
-                    'Content-Type' => 'application/json',
+                    'Content-Type' => ['application/json'],
                 ],
-                json_encode([
+                (string) json_encode([
                     'planId' => 'plan-id',
                     'quantity' => 1,
                 ]),
-                false,
-            )
+            ))
         ;
 
         $client = new MarketplaceApiClient($azureApiClient);
@@ -131,17 +132,16 @@ class MarketplaceApiClientTest extends TestCase
         $azureApiClient = $this->createMock(AzureApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequest')
-            ->with(
+            ->with(self::checkRequestEquals(
                 'PATCH',
                 '/api/saas/subscriptions/subscription+id/operations/operation+id?api-version=2018-08-31',
                 [
-                    'Content-Type' => 'application/json',
+                    'Content-Type' => ['application/json'],
                 ],
-                json_encode([
+                (string) json_encode([
                     'status' => 'Success',
                 ]),
-                false,
-            )
+            ))
         ;
 
         $client = new MarketplaceApiClient($azureApiClient);
@@ -150,5 +150,23 @@ class MarketplaceApiClientTest extends TestCase
             'operation id',
             OperationStatus::SUCCESS,
         );
+    }
+
+    /**
+     * @return Callback<Request>
+     */
+    private static function checkRequestEquals(
+        string $method,
+        string $uri,
+        array $headers = [],
+        ?string $body = null
+    ): Callback {
+        return self::callback(function (Request $request) use ($method, $uri, $headers, $body) {
+            self::assertSame($method, $request->getMethod());
+            self::assertSame($uri, $request->getUri()->__toString());
+            self::assertSame($headers, $request->getHeaders());
+            self::assertSame($body ?? '', $request->getBody()->getContents());
+            return true;
+        });
     }
 }

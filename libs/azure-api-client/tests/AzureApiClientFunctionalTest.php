@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests;
 
+use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\AzureApiClient;
+use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\GuzzleClientFactory;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
 class AzureApiClientFunctionalTest extends TestCase
 {
-    public function testSendGetRequest(): void
+    public function testSendRequest(): void
     {
         $mockserver = new Mockserver();
         $mockserver->reset();
@@ -27,7 +29,6 @@ class AzureApiClientFunctionalTest extends TestCase
             ],
             'httpResponse' => [
                 'statusCode' => 200,
-                'body' => json_encode(['foo' => 'bar']),
             ],
         ]);
 
@@ -43,11 +44,18 @@ class AzureApiClientFunctionalTest extends TestCase
             $logger,
         );
 
-        $response = $apiClient->sendRequest('GET', 'foo/bar');
-        self::assertSame(['foo' => 'bar'], $response);
+        $apiClient->sendRequest(new Request('GET', 'foo/bar'));
+
+        self::assertTrue($mockserver->hasRecordedRequest([
+            'method' => 'GET',
+            'path' => '/foo/bar',
+            'headers' => [
+                'Authorization' => 'Bearer auth-token',
+            ],
+        ]));
     }
 
-    public function testSendPostRequestWithResponse(): void
+    public function testSendRequestWithMappedResponse(): void
     {
         $mockserver = new Mockserver();
         $mockserver->reset();
@@ -59,11 +67,11 @@ class AzureApiClientFunctionalTest extends TestCase
                     'Authorization' => 'Bearer auth-token',
                     'Content-Type' => 'application/json',
                 ],
-                'body' => '{"foo":"baz"}'
+                'body' => '{"foo":"baz"}',
             ],
             'httpResponse' => [
                 'statusCode' => 200,
-                'body' => json_encode(['foo' => 'bar']),
+                'body' => (string) json_encode(['foo' => 'bar']),
             ],
         ]);
 
@@ -79,31 +87,42 @@ class AzureApiClientFunctionalTest extends TestCase
             $logger,
         );
 
-        $response = $apiClient->sendRequest(
-            'POST',
-            'foo/bar',
-            ['Content-Type' => 'application/json'],
-            '{"foo":"baz"}',
-            true,
+        $response = $apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                'foo/bar',
+                ['Content-Type' => 'application/json'],
+                '{"foo":"baz"}',
+            ),
+            DummyTestResponse::class,
         );
-        self::assertSame(['foo' => 'bar'], $response);
+
+        self::assertEquals(
+            new DummyTestResponse('bar'),
+            $response,
+        );
     }
 
-    public function testSendPostRequestWithoutResponse(): void
+    public function testSendRequestWithMappedArrayResponse(): void
     {
         $mockserver = new Mockserver();
         $mockserver->reset();
         $mockserver->expect([
             'httpRequest' => [
-                'method' => 'DELETE',
+                'method' => 'POST',
                 'path' => '/foo/bar',
                 'headers' => [
                     'Authorization' => 'Bearer auth-token',
+                    'Content-Type' => 'application/json',
                 ],
-                'body' => ''
+                'body' => '{"foo":"baz"}',
             ],
             'httpResponse' => [
                 'statusCode' => 200,
+                'body' => (string) json_encode([
+                    ['foo' => 'bar'],
+                    ['foo' => 'me'],
+                ]),
             ],
         ]);
 
@@ -119,14 +138,131 @@ class AzureApiClientFunctionalTest extends TestCase
             $logger,
         );
 
-        $response = $apiClient->sendRequest(
-            'DELETE',
-            'foo/bar',
-            [],
-            null,
-            false,
+        $response = $apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                'foo/bar',
+                ['Content-Type' => 'application/json'],
+                '{"foo":"baz"}',
+            ),
+            DummyTestResponse::class,
+            true,
         );
-        self::assertNull($response);
+
+        self::assertEquals(
+            [new DummyTestResponse('bar'), new DummyTestResponse('me')],
+            $response,
+        );
+    }
+
+    public function testSendRequestFailingWithRegularError(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 400,
+                'body' => (string) json_encode([
+                    'error' => [
+                        'code' => 'BadRequest',
+                        'message' => 'This is not good',
+                    ],
+                ]),
+            ],
+        ]);
+
+        $logger = new Logger('test');
+        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+
+        $apiClient = new AzureApiClient(
+            $mockserver->getServerUrl(),
+            'my-api',
+            $guzzleClientFactory,
+            $authenticatorFactory,
+            $logger,
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('BadRequest: This is not good');
+
+        $apiClient->sendRequest(new Request('GET', 'foo/bar'));
+    }
+
+    public function testSendRequestFailingWithUnexpectedError(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 400,
+                'body' => 'Gateway timeout',
+            ],
+        ]);
+
+        $logger = new Logger('test');
+        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+
+        $apiClient = new AzureApiClient(
+            $mockserver->getServerUrl(),
+            'my-api',
+            $guzzleClientFactory,
+            $authenticatorFactory,
+            $logger,
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
+            "GET http://mockserver:1080/foo/bar` resulted in a `400 Bad Request` response:\nGateway timeout"
+        );
+
+        $apiClient->sendRequest(new Request('GET', 'foo/bar'));
+    }
+
+    public function testSendRequestFailingOnResponseMapping(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 200,
+                'body' => '{"foo": null}',
+            ],
+        ]);
+
+        $logger = new Logger('test');
+        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+
+        $apiClient = new AzureApiClient(
+            $mockserver->getServerUrl(),
+            'my-api',
+            $guzzleClientFactory,
+            $authenticatorFactory,
+            $logger,
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
+            'Failed to map response data: Keboola\AzureApiClient\Tests\DummyTestResponse::__construct(): ' .
+            'Argument #1 ($foo) must be of type string, null given, called in ' .
+            '/code/libs/azure-api-client/tests/DummyTestResponse.php on line'
+        );
+
+        $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);
     }
 
     public function createAuthenticatorFactory(string $authToken): AuthenticatorFactory

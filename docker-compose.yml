@@ -1,6 +1,9 @@
 version: "3.4"
 
 services:
+  mockserver:
+    image: mockserver/mockserver:5.13.2
+
   dev: &dev
     profiles: [ ci, dev ]
     build: &dev-build
@@ -36,6 +39,8 @@ services:
     working_dir: /code/libs/azure-api-client
     volumes:
       - .:/code
+    depends_on:
+      - mockserver
 
   dev-input-mapping:
     profiles: [dev]

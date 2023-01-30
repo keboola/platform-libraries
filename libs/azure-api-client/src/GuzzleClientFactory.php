@@ -25,11 +25,9 @@ class GuzzleClientFactory
     private const AZURE_THROTTLING_CODE = 429;
     private const ALLOWED_OPTIONS = ['backoffMaxTries', 'userAgent', 'handler', 'logger'];
 
-    private LoggerInterface $logger;
-
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function getLogger(): LoggerInterface

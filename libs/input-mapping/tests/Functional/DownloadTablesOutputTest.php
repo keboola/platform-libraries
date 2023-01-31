@@ -94,8 +94,9 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
             $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test2.csv'
         );
         self::assertCount(2, $tablesResult->getInputTableStateList()->jsonSerialize());
-        /** @var TableMetrics[] $metrics */
-        $metrics = iterator_to_array($tablesResult->getMetrics()->getTableMetrics());
+        $tableMetrics = $tablesResult->getMetrics()?->getTableMetrics();
+        self::assertNotNull($tableMetrics);
+        $metrics = iterator_to_array($tableMetrics);
         self::assertEquals('in.c-input-mapping-test.test', $metrics[0]->getTableId());
         self::assertEquals('in.c-input-mapping-test.test2', $metrics[1]->getTableId());
         self::assertSame(0, $metrics[0]->getUncompressedBytes());

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient;
 
+use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
@@ -17,37 +19,35 @@ use RuntimeException;
 use Throwable;
 
 /**
- * @phpstan-type ResourceType Pod|Secret
+ * @phpstan-type ResourceType Event|Pod|Secret
  */
 class KubernetesApiClientFacade
 {
-    private LoggerInterface $logger;
-    private array $apis;
-
     public function __construct(
-        LoggerInterface $logger,
-        PodsApiClient $podsApiClient,
-        SecretsApiClient $secretsApiClient
+        private readonly LoggerInterface $logger,
+        private readonly PodsApiClient $podsApiClient,
+        private readonly SecretsApiClient $secretsApiClient,
+        private readonly EventsApiClient $eventsApiClient,
     ) {
-        $this->logger = $logger;
-        $this->apis = [
-            Pod::class => $podsApiClient,
-            Secret::class => $secretsApiClient,
-        ];
     }
 
     public function pods(): PodsApiClient
     {
-        return $this->apis[Pod::class];
+        return $this->podsApiClient;
     }
 
     public function secrets(): SecretsApiClient
     {
-        return $this->apis[Secret::class];
+        return $this->secretsApiClient;
+    }
+
+    public function events(): EventsApiClient
+    {
+        return $this->eventsApiClient;
     }
 
     /**
-     * @phpstan-template T of Pod|Secret
+     * @phpstan-template T of Event|Pod|Secret
      * @phpstan-param class-string<T> $resourceType
      * @phpstan-return T
      */
@@ -71,19 +71,15 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param iterable<ResourceType> $resources
+     * @param array<ResourceType> $resources
      * @return ResourceType[]
      */
-    public function createModels(iterable $resources, array $queries = []): array
+    public function createModels(array $resources, array $queries = []): array
     {
-        $results = [];
-
-        foreach ($resources as $k => $resource) {
-            $api = $this->getApiForResource($resource::class);
-            $results[$k] = $api->create($resource, $queries);
-        }
-
-        return $results;
+        return array_map(
+            fn($resource) => $this->getApiForResource($resource::class)->create($resource, $queries),
+            $resources,
+        );
     }
 
     /**
@@ -100,23 +96,23 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param iterable<ResourceType> $resources
+     * @param array<ResourceType> $resources
      * @return Status[]
      */
-    public function deleteModels(iterable $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
+    public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
     {
-        $results = [];
-
-        foreach ($resources as $k => $resource) {
-            $api = $this->getApiForResource($resource::class);
-            $results[$k] = $api->delete($resource->metadata->name, $deleteOptions, $queries);
-        }
-
-        return $results;
+        return array_map(
+            fn($resource) => $this->getApiForResource($resource::class)->delete(
+                $resource->metadata->name,
+                $deleteOptions,
+                $queries
+            ),
+            $resources,
+        );
     }
 
     /**
-     * @param array<Pod|Secret> $resources
+     * @param array<Event|Pod|Secret> $resources
      */
     public function waitWhileExists(array $resources, float $timeout = INF): void
     {
@@ -171,7 +167,12 @@ class KubernetesApiClientFacade
      */
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
-        foreach ($this->apis as $api) {
+        $deleteFromApis = [
+            $this->podsApiClient,
+            $this->secretsApiClient,
+        ];
+
+        foreach ($deleteFromApis as $api) {
             try {
                 $api->deleteCollection($deleteOptions, $queries);
             } catch (Throwable $exception) {
@@ -189,11 +190,17 @@ class KubernetesApiClientFacade
     /**
      * @param class-string<ResourceType> $resourceType
      */
-    private function getApiForResource(string $resourceType): PodsApiClient|SecretsApiClient
+    private function getApiForResource(string $resourceType): EventsApiClient|PodsApiClient|SecretsApiClient
     {
-        return $this->apis[$resourceType] ?? throw new RuntimeException(sprintf(
-            'Unknown K8S resource type "%s"',
-            get_debug_type($resourceType)
-        ));
+        return match ($resourceType) {
+            Event::class => $this->eventsApiClient,
+            Pod::class => $this->podsApiClient,
+            Secret::class => $this->secretsApiClient,
+
+            default => throw new RuntimeException(sprintf(
+                'Unknown K8S resource type "%s"',
+                get_debug_type($resourceType)
+            )),
+        };
     }
 }

@@ -12,7 +12,10 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 
-class PodsApiClient
+/**
+ * @template-implements ApiClientInterface<PodList, Pod>
+ */
+class PodsApiClient implements ApiClientInterface
 {
     private KubernetesApiClient $apiClient;
     private PodsApi $baseApi;
@@ -33,7 +36,7 @@ class PodsApiClient
         return $this->apiClient->request($this->baseApi, 'read', Pod::class, $name, $queries);
     }
 
-    public function create(Pod $model, array $queries = []): Pod
+    public function create($model, array $queries = []): Pod
     {
         return $this->apiClient->request($this->baseApi, 'create', Pod::class, $model, $queries);
     }

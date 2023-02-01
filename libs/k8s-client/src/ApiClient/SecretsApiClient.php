@@ -11,7 +11,10 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\SecretList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 
-class SecretsApiClient
+/**
+ * @template-implements ApiClientInterface<SecretList, Secret>
+ */
+class SecretsApiClient implements ApiClientInterface
 {
     private KubernetesApiClient $apiClient;
     private SecretsApi $baseApi;
@@ -32,7 +35,7 @@ class SecretsApiClient
         return $this->apiClient->request($this->baseApi, 'read', Secret::class, $name, $queries);
     }
 
-    public function create(Secret $model, array $queries = []): Secret
+    public function create($model, array $queries = []): Secret
     {
         return $this->apiClient->request($this->baseApi, 'create', Secret::class, $model, $queries);
     }

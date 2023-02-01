@@ -2,7 +2,15 @@
 
 namespace KubernetesRuntime
 {
-    class AbstractModel {}
+    use stdClass;
+
+    class AbstractModel
+    {
+        /**
+         * @param array<mixed>|stdClass|null $data
+         */
+        public function __construct(array|stdClass $data = null) {}
+    }
 }
 
 namespace Kubernetes\Model\Io\K8s\Api\Core\V1

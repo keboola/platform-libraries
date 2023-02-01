@@ -27,6 +27,16 @@ services:
       args:
         PHP_VERSION: "8.1"
 
+  dev-azure-api-client:
+    profiles: [dev]
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.1"
+    working_dir: /code/libs/azure-api-client
+    volumes:
+      - .:/code
+
   dev-input-mapping:
     profiles: [dev]
     build:

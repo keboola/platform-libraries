@@ -29,10 +29,12 @@
         "lock": false,
         "sort-packages": true,
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "infection/extension-installer": true
         }
     },
     "require-dev": {
+        "infection/infection": "^0.26.18",
         "keboola/coding-standard": "^14.0",
         "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-phpunit": "^1.3",
@@ -44,10 +46,12 @@
             "@composer validate --no-check-publish --no-check-all",
             "@phpcs",
             "@phpstan",
-            "@tests"
+            "@tests",
+            "@infection"
         ],
         "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
-        "tests": "phpunit"
+        "tests": "XDEBUG_MODE=coverage phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml",
+        "infection": "infection --threads=4 --min-covered-msi=90 --coverage=/tmp/build-logs --only-covered"
     }
 }

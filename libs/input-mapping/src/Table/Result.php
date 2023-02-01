@@ -15,7 +15,7 @@ class Result
     private array $tables = [];
 
     private InputTableStateList $inputTableStateList;
-    private Metrics $metrics;
+    private ?Metrics $metrics = null;
 
     public function addTable(TableInfo $table): void
     {
@@ -44,7 +44,7 @@ class Result
         return $this->inputTableStateList;
     }
 
-    public function getMetrics(): Metrics
+    public function getMetrics(): ?Metrics
     {
         return $this->metrics;
     }

@@ -9,7 +9,7 @@ use Generator;
 class Metrics
 {
     /** @var TableMetrics[] */
-    private array $metrics;
+    private array $metrics = [];
 
     public function __construct(array $jobResults)
     {
@@ -18,6 +18,9 @@ class Metrics
         }
     }
 
+    /**
+     * @return Generator<TableMetrics>
+     */
     public function getTableMetrics(): Generator
     {
         foreach ($this->metrics as $metric) {

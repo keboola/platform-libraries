@@ -1,6 +1,54 @@
 jobs:
-  - template: ../../azure-pipelines/jobs/run-tests.yml
-    parameters:
-      displayName: Tests
-      serviceName: dev81
-      testCommand: bash -c 'cd libs/k8s-client && composer install && composer ci'
+  - job:
+    displayName: Tests AWS
+    steps:
+      - template: ../../azure-pipelines/steps/restore-docker-artifacts.yml
+
+      - script: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
+        displayName: Install Terraform
+
+      - script: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
+        displayName: Init Terraform
+        env:
+          AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local aws
+        displayName: Configure ENV
+        env:
+          AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: docker-compose --profile dev run --rm dev-k8s-client bash -c 'composer install && composer ci'
+        displayName: Run tests
+
+      - script: docker-compose logs
+        displayName: Show logs
+        condition: failed()
+
+  - job:
+    displayName: Tests Azure
+    steps:
+      - template: ../../azure-pipelines/steps/restore-docker-artifacts.yml
+
+      - script: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
+        displayName: Install Terraform
+
+      - script: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
+        displayName: Init Terraform
+        env:
+          AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local azure
+        displayName: Configure ENV
+        env:
+          AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: docker-compose --profile dev run --rm dev-k8s-client bash -c 'composer install && composer ci'
+        displayName: Run tests
+
+      - script: docker-compose logs
+        displayName: Show logs
+        condition: failed()

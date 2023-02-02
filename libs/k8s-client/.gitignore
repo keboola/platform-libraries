@@ -1,2 +1,6 @@
+var/
 vendor/
+!.env
+.env.local
+.env.*.local
 .phpunit.result.cache

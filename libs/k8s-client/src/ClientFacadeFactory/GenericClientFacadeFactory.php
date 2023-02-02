@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\Exception\ConfigurationException;
@@ -56,6 +57,7 @@ class GenericClientFacadeFactory
             $this->logger,
             new PodsApiClient($apiClient),
             new SecretsApiClient($apiClient),
+            new EventsApiClient($apiClient),
         );
     }
 }

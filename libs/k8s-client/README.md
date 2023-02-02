@@ -68,6 +68,29 @@ $client->deleteModels([
 ]);
 ```
 
+## Development
+Prerequisites:
+* configured `az` and `aws` CLI tools (run `az login` and `aws configure --profile keboola-dev-platform-services`)
+* installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
+* intalled `docker` with `docker compose` to run & develop the library
+
+TL;DR:
+```
+export NAME_PREFIX= # your name/nickname to make your resource unique & recognizable
+
+cat <<EOF > ./provisioning/local/terraform.tfvars
+name_prefix = "${NAME_PREFIX}"
+EOF
+
+terraform -chdir=./provisioning/local init -backend-config="key=k8s-client/${NAME_PREFIX}.tfstate"
+terraform -chdir=./provisioning/local apply
+./provisioning/local/update-env.sh azure # or aws
+
+docker-compose run --rm dev composer install
+docker-compose run --rm dev composer ci
+```
+
+
 ## Implementing new API
 Only few K8S APIs we needed are implement so far. To implement new API, do following:
 * create API client wrapper in `Keboola\K8sClient\ApiClient`

@@ -36,7 +36,7 @@ class ColumnMetadataTest extends TestCase
     public function applyDataProvider(): Generator
     {
         yield 'load at once' => [
-            'bulkSize' => null,
+            'bulkSize' => 10,
             'expectedApiCalls' => 1,
             'expectedColumnsMetadata' => [
                 [
@@ -91,7 +91,7 @@ class ColumnMetadataTest extends TestCase
     /**
      * @dataProvider applyDataProvider
      */
-    public function testApply(?int $bulkSize, int $expectedApiCalls, array $expectedColumnsMetadata): void
+    public function testApply(int $bulkSize, int $expectedApiCalls, array $expectedColumnsMetadata): void
     {
         $metadataClientMock = $this->createMock(Metadata::class);
         $metadataClientMock->expects(self::exactly($expectedApiCalls))
@@ -117,10 +117,6 @@ class ColumnMetadataTest extends TestCase
             self::TEST_METADATA
         );
 
-        if ($bulkSize) {
-            $columnMetadata->apply($metadataClientMock, $bulkSize);
-        } else {
-            $columnMetadata->apply($metadataClientMock);
-        }
+        $columnMetadata->apply($metadataClientMock, $bulkSize);
     }
 }

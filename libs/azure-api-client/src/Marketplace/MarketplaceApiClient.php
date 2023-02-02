@@ -13,7 +13,7 @@ use Keboola\AzureApiClient\Marketplace\Model\Subscription;
 
 class MarketplaceApiClient
 {
-    private function __construct(
+    public function __construct(
         private readonly AzureApiClient $azureApiClient,
     ) {
     }
@@ -26,63 +26,69 @@ class MarketplaceApiClient
 
     public function resolveSubscription(string $marketplaceToken): ResolveSubscriptionResult
     {
-        $responseData = $this->azureApiClient->sendRequest(new Request(
-            'POST',
-            '/api/saas/subscriptions/resolve?api-version=2018-08-31',
-            [
-                'x-ms-marketplace-token' => $marketplaceToken,
-            ]
-        ));
-
-        return ResolveSubscriptionResult::fromResponseData($responseData);
+        return $this->azureApiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                '/api/saas/subscriptions/resolve?api-version=2018-08-31',
+                [
+                    'x-ms-marketplace-token' => $marketplaceToken,
+                ],
+            ),
+            ResolveSubscriptionResult::class,
+        );
     }
 
     public function getSubscription(string $subscriptionId): Subscription
     {
-        $responseData = $this->azureApiClient->sendRequest(new Request(
-            'GET',
-            sprintf(
-                '/api/saas/subscriptions/%s?api-version=2018-08-31',
-                urlencode($subscriptionId),
+        return $this->azureApiClient->sendRequestAndMapResponse(
+            new Request(
+                'GET',
+                sprintf(
+                    '/api/saas/subscriptions/%s?api-version=2018-08-31',
+                    urlencode($subscriptionId),
+                ),
             ),
-        ));
-
-        return Subscription::fromResponseData($responseData);
+            Subscription::class,
+        );
     }
 
     public function activateSubscription(ActivateSubscriptionRequest $parameters): void
     {
-        $this->azureApiClient->sendRequest(new Request(
-            'POST',
-            sprintf(
-                '/api/saas/subscriptions/%s/activate?api-version=2018-08-31',
-                urlencode($parameters->subscriptionId)
+        $this->azureApiClient->sendRequest(
+            new Request(
+                'POST',
+                sprintf(
+                    '/api/saas/subscriptions/%s/activate?api-version=2018-08-31',
+                    urlencode($parameters->subscriptionId)
+                ),
+                [
+                    'Content-Type' => 'application/json',
+                ],
+                (string) json_encode([
+                    'planId' => $parameters->planId,
+                    'quantity' => $parameters->quantity,
+                ], JSON_THROW_ON_ERROR),
             ),
-            [
-                'Content-Type' => 'application/json',
-            ],
-            (string) json_encode([
-                'planId' => $parameters->planId,
-                'quantity' => $parameters->quantity,
-            ], JSON_THROW_ON_ERROR),
-        ), false);
+        );
     }
 
     public function updateOperationStatus(string $subscriptionId, string $operationId, OperationStatus $status): void
     {
-        $this->azureApiClient->sendRequest(new Request(
-            'PATCH',
-            sprintf(
-                '/api/saas/subscriptions/%s/operations%s?api-version=2018-08-31',
-                urlencode($subscriptionId),
-                urlencode($operationId),
+        $this->azureApiClient->sendRequest(
+            new Request(
+                'PATCH',
+                sprintf(
+                    '/api/saas/subscriptions/%s/operations/%s?api-version=2018-08-31',
+                    urlencode($subscriptionId),
+                    urlencode($operationId),
+                ),
+                [
+                    'Content-Type' => 'application/json',
+                ],
+                (string) json_encode([
+                    'status' => $status->value,
+                ], JSON_THROW_ON_ERROR),
             ),
-            [
-                'Content-Type' => 'application/json',
-            ],
-            (string) json_encode([
-                'status' => $status->value,
-            ], JSON_THROW_ON_ERROR),
-        ), false);
+        );
     }
 }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Marketplace\Model;
 
-class Subscription
+use Keboola\AzureApiClient\ResponseModelInterface;
+
+final class Subscription implements ResponseModelInterface
 {
     public function __construct(
         public readonly string $id,
@@ -12,12 +14,12 @@ class Subscription
         public readonly string $offerId,
         public readonly string $planId,
         public readonly string $name,
-        public readonly ?int $quantity,
+        public readonly null|string|int|float $quantity,
         public readonly string $saasSubscriptionStatus,
     ) {
     }
 
-    public static function fromResponseData(array $data): self
+    public static function fromResponseData(array $data): static
     {
         return new self(
             $data['id'],

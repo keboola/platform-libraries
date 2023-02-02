@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Marketplace\Model;
 
 use DateTimeImmutable;
+use Keboola\AzureApiClient\ResponseModelInterface;
 
-class UsageEventResult
+final class UsageEventResult implements ResponseModelInterface
 {
     public function __construct(
         public readonly ?string $usageEventId,
@@ -21,7 +22,7 @@ class UsageEventResult
     ) {
     }
 
-    public static function fromResponseData(array $data): self
+    public static function fromResponseData(array $data): static
     {
         return new self(
             $data['usageEventId'] ?? null,

@@ -10,9 +10,7 @@ use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class ColumnMetadata implements MetadataInterface
 {
-    /**
-     * @param array<string, array> $metadata
-     */
+    /** @param array<string, array> $metadata */
     public function __construct(
         private readonly string $tableId,
         private readonly string $provider,
@@ -20,28 +18,32 @@ class ColumnMetadata implements MetadataInterface
     ) {
     }
 
-    public function apply(Metadata $apiClient): void
+    public function apply(Metadata $apiClient, int $bulkSize = 100): void
     {
-        $columnsMetadata = [];
-        foreach ($this->metadata as $column => $metadataArray) {
-            $columnMetadata = [];
-            foreach ($metadataArray as $metadata) {
-                $columnMetadata[] = [
-                    'key' => (string) $metadata['key'],
-                    'value' => (string) $metadata['value'],
-                ];
+        assert($bulkSize > 0);
+        foreach (array_chunk($this->metadata, $bulkSize, true) as $chunk) {
+            $columnsMetadata = [];
+
+            foreach ($chunk as $column => $metadataArray) {
+                $columnMetadata = [];
+                foreach ($metadataArray as $metadata) {
+                    $columnMetadata[] = [
+                        'key' => (string) $metadata['key'],
+                        'value' => (string) $metadata['value'],
+                    ];
+                }
+
+                $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $columnMetadata;
             }
 
-            $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $columnMetadata;
+            $options = new TableMetadataUpdateOptions(
+                $this->tableId,
+                $this->provider,
+                null,
+                $columnsMetadata
+            );
+
+            $apiClient->postTableMetadataWithColumns($options);
         }
-
-        $options = new TableMetadataUpdateOptions(
-            $this->tableId,
-            $this->provider,
-            null,
-            $columnsMetadata
-        );
-
-        $apiClient->postTableMetadataWithColumns($options);
     }
 }

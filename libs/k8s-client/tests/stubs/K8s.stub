@@ -55,6 +55,12 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
         /** @var array<string, string>|null */
         public $data;
     }
+
+    class SecretList extends AbstractModel
+    {
+        /** @var ListMeta|null */
+        public $metadata;
+    }
 }
 
 namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
@@ -69,6 +75,9 @@ namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
 
     class ObjectMeta
     {
+        /** @var string|null */
+        public $creationTimestamp;
+
         /** @var array<string, string>|null */
         public $annotations;
     }

@@ -46,7 +46,7 @@ resource "kubernetes_role" "k8s_client" {
 
   rule {
     api_groups = [""]
-    resources  = ["pods", "secret"]
+    resources  = ["pods", "secrets"]
     verbs      = ["*"]
   }
 }

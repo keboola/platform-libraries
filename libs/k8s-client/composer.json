@@ -27,7 +27,7 @@
     },
     "require-dev": {
         "keboola/coding-standard": "^14.0",
-        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-phpunit": "^1.1",
         "phpunit/phpunit": "^9.5",
         "sempro/phpunit-pretty-print": "^1.4",

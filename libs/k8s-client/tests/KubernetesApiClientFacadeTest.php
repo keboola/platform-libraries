@@ -12,6 +12,7 @@ use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
@@ -422,6 +423,92 @@ class KubernetesApiClientFacadeTest extends TestCase
         $endTime = microtime(true);
 
         self::assertEqualsWithDelta(3, $endTime - $startTime, 1);
+    }
+
+    public function testListMatching(): void
+    {
+        $pod1 = new Pod(['metadata' => ['name' => 'pod-1']]);
+        $pod2 = new Pod(['metadata' => ['name' => 'pod-2']]);
+        $pod3 = new Pod(['metadata' => ['name' => 'pod-3']]);
+
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::exactly(2))
+            ->method('list')
+            ->withConsecutive(
+                [['labelSelector' => 'app=my', 'limit' => 100]],
+                [['labelSelector' => 'app=my', 'limit' => 100, 'continue' => 'foo']],
+            )
+            ->willReturnOnConsecutiveCalls(
+                new PodList([
+                    'metadata' => [
+                        'continue' => 'foo',
+                    ],
+                    'items' => [$pod1, $pod2],
+                ]),
+                new PodList([
+                    'items' => [$pod3],
+                ]),
+            )
+        ;
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::never())->method(self::anything());
+
+        $eventsApiClient = $this->createMock(EventsApiClient::class);
+        $eventsApiClient->expects(self::never())->method(self::anything());
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $podsApiClient,
+            $secretsApiClient,
+            $eventsApiClient,
+        );
+
+        $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my']);
+        self::assertEquals([$pod1, $pod2, $pod3], [...$result]);
+    }
+
+    public function testListMatchingWithCustomPageSize(): void
+    {
+        $pod1 = new Pod(['metadata' => ['name' => 'pod-1']]);
+        $pod2 = new Pod(['metadata' => ['name' => 'pod-2']]);
+        $pod3 = new Pod(['metadata' => ['name' => 'pod-3']]);
+
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::exactly(2))
+            ->method('list')
+            ->withConsecutive(
+                [['labelSelector' => 'app=my', 'limit' => 5]],
+                [['labelSelector' => 'app=my', 'limit' => 5, 'continue' => 'foo']],
+            )
+            ->willReturnOnConsecutiveCalls(
+                new PodList([
+                    'metadata' => [
+                        'continue' => 'foo',
+                    ],
+                    'items' => [$pod1, $pod2],
+                ]),
+                new PodList([
+                    'items' => [$pod3],
+                ]),
+            )
+        ;
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::never())->method(self::anything());
+
+        $eventsApiClient = $this->createMock(EventsApiClient::class);
+        $eventsApiClient->expects(self::never())->method(self::anything());
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $podsApiClient,
+            $secretsApiClient,
+            $eventsApiClient,
+        );
+
+        $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my', 'limit' => 5]);
+        self::assertEquals([$pod1, $pod2, $pod3], [...$result]);
     }
 
     public function testDeleteAllMatching(): void

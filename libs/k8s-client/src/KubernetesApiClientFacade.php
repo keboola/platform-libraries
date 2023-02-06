@@ -14,15 +14,15 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
+use KubernetesRuntime\AbstractModel;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
-/**
- * @phpstan-type ResourceType Event|Pod|Secret
- */
 class KubernetesApiClientFacade
 {
+    private const LIST_INTERNAL_PAGE_SIZE = 100;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly PodsApiClient $podsApiClient,
@@ -71,8 +71,8 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param array<ResourceType> $resources
-     * @return ResourceType[]
+     * @param array<Event|Pod|Secret> $resources
+     * @return (Event|Pod|Secret)[]
      */
     public function createModels(array $resources, array $queries = []): array
     {
@@ -96,7 +96,7 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param array<ResourceType> $resources
+     * @param array<Event|Pod|Secret> $resources
      * @return Status[]
      */
     public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
@@ -152,6 +152,27 @@ class KubernetesApiClientFacade
     }
 
     /**
+     * @template T of Event|Pod|Secret
+     * @param class-string<T> $resourceType
+     * @return iterable<T>
+     */
+    public function listMatching(string $resourceType, array $queries = []): iterable
+    {
+        $queries['limit'] ??= self::LIST_INTERNAL_PAGE_SIZE;
+        $api = $this->getApiForResource($resourceType);
+
+        do {
+            $response = $api->list($queries);
+            foreach ($response->items as $item) {
+                /** @var T $item */
+                yield $item;
+            }
+
+            $queries['continue'] = $response->metadata?->continue;
+        } while ($queries['continue']);
+    }
+
+    /**
      * Delete all matching resources, regardless of type.
      *
      * Resources are delete sequentially by API type. If some delete request fails, the error is logged and other APIs
@@ -188,7 +209,11 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @param class-string<ResourceType> $resourceType
+     * @param class-string<AbstractModel> $resourceType
+     * @return ($resourceType is class-string<Event> ? EventsApiClient :
+     *         ($resourceType is class-string<Pod> ? PodsApiClient :
+     *         ($resourceType is class-string<Secret> ? SecretsApiClient :
+     *         never)))
      */
     private function getApiForResource(string $resourceType): EventsApiClient|PodsApiClient|SecretsApiClient
     {

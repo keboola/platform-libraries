@@ -9,148 +9,88 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ClientCredentialsEnvironmentAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Tests\BaseTest;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
-use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 
 class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 {
-    public function testCheckUsabilityFailureMissingTenant(): void
+    private readonly PlainAzureApiClientFactory $clientFactory;
+    private readonly LoggerInterface $logger;
+    private readonly TestHandler $logsHandler;
+
+    public function setUp(): void
     {
-        $authenticator = new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory(new NullLogger()));
-        putenv('AZURE_TENANT_ID=');
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Environment variable "AZURE_TENANT_ID" is not set.');
-        $authenticator->checkUsability();
+        parent::setUp();
+
+        $this->logsHandler = new TestHandler();
+        $this->logger = new Logger('tests', [$this->logsHandler]);
+
+        $this->clientFactory = new PlainAzureApiClientFactory(
+            new GuzzleClientFactory($this->logger),
+        );
     }
 
-    public function testCheckUsabilityFailureMissingClient(): void
+    public function testOptionalEnvsFallback(): void
     {
-        $authenticator = new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory(new NullLogger()));
-        putenv('AZURE_CLIENT_ID=');
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Environment variable "AZURE_CLIENT_ID" is not set.');
-        $authenticator->checkUsability();
-    }
+        putenv('AZURE_AD_RESOURCE=http://foo');
+        putenv('AZURE_ENVIRONMENT=foo');
+        new ClientCredentialsEnvironmentAuthenticator($this->clientFactory, $this->logger);
+        self::assertCount(0, $this->logsHandler->getRecords());
 
-    public function testCheckUsabilityFailureMissingSecret(): void
-    {
-        $authenticator = new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory(new NullLogger()));
-        putenv('AZURE_CLIENT_SECRET=');
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Environment variable "AZURE_CLIENT_SECRET" is not set.');
-        $authenticator->checkUsability();
-    }
-
-    public function testValidEnvironmentSettings(): void
-    {
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
-
-        $authenticator = new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory($logger));
-        $authenticator->checkUsability();
-
-        self::assertTrue($logsHandler->hasDebugThatContains(
+        putenv('AZURE_AD_RESOURCE');
+        putenv('AZURE_ENVIRONMENT');
+        new ClientCredentialsEnvironmentAuthenticator($this->clientFactory, $this->logger);
+        self::assertTrue($this->logsHandler->hasDebug(
             'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
         ));
-        self::assertTrue($logsHandler->hasDebugThatContains(
+        self::assertTrue($this->logsHandler->hasDebug(
             'AZURE_ENVIRONMENT environment variable is not specified, falling back to default.'
         ));
     }
 
-    public function testValidFullEnvironmentSettings(): void
+    public function testCheckUsabilitySuccess(): void
     {
-        putenv('AZURE_AD_RESOURCE=https://example.com');
-        putenv('AZURE_ENVIRONMENT=123');
+        putenv('AZURE_TENANT_ID=foo');
+        putenv('AZURE_CLIENT_ID=foo');
+        putenv('AZURE_CLIENT_SECRET=foo');
 
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
-
-        $authenticator = new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory($logger));
+        $authenticator = new ClientCredentialsEnvironmentAuthenticator($this->clientFactory, $this->logger);
         $authenticator->checkUsability();
 
-        self::assertFalse($logsHandler->hasDebugThatContains(
-            'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
-        ));
-        self::assertFalse($logsHandler->hasDebugThatContains(
-            'AZURE_ENVIRONMENT environment variable is not specified, falling back to default.'
-        ));
+        self::expectNotToPerformAssertions();
     }
 
-    public function testInvalidAdResource(): void
+    /** @dataProvider provideCheckUsabilityFailureTestData */
+    public function testCheckUsabilityFailure(string $requiredEnv): void
     {
-        putenv('AZURE_AD_RESOURCE=not-an-url');
-        putenv('AzureCloud=123');
+        putenv($requiredEnv);
 
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
+        $authenticator = new ClientCredentialsEnvironmentAuthenticator($this->clientFactory, $this->logger);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(
-            'Invalid options when creating client: Value "not-an-url" is invalid: This value is not a valid URL.'
-        );
-        new ClientCredentialsEnvironmentAuthenticator(new GuzzleClientFactory($logger));
+        $this->expectExceptionMessage(sprintf('Environment variable "%s" is not set.', $requiredEnv));
+
+        $authenticator->checkUsability();
     }
 
-    public function testAuthenticate(): void
+    public function provideCheckUsabilityFailureTestData(): iterable
     {
-        $mock = new MockHandler($this->getMockAuthResponses());
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
-
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-
-        /** @var GuzzleClientFactory $factory */
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
-        $token = $auth->getAuthenticationToken('resource-id');
-        self::assertCount(2, $requestHistory);
-
-        // call second time, value is cached and no new request are made
-        $token2 = $auth->getAuthenticationToken('resource-id');
-        self::assertCount(2, $requestHistory);
-        self::assertSame($token, $token2);
-        self::assertEquals('ey....ey', $token);
-        /** @var Request $request */
-        $request = $requestHistory[0]['request'];
-        self::assertEquals(
-            'https://management.azure.com/metadata/endpoints?api-version=2020-01-01',
-            $request->getUri()->__toString()
-        );
-        self::assertEquals('GET', $request->getMethod());
-        self::assertEquals('Azure PHP Client', $request->getHeader('User-Agent')[0]);
-        self::assertEquals('application/json', $request->getHeader('Content-type')[0]);
-        /** @var Request $request */
-        $request = $requestHistory[1]['request'];
-        self::assertEquals('https://login.windows.net/tenant123/oauth2/token', $request->getUri()->__toString());
-        self::assertEquals('POST', $request->getMethod());
-        self::assertEquals('Azure PHP Client', $request->getHeader('User-Agent')[0]);
-        self::assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
-        self::assertEquals(
-            // phpcs:ignore Generic.Files.LineLength
-            'grant_type=client_credentials&client_id=client123&client_secret=secret123&resource=resource-id',
-            $request->getBody()->getContents()
-        );
+        yield 'AZURE_TENANT_ID' => ['AZURE_TENANT_ID'];
+        yield 'AZURE_CLIENT_ID' => ['AZURE_CLIENT_ID'];
+        yield 'AZURE_CLIENT_SECRET' => ['AZURE_CLIENT_SECRET'];
     }
 
-    public function testAuthenticateCustomMetadata(): void
+    public function testGetAuthenticationToken(): void
     {
         $metadata = $this->getSampleArmMetadata();
-        $metadata[0]['authentication']['loginEndpoint'] = 'https://my-custom-login/';
-        $metadata[0]['name'] = 'my-azure';
-        putenv('AZURE_ENVIRONMENT=my-azure');
-        putenv('AZURE_AD_RESOURCE=https://example.com');
 
-        $mock = new MockHandler([
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -171,42 +111,106 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        /** @var GuzzleClientFactory $factory */
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
+
         $token = $auth->getAuthenticationToken('resource-id');
-        self::assertEquals('ey....ey', $token);
-        self::assertCount(2, $requestHistory);
-        /** @var Request $request */
-        $request = $requestHistory[0]['request'];
-        self::assertEquals('https://example.com', $request->getUri()->__toString());
-        self::assertEquals('GET', $request->getMethod());
-        self::assertEquals('Azure PHP Client', $request->getHeader('User-Agent')[0]);
-        self::assertEquals('application/json', $request->getHeader('Content-type')[0]);
-        $request = $requestHistory[1]['request'];
-        self::assertEquals('https://my-custom-login/tenant123/oauth2/token', $request->getUri()->__toString());
-        self::assertEquals('POST', $request->getMethod());
-        self::assertEquals('Azure PHP Client', $request->getHeader('User-Agent')[0]);
-        self::assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
-        self::assertEquals(
-            // phpcs:ignore Generic.Files.LineLength
+        self::assertCount(2, $requestsHistory);
+        self::assertSame('ey....ey', $token);
+
+        $request = $requestsHistory[0]['request'];
+        self::assertSame(
+            'https://management.azure.com/metadata/endpoints?api-version=2020-01-01',
+            $request->getUri()->__toString()
+        );
+        self::assertSame('GET', $request->getMethod());
+        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
+
+        $request = $requestsHistory[1]['request'];
+        self::assertSame('https://login.windows.net/tenant123/oauth2/token', $request->getUri()->__toString());
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
+        self::assertSame(
+            'grant_type=client_credentials&client_id=client123&client_secret=secret123&resource=resource-id',
+            $request->getBody()->getContents()
+        );
+
+        // call second time, value is cached and no new request are made
+        $token2 = $auth->getAuthenticationToken('resource-id');
+        self::assertCount(2, $requestsHistory);
+        self::assertSame('ey....ey', $token2);
+    }
+
+
+    public function testGetAuthenticationTokenWithCustomMetadata(): void
+    {
+        $metadata = $this->getSampleArmMetadata();
+        $metadata[0]['authentication']['loginEndpoint'] = 'https://my-custom-login/';
+        $metadata[0]['name'] = 'my-azure';
+        putenv('AZURE_ENVIRONMENT=my-azure');
+        putenv('AZURE_AD_RESOURCE=https://example.com');
+
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                (string) json_encode($metadata)
+            ),
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                '{
+                    "token_type": "Bearer",
+                    "expires_in": "3599",
+                    "ext_expires_in": "3599",
+                    "expires_on": "1589810452",
+                    "not_before": "1589806552",
+                    "resource": "https://vault.azure.net",
+                    "access_token": "ey....ey"
+                }'
+            ),
+        ]);
+
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
+
+        $token = $auth->getAuthenticationToken('resource-id');
+        self::assertCount(2, $requestsHistory);
+        self::assertSame('ey....ey', $token);
+
+        $request = $requestsHistory[0]['request'];
+        self::assertSame(
+            'https://example.com',
+            $request->getUri()->__toString()
+        );
+        self::assertSame('GET', $request->getMethod());
+        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
+
+        $request = $requestsHistory[1]['request'];
+        self::assertSame('https://my-custom-login/tenant123/oauth2/token', $request->getUri()->__toString());
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
+        self::assertSame(
             'grant_type=client_credentials&client_id=client123&client_secret=secret123&resource=resource-id',
             $request->getBody()->getContents()
         );
     }
 
-    public function testAuthenticateInvalidMetadata(): void
+    public function testGetAuthenticationTokenWithInvalidCustomMetadata(): void
     {
         putenv('AZURE_ENVIRONMENT=non-existent');
-        $mock = new MockHandler([
+
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -214,25 +218,23 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
 
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Cloud "non-existent" not found in instance metadata');
+        $this->expectExceptionMessage('Cloud "non-existent" not found in instance metadata: ');
+
         $auth->getAuthenticationToken('resource-id');
     }
 
-    public function testAuthenticateMetadataRetry(): void
+    public function testGetAuthenticationTokenMetadataRetry(): void
     {
-        $mock = new MockHandler([
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
             new Response(
                 500,
                 ['Content-Type' => 'application/json'],
@@ -258,23 +260,21 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
+
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertEquals('ey....ey', $token);
     }
 
-    public function testAuthenticateMetadataFailure(): void
+    public function testGetAuthenticationTokenMetadataFailure(): void
     {
-        $mock = new MockHandler([
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -282,51 +282,22 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Failed to get instance metadata: Syntax error');
+        $this->expectExceptionMessage('Failed to get instance metadata: Response is not a valid JSON: Syntax error');
         $auth->getAuthenticationToken('resource-id');
     }
 
-    public function testAuthenticateMalformedMetadata(): void
+    public function testGetAuthenticationTokenTokenError(): void
     {
-        $mock = new MockHandler([
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                '"boo"'
-            ),
-        ]);
-
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
-
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid metadata contents: "boo"');
-        $auth->getAuthenticationToken('resource-id');
-    }
-
-    public function testAuthenticateTokenError(): void
-    {
-        $mock = new MockHandler([
+        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -335,54 +306,35 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                '{"boo"}'
+                '{"boo":"bar"}'
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
+        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
+        $auth = new ClientCredentialsEnvironmentAuthenticator(
+            $apiClientFactory,
+            $this->logger
+        );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Failed to get authentication token: Syntax error');
+        $this->expectExceptionMessage('Access token not provided in response: {"boo":"bar"}');
         $auth->getAuthenticationToken('resource-id');
     }
 
-    public function testAuthenticateTokenMalformed(): void
+    /**
+     * @param list<array{request: Request, response: Response}> $requestsHistory
+     * @param list<Response>                                    $responses
+     * @return HandlerStack
+     */
+    private static function prepareGuzzleMockHandler(?array &$requestsHistory, array $responses): HandlerStack
     {
-        $mock = new MockHandler([
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                (string) json_encode($this->getSampleArmMetadata())
-            ),
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                '{"error": "boo"}'
-            ),
-        ]);
+        $requestsHistory = [];
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['handler' => $stack]);
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(Middleware::history($requestsHistory));
 
-        $factory = $this->createMock(GuzzleClientFactory::class);
-        $factory->method('getClient')->willReturn($client);
-        $auth = new ClientCredentialsEnvironmentAuthenticator($factory);
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Access token not provided in response: {"error":"boo"}');
-        $auth->getAuthenticationToken('resource-id');
+        return $stack;
     }
 }

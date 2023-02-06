@@ -7,68 +7,40 @@ namespace Keboola\AzureApiClient;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use JsonException;
-use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
-use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
-class AzureApiClient
+class ApiClient
 {
-    private readonly GuzzleClient $guzzle;
-    private readonly AuthenticatorInterface $authenticator;
-    private readonly LoggerInterface $logger;
-    private string $token;
-
     public function __construct(
-        string $baseUrl,
-        private readonly string $resource,
-        GuzzleClientFactory $clientFactory,
-        AuthenticatorFactory $authenticatorFactory,
-        LoggerInterface $logger,
-        array $options = [],
+        private readonly GuzzleClient $guzzleClient
     ) {
-        $handlerStack = $options['handler'] ?? HandlerStack::create();
-        $options['handler'] = $handlerStack;
-
-        // Set handler to set authorization
-        $handlerStack->push(Middleware::mapRequest(
-            function (RequestInterface $request) {
-                return $request
-                    ->withHeader('Authorization', 'Bearer ' . $this->token);
-            }
-        ));
-
-        $this->guzzle = $clientFactory->getClient($baseUrl, $options);
-        $this->authenticator = $authenticatorFactory->getAuthenticator($clientFactory);
-        $this->logger = $logger;
     }
 
     /**
      * @template TResponseClass of ResponseModelInterface
      * @param class-string<TResponseClass> $responseClass
-     * @return ($isArray is true ? list<TResponseClass> : TResponseClass)
+     * @return ($isList is true ? list<TResponseClass> : TResponseClass)
      */
     public function sendRequestAndMapResponse(
         RequestInterface $request,
         string $responseClass,
-        bool $isArray = false,
+        array $options = [],
+        bool $isList = false,
     ) {
-        $response = $this->doSendRequest($request);
+        $response = $this->doSendRequest($request, $options);
 
         try {
             $responseData = (array) json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            throw new ClientException($e->getMessage(), $e->getCode(), $e);
+            throw new ClientException('Response is not a valid JSON: ' . $e->getMessage(), $e->getCode(), $e);
         }
 
         try {
-            if ($isArray) {
+            if ($isList) {
                 return array_map($responseClass::fromResponseData(...), $responseData);
             } else {
                 return $responseClass::fromResponseData($responseData);
@@ -83,14 +55,10 @@ class AzureApiClient
         $this->doSendRequest($request);
     }
 
-    public function doSendRequest(RequestInterface $request): ResponseInterface
+    private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface
     {
         try {
-            if (empty($this->token)) {
-                $this->token = $this->authenticator->getAuthenticationToken($this->resource);
-                $this->logger->info('Successfully authenticated.');
-            }
-            return $this->guzzle->send($request);
+            return $this->guzzleClient->send($request, $options);
         } catch (GuzzleException $e) {
             if ($e instanceof RequestException) {
                 $this->handleRequestException($e);

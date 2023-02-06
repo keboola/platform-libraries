@@ -52,6 +52,6 @@
         "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
         "tests": "XDEBUG_MODE=coverage phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml",
-        "infection": "infection --threads=4 --min-covered-msi=90 --coverage=/tmp/build-logs --only-covered"
+        "infection": "infection --log-verbosity=all --threads=20 --min-covered-msi=90 --coverage=/tmp/build-logs --only-covered"
     }
 }

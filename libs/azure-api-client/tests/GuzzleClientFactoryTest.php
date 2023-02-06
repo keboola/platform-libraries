@@ -25,7 +25,6 @@ class GuzzleClientFactoryTest extends TestCase
         $factory = new GuzzleClientFactory(new NullLogger());
         $client = $factory->getClient('http://example.com');
 
-        self::assertInstanceOf(NullLogger::class, $factory->getLogger());
         self::assertEquals(120, $client->getConfig('timeout'));
         self::assertEquals(10, $client->getConfig('connect_timeout'));
     }
@@ -49,7 +48,7 @@ class GuzzleClientFactoryTest extends TestCase
                     'non-existent' => 'foo',
                 ],
                 // phpcs:ignore Generic.Files.LineLength
-                'Invalid options when creating client: non-existent. Valid options are: backoffMaxTries, userAgent, handler, logger.',
+                'Invalid options when creating client: non-existent. Valid options are: backoffMaxTries, userAgent, middleware.',
             ],
             'invalid-backoff' => [
                 [
@@ -73,8 +72,8 @@ class GuzzleClientFactoryTest extends TestCase
         $logsHandler = new TestHandler();
         $logger = new Logger('tests', [$logsHandler]);
 
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $client = $factory->getClient('https://example.com', ['logger' => $logger, 'userAgent' => 'test-client']);
+        $factory = new GuzzleClientFactory($logger);
+        $client = $factory->getClient('https://example.com', ['userAgent' => 'test-client']);
         $client->get('');
         self::assertTrue($logsHandler->hasInfoThatContains('test-client - ['));
         self::assertTrue($logsHandler->hasInfoThatContains('"GET  /1.1" 200'));
@@ -95,10 +94,10 @@ class GuzzleClientFactoryTest extends TestCase
         $stack = HandlerStack::create($mock);
         $stack->push($history);
 
-        $factory = new GuzzleClientFactory(new NullLogger());
+        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
         $client = $factory->getClient(
             'https://example.com',
-            ['handler' => $stack, 'userAgent' => 'test-client']
+            ['userAgent' => 'test-client']
         );
         $client->get('');
 
@@ -127,10 +126,10 @@ class GuzzleClientFactoryTest extends TestCase
         $stack = HandlerStack::create($mock);
         $stack->push($history);
 
-        $factory = new GuzzleClientFactory(new NullLogger());
+        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
         $client = $factory->getClient(
             'https://example.com',
-            ['handler' => $stack, 'userAgent' => 'test-client']
+            ['userAgent' => 'test-client']
         );
         try {
             $client->get('');
@@ -173,10 +172,10 @@ class GuzzleClientFactoryTest extends TestCase
         $stack = HandlerStack::create($mock);
         $stack->push($history);
 
-        $factory = new GuzzleClientFactory(new NullLogger());
+        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
         $client = $factory->getClient(
             'https://example.com',
-            ['handler' => $stack, 'userAgent' => 'test-client', 'backoffMaxTries' => 2]
+            ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
         );
         try {
             $client->get('');
@@ -226,10 +225,10 @@ class GuzzleClientFactoryTest extends TestCase
         $logsHandler = new TestHandler();
         $logger = new Logger('tests', [$logsHandler]);
 
-        $factory = new GuzzleClientFactory($logger);
+        $factory = new GuzzleClientFactory($logger, $stack);
         $client = $factory->getClient(
             'https://example.com',
-            ['handler' => $stack, 'userAgent' => 'test-client', 'backoffMaxTries' => 2]
+            ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
         );
         $client->get('');
 
@@ -275,10 +274,10 @@ class GuzzleClientFactoryTest extends TestCase
         $logsHandler = new TestHandler();
         $logger = new Logger('tests', [$logsHandler]);
 
-        $factory = new GuzzleClientFactory($logger);
+        $factory = new GuzzleClientFactory($logger, $stack);
         $client = $factory->getClient(
             'https://example.com',
-            ['handler' => $stack, 'userAgent' => 'test-client', 'backoffMaxTries' => 2]
+            ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
         );
         $client->get('');
 

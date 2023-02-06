@@ -56,28 +56,4 @@ abstract class BaseTest extends TestCase
             ],
         ];
     }
-
-    protected function getMockAuthResponses(): array
-    {
-        return [
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                (string) json_encode($this->getSampleArmMetadata())
-            ),
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                '{
-                    "token_type": "Bearer",
-                    "expires_in": "3599",
-                    "ext_expires_in": "3599",
-                    "expires_on": "1589810452",
-                    "not_before": "1589806552",
-                    "resource": "https://vault.azure.net",
-                    "access_token": "ey....ey"
-                }'
-            ),
-        ];
-    }
 }

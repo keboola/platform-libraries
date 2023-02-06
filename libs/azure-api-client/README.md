@@ -9,10 +9,11 @@ composer require keboola/azure-api-client
 ## Usage
 
 To create API client using PHP:
+
 ```php
 # example.php
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
-use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Monolog\Logger;
@@ -20,7 +21,7 @@ use Monolog\Logger;
 $logger = new Logger('azure-api-client');
 $guzzleClientFactory = new GuzzleClientFactory($logger);
 $authenticatorFactory = new AuthenticatorFactory();
-$clientFactory = new AzureApiClientFactory($guzzleClientFactory, $authenticatorFactory, $logger);
+$clientFactory = new PlainAzureApiClientFactory($guzzleClientFactory, $authenticatorFactory, $logger);
 
 $marketingApiClient = MarketplaceApiClient::create($clientFactory);
 ```

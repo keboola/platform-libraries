@@ -23,24 +23,22 @@ class GuzzleClientFactory
     private const DEFAULT_USER_AGENT = 'Azure PHP Client';
     private const DEFAULT_BACKOFF_RETRIES = 10;
     private const AZURE_THROTTLING_CODE = 429;
-    private const ALLOWED_OPTIONS = ['backoffMaxTries', 'userAgent', 'handler', 'logger'];
+    private const ALLOWED_OPTIONS = ['backoffMaxTries', 'userAgent', 'middleware'];
 
+    /**
+     * @param callable|null $requestHandler
+     */
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly mixed $requestHandler = null,
     ) {
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
     }
 
     /**
      * @param array{
      *     backoffMaxTries?: null|int<0, max>,
      *     userAgent?: null|string,
-     *     handler?: null|callable,
-     *     logger?: null|LoggerInterface,
+     *     middleware?: null|list<callable>,
      * }  $options
      */
     public function getClient(string $baseUrl, array $options = []): GuzzleClient
@@ -81,7 +79,33 @@ class GuzzleClientFactory
             }
             throw new ClientException('Invalid options when creating client: ' . implode("\n", $messages));
         }
-        return $this->initClient($baseUrl, $options);
+
+        // Initialize handlers (start with those supplied in constructor)
+        $handlerStack = HandlerStack::create($this->requestHandler ?? null);
+        foreach ($options['middleware'] ?? [] as $middleware) {
+            $handlerStack->push($middleware);
+        }
+
+        // Set exponential backoff
+        $handlerStack->push(Middleware::retry($this->createDefaultDecider($options['backoffMaxTries'])));
+
+        // Set client logger
+        $handlerStack->push(Middleware::log(
+            $this->logger,
+            new MessageFormatter(
+                '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
+                ' {code} {res_header_Content-Length}'
+            )
+        ));
+
+        // finally create the instance
+        return new GuzzleClient([
+            'base_uri' => $baseUrl,
+            'handler' => $handlerStack,
+            'headers' => ['User-Agent' => $options['userAgent'], 'Content-type' => 'application/json'],
+            'connect_timeout' => 10,
+            'timeout' => 120,
+        ]);
     }
 
     private function createDefaultDecider(int $maxRetries): callable
@@ -118,32 +142,5 @@ class GuzzleClientFactory
             }
             return false;
         };
-    }
-
-    private function initClient(string $baseUrl, array $options = []): GuzzleClient
-    {
-        // Initialize handlers (start with those supplied in constructor)
-        $handlerStack = HandlerStack::create($options['handler'] ?? null);
-        // Set exponential backoff
-        $handlerStack->push(Middleware::retry($this->createDefaultDecider($options['backoffMaxTries'])));
-
-        // Set client logger
-        if (isset($options['logger']) && $options['logger'] instanceof LoggerInterface) {
-            $handlerStack->push(Middleware::log(
-                $options['logger'],
-                new MessageFormatter(
-                    '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
-                    ' {code} {res_header_Content-Length}'
-                )
-            ));
-        }
-        // finally create the instance
-        return new GuzzleClient([
-            'base_uri' => $baseUrl,
-            'handler' => $handlerStack,
-            'headers' => ['User-Agent' => $options['userAgent'], 'Content-type' => 'application/json'],
-            'connect_timeout' => 10,
-            'timeout' => 120,
-        ]);
     }
 }

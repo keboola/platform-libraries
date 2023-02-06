@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Marketplace;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\AzureApiClient;
-use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
 use Keboola\AzureApiClient\Marketplace\Model\Subscription;
@@ -14,19 +15,22 @@ use Keboola\AzureApiClient\Marketplace\Model\Subscription;
 class MarketplaceApiClient
 {
     public function __construct(
-        private readonly AzureApiClient $azureApiClient,
+        private readonly ApiClient $apiClient,
     ) {
     }
 
-    public static function create(AzureApiClientFactory $clientFactory): self
+    public static function create(AuthenticatedAzureApiClientFactory $clientFactory): self
     {
-        $apiClient = $clientFactory->getClient('https://marketplaceapi.microsoft.com', Resources::AZURE_MARKETPLACE);
+        $apiClient = $clientFactory->createClient(
+            'https://marketplaceapi.microsoft.com',
+            Resources::AZURE_MARKETPLACE
+        );
         return new self($apiClient);
     }
 
     public function resolveSubscription(string $marketplaceToken): ResolveSubscriptionResult
     {
-        return $this->azureApiClient->sendRequestAndMapResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 '/api/saas/subscriptions/resolve?api-version=2018-08-31',
@@ -40,7 +44,7 @@ class MarketplaceApiClient
 
     public function getSubscription(string $subscriptionId): Subscription
     {
-        return $this->azureApiClient->sendRequestAndMapResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
                 sprintf(
@@ -54,7 +58,7 @@ class MarketplaceApiClient
 
     public function activateSubscription(ActivateSubscriptionRequest $parameters): void
     {
-        $this->azureApiClient->sendRequest(
+        $this->apiClient->sendRequest(
             new Request(
                 'POST',
                 sprintf(
@@ -74,7 +78,7 @@ class MarketplaceApiClient
 
     public function updateOperationStatus(string $subscriptionId, string $operationId, OperationStatus $status): void
     {
-        $this->azureApiClient->sendRequest(
+        $this->apiClient->sendRequest(
             new Request(
                 'PATCH',
                 sprintf(

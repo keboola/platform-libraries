@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Tests;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
-use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\AzureApiClient;
+use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\GuzzleClientFactory;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
-class AzureApiClientFunctionalTest extends TestCase
+class ApiClientFunctionalTest extends TestCase
 {
     public function testSendRequest(): void
     {
@@ -23,9 +21,6 @@ class AzureApiClientFunctionalTest extends TestCase
             'httpRequest' => [
                 'method' => 'GET',
                 'path' => '/foo/bar',
-                'headers' => [
-                    'Authorization' => 'Bearer auth-token',
-                ],
             ],
             'httpResponse' => [
                 'statusCode' => 200,
@@ -33,25 +28,16 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+
         $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
-
+        $apiClient = new ApiClient($guzzleClient);
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
         self::assertTrue($mockserver->hasRecordedRequest([
             'method' => 'GET',
             'path' => '/foo/bar',
-            'headers' => [
-                'Authorization' => 'Bearer auth-token',
-            ],
         ]));
     }
 
@@ -64,7 +50,6 @@ class AzureApiClientFunctionalTest extends TestCase
                 'method' => 'POST',
                 'path' => '/foo/bar',
                 'headers' => [
-                    'Authorization' => 'Bearer auth-token',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => '{"foo":"baz"}',
@@ -76,17 +61,11 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+
         $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
-
+        $apiClient = new ApiClient($guzzleClient);
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
@@ -112,7 +91,6 @@ class AzureApiClientFunctionalTest extends TestCase
                 'method' => 'POST',
                 'path' => '/foo/bar',
                 'headers' => [
-                    'Authorization' => 'Bearer auth-token',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => '{"foo":"baz"}',
@@ -127,17 +105,11 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
+
         $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
-
+        $apiClient = new ApiClient($guzzleClient);
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
@@ -146,6 +118,7 @@ class AzureApiClientFunctionalTest extends TestCase
                 '{"foo":"baz"}',
             ),
             DummyTestResponse::class,
+            [],
             true,
         );
 
@@ -176,16 +149,11 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
+
+        $apiClient = new ApiClient($guzzleClient);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('BadRequest: This is not good');
@@ -209,16 +177,11 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
+
+        $apiClient = new ApiClient($guzzleClient);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -244,16 +207,11 @@ class AzureApiClientFunctionalTest extends TestCase
         ]);
 
         $logger = new Logger('test');
-        $authenticatorFactory = $this->createAuthenticatorFactory('auth-token');
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
 
-        $apiClient = new AzureApiClient(
-            $mockserver->getServerUrl(),
-            'my-api',
-            $guzzleClientFactory,
-            $authenticatorFactory,
-            $logger,
-        );
+        $guzzleClientFactory = new GuzzleClientFactory($logger);
+        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
+
+        $apiClient = new ApiClient($guzzleClient);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -263,16 +221,5 @@ class AzureApiClientFunctionalTest extends TestCase
         );
 
         $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);
-    }
-
-    public function createAuthenticatorFactory(string $authToken): AuthenticatorFactory
-    {
-        $authenticator = $this->createMock(AuthenticatorInterface::class);
-        $authenticator->method('getAuthenticationToken')->willReturn($authToken);
-
-        $authenticatorFactory = $this->createMock(AuthenticatorFactory::class);
-        $authenticatorFactory->method('getAuthenticator')->willReturn($authenticator);
-
-        return $authenticatorFactory;
     }
 }

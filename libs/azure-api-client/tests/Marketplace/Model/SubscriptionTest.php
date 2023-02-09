@@ -52,12 +52,12 @@ class SubscriptionTest extends TestCase
 
         $result = Subscription::fromResponseData($responseData);
 
-        self::assertSame($responseData['id'], $result->id);
-        self::assertSame($responseData['publisherId'], $result->publisherId);
-        self::assertSame($responseData['offerId'], $result->offerId);
-        self::assertSame($responseData['planId'], $result->planId);
-        self::assertSame($responseData['name'], $result->name);
-        self::assertSame($responseData['quantity'], $result->quantity);
-        self::assertSame($responseData['saasSubscriptionStatus'], $result->saasSubscriptionStatus);
+        self::assertSame('<guid>', $result->id);
+        self::assertSame('contoso', $result->publisherId);
+        self::assertSame('offer1', $result->offerId);
+        self::assertSame('silver', $result->planId);
+        self::assertSame('Contoso Cloud Solution', $result->name);
+        self::assertSame(5, $result->quantity);
+        self::assertSame(' PendingFulfillmentStart ', $result->saasSubscriptionStatus);
     }
 }

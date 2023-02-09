@@ -60,10 +60,10 @@ class ResolveSubscriptionResultTest extends TestCase
 
         $result = ResolveSubscriptionResult::fromResponseData($responseData);
 
-        self::assertSame($responseData['id'], $result->id);
-        self::assertSame($responseData['subscriptionName'], $result->subscriptionName);
-        self::assertSame($responseData['offerId'], $result->offerId);
-        self::assertSame($responseData['planId'], $result->planId);
+        self::assertSame('<guid>', $result->id);
+        self::assertSame('Contoso Cloud Solution', $result->subscriptionName);
+        self::assertSame('offer1', $result->offerId);
+        self::assertSame('silver', $result->planId);
         self::assertEquals(Subscription::fromResponseData($responseData['subscription']), $result->subscription);
         self::assertSame($responseData, $result->rawData);
     }

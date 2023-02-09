@@ -34,7 +34,7 @@ class ApiClient
         $response = $this->doSendRequest($request, $options);
 
         try {
-            $responseData = (array) json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            $responseData = Json::decodeArray($response->getBody()->getContents());
         } catch (JsonException $e) {
             throw new ClientException('Response is not a valid JSON: ' . $e->getMessage(), $e->getCode(), $e);
         }
@@ -77,7 +77,7 @@ class ApiClient
         }
 
         try {
-            $data = (array) json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            $data = Json::decodeArray($response->getBody()->getContents());
         } catch (JsonException $e2) {
             // throw the original one, we don't care about e2
             throw new ClientException(trim($e->getMessage()), $response->getStatusCode(), $e);

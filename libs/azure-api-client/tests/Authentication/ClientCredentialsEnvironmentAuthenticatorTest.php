@@ -13,6 +13,7 @@ use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ClientCredentialsEnvironmentAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\GuzzleClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Tests\BaseTest;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -94,7 +95,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode($metadata)
+                Json::encodeArray($metadata)
             ),
             new Response(
                 200,
@@ -159,7 +160,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode($metadata)
+                Json::encodeArray($metadata)
             ),
             new Response(
                 200,
@@ -214,7 +215,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata())
             ),
         ]);
 
@@ -243,7 +244,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata())
             ),
             new Response(
                 200,
@@ -301,7 +302,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata())
             ),
             new Response(
                 200,

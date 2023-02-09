@@ -50,7 +50,7 @@ class ArmMetadataTest extends BaseTest
                     'storage' => 'core.windows.net',
                 ],
             ],
-            '"name" field not found in API response:',
+            '"name" field not found in API response: {"portal":',
         ];
         yield 'missing-suffixes' => [
             [
@@ -67,7 +67,7 @@ class ArmMetadataTest extends BaseTest
                 'media' => 'https://rest.media.azure.net',
                 'name' => 'AzureCloud',
             ],
-            '"suffixes.keyVaultDns" field not found in API response:',
+            '"suffixes.keyVaultDns" field not found in API response: {"portal":',
         ];
         yield 'missing-keyVaultDns' => [
             [
@@ -87,7 +87,7 @@ class ArmMetadataTest extends BaseTest
                     'storage' => 'core.windows.net',
                 ],
             ],
-            '"suffixes.keyVaultDns" field not found in API response:',
+            '"suffixes.keyVaultDns" field not found in API response: {"portal":',
         ];
         yield 'missing-authentication' => [
             [
@@ -99,7 +99,7 @@ class ArmMetadataTest extends BaseTest
                     'storage' => 'core.windows.net',
                 ],
             ],
-            '"authentication.loginEndpoint" field not found in API response:',
+            '"authentication.loginEndpoint" field not found in API response: {"portal":',
         ];
         yield 'missing-loginEndpoint' => [
             [
@@ -119,7 +119,7 @@ class ArmMetadataTest extends BaseTest
                     'storage' => 'core.windows.net',
                 ],
             ],
-            '"authentication.loginEndpoint" field not found in API response:',
+            '"authentication.loginEndpoint" field not found in API response: {"portal":',
         ];
     }
 }

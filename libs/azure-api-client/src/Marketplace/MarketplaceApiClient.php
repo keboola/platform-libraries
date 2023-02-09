@@ -7,7 +7,7 @@ namespace Keboola\AzureApiClient\Marketplace;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
 use Keboola\AzureApiClient\Marketplace\Model\Subscription;
@@ -68,10 +68,10 @@ class MarketplaceApiClient
                 [
                     'Content-Type' => 'application/json',
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'planId' => $parameters->planId,
                     'quantity' => $parameters->quantity,
-                ], JSON_THROW_ON_ERROR),
+                ]),
             ),
         );
     }
@@ -89,9 +89,9 @@ class MarketplaceApiClient
                 [
                     'Content-Type' => 'application/json',
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'status' => $status->value,
-                ], JSON_THROW_ON_ERROR),
+                ]),
             ),
         );
     }

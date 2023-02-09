@@ -7,7 +7,7 @@ namespace Keboola\AzureApiClient\Marketplace;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
@@ -41,9 +41,9 @@ class MeteringServiceApiClient
                 [
                     'Content-Type' => 'application/json',
                 ],
-                json_encode([
+                Json::encodeArray([
                     'request' => $events,
-                ], JSON_THROW_ON_ERROR),
+                ]),
             ),
             ReportUsageEventsBatchResult::class,
         )->result;

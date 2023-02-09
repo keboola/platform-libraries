@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\GuzzleClientFactory;
+use Keboola\AzureApiClient\Json;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
@@ -56,7 +57,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
             'httpResponse' => [
                 'statusCode' => 200,
-                'body' => (string) json_encode(['foo' => 'bar']),
+                'body' => Json::encodeArray(['foo' => 'bar']),
             ],
         ]);
 
@@ -97,7 +98,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
             'httpResponse' => [
                 'statusCode' => 200,
-                'body' => (string) json_encode([
+                'body' => Json::encodeArray([
                     ['foo' => 'bar'],
                     ['foo' => 'me'],
                 ]),
@@ -139,7 +140,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
             'httpResponse' => [
                 'statusCode' => 400,
-                'body' => (string) json_encode([
+                'body' => Json::encodeArray([
                     'error' => [
                         'code' => 'BadRequest',
                         'message' => 'This is not good',

@@ -13,6 +13,7 @@ use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\GuzzleClientFactory;
+use Keboola\AzureApiClient\Json;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -34,12 +35,12 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode(['foo' => 'bar']),
+                Json::encodeArray(['foo' => 'bar']),
             ),
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                (string) json_encode(['foo' => 'bar']),
+                Json::encodeArray(['foo' => 'bar']),
             ),
         ]);
 

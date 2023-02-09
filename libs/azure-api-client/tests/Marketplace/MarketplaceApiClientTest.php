@@ -7,6 +7,7 @@ namespace Keboola\AzureApiClient\Tests\Marketplace;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
@@ -112,7 +113,7 @@ class MarketplaceApiClientTest extends TestCase
                 [
                     'Content-Type' => ['application/json'],
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'planId' => 'plan-id',
                     'quantity' => 1,
                 ]),
@@ -138,7 +139,7 @@ class MarketplaceApiClientTest extends TestCase
                 [
                     'Content-Type' => ['application/json'],
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'status' => 'Success',
                 ]),
             ))

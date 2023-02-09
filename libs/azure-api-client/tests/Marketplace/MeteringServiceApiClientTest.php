@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MeteringServiceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
@@ -76,7 +77,7 @@ class MeteringServiceApiClientTest extends TestCase
                 [
                     'Content-Type' => ['application/json'],
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'request' => [
                         [
                             'resourceId' => 'resource-1',

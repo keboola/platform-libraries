@@ -29,9 +29,31 @@ class GuzzleClientFactoryTest extends TestCase
         self::assertEquals(10, $client->getConfig('connect_timeout'));
     }
 
-    /**
-     * @dataProvider invalidOptionsProvider
-     */
+    /** @dataProvider provideInvalidUrls */
+    public function testInvalidUrl(string $url, string $expectedError): void
+    {
+        $factory = new GuzzleClientFactory(new NullLogger());
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage($expectedError);
+
+        $factory->getClient($url);
+    }
+
+    public function provideInvalidUrls(): iterable
+    {
+        yield 'empty string' => [
+            'url' => '',
+            'error' => 'Invalid options when creating client: Value "" is invalid: This value should not be blank.',
+        ];
+
+        yield 'invalid URL' => [
+            'url' => 'foo',
+            'error' => 'Invalid options when creating client: Value "foo" is invalid: This value is not a valid URL.',
+        ];
+    }
+
+    /** @dataProvider provideInvalidOptions */
     public function testInvalidOptions(array $options, string $expectedMessage): void
     {
         $factory = new GuzzleClientFactory(new NullLogger());
@@ -40,31 +62,36 @@ class GuzzleClientFactoryTest extends TestCase
         $factory->getClient('http://example.com', $options);
     }
 
-    public function invalidOptionsProvider(): array
+    public function provideInvalidOptions(): iterable
     {
-        return [
-            'invalid-options' => [
-                [
-                    'non-existent' => 'foo',
-                ],
-                // phpcs:ignore Generic.Files.LineLength
-                'Invalid options when creating client: non-existent. Valid options are: backoffMaxTries, userAgent, middleware.',
+        yield 'invalid options' => [
+            'options' => [
+                'non-existent' => 'foo',
             ],
-            'invalid-backoff' => [
-                [
-                    'backoffMaxTries' => 'foo',
-                ],
-                'Invalid options when creating client: Value "foo" is invalid: This value should be a valid number.',
-            ],
+            // phpcs:ignore Generic.Files.LineLength
+            'error' => 'Invalid options when creating client: non-existent. Valid options are: backoffMaxTries, userAgent, middleware.',
         ];
-    }
 
-    public function testInvalidUrl(): void
-    {
-        $factory = new GuzzleClientFactory(new NullLogger());
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('boo');
-        $factory->getClient('boo');
+        yield 'invalid backoff' => [
+            [
+                'backoffMaxTries' => 'foo',
+            ],
+            'Invalid options when creating client: Value "foo" is invalid: This value should be a valid number.',
+        ];
+
+        yield 'high backoff' => [
+            [
+                'backoffMaxTries' => 101,
+            ],
+            'Invalid options when creating client: Value "101" is invalid: This value should be between 0 and 100.',
+        ];
+
+        yield 'low backoff' => [
+            [
+                'backoffMaxTries' => -1,
+            ],
+            'Invalid options when creating client: Value "-1" is invalid: This value should be between 0 and 100.',
+        ];
     }
 
     public function testLogger(): void

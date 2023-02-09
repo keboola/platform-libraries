@@ -59,38 +59,36 @@ class ApiClient
     {
         try {
             return $this->guzzleClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw $this->processRequestException($e) ?? new ClientException($e->getMessage(), $e->getCode(), $e);
         } catch (GuzzleException $e) {
-            if ($e instanceof RequestException) {
-                $this->handleRequestException($e);
-            }
-
             throw new ClientException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
-    private function handleRequestException(RequestException $e): void
+    private function processRequestException(RequestException $e): ?ClientException
     {
         $response = $e->getResponse();
-
         if ($response === null) {
-            return;
+            return null;
         }
 
         try {
             $data = Json::decodeArray($response->getBody()->getContents());
-        } catch (JsonException $e2) {
+        } catch (JsonException) {
             // throw the original one, we don't care about e2
-            throw new ClientException(trim($e->getMessage()), $response->getStatusCode(), $e);
+            return new ClientException(trim($e->getMessage()), $response->getStatusCode(), $e);
         }
 
         $error = is_array($data['error'] ?? null) ? $data['error'] : $data;
-
-        if (!empty($error['message']) && !empty($error['code'])) {
-            throw new ClientException(
-                trim($error['code'] . ': ' . $error['message']),
-                $response->getStatusCode(),
-                $e
-            );
+        if (empty($error['message']) || empty($error['code'])) {
+            return null;
         }
+
+        return new ClientException(
+            trim($error['code'] . ': ' . $error['message']),
+            $response->getStatusCode(),
+            $e
+        );
     }
 }

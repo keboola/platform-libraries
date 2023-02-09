@@ -43,42 +43,7 @@ class GuzzleClientFactory
      */
     public function getClient(string $baseUrl, array $options = []): GuzzleClient
     {
-        $validator = Validation::createValidator();
-        $errors = $validator->validate($baseUrl, [new Url()]);
-        $errors->addAll(
-            $validator->validate($baseUrl, [new NotBlank()])
-        );
-        $unknownOptions = array_diff(array_keys($options), self::ALLOWED_OPTIONS);
-        if ($unknownOptions) {
-            throw new ClientException(sprintf(
-                'Invalid options when creating client: %s. Valid options are: %s.',
-                implode(', ', $unknownOptions),
-                implode(', ', self::ALLOWED_OPTIONS)
-            ));
-        }
-
-        if (!empty($options['backoffMaxTries'])) {
-            $errors->addAll($validator->validate($options['backoffMaxTries'], [new Range(['min' => 0, 'max' => 100])]));
-            $options['backoffMaxTries'] = (int) $options['backoffMaxTries'];
-        } else {
-            $options['backoffMaxTries'] = self::DEFAULT_BACKOFF_RETRIES;
-        }
-        if (empty($options['userAgent'])) {
-            $options['userAgent'] = self::DEFAULT_USER_AGENT;
-        }
-        if ($errors->count() !== 0) {
-            $messages = [];
-            /** @var ConstraintViolationInterface $error */
-            foreach ($errors as $error) {
-                $value = $error->getInvalidValue();
-                $messages[] = sprintf(
-                    'Value "%s" is invalid: %s',
-                    is_scalar($value) ? $value : get_debug_type($value),
-                    $error->getMessage()
-                );
-            }
-            throw new ClientException('Invalid options when creating client: ' . implode("\n", $messages));
-        }
+        $options = $this->validateAndNormalizeOptions($baseUrl, $options);
 
         // Initialize handlers (start with those supplied in constructor)
         $handlerStack = HandlerStack::create($this->requestHandler ?? null);
@@ -106,6 +71,51 @@ class GuzzleClientFactory
             'connect_timeout' => 10,
             'timeout' => 120,
         ]);
+    }
+
+    public function validateAndNormalizeOptions(string $baseUrl, array $options): array
+    {
+        $validator = Validation::createValidator();
+        $errors = $validator->validate($baseUrl, [new Url()]);
+        $errors->addAll(
+            $validator->validate($baseUrl, [new NotBlank()])
+        );
+        $unknownOptions = array_diff(array_keys($options), self::ALLOWED_OPTIONS);
+
+        if ($unknownOptions) {
+            throw new ClientException(sprintf(
+                'Invalid options when creating client: %s. Valid options are: %s.',
+                implode(', ', $unknownOptions),
+                implode(', ', self::ALLOWED_OPTIONS)
+            ));
+        }
+
+        if (!empty($options['backoffMaxTries'])) {
+            $errors->addAll($validator->validate($options['backoffMaxTries'], [new Range(['min' => 0, 'max' => 100])]));
+            $options['backoffMaxTries'] = (int) $options['backoffMaxTries'];
+        } else {
+            $options['backoffMaxTries'] = self::DEFAULT_BACKOFF_RETRIES;
+        }
+
+        if (empty($options['userAgent'])) {
+            $options['userAgent'] = self::DEFAULT_USER_AGENT;
+        }
+
+        if ($errors->count() !== 0) {
+            $messages = [];
+            /** @var ConstraintViolationInterface $error */
+            foreach ($errors as $error) {
+                $value = $error->getInvalidValue();
+                $messages[] = sprintf(
+                    'Value "%s" is invalid: %s',
+                    is_scalar($value) ? $value : get_debug_type($value),
+                    $error->getMessage()
+                );
+            }
+            throw new ClientException('Invalid options when creating client: ' . implode("\n", $messages));
+        }
+
+        return $options;
     }
 
     private function createDefaultDecider(int $maxRetries): callable

@@ -228,7 +228,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Cloud "non-existent" not found in instance metadata: ');
+        $this->expectExceptionMessage('Cloud "non-existent" not found in instance metadata');
 
         $auth->getAuthenticationToken('resource-id');
     }

@@ -7,8 +7,6 @@ namespace Keboola\AzureApiClient\Authentication;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Keboola\AzureApiClient\Exception\InvalidResponseException;
-use Keboola\AzureApiClient\Responses\ArrayDataResponse;
 use Psr\Log\LoggerInterface;
 
 class ManagedCredentialsAuthenticator implements AuthenticatorInterface
@@ -31,7 +29,7 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
         }
 
         $client = $this->clientFactory->createClient(self::INSTANCE_METADATA_SERVICE_ENDPOINT);
-        $data = $client->sendRequestAndMapResponse(
+        $token = $client->sendRequestAndMapResponse(
             new Request(
                 'GET',
                 sprintf(
@@ -46,15 +44,11 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
                     'Metadata' => 'true',
                 ],
             ),
-            ArrayDataResponse::class
-        )->data;
+            TokenResponse::class
+        );
 
-        if (empty($data['access_token']) || !is_scalar($data['access_token'])) {
-            throw new InvalidResponseException('Access token not provided in response: ' . json_encode($data));
-        }
         $this->logger->info('Successfully authenticated using instance metadata.');
-        $this->cachedToken = (string) $data['access_token'];
-        return $this->cachedToken;
+        return $this->cachedToken = $token->accessToken;
     }
 
     public function checkUsability(): void

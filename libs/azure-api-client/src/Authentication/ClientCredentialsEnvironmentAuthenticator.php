@@ -8,9 +8,6 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Keboola\AzureApiClient\Exception\InvalidResponseException;
-use Keboola\AzureApiClient\Responses\ArmMetadata;
-use Keboola\AzureApiClient\Responses\ArrayDataResponse;
 use Psr\Log\LoggerInterface;
 
 class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterface
@@ -63,9 +60,8 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
     public function getAuthenticationToken(string $resource): string
     {
         if (empty($this->cachedToken)) {
-            $metadata = $this->getMetadata($this->armUrl);
-            $metadata = $this->processInstanceMetadata($metadata, $this->cloudName);
-            $this->cachedToken = $this->authenticate($metadata->getAuthenticationLoginEndpoint(), $resource);
+            $metadata = $this->getMetadata($this->armUrl, $this->cloudName);
+            $this->cachedToken = $this->authenticate($metadata->authenticationLoginEndpoint, $resource);
         }
         return $this->cachedToken;
     }
@@ -83,34 +79,31 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         }
     }
 
-    private function getMetadata(string $armUrl): array
+    private function getMetadata(string $armUrl, string $cloudName): MetadataResponse
     {
         try {
-            $request = new Request('GET', $armUrl);
-            return $this->apiClient->sendRequestAndMapResponse($request, ArrayDataResponse::class)->data;
+            $metadataList = $this->apiClient->sendRequestAndMapResponse(
+                new Request('GET', $armUrl),
+                MetadataResponse::class,
+                [],
+                true
+            );
         } catch (ClientException $e) {
             throw new ClientException('Failed to get instance metadata: ' . $e->getMessage(), $e->getCode(), $e);
         }
-    }
 
-    private function processInstanceMetadata(array $metadataArray, string $cloudName): ArmMetadata
-    {
-        $cloud = null;
-        foreach ($metadataArray as $item) {
-            if (!empty($item['name']) && ($item['name'] === $cloudName)) {
-                $cloud = $item;
+        foreach ($metadataList as $metadataItem) {
+            if ($metadataItem->name === $cloudName) {
+                return $metadataItem;
             }
         }
-        if (!$cloud) {
-            throw new ClientException(sprintf(
-                'Cloud "%s" not found in instance metadata: %s',
-                $cloudName,
-                json_encode($metadataArray)
-            ));
-        }
-        return new ArmMetadata($cloud);
+
+        throw new ClientException(sprintf('Cloud "%s" not found in instance metadata', $cloudName));
     }
 
+    /**
+     * @return non-empty-string
+     */
     private function authenticate(string $authUrl, string $resource): string
     {
         $request = new Request('POST', sprintf('%s%s/oauth2/token', $authUrl, $this->tenantId));
@@ -121,17 +114,13 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
             'resource' => $resource,
         ];
 
-        $data = $this->apiClient->sendRequestAndMapResponse(
+        $token = $this->apiClient->sendRequestAndMapResponse(
             $request,
-            ArrayDataResponse::class,
+            TokenResponse::class,
             ['form_params' => $formData]
-        )->data;
-
-        if (empty($data['access_token']) || !is_scalar($data['access_token'])) {
-            throw new InvalidResponseException('Access token not provided in response: ' . json_encode($data));
-        }
+        );
 
         $this->logger->info('Successfully authenticated using client credentials.');
-        return (string) $data['access_token'];
+        return $token->accessToken;
     }
 }

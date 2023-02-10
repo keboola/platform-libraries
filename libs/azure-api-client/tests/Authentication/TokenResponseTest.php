@@ -12,9 +12,10 @@ class TokenResponseTest extends TestCase
 {
     public function testFromResponseData(): void
     {
-        // reverse-engineered from implementation
+        // https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#successful-response-2
         $data = [
             'access_token' => 'access-token',
+            'expires_in' => '3599',
         ];
 
         $response = TokenResponse::fromResponseData($data);
@@ -35,14 +36,14 @@ class TokenResponseTest extends TestCase
     {
         yield 'no access token' => [
             'data' => [],
-            'error' => 'Access token not provided in response: []',
+            'error' => 'Missing or invalid "access_token" in response: []',
         ];
 
         yield 'invalid access token' => [
             'data' => [
                 'access_token' => [],
             ],
-            'error' => 'Access token not provided in response: {"access_token":[]}',
+            'error' => 'Missing or invalid "access_token" in response: {"access_token":[]}',
         ];
     }
 }

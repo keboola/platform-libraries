@@ -39,10 +39,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
                 ['Content-Type' => 'application/json'],
                 '{
                     "token_type": "Bearer",
-                    "expires_in": "3599",
-                    "ext_expires_in": "3599",
-                    "expires_on": "1589810452",
-                    "not_before": "1589806552",
+                    "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
                 }'
@@ -55,7 +52,8 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
         $token = $auth->getAuthenticationToken('resource-id');
-        self::assertSame('ey....ey', $token);
+        self::assertSame('ey....ey', $token->accessToken);
+        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
         self::assertCount(1, $requestsHistory);
 
         $request = $requestsHistory[0]['request'];
@@ -67,11 +65,6 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         self::assertSame('GET', $request->getMethod());
         self::assertSame('true', $request->getHeader('Metadata')[0]);
         self::assertSame('application/json', $request->getHeader('Content-type')[0]);
-
-        // call second time, value is cached and no new request are made
-        $token2 = $auth->getAuthenticationToken('resource-id');
-        self::assertSame('ey....ey', $token2);
-        self::assertCount(1, $requestsHistory);
 
         self::assertTrue($this->logsHandler->hasInfo('Successfully authenticated using instance metadata.'));
     }
@@ -94,7 +87,9 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Access token not provided in response: {"foo":"bar"}');
+        $this->expectExceptionMessage(
+            'Failed to map response data: Missing or invalid "access_token" in response: {"foo":"bar"}'
+        );
         $auth->getAuthenticationToken('resource-id');
     }
 

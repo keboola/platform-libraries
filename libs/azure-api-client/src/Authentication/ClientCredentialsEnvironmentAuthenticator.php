@@ -29,7 +29,8 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
 
     private string $armUrl;
     private string $cloudName;
-    private ?string $cachedToken;
+
+    private ?string $authEndpoint = null;
 
     public function __construct(
         PlainAzureApiClientFactory $clientFactory,
@@ -57,13 +58,28 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         $this->apiClient = $clientFactory->createClient($this->armUrl);
     }
 
-    public function getAuthenticationToken(string $resource): string
+    public function getAuthenticationToken(string $resource): TokenResponse
     {
-        if (empty($this->cachedToken)) {
-            $metadata = $this->getMetadata($this->armUrl, $this->cloudName);
-            $this->cachedToken = $this->authenticate($metadata->authenticationLoginEndpoint, $resource);
+        if ($this->authEndpoint === null) {
+            $this->authEndpoint = $this->getMetadata($this->armUrl, $this->cloudName)->authenticationLoginEndpoint;
         }
-        return $this->cachedToken;
+
+        $request = new Request('POST', sprintf('%s%s/oauth2/token', $this->authEndpoint, $this->tenantId));
+        $formData = [
+            'grant_type' => 'client_credentials',
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret,
+            'resource' => $resource,
+        ];
+
+        $token = $this->apiClient->sendRequestAndMapResponse(
+            $request,
+            TokenResponse::class,
+            ['form_params' => $formData]
+        );
+
+        $this->logger->info('Successfully authenticated using client credentials.');
+        return $token;
     }
 
     public function checkUsability(): void
@@ -99,28 +115,5 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         }
 
         throw new ClientException(sprintf('Cloud "%s" not found in instance metadata', $cloudName));
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    private function authenticate(string $authUrl, string $resource): string
-    {
-        $request = new Request('POST', sprintf('%s%s/oauth2/token', $authUrl, $this->tenantId));
-        $formData = [
-            'grant_type' => 'client_credentials',
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'resource' => $resource,
-        ];
-
-        $token = $this->apiClient->sendRequestAndMapResponse(
-            $request,
-            TokenResponse::class,
-            ['form_params' => $formData]
-        );
-
-        $this->logger->info('Successfully authenticated using client credentials.');
-        return $token->accessToken;
     }
 }

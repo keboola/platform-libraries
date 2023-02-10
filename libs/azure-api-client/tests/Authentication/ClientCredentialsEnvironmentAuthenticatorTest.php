@@ -102,10 +102,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
                 ['Content-Type' => 'application/json'],
                 '{
                     "token_type": "Bearer",
-                    "expires_in": "3599",
-                    "ext_expires_in": "3599",
-                    "expires_on": "1589810452",
-                    "not_before": "1589806552",
+                    "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
                 }'
@@ -122,7 +119,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertCount(2, $requestsHistory);
-        self::assertSame('ey....ey', $token);
+        self::assertSame('ey....ey', $token->accessToken);
+        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
 
         $request = $requestsHistory[0]['request'];
         self::assertSame(
@@ -140,11 +138,6 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             'grant_type=client_credentials&client_id=client123&client_secret=secret123&resource=resource-id',
             $request->getBody()->getContents()
         );
-
-        // call second time, value is cached and no new request are made
-        $token2 = $auth->getAuthenticationToken('resource-id');
-        self::assertCount(2, $requestsHistory);
-        self::assertSame('ey....ey', $token2);
     }
 
 
@@ -167,10 +160,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
                 ['Content-Type' => 'application/json'],
                 '{
                     "token_type": "Bearer",
-                    "expires_in": "3599",
-                    "ext_expires_in": "3599",
-                    "expires_on": "1589810452",
-                    "not_before": "1589806552",
+                    "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
                 }'
@@ -187,7 +177,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertCount(2, $requestsHistory);
-        self::assertSame('ey....ey', $token);
+        self::assertSame('ey....ey', $token->accessToken);
+        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
 
         $request = $requestsHistory[0]['request'];
         self::assertSame(
@@ -251,10 +242,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
                 ['Content-Type' => 'application/json'],
                 '{
                     "token_type": "Bearer",
-                    "expires_in": "3599",
-                    "ext_expires_in": "3599",
-                    "expires_on": "1589810452",
-                    "not_before": "1589806552",
+                    "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
                 }'
@@ -270,7 +258,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
-        self::assertEquals('ey....ey', $token);
+        self::assertEquals('ey....ey', $token->accessToken);
+        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
     }
 
     public function testGetAuthenticationTokenMetadataFailure(): void
@@ -320,7 +309,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Access token not provided in response: {"boo":"bar"}');
+        $this->expectExceptionMessage(
+            'Failed to map response data: Missing or invalid "access_token" in response: {"boo":"bar"}'
+        );
         $auth->getAuthenticationToken('resource-id');
     }
 

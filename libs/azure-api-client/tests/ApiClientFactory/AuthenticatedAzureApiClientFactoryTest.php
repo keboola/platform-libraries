@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests\ApiClientFactory;
 
+use DateTimeImmutable;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -12,6 +13,7 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
+use Keboola\AzureApiClient\Authentication\TokenResponse;
 use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Json;
 use PHPUnit\Framework\TestCase;
@@ -55,21 +57,20 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
 
         $request = $requestsHistory[0]['request'];
         self::assertSame('Bearer auth-token', $request->getHeaderLine('Authorization'));
-
-        // second request does not request new access token
-        $client->sendRequest(new Request('GET', '/foo'));
-        self::assertCount(2, $requestsHistory);
-
-        $request = $requestsHistory[1]['request'];
-        self::assertSame('Bearer auth-token', $request->getHeaderLine('Authorization'));
     }
 
+    /**
+     * @param non-empty-string $authToken
+     */
     private function createFakeAuthenticatorFactory(string $authToken): AuthenticatorFactory
     {
         $authenticator = $this->createMock(AuthenticatorInterface::class);
         $authenticator->expects(self::once())
             ->method('getAuthenticationToken')
-            ->willReturn($authToken)
+            ->willReturn(new TokenResponse(
+                $authToken,
+                new DateTimeImmutable('+1 hour'),
+            ))
         ;
 
         $authenticatorFactory = $this->createMock(AuthenticatorFactory::class);

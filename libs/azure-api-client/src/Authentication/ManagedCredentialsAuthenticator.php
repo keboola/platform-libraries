@@ -11,8 +11,6 @@ use Psr\Log\LoggerInterface;
 
 class ManagedCredentialsAuthenticator implements AuthenticatorInterface
 {
-    private ?string $cachedToken;
-
     private const INSTANCE_METADATA_SERVICE_ENDPOINT = 'http://169.254.169.254/';
     private const API_VERSION = '2019-11-01';
 
@@ -22,12 +20,8 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
     ) {
     }
 
-    public function getAuthenticationToken(string $resource): string
+    public function getAuthenticationToken(string $resource): TokenResponse
     {
-        if (!empty($this->cachedToken)) {
-            return $this->cachedToken;
-        }
-
         $client = $this->clientFactory->createClient(self::INSTANCE_METADATA_SERVICE_ENDPOINT);
         $token = $client->sendRequestAndMapResponse(
             new Request(
@@ -48,7 +42,7 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
         );
 
         $this->logger->info('Successfully authenticated using instance metadata.');
-        return $this->cachedToken = $token->accessToken;
+        return $token;
     }
 
     public function checkUsability(): void

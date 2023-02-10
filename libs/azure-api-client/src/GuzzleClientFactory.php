@@ -9,8 +9,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Range;
@@ -22,7 +20,6 @@ class GuzzleClientFactory
 {
     private const DEFAULT_USER_AGENT = 'Azure PHP Client';
     private const DEFAULT_BACKOFF_RETRIES = 10;
-    private const AZURE_THROTTLING_CODE = 429;
     private const ALLOWED_OPTIONS = ['backoffMaxTries', 'userAgent', 'middleware'];
 
     /**
@@ -52,7 +49,10 @@ class GuzzleClientFactory
         }
 
         // Set exponential backoff
-        $handlerStack->push(Middleware::retry($this->createDefaultDecider($options['backoffMaxTries'])));
+        $handlerStack->push(Middleware::retry(new RetryDecider(
+            $options['backoffMaxTries'],
+            $this->logger,
+        )));
 
         // Set client logger
         $handlerStack->push(Middleware::log(
@@ -116,41 +116,5 @@ class GuzzleClientFactory
         }
 
         return $options;
-    }
-
-    private function createDefaultDecider(int $maxRetries): callable
-    {
-        return function (
-            $retries,
-            RequestInterface $request,
-            ?ResponseInterface $response = null,
-            $error = null
-        ) use ($maxRetries) {
-            if ($retries >= $maxRetries) {
-                return false;
-            }
-            $code = null;
-            if ($response) {
-                $code = $response->getStatusCode();
-            } elseif ($error) {
-                $code = (int) $error->getCode();
-            }
-            if (($code >= 400) && ($code < 500) && ($code !== self::AZURE_THROTTLING_CODE)) {
-                return false;
-            }
-            if ($code >= 500 || $code === self::AZURE_THROTTLING_CODE || $error) {
-                $this->logger->warning(
-                    sprintf(
-                        'Request failed (%s), retrying (%s of %s)',
-                        empty($error) ? empty($response) ? 'No error' :
-                            $response->getBody()->getContents() : $error->getMessage(),
-                        $retries,
-                        $maxRetries
-                    )
-                );
-                return true;
-            }
-            return false;
-        };
     }
 }

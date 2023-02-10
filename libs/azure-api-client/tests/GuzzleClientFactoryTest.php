@@ -16,10 +16,22 @@ use Keboola\AzureApiClient\GuzzleClientFactory;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 class GuzzleClientFactoryTest extends TestCase
 {
+    private readonly LoggerInterface $logger;
+    private readonly TestHandler $logsHandler;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->logsHandler = new TestHandler();
+        $this->logger = new Logger('tests', [$this->logsHandler]);
+    }
+
     public function testGetClient(): void
     {
         $factory = new GuzzleClientFactory(new NullLogger());
@@ -32,7 +44,7 @@ class GuzzleClientFactoryTest extends TestCase
     /** @dataProvider provideInvalidUrls */
     public function testInvalidUrl(string $url, string $expectedError): void
     {
-        $factory = new GuzzleClientFactory(new NullLogger());
+        $factory = new GuzzleClientFactory($this->logger);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage($expectedError);
@@ -56,7 +68,7 @@ class GuzzleClientFactoryTest extends TestCase
     /** @dataProvider provideInvalidOptions */
     public function testInvalidOptions(array $options, string $expectedMessage): void
     {
-        $factory = new GuzzleClientFactory(new NullLogger());
+        $factory = new GuzzleClientFactory($this->logger);
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage($expectedMessage);
         $factory->getClient('http://example.com', $options);
@@ -96,19 +108,16 @@ class GuzzleClientFactoryTest extends TestCase
 
     public function testLogger(): void
     {
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
-
-        $factory = new GuzzleClientFactory($logger);
+        $factory = new GuzzleClientFactory($this->logger);
         $client = $factory->getClient('https://example.com', ['userAgent' => 'test-client']);
         $client->get('');
-        self::assertTrue($logsHandler->hasInfoThatContains('test-client - ['));
-        self::assertTrue($logsHandler->hasInfoThatContains('"GET  /1.1" 200'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('test-client - ['));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('"GET  /1.1" 200'));
     }
 
     public function testDefaultHeader(): void
     {
-        $mock = new MockHandler([
+        $handlerStack = $this->createGuzzleStack($requestHistory, [
             new Response(
                 200,
                 [],
@@ -116,12 +125,7 @@ class GuzzleClientFactoryTest extends TestCase
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
+        $factory = new GuzzleClientFactory($this->logger, $handlerStack);
         $client = $factory->getClient(
             'https://example.com',
             ['userAgent' => 'test-client']
@@ -129,7 +133,6 @@ class GuzzleClientFactoryTest extends TestCase
         $client->get('');
 
         self::assertCount(1, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         self::assertEquals('GET', $request->getMethod());
@@ -140,7 +143,7 @@ class GuzzleClientFactoryTest extends TestCase
 
     public function testRetryDeciderNoRetry(): void
     {
-        $mock = new MockHandler([
+        $handlerStack = $this->createGuzzleStack($requestHistory, [
             new Response(
                 403,
                 [],
@@ -148,12 +151,7 @@ class GuzzleClientFactoryTest extends TestCase
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
+        $factory = new GuzzleClientFactory($this->logger, $handlerStack);
         $client = $factory->getClient(
             'https://example.com',
             ['userAgent' => 'test-client']
@@ -169,14 +167,13 @@ class GuzzleClientFactoryTest extends TestCase
         }
 
         self::assertCount(1, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
     }
 
     public function testRetryDeciderRetryFail(): void
     {
-        $mock = new MockHandler([
+        $handlerStack = $this->createGuzzleStack($requestHistory, [
             new Response(
                 501,
                 [],
@@ -194,12 +191,7 @@ class GuzzleClientFactoryTest extends TestCase
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $factory = new GuzzleClientFactory(new NullLogger(), $stack);
+        $factory = new GuzzleClientFactory($this->logger, $handlerStack);
         $client = $factory->getClient(
             'https://example.com',
             ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
@@ -215,7 +207,6 @@ class GuzzleClientFactoryTest extends TestCase
         }
 
         self::assertCount(3, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         $request = $requestHistory[1]['request'];
@@ -226,7 +217,7 @@ class GuzzleClientFactoryTest extends TestCase
 
     public function testRetryDeciderRetrySuccess(): void
     {
-        $mock = new MockHandler([
+        $handlerStack = $this->createGuzzleStack($requestHistory, [
             new Response(
                 501,
                 [],
@@ -244,15 +235,7 @@ class GuzzleClientFactoryTest extends TestCase
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
-
-        $factory = new GuzzleClientFactory($logger, $stack);
+        $factory = new GuzzleClientFactory($this->logger, $handlerStack);
         $client = $factory->getClient(
             'https://example.com',
             ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
@@ -260,22 +243,21 @@ class GuzzleClientFactoryTest extends TestCase
         $client->get('');
 
         self::assertCount(3, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         $request = $requestHistory[1]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         $request = $requestHistory[2]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
-        self::assertTrue($logsHandler->hasWarningThatContains(
+        self::assertTrue($this->logsHandler->hasWarningThatContains(
             'Request failed (Server error: `GET https://example.com` resulted in a `501 Not Implemented`'
         ));
-        self::assertTrue($logsHandler->hasWarningThatContains('retrying (1 of 2)'));
+        self::assertTrue($this->logsHandler->hasWarningThatContains('retrying (1 of 2)'));
     }
 
     public function testRetryDeciderThrottlingRetrySuccess(): void
     {
-        $mock = new MockHandler([
+        $handlerStack = $this->createGuzzleStack($requestHistory, [
             new Response(
                 429,
                 [],
@@ -293,15 +275,7 @@ class GuzzleClientFactoryTest extends TestCase
             ),
         ]);
 
-        $requestHistory = [];
-        $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-
-        $logsHandler = new TestHandler();
-        $logger = new Logger('tests', [$logsHandler]);
-
-        $factory = new GuzzleClientFactory($logger, $stack);
+        $factory = new GuzzleClientFactory($this->logger, $handlerStack);
         $client = $factory->getClient(
             'https://example.com',
             ['userAgent' => 'test-client', 'backoffMaxTries' => 2]
@@ -309,16 +283,29 @@ class GuzzleClientFactoryTest extends TestCase
         $client->get('');
 
         self::assertCount(3, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         $request = $requestHistory[1]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
         $request = $requestHistory[2]['request'];
         self::assertEquals('https://example.com', $request->getUri()->__toString());
-        self::assertTrue($logsHandler->hasWarningThatContains(
+        self::assertTrue($this->logsHandler->hasWarningThatContains(
             'Request failed (Client error: `GET https://example.com` resulted in a `429 Too Many Requests`'
         ));
-        self::assertTrue($logsHandler->hasWarningThatContains('retrying (1 of 2)'));
+        self::assertTrue($this->logsHandler->hasWarningThatContains('retrying (1 of 2)'));
+    }
+
+    /**
+     * @param list<array{request: Request, response: Response}> $requestsHistory
+     * @param list<Response>                                    $responses
+     */
+    private function createGuzzleStack(?array &$requestsHistory, array $responses): HandlerStack
+    {
+        $requestsHistory = [];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(Middleware::history($requestsHistory));
+
+        return $stack;
     }
 }

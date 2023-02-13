@@ -311,7 +311,7 @@ class TableWriter extends AbstractWriter
     {
         $tmp = new Temp();
 
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv'));
+        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv')->getPathname());
         $headerCsvFile->writeRow($columns);
 
         $this->clientWrapper->getBasicClient()->createTableAsync(

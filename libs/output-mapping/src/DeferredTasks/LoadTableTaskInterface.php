@@ -15,5 +15,5 @@ interface LoadTableTaskInterface
 
     public function getDestinationTableName(): string;
 
-    public function getStorageJobId(): ?string;
+    public function getStorageJobId(): string;
 }

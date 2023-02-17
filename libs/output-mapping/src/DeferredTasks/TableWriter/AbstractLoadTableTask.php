@@ -13,7 +13,7 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
 {
     protected MappingDestination $destination;
     protected array $options;
-    protected ?string $storageJobId;
+    protected string $storageJobId;
     /** @var MetadataInterface[] */
     protected array $metadata = [];
 
@@ -40,7 +40,7 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         return $this->destination->getTableId();
     }
 
-    public function getStorageJobId(): ?string
+    public function getStorageJobId(): string
     {
         return $this->storageJobId;
     }

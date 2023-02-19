@@ -12,7 +12,6 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ManagedCredentialsAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Keboola\AzureApiClient\GuzzleClientFactory;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +32,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
 
     public function testGetAuthenticationToken(): void
     {
-        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
+        $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -46,8 +45,9 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
@@ -64,14 +64,13 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         );
         self::assertSame('GET', $request->getMethod());
         self::assertSame('true', $request->getHeader('Metadata')[0]);
-        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
 
         self::assertTrue($this->logsHandler->hasInfo('Successfully authenticated using instance metadata.'));
     }
 
     public function testGetAuthenticationTokenWithInvalidResponse(): void
     {
-        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
+        $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -81,8 +80,9 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
@@ -95,7 +95,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
 
     public function testCheckUsabilitySuccess(): void
     {
-        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
+        $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -103,8 +103,9 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
@@ -118,12 +119,11 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         );
         self::assertSame('GET', $request->getMethod());
         self::assertSame('true', $request->getHeader('Metadata')[0]);
-        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
     }
 
     public function testCheckUsabilityFailure(): void
     {
-        $requestHandler = self::prepareGuzzleMockHandler($requestsHistory, [
+        $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
                 500,
                 ['Content-Type' => 'application/json'],
@@ -136,8 +136,9 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
@@ -155,7 +156,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
      * @param list<Response>                                    $responses
      * @return HandlerStack
      */
-    private static function prepareGuzzleMockHandler(?array &$requestsHistory, array $responses): HandlerStack
+    private static function createRequestHandler(?array &$requestsHistory, array $responses): HandlerStack
     {
         $requestsHistory = [];
 

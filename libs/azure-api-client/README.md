@@ -18,8 +18,6 @@ use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Monolog\Logger;
 
-$logger = new Logger('azure-api-client');
-$guzzleClientFactory = new GuzzleClientFactory($logger);
 $authenticatorFactory = new AuthenticatorFactory();
 $clientFactory = new PlainAzureApiClientFactory($guzzleClientFactory, $authenticatorFactory, $logger);
 
@@ -34,11 +32,8 @@ services:
 
   Keboola\AzureApiClient\AzureApiClientFactory:
 
-  Keboola\AzureApiClient\GuzzleClientFactory:
-  
   Keboola\AzureApiClient\Marketplace\MarketplaceApiClient:
     factory: ['App\Marketplace\Azure\MarketplaceApiClient\Marketplace\MarketplaceApiClient', 'create']
-
 ```
 
 ## License

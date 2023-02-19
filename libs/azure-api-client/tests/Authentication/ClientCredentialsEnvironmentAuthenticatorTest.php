@@ -12,7 +12,6 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ClientCredentialsEnvironmentAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Tests\BaseTest;
 use Monolog\Handler\TestHandler;
@@ -32,9 +31,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         $this->logsHandler = new TestHandler();
         $this->logger = new Logger('tests', [$this->logsHandler]);
 
-        $this->clientFactory = new PlainAzureApiClientFactory(
-            new GuzzleClientFactory($this->logger),
-        );
+        $this->clientFactory = new PlainAzureApiClientFactory();
     }
 
     public function testOptionalEnvsFallback(): void
@@ -109,8 +106,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,
@@ -128,7 +126,6 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             $request->getUri()->__toString()
         );
         self::assertSame('GET', $request->getMethod());
-        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
 
         $request = $requestsHistory[1]['request'];
         self::assertSame('https://login.windows.net/tenant123/oauth2/token', $request->getUri()->__toString());
@@ -167,8 +164,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,
@@ -186,7 +184,6 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             $request->getUri()->__toString()
         );
         self::assertSame('GET', $request->getMethod());
-        self::assertSame('application/json', $request->getHeader('Content-type')[0]);
 
         $request = $requestsHistory[1]['request'];
         self::assertSame('https://my-custom-login/tenant123/oauth2/token', $request->getUri()->__toString());
@@ -210,8 +207,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,
@@ -249,8 +247,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,
@@ -272,8 +271,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,
@@ -300,8 +300,9 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($this->logger, $requestHandler);
-        $apiClientFactory = new PlainAzureApiClientFactory($guzzleClientFactory);
+        $apiClientFactory = new PlainAzureApiClientFactory([
+            'requestHandler' => $requestHandler,
+        ]);
 
         $auth = new ClientCredentialsEnvironmentAuthenticator(
             $apiClientFactory,

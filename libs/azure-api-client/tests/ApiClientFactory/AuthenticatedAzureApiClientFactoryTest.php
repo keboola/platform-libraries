@@ -14,26 +14,14 @@ use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Authentication\TokenResponse;
-use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Json;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 class AuthenticatedAzureApiClientFactoryTest extends TestCase
 {
-    private readonly LoggerInterface $logger;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->logger = new NullLogger();
-    }
-
     public function testCreatedClientAddsAuthorizationHeader(): void
     {
-        $guzzleClientFactory = $this->createGuzzleClientFactory($requestsHistory, [
+        $requestHandler = $this->createRequestHandler($requestsHistory, [
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
@@ -47,8 +35,10 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
         ]);
 
         $factory = new AuthenticatedAzureApiClientFactory(
-            $guzzleClientFactory,
             $this->createFakeAuthenticatorFactory('auth-token'),
+            [
+                'requestHandler' => $requestHandler,
+            ],
         );
         $client = $factory->createClient('http://example.com', 'foo');
 
@@ -86,13 +76,13 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
      * @param list<array{request: Request, response: Response}> $requestsHistory
      * @param list<Response>                                    $responses
      */
-    private function createGuzzleClientFactory(?array &$requestsHistory, array $responses): GuzzleClientFactory
+    private function createRequestHandler(?array &$requestsHistory, array $responses): HandlerStack
     {
         $requestsHistory = [];
 
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(Middleware::history($requestsHistory));
 
-        return new GuzzleClientFactory($this->logger, $stack);
+        return $stack;
     }
 }

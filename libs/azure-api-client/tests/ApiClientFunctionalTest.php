@@ -7,9 +7,7 @@ namespace Keboola\AzureApiClient\Tests;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Json;
-use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
 class ApiClientFunctionalTest extends TestCase
@@ -28,18 +26,23 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
-
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
-        self::assertTrue($mockserver->hasRecordedRequest([
+        $recordedRequests = $mockserver->fetchRecordedRequests([
             'method' => 'GET',
             'path' => '/foo/bar',
-        ]));
+        ]);
+        self::assertCount(1, $recordedRequests);
+        $request = $recordedRequests[0];
+
+        self::assertSame('GET', $request['method']);
+        self::assertSame('/foo/bar', $request['path']);
+        self::assertTrue($request['keepAlive']);
+        self::assertSame('Keboola Azure PHP Client', $request['headers']['user-agent'] ?? null);
+        self::assertArrayNotHasKey('content-type', $request['headers']);
     }
 
     public function testSendRequestWithMappedResponse(): void
@@ -61,12 +64,10 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
@@ -81,6 +82,20 @@ class ApiClientFunctionalTest extends TestCase
             new DummyTestResponse('bar'),
             $response,
         );
+
+        $recordedRequests = $mockserver->fetchRecordedRequests([
+            'method' => 'POST',
+            'path' => '/foo/bar',
+        ]);
+        self::assertCount(1, $recordedRequests);
+        $request = $recordedRequests[0];
+
+        self::assertSame('POST', $request['method']);
+        self::assertSame('/foo/bar', $request['path']);
+        self::assertTrue($request['keepAlive']);
+        self::assertSame('Keboola Azure PHP Client', $request['headers']['user-agent'] ?? null);
+        self::assertSame('application/json', $request['headers']['content-type'] ?? null);
+        self::assertSame('{"foo":"baz"}', base64_decode($request['body']['rawBytes'] ?? ''));
     }
 
     public function testSendRequestWithMappedArrayResponse(): void
@@ -105,12 +120,10 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
 
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
@@ -149,12 +162,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
-
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('BadRequest: This is not good');
@@ -177,12 +187,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
-
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -207,12 +214,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $logger = new Logger('test');
-
-        $guzzleClientFactory = new GuzzleClientFactory($logger);
-        $guzzleClient = $guzzleClientFactory->getClient($mockserver->getServerUrl());
-
-        $apiClient = new ApiClient($guzzleClient);
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -222,5 +226,113 @@ class ApiClientFunctionalTest extends TestCase
         );
 
         $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);
+    }
+
+    public function testRetrySuccess(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 500,
+            ],
+            'times' => [
+                'remainingTimes' => 2,
+            ],
+        ]);
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 200,
+            ],
+        ]);
+
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+        ]);
+        $apiClient->sendRequest(new Request('GET', 'foo/bar'));
+
+        $recordedRequests = $mockserver->fetchRecordedRequests([
+            'method' => 'GET',
+            'path' => '/foo/bar',
+        ]);
+        self::assertCount(3, $recordedRequests);
+    }
+
+    public function testRetryFailure(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 500,
+                'body' => 'error occurred',
+            ],
+        ]);
+
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+            'backoffMaxTries' => 2,
+        ]);
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
+            'Server error: `GET http://mockserver:1080/foo/bar` resulted in a `500 Internal Server Error` response:
+error occurred'
+        );
+
+        $apiClient->sendRequest(new Request('GET', 'foo/bar'));
+    }
+
+    public function testRetryOnThrottling(): void
+    {
+        $mockserver = new Mockserver();
+        $mockserver->reset();
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 429,
+                'body' => 'too many requests',
+            ],
+            'times' => [
+                'remainingTimes' => 2,
+            ],
+        ]);
+        $mockserver->expect([
+            'httpRequest' => [
+                'method' => 'GET',
+                'path' => '/foo/bar',
+            ],
+            'httpResponse' => [
+                'statusCode' => 200,
+                'body' => '{"foo":"bar"}',
+            ],
+        ]);
+
+        $apiClient = new ApiClient([
+            'baseUrl' => $mockserver->getServerUrl(),
+            'backoffMaxTries' => 2,
+        ]);
+
+        $response = $apiClient->sendRequestAndMapResponse(
+            new Request('GET', 'foo/bar'),
+            DummyTestResponse::class,
+        );
+
+        self::assertEquals(DummyTestResponse::fromResponseData(['foo' => 'bar']), $response);
     }
 }

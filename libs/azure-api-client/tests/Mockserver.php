@@ -9,15 +9,25 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Mockserver
 {
+    /** @var non-empty-string */
     private readonly string $serverUrl;
     private HttpClientInterface $client;
 
+    /**
+     * @param non-empty-string $serverUrl
+     */
     public function __construct(string $serverUrl = 'http://mockserver:1080')
     {
-        $this->serverUrl = rtrim($serverUrl, '/');
+        $serverUrl = rtrim($serverUrl, '/');
+        assert($serverUrl !== '');
+        $this->serverUrl = $serverUrl;
+
         $this->client = HttpClient::createForBaseUri($this->serverUrl . '/mockserver');
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getServerUrl(): string
     {
         return $this->serverUrl;
@@ -57,7 +67,9 @@ class Mockserver
      * @return list<array{
      *     method: string,
      *     path: string,
-     *     headers: array<string, string[]>,
+     *     headers: array<string, string>,
+     *     body?: array{rawBytes: string},
+     *     keepAlive: bool,
      * }>
      */
     public function fetchRecordedRequests(array $httpRequest): array
@@ -66,8 +78,28 @@ class Mockserver
             'body' => json_encode($httpRequest, JSON_THROW_ON_ERROR),
         ]);
 
-        // @phpstan-ignore-next-line
-        return (array) json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        /** @var list<array{
+         *     method: string,
+         *     path: string,
+         *     headers?: array<string, string[]>,
+         *     body?: array{rawBytes: string},
+         *     keepAlive: bool,
+         * }> $requests
+         */
+        $requests = (array) json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        return array_map(
+            function (array $request) {
+                $headers = [];
+                foreach ($request['headers'] ?? [] as $headerName => $headerValues) {
+                    $headers[strtolower($headerName)] = implode(', ', $headerValues);
+                }
+
+                $request['headers'] = $headers;
+                return $request;
+            },
+            $requests,
+        );
     }
 
     /**

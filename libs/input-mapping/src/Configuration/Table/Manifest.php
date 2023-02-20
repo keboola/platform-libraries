@@ -65,7 +65,6 @@ class Manifest extends Configuration
                     ->defaultValue([])
                 ->end()
                 ->arrayNode('column_metadata')
-                    ->useAttributeAsKey('name')
                     ->prototype('array')
                         ->prototype('array')
                             ->children()

@@ -9,9 +9,9 @@ use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 
 /**
- * @phpstan-import-type Options from AzureApiClientFactoryInterface
+ * @phpstan-import-type Options from UnauthenticatedAzureApiClientFactory
  */
-class AuthenticatedAzureApiClientFactory implements AzureApiClientFactoryInterface
+class AuthenticatedAzureApiClientFactory
 {
     /**
      * @param Options $options

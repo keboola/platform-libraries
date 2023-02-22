@@ -11,9 +11,11 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\AuthorizationHeaderResolverInterface;
+use Keboola\AzureApiClient\ApiClientFactory\BearerAuthorizationHeaderResolver;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\TokenWithExpiration;
 use Keboola\AzureApiClient\Json;
 use PHPUnit\Framework\TestCase;
 
@@ -35,7 +37,7 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
         ]);
 
         $factory = new AuthenticatedAzureApiClientFactory(
-            $this->createFakeAuthenticatorFactory('auth-token'),
+            $this->createFakeAuthenticator('auth-token'),
             [
                 'requestHandler' => $requestHandler,
             ],
@@ -52,24 +54,23 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
     /**
      * @param non-empty-string $authToken
      */
-    private function createFakeAuthenticatorFactory(string $authToken): AuthenticatorFactory
+    private function createFakeAuthenticator(string $authToken): AuthenticatorInterface
     {
         $authenticator = $this->createMock(AuthenticatorInterface::class);
         $authenticator->expects(self::once())
             ->method('getAuthenticationToken')
-            ->willReturn(new TokenResponse(
+            ->willReturn(new TokenWithExpiration(
                 $authToken,
                 new DateTimeImmutable('+1 hour'),
             ))
         ;
-
-        $authenticatorFactory = $this->createMock(AuthenticatorFactory::class);
-        $authenticatorFactory->expects(self::once())
-            ->method('createAuthenticator')
-            ->willReturn($authenticator)
+        $authenticator->expects(self::once())->method('getHeaderResolver')
+            ->willReturn(
+                new BearerAuthorizationHeaderResolver($authenticator, '')
+            )
         ;
 
-        return $authenticatorFactory;
+        return $authenticator;
     }
 
     /**

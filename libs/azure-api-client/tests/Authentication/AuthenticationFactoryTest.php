@@ -9,7 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\ClientCredentialsEnvironmentAuthenticator;
 use Keboola\AzureApiClient\Authentication\ManagedCredentialsAuthenticator;
@@ -36,7 +36,7 @@ class AuthenticationFactoryTest extends TestCase
     {
         $requestHandler = $this->createRequestHandler($requestsHistory, []);
         $authenticationFactory = new AuthenticatorFactory(
-            new PlainAzureApiClientFactory([
+            new UnauthenticatedAzureApiClientFactory([
                 'requestHandler' => $requestHandler,
             ]),
             $this->logger
@@ -54,7 +54,7 @@ class AuthenticationFactoryTest extends TestCase
     {
         $requestHandler = $this->createRequestHandler($requestsHistory, []);
         $authenticationFactory = new AuthenticatorFactory(
-            new PlainAzureApiClientFactory([
+            new UnauthenticatedAzureApiClientFactory([
                 'requestHandler' => $requestHandler,
             ]),
             $this->logger
@@ -81,7 +81,7 @@ class AuthenticationFactoryTest extends TestCase
             new Response(400),
         ]);
         $authenticationFactory = new AuthenticatorFactory(
-            new PlainAzureApiClientFactory([
+            new UnauthenticatedAzureApiClientFactory([
                 'requestHandler' => $requestHandler,
             ]),
             $this->logger

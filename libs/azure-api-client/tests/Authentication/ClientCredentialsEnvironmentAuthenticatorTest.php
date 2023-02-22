@@ -9,7 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ClientCredentialsEnvironmentAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\Json;
@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
 
 class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 {
-    private readonly PlainAzureApiClientFactory $clientFactory;
+    private readonly UnauthenticatedAzureApiClientFactory $clientFactory;
     private readonly LoggerInterface $logger;
     private readonly TestHandler $logsHandler;
 
@@ -31,7 +31,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         $this->logsHandler = new TestHandler();
         $this->logger = new Logger('tests', [$this->logsHandler]);
 
-        $this->clientFactory = new PlainAzureApiClientFactory();
+        $this->clientFactory = new UnauthenticatedAzureApiClientFactory();
     }
 
     public function testOptionalEnvsFallback(): void
@@ -106,7 +106,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -117,8 +117,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertCount(2, $requestsHistory);
-        self::assertSame('ey....ey', $token->accessToken);
-        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
+        self::assertSame('ey....ey', $token->getToken());
+        self::assertTrue($token->isValid());
 
         $request = $requestsHistory[0]['request'];
         self::assertSame(
@@ -164,7 +164,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -175,8 +175,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertCount(2, $requestsHistory);
-        self::assertSame('ey....ey', $token->accessToken);
-        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
+        self::assertSame('ey....ey', $token->getToken());
+        self::assertTrue($token->isValid());
 
         $request = $requestsHistory[0]['request'];
         self::assertSame(
@@ -207,7 +207,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -247,7 +247,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -257,8 +257,8 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
-        self::assertEquals('ey....ey', $token->accessToken);
-        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
+        self::assertEquals('ey....ey', $token->getToken());
+        self::assertTrue($token->isValid());
     }
 
     public function testGetAuthenticationTokenMetadataFailure(): void
@@ -271,7 +271,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -300,7 +300,7 @@ class ClientCredentialsEnvironmentAuthenticatorTest extends BaseTest
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 

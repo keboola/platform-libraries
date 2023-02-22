@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MeteringServiceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
@@ -23,18 +24,11 @@ class MeteringServiceApiClientTest extends TestCase
 
     public function testCreateClient(): void
     {
-        $azureApiClient = $this->createMock(ApiClient::class);
+        $authenticator = $this->createMock(AuthenticatorInterface::class);
 
-        $clientFactory = $this->createMock(AuthenticatedAzureApiClientFactory::class);
-        $clientFactory->expects(self::once())
-            ->method('createClient')
-            ->with('https://marketplaceapi.microsoft.com/api/', '20e940b3-4c77-4b0b-9a53-9e16a1b010a7')
-            ->willReturn($azureApiClient)
-        ;
+        $client = MeteringServiceApiClient::create($authenticator);
 
-        $client = MeteringServiceApiClient::create($clientFactory);
-
-        self::assertSame($azureApiClient, self::getPrivatePropertyValue($client, 'apiClient'));
+        self::assertInstanceOf(ApiClient::class, self::getPrivatePropertyValue($client, 'apiClient'));
     }
 
     public function testReportUsageEventsBatch(): void

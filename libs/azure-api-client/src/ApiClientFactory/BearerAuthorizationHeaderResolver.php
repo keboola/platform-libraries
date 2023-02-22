@@ -6,18 +6,16 @@ namespace Keboola\AzureApiClient\ApiClientFactory;
 
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\TokenInterface;
+use Keboola\AzureApiClient\Authentication\TokenWithExpiration;
 use Psr\Http\Message\RequestInterface;
 
-class AuthorizationHeaderResolver
+class BearerAuthorizationHeaderResolver implements AuthorizationHeaderResolverInterface
 {
-    private const EXPIRATION_MARGIN = 60; // seconds
-
-    private ?AuthenticatorInterface $authenticator = null;
-    private ?TokenResponse $token = null;
+    private ?TokenInterface $token = null;
 
     public function __construct(
-        private readonly AuthenticatorFactory $authenticatorFactory,
+        private readonly AuthenticatorInterface $authenticator,
         private readonly string $resource
     ) {
     }
@@ -29,7 +27,7 @@ class AuthorizationHeaderResolver
         }
         assert($this->token !== null);
 
-        return $request->withHeader('Authorization', 'Bearer ' . $this->token->accessToken);
+        return $request->withHeader('Authorization', 'Bearer ' . $this->token->getToken());
     }
 
     private function isTokenValid(): bool
@@ -38,20 +36,11 @@ class AuthorizationHeaderResolver
             return false;
         }
 
-        $expirationTimestamp = $this->token->accessTokenExpiration->getTimestamp();
-        if ($expirationTimestamp - self::EXPIRATION_MARGIN < time()) {
-            return false;
-        }
-
-        return true;
+        return $this->token->isValid();
     }
 
     private function refreshToken(): void
     {
-        if ($this->authenticator === null) {
-            $this->authenticator = $this->authenticatorFactory->createAuthenticator();
-        }
-
         $this->token = $this->authenticator->getAuthenticationToken($this->resource);
     }
 }

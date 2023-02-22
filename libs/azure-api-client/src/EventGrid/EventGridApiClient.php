@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\EventGrid;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\AzureApiClient;
-use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\EventGrid\Model\EventGridEvent;
 
 class EventGridApiClient
@@ -14,15 +15,15 @@ class EventGridApiClient
     private const API_VERSION = '2018-01-01';
 
     public function __construct(
-        private readonly AzureApiClient $azureApiClient,
+        private readonly ApiClient $azureApiClient,
     ) {
     }
 
     public static function create(
-        AzureApiClientFactory $clientFactory,
+        AuthenticatorInterface $authenticator,
         string $topicHostname
     ): self {
-        $apiClient = $clientFactory->getClient(
+        $apiClient = (new AuthenticatedAzureApiClientFactory($authenticator))->createClient(
             sprintf('https://%s', $topicHostname),
             Resources::AZURE_EVENT_GRID
         );

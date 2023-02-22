@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests\Authentication;
 
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\TokenWithExpiration;
 use Keboola\AzureApiClient\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ class TokenResponseTest extends TestCase
             'expires_in' => '3599',
         ];
 
-        $response = TokenResponse::fromResponseData($data);
+        $response = TokenWithExpiration::fromResponseData($data);
 
         self::assertSame('access-token', $response->accessToken);
     }
@@ -29,7 +29,7 @@ class TokenResponseTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage($expectedError);
 
-        $response = TokenResponse::fromResponseData($data);
+        $response = TokenWithExpiration::fromResponseData($data);
     }
 
     public function provideInvalidResponseData(): iterable

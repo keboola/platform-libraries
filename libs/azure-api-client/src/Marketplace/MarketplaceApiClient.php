@@ -7,6 +7,7 @@ namespace Keboola\AzureApiClient\Marketplace;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
@@ -19,9 +20,9 @@ class MarketplaceApiClient
     ) {
     }
 
-    public static function create(AuthenticatedAzureApiClientFactory $clientFactory): self
+    public static function create(AuthenticatorInterface $authenticator): self
     {
-        $apiClient = $clientFactory->createClient(
+        $apiClient = (new AuthenticatedAzureApiClientFactory($authenticator))->createClient(
             'https://marketplaceapi.microsoft.com',
             Resources::AZURE_MARKETPLACE
         );

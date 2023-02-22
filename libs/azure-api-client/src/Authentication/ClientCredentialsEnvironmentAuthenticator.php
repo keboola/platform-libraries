@@ -6,7 +6,9 @@ namespace Keboola\AzureApiClient\Authentication;
 
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\AuthorizationHeaderResolverInterface;
+use Keboola\AzureApiClient\ApiClientFactory\BearerAuthorizationHeaderResolver;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Log\LoggerInterface;
 
@@ -17,23 +19,25 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
     private const ENV_AZURE_TENANT_ID = 'AZURE_TENANT_ID';
     private const ENV_AZURE_CLIENT_ID = 'AZURE_CLIENT_ID';
     private const ENV_AZURE_CLIENT_SECRET = 'AZURE_CLIENT_SECRET';
-
     private const DEFAULT_ARM_URL = 'https://management.azure.com/metadata/endpoints?api-version=2020-01-01';
     private const DEFAULT_PUBLIC_CLOUD_NAME = 'AzureCloud';
 
     private ApiClient $apiClient;
 
     private string $tenantId;
+
     private string $clientId;
+
     private string $clientSecret;
 
     private string $armUrl;
+
     private string $cloudName;
 
     private ?string $authEndpoint = null;
 
     public function __construct(
-        PlainAzureApiClientFactory $clientFactory,
+        UnauthenticatedAzureApiClientFactory $clientFactory,
         private readonly LoggerInterface $logger,
     ) {
         $this->armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
@@ -58,7 +62,7 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         $this->apiClient = $clientFactory->createClient($this->armUrl);
     }
 
-    public function getAuthenticationToken(string $resource): TokenResponse
+    public function getAuthenticationToken(string $resource): TokenWithExpiration
     {
         if ($this->authEndpoint === null) {
             $this->authEndpoint = $this->getMetadata($this->armUrl, $this->cloudName)->authenticationLoginEndpoint;
@@ -74,7 +78,7 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
 
         $token = $this->apiClient->sendRequestAndMapResponse(
             $request,
-            TokenResponse::class,
+            TokenWithExpiration::class,
             ['form_params' => $formData]
         );
 
@@ -115,5 +119,10 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         }
 
         throw new ClientException(sprintf('Cloud "%s" not found in instance metadata', $cloudName));
+    }
+
+    public function getHeaderResolver(string $resource): AuthorizationHeaderResolverInterface
+    {
+        return new BearerAuthorizationHeaderResolver($this, $resource);
     }
 }

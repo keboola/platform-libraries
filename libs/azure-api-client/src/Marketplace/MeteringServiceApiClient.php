@@ -7,6 +7,7 @@ namespace Keboola\AzureApiClient\Marketplace;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
@@ -19,9 +20,9 @@ class MeteringServiceApiClient
     ) {
     }
 
-    public static function create(AuthenticatedAzureApiClientFactory $clientFactory): self
+    public static function create(AuthenticatorInterface $authenticator): self
     {
-        $apiClient = $clientFactory->createClient(
+        $apiClient = (new AuthenticatedAzureApiClientFactory($authenticator))->createClient(
             'https://marketplaceapi.microsoft.com/api/',
             Resources::AZURE_MARKETPLACE
         );

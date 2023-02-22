@@ -6,10 +6,10 @@ namespace Keboola\AzureApiClient\Tests\ApiClientFactory;
 
 use DateTimeImmutable;
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\ApiClientFactory\AuthorizationHeaderResolver;
+use Keboola\AzureApiClient\ApiClientFactory\BearerAuthorizationHeaderResolver;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\TokenWithExpiration;
 use PHPUnit\Framework\TestCase;
 
 class AuthorizationHeaderResolverTest extends TestCase
@@ -22,7 +22,7 @@ class AuthorizationHeaderResolverTest extends TestCase
         $authenticator
             ->method('getAuthenticationToken')
             ->with('foo-resource')
-            ->willReturn(new TokenResponse(
+            ->willReturn(new TokenWithExpiration(
                 'auth-token',
                 new DateTimeImmutable('+1 hour'),
             ))
@@ -34,7 +34,7 @@ class AuthorizationHeaderResolverTest extends TestCase
             ->willReturn($authenticator)
         ;
 
-        $resolver = new AuthorizationHeaderResolver(
+        $resolver = new BearerAuthorizationHeaderResolver(
             $authenticatorFactory,
             'foo-resource',
         );
@@ -52,11 +52,11 @@ class AuthorizationHeaderResolverTest extends TestCase
             ->method('getAuthenticationToken')
             ->with('foo-resource')
             ->willReturnOnConsecutiveCalls(
-                new TokenResponse(
+                new TokenWithExpiration(
                     'auth-token1',
                     new DateTimeImmutable('+63 seconds'), // 60 seconds is EXPIRATION_MARGIN
                 ),
-                new TokenResponse(
+                new TokenWithExpiration(
                     'auth-token2',
                     new DateTimeImmutable('+1 hour'),
                 ),
@@ -69,7 +69,7 @@ class AuthorizationHeaderResolverTest extends TestCase
             ->willReturn($authenticator)
         ;
 
-        $resolver = new AuthorizationHeaderResolver(
+        $resolver = new BearerAuthorizationHeaderResolver(
             $authenticatorFactory,
             'foo-resource',
         );

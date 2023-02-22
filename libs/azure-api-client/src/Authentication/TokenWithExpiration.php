@@ -8,12 +8,12 @@ use DateTimeImmutable;
 use Keboola\AzureApiClient\Exception\InvalidResponseException;
 use Keboola\AzureApiClient\ResponseModelInterface;
 
-final class TokenResponse implements ResponseModelInterface
+final class TokenWithExpiration implements ResponseModelInterface, TokenInterface
 {
     public function __construct(
         /** @var non-empty-string $accessToken */
-        public readonly string $accessToken,
-        public readonly DateTimeImmutable $accessTokenExpiration,
+        private readonly string $accessToken,
+        private readonly DateTimeImmutable $accessTokenExpiration,
     ) {
     }
 
@@ -31,5 +31,20 @@ final class TokenResponse implements ResponseModelInterface
             $data['access_token'],
             new DateTimeImmutable(sprintf('+ %s second', $data['expires_in'])),
         );
+    }
+
+    public function getToken(): string
+    {
+        return $this->accessToken;
+    }
+
+    public function isValid(): bool
+    {
+        $expirationTimestamp = $this->accessTokenExpiration->getTimestamp();
+        if ($expirationTimestamp - self::EXPIRATION_MARGIN < time()) {
+            return false;
+        }
+
+        return true;
     }
 }

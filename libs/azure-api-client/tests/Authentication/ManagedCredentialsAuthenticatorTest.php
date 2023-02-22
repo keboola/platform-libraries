@@ -9,7 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\ManagedCredentialsAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Monolog\Handler\TestHandler;
@@ -45,7 +45,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -80,7 +80,7 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $apiClientFactory = new UnauthenticatedAzureApiClientFactory([
             'requestHandler' => $requestHandler,
         ]);
 
@@ -91,64 +91,6 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             'Failed to map response data: Missing or invalid "access_token" in response: {"foo":"bar"}'
         );
         $auth->getAuthenticationToken('resource-id');
-    }
-
-    public function testCheckUsabilitySuccess(): void
-    {
-        $requestHandler = self::createRequestHandler($requestsHistory, [
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-        ]);
-
-        $apiClientFactory = new PlainAzureApiClientFactory([
-            'requestHandler' => $requestHandler,
-        ]);
-
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
-
-        $auth->checkUsability();
-        self::assertCount(1, $requestsHistory);
-
-        $request = $requestsHistory[0]['request'];
-        self::assertSame(
-            'http://169.254.169.254/metadata?api-version=2019-11-01&format=text',
-            $request->getUri()->__toString()
-        );
-        self::assertSame('GET', $request->getMethod());
-        self::assertSame('true', $request->getHeader('Metadata')[0]);
-    }
-
-    public function testCheckUsabilityFailure(): void
-    {
-        $requestHandler = self::createRequestHandler($requestsHistory, [
-            new Response(
-                500,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-            new Response(
-                500,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-        ]);
-
-        $apiClientFactory = new PlainAzureApiClientFactory([
-            'requestHandler' => $requestHandler,
-        ]);
-
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
-
-        $this->expectExceptionMessage(
-            'Instance metadata service not available: Server error: ' .
-            '`GET http://169.254.169.254/metadata?api-version=2019-11-01&format=text` resulted in a ' .
-            '`500 Internal Server Error` response'
-        );
-        $this->expectException(ClientException::class);
-        $auth->checkUsability();
     }
 
     /**

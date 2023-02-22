@@ -13,7 +13,7 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
 use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\TokenWithExpiration;
 use Keboola\AzureApiClient\Json;
 use PHPUnit\Framework\TestCase;
 
@@ -57,7 +57,7 @@ class AuthenticatedAzureApiClientFactoryTest extends TestCase
         $authenticator = $this->createMock(AuthenticatorInterface::class);
         $authenticator->expects(self::once())
             ->method('getAuthenticationToken')
-            ->willReturn(new TokenResponse(
+            ->willReturn(new TokenWithExpiration(
                 $authToken,
                 new DateTimeImmutable('+1 hour'),
             ))

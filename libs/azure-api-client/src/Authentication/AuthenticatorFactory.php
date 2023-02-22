@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Authentication;
 
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Log\LoggerInterface;
 
 class AuthenticatorFactory
 {
     public function __construct(
-        private readonly PlainAzureApiClientFactory $clientFactory,
+        private readonly UnauthenticatedAzureApiClientFactory $clientFactory,
         private readonly LoggerInterface $logger,
     ) {
     }

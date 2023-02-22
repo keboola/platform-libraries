@@ -5,37 +5,21 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Tests\Marketplace;
 
 use DateTimeImmutable;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\ApiClient;
-use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use GuzzleHttp\Psr7\Response;
+use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MeteringServiceApiClient;
-use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
-use Keboola\AzureApiClient\Tests\ReflectionPropertyAccessTestCase;
-use PHPUnit\Framework\Constraint\Callback;
 use PHPUnit\Framework\TestCase;
 
 class MeteringServiceApiClientTest extends TestCase
 {
-    use ReflectionPropertyAccessTestCase;
 
-    public function testCreateClient(): void
-    {
-        $azureApiClient = $this->createMock(ApiClient::class);
-
-        $clientFactory = $this->createMock(AuthenticatedAzureApiClientFactory::class);
-        $clientFactory->expects(self::once())
-            ->method('createClient')
-            ->with('https://marketplaceapi.microsoft.com/api/', '20e940b3-4c77-4b0b-9a53-9e16a1b010a7')
-            ->willReturn($azureApiClient)
-        ;
-
-        $client = MeteringServiceApiClient::create($clientFactory);
-
-        self::assertSame($azureApiClient, self::getPrivatePropertyValue($client, 'apiClient'));
-    }
 
     public function testReportUsageEventsBatch(): void
     {
@@ -68,38 +52,18 @@ class MeteringServiceApiClientTest extends TestCase
             ],
         ];
 
-        $azureApiClient = $this->createMock(ApiClient::class);
-        $azureApiClient->expects(self::once())
-            ->method('sendRequestAndMapResponse')
-            ->with(self::checkRequestEquals(
-                'POST',
-                'batchUsageEvent?api-version=2018-08-31',
-                [
-                    'Content-Type' => ['application/json'],
-                ],
-                Json::encodeArray([
-                    'request' => [
-                        [
-                            'resourceId' => 'resource-1',
-                            'planId' => 'plan-1',
-                            'dimension' => 'dim-1',
-                            'quantity' => 1.0,
-                            'effectiveStartTime' => '2023-01-01T12:00:00+00:00',
-                        ],
-                        [
-                            'resourceId' => 'resource-2',
-                            'planId' => 'plan-2',
-                            'dimension' => 'dim-2',
-                            'quantity' => 2.5,
-                            'effectiveStartTime' => '2023-01-02T12:00:00+00:00',
-                        ],
-                    ],
-                ]),
-            ))
-            ->willReturn(ReportUsageEventsBatchResult::fromResponseData($apiResponse))
-        ;
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($apiResponse)
+            ),
+        ]);
 
-        $client = new MeteringServiceApiClient($azureApiClient);
+        $client = new MeteringServiceApiClient([
+            'authenticator' => new StaticTokenAuthenticator('my-token'),
+            'requestHandler' => $requestHandler,
+        ]);
         $result = $client->reportUsageEventsBatch([
             new UsageEvent(
                 'resource-1',
@@ -121,23 +85,66 @@ class MeteringServiceApiClientTest extends TestCase
             UsageEventResult::fromResponseData($apiResponse['result'][0]),
             UsageEventResult::fromResponseData($apiResponse['result'][1]),
         ], $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'POST',
+            'https://marketplaceapi.microsoft.com/api/batchUsageEvent?api-version=2018-08-31',
+            [
+                'Authorization' => 'Bearer my-token',
+                'Content-Type' => 'application/json',
+            ],
+            Json::encodeArray([
+                'request' => [
+                    [
+                        'resourceId' => 'resource-1',
+                        'planId' => 'plan-1',
+                        'dimension' => 'dim-1',
+                        'quantity' => 1.0,
+                        'effectiveStartTime' => '2023-01-01T12:00:00+00:00',
+                    ],
+                    [
+                        'resourceId' => 'resource-2',
+                        'planId' => 'plan-2',
+                        'dimension' => 'dim-2',
+                        'quantity' => 2.5,
+                        'effectiveStartTime' => '2023-01-02T12:00:00+00:00',
+                    ],
+                ],
+            ]),
+            $requestsHistory[0]['request'],
+        );
     }
 
     /**
-     * @return Callback<Request>
+     * @param list<array{request: Request, response: Response}> $requestsHistory
+     * @param list<Response>                                    $responses
+     * @return HandlerStack
      */
-    private static function checkRequestEquals(
+    private static function createRequestHandler(?array &$requestsHistory, array $responses): HandlerStack
+    {
+        $requestsHistory = [];
+
+        $stack = HandlerStack::create(new MockHandler($responses));
+        $stack->push(Middleware::history($requestsHistory));
+
+        return $stack;
+    }
+
+    private static function assertRequestEquals(
         string $method,
         string $uri,
-        array $headers = [],
-        ?string $body = null
-    ): Callback {
-        return self::callback(function (Request $request) use ($method, $uri, $headers, $body) {
-            self::assertSame($method, $request->getMethod());
-            self::assertSame($uri, $request->getUri()->__toString());
-            self::assertSame($headers, $request->getHeaders());
-            self::assertSame($body ?? '', $request->getBody()->getContents());
-            return true;
-        });
+        array $headers,
+        ?string $body,
+        Request $request,
+    ): void {
+        self::assertSame($method, $request->getMethod());
+        self::assertSame($uri, $request->getUri()->__toString());
+
+        foreach ($headers as $headerName => $headerValue) {
+            self::assertSame($headerValue, $request->getHeaderLine($headerName));
+        }
+
+        self::assertSame($body ?? '', $request->getBody()->getContents());
     }
 }

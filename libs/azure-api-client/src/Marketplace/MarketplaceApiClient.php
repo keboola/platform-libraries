@@ -6,26 +6,30 @@ namespace Keboola\AzureApiClient\Marketplace;
 
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
-use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
 use Keboola\AzureApiClient\Marketplace\Model\Subscription;
+use Psr\Log\LoggerInterface;
 
 class MarketplaceApiClient
 {
-    public function __construct(
-        private readonly ApiClient $apiClient,
-    ) {
-    }
+    private ApiClient $apiClient;
 
-    public static function create(AuthenticatedAzureApiClientFactory $clientFactory): self
+    /**
+     * @param array{
+     *     backoffMaxTries?: null|int<0, max>,
+     *     authenticator?: null|AuthenticatorInterface,
+     *     requestHandler?: null|callable,
+     *     logger?: null|LoggerInterface,
+     * } $options
+     */
+    public function __construct(array $options = [])
     {
-        $apiClient = $clientFactory->createClient(
-            'https://marketplaceapi.microsoft.com',
-            Resources::AZURE_MARKETPLACE
-        );
-        return new self($apiClient);
+        $options['baseUrl'] = 'https://marketplaceapi.microsoft.com';
+        $this->apiClient = new ApiClient($options);
+        $this->apiClient->authenticate(Resources::AZURE_MARKETPLACE);
     }
 
     public function resolveSubscription(string $marketplaceToken): ResolveSubscriptionResult

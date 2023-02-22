@@ -1,39 +1,51 @@
 # Azure API Client
 
 ## Installation
-
 ```bash
 composer require keboola/azure-api-client
 ```
 
 ## Usage
-
-To create API client using PHP:
+The simplest way to use API client is just by creating its instance. 
 
 ```php
-# example.php
-use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
-use Keboola\AzureApiClient\GuzzleClientFactory;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Monolog\Logger;
 
-$authenticatorFactory = new AuthenticatorFactory();
-$clientFactory = new PlainAzureApiClientFactory($guzzleClientFactory, $authenticatorFactory, $logger);
-
-$marketingApiClient = MarketplaceApiClient::create($clientFactory);
+$logger = new Logger('azure-api-client');
+$marketplaces = new MarketplaceApiClient([
+    'logger' => $logger,
+]);
 ```
 
-To create API client using Symfony container, just register class services and everything should auto-wire just fine:
-```yaml
-# services.yaml
-services:
-  Keboola\AzureApiClient\Authentication\AuthenticatorFactory:
+### Authentication
+By default, API client will try to authenticate using ENV variables `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and
+`AZURE_CLIENT_SECRET`. If some of them is not available, it'll fall back to Azure metadata API.
 
-  Keboola\AzureApiClient\AzureApiClientFactory:
+If you want to supply your own credentials, you can pass custom authenticator instance in the client options:
+```php
+use Keboola\AzureApiClient\Authentication\Authenticator\ClientCredentialsAuthenticator;
+use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 
-  Keboola\AzureApiClient\Marketplace\MarketplaceApiClient:
-    factory: ['App\Marketplace\Azure\MarketplaceApiClient\Marketplace\MarketplaceApiClient', 'create']
+$logger = new Logger('azure-api-client');
+$marketplaces = new MarketplaceApiClient([
+    'authenticator' => new ClientCredentialsAuthenticator(
+        'tenant-id',
+        'client-id',
+        'client-secret',
+    ),
+]);
+```
+
+Or can provide custom authentication token directly:
+```php
+use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
+use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
+
+$logger = new Logger('azure-api-client');
+$marketplaces = new MarketplaceApiClient([
+    'authenticator' => new StaticTokenAuthenticator('my-token'),
+]);
 ```
 
 ## License

@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Tests\Authentication;
+namespace Keboola\AzureApiClient\Tests\Authentication\Authenticator;
 
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
-use Keboola\AzureApiClient\Authentication\ManagedCredentialsAuthenticator;
+use Keboola\AzureApiClient\Authentication\Authenticator\ManagedCredentialsAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -45,15 +44,14 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $auth = new ManagedCredentialsAuthenticator([
             'requestHandler' => $requestHandler,
+            'logger' => $this->logger,
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
-
         $token = $auth->getAuthenticationToken('resource-id');
-        self::assertSame('ey....ey', $token->accessToken);
-        self::assertEqualsWithDelta(time() + 3599, $token->accessTokenExpiration->getTimestamp(), 1);
+        self::assertSame('ey....ey', $token->value);
+        self::assertEqualsWithDelta(time() + 3599, $token->expiresAt?->getTimestamp(), 1);
         self::assertCount(1, $requestsHistory);
 
         $request = $requestsHistory[0]['request'];
@@ -64,8 +62,6 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
         );
         self::assertSame('GET', $request->getMethod());
         self::assertSame('true', $request->getHeader('Metadata')[0]);
-
-        self::assertTrue($this->logsHandler->hasInfo('Successfully authenticated using instance metadata.'));
     }
 
     public function testGetAuthenticationTokenWithInvalidResponse(): void
@@ -80,75 +76,16 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $apiClientFactory = new PlainAzureApiClientFactory([
+        $auth = new ManagedCredentialsAuthenticator([
             'requestHandler' => $requestHandler,
+            'logger' => $this->logger,
         ]);
-
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
             'Failed to map response data: Missing or invalid "access_token" in response: {"foo":"bar"}'
         );
         $auth->getAuthenticationToken('resource-id');
-    }
-
-    public function testCheckUsabilitySuccess(): void
-    {
-        $requestHandler = self::createRequestHandler($requestsHistory, [
-            new Response(
-                200,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-        ]);
-
-        $apiClientFactory = new PlainAzureApiClientFactory([
-            'requestHandler' => $requestHandler,
-        ]);
-
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
-
-        $auth->checkUsability();
-        self::assertCount(1, $requestsHistory);
-
-        $request = $requestsHistory[0]['request'];
-        self::assertSame(
-            'http://169.254.169.254/metadata?api-version=2019-11-01&format=text',
-            $request->getUri()->__toString()
-        );
-        self::assertSame('GET', $request->getMethod());
-        self::assertSame('true', $request->getHeader('Metadata')[0]);
-    }
-
-    public function testCheckUsabilityFailure(): void
-    {
-        $requestHandler = self::createRequestHandler($requestsHistory, [
-            new Response(
-                500,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-            new Response(
-                500,
-                ['Content-Type' => 'application/json'],
-                ''
-            ),
-        ]);
-
-        $apiClientFactory = new PlainAzureApiClientFactory([
-            'requestHandler' => $requestHandler,
-        ]);
-
-        $auth = new ManagedCredentialsAuthenticator($apiClientFactory, $this->logger);
-
-        $this->expectExceptionMessage(
-            'Instance metadata service not available: Server error: ' .
-            '`GET http://169.254.169.254/metadata?api-version=2019-11-01&format=text` resulted in a ' .
-            '`500 Internal Server Error` response'
-        );
-        $this->expectException(ClientException::class);
-        $auth->checkUsability();
     }
 
     /**

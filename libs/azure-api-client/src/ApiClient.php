@@ -11,6 +11,9 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use JsonException;
+use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
+use Keboola\AzureApiClient\Authentication\Authenticator\SystemAuthenticatorResolver;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -28,13 +31,14 @@ class ApiClient
 
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
+    private readonly AuthenticatorInterface $authenticator;
     private readonly LoggerInterface $logger;
 
     /**
      * @param array{
      *     baseUrl?: null|non-empty-string,
      *     backoffMaxTries?: null|int<0, max>,
-     *     middleware?: null|list<callable>,
+     *     authenticator?: null|AuthenticatorInterface,
      *     requestHandler?: null|callable,
      *     logger?: null|LoggerInterface,
      * } $options
@@ -56,9 +60,7 @@ class ApiClient
                     new Assert\GreaterThanOrEqual(0),
                 ]),
 
-                'middleware' => new Assert\All([
-                    new Assert\Type('callable'),
-                ]),
+                'authenticator' => new Assert\Type(AuthenticatorInterface::class),
 
                 'requestHandler' => new Assert\Type('callable'),
 
@@ -81,10 +83,13 @@ class ApiClient
 
         $this->logger = $options['logger'] ?? new NullLogger();
 
+        $this->authenticator = $options['authenticator'] ?? new SystemAuthenticatorResolver([
+            'backoffMaxTries' => $options['backoffMaxTries'] ?? null,
+            'requestHandler' => $options['requestHandler'] ?? null,
+            'logger' => $this->logger,
+        ]);
+
         $this->requestHandlerStack = HandlerStack::create($options['requestHandler'] ?? null);
-        foreach ($options['middleware'] ?? [] as $middleware) {
-            $this->requestHandlerStack->push($middleware);
-        }
 
         $backoffMaxTries = $options['backoffMaxTries'] ?? self::DEFAULT_BACKOFF_RETRIES;
         if ($backoffMaxTries > 0) {
@@ -105,6 +110,17 @@ class ApiClient
             'connect_timeout' => 10,
             'timeout' => 120,
         ]);
+    }
+
+    public function authenticate(string $resource): void
+    {
+        $middleware = Middleware::mapRequest(new AuthorizationHeaderResolver(
+            $this->authenticator,
+            $resource
+        ));
+
+        $this->requestHandlerStack->remove('auth');
+        $this->requestHandlerStack->push($middleware, 'auth');
     }
 
     /**

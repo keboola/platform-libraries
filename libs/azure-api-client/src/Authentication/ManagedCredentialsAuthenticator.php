@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Authentication;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
-use Keboola\AzureApiClient\Exception\ClientException;
+use Keboola\AzureApiClient\ApiClientFactory\AuthorizationHeaderResolverInterface;
+use Keboola\AzureApiClient\ApiClientFactory\BearerAuthorizationHeaderResolver;
+use Keboola\AzureApiClient\ApiClientFactory\UnauthenticatedAzureApiClientFactory;
 use Psr\Log\LoggerInterface;
 
 class ManagedCredentialsAuthenticator implements AuthenticatorInterface
@@ -15,12 +16,12 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
     private const API_VERSION = '2019-11-01';
 
     public function __construct(
-        private readonly PlainAzureApiClientFactory $clientFactory,
+        private readonly UnauthenticatedAzureApiClientFactory $clientFactory,
         private readonly LoggerInterface $logger,
     ) {
     }
 
-    public function getAuthenticationToken(string $resource): TokenResponse
+    public function getAuthenticationToken(string $resource): TokenWithExpiration
     {
         $client = $this->clientFactory->createClient(self::INSTANCE_METADATA_SERVICE_ENDPOINT);
         $token = $client->sendRequestAndMapResponse(
@@ -38,34 +39,15 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
                     'Metadata' => 'true',
                 ],
             ),
-            TokenResponse::class
+            TokenWithExpiration::class
         );
 
         $this->logger->info('Successfully authenticated using instance metadata.');
         return $token;
     }
 
-    public function checkUsability(): void
+    public function getHeaderResolver(string $resource): AuthorizationHeaderResolverInterface
     {
-        try {
-            $client = $this->clientFactory->createClient(
-                self::INSTANCE_METADATA_SERVICE_ENDPOINT,
-                ['backoffMaxTries' => 1]
-            );
-            $client->sendRequest(
-                new Request(
-                    'GET',
-                    sprintf('/metadata?%s', http_build_query([
-                        'api-version' => self::API_VERSION,
-                        'format' => 'text',
-                    ])),
-                    [
-                        'Metadata' => 'true',
-                    ],
-                ),
-            );
-        } catch (ClientException $e) {
-            throw new ClientException('Instance metadata service not available: ' . $e->getMessage(), 0, $e);
-        }
+        return new BearerAuthorizationHeaderResolver($this, $resource);
     }
 }

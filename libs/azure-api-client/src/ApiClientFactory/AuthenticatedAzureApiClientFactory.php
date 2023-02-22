@@ -6,18 +6,18 @@ namespace Keboola\AzureApiClient\ApiClientFactory;
 
 use GuzzleHttp\Middleware;
 use Keboola\AzureApiClient\ApiClient;
-use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
+use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
 
 /**
- * @phpstan-import-type Options from PlainAzureApiClientFactory
+ * @phpstan-import-type Options from AzureApiClientFactoryInterface
  */
-class AuthenticatedAzureApiClientFactory
+class AuthenticatedAzureApiClientFactory implements AzureApiClientFactoryInterface
 {
     /**
      * @param Options $options
      */
     public function __construct(
-        private readonly AuthenticatorFactory $authenticatorFactory,
+        private readonly AuthenticatorInterface $authenticator,
         private readonly array $options = [],
     ) {
     }
@@ -33,10 +33,9 @@ class AuthenticatedAzureApiClientFactory
         $options['baseUrl'] = $baseUrl;
 
         $options['middleware'] ??= [];
-        $options['middleware'][] = Middleware::mapRequest(new AuthorizationHeaderResolver(
-            $this->authenticatorFactory,
-            $resource
-        ));
+        $options['middleware'][] = Middleware::mapRequest(
+            $this->authenticator->getHeaderResolver($resource)
+        );
 
         return new ApiClient($options);
     }

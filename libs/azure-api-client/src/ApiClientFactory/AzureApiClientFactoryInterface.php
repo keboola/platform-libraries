@@ -15,25 +15,12 @@ use Psr\Log\LoggerInterface;
  *     logger?: null|LoggerInterface,
  * }
  */
-class PlainAzureApiClientFactory
+interface AzureApiClientFactoryInterface
 {
     /**
-     * @param Options $options
-     */
-    public function __construct(
-        private readonly array $options = [],
-    ) {
-    }
-
-    /**
      * @param non-empty-string $baseUrl
+     * @param non-empty-string $resource
      * @param Options $options
      */
-    public function createClient(string $baseUrl, array $options = []): ApiClient
-    {
-        $options = array_merge($this->options, $options);
-        $options['baseUrl'] = $baseUrl;
-
-        return new ApiClient($options);
-    }
+    public function createClient(string $baseUrl, string $resource, array $options = []): ApiClient;
 }

@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Tests;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -88,18 +85,11 @@ class ApiClientTest extends TestCase
             'error' => 'Invalid options when creating client: [backoffMaxTries]: This value should be greater than or equal to 0.',
         ];
 
-        yield 'invalid middleware' => [
+        yield 'invalid authenticator' => [
             'options' => [
-                'middleware' => 'foo',
+                'authenticator' => ['foo'],
             ],
-            'error' => 'Invalid options when creating client: [middleware]: This value should be of type iterable.',
-        ];
-
-        yield 'invalid middleware item' => [
-            'options' => [
-                'middleware' => ['foo'],
-            ],
-            'error' => 'Invalid options when creating client: [middleware][0]: This value should be of type callable.',
+            'error' => 'Invalid options when creating client: [authenticator]: This value should be of type Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface.',
         ];
 
         yield 'invalid requestHandler' => [

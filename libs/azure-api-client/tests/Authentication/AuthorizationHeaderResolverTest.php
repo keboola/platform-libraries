@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Tests\ApiClientFactory;
+namespace Keboola\AzureApiClient\Tests\Authentication;
 
 use DateTimeImmutable;
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\ApiClientFactory\AuthorizationHeaderResolver;
-use Keboola\AzureApiClient\Authentication\AuthenticatorFactory;
-use Keboola\AzureApiClient\Authentication\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
 use PHPUnit\Framework\TestCase;
 
 class AuthorizationHeaderResolverTest extends TestCase
@@ -22,20 +21,14 @@ class AuthorizationHeaderResolverTest extends TestCase
         $authenticator
             ->method('getAuthenticationToken')
             ->with('foo-resource')
-            ->willReturn(new TokenResponse(
+            ->willReturn(new AuthenticationToken(
                 'auth-token',
                 new DateTimeImmutable('+1 hour'),
             ))
         ;
 
-        $authenticatorFactory = $this->createMock(AuthenticatorFactory::class);
-        $authenticatorFactory->expects(self::once())
-            ->method('createAuthenticator')
-            ->willReturn($authenticator)
-        ;
-
         $resolver = new AuthorizationHeaderResolver(
-            $authenticatorFactory,
+            $authenticator,
             'foo-resource',
         );
 
@@ -52,25 +45,19 @@ class AuthorizationHeaderResolverTest extends TestCase
             ->method('getAuthenticationToken')
             ->with('foo-resource')
             ->willReturnOnConsecutiveCalls(
-                new TokenResponse(
+                new AuthenticationToken(
                     'auth-token1',
                     new DateTimeImmutable('+63 seconds'), // 60 seconds is EXPIRATION_MARGIN
                 ),
-                new TokenResponse(
+                new AuthenticationToken(
                     'auth-token2',
                     new DateTimeImmutable('+1 hour'),
                 ),
             )
         ;
 
-        $authenticatorFactory = $this->createMock(AuthenticatorFactory::class);
-        $authenticatorFactory->expects(self::once())
-            ->method('createAuthenticator')
-            ->willReturn($authenticator)
-        ;
-
         $resolver = new AuthorizationHeaderResolver(
-            $authenticatorFactory,
+            $authenticator,
             'foo-resource',
         );
 

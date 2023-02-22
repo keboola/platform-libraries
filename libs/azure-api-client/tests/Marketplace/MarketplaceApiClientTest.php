@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Tests\Marketplace;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\AzureApiClient;
-use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
 use Keboola\AzureApiClient\Marketplace\Model\ResolveSubscriptionResult;
@@ -22,18 +23,18 @@ class MarketplaceApiClientTest extends TestCase
 
     public function testCreateClient(): void
     {
-        $azureApiClient = $this->createMock(AzureApiClient::class);
+        $azureApiClient = $this->createMock(ApiClient::class);
 
-        $clientFactory = $this->createMock(AzureApiClientFactory::class);
+        $clientFactory = $this->createMock(AuthenticatedAzureApiClientFactory::class);
         $clientFactory->expects(self::once())
-            ->method('getClient')
+            ->method('createClient')
             ->with('https://marketplaceapi.microsoft.com', '20e940b3-4c77-4b0b-9a53-9e16a1b010a7')
             ->willReturn($azureApiClient)
         ;
 
         $client = MarketplaceApiClient::create($clientFactory);
 
-        self::assertSame($azureApiClient, self::getPrivatePropertyValue($client, 'azureApiClient'));
+        self::assertSame($azureApiClient, self::getPrivatePropertyValue($client, 'apiClient'));
     }
 
     public function testResolveSubscription(): void
@@ -54,7 +55,7 @@ class MarketplaceApiClientTest extends TestCase
             ],
         ]);
 
-        $azureApiClient = $this->createMock(AzureApiClient::class);
+        $azureApiClient = $this->createMock(ApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequestAndMapResponse')
             ->with(self::checkRequestEquals(
@@ -85,7 +86,7 @@ class MarketplaceApiClientTest extends TestCase
             'saasSubscriptionStatus' => 'status',
         ]);
 
-        $azureApiClient = $this->createMock(AzureApiClient::class);
+        $azureApiClient = $this->createMock(ApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequestAndMapResponse')
             ->with(self::checkRequestEquals(
@@ -103,7 +104,7 @@ class MarketplaceApiClientTest extends TestCase
 
     public function testActivateSubscription(): void
     {
-        $azureApiClient = $this->createMock(AzureApiClient::class);
+        $azureApiClient = $this->createMock(ApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequest')
             ->with(self::checkRequestEquals(
@@ -112,7 +113,7 @@ class MarketplaceApiClientTest extends TestCase
                 [
                     'Content-Type' => ['application/json'],
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'planId' => 'plan-id',
                     'quantity' => 1,
                 ]),
@@ -129,7 +130,7 @@ class MarketplaceApiClientTest extends TestCase
 
     public function testUpdateOperationStatus(): void
     {
-        $azureApiClient = $this->createMock(AzureApiClient::class);
+        $azureApiClient = $this->createMock(ApiClient::class);
         $azureApiClient->expects(self::once())
             ->method('sendRequest')
             ->with(self::checkRequestEquals(
@@ -138,7 +139,7 @@ class MarketplaceApiClientTest extends TestCase
                 [
                     'Content-Type' => ['application/json'],
                 ],
-                (string) json_encode([
+                Json::encodeArray([
                     'status' => 'Success',
                 ]),
             ))

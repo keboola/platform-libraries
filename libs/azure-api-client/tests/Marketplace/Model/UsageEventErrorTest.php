@@ -27,8 +27,8 @@ class UsageEventErrorTest extends TestCase
 
         $result = UsageEventError::fromResponseData($responseData);
 
-        self::assertSame($responseData['code'], $result->code);
-        self::assertSame($responseData['message'], $result->message);
+        self::assertSame('BadArgument', $result->code);
+        self::assertSame('One or more errors have occurred.', $result->message);
         self::assertNull($result->additionalInfo);
     }
 
@@ -54,8 +54,19 @@ class UsageEventErrorTest extends TestCase
 
         $result = UsageEventError::fromResponseData($responseData);
 
-        self::assertSame($responseData['code'], $result->code);
-        self::assertSame($responseData['message'], $result->message);
-        self::assertSame($responseData['additionalInfo'], $result->additionalInfo);
+        self::assertSame('Conflict', $result->code);
+        self::assertSame('This usage event already exist.', $result->message);
+        self::assertSame([
+            'acceptedMessage' => [
+                'usageEventId' => '<guid>',
+                'status' => 'Duplicate',
+                'messageTime' => '2020-01-12T13:19:35.3458658Z',
+                'resourceId' => '<guid>',
+                'quantity' => 1,
+                'dimension' => 'dim1',
+                'effectiveStartTime' => '2020-01-12T11:03:28.14Z',
+                'planId' => 'plan1',
+            ],
+        ], $result->additionalInfo);
     }
 }

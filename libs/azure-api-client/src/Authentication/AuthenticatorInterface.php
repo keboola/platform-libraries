@@ -6,7 +6,7 @@ namespace Keboola\AzureApiClient\Authentication;
 
 interface AuthenticatorInterface
 {
-    public function getAuthenticationToken(string $resource): string;
+    public function getAuthenticationToken(string $resource): TokenResponse;
 
     public function checkUsability(): void;
 }

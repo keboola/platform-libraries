@@ -10,9 +10,17 @@
          processIsolation="false"
          stopOnFailure="false"
          bootstrap="tests/bootstrap.php"
+         cacheResultFile="/tmp/phpunit.result.cache"
          printerClass="Sempro\PHPUnitPrettyPrinter\PrettyPrinterForPhpUnit9">
 
   <testsuite name="Tests">
     <directory>tests/</directory>
   </testsuite>
+
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">src/</directory>
+      <directory suffix=".php">tests/</directory>
+    </include>
+  </coverage>
 </phpunit>

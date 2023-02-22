@@ -27,15 +27,15 @@ class UsageEventResultTest extends TestCase
 
         $result = UsageEventResult::fromResponseData($responseData);
 
-        self::assertSame($responseData['usageEventId'], $result->usageEventId);
+        self::assertSame('<guid>', $result->usageEventId);
         self::assertNull($result->error);
-        self::assertSame($responseData['status'], $result->status);
-        self::assertEquals(new DateTimeImmutable($responseData['messageTime']), $result->messageTime);
-        self::assertSame($responseData['resourceId'], $result->resourceId);
-        self::assertSame($responseData['planId'], $result->planId);
-        self::assertSame($responseData['dimension'], $result->dimension);
-        self::assertSame((float) $responseData['quantity'], $result->quantity);
-        self::assertEquals(new DateTimeImmutable($responseData['effectiveStartTime']), $result->effectiveStartTime);
+        self::assertSame('Accepted', $result->status);
+        self::assertEquals(new DateTimeImmutable('2020-01-12T13:19:35.3458658Z'), $result->messageTime);
+        self::assertSame('<guid1>', $result->resourceId);
+        self::assertSame('plan1', $result->planId);
+        self::assertSame('dim1', $result->dimension);
+        self::assertSame(5.0, $result->quantity);
+        self::assertEquals(new DateTimeImmutable('2018-12-01T08:30:14'), $result->effectiveStartTime);
     }
 
     public function testFromResponseDataWithError(): void
@@ -61,7 +61,7 @@ class UsageEventResultTest extends TestCase
                 'code' => 'Conflict',
             ],
             'resourceId' => '<guid2>',
-            'quantity' => 1,
+            'quantity' => '1',
             'dimension' => 'email',
             'effectiveStartTime' => '2020-01-12T11:03:28.14Z',
             'planId' => 'gold',
@@ -70,13 +70,28 @@ class UsageEventResultTest extends TestCase
         $result = UsageEventResult::fromResponseData($responseData);
 
         self::assertNull($result->usageEventId);
-        self::assertEquals(UsageEventError::fromResponseData($responseData['error']), $result->error);
-        self::assertSame($responseData['status'], $result->status);
-        self::assertEquals(new DateTimeImmutable($responseData['messageTime']), $result->messageTime);
-        self::assertSame($responseData['resourceId'], $result->resourceId);
-        self::assertSame($responseData['planId'], $result->planId);
-        self::assertSame($responseData['dimension'], $result->dimension);
-        self::assertSame((float) $responseData['quantity'], $result->quantity);
-        self::assertEquals(new DateTimeImmutable($responseData['effectiveStartTime']), $result->effectiveStartTime);
+        self::assertEquals(UsageEventError::fromResponseData([
+            'additionalInfo' => [
+                'acceptedMessage' => [
+                    'usageEventId' => '<guid>',
+                    'status' => 'Duplicate',
+                    'messageTime' => '2020-01-12T13:19:35.3458658Z',
+                    'resourceId' => '<guid2>',
+                    'quantity' => 1,
+                    'dimension' => 'email',
+                    'effectiveStartTime' => '2020-01-12T11:03:28.14Z',
+                    'planId' => 'gold',
+                ],
+            ],
+            'message' => 'This usage event already exist.',
+            'code' => 'Conflict',
+        ]), $result->error);
+        self::assertSame('Duplicate', $result->status);
+        self::assertEquals(new DateTimeImmutable('0001-01-01T00:00:00'), $result->messageTime);
+        self::assertSame('<guid2>', $result->resourceId);
+        self::assertSame('gold', $result->planId);
+        self::assertSame('email', $result->dimension);
+        self::assertSame(1.0, $result->quantity);
+        self::assertEquals(new DateTimeImmutable('2020-01-12T11:03:28.14Z'), $result->effectiveStartTime);
     }
 }

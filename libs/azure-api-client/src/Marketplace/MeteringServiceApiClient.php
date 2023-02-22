@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Marketplace;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\AzureApiClient\AzureApiClient;
-use Keboola\AzureApiClient\AzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientFactory\AuthenticatedAzureApiClientFactory;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
@@ -14,13 +15,13 @@ use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
 class MeteringServiceApiClient
 {
     public function __construct(
-        private readonly AzureApiClient $azureApiClient,
+        private readonly ApiClient $apiClient,
     ) {
     }
 
-    public static function create(AzureApiClientFactory $clientFactory): self
+    public static function create(AuthenticatedAzureApiClientFactory $clientFactory): self
     {
-        $apiClient = $clientFactory->getClient(
+        $apiClient = $clientFactory->createClient(
             'https://marketplaceapi.microsoft.com/api/',
             Resources::AZURE_MARKETPLACE
         );
@@ -33,16 +34,16 @@ class MeteringServiceApiClient
      */
     public function reportUsageEventsBatch(array $events): array
     {
-        return $this->azureApiClient->sendRequestAndMapResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 'batchUsageEvent?api-version=2018-08-31',
                 [
                     'Content-Type' => 'application/json',
                 ],
-                json_encode([
+                Json::encodeArray([
                     'request' => $events,
-                ], JSON_THROW_ON_ERROR),
+                ]),
             ),
             ReportUsageEventsBatchResult::class,
         )->result;

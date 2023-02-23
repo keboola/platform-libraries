@@ -5,23 +5,30 @@ declare(strict_types=1);
 namespace Keboola\AzureApiClient\Authentication\Authenticator;
 
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolverInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 class SystemAuthenticatorResolver implements AuthenticatorInterface
 {
+    private LoggerInterface $logger;
+
+    /** @var callable|null */
+    private $requestHandler;
+
     private ?AuthenticatorInterface $resolvedAuthenticator = null;
 
-    /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
+    /** @var callable|null */
+    private $retryMiddleware;
+
     public function __construct(
-        private readonly array $options = [],
+        null|callable $retryMiddleware = null,
+        null|callable $requestHandler = null,
+        null|LoggerInterface $logger = null,
     ) {
+        $this->retryMiddleware = $retryMiddleware;
+        $this->requestHandler = $requestHandler;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken
@@ -41,14 +48,26 @@ class SystemAuthenticatorResolver implements AuthenticatorInterface
             $logger->debug('Found Azure client credentials in ENV, using ClientCredentialsAuthenticator');
 
             return new ClientCredentialsAuthenticator(
-                $tenantId,
-                $clientId,
-                $clientSecret,
-                $this->options,
+                tenantId: $tenantId,
+                clientId: $clientId,
+                clientSecret: $clientSecret,
+                retryMiddleware: $this->retryMiddleware,
+                requestHandler: $this->requestHandler,
+                logger: $this->logger
             );
         }
 
         $logger->debug('Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator');
-        return new ManagedCredentialsAuthenticator($this->options);
+        return new ManagedCredentialsAuthenticator(
+            retryMiddleware: $this->retryMiddleware,
+            requestHandler: $this->requestHandler,
+            logger: $this->logger
+        );
+    }
+
+    public function getHeaderResolver(string $resource): AuthorizationHeaderResolverInterface
+    {
+        $this->resolvedAuthenticator ??= $this->resolveAuthenticator();
+        return $this->resolvedAuthenticator->getHeaderResolver($resource);
     }
 }

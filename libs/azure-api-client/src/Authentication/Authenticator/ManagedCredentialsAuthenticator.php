@@ -7,6 +7,8 @@ namespace Keboola\AzureApiClient\Authentication\Authenticator;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolverInterface;
 use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Psr\Log\LoggerInterface;
 
@@ -17,22 +19,22 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
 
     private ApiClient $apiClient;
 
-    /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
     public function __construct(
-        array $options = [],
+        null|callable $retryMiddleware = null,
+        null|callable $requestHandler = null,
+        null|LoggerInterface $logger = null,
     ) {
-        $options['baseUrl'] = self::INSTANCE_METADATA_SERVICE_ENDPOINT;
-        $this->apiClient = new ApiClient($options);
+        $this->apiClient = new ApiClient(
+            baseUrl: self::INSTANCE_METADATA_SERVICE_ENDPOINT,
+            retryMiddleware: $retryMiddleware,
+            requestHandler: $requestHandler,
+            logger: $logger
+        );
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken
     {
+        /** @var TokenResponse $token */
         $token = $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
@@ -55,5 +57,10 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
             $token->accessToken,
             $token->accessTokenExpiration,
         );
+    }
+
+    public function getHeaderResolver(string $resource): AuthorizationHeaderResolverInterface
+    {
+        return new AuthorizationHeaderResolver($this, $resource);
     }
 }

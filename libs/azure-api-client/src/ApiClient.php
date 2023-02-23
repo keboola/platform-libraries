@@ -13,7 +13,6 @@ use GuzzleHttp\Middleware;
 use JsonException;
 use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
 use Keboola\AzureApiClient\Authentication\Authenticator\SystemAuthenticatorResolver;
-use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -29,50 +28,29 @@ class ApiClient
     private const USER_AGENT = 'Keboola Azure PHP Client';
     private const DEFAULT_BACKOFF_RETRIES = 10;
 
-    private readonly HandlerStack $requestHandlerStack;
-    private readonly GuzzleClient $httpClient;
     private readonly AuthenticatorInterface $authenticator;
-    private readonly LoggerInterface $logger;
 
-    /**
-     * @param array{
-     *     baseUrl?: null|non-empty-string,
-     *     backoffMaxTries?: null|int<0, max>,
-     *     authenticator?: null|AuthenticatorInterface,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
+    private readonly GuzzleClient $httpClient;
+
+    private readonly HandlerStack $requestHandlerStack;
+
     public function __construct(
-        array $options = [],
+        null|string $baseUrl = null,
+        AuthenticatorInterface|null $authenticator = null,
+        null|callable $retryMiddleware = null,
+        null|callable $requestHandler = null,
+        null|LoggerInterface $logger = null,
     ) {
-        $errors = Validation::createValidator()->validate($options, new Assert\Collection([
-            'allowMissingFields' => true,
-            'allowExtraFields' => false,
-            'fields' => [
-                'baseUrl' => new Assert\Sequentially([
-                    new Assert\Url(),
-                    new Assert\Length(['min' => 1]),
-                ]),
-
-                'backoffMaxTries' => new Assert\Sequentially([
-                    new Assert\Type('int'),
-                    new Assert\GreaterThanOrEqual(0),
-                ]),
-
-                'authenticator' => new Assert\Type(AuthenticatorInterface::class),
-
-                'requestHandler' => new Assert\Type('callable'),
-
-                'logger' => new Assert\Type(LoggerInterface::class),
-            ],
+        $errors = Validation::createValidator()->validate($baseUrl, new Assert\Sequentially([
+            new Assert\Url(),
+            new Assert\Length(['min' => 1]),
         ]));
 
         if ($errors->count() > 0) {
             $messages = array_map(
                 fn(ConstraintViolationInterface $error) => sprintf(
                     '%s: %s',
-                    $error->getPropertyPath(),
+                    'baseUrl',
                     $error->getMessage()
                 ),
                 iterator_to_array($errors),
@@ -81,28 +59,31 @@ class ApiClient
             throw new ClientException(sprintf('Invalid options when creating client: %s', implode("\n", $messages)));
         }
 
-        $this->logger = $options['logger'] ?? new NullLogger();
+        $logger = $logger ?? new NullLogger();
 
-        $this->authenticator = $options['authenticator'] ?? new SystemAuthenticatorResolver([
-            'backoffMaxTries' => $options['backoffMaxTries'] ?? null,
-            'requestHandler' => $options['requestHandler'] ?? null,
-            'logger' => $this->logger,
-        ]);
+        $this->authenticator = $authenticator ?? new SystemAuthenticatorResolver(
+            $retryMiddleware,
+            $requestHandler,
+            $logger
+        );
 
-        $this->requestHandlerStack = HandlerStack::create($options['requestHandler'] ?? null);
+        $this->requestHandlerStack = HandlerStack::create($requestHandler ?? null);
 
-        $backoffMaxTries = $options['backoffMaxTries'] ?? self::DEFAULT_BACKOFF_RETRIES;
-        if ($backoffMaxTries > 0) {
-            $this->requestHandlerStack->push(Middleware::retry(new RetryDecider($backoffMaxTries, $this->logger)));
+        if ($retryMiddleware !== null) {
+            $this->requestHandlerStack->push($retryMiddleware);
+        } else {
+            $this->requestHandlerStack->push(Middleware::retry(
+                new RetryDecider(self::DEFAULT_BACKOFF_RETRIES, $logger)
+            ));
         }
 
-        $this->requestHandlerStack->push(Middleware::log($this->logger, new MessageFormatter(
+        $this->requestHandlerStack->push(Middleware::log($logger, new MessageFormatter(
             '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
             ' {code} {res_header_Content-Length}'
         )));
 
         $this->httpClient = new GuzzleClient([
-            'base_uri' => $options['baseUrl'] ?? null,
+            'base_uri' => $baseUrl,
             'handler' => $this->requestHandlerStack,
             'headers' => [
                 'User-Agent' => self::USER_AGENT,
@@ -114,11 +95,7 @@ class ApiClient
 
     public function authenticate(string $resource): void
     {
-        $middleware = Middleware::mapRequest(new AuthorizationHeaderResolver(
-            $this->authenticator,
-            $resource
-        ));
-
+        $middleware = Middleware::mapRequest($this->authenticator->getHeaderResolver($resource));
         $this->requestHandlerStack->remove('auth');
         $this->requestHandlerStack->push($middleware, 'auth');
     }

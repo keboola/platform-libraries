@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests;
 
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\Json;
+use Keboola\AzureApiClient\RetryDecider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class ApiClientFunctionalTest extends TestCase
 {
@@ -26,9 +29,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
         $recordedRequests = $mockserver->fetchRecordedRequests([
@@ -64,9 +67,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
 
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
@@ -120,9 +123,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
 
         $response = $apiClient->sendRequestAndMapResponse(
             new Request(
@@ -162,9 +165,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('BadRequest: This is not good');
@@ -187,9 +190,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -214,9 +217,9 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -254,9 +257,12 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+            retryMiddleware: Middleware::retry(
+                new RetryDecider(2, new NullLogger())
+            )
+        );
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
         $recordedRequests = $mockserver->fetchRecordedRequests([
@@ -281,10 +287,12 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-            'backoffMaxTries' => 2,
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+            retryMiddleware: Middleware::retry(
+                new RetryDecider(2, new NullLogger())
+            )
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -323,10 +331,12 @@ error occurred'
             ],
         ]);
 
-        $apiClient = new ApiClient([
-            'baseUrl' => $mockserver->getServerUrl(),
-            'backoffMaxTries' => 2,
-        ]);
+        $apiClient = new ApiClient(
+            baseUrl: $mockserver->getServerUrl(),
+            retryMiddleware: Middleware::retry(
+                new RetryDecider(2, new NullLogger())
+            )
+        );
 
         $response = $apiClient->sendRequestAndMapResponse(
             new Request('GET', 'foo/bar'),

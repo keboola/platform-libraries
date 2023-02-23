@@ -7,6 +7,8 @@ namespace Keboola\AzureApiClient\Authentication\Authenticator;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
+use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolverInterface;
 use Keboola\AzureApiClient\Authentication\Model\MetadataResponse;
 use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Keboola\AzureApiClient\Exception\ClientException;
@@ -27,20 +29,15 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
 
     private ?string $authEndpoint = null;
 
-    /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
     public function __construct(
         private readonly string $tenantId,
         private readonly string $clientId,
         private readonly string $clientSecret,
-        array $options = [],
+        null|callable $retryMiddleware = null,
+        null|callable $requestHandler = null,
+        null|LoggerInterface $logger = null,
     ) {
-        $logger = $options['logger'] ?? new NullLogger();
+        $logger = $logger ?? new NullLogger();
 
         $armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
         if (!$armUrl) {
@@ -58,8 +55,12 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
             );
         }
 
-        $options['baseUrl'] = $armUrl;
-        $this->apiClient = new ApiClient($options);
+        $this->apiClient = new ApiClient(
+            baseUrl: $armUrl,
+            retryMiddleware: $retryMiddleware,
+            requestHandler: $requestHandler,
+            logger: $logger
+        );
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken
@@ -106,5 +107,10 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
         }
 
         throw new ClientException(sprintf('Cloud "%s" not found in instance metadata', $cloudName));
+    }
+
+    public function getHeaderResolver(string $resource): AuthorizationHeaderResolverInterface
+    {
+        return new AuthorizationHeaderResolver($this, $resource);
     }
 }

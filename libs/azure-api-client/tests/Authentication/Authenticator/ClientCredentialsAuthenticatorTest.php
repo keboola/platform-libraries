@@ -41,24 +41,20 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         putenv('AZURE_AD_RESOURCE=https://foo');
         putenv('AZURE_ENVIRONMENT=foo');
         new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            logger: $this->logger
         );
         self::assertCount(0, $this->logsHandler->getRecords());
 
         putenv('AZURE_AD_RESOURCE');
         putenv('AZURE_ENVIRONMENT');
         new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            logger: $this->logger
         );
         self::assertTrue($this->logsHandler->hasDebug(
             'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
@@ -91,13 +87,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -150,13 +144,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -194,13 +186,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $this->expectException(ClientException::class);
@@ -235,13 +225,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -260,13 +248,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $this->expectException(ClientException::class);
@@ -290,13 +276,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
         ]);
 
         $auth = new ClientCredentialsAuthenticator(
-            'tenant-id',
-            'client-id',
-            'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            tenantId: 'tenant-id',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            requestHandler: $requestHandler,
+            logger: $this->logger
         );
 
         $this->expectException(ClientException::class);

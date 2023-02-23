@@ -17,18 +17,19 @@ class MarketplaceApiClient
 {
     private ApiClient $apiClient;
 
-    /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     authenticator?: null|AuthenticatorInterface,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
-    public function __construct(array $options = [])
-    {
-        $options['baseUrl'] = 'https://marketplaceapi.microsoft.com';
-        $this->apiClient = new ApiClient($options);
+    public function __construct(
+        AuthenticatorInterface|null $authenticator = null,
+        null|callable $retryMiddleware = null,
+        null|callable $requestHandler = null,
+        null|LoggerInterface $logger = null,
+    ) {
+        $this->apiClient = new ApiClient(
+            baseUrl: 'https://marketplaceapi.microsoft.com',
+            authenticator: $authenticator,
+            retryMiddleware: $retryMiddleware,
+            requestHandler: $requestHandler,
+            logger: $logger
+        );
         $this->apiClient->authenticate(Resources::AZURE_MARKETPLACE);
     }
 

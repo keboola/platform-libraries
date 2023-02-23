@@ -60,10 +60,10 @@ class MeteringServiceApiClientTest extends TestCase
             ),
         ]);
 
-        $client = new MeteringServiceApiClient([
-            'authenticator' => new StaticTokenAuthenticator('my-token'),
-            'requestHandler' => $requestHandler,
-        ]);
+        $client = new MeteringServiceApiClient(
+            authenticator: new StaticTokenAuthenticator('my-token'),
+            requestHandler: $requestHandler,
+        );
         $result = $client->reportUsageEventsBatch([
             new UsageEvent(
                 'resource-1',

@@ -7,7 +7,7 @@ namespace Keboola\AzureApiClient\Authentication;
 use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
 use Psr\Http\Message\RequestInterface;
 
-class AuthorizationHeaderResolver
+class AuthorizationHeaderResolver implements AuthorizationHeaderResolverInterface
 {
     private const EXPIRATION_MARGIN = 60; // seconds
 

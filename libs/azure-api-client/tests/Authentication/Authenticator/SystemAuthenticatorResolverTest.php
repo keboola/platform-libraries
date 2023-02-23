@@ -55,10 +55,10 @@ class SystemAuthenticatorResolverTest extends TestCase
             ),
         ]);
 
-        $auth = new SystemAuthenticatorResolver([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new SystemAuthenticatorResolver(
+            requestHandler: $requestHandler,
+            logger: $this->logger
+        );
 
         putenv('AZURE_TENANT_ID=tenant-id');
         putenv('AZURE_CLIENT_ID=client-id');
@@ -88,10 +88,10 @@ class SystemAuthenticatorResolverTest extends TestCase
             ),
         ]);
 
-        $auth = new SystemAuthenticatorResolver([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new SystemAuthenticatorResolver(
+            requestHandler: $requestHandler,
+            logger: $this->logger
+        );
 
         $token = $auth->getAuthenticationToken('resource-id');
 

@@ -44,10 +44,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(
+            requestHandler: $requestHandler,
+            logger: $this->logger
+        );
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertSame('ey....ey', $token->value);
@@ -76,10 +76,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(
+            requestHandler: $requestHandler,
+            logger: $this->logger
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(

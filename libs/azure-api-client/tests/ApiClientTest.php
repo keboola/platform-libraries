@@ -20,6 +20,7 @@ class ApiClientTest extends TestCase
     use ReflectionPropertyAccessTestCase;
 
     private readonly LoggerInterface $logger;
+
     private readonly TestHandler $logsHandler;
 
     protected function setUp(): void
@@ -45,76 +46,42 @@ class ApiClientTest extends TestCase
         self::assertSame(10, $httpClientConfig['connect_timeout']);
     }
 
-    /** @dataProvider provideInvalidOptions */
-    public function testInvalidOptions(array $options, string $expectedError): void
+    /**
+     * @dataProvider provideInvalidOptions
+     * @param non-empty-string $baseUrl
+     */
+    public function testInvalidBaseUrl(string $baseUrl, string $expectedError): void
     {
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage($expectedError);
 
-        new ApiClient($options);
+        new ApiClient(
+            baseUrl: $baseUrl
+        );
     }
 
     public function provideInvalidOptions(): iterable
     {
         // phpcs:disable Generic.Files.LineLength
         yield 'empty baseUrl' => [
-            'options' => [
-                'baseUrl' => '',
-            ],
-            'error' => 'Invalid options when creating client: [baseUrl]: This value is too short. It should have 1 character or more.',
+            '',
+            'error' => 'Invalid options when creating client: baseUrl: This value is too short. It should have 1 character or more.',
         ];
 
         yield 'invalid baseUrl' => [
-            'options' => [
-                'baseUrl' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [baseUrl]: This value is not a valid URL.',
-        ];
-
-        yield 'invalid backoffMaxTries' => [
-            'options' => [
-                'backoffMaxTries' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [backoffMaxTries]: This value should be of type int.',
-        ];
-
-        yield 'negative backoffMaxTries' => [
-            'options' => [
-                'backoffMaxTries' => -1,
-            ],
-            'error' => 'Invalid options when creating client: [backoffMaxTries]: This value should be greater than or equal to 0.',
-        ];
-
-        yield 'invalid authenticator' => [
-            'options' => [
-                'authenticator' => ['foo'],
-            ],
-            'error' => 'Invalid options when creating client: [authenticator]: This value should be of type Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface.',
-        ];
-
-        yield 'invalid requestHandler' => [
-            'options' => [
-                'requestHandler' => ['foo'],
-            ],
-            'error' => 'Invalid options when creating client: [requestHandler]: This value should be of type callable.',
-        ];
-
-        yield 'invalid logger' => [
-            'options' => [
-                'logger' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [logger]: This value should be of type Psr\Log\LoggerInterface.',
+            'foo',
+            'error' => 'Invalid options when creating client: baseUrl: This value is not a valid URL.',
         ];
         // phpcs:enable Generic.Files.LineLength
     }
 
     public function testLogger(): void
     {
-
-        $client = new ApiClient([
-            'logger' => $this->logger,
-            'requestHandler' => fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
-        ]);
+        $client = new ApiClient(
+            baseUrl: 'https://test.cz',
+            requestHandler: fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
+            logger: $this->logger,
+        );
         $client->sendRequest(new Request('GET', '/'));
         self::assertTrue($this->logsHandler->hasInfoThatMatches(
             '#^[\w\d]+ Keboola Azure PHP Client - \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00\] "GET  /1.1" 201 $#',

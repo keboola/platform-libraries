@@ -39,7 +39,7 @@ class SystemAuthenticatorResolver implements AuthenticatorInterface
 
     private function resolveAuthenticator(): AuthenticatorInterface
     {
-        $logger = $this->options['logger'] ?? new NullLogger();
+        $logger = $this->logger;
 
         $tenantId = (string) getenv('AZURE_TENANT_ID');
         $clientId = (string) getenv('AZURE_CLIENT_ID');

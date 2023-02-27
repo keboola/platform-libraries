@@ -27,7 +27,7 @@ interface ApiClientInterface
     /**
      * @param TItem $model
      */
-    public function create($model, array $queries = []): AbstractModel;
+    public function create(AbstractModel $model, array $queries = []): AbstractModel;
 
     public function delete(string $name, ?DeleteOptions $options = null, array $queries = []): Status;
 

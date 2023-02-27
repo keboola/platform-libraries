@@ -12,9 +12,9 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 
 /**
- * @template-extends BaseApiClient<PodsApi, PodList, Pod>
+ * @template-extends BaseNamespaceApiClient<PodsApi, PodList, Pod>
  */
-class PodsApiClient extends BaseApiClient
+class PodsApiClient extends BaseNamespaceApiClient
 {
     public function __construct(KubernetesApiClient $apiClient)
     {

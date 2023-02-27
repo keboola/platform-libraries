@@ -10,9 +10,9 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\SecretList;
 
 /**
- * @template-extends BaseApiClient<SecretsApi, SecretList, Secret>
+ * @template-extends BaseNamespaceApiClient<SecretsApi, SecretList, Secret>
  */
-class SecretsApiClient extends BaseApiClient
+class SecretsApiClient extends BaseNamespaceApiClient
 {
     public function __construct(KubernetesApiClient $apiClient)
     {

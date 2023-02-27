@@ -10,9 +10,9 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeList;
 
 /**
- * @template-extends BaseApiClient<PersistentVolumeApi, PersistentVolumeList, PersistentVolume>
+ * @template-extends BaseClusterApiClient<PersistentVolumeApi, PersistentVolumeList, PersistentVolume>
  */
-class PersistentVolumeApiClient extends BaseApiClient
+class PersistentVolumeApiClient extends BaseClusterApiClient
 {
     public function __construct(KubernetesApiClient $apiClient)
     {

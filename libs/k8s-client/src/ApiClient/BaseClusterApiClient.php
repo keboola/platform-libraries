@@ -16,7 +16,7 @@ use KubernetesRuntime\AbstractModel;
  * @template TItem of AbstractModel
  * @implements ApiClientInterface<TList, TItem>
  */
-abstract class BaseApiClient implements ApiClientInterface
+abstract class BaseClusterApiClient implements ApiClientInterface
 {
     /**
      * @param TBaseApi $baseApi
@@ -36,7 +36,7 @@ abstract class BaseApiClient implements ApiClientInterface
      */
     public function list(array $queries = []): AbstractModel
     {
-        return $this->apiClient->request($this->baseApi, 'list', $this->listClass, $queries);
+        return $this->apiClient->clusterRequest($this->baseApi, 'list', $this->listClass, $queries);
     }
 
     /**
@@ -44,7 +44,7 @@ abstract class BaseApiClient implements ApiClientInterface
      */
     public function get(string $name, array $queries = []): AbstractModel
     {
-        return $this->apiClient->request($this->baseApi, 'read', $this->itemClass, $name, $queries);
+        return $this->apiClient->clusterRequest($this->baseApi, 'read', $this->itemClass, $name, $queries);
     }
 
     /**
@@ -53,18 +53,18 @@ abstract class BaseApiClient implements ApiClientInterface
      */
     public function create(AbstractModel $model, array $queries = []): AbstractModel
     {
-        return $this->apiClient->request($this->baseApi, 'create', $this->itemClass, $model, $queries);
+        return $this->apiClient->clusterRequest($this->baseApi, 'create', $this->itemClass, $model, $queries);
     }
 
     public function delete(string $name, ?DeleteOptions $options = null, array $queries = []): Status
     {
         $options ??= new DeleteOptions();
-        return $this->apiClient->request($this->baseApi, 'delete', Status::class, $name, $options, $queries);
+        return $this->apiClient->clusterRequest($this->baseApi, 'delete', Status::class, $name, $options, $queries);
     }
 
     public function deleteCollection(?DeleteOptions $options = null, array $queries = []): Status
     {
         $options ??= new DeleteOptions();
-        return $this->apiClient->request($this->baseApi, 'deleteCollection', Status::class, $options, $queries);
+        return $this->apiClient->clusterRequest($this->baseApi, 'deleteCollection', Status::class, $options, $queries);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests;
 
+use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
@@ -36,6 +37,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
     public function testApisAccessors(): void
     {
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $persistentVolumeClient = $this->createMock(PersistentVolumeApiClient::class);
         $persistentVolumeClaimClient = $this->createMock(PersistentVolumeClaimApiClient::class);
@@ -44,6 +46,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $configMapsApiClient,
             $eventsApiClient,
             $persistentVolumeClient,
             $persistentVolumeClaimClient,
@@ -51,6 +54,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
         );
 
+        self::assertSame($configMapsApiClient, $facade->configMaps());
         self::assertSame($eventsApiClient, $facade->events());
         self::assertSame($persistentVolumeClient, $facade->persistentVolumes());
         self::assertSame($persistentVolumeClaimClient, $facade->persistentVolumeClaims());
@@ -84,6 +88,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -121,6 +126,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -158,6 +164,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -212,6 +219,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -256,6 +264,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -313,6 +322,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -359,6 +369,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -402,6 +413,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -431,6 +443,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -486,6 +499,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -531,6 +545,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -564,6 +579,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),
@@ -598,6 +614,7 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
             $this->createMock(PersistentVolumeApiClient::class),
             $this->createMock(PersistentVolumeClaimApiClient::class),

@@ -6,12 +6,11 @@ namespace Keboola\AzureApiClient\Authentication\Authenticator;
 
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
 use Keboola\AzureApiClient\Authentication\Model\MetadataResponse;
 use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 class ClientCredentialsAuthenticator implements AuthenticatorInterface
 {
@@ -27,25 +26,18 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
 
     private ?string $authEndpoint = null;
 
-    /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
-     */
     public function __construct(
         private readonly string $tenantId,
         private readonly string $clientId,
         private readonly string $clientSecret,
-        array $options = [],
+        ?ApiClientConfiguration $configuration = null,
     ) {
-        $logger = $options['logger'] ?? new NullLogger();
+        $configuration ??= new ApiClientConfiguration();
 
         $armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
         if (!$armUrl) {
             $armUrl = self::DEFAULT_ARM_URL;
-            $logger->debug(
+            $configuration->logger->debug(
                 self::ENV_AZURE_AD_RESOURCE . ' environment variable is not specified, falling back to default.'
             );
         }
@@ -53,13 +45,12 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
         $this->cloudName = (string) getenv(self::ENV_AZURE_ENVIRONMENT);
         if (!$this->cloudName) {
             $this->cloudName = self::DEFAULT_PUBLIC_CLOUD_NAME;
-            $logger->debug(
+            $configuration->logger->debug(
                 self::ENV_AZURE_ENVIRONMENT . ' environment variable is not specified, falling back to default.'
             );
         }
 
-        $options['baseUrl'] = $armUrl;
-        $this->apiClient = new ApiClient($options);
+        $this->apiClient = new ApiClient($armUrl, $configuration);
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken

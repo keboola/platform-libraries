@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\Authenticator\ManagedCredentialsAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Monolog\Handler\TestHandler;
@@ -44,10 +45,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(new ApiClientConfiguration(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        ));
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertSame('ey....ey', $token->value);
@@ -76,10 +77,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(new ApiClientConfiguration(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        ));
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(

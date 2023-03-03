@@ -8,7 +8,9 @@ use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use InvalidArgumentException;
 use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -46,75 +48,46 @@ class ApiClientTest extends TestCase
     }
 
     /** @dataProvider provideInvalidOptions */
-    public function testInvalidOptions(array $options, string $expectedError): void
-    {
-        $this->expectException(ClientException::class);
+    public function testInvalidOptions(
+        ?string $baseUrl,
+        ?int $backoffMaxTries,
+        string $expectedError
+    ): void {
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedError);
 
-        new ApiClient($options);
+        new ApiClient(
+            $baseUrl, // @phpstan-ignore-line intentionally passing invalid values
+            new ApiClientConfiguration(
+                backoffMaxTries: $backoffMaxTries // @phpstan-ignore-line
+            )
+        );
     }
 
     public function provideInvalidOptions(): iterable
     {
-        // phpcs:disable Generic.Files.LineLength
         yield 'empty baseUrl' => [
-            'options' => [
-                'baseUrl' => '',
-            ],
-            'error' => 'Invalid options when creating client: [baseUrl]: This value is too short. It should have 1 character or more.',
-        ];
-
-        yield 'invalid baseUrl' => [
-            'options' => [
-                'baseUrl' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [baseUrl]: This value is not a valid URL.',
-        ];
-
-        yield 'invalid backoffMaxTries' => [
-            'options' => [
-                'backoffMaxTries' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [backoffMaxTries]: This value should be of type int.',
+            'baseUrl' => '',
+            'backoffMaxTries' => 0,
+            'error' => 'Expected a value to contain at least 1 characters. Got: ""',
         ];
 
         yield 'negative backoffMaxTries' => [
-            'options' => [
-                'backoffMaxTries' => -1,
-            ],
-            'error' => 'Invalid options when creating client: [backoffMaxTries]: This value should be greater than or equal to 0.',
+            'baseUrl' => null,
+            'backoffMaxTries' => -1,
+            'error' => 'Expected a value greater than or equal to 0. Got: -1',
         ];
-
-        yield 'invalid authenticator' => [
-            'options' => [
-                'authenticator' => ['foo'],
-            ],
-            'error' => 'Invalid options when creating client: [authenticator]: This value should be of type Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface.',
-        ];
-
-        yield 'invalid requestHandler' => [
-            'options' => [
-                'requestHandler' => ['foo'],
-            ],
-            'error' => 'Invalid options when creating client: [requestHandler]: This value should be of type callable.',
-        ];
-
-        yield 'invalid logger' => [
-            'options' => [
-                'logger' => 'foo',
-            ],
-            'error' => 'Invalid options when creating client: [logger]: This value should be of type Psr\Log\LoggerInterface.',
-        ];
-        // phpcs:enable Generic.Files.LineLength
     }
 
     public function testLogger(): void
     {
 
-        $client = new ApiClient([
-            'logger' => $this->logger,
-            'requestHandler' => fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
-        ]);
+        $client = new ApiClient(
+            configuration: new ApiClientConfiguration(
+                requestHandler: fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
+                logger: $this->logger,
+            ),
+        );
         $client->sendRequest(new Request('GET', '/'));
         self::assertTrue($this->logsHandler->hasInfoThatMatches(
             '#^[\w\d]+ Keboola Azure PHP Client - \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00\] "GET  /1.1" 201 $#',

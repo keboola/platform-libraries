@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\Authenticator\ClientCredentialsAuthenticator;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\Json;
@@ -44,9 +45,9 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                logger: $this->logger,
+            )
         );
         self::assertCount(0, $this->logsHandler->getRecords());
 
@@ -56,9 +57,9 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                logger: $this->logger,
+            )
         );
         self::assertTrue($this->logsHandler->hasDebug(
             'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
@@ -94,10 +95,10 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -153,10 +154,10 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -197,10 +198,10 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
 
         $this->expectException(ClientException::class);
@@ -238,12 +239,11 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
-
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertEquals('ey....ey', $token->value);
         self::assertEqualsWithDelta(time() + 3599, $token->expiresAt?->getTimestamp(), 1);
@@ -263,10 +263,10 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
 
         $this->expectException(ClientException::class);
@@ -293,10 +293,10 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            new ApiClientConfiguration(
+                requestHandler: $requestHandler(...),
+                logger: $this->logger,
+            )
         );
 
         $this->expectException(ClientException::class);

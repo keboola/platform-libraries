@@ -28,20 +28,16 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
     private ?string $authEndpoint = null;
 
     /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
+     * @param int<0, max>|null $backoffMaxTries
      */
     public function __construct(
         private readonly string $tenantId,
         private readonly string $clientId,
         private readonly string $clientSecret,
-        array $options = [],
+        ?int $backoffMaxTries = null,
+        ?callable $requestHandler = null,
+        LoggerInterface $logger = new NullLogger(),
     ) {
-        $logger = $options['logger'] ?? new NullLogger();
-
         $armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
         if (!$armUrl) {
             $armUrl = self::DEFAULT_ARM_URL;
@@ -58,8 +54,12 @@ class ClientCredentialsAuthenticator implements AuthenticatorInterface
             );
         }
 
-        $options['baseUrl'] = $armUrl;
-        $this->apiClient = new ApiClient($options);
+        $this->apiClient = new ApiClient(
+            baseUrl: $armUrl,
+            backoffMaxTries: $backoffMaxTries,
+            requestHandler: $requestHandler,
+            logger: $logger,
+        );
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken

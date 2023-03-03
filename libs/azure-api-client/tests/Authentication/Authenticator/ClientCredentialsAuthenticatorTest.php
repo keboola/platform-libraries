@@ -44,9 +44,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            logger: $this->logger,
         );
         self::assertCount(0, $this->logsHandler->getRecords());
 
@@ -56,9 +54,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'logger' => $this->logger,
-            ]
+            logger: $this->logger,
         );
         self::assertTrue($this->logsHandler->hasDebug(
             'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
@@ -94,10 +90,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -153,10 +147,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -197,10 +189,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $this->expectException(ClientException::class);
@@ -238,10 +228,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -263,10 +251,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $this->expectException(ClientException::class);
@@ -293,10 +279,8 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             'tenant-id',
             'client-id',
             'client-secret',
-            [
-                'requestHandler' => $requestHandler,
-                'logger' => $this->logger,
-            ]
+            requestHandler: $requestHandler,
+            logger: $this->logger,
         );
 
         $this->expectException(ClientException::class);

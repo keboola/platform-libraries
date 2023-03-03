@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests\Authentication\Authenticator;
 
+use Closure;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -44,10 +45,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        );
 
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertSame('ey....ey', $token->value);
@@ -76,10 +77,10 @@ class ManagedCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ManagedCredentialsAuthenticator([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new ManagedCredentialsAuthenticator(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(

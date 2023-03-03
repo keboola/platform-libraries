@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Authentication\Authenticator;
 
+use Closure;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
@@ -18,17 +19,19 @@ class ManagedCredentialsAuthenticator implements AuthenticatorInterface
     private ApiClient $apiClient;
 
     /**
-     * @param array{
-     *     backoffMaxTries?: null|int<0, max>,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
+     * @param int<0, max>|null $backoffMaxTries
      */
     public function __construct(
-        array $options = [],
+        ?int $backoffMaxTries = null,
+        ?Closure $requestHandler = null,
+        ?LoggerInterface $logger = null,
     ) {
-        $options['baseUrl'] = self::INSTANCE_METADATA_SERVICE_ENDPOINT;
-        $this->apiClient = new ApiClient($options);
+        $this->apiClient = new ApiClient(
+            baseUrl: self::INSTANCE_METADATA_SERVICE_ENDPOINT,
+            backoffMaxTries: $backoffMaxTries,
+            requestHandler: $requestHandler,
+            logger: $logger,
+        );
     }
 
     public function getAuthenticationToken(string $resource): AuthenticationToken

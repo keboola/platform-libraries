@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
@@ -46,10 +47,10 @@ class MarketplaceApiClientTest extends TestCase
             ),
         ]);
 
-        $client = new MarketplaceApiClient([
-            'authenticator' => new StaticTokenAuthenticator('my-token'),
-            'requestHandler' => $requestHandler,
-        ]);
+        $client = new MarketplaceApiClient(new ApiClientConfiguration(
+            authenticator: new StaticTokenAuthenticator('my-token'),
+            requestHandler: $requestHandler(...),
+        ));
         $result = $client->resolveSubscription('marketplace-token');
 
         self::assertEquals(
@@ -90,10 +91,10 @@ class MarketplaceApiClientTest extends TestCase
             ),
         ]);
 
-        $client = new MarketplaceApiClient([
-            'authenticator' => new StaticTokenAuthenticator('my-token'),
-            'requestHandler' => $requestHandler,
-        ]);
+        $client = new MarketplaceApiClient(new ApiClientConfiguration(
+            authenticator: new StaticTokenAuthenticator('my-token'),
+            requestHandler: $requestHandler(...),
+        ));
         $result = $client->getSubscription('subscription id');
 
         self::assertEquals(
@@ -119,10 +120,10 @@ class MarketplaceApiClientTest extends TestCase
             new Response(200),
         ]);
 
-        $client = new MarketplaceApiClient([
-            'authenticator' => new StaticTokenAuthenticator('my-token'),
-            'requestHandler' => $requestHandler,
-        ]);
+        $client = new MarketplaceApiClient(new ApiClientConfiguration(
+            authenticator: new StaticTokenAuthenticator('my-token'),
+            requestHandler: $requestHandler(...),
+        ));
         $client->activateSubscription(new ActivateSubscriptionRequest(
             'subscription id',
             'plan-id',
@@ -152,10 +153,10 @@ class MarketplaceApiClientTest extends TestCase
             new Response(200),
         ]);
 
-        $client = new MarketplaceApiClient([
-            'authenticator' => new StaticTokenAuthenticator('my-token'),
-            'requestHandler' => $requestHandler,
-        ]);
+        $client = new MarketplaceApiClient(new ApiClientConfiguration(
+            authenticator: new StaticTokenAuthenticator('my-token'),
+            requestHandler: $requestHandler(...),
+        ));
         $client->updateOperationStatus(
             'subscription id',
             'operation id',

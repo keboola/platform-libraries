@@ -19,10 +19,8 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\ConstraintViolationInterface;
-use Symfony\Component\Validator\Validation;
 use Throwable;
+use Webmozart\Assert\Assert;
 
 class ApiClient
 {
@@ -32,77 +30,43 @@ class ApiClient
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
     private readonly AuthenticatorInterface $authenticator;
-    private readonly LoggerInterface $logger;
 
     /**
-     * @param array{
-     *     baseUrl?: null|non-empty-string,
-     *     backoffMaxTries?: null|int<0, max>,
-     *     authenticator?: null|AuthenticatorInterface,
-     *     requestHandler?: null|callable,
-     *     logger?: null|LoggerInterface,
-     * } $options
+     * @param non-empty-string|null $baseUrl
+     * @param int<0, max>|null      $backoffMaxTries
      */
     public function __construct(
-        array $options = [],
+        ?string $baseUrl = null,
+        ?int $backoffMaxTries = null,
+        ?AuthenticatorInterface $authenticator = null,
+        ?callable $requestHandler = null,
+        ?LoggerInterface $logger = null,
     ) {
-        $errors = Validation::createValidator()->validate($options, new Assert\Collection([
-            'allowMissingFields' => true,
-            'allowExtraFields' => false,
-            'fields' => [
-                'baseUrl' => new Assert\Sequentially([
-                    new Assert\Url(),
-                    new Assert\Length(['min' => 1]),
-                ]),
+        $backoffMaxTries ??= self::DEFAULT_BACKOFF_RETRIES;
+        $logger ??= new NullLogger();
 
-                'backoffMaxTries' => new Assert\Sequentially([
-                    new Assert\Type('int'),
-                    new Assert\GreaterThanOrEqual(0),
-                ]),
+        Assert::nullOrMinLength($baseUrl, 1);
+        Assert::greaterThanEq($backoffMaxTries, 0);
 
-                'authenticator' => new Assert\Type(AuthenticatorInterface::class),
+        $this->authenticator = $authenticator ?? new SystemAuthenticatorResolver(
+            backoffMaxTries: $backoffMaxTries,
+            requestHandler: $requestHandler ? $requestHandler(...) : null,
+            logger: $logger,
+        );
 
-                'requestHandler' => new Assert\Type('callable'),
+        $this->requestHandlerStack = HandlerStack::create($requestHandler);
 
-                'logger' => new Assert\Type(LoggerInterface::class),
-            ],
-        ]));
-
-        if ($errors->count() > 0) {
-            $messages = array_map(
-                fn(ConstraintViolationInterface $error) => sprintf(
-                    '%s: %s',
-                    $error->getPropertyPath(),
-                    $error->getMessage()
-                ),
-                iterator_to_array($errors),
-            );
-
-            throw new ClientException(sprintf('Invalid options when creating client: %s', implode("\n", $messages)));
-        }
-
-        $this->logger = $options['logger'] ?? new NullLogger();
-
-        $this->authenticator = $options['authenticator'] ?? new SystemAuthenticatorResolver([
-            'backoffMaxTries' => $options['backoffMaxTries'] ?? null,
-            'requestHandler' => $options['requestHandler'] ?? null,
-            'logger' => $this->logger,
-        ]);
-
-        $this->requestHandlerStack = HandlerStack::create($options['requestHandler'] ?? null);
-
-        $backoffMaxTries = $options['backoffMaxTries'] ?? self::DEFAULT_BACKOFF_RETRIES;
         if ($backoffMaxTries > 0) {
-            $this->requestHandlerStack->push(Middleware::retry(new RetryDecider($backoffMaxTries, $this->logger)));
+            $this->requestHandlerStack->push(Middleware::retry(new RetryDecider($backoffMaxTries, $logger)));
         }
 
-        $this->requestHandlerStack->push(Middleware::log($this->logger, new MessageFormatter(
+        $this->requestHandlerStack->push(Middleware::log($logger, new MessageFormatter(
             '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
             ' {code} {res_header_Content-Length}'
         )));
 
         $this->httpClient = new GuzzleClient([
-            'base_uri' => $options['baseUrl'] ?? null,
+            'base_uri' => $baseUrl,
             'handler' => $this->requestHandlerStack,
             'headers' => [
                 'User-Agent' => self::USER_AGENT,

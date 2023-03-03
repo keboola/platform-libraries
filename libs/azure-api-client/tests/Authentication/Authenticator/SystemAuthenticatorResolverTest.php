@@ -10,13 +10,10 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\Authentication\Authenticator\SystemAuthenticatorResolver;
-use Keboola\AzureApiClient\Json;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use function _PHPStan_7d6f0f6a4\RingCentral\Psr7\str;
-use function Later\now;
 
 class SystemAuthenticatorResolverTest extends TestCase
 {
@@ -55,10 +52,10 @@ class SystemAuthenticatorResolverTest extends TestCase
             ),
         ]);
 
-        $auth = new SystemAuthenticatorResolver([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new SystemAuthenticatorResolver(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        );
 
         putenv('AZURE_TENANT_ID=tenant-id');
         putenv('AZURE_CLIENT_ID=client-id');
@@ -88,10 +85,10 @@ class SystemAuthenticatorResolverTest extends TestCase
             ),
         ]);
 
-        $auth = new SystemAuthenticatorResolver([
-            'requestHandler' => $requestHandler,
-            'logger' => $this->logger,
-        ]);
+        $auth = new SystemAuthenticatorResolver(
+            requestHandler: $requestHandler(...),
+            logger: $this->logger,
+        );
 
         $token = $auth->getAuthenticationToken('resource-id');
 

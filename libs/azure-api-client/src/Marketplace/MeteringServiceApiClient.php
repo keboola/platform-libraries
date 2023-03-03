@@ -6,19 +6,33 @@ namespace Keboola\AzureApiClient\Marketplace;
 
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
+use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\Model\ReportUsageEventsBatchResult;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEventResult;
+use Psr\Log\LoggerInterface;
 
 class MeteringServiceApiClient
 {
     private ApiClient $apiClient;
 
-    public function __construct(array $options = [])
-    {
-        $options['baseUrl'] = 'https://marketplaceapi.microsoft.com/api/';
-        $this->apiClient = new ApiClient($options);
+    /**
+     * @param int<0, max>|null $backoffMaxTries
+     */
+    public function __construct(
+        ?int $backoffMaxTries = null,
+        ?AuthenticatorInterface $authenticator = null,
+        ?callable $requestHandler = null,
+        ?LoggerInterface $logger = null,
+    ) {
+        $this->apiClient = new ApiClient(
+            baseUrl: 'https://marketplaceapi.microsoft.com/api/',
+            backoffMaxTries: $backoffMaxTries,
+            authenticator: $authenticator,
+            requestHandler: $requestHandler,
+            logger: $logger,
+        );
         $this->apiClient->authenticate(Resources::AZURE_MARKETPLACE);
     }
 

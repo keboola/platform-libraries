@@ -6,6 +6,7 @@ namespace Keboola\K8sClient\ApiClient;
 
 use Keboola\K8sClient\KubernetesApiClient;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractAPI;
 use KubernetesRuntime\AbstractModel;
@@ -54,6 +55,14 @@ abstract class BaseNamespaceApiClient implements ApiClientInterface
     public function create(AbstractModel $model, array $queries = []): AbstractModel
     {
         return $this->apiClient->request($this->baseApi, 'create', $this->itemClass, $model, $queries);
+    }
+
+    /**
+     * @return TItem
+     */
+    public function patch(string $name, Patch $model, array $queries = []): AbstractModel
+    {
+        return $this->apiClient->request($this->baseApi, 'patch', $this->itemClass, $name, $model, $queries);
     }
 
     public function delete(string $name, ?DeleteOptions $options = null, array $queries = []): Status

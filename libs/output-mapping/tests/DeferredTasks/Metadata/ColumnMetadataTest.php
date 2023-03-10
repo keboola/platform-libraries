@@ -17,16 +17,19 @@ class ColumnMetadataTest extends TestCase
     private const TEST_METADATA = [
         'id' => [
             [
+                'columnName' => 'id',
                 'key' => 'timestamp',
                 'value' => '1674226231',
             ],
         ],
         'aa_caa' => [
             [
+                'columnName' => 'aa_caa',
                 'key' => 'KBC.datatype.basetype',
                 'value' => 'STRING',
             ],
             [
+                'columnName' => 'aa_caa',
                 'key' => '1',
                 'value' => '',
             ],
@@ -42,16 +45,19 @@ class ColumnMetadataTest extends TestCase
                 [
                     'id' => [
                         [
+                            'columnName' => 'id',
                             'key' => 'timestamp',
                             'value' => '1674226231',
                         ],
                     ],
                     'aa_caa' => [
                         [
+                            'columnName' => 'aa_caa',
                             'key' => 'KBC.datatype.basetype',
                             'value' => 'STRING',
                         ],
                         [
+                            'columnName' => 'aa_caa',
                             'key' => '1',
                             'value' => '',
                         ],
@@ -67,6 +73,7 @@ class ColumnMetadataTest extends TestCase
                 [
                     'id' => [
                         [
+                            'columnName' => 'id',
                             'key' => 'timestamp',
                             'value' => '1674226231',
                         ],
@@ -75,10 +82,12 @@ class ColumnMetadataTest extends TestCase
                 [
                     'aa_caa' => [
                         [
+                            'columnName' => 'aa_caa',
                             'key' => 'KBC.datatype.basetype',
                             'value' => 'STRING',
                         ],
                         [
+                            'columnName' => 'aa_caa',
                             'key' => '1',
                             'value' => '',
                         ],

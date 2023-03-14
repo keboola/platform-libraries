@@ -22,6 +22,12 @@ class ColumnMetadataTest extends TestCase
                 'value' => '1674226231',
             ],
         ],
+        'webalize | test 😁' => [
+            [
+                'key' => 'foo',
+                'value' => 'bar',
+            ],
+        ],
         'aa_caa' => [
             [
                 'columnName' => 'aa_caa',
@@ -50,6 +56,13 @@ class ColumnMetadataTest extends TestCase
                             'value' => '1674226231',
                         ],
                     ],
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'foo',
+                            'value' => 'bar',
+                        ],
+                    ],
                     'aa_caa' => [
                         [
                             'columnName' => 'aa_caa',
@@ -68,7 +81,7 @@ class ColumnMetadataTest extends TestCase
 
         yield 'load in chunks' => [
             'bulkSize' => 1,
-            'expectedApiCalls' => 2,
+            'expectedApiCalls' => 3,
             'expectedColumnsMetadata' => [
                 [
                     'id' => [
@@ -76,6 +89,15 @@ class ColumnMetadataTest extends TestCase
                             'columnName' => 'id',
                             'key' => 'timestamp',
                             'value' => '1674226231',
+                        ],
+                    ],
+                ],
+                [
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'foo',
+                            'value' => 'bar',
                         ],
                     ],
                 ],

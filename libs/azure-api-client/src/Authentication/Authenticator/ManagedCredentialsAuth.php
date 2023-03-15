@@ -8,9 +8,10 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
 use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 
-class ManagedCredentialsAuthenticator implements AuthenticatorInterface
+class ManagedCredentialsAuth implements BearerTokenResolver
 {
     private const INSTANCE_METADATA_SERVICE_ENDPOINT = 'http://169.254.169.254/';
     private const API_VERSION = '2019-11-01';

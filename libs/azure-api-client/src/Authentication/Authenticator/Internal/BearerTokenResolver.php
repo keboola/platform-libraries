@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Authentication\Authenticator;
+namespace Keboola\AzureApiClient\Authentication\Authenticator\Internal;
 
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
 
-interface AuthenticatorInterface
+interface BearerTokenResolver
 {
     public function getAuthenticationToken(string $resource): AuthenticationToken;
 }

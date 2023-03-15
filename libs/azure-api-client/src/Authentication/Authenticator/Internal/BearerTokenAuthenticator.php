@@ -2,27 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Authentication;
+namespace Keboola\AzureApiClient\Authentication\Authenticator\Internal;
 
-use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
+use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorInterface;
 use Psr\Http\Message\RequestInterface;
 
-class AuthorizationHeaderResolver
+class BearerTokenAuthenticator implements RequestAuthenticatorInterface
 {
     private const EXPIRATION_MARGIN = 60; // seconds
 
     private ?AuthenticationToken $token = null;
 
     public function __construct(
-        private readonly AuthenticatorInterface $authenticator,
-        private readonly string $resource
+        private readonly BearerTokenResolver $tokenResolver,
+        private readonly string $resource,
     ) {
     }
 
     public function __invoke(RequestInterface $request): RequestInterface
     {
         if ($this->token === null || !$this->isTokenValid($this->token)) {
-            $this->token = $this->authenticator->getAuthenticationToken($this->resource);
+            $this->token = $this->tokenResolver->getAuthenticationToken($this->resource);
         }
 
         return $request->withHeader('Authorization', 'Bearer ' . $this->token->value);

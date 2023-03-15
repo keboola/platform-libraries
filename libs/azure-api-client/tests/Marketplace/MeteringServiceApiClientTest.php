@@ -11,7 +11,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientConfiguration;
-use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
+use Keboola\AzureApiClient\Authentication\Authenticator\StaticBearerTokenAuth;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MeteringServiceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\UsageEvent;
@@ -60,7 +60,7 @@ class MeteringServiceApiClientTest extends TestCase
         ]);
 
         $client = new MeteringServiceApiClient(new ApiClientConfiguration(
-            authenticator: new StaticTokenAuthenticator('my-token'),
+            authenticator: new StaticBearerTokenAuth('my-token'),
             requestHandler: $requestHandler(...),
         ));
         $result = $client->reportUsageEventsBatch([

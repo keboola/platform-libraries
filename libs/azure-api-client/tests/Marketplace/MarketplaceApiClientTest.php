@@ -10,7 +10,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientConfiguration;
-use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
+use Keboola\AzureApiClient\Authentication\Authenticator\StaticBearerTokenAuth;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\Marketplace\MarketplaceApiClient;
 use Keboola\AzureApiClient\Marketplace\Model\ActivateSubscriptionRequest;
@@ -48,7 +48,7 @@ class MarketplaceApiClientTest extends TestCase
         ]);
 
         $client = new MarketplaceApiClient(new ApiClientConfiguration(
-            authenticator: new StaticTokenAuthenticator('my-token'),
+            authenticator: new StaticBearerTokenAuth('my-token'),
             requestHandler: $requestHandler(...),
         ));
         $result = $client->resolveSubscription('marketplace-token');
@@ -92,7 +92,7 @@ class MarketplaceApiClientTest extends TestCase
         ]);
 
         $client = new MarketplaceApiClient(new ApiClientConfiguration(
-            authenticator: new StaticTokenAuthenticator('my-token'),
+            authenticator: new StaticBearerTokenAuth('my-token'),
             requestHandler: $requestHandler(...),
         ));
         $result = $client->getSubscription('subscription id');
@@ -121,7 +121,7 @@ class MarketplaceApiClientTest extends TestCase
         ]);
 
         $client = new MarketplaceApiClient(new ApiClientConfiguration(
-            authenticator: new StaticTokenAuthenticator('my-token'),
+            authenticator: new StaticBearerTokenAuth('my-token'),
             requestHandler: $requestHandler(...),
         ));
         $client->activateSubscription(new ActivateSubscriptionRequest(
@@ -154,7 +154,7 @@ class MarketplaceApiClientTest extends TestCase
         ]);
 
         $client = new MarketplaceApiClient(new ApiClientConfiguration(
-            authenticator: new StaticTokenAuthenticator('my-token'),
+            authenticator: new StaticBearerTokenAuth('my-token'),
             requestHandler: $requestHandler(...),
         ));
         $client->updateOperationStatus(

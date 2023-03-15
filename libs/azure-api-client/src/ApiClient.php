@@ -11,9 +11,10 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use JsonException;
-use Keboola\AzureApiClient\Authentication\Authenticator\AuthenticatorInterface;
-use Keboola\AzureApiClient\Authentication\Authenticator\SystemAuthenticatorResolver;
-use Keboola\AzureApiClient\Authentication\AuthorizationHeaderResolver;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenAuthenticatorFactory;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\SystemAuthenticatorResolver;
+use Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorFactoryInterface;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -26,7 +27,7 @@ class ApiClient
 
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
-    private readonly AuthenticatorInterface $authenticator;
+    private readonly RequestAuthenticatorFactoryInterface $authenticatorFactory;
 
     /**
      * @param non-empty-string|null $baseUrl
@@ -39,7 +40,15 @@ class ApiClient
         $configuration ??= new ApiClientConfiguration();
 
         $this->requestHandlerStack = HandlerStack::create($configuration->requestHandler);
-        $this->authenticator = $configuration->authenticator ?? new SystemAuthenticatorResolver($configuration);
+
+        $authenticatorFactory = $configuration->authenticator;
+        if ($authenticatorFactory === null) {
+            $authenticatorFactory = new SystemAuthenticatorResolver($configuration);
+        }
+        if ($authenticatorFactory instanceof BearerTokenResolver) {
+            $authenticatorFactory = new BearerTokenAuthenticatorFactory($authenticatorFactory);
+        }
+        $this->authenticatorFactory = $authenticatorFactory;
 
         if ($configuration->backoffMaxTries > 0) {
             $this->requestHandlerStack->push(Middleware::retry(new RetryDecider(
@@ -66,10 +75,8 @@ class ApiClient
 
     public function authenticate(string $resource): void
     {
-        $middleware = Middleware::mapRequest(new AuthorizationHeaderResolver(
-            $this->authenticator,
-            $resource
-        ));
+        $authenticator = $this->authenticatorFactory->createRequestAuthenticator($resource);
+        $middleware = Middleware::mapRequest($authenticator);
 
         $this->requestHandlerStack->remove('auth');
         $this->requestHandlerStack->push($middleware, 'auth');

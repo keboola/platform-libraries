@@ -10,7 +10,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AzureApiClient\ApiClientConfiguration;
-use Keboola\AzureApiClient\Authentication\Authenticator\ClientCredentialsAuthenticator;
+use Keboola\AzureApiClient\Authentication\Authenticator\ClientCredentialsAuth;
 use Keboola\AzureApiClient\Exception\ClientException;
 use Keboola\AzureApiClient\Json;
 use Monolog\Handler\TestHandler;
@@ -18,7 +18,7 @@ use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class ClientCredentialsAuthenticatorTest extends TestCase
+class ClientCredentialsAuthTest extends TestCase
 {
     private readonly LoggerInterface $logger;
     private readonly TestHandler $logsHandler;
@@ -41,7 +41,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
     {
         putenv('AZURE_AD_RESOURCE=https://foo');
         putenv('AZURE_ENVIRONMENT=foo');
-        new ClientCredentialsAuthenticator(
+        new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -53,7 +53,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
 
         putenv('AZURE_AD_RESOURCE');
         putenv('AZURE_ENVIRONMENT');
-        new ClientCredentialsAuthenticator(
+        new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -91,7 +91,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -150,7 +150,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -194,7 +194,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -235,7 +235,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -259,7 +259,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',
@@ -289,7 +289,7 @@ class ClientCredentialsAuthenticatorTest extends TestCase
             ),
         ]);
 
-        $auth = new ClientCredentialsAuthenticator(
+        $auth = new ClientCredentialsAuth(
             'tenant-id',
             'client-id',
             'client-secret',

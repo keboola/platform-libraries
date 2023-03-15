@@ -8,11 +8,12 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
 use Keboola\AzureApiClient\Authentication\Model\MetadataResponse;
 use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Keboola\AzureApiClient\Exception\ClientException;
 
-class ClientCredentialsAuthenticator implements AuthenticatorInterface
+class ClientCredentialsAuth implements BearerTokenResolver
 {
     private const ENV_AZURE_AD_RESOURCE = 'AZURE_AD_RESOURCE';
     private const ENV_AZURE_ENVIRONMENT = 'AZURE_ENVIRONMENT';

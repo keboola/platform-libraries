@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Authentication\Authenticator;
+namespace Keboola\AzureApiClient\Authentication\Authenticator\Internal;
 
 use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\ClientCredentialsAuth;
+use Keboola\AzureApiClient\Authentication\Authenticator\ManagedCredentialsAuth;
 
-class SystemAuthenticatorResolver implements AuthenticatorInterface
+class SystemAuthenticatorResolver implements BearerTokenResolver
 {
     private readonly ApiClientConfiguration $configuration;
-    private ?AuthenticatorInterface $resolvedAuthenticator = null;
+    private ?BearerTokenResolver $tokenResolver = null;
 
     public function __construct(
         ?ApiClientConfiguration $configuration = null,
@@ -20,11 +22,11 @@ class SystemAuthenticatorResolver implements AuthenticatorInterface
 
     public function getAuthenticationToken(string $resource): AuthenticationToken
     {
-        $this->resolvedAuthenticator ??= $this->resolveAuthenticator();
-        return $this->resolvedAuthenticator->getAuthenticationToken($resource);
+        $this->tokenResolver ??= $this->resolveTokenResolver();
+        return $this->tokenResolver->getAuthenticationToken($resource);
     }
 
-    private function resolveAuthenticator(): AuthenticatorInterface
+    private function resolveTokenResolver(): BearerTokenResolver
     {
         $tenantId = (string) getenv('AZURE_TENANT_ID');
         $clientId = (string) getenv('AZURE_CLIENT_ID');
@@ -34,7 +36,7 @@ class SystemAuthenticatorResolver implements AuthenticatorInterface
                 'Found Azure client credentials in ENV, using ClientCredentialsAuthenticator'
             );
 
-            return new ClientCredentialsAuthenticator(
+            return new ClientCredentialsAuth(
                 $tenantId,
                 $clientId,
                 $clientSecret,
@@ -45,6 +47,6 @@ class SystemAuthenticatorResolver implements AuthenticatorInterface
         $this->configuration->logger->debug(
             'Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator'
         );
-        return new ManagedCredentialsAuthenticator($this->configuration);
+        return new ManagedCredentialsAuth($this->configuration);
     }
 }

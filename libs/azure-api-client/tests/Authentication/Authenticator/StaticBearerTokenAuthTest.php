@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests\Authentication\Authenticator;
 
-use Keboola\AzureApiClient\Authentication\Authenticator\StaticTokenAuthenticator;
+use Keboola\AzureApiClient\Authentication\Authenticator\StaticBearerTokenAuth;
 use PHPUnit\Framework\TestCase;
 
-class StaticTokenAuthenticatorTest extends TestCase
+class StaticBearerTokenAuthTest extends TestCase
 {
     public function testGetAuthenticationToken(): void
     {
-        $authenticator = new StaticTokenAuthenticator('my-token');
+        $authenticator = new StaticBearerTokenAuth('my-token');
         $token = $authenticator->getAuthenticationToken('foo-resource');
 
         self::assertSame('my-token', $token->value);

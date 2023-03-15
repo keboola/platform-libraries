@@ -17,16 +17,25 @@ class ColumnMetadataTest extends TestCase
     private const TEST_METADATA = [
         'id' => [
             [
+                'columnName' => 'id',
                 'key' => 'timestamp',
                 'value' => '1674226231',
             ],
         ],
+        'webalize | test 😁' => [
+            [
+                'key' => 'foo',
+                'value' => 'bar',
+            ],
+        ],
         'aa_caa' => [
             [
+                'columnName' => 'aa_caa',
                 'key' => 'KBC.datatype.basetype',
                 'value' => 'STRING',
             ],
             [
+                'columnName' => 'aa_caa',
                 'key' => '1',
                 'value' => '',
             ],
@@ -42,16 +51,26 @@ class ColumnMetadataTest extends TestCase
                 [
                     'id' => [
                         [
+                            'columnName' => 'id',
                             'key' => 'timestamp',
                             'value' => '1674226231',
                         ],
                     ],
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'foo',
+                            'value' => 'bar',
+                        ],
+                    ],
                     'aa_caa' => [
                         [
+                            'columnName' => 'aa_caa',
                             'key' => 'KBC.datatype.basetype',
                             'value' => 'STRING',
                         ],
                         [
+                            'columnName' => 'aa_caa',
                             'key' => '1',
                             'value' => '',
                         ],
@@ -62,23 +81,35 @@ class ColumnMetadataTest extends TestCase
 
         yield 'load in chunks' => [
             'bulkSize' => 1,
-            'expectedApiCalls' => 2,
+            'expectedApiCalls' => 3,
             'expectedColumnsMetadata' => [
                 [
                     'id' => [
                         [
+                            'columnName' => 'id',
                             'key' => 'timestamp',
                             'value' => '1674226231',
                         ],
                     ],
                 ],
                 [
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'foo',
+                            'value' => 'bar',
+                        ],
+                    ],
+                ],
+                [
                     'aa_caa' => [
                         [
+                            'columnName' => 'aa_caa',
                             'key' => 'KBC.datatype.basetype',
                             'value' => 'STRING',
                         ],
                         [
+                            'columnName' => 'aa_caa',
                             'key' => '1',
                             'value' => '',
                         ],

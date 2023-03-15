@@ -26,14 +26,16 @@ class ColumnMetadata implements MetadataInterface
 
             foreach ($chunk as $column => $metadataArray) {
                 $columnMetadata = [];
+                $columnName = ColumnNameSanitizer::sanitize($column);
                 foreach ($metadataArray as $metadata) {
                     $columnMetadata[] = [
+                        'columnName' => $columnName,
                         'key' => (string) $metadata['key'],
                         'value' => (string) $metadata['value'],
                     ];
                 }
 
-                $columnsMetadata[ColumnNameSanitizer::sanitize($column)] = $columnMetadata;
+                $columnsMetadata[$columnName] = $columnMetadata;
             }
 
             $options = new TableMetadataUpdateOptions(

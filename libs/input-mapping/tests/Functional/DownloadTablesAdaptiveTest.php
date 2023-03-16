@@ -140,7 +140,8 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid date format: nonsense');
+        $this->expectExceptionMessage('Invalid parameters - changedSince: changedSince has to be '
+            . 'compatible with strtotime() or to be a unix timestamp.');
         $reader->downloadTables(
             $configuration,
             $inputTablesState,

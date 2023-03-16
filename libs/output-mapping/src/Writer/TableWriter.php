@@ -151,6 +151,7 @@ class TableWriter extends AbstractWriter
         bool $createTypedTables
     ): LoadTableTaskInterface {
         $hasColumns = !empty($config['columns']);
+        $hasColumnsMetadata = !empty($config['column_metadata']);
         if (!$hasColumns && $source->isSliced()) {
             throw new InvalidOutputException(
                 sprintf('Sliced file "%s" columns specification missing.', $source->getName())
@@ -222,7 +223,7 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && !empty($config['column_metadata']))) {
+        if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && $hasColumnsMetadata)) {
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
                 $destinationBucket['backend']
@@ -269,7 +270,7 @@ class TableWriter extends AbstractWriter
             ));
         }
 
-        if (!empty($config['column_metadata'])) {
+        if ($hasColumnsMetadata) {
             $loadTask->addMetadata(new ColumnMetadata(
                 $destination->getTableId(),
                 $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],

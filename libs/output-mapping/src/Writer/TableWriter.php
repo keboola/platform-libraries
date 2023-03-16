@@ -168,7 +168,6 @@ class TableWriter extends AbstractWriter
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
         $storageApiClient = $this->clientWrapper->getBasicClient();
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
-        $destinationTableExists = (bool) $destinationTableInfo;
 
         if ($destinationTableInfo !== null) {
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
@@ -198,7 +197,7 @@ class TableWriter extends AbstractWriter
             'incremental' => $config['incremental'],
         ];
 
-        if (!$destinationTableExists && isset($config['distribution_key'])) {
+        if ($destinationTableInfo === null && isset($config['distribution_key'])) {
             $loadOptions['distributionKey'] = implode(
                 ',',
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
@@ -213,7 +212,7 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
+        if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && !empty($config['column_metadata']))) {
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
                 $destinationBucket['backend']
@@ -226,11 +225,11 @@ class TableWriter extends AbstractWriter
             $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif (!$destinationTableExists && $hasColumns) {
+        } elseif ($destinationTableInfo === null && $hasColumns) {
             $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif ($destinationTableExists) {
+        } elseif ($destinationTableInfo !== null) {
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = false;
         } else {

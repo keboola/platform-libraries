@@ -23,6 +23,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -128,6 +129,19 @@ class TableWriter extends AbstractWriter
         return $tableQueue;
     }
 
+    private function getDestinationTableInfoIfExists(string $tableId, Client $storageApiClient): ?array
+    {
+        try {
+            return $storageApiClient->getTable($tableId);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+
+        return null;
+    }
+
     private function createLoadTableTask(
         StrategyInterface $strategy,
         SourceInterface $source,
@@ -152,24 +166,15 @@ class TableWriter extends AbstractWriter
         }
 
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
-
         $storageApiClient = $this->clientWrapper->getBasicClient();
-        try {
-            $destinationTableInfo = $storageApiClient->getTable($destination->getTableId());
-            $destinationTableExists = true;
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-            $destinationTableInfo = null;
-            $destinationTableExists = false;
-        }
+        $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
+        $destinationTableExists = (bool) $destinationTableInfo;
 
         if ($destinationTableInfo !== null) {
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
-                    $this->clientWrapper->getBasicClient(),
+                    $storageApiClient,
                     $destination->getTableId(),
                     $destinationTableInfo['primaryKey'],
                     $config['primary_key']
@@ -183,7 +188,7 @@ class TableWriter extends AbstractWriter
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $this->clientWrapper->getBasicClient()->deleteTableRows($destination->getTableId(), $deleteOptions);
+                $storageApiClient->deleteTableRows($destination->getTableId(), $deleteOptions);
             }
         }
 

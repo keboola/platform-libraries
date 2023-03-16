@@ -57,7 +57,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
         // there were 2 jobs, clone and copy, so should have 2 metrics entries
         $metrics = $result->getMetrics()?->getTableMetrics();
         self::assertNotNull($metrics);
-        self::assertCount(2, $metrics);
+        self::assertCount(2, iterator_to_array($metrics));
 
         $adapter = new Adapter();
 

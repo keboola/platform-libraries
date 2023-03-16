@@ -17,6 +17,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\TypedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -170,6 +171,15 @@ class TableWriter extends AbstractWriter
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
 
         if ($destinationTableInfo !== null) {
+            if ($createTypedTables && TypedColumnsHelper::addMissingColumnsDecider($destinationTableInfo, $config)) {
+                TypedColumnsHelper::addMissingColumns(
+                    $storageApiClient,
+                    $destinationTableInfo,
+                    $config,
+                    $destinationBucket['backend']
+                );
+            }
+
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,

@@ -254,6 +254,135 @@ class TableDefinitionTest extends BaseWriterTest
     /**
      * @dataProvider incrementalFlagProvider
      */
+    public function testWriterUpdateTableDefinitionWithBaseTypes(bool $incrementalFlag): void
+    {
+        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
+        $this->dropTableIfExists($tableId);
+
+        $idDatatype = new GenericStorage('int', ['nullable' => false]);
+        $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
+        //@TODO I think this is problem, we do not have option to set nullable flag for basetypes
+        $birthweightDatatype = new GenericStorage('decimal', ['length' => '5,2', 'nullable' => false]);
+        $created = new GenericStorage('timestamp');
+
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $tableId,
+            'incremental' => $incrementalFlag,
+            'columns' => ['Id', 'Name', 'birthweight', 'created'],
+            'primary_key' => ['Id', 'Name'],
+            'column_metadata' => [
+                'Id' => $idDatatype->toMetadata(),
+                'Name' => $nameDatatype->toMetadata(),
+                'birthweight' => $birthweightDatatype->toMetadata(),
+                'created' => $created->toMetadata(),
+            ],
+        ];
+
+        $this->clientWrapper->getBasicClient()->createTableDefinition(self::OUTPUT_BUCKET, [
+            'name' => 'tableDefinition',
+            'primaryKeysNames' => ['Id', 'Name'], //@TODO without pk the test is failing
+            'columns' => [
+                [
+                    'name' => 'Id',
+                    'basetype' => $idDatatype->getBasetype(),
+                ],
+                [
+                    'name' => 'Name',
+                    'basetype' => $nameDatatype->getBasetype(),
+                ],
+            ],
+        ]);
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBasicClient()->setRunId($runId);
+
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT
+        );
+        $writer = new TableWriter($this->getStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'typedTableEnabled' => true,
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            true
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $writerJobs = array_filter(
+            $this->clientWrapper->getBasicClient()->listJobs(),
+            function (array $job) use ($runId) {
+                return $runId === $job['runId'];
+            }
+        );
+
+//        self::assertCount(4, $writerJobs);
+        self::assertCount(3, $writerJobs);
+
+        // tableColumnAdd jobs
+        $job = array_pop($writerJobs);
+        self::assertSame('tableColumnAdd', $job['operationName']);
+        self::assertSame('birthweight', $job['operationParams']['name']);
+        self::assertSame('NUMERIC', $job['operationParams']['basetype']);
+        self::assertNull($job['operationParams']['definition']);
+
+        $job = array_pop($writerJobs);
+        self::assertSame('tableColumnAdd', $job['operationName']);
+        self::assertSame('created', $job['operationParams']['name']);
+        self::assertSame('TIMESTAMP', $job['operationParams']['basetype']);
+        self::assertNull($job['operationParams']['definition']);
+
+        /*
+        // modify PK job
+        $job = array_pop($writerJobs);
+        self::assertSame('tablePrimaryKeyAdd', $job['operationName']);
+        self::assertSame(['Id', 'Name'], $job['operationParams']['columns']);
+*/
+        // incremental import
+        $job = array_pop($writerJobs);
+        self::assertSame('tableImport', $job['operationName']);
+        self::assertSame($incrementalFlag, $job['operationParams']['params']['incremental']);
+        self::assertSame([], $job['results']['newColumns']);
+
+        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
+            'type' => Snowflake::TYPE_NUMBER,
+            'length' => '38,0', // default integer length
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [
+            'type' => Snowflake::TYPE_VARCHAR,
+            'length' => '16777216', // default varchar length
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
+            'type' => Snowflake::TYPE_NUMBER,
+            'length' => '38,0',
+            'nullable' => true, // tady by spravne melo byt false
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
+            'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+            'length' => '9',
+            'nullable' => true,
+        ]);
+    }
+
+    /**
+     * @dataProvider incrementalFlagProvider
+     */
     public function testWriterUpdateTableDefinitionWithNativeTypes(bool $incrementalFlag): void
     {
         $tableId = self::OUTPUT_BUCKET . '.tableDefinition';

@@ -39,20 +39,17 @@ class TableDefinitionTest extends BaseWriterTest
 
     public function testNotCreateTableDefinition(): void
     {
+        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
         $config = [
             'source' => 'tableDefinition.csv',
-            'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
+            'destination' => $tableId,
             'columns' => ['Id', 'Name', 'birthweight', 'created'],
             'column_metadata' => [],
             'primary_key' => ['Id', 'Name'],
         ];
-        try {
-            $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (Throwable $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-        }
+
+        $this->dropTableIfExists($tableId);
+
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
@@ -75,15 +72,16 @@ class TableDefinitionTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
+        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertFalse($tableDetails['isTyped']);
     }
 
     public function testCreateTableDefinitionErrorHandling(): void
     {
+        $tableId = self::OUTPUT_BUCKET . '.tableDefinitionWithInvalidDataTypes';
         $config = [
             'source' => 'tableDefinition.csv',
-            'destination' => self::OUTPUT_BUCKET . '.tableDefinitionWithInvalidDataTypes',
+            'destination' => $tableId,
             'columns' => ['Id', 'Name'],
             'column_metadata' => [
                 'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
@@ -91,13 +89,7 @@ class TableDefinitionTest extends BaseWriterTest
             'primary_key' => ['Id', 'Name'],
         ];
 
-        try {
-            $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (Throwable $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-        }
+        $this->dropTableIfExists($tableId);
 
         touch(sprintf('%s/upload/tableDefinition.csv', $this->tmp->getTmpFolder()));
         $writer = new TableWriter($this->getStagingFactory());
@@ -128,13 +120,8 @@ class TableDefinitionTest extends BaseWriterTest
         array $config,
         array $expectedTypes
     ): void {
-        try {
-            $this->clientWrapper->getBasicClient()->dropTable($config['destination']);
-        } catch (Throwable $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-        }
+        $this->dropTableIfExists($config['destination']);
+
         $root = $this->tmp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
@@ -258,6 +245,142 @@ class TableDefinitionTest extends BaseWriterTest
         ];
     }
 
+    public function incrementalFlagProvider(): Generator
+    {
+        yield 'incremental load' => [true];
+        yield 'full load' => [false];
+    }
+
+    /**
+     * @dataProvider incrementalFlagProvider
+     */
+    public function testWriterUpdateTableDefinitionWithNativeTypes(bool $incrementalFlag): void
+    {
+        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
+        $this->dropTableIfExists($tableId);
+
+        $idDatatype = new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]);
+        $nameDatatype = new Snowflake(Snowflake::TYPE_TEXT, ['length' => '17', 'nullable' => false]);
+        $birthweightDatatype = new Snowflake(Snowflake::TYPE_DECIMAL, ['length' => '10,2']);
+        $created = new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ);
+
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $tableId,
+            'incremental' => $incrementalFlag,
+            'columns' => ['Id', 'Name', 'birthweight', 'created'],
+            'primary_key' => ['Id', 'Name'],
+            'metadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'snowflake',
+                ],
+            ],
+            'column_metadata' => [
+                'Id' => $idDatatype->toMetadata(),
+                'Name' => $nameDatatype->toMetadata(),
+                'birthweight' => $birthweightDatatype->toMetadata(),
+                'created' => $created->toMetadata(),
+            ],
+        ];
+
+        $this->clientWrapper->getBasicClient()->createTableDefinition(self::OUTPUT_BUCKET, [
+            'name' => 'tableDefinition',
+            'primaryKeysNames' => [],
+            'columns' => [
+                [
+                    'name' => 'Id',
+                    'definition' => $idDatatype->toArray(),
+                ],
+                [
+                    'name' => 'Name',
+                    'definition' => $nameDatatype->toArray(),
+                ],
+            ],
+        ]);
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBasicClient()->setRunId($runId);
+
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT
+        );
+        $writer = new TableWriter($this->getStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'typedTableEnabled' => true,
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            true
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $writerJobs = array_filter(
+            $this->clientWrapper->getBasicClient()->listJobs(),
+            function (array $job) use ($runId) {
+                return $runId === $job['runId'];
+            }
+        );
+
+        self::assertCount(4, $writerJobs);
+        self::assertTableColumnAddJob(
+            array_pop($writerJobs),
+            'birthweight',
+            null,
+            [
+                'type' => 'DECIMAL',
+                'length' => '10,2',
+                'nullable' => true,
+            ]
+        );
+        self::assertTableColumnAddJob(
+            array_pop($writerJobs),
+            'created',
+            null,
+            [
+                'type' => 'TIMESTAMP_TZ',
+                'length' => null,
+                'nullable' => true,
+            ]
+        );
+        self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
+        self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
+
+        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
+            'type' => Snowflake::TYPE_NUMBER,
+            'length' => '38,0', // default integer length
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [
+            'type' => Snowflake::TYPE_VARCHAR,
+            'length' => '17',
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
+            'type' => Snowflake::TYPE_NUMBER,
+            'length' => '10,2',
+            'nullable' => true,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
+            'type' => Snowflake::TYPE_TIMESTAMP_TZ,
+            'length' => '9', // timestamp_tz has length 9 apparently
+            'nullable' => true,
+        ]);
+    }
+
     private static function assertDataTypeDefinition(array $metadata, array $expectedType): void
     {
         $typeMetadata = array_values(array_filter($metadata, function ($metadatum) {
@@ -280,5 +403,44 @@ class TableDefinitionTest extends BaseWriterTest
         }));
         self::assertCount(1, $nullableMetadata);
         self::assertEquals($expectedType['nullable'], $nullableMetadata[0]['value']);
+    }
+
+    private static function assertTableColumnAddJob(
+        array $jobData,
+        string $expectedColumnName,
+        ?string $expectedBaseType,
+        ?array $expectedDefinition
+    ): void {
+        self::assertSame('tableColumnAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
+        self::assertSame($expectedBaseType, $jobData['operationParams']['basetype']);
+        self::assertSame($expectedDefinition, $jobData['operationParams']['definition']);
+    }
+
+    private static function assertTablePrimaryKeyAddJob(array $jobData, array $expectedPk): void
+    {
+        self::assertSame('tablePrimaryKeyAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedPk, $jobData['operationParams']['columns']);
+    }
+
+    private static function assertTableImportJob(array $jobData, bool $expectedIncrementalFlag): void
+    {
+        self::assertSame('tableImport', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
+        self::assertSame([], $jobData['results']['newColumns']);
+    }
+
+    private function dropTableIfExists(string $tableId): void
+    {
+        try {
+            $this->clientWrapper->getBasicClient()->dropTable($tableId);
+        } catch (Throwable $exception) {
+            if ($exception->getCode() !== 404) {
+                throw $exception;
+            }
+        }
     }
 }

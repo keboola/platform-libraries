@@ -320,62 +320,50 @@ class TypedColumnsHelperTest extends TestCase
     /**
      * @dataProvider addMissingColumnsProvider
      */
-    public function testAddMissingColumnsHovno(
+    public function testAddMissingColumns(
         array $tableInfo,
         array $config,
         array $addTableColumnWithConsecutiveParams
     ): void {
         $clientMock = $this->createMock(Client::class);
-
-        $expectedTableIds = [];
-        $expectedColumnNames = [];
-        $expectedDefinitions = [];
-        $expectedDataTypes = [];
-
-        foreach ($addTableColumnWithConsecutiveParams as $expected) {
-            $expectedTableIds[] = $expected[0];
-            $expectedColumnNames[] = $expected[1];
-            $expectedDefinitions[] = $expected[2];
-            $expectedDataTypes[] = $expected[3];
-        }
-
         $clientMock
             ->expects(self::exactly(2))
             ->method('addTableColumn')
-            // withConsecutive alternative
-            ->with(
-                self::callback(function (string $tableId) use (&$expectedTableIds) {
+            ->willReturnCallback(
+                function (
+                    string $tableId,
+                    string $columnName,
+                    ?array $definition,
+                    ?string $baseType
+                ) use (&$addTableColumnWithConsecutiveParams) {
+                    list (
+                        $xpectedTableId,
+                        $expectedColumnName,
+                        $expectedDefinition,
+                        $expectedDataTypes
+                    ) = array_shift($addTableColumnWithConsecutiveParams);
+
                     self::assertSame(
-                        array_shift($expectedTableIds),
+                        $xpectedTableId,
                         $tableId,
                         'Table id does not match'
                     );
-                    return true;
-                }),
-                self::callback(function (string $columnName) use (&$expectedColumnNames) {
                     self::assertSame(
-                        array_shift($expectedColumnNames),
+                        $expectedColumnName,
                         $columnName,
                         'Column name does not match'
                     );
-                    return true;
-                }),
-                self::callback(function (?array $definition) use (&$expectedDefinitions) {
                     self::assertSame(
-                        array_shift($expectedDefinitions),
+                        $expectedDefinition,
                         $definition,
                         'Column definition does not match'
                     );
-                    return true;
-                }),
-                self::callback(function (?string $baseType) use (&$expectedDataTypes) {
                     self::assertSame(
-                        array_shift($expectedDataTypes),
+                        $expectedDataTypes,
                         $baseType,
                         'Column datatype does not match'
                     );
-                    return true;
-                })
+                }
             )
         ;
 

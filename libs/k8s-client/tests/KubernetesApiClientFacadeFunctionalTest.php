@@ -56,7 +56,6 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
     {
         $this->apiClient->deleteAllMatching(
             new DeleteOptions(['gracePeriodSeconds' => 0]),
-            ['labelSelector' => 'app=KubernetesApiClientFacadeFunctionalTest']
         );
     }
 

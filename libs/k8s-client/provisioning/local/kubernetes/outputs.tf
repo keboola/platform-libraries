@@ -1,5 +1,5 @@
 output "namespace" {
-  value     = kubernetes_namespace.k8s_client.metadata.0.name
+  value     = kubernetes_namespace.k8s_client_tests.metadata.0.name
   sensitive = true
 }
 

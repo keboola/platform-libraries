@@ -16,11 +16,11 @@ use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
  */
 class PodsApiClient extends BaseNamespaceApiClient
 {
-    public function __construct(KubernetesApiClient $apiClient)
+    public function __construct(KubernetesApiClient $apiClient, PodsApi $baseApi)
     {
         parent::__construct(
             $apiClient,
-            new PodsApi(),
+            $baseApi,
             PodList::class,
             Pod::class,
         );

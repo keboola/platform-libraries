@@ -55,6 +55,7 @@ resource "kubernetes_role" "k8s_client" {
   rule {
     api_groups = [""]
     resources  = [
+      "configmaps",
       "persistentvolumeclaims",
       "pods",
       "secrets",

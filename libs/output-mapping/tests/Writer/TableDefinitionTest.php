@@ -261,8 +261,7 @@ class TableDefinitionTest extends BaseWriterTest
 
         $idDatatype = new GenericStorage('int', ['nullable' => false]);
         $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
-        //@TODO I think this is problem, we do not have option to set nullable flag for basetypes
-        $birthweightDatatype = new GenericStorage('decimal', ['length' => '5,2', 'nullable' => false]);
+        $birthweightDatatype = new GenericStorage('decimal', ['length' => '5,2']);
         $created = new GenericStorage('timestamp');
 
         $config = [
@@ -281,7 +280,7 @@ class TableDefinitionTest extends BaseWriterTest
 
         $this->clientWrapper->getBasicClient()->createTableDefinition(self::OUTPUT_BUCKET, [
             'name' => 'tableDefinition',
-            'primaryKeysNames' => ['Id', 'Name'], //@TODO without pk the test is failing
+            'primaryKeysNames' => [],
             'columns' => [
                 [
                     'name' => 'Id',
@@ -327,8 +326,7 @@ class TableDefinitionTest extends BaseWriterTest
             }
         );
 
-//        self::assertCount(4, $writerJobs);
-        self::assertCount(3, $writerJobs);
+        self::assertCount(4, $writerJobs);
 
         // tableColumnAdd jobs
         $job = array_pop($writerJobs);
@@ -343,12 +341,11 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertSame('TIMESTAMP', $job['operationParams']['basetype']);
         self::assertNull($job['operationParams']['definition']);
 
-        /*
         // modify PK job
         $job = array_pop($writerJobs);
         self::assertSame('tablePrimaryKeyAdd', $job['operationName']);
         self::assertSame(['Id', 'Name'], $job['operationParams']['columns']);
-*/
+
         // incremental import
         $job = array_pop($writerJobs);
         self::assertSame('tableImport', $job['operationName']);
@@ -361,17 +358,17 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
             'type' => Snowflake::TYPE_NUMBER,
             'length' => '38,0', // default integer length
-            'nullable' => false,
+            'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [
             'type' => Snowflake::TYPE_VARCHAR,
             'length' => '16777216', // default varchar length
-            'nullable' => false,
+            'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
             'type' => Snowflake::TYPE_NUMBER,
             'length' => '38,0',
-            'nullable' => true, // tady by spravne melo byt false
+            'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
             'type' => Snowflake::TYPE_TIMESTAMP_LTZ,

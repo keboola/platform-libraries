@@ -6,7 +6,6 @@ namespace Keboola\K8sClient\ClientFacadeFactory;
 
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
@@ -61,7 +60,6 @@ class GenericClientFacadeFactory
             $this->logger,
             new ConfigMapsApiClient($apiClient),
             new EventsApiClient($apiClient),
-            new PersistentVolumeApiClient($apiClient),
             new PersistentVolumeClaimApiClient($apiClient),
             new PodsApiClient($apiClient, new Pod()),
             new SecretsApiClient($apiClient),

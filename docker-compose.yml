@@ -161,3 +161,17 @@ services:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
+
+  dev-settle:
+    profiles: [ dev ]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/settle
+
+  ci-settle:
+    profiles: [ ci ]
+    image: keboola/settle
+    build:
+      context: .
+      target: settle

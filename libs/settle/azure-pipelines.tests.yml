@@ -1,0 +1,7 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: settle_tests
+      displayName: Settle Tests
+      serviceName: ci-settle

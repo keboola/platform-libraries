@@ -38,6 +38,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/configuration-variables-resolver
+    - repository: settle
+      type: github
+      endpoint: keboola
+      name: keboola/settle
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -99,3 +103,11 @@ jobs:
       targetRepo: configuration-variables-resolver
       libraryPath: libs/configuration-variables-resolver
       tagPrefix: configuration-variables-resolver/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/settle/')
+      sourceRepo: platform-libraries
+      targetRepo: settle
+      libraryPath: libs/settle
+      tagPrefix: settle/

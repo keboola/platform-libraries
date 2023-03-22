@@ -10,9 +10,9 @@ use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class TypedColumnsHelper
 {
-    private static function getMissingColumns(array $tableInfo, array $config): array
+    private static function getMissingColumns(array $currentTableInfo, array $config): array
     {
-        $tableColumns = $tableInfo['columns'];
+        $tableColumns = $currentTableInfo['columns'];
         $configColumns = array_map(function ($columnName): string {
             return ColumnNameSanitizer::sanitize($columnName);
         }, array_keys($config['column_metadata']));
@@ -20,13 +20,13 @@ class TypedColumnsHelper
         return array_diff($configColumns, $tableColumns);
     }
 
-    public static function addMissingColumnsDecider(array $tableInfo, array $config): bool
+    public static function addMissingColumnsDecider(array $currentTableInfo, array $config): bool
     {
-        if ($tableInfo['isTyped'] !== true) {
+        if ($currentTableInfo['isTyped'] !== true) {
             return false;
         }
 
-        if (self::getMissingColumns($tableInfo, $config)) {
+        if (self::getMissingColumns($currentTableInfo, $config)) {
             return true;
         }
 
@@ -35,14 +35,14 @@ class TypedColumnsHelper
 
     public static function addMissingColumns(
         Client $client,
-        array $tableInfo,
-        array $config,
+        array  $currentTableInfo,
+        array  $config,
         string $backendType,
     ): void {
 
         $tableMetadata = $config['metadata'] ?? [];
 
-        $missingColumns = self::getMissingColumns($tableInfo, $config);
+        $missingColumns = self::getMissingColumns($currentTableInfo, $config);
 
         foreach ($config['column_metadata'] as $columnName => $columnMetadata) {
             $columnName = ColumnNameSanitizer::sanitize($columnName);
@@ -56,7 +56,7 @@ class TypedColumnsHelper
 
             $columnData = $column->toArray();
             $client->addTableColumn(
-                $tableInfo['id'],
+                $currentTableInfo['id'],
                 $column->getName(),
                 $columnData['definition'] ?? null,
                 $columnData['basetype'] ?? null

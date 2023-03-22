@@ -226,9 +226,9 @@ class TypedColumnsHelperTest extends TestCase
     /**
      * @dataProvider addMissingColumnsDeciderProvider
      */
-    public function testAddMissingColumnsDecider(array $tableInfo, array $config, bool $expectedDecision): void
+    public function testAddMissingColumnsDecider(array $currentTableInfo, array $config, bool $expectedDecision): void
     {
-        self::assertSame($expectedDecision, TypedColumnsHelper::addMissingColumnsDecider($tableInfo, $config));
+        self::assertSame($expectedDecision, TypedColumnsHelper::addMissingColumnsDecider($currentTableInfo, $config));
     }
 
     public function doNotAddColumnsProvider(): Generator
@@ -303,7 +303,7 @@ class TypedColumnsHelperTest extends TestCase
     /**
      * @dataProvider doNotAddColumnsProvider
      */
-    public function testDoNotAddColumns(array $tableInfo, array $config): void
+    public function testDoNotAddColumns(array $currentTableInfo, array $config): void
     {
         $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::never())
@@ -311,7 +311,7 @@ class TypedColumnsHelperTest extends TestCase
 
         TypedColumnsHelper::addMissingColumns(
             $clientMock,
-            $tableInfo,
+            $currentTableInfo,
             $config,
             $this->getBackendFromTableMetadata($config['metadata'])
         );
@@ -321,7 +321,7 @@ class TypedColumnsHelperTest extends TestCase
      * @dataProvider addMissingColumnsProvider
      */
     public function testAddMissingColumns(
-        array $tableInfo,
+        array $currentTableInfo,
         array $config,
         array $addTableColumnWithConsecutiveParams
     ): void {
@@ -369,7 +369,7 @@ class TypedColumnsHelperTest extends TestCase
 
         TypedColumnsHelper::addMissingColumns(
             $clientMock,
-            $tableInfo,
+            $currentTableInfo,
             $config,
             $this->getBackendFromTableMetadata($config['metadata'])
         );

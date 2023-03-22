@@ -10,23 +10,23 @@ use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class TypedColumnsHelper
 {
-    private static function getMissingColumns(array $currentTableInfo, array $config): array
+    private static function getMissingColumns(array $currentTableInfo, array $newTableConfiguration): array
     {
         $tableColumns = $currentTableInfo['columns'];
         $configColumns = array_map(function ($columnName): string {
             return ColumnNameSanitizer::sanitize($columnName);
-        }, array_keys($config['column_metadata']));
+        }, array_keys($newTableConfiguration['column_metadata']));
 
         return array_diff($configColumns, $tableColumns);
     }
 
-    public static function addMissingColumnsDecider(array $currentTableInfo, array $config): bool
+    public static function addMissingColumnsDecider(array $currentTableInfo, array $newTableConfiguration): bool
     {
         if ($currentTableInfo['isTyped'] !== true) {
             return false;
         }
 
-        if (self::getMissingColumns($currentTableInfo, $config)) {
+        if (self::getMissingColumns($currentTableInfo, $newTableConfiguration)) {
             return true;
         }
 
@@ -35,16 +35,16 @@ class TypedColumnsHelper
 
     public static function addMissingColumns(
         Client $client,
-        array  $currentTableInfo,
-        array  $config,
+        array $currentTableInfo,
+        array $newTableConfiguration,
         string $backendType,
     ): void {
 
-        $tableMetadata = $config['metadata'] ?? [];
+        $tableMetadata = $newTableConfiguration['metadata'] ?? [];
 
-        $missingColumns = self::getMissingColumns($currentTableInfo, $config);
+        $missingColumns = self::getMissingColumns($currentTableInfo, $newTableConfiguration);
 
-        foreach ($config['column_metadata'] as $columnName => $columnMetadata) {
+        foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
             $columnName = ColumnNameSanitizer::sanitize($columnName);
 
             if (!in_array($columnName, $missingColumns)) {

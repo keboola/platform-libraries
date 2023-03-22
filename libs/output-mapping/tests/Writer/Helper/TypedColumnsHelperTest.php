@@ -226,9 +226,15 @@ class TypedColumnsHelperTest extends TestCase
     /**
      * @dataProvider addMissingColumnsDeciderProvider
      */
-    public function testAddMissingColumnsDecider(array $currentTableInfo, array $config, bool $expectedDecision): void
-    {
-        self::assertSame($expectedDecision, TypedColumnsHelper::addMissingColumnsDecider($currentTableInfo, $config));
+    public function testAddMissingColumnsDecider(
+        array $currentTableInfo,
+        array $newTableConfiguration,
+        bool $expectedDecision
+    ): void {
+        self::assertSame(
+            $expectedDecision,
+            TypedColumnsHelper::addMissingColumnsDecider($currentTableInfo, $newTableConfiguration)
+        );
     }
 
     public function doNotAddColumnsProvider(): Generator
@@ -303,7 +309,7 @@ class TypedColumnsHelperTest extends TestCase
     /**
      * @dataProvider doNotAddColumnsProvider
      */
-    public function testDoNotAddColumns(array $currentTableInfo, array $config): void
+    public function testDoNotAddColumns(array $currentTableInfo, array $newTableConfiguration): void
     {
         $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::never())
@@ -312,8 +318,8 @@ class TypedColumnsHelperTest extends TestCase
         TypedColumnsHelper::addMissingColumns(
             $clientMock,
             $currentTableInfo,
-            $config,
-            $this->getBackendFromTableMetadata($config['metadata'])
+            $newTableConfiguration,
+            $this->getBackendFromTableMetadata($newTableConfiguration['metadata'])
         );
     }
 
@@ -322,7 +328,7 @@ class TypedColumnsHelperTest extends TestCase
      */
     public function testAddMissingColumns(
         array $currentTableInfo,
-        array $config,
+        array $newTableConfiguration,
         array $addTableColumnWithConsecutiveParams
     ): void {
         $clientMock = $this->createMock(Client::class);
@@ -370,8 +376,8 @@ class TypedColumnsHelperTest extends TestCase
         TypedColumnsHelper::addMissingColumns(
             $clientMock,
             $currentTableInfo,
-            $config,
-            $this->getBackendFromTableMetadata($config['metadata'])
+            $newTableConfiguration,
+            $this->getBackendFromTableMetadata($newTableConfiguration['metadata'])
         );
     }
 

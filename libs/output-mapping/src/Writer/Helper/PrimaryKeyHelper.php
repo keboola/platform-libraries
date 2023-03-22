@@ -36,13 +36,14 @@ class PrimaryKeyHelper
     public static function modifyPrimaryKeyDecider(
         LoggerInterface $logger,
         array $currentTableInfo,
-        array $config
+        array $newTableConfiguration
     ): bool {
-        $configPK = self::normalizeKeyArray($logger, $config['primary_key']);
+        $configPK = self::normalizeKeyArray($logger, $newTableConfiguration['primary_key']);
         if (count($currentTableInfo['primaryKey']) !== count($configPK)) {
             return true;
         }
-        if (count(array_intersect($currentTableInfo['primaryKey'], $configPK)) !== count($currentTableInfo['primaryKey'])) {
+        $currentTablePkColumnsCount = count($currentTableInfo['primaryKey']);
+        if (count(array_intersect($currentTableInfo['primaryKey'], $configPK)) !== $currentTablePkColumnsCount) {
             return true;
         }
         return false;

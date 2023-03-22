@@ -170,8 +170,9 @@ class TableWriter extends AbstractWriter
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
         $storageApiClient = $this->clientWrapper->getBasicClient();
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
+        $destinationTableExists = (bool) $destinationTableInfo;
 
-        if ($destinationTableInfo !== null) {
+        if ($destinationTableExists) {
             if ($createTypedTables && TypedColumnsHelper::addMissingColumnsDecider($destinationTableInfo, $config)) {
                 TypedColumnsHelper::addMissingColumns(
                     $storageApiClient,
@@ -208,7 +209,7 @@ class TableWriter extends AbstractWriter
             'incremental' => $config['incremental'],
         ];
 
-        if ($destinationTableInfo === null && isset($config['distribution_key'])) {
+        if (!$destinationTableExists && isset($config['distribution_key'])) {
             $loadOptions['distributionKey'] = implode(
                 ',',
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
@@ -236,11 +237,11 @@ class TableWriter extends AbstractWriter
             $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif ($destinationTableInfo === null && $hasColumns) {
+        } elseif (!$destinationTableExists && $hasColumns) {
             $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif ($destinationTableInfo !== null) {
+        } elseif ($destinationTableExists) {
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = false;
         } else {

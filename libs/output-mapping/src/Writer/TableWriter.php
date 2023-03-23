@@ -172,7 +172,7 @@ class TableWriter extends AbstractWriter
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
 
         if ($destinationTableInfo !== null) {
-            if ($createTypedTables && TypedColumnsHelper::addMissingColumnsDecider($destinationTableInfo, $config)) {
+            if (TypedColumnsHelper::addMissingColumnsDecider($destinationTableInfo, $config)) {
                 TypedColumnsHelper::addMissingColumns(
                     $storageApiClient,
                     $destinationTableInfo,

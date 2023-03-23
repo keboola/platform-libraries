@@ -82,9 +82,16 @@ class PrimaryKeyHelperTest extends TestCase
     /**
      * @dataProvider modifyPrimaryKeyDeciderOptionsProvider
      */
-    public function testModifyPrimaryKeyDecider(array $tableInfo, array $config, bool $result): void
-    {
-        self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(new NullLogger(), $tableInfo, $config));
+    public function testModifyPrimaryKeyDecider(
+        array $currentTableInfo,
+        array $newTableConfiguration,
+        bool $result
+    ): void {
+        self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(
+            new NullLogger(),
+            $currentTableInfo,
+            $newTableConfiguration
+        ));
     }
 
     /**

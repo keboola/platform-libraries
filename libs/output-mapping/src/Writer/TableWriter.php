@@ -17,12 +17,14 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\TypedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
@@ -128,6 +130,19 @@ class TableWriter extends AbstractWriter
         return $tableQueue;
     }
 
+    private function getDestinationTableInfoIfExists(string $tableId, Client $storageApiClient): ?array
+    {
+        try {
+            return $storageApiClient->getTable($tableId);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+
+        return null;
+    }
+
     private function createLoadTableTask(
         StrategyInterface $strategy,
         SourceInterface $source,
@@ -136,6 +151,7 @@ class TableWriter extends AbstractWriter
         bool $createTypedTables
     ): LoadTableTaskInterface {
         $hasColumns = !empty($config['columns']);
+        $hasColumnsMetadata = !empty($config['column_metadata']);
         if (!$hasColumns && $source->isSliced()) {
             throw new InvalidOutputException(
                 sprintf('Sliced file "%s" columns specification missing.', $source->getName())
@@ -152,24 +168,21 @@ class TableWriter extends AbstractWriter
         }
 
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
-
         $storageApiClient = $this->clientWrapper->getBasicClient();
-        try {
-            $destinationTableInfo = $storageApiClient->getTable($destination->getTableId());
-            $destinationTableExists = true;
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-            $destinationTableInfo = null;
-            $destinationTableExists = false;
-        }
+        $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
 
         if ($destinationTableInfo !== null) {
+            TypedColumnsHelper::addMissingColumns(
+                $storageApiClient,
+                $destinationTableInfo,
+                $config,
+                $destinationBucket['backend']
+            );
+
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
-                    $this->clientWrapper->getBasicClient(),
+                    $storageApiClient,
                     $destination->getTableId(),
                     $destinationTableInfo['primaryKey'],
                     $config['primary_key']
@@ -183,7 +196,7 @@ class TableWriter extends AbstractWriter
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $this->clientWrapper->getBasicClient()->deleteTableRows($destination->getTableId(), $deleteOptions);
+                $storageApiClient->deleteTableRows($destination->getTableId(), $deleteOptions);
             }
         }
 
@@ -193,7 +206,7 @@ class TableWriter extends AbstractWriter
             'incremental' => $config['incremental'],
         ];
 
-        if (!$destinationTableExists && isset($config['distribution_key'])) {
+        if ($destinationTableInfo === null && isset($config['distribution_key'])) {
             $loadOptions['distributionKey'] = implode(
                 ',',
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
@@ -208,7 +221,7 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && !$destinationTableExists && ($hasColumns && !empty($config['column_metadata']))) {
+        if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && $hasColumnsMetadata)) {
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
                 $destinationBucket['backend']
@@ -221,11 +234,11 @@ class TableWriter extends AbstractWriter
             $this->createTableDefinition($destination, $tableDefinition);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif (!$destinationTableExists && $hasColumns) {
+        } elseif ($destinationTableInfo === null && $hasColumns) {
             $this->createTable($destination, $config['columns'], $loadOptions);
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
-        } elseif ($destinationTableExists) {
+        } elseif ($destinationTableInfo !== null) {
             $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = false;
         } else {
@@ -255,7 +268,7 @@ class TableWriter extends AbstractWriter
             ));
         }
 
-        if (!empty($config['column_metadata'])) {
+        if ($hasColumnsMetadata) {
             $loadTask->addMetadata(new ColumnMetadata(
                 $destination->getTableId(),
                 $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],

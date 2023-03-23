@@ -33,13 +33,17 @@ class PrimaryKeyHelper
         );
     }
 
-    public static function modifyPrimaryKeyDecider(LoggerInterface $logger, array $tableInfo, array $config): bool
-    {
-        $configPK = self::normalizeKeyArray($logger, $config['primary_key']);
-        if (count($tableInfo['primaryKey']) !== count($configPK)) {
+    public static function modifyPrimaryKeyDecider(
+        LoggerInterface $logger,
+        array $currentTableInfo,
+        array $newTableConfiguration
+    ): bool {
+        $configPK = self::normalizeKeyArray($logger, $newTableConfiguration['primary_key']);
+        if (count($currentTableInfo['primaryKey']) !== count($configPK)) {
             return true;
         }
-        if (count(array_intersect($tableInfo['primaryKey'], $configPK)) !== count($tableInfo['primaryKey'])) {
+        $currentTablePkColumnsCount = count($currentTableInfo['primaryKey']);
+        if (count(array_intersect($currentTableInfo['primaryKey'], $configPK)) !== $currentTablePkColumnsCount) {
             return true;
         }
         return false;

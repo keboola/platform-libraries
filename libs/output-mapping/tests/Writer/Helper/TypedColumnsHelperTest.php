@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
 use Keboola\OutputMapping\Writer\Helper\TypedColumnsHelper;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
 use PHPUnit\Framework\TestCase;
 
@@ -50,109 +49,6 @@ class TypedColumnsHelperTest extends TestCase
             'value' => 'random',
         ],
     ];
-
-    public function addMissingColumnsDeciderProvider(): Generator
-    {
-        yield 'non-typed table - extra columns in config' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            false,
-        ];
-
-        yield 'non-typed table - extra columns in table' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            false,
-        ];
-
-        yield 'non-typed table - same columns' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            false,
-        ];
-
-        yield 'typed table - extra columns in config' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            true,
-        ];
-
-        yield 'typed table - extra columns in table' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            false,
-        ];
-
-        yield 'typed table - same columns' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            false,
-        ];
-    }
 
     public function addMissingColumnsProvider(): Generator
     {
@@ -223,20 +119,6 @@ class TypedColumnsHelperTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider addMissingColumnsDeciderProvider
-     */
-    public function testAddMissingColumnsDecider(
-        array $currentTableInfo,
-        array $newTableConfiguration,
-        bool $expectedDecision
-    ): void {
-        self::assertSame(
-            $expectedDecision,
-            TypedColumnsHelper::addMissingColumnsDecider($currentTableInfo, $newTableConfiguration)
-        );
-    }
-
     public function doNotAddColumnsProvider(): Generator
     {
         yield 'typed table - extra columns in table' => [
@@ -304,6 +186,53 @@ class TypedColumnsHelperTest extends TestCase
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
         ];
+
+        yield 'non-typed table - extra columns in config' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
+        yield 'non-typed table - extra columns in table' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                    'address',
+                    'crm_id',
+                    'created',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
+        yield 'non-typed table - same columns' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                    'address',
+                    'crm_id',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
     }
 
     /**
@@ -319,7 +248,7 @@ class TypedColumnsHelperTest extends TestCase
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
-            $this->getBackendFromTableMetadata($newTableConfiguration['metadata'])
+            'snowflake'
         );
     }
 
@@ -377,18 +306,7 @@ class TypedColumnsHelperTest extends TestCase
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
-            $this->getBackendFromTableMetadata($newTableConfiguration['metadata'])
+            'snowflake'
         );
-    }
-
-    private function getBackendFromTableMetadata(array $metadata): string
-    {
-        foreach ($metadata as $metadatum) {
-            if ($metadatum['key'] === TableDefinitionColumnFactory::NATIVE_TYPE_METADATA_KEY) {
-                return $metadatum['value'];
-            }
-        }
-
-        self::fail('Test metadata does not contains backend info.');
     }
 }

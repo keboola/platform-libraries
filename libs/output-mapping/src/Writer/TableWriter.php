@@ -172,14 +172,12 @@ class TableWriter extends AbstractWriter
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
 
         if ($destinationTableInfo !== null) {
-            if (TypedColumnsHelper::addMissingColumnsDecider($destinationTableInfo, $config)) {
-                TypedColumnsHelper::addMissingColumns(
-                    $storageApiClient,
-                    $destinationTableInfo,
-                    $config,
-                    $destinationBucket['backend']
-                );
-            }
+            TypedColumnsHelper::addMissingColumns(
+                $storageApiClient,
+                $destinationTableInfo,
+                $config,
+                $destinationBucket['backend']
+            );
 
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(

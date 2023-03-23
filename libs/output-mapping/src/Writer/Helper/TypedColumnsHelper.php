@@ -20,25 +20,15 @@ class TypedColumnsHelper
         return array_diff($configColumns, $tableColumns);
     }
 
-    public static function addMissingColumnsDecider(array $currentTableInfo, array $newTableConfiguration): bool
-    {
-        if ($currentTableInfo['isTyped'] !== true) {
-            return false;
-        }
-
-        if (self::getMissingColumns($currentTableInfo, $newTableConfiguration)) {
-            return true;
-        }
-
-        return false;
-    }
-
     public static function addMissingColumns(
         Client $client,
         array $currentTableInfo,
         array $newTableConfiguration,
         string $backendType,
     ): void {
+        if ($currentTableInfo['isTyped'] !== true) {
+            return;
+        }
 
         $tableMetadata = $newTableConfiguration['metadata'] ?? [];
 

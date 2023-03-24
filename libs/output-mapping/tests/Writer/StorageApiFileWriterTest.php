@@ -70,7 +70,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
         );
         sleep(1);
 
@@ -167,7 +169,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $writer = new FileWriter($this->getStagingFactory());
 
-        $writer->uploadFiles('/upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -227,7 +236,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'runId' => '999',
         ];
 
-        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -278,7 +294,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
         );
         sleep(1);
 
@@ -318,7 +336,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
-        $writer->uploadFiles('/upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesInvalidYaml(): void
@@ -339,7 +364,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
-        $writer->uploadFiles('upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            'upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesOutputMappingMissing(): void
@@ -362,7 +394,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("File 'file2' not found");
         $this->expectExceptionCode(404);
-        $writer->uploadFiles('upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            'upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesOrphanedManifest(): void
@@ -375,7 +414,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("Found orphaned file manifest: 'file1.manifest'");
-        $writer->uploadFiles('/upload', [], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            [],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesNoComponentId(): void
@@ -383,7 +429,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
-        $writer->uploadFiles('/upload', [], ['configurationId' => '123'], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            [],
+            ['configurationId' => '123'],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testTagProcessedFiles(): void
@@ -468,7 +521,8 @@ class StorageApiFileWriterTest extends BaseWriterTest
             [],
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
-            $tableFiles
+            $tableFiles,
+            false
         );
         sleep(1);
 

@@ -139,7 +139,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'someday',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-abs'
+            'workspace-abs',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -205,7 +207,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'data/out/tables/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-abs'
+            'workspace-abs',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -288,7 +292,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'data/out/tables/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-abs'
+            'workspace-abs',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -376,7 +382,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::WORKSPACE_ABS
+            AbstractStrategyFactory::WORKSPACE_ABS,
+            [],
+            false
         );
         sleep(1);
 

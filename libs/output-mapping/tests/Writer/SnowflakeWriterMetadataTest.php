@@ -81,7 +81,9 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'upload',
             $config,
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -114,7 +116,14 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables('upload', $config, $systemMetadata, 'local');
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            $config,
+            $systemMetadata,
+            'local',
+            false,
+            false
+        );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -154,7 +163,9 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'upload',
             $config,
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table ' . self::INPUT_BUCKET . '".table55a": Load error: ' .
@@ -219,7 +230,9 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             '/upload',
             $config,
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -253,7 +266,14 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables('/upload', $config, $systemMetadata, 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            $config,
+            $systemMetadata,
+            'local',
+            false,
+            false
+        );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 

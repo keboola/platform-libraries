@@ -33,8 +33,8 @@ class FileWriter extends AbstractWriter
         array $configuration,
         array $systemMetadata,
         string $storage,
-        array $tableFiles = [],
-        bool $isFailedJob = false
+        array $tableFiles,
+        bool $isFailedJob
     ): void {
         if ($isFailedJob) {
             return;

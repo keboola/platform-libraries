@@ -69,7 +69,9 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT
+            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

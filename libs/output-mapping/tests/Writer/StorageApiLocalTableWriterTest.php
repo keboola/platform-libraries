@@ -62,7 +62,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -141,7 +143,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -207,7 +211,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo', 'branchId' => $branchId],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -249,7 +255,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -259,7 +267,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -291,7 +301,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -318,7 +330,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -353,7 +367,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -379,7 +395,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Invalid type for path');
-        $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+        $writer->uploadTables(
+            '/upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testWriteTableManifestCsvDefaultBackend(): void
@@ -396,7 +419,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
 
         $writer = new TableWriter($this->getStagingFactory());
 
-        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -425,7 +455,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Found orphaned table manifest: "table.csv.manifest"');
-        $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+        $writer->uploadTables(
+            '/upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testWriteTableOutputMappingMissing(): void
@@ -443,7 +480,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
     }
 
@@ -452,7 +491,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $writer = new TableWriter($this->getStagingFactory());
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
-        $writer->uploadTables('/upload', [], [], 'local');
+        $writer->uploadTables(
+            '/upload',
+            [],
+            [],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testWriteTableIncrementalWithDeleteDefault(): void
@@ -480,7 +526,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -491,7 +539,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -533,7 +583,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['bucket' => self::OUTPUT_BUCKET],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -559,7 +611,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['bucket' => self::OUTPUT_BUCKET],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -588,7 +642,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -614,7 +670,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $tableQueue->waitForAll();
 
@@ -631,7 +689,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -659,7 +719,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $tableQueue->waitForAll();
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table12');
@@ -678,7 +740,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -707,7 +771,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -717,7 +783,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             $root . '/upload/table11.csv.manifest',
             '{"destination": "' . self::OUTPUT_BUCKET . '.table11","primary_key": [""]}'
         );
-        $tableQueue =  $writer->uploadTables('upload', [], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         self::assertFalse(
@@ -750,7 +823,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             $configuration,
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $tableQueue->waitForAll();
 
@@ -779,7 +854,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             $configuration,
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -818,7 +895,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             $configuration,
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $tableQueue->waitForAll();
 
@@ -848,7 +927,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             $configuration,
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         try {
             $tableQueue->waitForAll();
@@ -905,7 +986,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo', 'branchId' => $branchId],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -932,7 +1015,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
     }
 
@@ -972,7 +1057,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo', 'branchId' => $branchId],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1009,7 +1096,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
     }
 
@@ -1147,7 +1236,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             'upload',
             ['bucket' => $defaultBucket, 'mapping' => $mapping],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $tableQueue->waitForAll();
     }
@@ -1207,7 +1298,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['bucket' => $defaultBucket],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1268,7 +1361,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
             '/upload',
             ['bucket' => $defaultBucket],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
     }
 
@@ -1290,7 +1385,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
 
-        $tableWriter->uploadTables('upload', [], [], 'local');
+        $tableWriter->uploadTables(
+            'upload',
+            [],
+            [],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testLocalTableUploadChecksForOrphanedManifests(): void
@@ -1303,7 +1405,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Found orphaned table manifest: "table.csv.manifest"');
 
-        $tableWriter->uploadTables('upload', [], ['componentId' => 'foo'], 'local');
+        $tableWriter->uploadTables(
+            'upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testLocalTableUploadChecksForUnusedMappingEntries(): void
@@ -1313,14 +1422,21 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table sources not found: "unknown.csv"');
 
-        $tableWriter->uploadTables('upload', [
-            'mapping' => [
-                [
-                    'source' => 'unknown.csv',
-                    'destination' => 'unknown',
+        $tableWriter->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'unknown.csv',
+                        'destination' => 'unknown',
+                    ],
                 ],
             ],
-        ], ['componentId' => 'foo'], 'local');
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
     }
 
     public function testLocalTableUploadChecksForWriteAlwaysMappingEntries(): void
@@ -1403,7 +1519,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1422,7 +1540,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
 
         $jobIds = $tableQueue->waitForAll();
@@ -1448,7 +1568,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1467,7 +1589,9 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
                 ],
             ],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);

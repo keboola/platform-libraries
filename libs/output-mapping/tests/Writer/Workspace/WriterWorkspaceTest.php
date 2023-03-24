@@ -79,7 +79,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -137,7 +139,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $tableQueue->waitForAll();
     }
@@ -158,7 +162,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $tableQueue->waitForAll();
     }
@@ -218,7 +224,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -277,7 +285,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
     }
 
@@ -310,7 +320,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
     }
 
@@ -349,7 +361,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs, 'bucket' => self::OUTPUT_BUCKET],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -426,7 +440,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo', 'branchId' => $branchId],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -483,7 +499,9 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'workspace-snowflake'
+            'workspace-snowflake',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

@@ -78,7 +78,9 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             '/',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::WORKSPACE_SYNAPSE
+            AbstractStrategyFactory::WORKSPACE_SYNAPSE,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

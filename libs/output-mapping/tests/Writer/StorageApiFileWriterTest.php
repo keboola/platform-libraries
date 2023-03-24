@@ -114,6 +114,45 @@ class StorageApiFileWriterTest extends BaseWriterTest
         self::assertTrue($file3['isPublic']);
     }
 
+    public function testWriteFilesFailedJob(): void
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/file1', 'test');
+
+        $systemMetadata = [
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '12345',
+            'branchId' => '1234',
+            'runId' => '999',
+        ];
+
+        $configs = [
+            [
+                'source' => 'file1',
+                'tags' => [self::FILE_TAG],
+            ],
+        ];
+
+        $writer = new FileWriter($this->getStagingFactory());
+
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL,
+            [],
+            true
+        );
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags([self::FILE_TAG]);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        // no files should be uploaded since, isFailedJob was true and write_always is not implemented for files
+        self::assertCount(0, $files);
+    }
+
     public function testWriteFilesOutputMapping(): void
     {
         $root = $this->tmp->getTmpFolder();

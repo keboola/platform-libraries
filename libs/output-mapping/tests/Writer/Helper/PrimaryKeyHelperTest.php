@@ -199,6 +199,27 @@ class PrimaryKeyHelperTest extends TestCase
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
+    public function testModifyPrimaryKeyChangeToEmpty(): void
+    {
+        $logger = new TestLogger();
+        $this->createTable(['id', 'name', 'foo'], 'id,foo');
+        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
+
+        PrimaryKeyHelper::modifyPrimaryKey(
+            $logger,
+            $this->client,
+            self::TEST_TABLE_ID,
+            $tableInfo['primaryKey'],
+            []
+        );
+        self::assertTrue($logger->hasWarningThatContains(
+            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, foo" to "".'
+        ));
+        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        self::assertEquals([], $tableInfo['primaryKey']);
+    }
+
     public function testModifyPrimaryKeyErrorRemove(): void
     {
         $logger = new TestLogger();

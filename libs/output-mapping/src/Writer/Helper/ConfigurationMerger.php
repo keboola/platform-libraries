@@ -33,6 +33,10 @@ class ConfigurationMerger
                 foreach ($configFromMapping[$key] as $column => $item) {
                     $config[$key][$column] = $item;
                 }
+            } elseif ($key === 'primary_key') {
+                if (!isset($config[$key]) || is_array($value)) {
+                    $config[$key] = $value;
+                }
             } else {
                 if (!isset($config[$key]) || $value) {
                     $config[$key] = $value;

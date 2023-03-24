@@ -445,7 +445,6 @@ class ConfigurationMergerTest extends TestCase
                     ],
                 ],
             ],
-
             'metadata-with-multiple-matching-keys' => [
                 'mapping' => [
                     'metadata' => [
@@ -482,6 +481,17 @@ class ConfigurationMergerTest extends TestCase
                             'value' => 'table value four',
                         ],
                     ],
+                ],
+            ],
+            'primary-key-reset' => [
+                'mapping' => [
+                    'primary_key' => [],
+                ],
+                'manifest' => [
+                    'primary_key' => ['a', 'b'],
+                ],
+                'expected' => [
+                    'primary_key' => [],
                 ],
             ],
         ];

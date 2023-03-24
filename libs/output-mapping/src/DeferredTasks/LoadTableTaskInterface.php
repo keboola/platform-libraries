@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\DeferredTasks;
 
+use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
@@ -16,4 +17,6 @@ interface LoadTableTaskInterface
     public function getDestinationTableName(): string;
 
     public function getStorageJobId(): string;
+
+    public function isUsingFreshlyCreatedTable(): bool;
 }

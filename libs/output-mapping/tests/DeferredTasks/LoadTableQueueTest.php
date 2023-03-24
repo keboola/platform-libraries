@@ -16,6 +16,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class LoadTableQueueTest extends TestCase
 {
@@ -23,6 +24,7 @@ class LoadTableQueueTest extends TestCase
     {
         $loadQueue = new LoadTableQueue(
             $this->createMock(Client::class),
+            new NullLogger(),
             [
                 $this->createMock(LoadTableTask::class),
                 $this->createMock(LoadTableTask::class),
@@ -45,7 +47,7 @@ class LoadTableQueueTest extends TestCase
             }))
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
         $loadQueue->start();
     }
 
@@ -70,7 +72,7 @@ class LoadTableQueueTest extends TestCase
         ;
 
         try {
-            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
             $loadQueue->start();
             self::fail('LoadTableQueue should fail with InvalidOutputException');
         } catch (InvalidOutputException $e) {
@@ -97,7 +99,7 @@ class LoadTableQueueTest extends TestCase
         ;
 
         try {
-            $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+            $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
             $loadQueue->start();
             self::fail('LoadTableQueue should fail with ClientException');
         } catch (ClientException $e) {
@@ -132,7 +134,7 @@ class LoadTableQueueTest extends TestCase
             ->willReturn('123')
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
 
         try {
             $loadQueue->waitForAll();
@@ -205,7 +207,7 @@ class LoadTableQueueTest extends TestCase
             ->method('applyMetadata')
             ->willThrowException($clientException)
         ;
-        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
 
         try {
             $loadQueue->waitForAll();
@@ -282,7 +284,7 @@ class LoadTableQueueTest extends TestCase
             }))
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
         $loadQueue->waitForAll();
 
         $tablesResult = $loadQueue->getTableResult();
@@ -337,7 +339,7 @@ class LoadTableQueueTest extends TestCase
             ->willThrowException($clientException)
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, [$loadTask]);
+        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
         try {
             $loadQueue->waitForAll();
             self::fail('WaitForAll shoud fail with ClientException.');

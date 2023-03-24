@@ -13,14 +13,16 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
 {
     protected MappingDestination $destination;
     protected array $options;
+    protected bool $freshlyCreatedTable;
     protected string $storageJobId;
     /** @var MetadataInterface[] */
     protected array $metadata = [];
 
-    public function __construct(MappingDestination $destination, array $options)
+    public function __construct(MappingDestination $destination, array $options, bool $freshlyCreatedTable)
     {
         $this->destination = $destination;
         $this->options = $options;
+        $this->freshlyCreatedTable = $freshlyCreatedTable;
     }
 
     public function addMetadata(MetadataInterface $metadataDefinition): void
@@ -43,5 +45,10 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
     public function getStorageJobId(): string
     {
         return $this->storageJobId;
+    }
+
+    public function isUsingFreshlyCreatedTable(): bool
+    {
+        return $this->freshlyCreatedTable;
     }
 }

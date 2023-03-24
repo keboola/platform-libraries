@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -1597,5 +1599,113 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table13');
         $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
+    }
+
+    public function testWriteTableFailedUploadDelete(): void
+    {
+        $tableId = self::OUTPUT_BUCKET . '.table_failed_upload';
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table_failed_upload.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n"
+        );
+
+        $configs = [
+            [
+                'source' => 'table_failed_upload.csv',
+                'destination' => $tableId,
+            ],
+        ];
+        try {
+            $this->clientWrapper->getBasicClient()->dropTable($tableId);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+
+        $testLogger = new TestLogger();
+        $writer = new TableWriter($this->getStagingFactory(logger: $testLogger));
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
+        try {
+            $jobIds = $tableQueue->waitForAll();
+            self::fail('Must throw exception');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString(
+                // phpcs:ignore Generic.Files.LineLength.MaxExceeded
+                'An exception occurred while executing a query: Field delimiter \',\' found while expecting record delimiter',
+                $e->getMessage()
+            );
+        }
+        self::assertFalse($this->clientWrapper->getBasicClient()->tableExists($tableId));
+        self::assertTrue(
+            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId))
+        );
+    }
+
+    public function testWriteTableFailedUploadNoDelete(): void
+    {
+        $tableId = self::OUTPUT_BUCKET . '.table_failed_upload';
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table_failed_upload.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n"
+        );
+
+        $configs = [
+            [
+                'source' => 'table_failed_upload.csv',
+                'destination' => $tableId,
+            ],
+        ];
+        try {
+            $this->clientWrapper->getBasicClient()->dropTable($tableId);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+
+        $csv = new CsvFile($root . '/table_header.csv');
+        $csv->writeRow(['Id', 'Name']);
+        $this->clientWrapper->getBasicClient()->createTableAsync(
+            self::OUTPUT_BUCKET,
+            'table_failed_upload',
+            $csv
+        );
+
+        $testLogger = new TestLogger();
+        $writer = new TableWriter($this->getStagingFactory(logger: $testLogger));
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
+        try {
+            $jobIds = $tableQueue->waitForAll();
+            self::fail('Must throw exception');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString(
+                // phpcs:ignore Generic.Files.LineLength.MaxExceeded
+                'An exception occurred while executing a query: Field delimiter \',\' found while expecting record delimiter',
+                $e->getMessage()
+            );
+        }
+        self::assertTrue($this->clientWrapper->getBasicClient()->tableExists($tableId));
+        self::assertFalse(
+            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId))
+        );
     }
 }

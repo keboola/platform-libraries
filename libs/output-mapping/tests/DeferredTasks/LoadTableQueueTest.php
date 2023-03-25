@@ -125,7 +125,7 @@ class LoadTableQueueTest extends TestCase
         $loadTask->expects($this->never())
             ->method('startImport')
         ;
-        $loadTask->expects($this->once())
+        $loadTask->expects($this->exactly(2))
             ->method('getDestinationTableName')
             ->willReturn('myTable')
         ;

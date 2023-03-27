@@ -39,7 +39,14 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         );
 
         $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables('/upload', [], ['componentId' => 'foo'], 'local');
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -83,7 +90,9 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -93,7 +102,9 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            'local'
+            'local',
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

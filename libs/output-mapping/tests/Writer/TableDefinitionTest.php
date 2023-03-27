@@ -68,7 +68,8 @@ class TableDefinitionTest extends BaseWriterTest
             ],
             ['componentId' => 'foo'],
             'local',
-            true
+            true,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -109,7 +110,8 @@ class TableDefinitionTest extends BaseWriterTest
             ],
             ['componentId' => 'foo'],
             'local',
-            true
+            true,
+            false
         );
     }
 
@@ -140,7 +142,8 @@ class TableDefinitionTest extends BaseWriterTest
             ],
             ['componentId' => 'foo'],
             'local',
-            true
+            true,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -314,7 +317,8 @@ class TableDefinitionTest extends BaseWriterTest
             ],
             ['componentId' => 'foo'],
             'local',
-            true
+            true,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -446,7 +450,8 @@ class TableDefinitionTest extends BaseWriterTest
             ],
             ['componentId' => 'foo'],
             'local',
-            true
+            true,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

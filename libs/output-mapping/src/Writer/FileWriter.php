@@ -24,14 +24,21 @@ class FileWriter extends AbstractWriter
      * @param array $systemMetadata Metadata identifying the source of the file
      * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      * @param array $tableFiles For the use file storage only case, tags etc are provided here
+     * @param bool $isFailedJob Marks that the writer was called as part of a failed job and only
+     *  write_always OM is to be processed. Since this flag is not currently implemented for files,
+     *  it means that no files will be uploaded.
      */
     public function uploadFiles(
         string $source,
         array $configuration,
         array $systemMetadata,
         string $storage,
-        array $tableFiles = []
+        array $tableFiles,
+        bool $isFailedJob
     ): void {
+        if ($isFailedJob) {
+            return;
+        }
         if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }

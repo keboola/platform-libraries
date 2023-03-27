@@ -72,8 +72,8 @@ class TableWriter extends AbstractWriter
         array $configuration,
         array $systemMetadata,
         string $stagingStorageOutput,
-        bool $createTypedTables = false,
-        bool $isFailedJob = false
+        bool $createTypedTables,
+        bool $isFailedJob
     ): LoadTableQueue {
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');

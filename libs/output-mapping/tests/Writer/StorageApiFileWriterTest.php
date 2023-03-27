@@ -70,7 +70,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
         );
         sleep(1);
 
@@ -114,6 +116,45 @@ class StorageApiFileWriterTest extends BaseWriterTest
         self::assertTrue($file3['isPublic']);
     }
 
+    public function testWriteFilesFailedJob(): void
+    {
+        $root = $this->tmp->getTmpFolder();
+        file_put_contents($root . '/upload/file1', 'test');
+
+        $systemMetadata = [
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '12345',
+            'branchId' => '1234',
+            'runId' => '999',
+        ];
+
+        $configs = [
+            [
+                'source' => 'file1',
+                'tags' => [self::FILE_TAG],
+            ],
+        ];
+
+        $writer = new FileWriter($this->getStagingFactory());
+
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL,
+            [],
+            true
+        );
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags([self::FILE_TAG]);
+        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        // no files should be uploaded since, isFailedJob was true and write_always is not implemented for files
+        self::assertCount(0, $files);
+    }
+
     public function testWriteFilesOutputMapping(): void
     {
         $root = $this->tmp->getTmpFolder();
@@ -128,7 +169,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
         $writer = new FileWriter($this->getStagingFactory());
 
-        $writer->uploadFiles('/upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -188,7 +236,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'runId' => '999',
         ];
 
-        $writer->uploadFiles('/upload', ['mapping' => $configs], $systemMetadata, AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
         sleep(1);
 
         $options = new ListFilesOptions();
@@ -239,7 +294,9 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
         );
         sleep(1);
 
@@ -279,7 +336,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
-        $writer->uploadFiles('/upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesInvalidYaml(): void
@@ -300,7 +364,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
-        $writer->uploadFiles('upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            'upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesOutputMappingMissing(): void
@@ -323,7 +394,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("File 'file2' not found");
         $this->expectExceptionCode(404);
-        $writer->uploadFiles('upload', ['mapping' => $configs], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            'upload',
+            ['mapping' => $configs],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesOrphanedManifest(): void
@@ -336,7 +414,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("Found orphaned file manifest: 'file1.manifest'");
-        $writer->uploadFiles('/upload', [], [], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            [],
+            [],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testWriteFilesNoComponentId(): void
@@ -344,7 +429,14 @@ class StorageApiFileWriterTest extends BaseWriterTest
         $writer = new FileWriter($this->getStagingFactory());
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
-        $writer->uploadFiles('/upload', [], ['configurationId' => '123'], AbstractStrategyFactory::LOCAL);
+        $writer->uploadFiles(
+            '/upload',
+            [],
+            ['configurationId' => '123'],
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
     }
 
     public function testTagProcessedFiles(): void
@@ -429,7 +521,8 @@ class StorageApiFileWriterTest extends BaseWriterTest
             [],
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
-            $tableFiles
+            $tableFiles,
+            false
         );
         sleep(1);
 

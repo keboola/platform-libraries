@@ -40,7 +40,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -78,7 +80,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -118,7 +122,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -154,7 +160,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             'upload',
             [],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -200,7 +208,9 @@ class StorageApiHeadlessWriterTest extends BaseWriterTest
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

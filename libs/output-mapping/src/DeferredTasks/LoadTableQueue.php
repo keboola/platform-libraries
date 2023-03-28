@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\DeferredTasks;
 
+use DateInterval;
+use DateTimeImmutable;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
+use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Psr\Log\LoggerInterface;
 
 class LoadTableQueue
 {
     private Client $client;
+    private LoggerInterface $logger;
 
     /** @var LoadTableTaskInterface[] */
     private array $loadTableTasks;
@@ -23,9 +28,10 @@ class LoadTableQueue
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
      */
-    public function __construct(Client $client, array $loadTableTasks)
+    public function __construct(Client $client, LoggerInterface $logger, array $loadTableTasks)
     {
         $this->client = $client;
+        $this->logger = $logger;
         $this->loadTableTasks = $loadTableTasks;
         $this->tableResult = new Result();
     }
@@ -68,6 +74,9 @@ class LoadTableQueue
                     $task->getDestinationTableName(),
                     $jobResult['error']['message']
                 );
+                if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->client, $task)) {
+                    $this->client->dropTable($task->getDestinationTableName());
+                }
             } else {
                 try {
                     $task->applyMetadata($metadataApiClient);

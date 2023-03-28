@@ -25,9 +25,10 @@ class LoadTableTaskTest extends TestCase
             ->willReturn('123456')
         ;
 
-        $loadTableTask = new LoadTableTask($destinationMock, ['foo' => 'bar']);
+        $loadTableTask = new LoadTableTask($destinationMock, ['foo' => 'bar'], false);
         $loadTableTask->startImport($storageApiMock);
 
+        self::assertFalse($loadTableTask->isUsingFreshlyCreatedTable());
         self::assertSame('123456', $loadTableTask->getStorageJobId());
     }
 }

@@ -125,7 +125,7 @@ class TableWriter extends AbstractWriter
             }
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $loadTableTasks);
+        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $this->logger, $loadTableTasks);
         $tableQueue->start();
         return $tableQueue;
     }
@@ -232,18 +232,18 @@ class TableWriter extends AbstractWriter
                 $config['column_metadata']
             );
             $this->createTableDefinition($destination, $tableDefinition);
-            $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
+            $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } elseif ($destinationTableInfo === null && $hasColumns) {
             $this->createTable($destination, $config['columns'], $loadOptions);
-            $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = true;
+            $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } elseif ($destinationTableInfo !== null) {
-            $loadTask = new LoadTableTask($destination, $loadOptions);
             $tableCreated = false;
+            $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } else {
-            $loadTask = new CreateAndLoadTableTask($destination, $loadOptions);
             $tableCreated = true;
+            $loadTask = new CreateAndLoadTableTask($destination, $loadOptions, $tableCreated);
         }
 
         if ($tableCreated) {

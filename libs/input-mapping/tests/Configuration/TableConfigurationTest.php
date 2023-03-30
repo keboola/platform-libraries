@@ -35,6 +35,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'DaysNullConfiguration' => [
@@ -58,6 +59,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'DaysConfiguration' => [
@@ -81,6 +83,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'ChangedSinceNullConfiguration' => [
@@ -104,6 +107,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'ChangedSinceConfiguration' => [
@@ -127,6 +131,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'SearchSourceConfiguration' => [
@@ -156,6 +161,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'DataTypesConfiguration' => [
@@ -195,6 +201,7 @@ class TableConfigurationTest extends TestCase
                     'where_operator' => 'ne',
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'FullDataTypesConfiguration' => [
@@ -233,6 +240,7 @@ class TableConfigurationTest extends TestCase
                     ],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'FullDataTypesConfigurationEmptyLength' => [
@@ -271,6 +279,7 @@ class TableConfigurationTest extends TestCase
                     ],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'OverwriteConfiguration' => [
@@ -286,6 +295,7 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => true,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
                 ],
             ],
             'BasicConfiguration' => [
@@ -300,6 +310,23 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'DropTimestampColumn' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'keep_internal_timestamp_column' => false,
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => false,
                 ],
             ],
         ];
@@ -388,6 +415,7 @@ class TableConfigurationTest extends TestCase
         $expectedArray['column_types'] = [];
         $expectedArray['overwrite'] = false;
         $expectedArray['use_view'] = false;
+        $expectedArray['keep_internal_timestamp_column'] = true;
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
     }

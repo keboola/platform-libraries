@@ -233,4 +233,9 @@ class InputTableOptions
     {
         return (bool) $this->definition['use_view'];
     }
+
+    public function keepInternalTimestampColumn(): bool
+    {
+        return (bool) $this->definition['keep_internal_timestamp_column'];
+    }
 }

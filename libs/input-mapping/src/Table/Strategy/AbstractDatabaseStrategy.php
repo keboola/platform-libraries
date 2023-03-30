@@ -44,6 +44,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                     'source' => $table->getSource(),
                     'destination' => $table->getDestination(),
                     'overwrite' => $table->getOverwrite(),
+                    'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
                 ];
                 $workspaceTables[] = $table;
             }

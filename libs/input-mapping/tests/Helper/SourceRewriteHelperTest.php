@@ -112,6 +112,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -130,6 +131,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -195,6 +197,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -213,6 +216,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -265,6 +269,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -284,6 +289,7 @@ class SourceRewriteHelperTest extends TestCase
                 'where_operator' => 'eq',
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
             $destinations->getTables()[1]->getDefinition()
         );

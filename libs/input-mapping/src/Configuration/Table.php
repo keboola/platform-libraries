@@ -71,6 +71,7 @@ class Table extends Configuration
                 ->end()
                 ->booleanNode('overwrite')->defaultValue(false)->end()
                 ->booleanNode('use_view')->defaultValue(false)->end()
+                ->booleanNode('keep_internal_timestamp_column')->defaultValue(true)->end()
             ->end()
             ->validate()
             ->ifTrue(function ($v) {

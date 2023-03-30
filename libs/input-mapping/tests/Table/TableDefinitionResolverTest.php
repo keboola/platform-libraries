@@ -86,6 +86,7 @@ class TableDefinitionResolverTest extends TestCase
             'where_operator' => 'eq',
             'overwrite' => false,
             'use_view' => false,
+            'keep_internal_timestamp_column' => true,
             'source' => 'table1',
         ], $result->getTables()[0]->getDefinition());
     }

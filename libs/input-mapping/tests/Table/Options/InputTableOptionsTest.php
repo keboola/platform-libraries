@@ -51,6 +51,7 @@ class InputTableOptionsTest extends TestCase
                 'column_types' => [],
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
         ];
         yield 'simple columns' => [
@@ -71,6 +72,7 @@ class InputTableOptionsTest extends TestCase
                 ],
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
         ];
         yield 'complex columns' => [
@@ -104,6 +106,7 @@ class InputTableOptionsTest extends TestCase
                 ],
                 'overwrite' => false,
                 'use_view' => false,
+                'keep_internal_timestamp_column' => true,
             ],
         ];
     }
@@ -407,5 +410,15 @@ class InputTableOptionsTest extends TestCase
         ]);
 
         self::assertTrue($definition->isUseView());
+    }
+
+    public function testKeepTimestampColumn(): void
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'keep_internal_timestamp_column' => false,
+        ]);
+
+        self::assertFalse($definition->keepInternalTimestampColumn());
     }
 }

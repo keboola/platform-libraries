@@ -8,7 +8,6 @@ use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -43,6 +42,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             [
                 'source' => 'in.c-input-mapping-test.test3',
                 'destination' => 'test3',
+                'keep_internal_timestamp_column' => false,
             ],
         ]);
 
@@ -82,20 +82,17 @@ class DownloadTablesWorkspaceSnowflakeTest extends DownloadTablesWorkspaceTestAb
             'out.c-input-mapping-test',
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
+        self::assertTrue($this->clientWrapper->getBasicClient()->tableExists('out.c-input-mapping-test.test2'));
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
-        /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
-            the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
-        try {
-            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-                'out.c-input-mapping-test',
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
-            );
-            self::fail('Must throw exception');
-        } catch (ClientException $e) {
-            self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
-        }
+        /* we want to check that the table exists in the workspace, so we try to load it. This time it
+            doesn't fail because keep_internal_timestamp_column=false was provided */
+        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            'out.c-input-mapping-test',
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+        );
+        self::assertTrue($this->clientWrapper->getBasicClient()->tableExists('out.c-input-mapping-test.test3'));
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be cloned.'));
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));

@@ -8,18 +8,8 @@ use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFact
 use Keboola\StorageApi\Client;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
-class TypedColumnsHelper
+class TypedColumnsHelper extends AbstractColumnsHelper
 {
-    private static function getMissingColumns(array $currentTableInfo, array $newTableConfiguration): array
-    {
-        $tableColumns = $currentTableInfo['columns'];
-        $configColumns = array_map(function ($columnName): string {
-            return ColumnNameSanitizer::sanitize($columnName);
-        }, array_keys($newTableConfiguration['column_metadata']));
-
-        return array_diff($configColumns, $tableColumns);
-    }
-
     public static function addMissingColumns(
         Client $client,
         array $currentTableInfo,

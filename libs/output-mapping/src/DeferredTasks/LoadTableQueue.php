@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use DateInterval;
 use DateTimeImmutable;
+use Exception;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
@@ -95,6 +96,12 @@ class LoadTableQueue
 
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
+                        if (isset($jobResult['results']['newColumns'])) {
+                            if (count($jobResult['results']['newColumns']) > 0) {
+                                throw new Exception('New columns added by tableImport job');
+                            }
+                        }
+
                         $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
                         $jobResults[] = $jobResult;
                         break;

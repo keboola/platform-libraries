@@ -939,14 +939,14 @@ class StorageApiLocalTableWriterTest extends BaseWriterTest
         } catch (InvalidOutputException $e) {
             self::assertStringContainsString(
                 'Failed to load table "' . self::OUTPUT_BUCKET . '.table10a": Some columns are ' .
-                'missing in the csv file. Missing columns: id,name. Expected columns: id,name. Please check if the ' .
-                'expected delimiter "," is used in the csv file.',
+                'missing in the csv file. Missing columns: id,name. Expected columns: id,name,Boing,Tschak. ' .
+                'Please check if the expected delimiter "," is used in the csv file.',
                 $e->getMessage()
             );
             self::assertStringContainsString(
                 'Failed to load table "' . self::OUTPUT_BUCKET . '.table10b": Some columns are ' .
-                'missing in the csv file. Missing columns: foo,bar. Expected columns: foo,bar. Please check if the ' .
-                'expected delimiter "," is used in the csv file.',
+                'missing in the csv file. Missing columns: foo,bar. Expected columns: foo,bar,bum,tschak. ' .
+                'Please check if the expected delimiter "," is used in the csv file.',
                 $e->getMessage()
             );
         }

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
+use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
 use Keboola\OutputMapping\Writer\Helper\TypedColumnsHelper;
 use Keboola\StorageApi\Client;
 use PHPUnit\Framework\TestCase;
 
-class TypedColumnsHelperTest extends TestCase
+class TableColumnsHelperTest extends TestCase
 {
     private const TEST_COLUMNS_METADATA = [
         'id' => [],
@@ -50,7 +51,7 @@ class TypedColumnsHelperTest extends TestCase
         ],
     ];
 
-    public function addMissingColumnsProvider(): Generator
+    public function addMissingColumnsToTypedTableProvider(): Generator
     {
         yield 'typed table - extra columns in config' => [
             [
@@ -187,20 +188,6 @@ class TypedColumnsHelperTest extends TestCase
             ],
         ];
 
-        yield 'non-typed table - extra columns in config' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-        ];
-
         yield 'non-typed table - extra columns in table' => [
             [
                 'isTyped' => false,
@@ -244,7 +231,7 @@ class TypedColumnsHelperTest extends TestCase
         $clientMock->expects(self::never())
             ->method('addTableColumn');
 
-        TypedColumnsHelper::addMissingColumns(
+        TableColumnsHelper::addMissingColumns(
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
@@ -253,9 +240,9 @@ class TypedColumnsHelperTest extends TestCase
     }
 
     /**
-     * @dataProvider addMissingColumnsProvider
+     * @dataProvider addMissingColumnsToTypedTableProvider
      */
-    public function testAddMissingColumns(
+    public function testAddMissingColumnsToTypedTable(
         array $currentTableInfo,
         array $newTableConfiguration,
         array $addTableColumnWithConsecutiveParams
@@ -302,7 +289,7 @@ class TypedColumnsHelperTest extends TestCase
             )
         ;
 
-        TypedColumnsHelper::addMissingColumns(
+        TableColumnsHelper::addMissingColumns(
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,

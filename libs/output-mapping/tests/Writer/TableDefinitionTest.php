@@ -458,7 +458,7 @@ class TableDefinitionTest extends BaseWriterTest
         );
 
         self::assertCount(4, $writerJobs);
-        self::assertTableColumnAddJob(
+        self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
             'birthweight',
             null,
@@ -468,7 +468,7 @@ class TableDefinitionTest extends BaseWriterTest
                 'nullable' => true,
             ]
         );
-        self::assertTableColumnAddJob(
+        self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
             'created',
             null,
@@ -530,7 +530,7 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertEquals($expectedType['nullable'], $nullableMetadata[0]['value']);
     }
 
-    private static function assertTableColumnAddJob(
+    private static function assertTableTypedColumnAddJob(
         array $jobData,
         string $expectedColumnName,
         ?string $expectedBaseType,

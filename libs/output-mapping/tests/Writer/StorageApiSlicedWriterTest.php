@@ -592,15 +592,4 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
     }
-
-    private static function assertTableColumnAddJob(
-        array $jobData,
-        string $expectedColumnName
-    ): void {
-        self::assertSame('tableColumnAdd', $jobData['operationName']);
-        self::assertSame('success', $jobData['status']);
-        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
-        self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
-        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
-    }
 }

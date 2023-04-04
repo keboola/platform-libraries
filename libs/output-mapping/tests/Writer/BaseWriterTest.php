@@ -160,6 +160,17 @@ abstract class BaseWriterTest extends TestCase
         self::assertSame([], $jobData['results']['newColumns']);
     }
 
+    protected static function assertTableColumnAddJob(
+        array $jobData,
+        string $expectedColumnName
+    ): void {
+        self::assertSame('tableColumnAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
+        self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
+        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
+    }
+
     public function incrementalFlagProvider(): Generator
     {
         yield 'incremental load' => [true];

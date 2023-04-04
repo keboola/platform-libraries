@@ -27,7 +27,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
         return $result;
     }
 
-    protected function metadataWritingTestColumnChangeTest(string $inputBucket): void
+    protected function metadataWritingTestColumnChangeTest(string $inputBucket, bool $incrementalFlag = false): void
     {
         $root = $this->tmp->getTmpFolder();
         $csv = new CsvFile($root . '/table88a.csv');
@@ -47,6 +47,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
                     'source' => 'table88b.csv',
                     'destination' => $inputBucket . '.table88',
                     'metadata' => [],
+                    'incremental' => $incrementalFlag,
                     'column_metadata' => [
                         'Id' => [
                             [
@@ -70,6 +71,10 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBasicClient()->setRunId($runId);
+
         $writer = new TableWriter($this->getStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -81,6 +86,18 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
+
+        $writerJobs = array_filter(
+            $this->clientWrapper->getBasicClient()->listJobs(),
+            function (array $job) use ($runId) {
+                return $runId === $job['runId'];
+            }
+        );
+
+        self::assertCount(2, $writerJobs);
+
+        self::assertTableColumnAddJob(array_pop($writerJobs), 'Foo');
+        self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
 
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
         $idColMetadata = $metadataApi->listColumnMetadata($inputBucket . '.table88.Id');

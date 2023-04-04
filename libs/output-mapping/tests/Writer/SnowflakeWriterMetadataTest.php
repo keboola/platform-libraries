@@ -284,9 +284,12 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
 
-    public function testMetadataWritingTestColumnChange(): void
+    /**
+     * @dataProvider incrementalFlagProvider
+     */
+    public function testMetadataWritingTestColumnChange(bool $incrementalFlag): void
     {
-        $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET, $incrementalFlag);
     }
 
     public function testMetadataWritingTestColumnChangeSpecialDelimiter(): void

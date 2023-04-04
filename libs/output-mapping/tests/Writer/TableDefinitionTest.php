@@ -556,14 +556,6 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
     }
 
-    private static function assertTableImportJob(array $jobData, bool $expectedIncrementalFlag): void
-    {
-        self::assertSame('tableImport', $jobData['operationName']);
-        self::assertSame('success', $jobData['status']);
-        self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
-        self::assertSame([], $jobData['results']['newColumns']);
-    }
-
     private function dropTableIfExists(string $tableId): void
     {
         try {

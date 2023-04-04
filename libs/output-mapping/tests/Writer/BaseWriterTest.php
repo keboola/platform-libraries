@@ -150,4 +150,12 @@ abstract class BaseWriterTest extends TestCase
             self::assertContains($expectedParam, $job['operationParams']['params']);
         }
     }
+
+    protected static function assertTableImportJob(array $jobData, bool $expectedIncrementalFlag): void
+    {
+        self::assertSame('tableImport', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
+        self::assertSame([], $jobData['results']['newColumns']);
+    }
 }

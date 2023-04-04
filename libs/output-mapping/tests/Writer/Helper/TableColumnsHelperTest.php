@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
-use Keboola\OutputMapping\Writer\Helper\TypedColumnsHelper;
 use Keboola\StorageApi\Client;
 use PHPUnit\Framework\TestCase;
 
@@ -205,6 +204,22 @@ class TableColumnsHelperTest extends TestCase
             ],
         ];
 
+        yield 'non-typed table - same metadata columns' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                    'address',
+                    'crm_id',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
         yield 'non-typed table - same columns' => [
             [
                 'isTyped' => false,
@@ -264,6 +279,125 @@ class TableColumnsHelperTest extends TestCase
                         $expectedDefinition,
                         $expectedDataTypes
                     ) = array_shift($addTableColumnWithConsecutiveParams);
+
+                    self::assertSame(
+                        $xpectedTableId,
+                        $tableId,
+                        'Table id does not match'
+                    );
+                    self::assertSame(
+                        $expectedColumnName,
+                        $columnName,
+                        'Column name does not match'
+                    );
+                    self::assertSame(
+                        $expectedDefinition,
+                        $definition,
+                        'Column definition does not match'
+                    );
+                    self::assertSame(
+                        $expectedDataTypes,
+                        $baseType,
+                        'Column datatype does not match'
+                    );
+                }
+            )
+        ;
+
+        TableColumnsHelper::addMissingColumns(
+            $clientMock,
+            $currentTableInfo,
+            $newTableConfiguration,
+            'snowflake'
+        );
+    }
+
+    public function addMissingColumnsToNonTypedTableProvider(): Generator
+    {
+        yield 'non-typed table - extra metadata columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'non-typed table - extra columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider addMissingColumnsToNonTypedTableProvider
+     */
+    public function testAddMissingColumnsToNonTypedTable(
+        array $currentTableInfo,
+        array $newTableConfiguration,
+        array $addTableColumnWithConsecutiveParams
+    ): void {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::exactly(2))
+            ->method('addTableColumn')
+            ->willReturnCallback(
+                function (
+                    string $tableId,
+                    string $columnName,
+                    ?array $definition,
+                    ?string $baseType
+                ) use (&$addTableColumnWithConsecutiveParams) {
+                    list (
+                        $xpectedTableId,
+                        $expectedColumnName,
+                        $expectedDefinition,
+                        $expectedDataTypes
+                        ) = array_shift($addTableColumnWithConsecutiveParams);
 
                     self::assertSame(
                         $xpectedTableId,

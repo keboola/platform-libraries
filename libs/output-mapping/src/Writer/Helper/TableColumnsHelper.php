@@ -14,7 +14,7 @@ class TableColumnsHelper
         array $newTableConfiguration,
         string $backendType,
     ): void {
-        if ($currentTableInfo['isTyped'] !== true) {
+        if ($currentTableInfo['isTyped'] === true) {
             TypedColumnsHelper::addMissingColumns($client, $currentTableInfo, $newTableConfiguration, $backendType);
         } else {
             ColumnsHelper::addMissingColumns($client, $currentTableInfo, $newTableConfiguration);

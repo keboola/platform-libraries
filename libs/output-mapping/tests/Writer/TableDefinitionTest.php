@@ -248,12 +248,6 @@ class TableDefinitionTest extends BaseWriterTest
         ];
     }
 
-    public function incrementalFlagProvider(): Generator
-    {
-        yield 'incremental load' => [true];
-        yield 'full load' => [false];
-    }
-
     /**
      * @dataProvider incrementalFlagProvider
      */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Generator;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
@@ -157,5 +158,11 @@ abstract class BaseWriterTest extends TestCase
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
         self::assertSame([], $jobData['results']['newColumns']);
+    }
+
+    public function incrementalFlagProvider(): Generator
+    {
+        yield 'incremental load' => [true];
+        yield 'full load' => [false];
     }
 }

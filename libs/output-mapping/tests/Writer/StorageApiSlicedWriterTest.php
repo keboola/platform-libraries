@@ -186,7 +186,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table16', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync(self::OUTPUT_BUCKET, 'table16', $csv);
 
         $root = $this->tmp->getTmpFolder();
         mkdir($root . '/upload/table16');
@@ -263,7 +263,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $fileName = $this->tmp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
         $csv = new CsvFile($fileName);
-        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table17', $csv);
+        $this->clientWrapper->getBasicClient()->createTableAsync(self::OUTPUT_BUCKET, 'table17', $csv);
 
         $root = $this->tmp->getTmpFolder();
         mkdir($root . '/upload/table17');
@@ -329,7 +329,7 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         $this->initBucket('snowflake');
         $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
         $csvFile->writeRow(['Id', 'Name']);
-        $this->clientWrapper->getBasicClient()->createTable(self::OUTPUT_BUCKET, 'table', $csvFile);
+        $this->clientWrapper->getBasicClient()->createTableAsync(self::OUTPUT_BUCKET, 'table', $csvFile);
         $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
@@ -373,6 +373,76 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
+    }
+
+    /**
+     * @dataProvider incrementalFlagProvider
+     */
+    public function testWriteTableOutputMappingExistingTableAddColumns(bool $incrementalFlag): void
+    {
+        $this->initBucket('snowflake');
+        $csvFile = new CsvFile($this->tmp->createFile('header')->getPathname());
+        $csvFile->writeRow(['Id', 'Name']);
+        $this->clientWrapper->getBasicClient()->createTableAsync(self::OUTPUT_BUCKET, 'table', $csvFile);
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name'], $table['columns']);
+
+        $root = $this->tmp->getTmpFolder();
+        mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\",\"eeff\"\n");
+
+        $configs = [
+            [
+                'source' => 'table.csv',
+                'destination' => self::OUTPUT_BUCKET . '.table',
+                'incremental' => $incrementalFlag,
+                'columns' => ['Id','Name','City'],
+            ],
+        ];
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBasicClient()->setRunId($runId);
+
+        $writer = new TableWriter($this->getStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL,
+            false,
+            false
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $writerJobs = array_filter(
+            $this->clientWrapper->getBasicClient()->listJobs(),
+            function (array $job) use ($runId) {
+                return $runId === $job['runId'];
+            }
+        );
+
+        self::assertCount(2, $writerJobs);
+
+        self::assertTableColumnAddJob(array_pop($writerJobs), 'City');
+        self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
+
+        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        self::assertCount(1, $tables);
+        $table = $this->clientWrapper->getBasicClient()->getTable(self::OUTPUT_BUCKET . '.table');
+        self::assertEquals(['Id', 'Name', 'City'], $table['columns']);
+
+        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $downloadedFile = $this->tmp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
+        $exporter->exportTable(self::OUTPUT_BUCKET . '.table', $downloadedFile, []);
+        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        self::assertCount(2, $table);
+        self::assertContains(['Id' => 'test', 'Name' => 'test', 'City' => 'test'], $table);
+        self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd', 'City' => 'eeff'], $table);
     }
 
     public function testWriteTableOutputMappingDifferentDelimiterEnclosure(): void
@@ -521,5 +591,16 @@ class StorageApiSlicedWriterTest extends BaseWriterTest
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
+    }
+
+    private static function assertTableColumnAddJob(
+        array $jobData,
+        string $expectedColumnName
+    ): void {
+        self::assertSame('tableColumnAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
+        self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
+        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
     }
 }

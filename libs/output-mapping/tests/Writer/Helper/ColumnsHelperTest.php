@@ -53,7 +53,7 @@ class ColumnsHelperTest extends TestCase
 
     public function addMissingColumnsProvider(): Generator
     {
-        yield 'non-typed - extra columns in config' => [
+        yield 'non-typed table - extra metadata columns in config' => [
             [
                 'id' => 'in.c-output-mapping.testTable1',
                 'isTyped' => false,
@@ -82,9 +82,9 @@ class ColumnsHelperTest extends TestCase
             ],
         ];
 
-        yield 'non-typed - typed table - extra columns in config' => [
+        yield 'non-typed table - extra columns in config' => [
             [
-                'id' => 'in.c-output-mapping.testTable2',
+                'id' => 'in.c-output-mapping.testTable1',
                 'isTyped' => false,
                 'columns' => [
                     'id',
@@ -92,18 +92,18 @@ class ColumnsHelperTest extends TestCase
                 ],
             ],
             [
-                'metadata' => self::TEST_RANDOM_BACKEND_TABLE_METADATA,
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
             ],
             [
                 [
-                    'in.c-output-mapping.testTable2',
+                    'in.c-output-mapping.testTable1',
                     'address',
                     null,
                     null,
                 ],
                 [
-                    'in.c-output-mapping.testTable2',
+                    'in.c-output-mapping.testTable1',
                     'crm_id',
                     null,
                     null,
@@ -227,7 +227,7 @@ class ColumnsHelperTest extends TestCase
             ],
         ];
 
-        yield 'non-typed table - same columns' => [
+        yield 'non-typed table - same metadata columns' => [
             [
                 'isTyped' => false,
                 'columns' => [
@@ -240,6 +240,22 @@ class ColumnsHelperTest extends TestCase
             [
                 'metadata' => [],
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
+        yield 'non-typed table - same columns' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                    'address',
+                    'crm_id',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
             ],
         ];
     }

@@ -21,14 +21,26 @@ class ColumnsHelper extends AbstractColumnsHelper
 
         $missingColumns = self::getMissingColumns($currentTableInfo, $newTableConfiguration);
 
-        foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
-            $columnName = ColumnNameSanitizer::sanitize($columnName);
-
-            if (!in_array($columnName, $missingColumns)) {
-                continue;
-            }
-
+        foreach ($missingColumns as $columnName) {
             $client->addTableColumn($currentTableInfo['id'], $columnName);
         }
+    }
+
+    protected static function getMissingColumns(array $currentTableInfo, array $newTableConfiguration): array
+    {
+        $tableColumns = $currentTableInfo['columns'];
+        $configColumns = [];
+
+        if (!empty($newTableConfiguration['column_metadata'])) {
+            $configColumns = array_map(function ($columnName): string {
+                return ColumnNameSanitizer::sanitize($columnName);
+            }, array_keys($newTableConfiguration['column_metadata']));
+        } elseif (!empty($newTableConfiguration['columns'])) {
+            $configColumns = array_map(function ($columnName): string {
+                return ColumnNameSanitizer::sanitize($columnName);
+            }, $newTableConfiguration['columns']);
+        }
+
+        return array_diff($configColumns, $tableColumns);
     }
 }

@@ -9,9 +9,11 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Psr\Log\NullLogger;
 
-class LocalStrategyTest extends AbstractStrategyTest
+class LocalStrategyTest extends AbstractTestCase
 {
     private function getProvider(): ProviderInterface
     {
@@ -27,6 +29,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         return $mockLocal;
     }
 
+    #[NeedsTestTables]
     public function testColumns(): void
     {
         $strategy = new Local(
@@ -39,7 +42,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         );
         $tableOptions = new InputTableOptions(
             [
-                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'columns' => ['Id', 'Name'],
             ]
@@ -47,7 +50,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(
             [
-                'tableId' => 'in.c-input-mapping-test-strategy.test1',
+                'tableId' => $this->firstTableId,
                 'destination' => $this->temp->getTmpFolder() . '/boo/some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
@@ -58,6 +61,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         );
     }
 
+    #[NeedsTestTables]
     public function testColumnsExtended(): void
     {
         $strategy = new Local(
@@ -70,7 +74,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         );
         $tableOptions = new InputTableOptions(
             [
-                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'column_types' => [
                     [
@@ -89,7 +93,7 @@ class LocalStrategyTest extends AbstractStrategyTest
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(
             [
-                'tableId' => 'in.c-input-mapping-test-strategy.test1',
+                'tableId' => $this->firstTableId,
                 'destination' => $this->temp->getTmpFolder() . '/boo/some-table.csv',
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],

@@ -152,9 +152,9 @@ EOF,
         $adapter = new Adapter();
 
         $this->expectException(InputOperationException::class);
-        $this->expectExceptionMessage('File \'test\' not found.');
+        $this->expectExceptionMessage('File \'non-existent\' not found.');
 
-        $adapter->readFromFile('test');
+        $adapter->readFromFile('non-existent');
     }
 
     public function testReadFromNonExistingFileThrowsException(): void
@@ -162,8 +162,8 @@ EOF,
         $adapter = new Adapter();
 
         $this->expectException(InputOperationException::class);
-        $this->expectExceptionMessage('File \'test\' not found.');
+        $this->expectExceptionMessage('File \'non-existent\' not found.');
 
-        $adapter->readFromFile('test');
+        $adapter->readFromFile('non-existent');
     }
 }

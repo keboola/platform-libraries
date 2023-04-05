@@ -12,13 +12,14 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\Test\TestLogger;
 
-class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
+class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 {
     private bool $runSynapseTests;
 
@@ -67,7 +68,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
         }
         $logger = new TestLogger();
         $reader = new Reader(
-            $this->getStagingFactory(
+            $this->getWorkspaceStagingFactory(
                 null,
                 'json',
                 $logger,
@@ -131,7 +132,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
             self::markTestSkipped('Synapse tests disabled');
         }
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(
+        $reader = new Reader($this->getWorkspaceStagingFactory(
             null,
             'json',
             $logger,
@@ -164,7 +165,7 @@ class DownloadTablesWorkspaceAbsTest extends DownloadTablesWorkspaceTestAbstract
     public function testUseViewFails(): void
     {
         $logger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory(
+        $reader = new Reader($this->getWorkspaceStagingFactory(
             null,
             'json',
             $logger,

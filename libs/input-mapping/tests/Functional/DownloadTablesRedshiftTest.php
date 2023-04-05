@@ -8,46 +8,22 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestRedshiftTable;
 use Keboola\StorageApi\Options\FileUploadOptions;
 
-class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
+class DownloadTablesRedshiftTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-        try {
-            $this->clientWrapper->getBasicClient()->dropBucket('in.c-docker-test-redshift', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
-        $this->clientWrapper->getBasicClient()->createBucket(
-            'docker-test-redshift',
-            Client::STAGE_IN,
-            'Docker Testsuite',
-            'redshift'
-        );
-
-        // Create table
-        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-        $csv->writeRow(['Id', 'Name']);
-        $csv->writeRow(['test', 'test']);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test-redshift', 'test', $csv);
-    }
-
+    #[NeedsTestRedshiftTable]
     public function testReadTablesRedshift(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test-redshift.test',
+                'source' => $this->redshiftTableId,
                 'destination' => 'test-redshift.csv',
             ],
         ]);
@@ -61,22 +37,24 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         );
 
         self::assertEquals(
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n",
+            // phpcs:ignore Generic.Files.LineLength
+            "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
             file_get_contents($this->temp->getTmpFolder(). '/download/test-redshift.csv')
         );
 
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-redshift.csv.manifest');
-        self::assertEquals('in.c-docker-test-redshift.test', $manifest['id']);
+        self::assertEquals($this->redshiftTableId, $manifest['id']);
     }
 
+    #[NeedsTestRedshiftTable]
     public function testReadTablesS3Redshift(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test-redshift.test',
+                'source' => $this->redshiftTableId,
                 'destination' => 'test-redshift.csv',
             ],
         ]);
@@ -91,10 +69,11 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-redshift.csv.manifest');
-        self::assertEquals('in.c-docker-test-redshift.test', $manifest['id']);
+        self::assertEquals($this->redshiftTableId, $manifest['id']);
         $this->assertS3info($manifest);
     }
 
+    #[NeedsTestRedshiftTable]
     public function testReadTablesEmptySlices(): void
     {
         $fileUploadOptions = new FileUploadOptions();
@@ -106,7 +85,7 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
         $this->clientWrapper->getBasicClient()->createTableAsync(
-            'in.c-docker-test-redshift',
+            $this->redshiftBucketId,
             'empty',
             $headerCsvFile,
             []
@@ -114,12 +93,12 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-redshift.empty', $options);
+        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect($this->redshiftBucketId . '.empty', $options);
 
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test-redshift.empty',
+                'source' => $this->redshiftBucketId . '.empty',
                 'destination' => 'empty.csv',
             ],
         ]);
@@ -136,6 +115,6 @@ class DownloadTablesRedshiftTest extends DownloadTablesTestAbstract
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/empty.csv.manifest');
-        self::assertEquals('in.c-docker-test-redshift.empty', $manifest['id']);
+        self::assertEquals($this->redshiftBucketId . '.empty', $manifest['id']);
     }
 }

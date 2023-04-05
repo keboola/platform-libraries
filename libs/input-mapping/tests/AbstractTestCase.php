@@ -2,33 +2,60 @@
 
 declare(strict_types=1);
 
-namespace Keboola\InputMapping\Tests\Functional;
+namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use ReflectionObject;
 use Symfony\Component\Filesystem\Filesystem;
 
-class DownloadTablesTestAbstract extends TestCase
+abstract class AbstractTestCase extends TestCase
 {
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
+    protected ?string $workspaceId = null;
+    protected array $workspaceCredentials;
+
+    protected string $emptyInputBucketId;
+    protected string $emptyOutputBucketId;
+    protected string $redshiftBucketId;
+    protected string $redshiftTableId;
+    protected string $testBucketId;
+    protected string $firstTableId;
+    protected string $secondTableId;
+    protected string $thirdTableId;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->temp = new Temp('docker');
+        $this->temp = new Temp('input-mapping');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
         $this->initClient();
+
+        $objects = TestSatisfyer::satisfyTestNeeds(
+            new ReflectionObject($this),
+            $this->clientWrapper,
+            $this->temp,
+            Test::describe($this)[1],
+        );
+        foreach ($objects as $name => $value) {
+            if ($value !== null) {
+                $this->$name = $value;
+            }
+        }
     }
 
     protected function initClient(): void
@@ -45,6 +72,16 @@ class DownloadTablesTestAbstract extends TestCase
             $tokenInfo['owner']['id'],
             $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
+    }
+
+    public function tearDown(): void
+    {
+        if ($this->workspaceId) {
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            $workspaces->deleteWorkspace($this->workspaceId, [], true);
+            $this->workspaceId = null;
+        }
+        parent::tearDown();
     }
 
     protected function assertS3info(array $manifest): void
@@ -98,7 +135,57 @@ class DownloadTablesTestAbstract extends TestCase
         }
     }
 
-    protected function getStagingFactory(
+    protected function getWorkspaceStagingFactory(
+        ?ClientWrapper $clientWrapper = null,
+        string $format = 'json',
+        ?LoggerInterface $logger = null,
+        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+    ): StrategyFactory {
+        $stagingFactory = new StrategyFactory(
+            $clientWrapper ?: $this->clientWrapper,
+            $logger ?: new NullLogger(),
+            $format
+        );
+        $mockWorkspace = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getWorkspaceId'])
+            ->getMock();
+        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
+            function () use ($backend) {
+                if (!$this->workspaceId) {
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
+                    $this->workspaceId = (string) $workspace['id'];
+                    $this->workspaceCredentials = $workspace['connection'];
+                }
+                return $this->workspaceId;
+            }
+        );
+        $mockLocal = self::getMockBuilder(NullProvider::class)
+            ->setMethods(['getPath'])
+            ->getMock();
+        $mockLocal->method('getPath')->willReturnCallback(
+            function () {
+                return $this->temp->getTmpFolder();
+            }
+        );
+        /** @var ProviderInterface $mockLocal */
+        /** @var ProviderInterface $mockWorkspace */
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                $backend[0] => new Scope([Scope::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockWorkspace,
+            [
+                $backend[0] => new Scope([Scope::TABLE_DATA]),
+            ]
+        );
+        return $stagingFactory;
+    }
+
+    protected function getLocalStagingFactory(
         ?ClientWrapper $clientWrapper = null,
         string $format = 'json',
         ?LoggerInterface $logger = null
@@ -123,6 +210,12 @@ class DownloadTablesTestAbstract extends TestCase
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
                 AbstractStrategyFactory::ABS => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
                 AbstractStrategyFactory::S3 => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
+            ]
+        );
+        $stagingFactory->addProvider(
+            $mockLocal,
+            [
+                AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
             ]
         );
         return $stagingFactory;

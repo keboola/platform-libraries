@@ -15,6 +15,8 @@ use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -195,12 +197,8 @@ class ReaderTest extends TestCase
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => 'not-needed.test',
                 'destination' => 'test.csv',
-            ],
-            [
-                'source' => 'in.c-docker-test.test2',
-                'destination' => 'test2.csv',
             ],
         ]);
 
@@ -219,30 +217,32 @@ class ReaderTest extends TestCase
 
     public function testReadTablesDefaultBackendBranchRewrite(): void
     {
-        $temp = new Temp(uniqid('input-mapping'));
-        file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
-        $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
+        file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
+        $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
 
         $clientWrapper = $this->getClientWrapper(null);
-        try {
-            $clientWrapper->getBasicClient()->dropBucket('in.c-my-branch-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
+        $branchBucketId = TestSatisfyer::getBucketIdByDisplayName(
+            $clientWrapper,
+            'my-branch-input-mapping-test',
+            Client::STAGE_IN
+        );
+        if ($branchBucketId) {
+            $clientWrapper->getBasicClient()->dropBucket((string) $branchBucketId, ['force' => true]);
         }
-        try {
-            $clientWrapper->getBasicClient()->dropBucket('in.c-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
+        $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
+            $clientWrapper,
+            'input-mapping-test',
+            Client::STAGE_IN
+        );
+        if ($inBucketId) {
+            $clientWrapper->getBasicClient()->dropBucket((string) $inBucketId, ['force' => true]);
         }
         foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
-            if (preg_match('/^c-[0-9]+-docker-test$/ui', $bucket['name'])) {
+            if (preg_match('/^(c-)?[0-9]+-input-mapping-test/ui', $bucket['name'])) {
                 $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
             }
         }
+
         $branchesApi = new DevBranches($clientWrapper->getBasicClient());
         foreach ($branchesApi->listBranches() as $branch) {
             if ($branch['name'] === 'my-branch') {
@@ -251,24 +251,29 @@ class ReaderTest extends TestCase
         }
         $branchId = (string) $branchesApi->createBranch('my-branch')['id'];
 
+        $inBucketId = $clientWrapper->getBasicClient()->createBucket('input-mapping-test', Client::STAGE_IN);
+        // we need to know the $inBucketId, which is known only after creation, but we need the bucket not to exist
+        // hence - create the bucket, get it id, and drop it
+        $clientWrapper->getBasicClient()->dropBucket($inBucketId, ['force' => true]);
         $branchBucketId = $clientWrapper->getBasicClient()->createBucket(
-            sprintf('%s-docker-test', $branchId),
-            'in'
+            sprintf('%s-input-mapping-test', $branchId),
+            Client::STAGE_IN
         );
-        $clientWrapper->getBasicClient()->createTable($branchBucketId, 'test', $csvFile);
+        $clientWrapper->getBasicClient()->createTableAsync($branchBucketId, 'test', $csvFile);
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper($branchId)));
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $inBucketId . '.test',
                 'destination' => 'test.csv',
             ],
         ]);
         $state = new InputTableStateList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $inBucketId . '.test',
                 'lastImportDate' => '1605741600',
             ],
         ]);
+
         $result = $reader->downloadTables(
             $configuration,
             $state,

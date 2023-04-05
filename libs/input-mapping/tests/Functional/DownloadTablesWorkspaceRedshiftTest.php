@@ -7,36 +7,37 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\Test\TestLogger;
 
-class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbstract
+class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
 {
+    #[NeedsTestTables(2)]
     public function testTablesRedshiftBackend(): void
     {
         $logger = new TestLogger();
         $reader = new Reader(
-            $this->getStagingFactory(
-                null,
-                'json',
-                $logger,
-                [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+            $this->getWorkspaceStagingFactory(
+                logger: $logger,
+                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
             )
         );
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'test1',
                 'changed_since' => '-2 days',
                 'columns' => ['Id'],
             ],
             [
-                'source' => 'in.c-input-mapping-test.test2',
+                'source' => $this->secondTableId,
                 'destination' => 'test2',
                 'column_types' => [
                     [
@@ -59,56 +60,66 @@ class DownloadTablesWorkspaceRedshiftTest extends DownloadTablesWorkspaceTestAbs
             new ReaderOptions(true)
         );
 
-        $adapter = new Adapter();
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         /* because of https://keboola.atlassian.net/browse/KBC-228 we have to create redshift bucket to
             unload data from redshift workspace */
-        $this->clientWrapper->getBasicClient()->dropBucket('out.c-input-mapping-test');
-        $this->clientWrapper->getBasicClient()->createBucket(
-            'input-mapping-test',
+        $bucketId = TestSatisfyer::getBucketIdByDisplayName(
+            $this->clientWrapper,
+            'input-mapping-test-rs',
+            Client::STAGE_OUT
+        );
+        if ($bucketId !== null) {
+            $this->clientWrapper->getBasicClient()->dropBucket($bucketId, ['force' => true]);
+        }
+
+        $this->emptyOutputBucketId = $this->clientWrapper->getBasicClient()->createBucket(
+            'input-mapping-test-rs',
             Client::STAGE_OUT,
             'Docker Testsuite',
             'redshift'
         );
 
-        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
+        $adapter = new Adapter();
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
+        self::assertEquals($this->firstTableId, $manifest['id']);
         // test that the table exists in the workspace
         $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-            'out.c-input-mapping-test',
+            $bucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
-        self::assertEquals('out.c-input-mapping-test.test1', $tableId);
+        self::assertEquals($bucketId . '.test1', $tableId);
         $table = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
-        self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
+        self::assertEquals($this->secondTableId, $manifest['id']);
         $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
-            'out.c-input-mapping-test',
+            $bucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
-        self::assertEquals('out.c-input-mapping-test.test2', $tableId);
+        self::assertEquals($bucketId . '.test2', $tableId);
 
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains(
+            sprintf('Table "%s" will be copied.', $this->firstTableId)
+        ));
+        self::assertTrue($logger->hasInfoThatContains(
+            sprintf('Table "%s" will be copied.', $this->secondTableId)
+        ));
         self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
+    #[NeedsTestTables]
     public function testUseViewFails(): void
     {
         $logger = new TestLogger();
         $reader = new Reader(
-            $this->getStagingFactory(
-                null,
-                'json',
-                $logger,
-                [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+            $this->getWorkspaceStagingFactory(
+                logger: $logger,
+                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
             )
         );
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'test1',
                 'use_view' => true,
             ],

@@ -248,12 +248,6 @@ class TableDefinitionTest extends BaseWriterTest
         ];
     }
 
-    public function incrementalFlagProvider(): Generator
-    {
-        yield 'incremental load' => [true];
-        yield 'full load' => [false];
-    }
-
     /**
      * @dataProvider incrementalFlagProvider
      */
@@ -464,7 +458,7 @@ class TableDefinitionTest extends BaseWriterTest
         );
 
         self::assertCount(4, $writerJobs);
-        self::assertTableColumnAddJob(
+        self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
             'birthweight',
             null,
@@ -474,7 +468,7 @@ class TableDefinitionTest extends BaseWriterTest
                 'nullable' => true,
             ]
         );
-        self::assertTableColumnAddJob(
+        self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
             'created',
             null,
@@ -536,7 +530,7 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertEquals($expectedType['nullable'], $nullableMetadata[0]['value']);
     }
 
-    private static function assertTableColumnAddJob(
+    private static function assertTableTypedColumnAddJob(
         array $jobData,
         string $expectedColumnName,
         ?string $expectedBaseType,
@@ -554,14 +548,6 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertSame('tablePrimaryKeyAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
-    }
-
-    private static function assertTableImportJob(array $jobData, bool $expectedIncrementalFlag): void
-    {
-        self::assertSame('tableImport', $jobData['operationName']);
-        self::assertSame('success', $jobData['status']);
-        self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
-        self::assertSame([], $jobData['results']['newColumns']);
     }
 
     private function dropTableIfExists(string $tableId): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
+use Generator;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
@@ -149,5 +150,30 @@ abstract class BaseWriterTest extends TestCase
         foreach ($expectedParams as $expectedParam) {
             self::assertContains($expectedParam, $job['operationParams']['params']);
         }
+    }
+
+    protected static function assertTableImportJob(array $jobData, bool $expectedIncrementalFlag): void
+    {
+        self::assertSame('tableImport', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedIncrementalFlag, $jobData['operationParams']['params']['incremental']);
+        self::assertSame([], $jobData['results']['newColumns']);
+    }
+
+    protected static function assertTableColumnAddJob(
+        array $jobData,
+        string $expectedColumnName
+    ): void {
+        self::assertSame('tableColumnAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
+        self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
+        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
+    }
+
+    public function incrementalFlagProvider(): Generator
+    {
+        yield 'incremental load' => [true];
+        yield 'full load' => [false];
     }
 }

@@ -4,30 +4,43 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftInputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
-use Keboola\OutputMapping\Tests\Writer\Workspace\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\TableWriter;
 
-class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
+class RedshiftWriterWorkspaceTest extends AbstractTestCase
 {
     use CreateBranchTrait;
-
-    private const INPUT_BUCKET = 'in.c-RedshiftWriterWorkspaceTest';
-    private const OUTPUT_BUCKET = 'out.c-RedshiftWriterWorkspaceTest';
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearBuckets([
-            self::INPUT_BUCKET,
-            self::OUTPUT_BUCKET,
-        ]);
     }
 
+    #[NeedsEmptyRedshiftInputBucket, NeedsEmptyRedshiftOutputBucket]
     public function testRedshiftTableOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        $tableIds = [];
+        // Create table
+        for ($i = 0; $i < 2; $i++) {
+            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+                $this->emptyRedshiftInputBucketId,
+                'test' . ($i + 1),
+                $csv
+            );
+        }
+
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
@@ -37,18 +50,16 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT)
             ->getDataStorage()->getWorkspaceId();
 
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('redshift', 'RedshiftWriterWorkspaceTest');
-        // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->clientWrapper->getBasicClient()->createBucket('RedshiftWriterWorkspaceTest', 'out', '', 'redshift');
+        $root = $this->temp->getTmpFolder();
+        $this->prepareWorkspaceWithTables($this->emptyRedshiftInputBucketId);
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'destination' => $this->emptyRedshiftOutputBucketId . '.table1a',
             ],
             [
                 'source' => 'table2a',
-                'destination' => self::OUTPUT_BUCKET . '.table2a',
+                'destination' => $this->emptyRedshiftOutputBucketId . '.table2a',
             ],
         ];
         file_put_contents(
@@ -60,7 +71,7 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id2', 'Name2']]
+                ['columns' => ['Id', 'Name']]
             )
         );
         $writer = new TableWriter($factory);
@@ -79,16 +90,17 @@ class RedshiftWriterWorkspaceTest extends BaseWriterWorkspaceTest
         self::assertNotEmpty($jobIds[1]);
 
         self::assertTablesExists(
-            self::OUTPUT_BUCKET,
+            $this->emptyRedshiftOutputBucketId,
             [
-                self::OUTPUT_BUCKET . '.table1a',
-                self::OUTPUT_BUCKET . '.table2a',
+                $this->emptyRedshiftOutputBucketId . '.table1a',
+                $this->emptyRedshiftOutputBucketId . '.table2a',
             ]
         );
-        self::assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
-            '"id","name"',
-            '"test","test"',
-            '"aabb","ccdd"',
+        self::assertTableRowsEquals($this->emptyRedshiftOutputBucketId . '.table1a', [
+            '"id","name","foo","bar"',
+            '"id1","name1","foo1","bar1"',
+            '"id2","name2","foo2","bar2"',
+            '"id3","name3","foo3","bar3"',
         ]);
     }
 }

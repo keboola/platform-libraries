@@ -9,20 +9,17 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
-use Keboola\OutputMapping\Tests\Writer\Workspace\BaseWriterWorkspaceTest;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\StorageApi\Workspaces;
-use Keboola\Temp\Temp;
 use Psr\Log\Test\TestLogger;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
-class ABSWorkspaceTest extends BaseWriterWorkspaceTest
+class ABSWorkspaceTest extends AbstractTestCase
 {
     use InitSynapseStorageClientTrait;
-
-    private Temp $temp;
 
     protected function initClient(?string $branchId = ''): void
     {
@@ -34,7 +31,6 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
         if (!$this->checkSynapseTests()) {
             self::markTestSkipped('Synapse tests disabled.');
         }
-        $this->temp = new Temp();
         parent::setUp();
     }
 
@@ -265,8 +261,8 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals([], $file['tags']);
-        self::assertEquals(false, $file['isPublic']);
-        self::assertEquals(true, $file['isEncrypted']);
+        self::assertFalse($file['isPublic']);
+        self::assertTrue($file['isEncrypted']);
         self::assertEquals(15, $file['maxAgeDays']);
     }
 
@@ -312,9 +308,9 @@ class ABSWorkspaceTest extends BaseWriterWorkspaceTest
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals(['first-tag', 'second-tag'], $file['tags']);
-        self::assertEquals(false, $file['isPublic']);
-        self::assertEquals(true, $file['isEncrypted']);
-        self::assertEquals(null, $file['maxAgeDays']);
+        self::assertFalse($file['isPublic']);
+        self::assertTrue($file['isEncrypted']);
+        self::assertNull($file['maxAgeDays']);
     }
 
     public function testLoadFileToStorageFileDoesNotExist(): void

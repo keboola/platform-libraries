@@ -9,13 +9,13 @@ use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Throwable;
 
-class TableDefinitionTest extends BaseWriterTest
+class TableDefinitionTest extends AbstractTestCase
 {
-    private const OUTPUT_BUCKET = 'out.c-TableDefinitionTest';
-
     public function setUp(): void
     {
         parent::setUp();
@@ -37,9 +37,10 @@ class TableDefinitionTest extends BaseWriterTest
         }
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testNotCreateTableDefinition(): void
     {
-        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
+        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
         $config = [
             'source' => 'tableDefinition.csv',
             'destination' => $tableId,
@@ -48,9 +49,7 @@ class TableDefinitionTest extends BaseWriterTest
             'primary_key' => ['Id', 'Name'],
         ];
 
-        $this->dropTableIfExists($tableId);
-
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
             <<< EOT
@@ -58,7 +57,7 @@ class TableDefinitionTest extends BaseWriterTest
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT
         );
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -77,9 +76,10 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertFalse($tableDetails['isTyped']);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testCreateTableDefinitionErrorHandling(): void
     {
-        $tableId = self::OUTPUT_BUCKET . '.tableDefinitionWithInvalidDataTypes';
+        $tableId = $this->emptyOutputBucketId . '.tableDefinitionWithInvalidDataTypes';
         $config = [
             'source' => 'tableDefinition.csv',
             'destination' => $tableId,
@@ -90,10 +90,8 @@ class TableDefinitionTest extends BaseWriterTest
             'primary_key' => ['Id', 'Name'],
         ];
 
-        $this->dropTableIfExists($tableId);
-
-        touch(sprintf('%s/upload/tableDefinition.csv', $this->tmp->getTmpFolder()));
-        $writer = new TableWriter($this->getStagingFactory());
+        touch(sprintf('%s/upload/tableDefinition.csv', $this->temp->getTmpFolder()));
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionCode(400);
@@ -118,13 +116,17 @@ class TableDefinitionTest extends BaseWriterTest
     /**
      * @dataProvider configProvider
      */
+    #[NeedsEmptyOutputBucket]
     public function testWriterCreateTableDefinition(
-        array $config,
+        array $configTemplate,
         array $expectedTypes
     ): void {
-        $this->dropTableIfExists($config['destination']);
+        array_walk_recursive($configTemplate, function (&$value) {
+            $value = is_string($value) ? sprintf($value, $this->emptyOutputBucketId) : $value;
+        });
+        $config = $configTemplate;
 
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
             <<< EOT
@@ -132,7 +134,7 @@ class TableDefinitionTest extends BaseWriterTest
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT
         );
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -161,7 +163,7 @@ class TableDefinitionTest extends BaseWriterTest
         yield 'base types' => [
             [
                 'source' => 'tableDefinition.csv',
-                'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
+                'destination' => '%s.tableDefinition',
                 'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'column_metadata' => [
                     'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
@@ -198,7 +200,7 @@ class TableDefinitionTest extends BaseWriterTest
         yield 'native snowflake types' => [
             [
                 'source' => 'tableDefinition.csv',
-                'destination' => self::OUTPUT_BUCKET . '.tableDefinition',
+                'destination' => '%s.tableDefinition',
                 'columns' => ['Id', 'Name', 'birthweight', 'created'],
                 'metadata' => [
                     [
@@ -251,10 +253,10 @@ class TableDefinitionTest extends BaseWriterTest
     /**
      * @dataProvider incrementalFlagProvider
      */
+    #[NeedsEmptyInputBucket, NeedsEmptyOutputBucket]
     public function testWriterUpdateTableDefinitionWithBaseTypes(bool $incrementalFlag): void
     {
-        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
-        $this->dropTableIfExists($tableId);
+        $tableId = $this->emptyInputBucketId . '.tableDefinition';
 
         $idDatatype = new GenericStorage('int', ['nullable' => false]);
         $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
@@ -275,7 +277,7 @@ class TableDefinitionTest extends BaseWriterTest
             ],
         ];
 
-        $this->clientWrapper->getBasicClient()->createTableDefinition(self::OUTPUT_BUCKET, [
+        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyInputBucketId, [
             'name' => 'tableDefinition',
             'primaryKeysNames' => [],
             'columns' => [
@@ -293,7 +295,7 @@ class TableDefinitionTest extends BaseWriterTest
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
         $this->clientWrapper->getBasicClient()->setRunId($runId);
 
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
             <<< EOT
@@ -301,7 +303,7 @@ class TableDefinitionTest extends BaseWriterTest
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT
         );
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -378,10 +380,10 @@ class TableDefinitionTest extends BaseWriterTest
     /**
      * @dataProvider incrementalFlagProvider
      */
+    #[NeedsEmptyOutputBucket]
     public function testWriterUpdateTableDefinitionWithNativeTypes(bool $incrementalFlag): void
     {
-        $tableId = self::OUTPUT_BUCKET . '.tableDefinition';
-        $this->dropTableIfExists($tableId);
+        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
 
         $idDatatype = new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]);
         $nameDatatype = new Snowflake(Snowflake::TYPE_TEXT, ['length' => '17', 'nullable' => false]);
@@ -408,7 +410,7 @@ class TableDefinitionTest extends BaseWriterTest
             ],
         ];
 
-        $this->clientWrapper->getBasicClient()->createTableDefinition(self::OUTPUT_BUCKET, [
+        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyOutputBucketId, [
             'name' => 'tableDefinition',
             'primaryKeysNames' => [],
             'columns' => [
@@ -426,7 +428,7 @@ class TableDefinitionTest extends BaseWriterTest
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
         $this->clientWrapper->getBasicClient()->setRunId($runId);
 
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
             <<< EOT
@@ -434,7 +436,7 @@ class TableDefinitionTest extends BaseWriterTest
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT
         );
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -548,16 +550,5 @@ class TableDefinitionTest extends BaseWriterTest
         self::assertSame('tablePrimaryKeyAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
-    }
-
-    private function dropTableIfExists(string $tableId): void
-    {
-        try {
-            $this->clientWrapper->getBasicClient()->dropTable($tableId);
-        } catch (Throwable $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-        }
     }
 }

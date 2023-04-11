@@ -4,28 +4,23 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
+use Keboola\Csv\CsvFile;
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Scope;
-use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\ListFilesOptions;
-use Keboola\StorageApi\Workspaces;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\Filesystem\Filesystem;
 
-class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
+class AbsWriterWorkspaceTest extends AbstractTestCase
 {
     use InitSynapseStorageClientTrait;
 
-    private const INPUT_BUCKET = 'in.c-AbsWriterWorkspaceTest';
-    private const OUTPUT_BUCKET = 'out.c-AbsWriterWorkspaceTest';
     private const FILE_TAG = 'AbsWriterWorkspaceTest';
 
     public function setUp(): void
@@ -34,7 +29,6 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-        $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
         $this->clearFileUploads([self::FILE_TAG]);
     }
 
@@ -43,86 +37,54 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
-    protected function getStagingFactory(
-        ?ClientWrapper $clientWrapper = null,
-        string $format = 'json',
-        ?LoggerInterface $logger = null,
-        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
-    ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
-            $logger ?: new NullLogger(),
-            $format
-        );
-        $mockWorkspace = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId', 'getCredentials'])
-            ->getMock();
-        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspace = $workspace;
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceId;
-            }
-        );
-        $mockWorkspace->method('getCredentials')->willReturnCallback(
-            function () use ($backend) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspace = $workspace;
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceCredentials;
-            }
-        );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->tmp->getTmpFolder();
-            }
-        );
-        /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspace */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-            ]
-        );
-        $stagingFactory->addProvider(
-            $mockWorkspace,
-            [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::FILE_DATA, Scope::TABLE_DATA]),
-            ]
-        );
-        return $stagingFactory;
-    }
-
+    #[NeedsEmptyOutputBucket]
     public function testAbsTableSlicedManifestOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
         );
+
+        $bucketName = 'testAbsTableSlicedManifestOutputMapping';
+        $bucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_IN);
+        if ($bucketId !== null) {
+            $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId, ['include' => '']);
+            foreach ($tables as $table) {
+                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+            }
+        } else {
+            $bucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+                name: $bucketName,
+                stage: Client::STAGE_IN,
+                backend: 'synapse'
+            );
+        }
+        $tableIds = [];
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        for ($i = 0; $i < 2; $i++) {
+            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+                $bucketId,
+                'test' . ($i + 1),
+                $csv
+            );
+        }
+
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('abs', 'AbsWriterWorkspaceTest', 'someday/');
+        $root = $this->temp->getTmpFolder();
+        $this->prepareWorkspaceWithTables($bucketId, 'someday/');
 
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
             ],
         ];
         $fs = new Filesystem();
@@ -146,25 +108,27 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
-        self::assertEquals(self::OUTPUT_BUCKET . '.table1a', $tables[0]['id']);
+        self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
 
         $this->assertJobParamsMatches([
             'incremental' => false,
             'columns' => ['Id', 'Name'],
         ], $jobIds[0]);
 
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
-            '"Id","Name"',
-            '"aabb","ccdd"',
-            '"test","test"',
+        $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
+            '"id","name"',
+            '"id1","name1"',
+            '"id2","name2"',
+            '"id3","name3"',
         ]);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testAbsTableSlicedOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
@@ -172,7 +136,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $content = "\"first value\",\"second value\"\n";
         $blobClient->createBlockBlob(
@@ -190,7 +154,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a.csv',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
             ],
         ];
         $fs = new Filesystem();
@@ -214,9 +178,9 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
-        self::assertEquals(self::OUTPUT_BUCKET . '.table1a', $tables[0]['id']);
+        self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
         self::assertNotEmpty($jobIds[0]);
 
         $this->assertJobParamsMatches([
@@ -224,16 +188,17 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             'columns' => ['First column', 'Second column'],
         ], $jobIds[0]);
 
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
-            '"First_column","Second_column"',
+        $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
             '"first value","second value"',
-            '"secondRow1","secondRow2"',
+            '"first_column","second_column"',
+            '"secondrow1","secondrow2"',
         ]);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testAbsTableSingleFileOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
@@ -244,7 +209,7 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
             AbstractStrategyFactory::WORKSPACE_ABS
         )->getDataStorage()->getWorkspaceId();
 
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
         $content = "\"First column\",\"Second Column\"\n\"first value\"," .
             "\"second value\"\n\"secondRow1\",\"secondRow2\"";
@@ -263,13 +228,13 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $configs = [
             [
                 'source' => 'table1a.csv',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
                 'incremental' => true,
                 'columns' => ['first column'],
             ],
             [
                 'source' => 'table1a.csv2',
-                'destination' => self::OUTPUT_BUCKET . '.table2a',
+                'destination' => $this->emptyOutputBucketId . '.table2a',
             ],
         ];
         $fs = new Filesystem();
@@ -312,27 +277,28 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         ], $jobIds[1]);
 
         $this->assertTablesExists(
-            self::OUTPUT_BUCKET,
+            $this->emptyOutputBucketId,
             [
-                self::OUTPUT_BUCKET . '.table1a',
-                self::OUTPUT_BUCKET . '.table2a',
+                $this->emptyOutputBucketId . '.table1a',
+                $this->emptyOutputBucketId . '.table2a',
             ]
         );
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
+        $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
             '"first_column"',
             '"first value"',
-            '"secondRow1"',
+            '"secondrow1"',
         ]);
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table2a', [
+        $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table2a', [
             '"first_column","second_column"',
             '"first","second"',
             '"third","fourth"',
         ]);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testWriteBasicFiles(): void
     {
-        $factory = $this->getStagingFactory(
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
@@ -341,20 +307,20 @@ class AbsWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS);
         $blobClient = ClientFactory::createClientFromConnectionString($this->workspaceCredentials['connectionString']);
-        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file1', 'test');
-        $blobClient->createBlockBlob($this->workspace['connection']['container'], 'upload/file2', 'test');
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'upload/file1', 'test');
+        $blobClient->createBlockBlob($this->workspaceCredentials['container'], 'upload/file2', 'test');
         $blobClient->createBlockBlob(
-            $this->workspace['connection']['container'],
+            $this->workspaceCredentials['container'],
             'upload/file2.manifest',
             '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}'
         );
         $blobClient->createBlockBlob(
-            $this->workspace['connection']['container'],
+            $this->workspaceCredentials['container'],
             'upload/file3',
             'test'
         );
         $blobClient->createBlockBlob(
-            $this->workspace['connection']['container'],
+            $this->workspaceCredentials['container'],
             'upload/file3.manifest',
             '{"tags": ["' . self::FILE_TAG . '"],"is_permanent": true}'
         );

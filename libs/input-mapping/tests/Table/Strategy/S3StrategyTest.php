@@ -8,10 +8,13 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\S3;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Psr\Log\NullLogger;
 
-class S3StrategyTest extends AbstractStrategyTest
+class S3StrategyTest extends AbstractTestCase
 {
+    #[NeedsTestTables]
     public function testColumns(): void
     {
         $strategy = new S3(
@@ -24,7 +27,7 @@ class S3StrategyTest extends AbstractStrategyTest
         );
         $tableOptions = new InputTableOptions(
             [
-                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'columns' => ['Id', 'Name'],
             ]
@@ -43,6 +46,7 @@ class S3StrategyTest extends AbstractStrategyTest
         );
     }
 
+    #[NeedsTestTables]
     public function testColumnsExtended(): void
     {
         $strategy = new S3(
@@ -55,7 +59,7 @@ class S3StrategyTest extends AbstractStrategyTest
         );
         $tableOptions = new InputTableOptions(
             [
-                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'column_types' => [
                     [

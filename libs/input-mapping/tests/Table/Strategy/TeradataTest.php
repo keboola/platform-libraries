@@ -8,19 +8,17 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Teradata;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Psr\Log\NullLogger;
 
-class TeradataTest extends AbstractStrategyTest
+class TeradataTest extends AbstractTestCase
 {
+    #[NeedsTestTables]
     public function testTeradataDownloadTable(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
         $strategy = new Teradata(
-            $clientWrapper,
+            $this->clientWrapper,
             new NullLogger(),
             new NullProvider(),
             new NullProvider(),
@@ -29,7 +27,7 @@ class TeradataTest extends AbstractStrategyTest
         );
         $result = $strategy->downloadTable(new InputTableOptions(
             [
-                'source' => 'in.c-input-mapping-test-strategy.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'my-table',
                 'columns' => ['foo', 'bar'],
             ]
@@ -39,7 +37,7 @@ class TeradataTest extends AbstractStrategyTest
                 'table' => [
                     new InputTableOptions(
                         [
-                            'source' => 'in.c-input-mapping-test-strategy.test1',
+                            'source' => $this->firstTableId,
                             'destination' => 'my-table',
                             'columns' => ['foo', 'bar'],
                         ]

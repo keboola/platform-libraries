@@ -7,51 +7,31 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
-use Keboola\StorageApi\Client;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 
-class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
+class DownloadTablesAdaptiveTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-        try {
-            $this->clientWrapper->getBasicClient()->dropBucket('in.c-docker-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
-        $this->clientWrapper->getBasicClient()->createBucket('docker-test', Client::STAGE_IN, 'Docker Testsuite');
-
-        // Create table
-        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
-        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
-        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
-        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test', 'test', $csv);
-    }
-
+    #[NeedsTestTables]
     public function testDownloadTablesDownloadsEmptyTable(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $this->firstTableId,
                 'destination' => 'test.csv',
                 'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ],
         ]);
-        $testTableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-docker-test.test');
+        $testTableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
         $inputTablesState = new InputTableStateList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $this->firstTableId,
                 'lastImportDate' => $testTableInfo['lastImportDate'],
             ],
         ]);
@@ -65,7 +45,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
         self::assertEquals(
             $testTableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable('in.c-docker-test.test')->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n",
@@ -74,12 +54,13 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         self::assertCount(1, $tablesResult->getInputTableStateList()->jsonSerialize());
     }
 
+    #[NeedsTestTables]
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $this->firstTableId,
                 'destination' => 'test.csv',
                 'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ],
@@ -97,12 +78,12 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
         $this->clientWrapper->getBasicClient()->writeTableAsync(
-            'in.c-docker-test.test',
+            $this->firstTableId,
             $csv,
             ['incremental' => true]
         );
 
-        $updatedTestTableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-docker-test.test');
+        $updatedTestTableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
         $secondTablesResult = $reader->downloadTables(
             $configuration,
             $firstTablesResult->getInputTableStateList(),
@@ -113,7 +94,7 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
 
         self::assertEquals(
             $updatedTestTableInfo['lastImportDate'],
-            $secondTablesResult->getInputTableStateList()->getTable('in.c-docker-test.test')->getLastImportDate()
+            $secondTablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
@@ -122,19 +103,20 @@ class DownloadTablesAdaptiveTest extends DownloadTablesTestAbstract
         self::assertCount(1, $secondTablesResult->getInputTableStateList()->jsonSerialize());
     }
 
+    #[NeedsTestTables]
     public function testDownloadTablesInvalidDate(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $this->firstTableId,
                 'destination' => 'test.csv',
                 'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ],
         ]);
         $inputTablesState = new InputTableStateList([
             [
-                'source' => 'in.c-docker-test.test',
+                'source' => $this->firstTableId,
                 'lastImportDate' => 'nonsense',
             ],
         ]);

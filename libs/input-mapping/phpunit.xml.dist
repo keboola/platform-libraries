@@ -14,8 +14,10 @@
         <testsuite name="CommonPart1">
             <directory>tests</directory>
             <exclude>tests/Functional/DownloadFilesAbsWorkspaceTest.php</exclude>
-            <exclude>tests/Functional/DownloadFilesAdaptiveTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesAdaptiveTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesBranchTest.php</exclude>
+            <exclude>tests/Functional/DownloadFilesAdaptiveBranchTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesRedshiftTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesRedshiftTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesDefaultTest.php</exclude>
@@ -32,6 +34,8 @@
         <testsuite name="CommonFiles">
             <file>tests/Functional/DownloadFilesTest.php</file>
             <file>tests/Functional/DownloadFilesAdaptiveTest.php</file>
+            <file>tests/Functional/DownloadFilesBranchTest.php</file>
+            <file>tests/Functional/DownloadFilesAdaptiveBranchTest.php</file>
         </testsuite>
         <testsuite name="Aws">
             <file>tests/Functional/DownloadFilesRedshiftTest.php</file>

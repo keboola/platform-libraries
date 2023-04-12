@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Functional;
 
-use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
@@ -13,53 +12,42 @@ use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Result\Column;
 use Keboola\InputMapping\Table\Result\MetadataItem;
 use Keboola\InputMapping\Table\Result\TableInfo;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 
-class DownloadTablesOutputTest extends DownloadTablesTestAbstract
+class DownloadTablesOutputTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-        try {
-            $this->clientWrapper->getBasicClient()->dropBucket('in.c-input-mapping-test', ['force' => true]);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
-        $this->clientWrapper->getBasicClient()->createBucket('input-mapping-test', Client::STAGE_IN);
-
-        // Create table
-        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
-        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
-        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
-        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test', 'test', $csv);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-input-mapping-test', 'test2', $csv);
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
-        $metadataApi->postColumnMetadata(
-            'in.c-input-mapping-test.test.Id',
-            'someProvider',
-            [[
-                'key' => 'someKey',
-                'value' => 'someValue',
-            ]]
-        );
-    }
-
+    #[NeedsTestTables(2)]
     public function testDownloadTablesResult(): void
     {
-        $reader = new Reader($this->getStagingFactory());
+        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi->postTableMetadataWithColumns(
+            new TableMetadataUpdateOptions(
+                $this->firstTableId,
+                'someProvider',
+                [[
+                    'key' => 'foo',
+                    'value' => 'bar',
+                ]],
+                [
+                    'Id' => [[
+                        'key' => 'someKey',
+                        'value' => 'someValue',
+                    ]],
+                ]
+            )
+        );
+
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test',
+                'source' => $this->firstTableId,
                 'destination' => 'test.csv',
             ],
             [
-                'source' => 'in.c-input-mapping-test.test2',
+                'source' => $this->secondTableId,
                 'destination' => 'test2.csv',
             ],
         ]);
@@ -71,15 +59,15 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
             AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
-        $test1TableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-input-mapping-test.test');
-        $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable('in.c-input-mapping-test.test2');
+        $test1TableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
+        $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable($this->secondTableId);
         self::assertEquals(
             $test1TableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable('in.c-input-mapping-test.test')->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
         );
         self::assertEquals(
             $test2TableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable('in.c-input-mapping-test.test2')->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->secondTableId)->getLastImportDate()
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
@@ -95,16 +83,16 @@ class DownloadTablesOutputTest extends DownloadTablesTestAbstract
         $tableMetrics = $tablesResult->getMetrics()?->getTableMetrics();
         self::assertNotNull($tableMetrics);
         $metrics = iterator_to_array($tableMetrics);
-        self::assertEquals('in.c-input-mapping-test.test', $metrics[0]->getTableId());
-        self::assertEquals('in.c-input-mapping-test.test2', $metrics[1]->getTableId());
+        self::assertEquals($this->firstTableId, $metrics[0]->getTableId());
+        self::assertEquals($this->secondTableId, $metrics[1]->getTableId());
         self::assertSame(0, $metrics[0]->getUncompressedBytes());
         self::assertGreaterThan(0, $metrics[0]->getCompressedBytes());
         /** @var TableInfo[] $tables */
         $tables = iterator_to_array($tablesResult->getTables());
-        self::assertSame('in.c-input-mapping-test.test', $tables[0]->getId());
-        self::assertSame('in.c-input-mapping-test.test2', $tables[1]->getId());
-        self::assertSame('test', $tables[0]->getName());
-        self::assertSame('test', $tables[0]->getDisplayName());
+        self::assertSame($this->firstTableId, $tables[0]->getId());
+        self::assertSame($this->secondTableId, $tables[1]->getId());
+        self::assertSame('test1', $tables[0]->getName());
+        self::assertSame('test1', $tables[0]->getDisplayName());
         self::assertNull($tables[0]->getSourceTableId());
         self::assertSame($test1TableInfo['lastImportDate'], $tables[0]->getLastImportDate());
         self::assertSame($test1TableInfo['lastChangeDate'], $tables[0]->getLastChangeDate());

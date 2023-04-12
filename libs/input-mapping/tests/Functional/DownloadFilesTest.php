@@ -4,20 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Functional;
 
-use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\DevBranches;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\Temp\Temp;
-use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -26,22 +20,20 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
-        $id2 = $clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -73,18 +65,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesOverwrite(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(3);
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         // download files for the first time
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
@@ -119,23 +109,21 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesTagsFilterRunId(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
 
         $configuration = [
@@ -162,11 +150,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeAllTags(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1']);
@@ -177,9 +163,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -214,11 +200,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesIncludeExcludeTags(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1', 'tag-3']);
@@ -229,9 +213,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -268,85 +252,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse(file_exists($root . '/download/' . $id3 . '_upload'));
     }
 
-    public function testReadFilesIncludeAllTagsWithBranchOverwrite(): void
-    {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
-
-        $root = $this->tmpDir;
-        file_put_contents($root . '/upload', 'test');
-
-        $file1 = new FileUploadOptions();
-        $file1->setTags(['tag-1']);
-
-        $file2 = new FileUploadOptions();
-        $file2->setTags([sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]);
-
-        $file3 = new FileUploadOptions();
-        $file3->setTags(['tag-1', sprintf('%s-tag-2', $branchId)]);
-
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
-
-        sleep(5);
-
-        $configuration = [
-            [
-                'source' => [
-                    'tags' => [
-                        [
-                            'name' => 'tag-1',
-                            'match' => 'include',
-                        ],
-                        [
-                            'name' => 'tag-2',
-                            'match' => 'include',
-                        ],
-                    ],
-                ],
-                'overwrite' => true,
-            ],
-        ];
-
-        $testLogger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
-        );
-        self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
-        self::assertFalse(file_exists($root . '/download/' . $id3 . '_upload'));
-
-        self::assertTrue(
-            $testLogger->hasInfoThatContains(
-                sprintf(
-                    'Using dev source tags "%s" instead of "tag-1, tag-2".',
-                    implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)])
-                )
-            )
-        );
-    }
-
     public function testReadFilesIncludeAllTagsWithLimit(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1', 'tag-2']);
@@ -354,8 +264,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file2 = new FileUploadOptions();
         $file2->setTags(['tag-1', 'tag-2']);
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
 
         sleep(5);
 
@@ -389,23 +299,21 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     }
     public function testReadFilesEsQueryFilterRunId(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
 
         $configuration = [
@@ -431,15 +339,14 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesLimit(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $temp = new Temp();
-        $root = $temp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
+        $fs = new Filesystem();
+        $fs->mkdir($this->temp->getTmpFolder() . '/download');
 
         // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
-            $clientWrapper->getBasicClient()->uploadFile(
+            $this->clientWrapper->getBasicClient()->uploadFile(
                 $root . '/upload',
                 (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
             );
@@ -447,7 +354,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(5);
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [];
         $reader->downloadFiles(
             $configuration,
@@ -456,7 +363,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             new InputFileStateList([])
         );
         // invalid configuration
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [[]];
         try {
             $reader->downloadFiles(
@@ -469,7 +376,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException) {
         }
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -483,7 +390,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $fs = new Filesystem();
         $fs->remove($this->temp->getTmpFolder());
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102, 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -496,56 +403,43 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals(102, $finder->count());
     }
 
+    #[NeedsTestTables]
     public function testReadSlicedFileSnowflake(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        // Create bucket
-        $bucketId = 'in.c-docker-test-snowflake';
-        if (!$clientWrapper->getBasicClient()->bucketExists($bucketId)) {
-            $clientWrapper->getBasicClient()->createBucket(
-                'docker-test-snowflake',
-                Client::STAGE_IN,
-                'Docker Testsuite'
-            );
-        }
-
-        // Create redshift table and export it to produce a sliced file
-        $tableName = 'test_file';
-        $tableId = sprintf('%s.%s', $bucketId, $tableName);
-        if (!$clientWrapper->getBasicClient()->tableExists($tableId)) {
-            $csv = new CsvFile($this->tmpDir . '/upload.csv');
-            $csv->writeRow(['Id', 'Name']);
-            $csv->writeRow(['test', 'test']);
-            $clientWrapper->getBasicClient()->createTableAsync($bucketId, $tableName, $csv);
-        }
-        $table = $clientWrapper->getBasicClient()->exportTableAsync($tableId);
+        // Create table and export it to produce a sliced file
+        $table = $this->clientWrapper->getBasicClient()->exportTableAsync($this->firstTableId);
         sleep(2);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper));
         $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
-        $dlDir = $this->tmpDir . '/download';
         $reader->downloadFiles(
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
             new InputFileStateList([])
         );
-        $fileName = sprintf('%s_%s.csv', $fileId, $tableId);
 
+        $fs = new Filesystem();
+        $fs->mkdir($this->temp->getTmpFolder() . '/download');
+        $downloadDir = $this->temp->getTmpFolder() . '/download';
+        $fileName = sprintf('%s_%s.csv', $fileId, $this->firstTableId);
         $resultFileContent = '';
         $finder = new Finder();
 
         /** @var SplFileInfo $file */
-        foreach ($finder->files()->in($dlDir . '/' . $fileName) as $file) {
+        foreach ($finder->files()->in($downloadDir . '/' . $fileName) as $file) {
             $resultFileContent .= file_get_contents($file->getPathname());
         }
 
-        self::assertEquals('"test","test"' . "\n", $resultFileContent);
+        self::assertEquals(
+            // phpcs:ignore Generic.Files.LineLength
+            "\"id1\",\"name1\",\"foo1\",\"bar1\"\n\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
+            $resultFileContent
+        );
 
-        $manifestFile = $dlDir . '/' . $fileName . '.manifest';
+        $manifestFile = $downloadDir . '/' . $fileName . '.manifest';
         self::assertFileExists($manifestFile);
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($manifestFile);
@@ -555,16 +449,14 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesEmptySlices(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('empty_file');
-        $uploadFileId = $clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
+        $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper));
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
@@ -588,18 +480,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesYamlFormat(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $root = $this->tmpDir;
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id = $clientWrapper->getBasicClient()->uploadFile(
+        $id = $this->clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
         sleep(5);
 
-        $reader = new Reader($this->getStagingFactory($clientWrapper, 'yaml'));
+        $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper, 'yaml'));
         $configuration = [[
             'tags' => [self::DEFAULT_TEST_FILE_TAG],
             'overwrite' => true,
@@ -619,210 +509,5 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertArrayHasKey('created', $manifest);
         self::assertArrayHasKey('is_public', $manifest);
         self::assertArrayHasKey('is_encrypted', $manifest);
-    }
-
-    public function testReadAndDownloadFilesWithEsQueryIsRestrictedForBranch(): void
-    {
-        $clientWrapper = $this->getClientWrapper(null);
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
-
-        $reader = new Reader($this->getStagingFactory($clientWrapper));
-
-        $fileConfiguration = ['query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG];
-
-        try {
-            $reader->downloadFiles(
-                [$fileConfiguration],
-                'dummy',
-                AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
-            );
-            self::fail('Must throw exception');
-        } catch (InvalidInputException $e) {
-            self::assertSame(
-                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
-                $e->getMessage()
-            );
-        }
-
-        try {
-            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger(), new InputFileStateList([]));
-            self::fail('Must throw exception');
-        } catch (InvalidInputException $e) {
-            self::assertSame(
-                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
-                $e->getMessage()
-            );
-        }
-    }
-
-    public function testReadFilesForBranch(): void
-    {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
-
-        $root = $this->tmpDir;
-        file_put_contents($root . '/upload', 'test');
-
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
-
-        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag])
-        );
-        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
-        );
-        sleep(5);
-
-        $testLogger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
-
-        $configuration = [[
-            'tags' => [self::TEST_FILE_TAG_FOR_BRANCH],
-            'overwrite' => true,
-        ]];
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
-        );
-        self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
-        self::assertFileDoesNotExist($root . '/download/' . $file2Id . '_upload');
-
-        $adapter = new Adapter();
-        $manifest1 = $adapter->readFromFile($root . '/download/' . $file1Id . '_upload.manifest');
-
-        self::assertArrayHasKey('id', $manifest1);
-        self::assertArrayHasKey('tags', $manifest1);
-        self::assertEquals($file1Id, $manifest1['id']);
-        self::assertEquals([$branchTag], $manifest1['tags']);
-
-        self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
-        ));
-    }
-
-    public function testReadFilesForBranchWithProcessedTags(): void
-    {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
-
-        $root = $this->tmpDir;
-        file_put_contents($root . '/upload', 'test');
-
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
-
-        $processedTag = sprintf('processed-%s', self::TEST_FILE_TAG_FOR_BRANCH);
-        $branchProcessedTag = sprintf('%s-processed-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
-        $excludeTag = sprintf('exclude-%s', self::TEST_FILE_TAG_FOR_BRANCH);
-
-        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag])
-        );
-        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
-        );
-        $processedFileId = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $processedTag])
-        );
-        $branchProcessedFileId = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag])
-        );
-        $excludeFileId = $clientWrapper->getBasicClient()->uploadFile(
-            $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $excludeTag])
-        );
-        sleep(5);
-
-        $testLogger = new TestLogger();
-        $reader = new Reader($this->getStagingFactory($clientWrapper, 'json', $testLogger));
-
-        $configuration = [
-            [
-                'source' => [
-                    'tags' => [
-                        [
-                            'name' => self::TEST_FILE_TAG_FOR_BRANCH,
-                            'match' => 'include',
-                        ],
-                        [
-                            'name' => $excludeTag,
-                            'match' => 'exclude',
-                        ],
-                        [
-                            'name' => $processedTag,
-                            'match' => 'exclude',
-                        ],
-                    ],
-                ],
-                'processed_tags' => [$processedTag],
-                'overwrite' => true,
-            ],
-        ];
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
-        );
-        self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
-        self::assertEquals('test', file_get_contents($root . '/download/' . $processedFileId . '_upload'));
-        self::assertFileDoesNotExist($root . '/download/' . $file2Id . '_upload');
-        self::assertFileDoesNotExist($root . '/download/' . $excludeFileId . '_upload');
-        self::assertFileDoesNotExist($root . '/download/' . $branchProcessedFileId . '_upload');
-
-        $this->assertManifestTags(
-            $root . '/download/' . $file1Id . '_upload.manifest',
-            [$branchTag]
-        );
-        $this->assertManifestTags(
-            $root . '/download/' . $processedFileId . '_upload.manifest',
-            [$branchTag, $processedTag]
-        );
-
-        $clientWrapper->getBasicClient()->deleteFile($file1Id);
-        $clientWrapper->getBasicClient()->deleteFile($excludeFileId);
-        $clientWrapper->getBasicClient()->deleteFile($processedFileId);
-        $clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
-    }
-
-    private function assertManifestTags(string $manifestPath, array $tags): void
-    {
-        $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($manifestPath);
-        self::assertArrayHasKey('tags', $manifest);
-        self::assertEquals($tags, $manifest['tags']);
     }
 }

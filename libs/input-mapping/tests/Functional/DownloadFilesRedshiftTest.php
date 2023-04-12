@@ -13,16 +13,16 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\StorageApi\Client;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestRedshiftTable;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use SplFileInfo;
 use Symfony\Component\Finder\Finder;
 
-class DownloadFilesRedshiftTest extends TestCase
+class DownloadFilesRedshiftTest extends AbstractTestCase
 {
     protected function getClientWrapper(?string $branchId): ClientWrapper
     {
@@ -58,30 +58,19 @@ class DownloadFilesRedshiftTest extends TestCase
         return $stagingFactory;
     }
 
+    #[NeedsTestRedshiftTable]
     public function testReadSlicedFile(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
         $temp = new Temp('input-mapping');
         $root = $temp->getTmpFolder();
 
-        // Create bucket
-        if (!$clientWrapper->getBasicClient()->bucketExists('in.c-docker-test-redshift')) {
-            $clientWrapper->getBasicClient()->createBucket(
-                'docker-test-redshift',
-                Client::STAGE_IN,
-                'Docker Testsuite',
-                'redshift'
-            );
-        }
-
         // Create redshift table and export it to produce a sliced file
-        if (!$clientWrapper->getBasicClient()->tableExists('in.c-docker-test-redshift.test_file')) {
-            $csv = new CsvFile($root . '/upload.csv');
-            $csv->writeRow(['Id', 'Name']);
-            $csv->writeRow(['test', 'test']);
-            $clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test-redshift', 'test_file', $csv);
-        }
-        $table = $clientWrapper->getBasicClient()->exportTableAsync('in.c-docker-test-redshift.test_file');
+        $csv = new CsvFile($root . '/upload.csv');
+        $csv->writeRow(['Id', 'Name']);
+        $csv->writeRow(['test', 'test']);
+        $tableId = $clientWrapper->getBasicClient()->createTableAsync($this->redshiftBucketId, 'test_file', $csv);
+        $table = $clientWrapper->getBasicClient()->exportTableAsync($tableId);
         $fileId = $table['file']['id'];
 
         $reader = new Reader($this->getStagingFactory($clientWrapper, $root));
@@ -94,7 +83,7 @@ class DownloadFilesRedshiftTest extends TestCase
             AbstractStrategyFactory::LOCAL,
             new InputFileStateList([])
         );
-        $fileName = $fileId . '_in.c-docker-test-redshift.test_file.csv';
+        $fileName = $fileId . '_' . $tableId . '.csv';
 
         $resultFileContent = '';
         $finder = new Finder();

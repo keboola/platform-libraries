@@ -59,7 +59,7 @@ class TestSatisfyer
             }
             return $bucketId;
         }
-        return $clientWrapper->getBasicClient()->createBucket($bucketName, $stage, $backend);
+        return $clientWrapper->getBasicClient()->createBucket(name: $bucketName, stage: $stage, backend: $backend);
     }
 
     /**

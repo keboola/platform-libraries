@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
-use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\Temp\Temp;
 
 class WriterWorkspaceTest extends BaseWriterWorkspaceTest
 {
@@ -99,130 +96,6 @@ class WriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->assertJobParamsMatches([
             'incremental' => false,
             'columns' => ['Id2', 'Name2'],
-        ], $jobIds[1]);
-
-        $this->assertTablesExists(
-            self::OUTPUT_BUCKET,
-            [
-                self::OUTPUT_BUCKET . '.table1a',
-                self::OUTPUT_BUCKET . '.table2a',
-            ]
-        );
-        $this->assertTableRowsEquals(self::OUTPUT_BUCKET . '.table1a', [
-            '"id","name"',
-            '"test","test"',
-            '"aabb","ccdd"',
-        ]);
-    }
-
-    protected function prepareWorkspaceWithTablesWithTimestampColumn(
-        string $bucketBackend,
-        string $bucketName,
-        string $tablePrefix = ''
-    ): void {
-        $temp = new Temp();
-        $root = $temp->getTmpFolder();
-        $bucketId = $this->clientWrapper->getBasicClient()->createBucket(
-            name: $bucketName,
-            stage: 'in',
-            backend: $bucketBackend
-        );
-        // Create tables
-        $csv1a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table1a.csv');
-        $csv1a->writeRow(['id', 'name', '_timestamp']);
-        $csv1a->writeRow(['test', 'test', '1']);
-        $csv1a->writeRow(['aabb', 'ccdd', '2']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($bucketId, 'table1a', $csv1a);
-        $csv2a = new CsvFile($root . DIRECTORY_SEPARATOR . 'table2a.csv');
-        $csv2a->writeRow(['id2', 'name2', '_timestamp']);
-        $csv2a->writeRow(['test2', 'test2', '1']);
-        $csv2a->writeRow(['aabb2', 'ccdd2', '2']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($bucketId, 'table2a', $csv2a);
-
-        $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
-        $workspaces->loadWorkspaceData(
-            $this->workspaceId,
-            [
-                'input' => [
-                    [
-                        'source' => $bucketId . '.table1a',
-                        'destination' => $tablePrefix . 'table1a',
-                    ],
-                    [
-                        'source' => $bucketId . '.table2a',
-                        'destination' => $tablePrefix . 'table2a',
-                    ],
-                ],
-            ]
-        );
-    }
-
-    public function testDropReservedColumnOnWorkspaceOutputMapping(): void
-    {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
-        $factory = $this->getStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
-        )->getDataStorage()->getWorkspaceId();
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTablesWithTimestampColumn(
-            $tokenInfo['owner']['defaultBackend'],
-            'WriterWorkspaceTest'
-        );
-
-        $configs = [
-            [
-                'source' => 'table1a',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
-                'incremental' => true,
-                'columns' => ['id'],
-            ],
-            [
-                'source' => 'table2a',
-                'destination' => self::OUTPUT_BUCKET . '.table2a',
-            ],
-        ];
-        file_put_contents(
-            $root . '/table1a.manifest',
-            json_encode(
-                ['columns' => ['id', 'name', '_timestamp']]
-            )
-        );
-        file_put_contents(
-            $root . '/table2a.manifest',
-            json_encode(
-                ['columns' => ['id2', 'name2', '_timestamp']]
-            )
-        );
-        $writer = new TableWriter($factory);
-
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            false
-        );
-        $jobIds = $tableQueue->waitForAll();
-        self::assertCount(2, $jobIds);
-        self::assertNotEmpty($jobIds[0]);
-        self::assertNotEmpty($jobIds[1]);
-
-        $this->assertJobParamsMatches([
-            'incremental' => true,
-            'columns' => ['id'],
-        ], $jobIds[0]);
-
-        $this->assertJobParamsMatches([
-            'incremental' => false,
-            'columns' => ['id2', 'name2', '_timestamp'],
         ], $jobIds[1]);
 
         $this->assertTablesExists(

@@ -24,6 +24,7 @@
         </testsuite>
         <testsuite name="main-writer-tests-1">
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
+            <file>tests/Writer/StorageApiHeadlessWriterTest.php</file>
         </testsuite>
         <testsuite name="main-writer-tests-2">
             <!-- Any test added to tests/Writer will be run in this suite -->
@@ -35,6 +36,7 @@
             <exclude>tests/Writer/Workspace</exclude>
             <exclude>tests/Writer/TableDefinitionTest.php</exclude>
             <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
+            <exclude>tests/Writer/StorageApiHeadlessWriterTest.php</exclude>
         </testsuite>
         <testsuite name="redshift-writer-tests">
             <directory>tests/Writer/Redshift</directory>

@@ -27,7 +27,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMapping(): void
+    public function testWriteRedshiftTableOutputMapping(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
@@ -74,7 +74,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableTagStagingFile(): void
+    public function testWriteRedshiftTableTagStagingFile(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
@@ -137,7 +137,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingEmptySlice(): void
+    public function testWriteRedshiftTableOutputMappingEmptySlice(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table');
@@ -173,7 +173,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingEmptySliceExistingTable(): void
+    public function testWriteRedshiftTableOutputMappingEmptySliceExistingTable(): void
     {
         $fileName = $this->temp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
@@ -214,7 +214,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingEmptyDir(): void
+    public function testWriteRedshiftTableOutputMappingEmptyDir(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table15');
@@ -250,7 +250,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingEmptyDirExistingTable(): void
+    public function testWriteRedshiftTableOutputMappingEmptyDirExistingTable(): void
     {
         $fileName = $this->temp->getTmpFolder() . uniqid('csv-');
         file_put_contents($fileName, "\"Id\",\"Name\"\n\"ab\",\"cd\"\n");
@@ -291,7 +291,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingMissingHeaders(): void
+    public function testWriteRedshiftTableOutputMappingMissingHeaders(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table');
@@ -317,7 +317,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingExistingTable(): void
+    public function testWriteRedshiftTableOutputMappingExistingTable(): void
     {
         $csvFile = new CsvFile($this->temp->createFile('header')->getPathname());
         $csvFile->writeRow(['Id', 'Name']);
@@ -368,7 +368,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingDifferentDelimiterEnclosure(): void
+    public function testWriteRedshiftTableOutputMappingDifferentDelimiterEnclosure(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
@@ -413,7 +413,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingCombination(): void
+    public function testWriteRedshiftTableOutputMappingCombination(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
@@ -471,7 +471,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
     }
 
     #[NeedsEmptyRedshiftOutputBucket]
-    public function testWriteTableOutputMappingCompression(): void
+    public function testWriteRedshiftTableOutputMappingCompression(): void
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table18.csv');

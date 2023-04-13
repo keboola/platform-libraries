@@ -6,10 +6,11 @@ namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
-abstract class BaseWriterMetadataTest extends BaseWriterTest
+abstract class BaseWriterMetadataTest extends AbstractTestCase
 {
     protected string $backend;
 
@@ -29,7 +30,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
 
     protected function metadataWritingTestColumnChangeTest(string $inputBucket, bool $incrementalFlag = false): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $csv = new CsvFile($root . '/table88a.csv');
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
@@ -75,7 +76,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
         $this->clientWrapper->getBasicClient()->setRunId($runId);
 
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             $config,
@@ -125,7 +126,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
 
     protected function metadataWritingTestColumnChangeSpecialDelimiter(string $inputBucket): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $csv = new CsvFile($root . '/table88a.csv');
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
@@ -162,7 +163,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue = $writer->uploadTables(
             'upload',
             $config,
@@ -193,7 +194,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
 
     protected function metadataWritingTestColumnChangeSpecialChars(string $inputBucket): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $csv = new CsvFile($root . '/table88a.csv');
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
@@ -234,7 +235,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             $config,
@@ -274,7 +275,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
 
     protected function metadataWritingTestColumnChangeHeadless(string $inputBucket): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         $csv = new CsvFile($root . '/table99a.csv');
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
@@ -317,7 +318,7 @@ abstract class BaseWriterMetadataTest extends BaseWriterTest
                 ],
             ],
         ];
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             $config,

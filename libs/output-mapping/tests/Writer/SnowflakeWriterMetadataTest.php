@@ -6,35 +6,29 @@ namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
 class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
 {
-    private const INPUT_BUCKET = 'in.c-SnowflakeWriterMetadataTest';
-    private const OUTPUT_BUCKET = 'out.c-SnowflakeWriterMetadataTest';
-    private const FILE_TAG = 'SnowflakeWriterMetadataTest';
-
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearFileUploads([self::FILE_TAG]);
-        $this->clearBuckets([self::INPUT_BUCKET, self::OUTPUT_BUCKET]);
-        $this->clientWrapper->getBasicClient()->createBucket('SnowflakeWriterMetadataTest', 'in', '', 'snowflake');
-
         $this->backend = 'snowflake';
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingTest(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table55.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
             'mapping' => [
                 [
                     'source' => 'table55.csv',
-                    'destination' => self::INPUT_BUCKET . '.table55',
+                    'destination' => $this->emptyOutputBucketId . '.table55',
                     'metadata' => [
                         [
                             'key' => 'table.key.one',
@@ -76,7 +70,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'branchId' => '1234',
         ];
 
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getWorkspaceStagingFactory());
         $tableQueue =  $writer->uploadTables(
             'upload',
             $config,
@@ -89,7 +83,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertCount(1, $jobIds);
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
-        $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table55');
+        $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId . '.table55');
         $expectedTableMetadata = [
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
@@ -106,7 +100,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
-        $idColMetadata = $metadataApi->listColumnMetadata(self::INPUT_BUCKET . '.table55.Id');
+        $idColMetadata = $metadataApi->listColumnMetadata($this->emptyOutputBucketId . '.table55.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one id',
@@ -127,24 +121,25 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table55');
+        $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId . '.table55');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingErrorTest(): void
     {
         self::markTestSkipped('Temporary skipped due bug in KBC');
         // @phpstan-ignore-next-line
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table55a.csv', "\"Id\",\"Name\"\n\"test\"\n\"aabb\"\n");
 
         $config = [
             'mapping' => [
                 [
                     'source' => 'table55a.csv',
-                    'destination' => self::INPUT_BUCKET . '.table55a',
+                    'destination' => $this->emptyOutputBucketId . '.table55a',
                     'column_metadata' => [
                         'NonExistent' => [
                             [
@@ -168,22 +163,24 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             false
         );
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to load table ' . self::INPUT_BUCKET . '".table55a": Load error: ' .
+        $this->expectExceptionMessage('Failed to load table ' . $this->emptyOutputBucketId .
+            '".table55a": Load error: ' .
             'odbc_execute(): SQL error: Number of columns in file (1) does not match that of the corresponding ' .
             'table (2), use file format option error_on_column_count_mismatch=false to ignore this error');
         $tableQueue->waitForAll();
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testConfigRowMetadataWritingTest(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table66.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $config = [
             'mapping' => [
                 [
                     'source' => 'table66.csv',
-                    'destination' => self::INPUT_BUCKET . '.table66',
+                    'destination' => $this->emptyOutputBucketId . '.table66',
                     'metadata' => [
                         [
                             'key' => 'table.key.one',
@@ -225,7 +222,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'configurationRowId' => 'row-1',
         ];
 
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             $config,
@@ -239,7 +236,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
 
         $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
 
-        $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table66');
+        $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId . '.table66');
         $expectedTableMetadata = [
             'system' => [
                 'KBC.createdBy.component.id' => 'testComponent',
@@ -256,7 +253,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         ];
         self::assertEquals($expectedTableMetadata, $this->getMetadataValues($tableMetadata));
 
-        $idColMetadata = $metadataApi->listColumnMetadata(self::INPUT_BUCKET . '.table66.Id');
+        $idColMetadata = $metadataApi->listColumnMetadata($this->emptyOutputBucketId. '.table66.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
                 'column.key.one' => 'column value one id',
@@ -277,7 +274,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tableMetadata = $metadataApi->listTableMetadata(self::INPUT_BUCKET . '.table66');
+        $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId. '.table66');
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configurationRow.id'] = 'row-1';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.configuration.id'] = 'metadata-write-test';
         $expectedTableMetadata['system']['KBC.lastUpdatedBy.component.id'] = 'testComponent';
@@ -287,23 +284,27 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
     /**
      * @dataProvider incrementalFlagProvider
      */
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingTestColumnChange(bool $incrementalFlag): void
     {
-        $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET, $incrementalFlag);
+        $this->metadataWritingTestColumnChangeTest($this->emptyOutputBucketId, $incrementalFlag);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingTestColumnChangeSpecialDelimiter(): void
     {
-        $this->metadataWritingTestColumnChangeSpecialDelimiter(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeSpecialDelimiter($this->emptyOutputBucketId);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingTestColumnChangeSpecialChars(): void
     {
-        $this->metadataWritingTestColumnChangeSpecialChars(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeSpecialChars($this->emptyOutputBucketId);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testMetadataWritingTestColumnChangeHeadless(): void
     {
-        $this->metadataWritingTestColumnChangeHeadless(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeHeadless($this->emptyOutputBucketId);
     }
 }

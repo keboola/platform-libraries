@@ -5,47 +5,21 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\Exception;
-use Keboola\Temp\Temp;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
-class PrimaryKeyHelperTest extends TestCase
+class PrimaryKeyHelperTest extends AbstractTestCase
 {
-    private const TEST_BUCKET_ID = 'out.c-PrimaryKeyHelperTest';
-    private const TEST_TABLE_NAME = 'test-table';
-    private const TEST_TABLE_ID = self::TEST_BUCKET_ID . '.' . self::TEST_TABLE_NAME;
-    protected Client $client;
-
-    public function setUp(): void
+    private function createTable(array $columns, string $primaryKey): string
     {
-        $this->client = new Client([
-            'url' => (string) getenv('STORAGE_API_URL'),
-            'token' => (string) getenv('STORAGE_API_TOKEN'),
-        ]);
-    }
-
-    private function createTable(array $columns, string $primaryKey): void
-    {
-        if (!$this->client->bucketExists(self::TEST_BUCKET_ID)) {
-            $this->client->createBucket('PrimaryKeyHelperTest', 'out');
-        }
-        try {
-            $this->client->dropTable(self::TEST_TABLE_ID);
-        } catch (Exception $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
-        $temp = new Temp();
-        $csv = new CsvFile($temp->getTmpFolder() . '/import.csv');
+        $csv = new CsvFile($this->temp->getTmpFolder() . '/import.csv');
         $csv->writeRow($columns);
-        $this->client->createTableAsync(
-            self::TEST_BUCKET_ID,
-            self::TEST_TABLE_NAME,
+        return $this->clientWrapper->getBasicClient()->createTableAsync(
+            $this->emptyOutputBucketId,
+            'test-table',
             $csv,
             ['primaryKey' => $primaryKey]
         );
@@ -157,117 +131,128 @@ class PrimaryKeyHelperTest extends TestCase
         ];
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChange(): void
     {
         $logger = new TestLogger();
-        $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->client,
-            self::TEST_TABLE_ID,
+            $this->clientWrapper->getBasicClient(),
+            $tableId,
             ['id', 'name'],
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, name" to "id, foo".'
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $tableId)
         ));
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChangeFromEmpty(): void
     {
         $logger = new TestLogger();
-        $this->createTable(['id', 'name', 'foo'], '');
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableId = $this->createTable(['id', 'name', 'foo'], '');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->client,
-            self::TEST_TABLE_ID,
+            $this->clientWrapper->getBasicClient(),
+            $tableId,
             [ ],
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "" to "id, foo".'
+            sprintf('Modifying primary key of table "%s" from "" to "id, foo".', $tableId)
         ));
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChangeToEmpty(): void
     {
         $logger = new TestLogger();
-        $this->createTable(['id', 'name', 'foo'], 'id,foo');
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableId = $this->createTable(['id', 'name', 'foo'], 'id,foo');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->client,
-            self::TEST_TABLE_ID,
+            $this->clientWrapper->getBasicClient(),
+            $tableId,
             $tableInfo['primaryKey'],
             []
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, foo" to "".'
+            sprintf('Modifying primary key of table "%s" from "id, foo" to "".', $tableId)
         ));
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyErrorRemove(): void
     {
         $logger = new TestLogger();
-        $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
+        $invalidTableId = $tableId . '-non-existent';
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->client,
-            self::TEST_TABLE_ID . '-non-existent',
+            $this->clientWrapper->getBasicClient(),
+            $invalidTableId,
             ['id', 'name'],
             ['id', 'foo']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID .
-            '.test-table-non-existent" from "id, name" to "id, foo".'
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $invalidTableId)
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error deleting primary key of table ' . self::TEST_BUCKET_ID . '.test-table-non-existent: The ' .
-            'table "test-table-non-existent" was not found in the bucket "' . self::TEST_BUCKET_ID . '" in the project'
+            sprintf(
+                'Error deleting primary key of table %s: The table "test-table-non-existent" ' .
+                'was not found in the bucket "%s" in the project',
+                $invalidTableId,
+                $this->emptyOutputBucketId
+            )
         ));
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyErrorCreate(): void
     {
         $logger = new TestLogger();
-        $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->client,
-            self::TEST_TABLE_ID,
+            $this->clientWrapper->getBasicClient(),
+            $tableId,
             ['id', 'name'],
             ['id', 'bar']
         );
         self::assertTrue($logger->hasWarningThatContains(
-            'Modifying primary key of table "' . self::TEST_BUCKET_ID . '.test-table" from "id, name" to "id, bar".'
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, bar".', $tableId)
         ));
         self::assertTrue($logger->hasWarningThatContains(
-            'Error changing primary key of table ' . self::TEST_BUCKET_ID . '.test-table: Primary key ' .
-            'columns "bar" not found in "id, name, foo"'
+            sprintf(
+                'Error changing primary key of table %s: Primary key columns "bar" not found in "id, name, foo"',
+                $tableId
+            )
         ));
-        $tableInfo = $this->client->getTable(self::TEST_TABLE_ID);
+        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
     }
 }

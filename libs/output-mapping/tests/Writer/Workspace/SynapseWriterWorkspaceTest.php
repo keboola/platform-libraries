@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 
-class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
+class SynapseWriterWorkspaceTest extends AbstractTestCase
 {
     use InitSynapseStorageClientTrait;
-
-    private const INPUT_BUCKET = 'in.c-SynapseWriterWorkspaceTest';
-    private const OUTPUT_BUCKET = 'out.c-SynapseWriterWorkspaceTest';
 
     public function setUp(): void
     {
@@ -22,10 +26,6 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
             self::markTestSkipped('Synapse tests disabled.');
         }
         parent::setUp();
-        $this->clearBuckets([
-            self::INPUT_BUCKET,
-            self::OUTPUT_BUCKET,
-        ]);
     }
 
     protected function initClient(?string $branchId = null): void
@@ -33,9 +33,57 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
+    #[NeedsEmptyOutputBucket]
     public function testSynapseTableOutputMapping(): void
     {
-        $factory = $this->getStagingFactory(
+        // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
+        $bucketName = 'testSynapseTableOutputMapping';
+
+        $outBucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_OUT);
+        if ($outBucketId !== null) {
+            $tables = $this->clientWrapper->getBasicClient()->listTables($outBucketId, ['include' => '']);
+            foreach ($tables as $table) {
+                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+            }
+        } else {
+            $outBucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+                name: $bucketName,
+                stage: Client::STAGE_OUT,
+                backend: 'synapse'
+            );
+        }
+
+        $bucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_IN);
+        if ($bucketId !== null) {
+            $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId, ['include' => '']);
+            foreach ($tables as $table) {
+                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+            }
+        } else {
+            $bucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+                name: $bucketName,
+                stage: Client::STAGE_IN,
+                backend: 'synapse'
+            );
+        }
+
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        $tableIds = [];
+        // Create table
+        for ($i = 0; $i < 2; $i++) {
+            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+                $bucketId,
+                'test' . ($i + 1),
+                $csv
+            );
+        }
+
+        $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
             null,
@@ -44,20 +92,18 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE)
             ->getDataStorage()->getWorkspaceId();
-        $root = $this->tmp->getTmpFolder();
-        $this->prepareWorkspaceWithTables('synapse', 'SynapseWriterWorkspaceTest');
-        // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $this->clientWrapper->getBasicClient()->createBucket('SynapseWriterWorkspaceTest', 'out', '', 'synapse');
+        $root = $this->temp->getTmpFolder();
+        $this->prepareWorkspaceWithTables($bucketId);
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => self::OUTPUT_BUCKET . '.table1a',
+                'destination' => $outBucketId . '.table1a',
                 'distribution_key' => [],
             ],
             [
                 'source' => 'table2a',
-                'destination' => self::OUTPUT_BUCKET . '.table2a',
-                'distribution_key' => ['Id2'],
+                'destination' => $outBucketId . '.table2a',
+                'distribution_key' => ['Id'],
             ],
         ];
         file_put_contents(
@@ -69,7 +115,7 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id2', 'Name2']]
+                ['columns' => ['Id', 'Name']]
             )
         );
         $writer = new TableWriter($factory);
@@ -85,27 +131,27 @@ class SynapseWriterWorkspaceTest extends BaseWriterWorkspaceTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($outBucketId);
         self::assertCount(2, $tables);
         $sortedTables = [$tables[0]['id'] => $tables[0], $tables[1]['id'] => $tables[1]];
         ksort($sortedTables);
         self::assertEquals(
-            [self::OUTPUT_BUCKET . '.table1a', self::OUTPUT_BUCKET . '.table2a'],
+            [$outBucketId . '.table1a', $outBucketId . '.table2a'],
             array_keys($sortedTables)
         );
-        self::assertArrayHasKey('distributionKey', $sortedTables[self::OUTPUT_BUCKET . '.table2a']);
-        self::assertEquals(['Id2'], $sortedTables[self::OUTPUT_BUCKET . '.table2a']['distributionKey']);
+        self::assertArrayHasKey('distributionKey', $sortedTables[$outBucketId . '.table2a']);
+        self::assertEquals(['Id'], $sortedTables[$outBucketId . '.table2a']['distributionKey']);
         self::assertCount(2, $jobIds);
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
-
-        $te = new TableExporter($this->clientWrapper->getBasicClient());
-        $te->exportTable(self::OUTPUT_BUCKET . '.table1a', $root . DIRECTORY_SEPARATOR . 'table1a-returned.csv', []);
-        $rows = explode(
-            "\n",
-            trim((string) file_get_contents($root . DIRECTORY_SEPARATOR . 'table1a-returned.csv'))
+        self::assertTableRowsEquals(
+            $outBucketId . '.table1a',
+            [
+                '"id","name","foo","bar"',
+                '"id1","name1","foo1","bar1"',
+                '"id2","name2","foo2","bar2"',
+                '"id3","name3","foo3","bar3"',
+            ]
         );
-        sort($rows);
-        self::assertEquals(['"Id","Name"', '"aabb","ccdd"', '"test","test"'], $rows);
     }
 }

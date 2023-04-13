@@ -432,7 +432,7 @@ class TableWriter extends AbstractWriter
             'key' => TableWriter::KBC_LAST_UPDATED_BY_COMPONENT_ID,
             'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
         ];
-        if (!empty($systemMetadata[TableWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
+        if (!empty($systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
                 'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
                 'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],

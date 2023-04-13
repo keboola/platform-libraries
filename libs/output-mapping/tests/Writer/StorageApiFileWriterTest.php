@@ -7,31 +7,28 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 
-class StorageApiFileWriterTest extends BaseWriterTest
+class StorageApiFileWriterTest extends AbstractTestCase
 {
     use CreateBranchTrait;
 
     private const FILE_TAG = 'StorageApiFileWriterTest';
-    private const OUTPUT_BUCKET = 'out.c-StorageApiFileWriterTest';
 
     public function setUp(): void
     {
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
-        $this->clearBuckets([
-            self::OUTPUT_BUCKET,
-        ]);
     }
 
     public function testWriteBasicFiles(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents($root . '/upload/file2', 'test');
         file_put_contents(
@@ -64,7 +61,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
 
         $writer->uploadFiles(
             '/upload',
@@ -118,7 +115,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesFailedJob(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
 
         $systemMetadata = [
@@ -136,7 +133,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
 
         $writer->uploadFiles(
             '/upload',
@@ -157,7 +154,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesOutputMapping(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
 
         $configs = [
@@ -167,7 +164,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
 
         $writer->uploadFiles(
             '/upload',
@@ -216,7 +213,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             )
         );
 
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
 
         $configs = [
@@ -226,7 +223,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
 
         $systemMetadata = [
             'componentId' => 'testComponent',
@@ -274,7 +271,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesOutputMappingAndManifest(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
@@ -289,7 +286,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $writer->uploadFiles(
             'upload',
             ['mapping' => $configs],
@@ -320,7 +317,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesInvalidJson(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents($root . '/upload/file1.manifest', 'this is not at all a {valid} json');
 
@@ -332,7 +329,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
@@ -348,7 +345,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesInvalidYaml(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents($root . '/upload/file1.manifest', "\tthis is not \n\t \tat all a {valid} json");
 
@@ -360,7 +357,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $writer->setFormat('json');
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('json');
@@ -376,7 +373,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesOutputMappingMissing(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
@@ -390,7 +387,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
                 'is_public' => false,
             ],
         ];
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("File 'file2' not found");
         $this->expectExceptionCode(404);
@@ -406,12 +403,12 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesOrphanedManifest(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/file1.manifest',
             '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}'
         );
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("Found orphaned file manifest: 'file1.manifest'");
         $writer->uploadFiles(
@@ -426,7 +423,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testWriteFilesNoComponentId(): void
     {
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
         $writer->uploadFiles(
@@ -441,7 +438,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testTagProcessedFiles(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
@@ -454,7 +451,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         );
         sleep(1);
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -466,7 +463,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testTagBranchProcessedFiles(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
         $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
@@ -481,7 +478,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
         // set it to use a branch
         $this->initClient('12345');
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
         $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -495,7 +492,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
 
     public function testTableFiles(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file', 'test');
         // in this case there may be a table manifest present
         file_put_contents(
@@ -514,7 +511,7 @@ class StorageApiFileWriterTest extends BaseWriterTest
             'is_permanent' => true,
         ];
 
-        $writer = new FileWriter($this->getStagingFactory());
+        $writer = new FileWriter($this->getLocalStagingFactory());
 
         $writer->uploadFiles(
             '/upload',

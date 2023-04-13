@@ -4,43 +4,32 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
 use Keboola\OutputMapping\Tests\Writer\BaseWriterMetadataTest;
 
 class StorageApiWriterMetadataRedshiftTest extends BaseWriterMetadataTest
 {
-    private const INPUT_BUCKET = 'in.c-StorageApiSlicedWriterRedshiftTest';
-    private const FILE_TAG = 'StorageApiSlicedWriterRedshiftTest';
-
-    public function setUp(): void
-    {
-        parent::setUp();
-        $this->clearBuckets([self::INPUT_BUCKET]);
-        $this->clearFileUploads([self::FILE_TAG]);
-        $this->clientWrapper->getBasicClient()->createBucket(
-            'StorageApiSlicedWriterRedshiftTest',
-            'in',
-            '',
-            'redshift'
-        );
-    }
-
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testMetadataWritingTestColumnChange(): void
     {
-        $this->metadataWritingTestColumnChangeTest(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeTest($this->emptyRedshiftOutputBucketId);
     }
 
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testMetadataWritingTestColumnChangeSpecialDelimiter(): void
     {
-        $this->metadataWritingTestColumnChangeSpecialDelimiter(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeSpecialDelimiter($this->emptyRedshiftOutputBucketId);
     }
 
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testMetadataWritingTestColumnChangeSpecialChars(): void
     {
-        $this->metadataWritingTestColumnChangeSpecialChars(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeSpecialChars($this->emptyRedshiftOutputBucketId);
     }
 
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testMetadataWritingTestColumnChangeHeadless(): void
     {
-        $this->metadataWritingTestColumnChangeHeadless(self::INPUT_BUCKET);
+        $this->metadataWritingTestColumnChangeHeadless($this->emptyRedshiftOutputBucketId);
     }
 }

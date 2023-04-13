@@ -4,41 +4,28 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
-use Keboola\OutputMapping\Tests\Writer\BaseWriterTest;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;
 
-class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
+class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
 {
-    private const OUTPUT_BUCKET = 'out.c-StorageApiLocalTableWriterRedshiftTest';
-
-    public function setUp(): void
-    {
-        parent::setUp();
-        $this->clearBuckets([
-            self::OUTPUT_BUCKET,
-        ]);
-        $this->clientWrapper->getBasicClient()->createBucket(
-            'StorageApiLocalTableWriterRedshiftTest',
-            'out',
-            '',
-            'redshift'
-        );
-    }
-
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testWriteTableManifestCsvRedshift(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3d.csv',
+            $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyRedshiftOutputBucketId . '.table3d.csv',
             "'Id'\t'Name'\n'test'\t'test''s'\n"
         );
         file_put_contents(
-            $root . DIRECTORY_SEPARATOR . 'upload/' . self::OUTPUT_BUCKET . '.table3d.csv.manifest',
-            '{"destination": "' . self::OUTPUT_BUCKET . '.table3d","delimiter": "' . "\\t" . '","enclosure": "\'"}'
+            $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyRedshiftOutputBucketId . '.table3d.csv.manifest',
+            '{"destination": "' . $this->emptyRedshiftOutputBucketId . '.table3d","delimiter": "'
+            . "\\t" . '","enclosure": "\'"}'
         );
 
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
             '/upload',
             [],
@@ -50,12 +37,12 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables(self::OUTPUT_BUCKET);
+        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
-        self::assertEquals(self::OUTPUT_BUCKET . '.table3d', $tables[0]['id']);
+        self::assertEquals($this->emptyRedshiftOutputBucketId . '.table3d', $tables[0]['id']);
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
-        $exporter->exportTable(self::OUTPUT_BUCKET . '.table3d', $downloadedFile, []);
+        $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table3d', $downloadedFile, []);
         $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
         self::assertCount(1, $table);
         self::assertCount(2, $table[0]);
@@ -65,9 +52,10 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         self::assertEquals('test\'s', $table[0]['Name']);
     }
 
+    #[NeedsEmptyRedshiftOutputBucket]
     public function testWriteTableIncrementalWithDeleteRedshift(): void
     {
-        $root = $this->tmp->getTmpFolder();
+        $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table61.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
@@ -76,7 +64,7 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
         $configs = [
             [
                 'source' => 'table61.csv',
-                'destination' => self::OUTPUT_BUCKET . '.table61',
+                'destination' => $this->emptyRedshiftOutputBucketId . '.table61',
                 'delete_where_column' => 'Id',
                 'delete_where_values' => ['aabb'],
                 'delete_where_operator' => 'eq',
@@ -84,7 +72,7 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
             ],
         ];
 
-        $writer = new TableWriter($this->getStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory());
 
         $tableQueue =  $writer->uploadTables(
             '/upload',
@@ -111,7 +99,7 @@ class StorageApiLocalTableWriterRedshiftTest extends BaseWriterTest
 
         $exporter = new TableExporter($this->clientWrapper->getBasicClient());
         $exporter->exportTable(
-            self::OUTPUT_BUCKET . '.table61',
+            $this->emptyRedshiftOutputBucketId . '.table61',
             $root . DIRECTORY_SEPARATOR . 'download.csv',
             []
         );

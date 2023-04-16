@@ -16,7 +16,13 @@ namespace KubernetesRuntime
 namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 {
     use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ListMeta;
+    use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ObjectMeta;
     use KubernetesRuntime\AbstractModel;
+
+    class Container extends AbstractModel
+    {
+
+    }
 
     class ContainerStatus extends AbstractModel
     {
@@ -31,6 +37,12 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 
     class Pod extends AbstractModel
     {
+        /** @var ObjectMeta */
+        public $metadata;
+
+        /** @var PodSpec */
+        public $spec;
+
         /** @var PodStatus|null  */
         public $status;
     }
@@ -41,6 +53,21 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
         public $metadata;
     }
 
+    class PodSpec extends AbstractModel
+    {
+        /** @var Container[] */
+        public $containers;
+
+        /** @var ResourceRequirements|null */
+        public $resources;
+
+        /** @var string|null */
+        public $serviceAccount;
+
+        /** @var array<string, string>|null */
+        public $nodeSelector;
+    }
+
     class PodStatus extends AbstractModel
     {
         /** @var string|null */
@@ -48,6 +75,15 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 
         /** @var ContainerStatus[]|null */
         public $containerStatuses;
+    }
+
+    class ResourceRequirements extends AbstractModel
+    {
+        /** @var array{cpu?: null|string, memory?: null|string}|null */
+        public $requests;
+
+        /** @var array{cpu?: null|string, memory?: null|string}|null */
+        public $limits;
     }
 
     class Secret extends AbstractModel
@@ -80,5 +116,8 @@ namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
 
         /** @var array<string, string>|null */
         public $annotations;
+
+        /** @var array<string, string> */
+        public $labels;
     }
 }

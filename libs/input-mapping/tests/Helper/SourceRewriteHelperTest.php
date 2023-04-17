@@ -55,7 +55,7 @@ class SourceRewriteHelperTest extends TestCase
 
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
         if ($outBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $outBucketId, ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket((string) $outBucketId, ['force' => true, 'async' => true]);
         }
 
         $outDevBucketId = TestSatisfyer::getBucketIdByDisplayName(

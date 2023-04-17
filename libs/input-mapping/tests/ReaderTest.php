@@ -227,7 +227,7 @@ class ReaderTest extends TestCase
             Client::STAGE_IN
         );
         if ($branchBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $branchBucketId, ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket((string) $branchBucketId, ['force' => true, 'async' => true]);
         }
         $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,

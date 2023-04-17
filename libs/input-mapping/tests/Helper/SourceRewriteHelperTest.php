@@ -64,12 +64,12 @@ class SourceRewriteHelperTest extends TestCase
             Client::STAGE_OUT
         );
         if ($outDevBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $outDevBucketId, ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket((string) $outDevBucketId, ['force' => true, 'async' => true]);
         }
 
         foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-output-mapping-test$/ui', $bucket['name'])) {
-                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
+                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
             }
         }
 

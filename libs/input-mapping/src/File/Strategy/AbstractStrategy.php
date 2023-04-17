@@ -83,7 +83,6 @@ abstract class AbstractStrategy implements StrategyInterface
                     ];
                     $biggestFileId = (int) $fileInfo['id'];
                 }
-                $this->logger->info(sprintf('Fetching file %s (%s).', $fileInfo['name'], $file['id']));
                 try {
                     $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite);
                 } catch (Throwable $e) {
@@ -98,7 +97,7 @@ abstract class AbstractStrategy implements StrategyInterface
                         $e
                     );
                 }
-                $this->logger->info(sprintf('Fetched file %s (%s).', $fileInfo['name'], $file['id']));
+                $this->logger->info(sprintf('Fetched file "%s".', basename($fileDestinationPath)));
             }
             if (!empty($outputStateConfiguration)) {
                 $outputStateList[] = $outputStateConfiguration;

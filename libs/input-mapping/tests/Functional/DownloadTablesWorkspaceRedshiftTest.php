@@ -68,7 +68,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
             Client::STAGE_OUT
         );
         if ($bucketId !== null) {
-            $this->clientWrapper->getBasicClient()->dropBucket($bucketId, ['force' => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket($bucketId, ['force' => true, 'async' => true]);
         }
 
         $this->emptyOutputBucketId = $this->clientWrapper->getBasicClient()->createBucket(

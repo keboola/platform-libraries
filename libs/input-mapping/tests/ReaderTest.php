@@ -227,7 +227,7 @@ class ReaderTest extends TestCase
             Client::STAGE_IN
         );
         if ($branchBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $branchBucketId, ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket((string) $branchBucketId, ['force' => true, 'async' => true]);
         }
         $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,
@@ -235,11 +235,11 @@ class ReaderTest extends TestCase
             Client::STAGE_IN
         );
         if ($inBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $inBucketId, ['force' => true]);
+            $clientWrapper->getBasicClient()->dropBucket((string) $inBucketId, ['force' => true, 'async' => true]);
         }
         foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-input-mapping-test/ui', $bucket['name'])) {
-                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true]);
+                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
             }
         }
 
@@ -254,7 +254,7 @@ class ReaderTest extends TestCase
         $inBucketId = $clientWrapper->getBasicClient()->createBucket('input-mapping-test', Client::STAGE_IN);
         // we need to know the $inBucketId, which is known only after creation, but we need the bucket not to exist
         // hence - create the bucket, get it id, and drop it
-        $clientWrapper->getBasicClient()->dropBucket($inBucketId, ['force' => true]);
+        $clientWrapper->getBasicClient()->dropBucket($inBucketId, ['force' => true, 'async' => true]);
         $branchBucketId = $clientWrapper->getBasicClient()->createBucket(
             sprintf('%s-input-mapping-test', $branchId),
             Client::STAGE_IN

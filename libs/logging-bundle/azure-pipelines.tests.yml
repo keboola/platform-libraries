@@ -2,15 +2,15 @@ jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       displayName: Tests (Symfony 5.4)
-      serviceName: dev
-      testCommand: bash -c 'cd libs/logging-bundle && composer install && composer ci'
+      serviceName: ci-logging-bundle
+      testCommand: composer ci
       variables:
         SYMFONY_REQUIRE: "5.4.*"
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       displayName: Tests (Symfony 6.1)
-      serviceName: dev
-      testCommand: bash -c 'cd libs/logging-bundle && composer install && composer ci'
+      serviceName: ci-logging-bundle
+      testCommand: composer ci
       variables:
         SYMFONY_REQUIRE: "6.1.*"

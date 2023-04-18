@@ -159,3 +159,12 @@ services:
     build:
       context: .
       target: settle
+
+  ci-logging-bundle:
+    profiles: [ci]
+    image: keboola/logging-bundle
+    build:
+      context: .
+      target: logging-bundle
+    environment:
+      - SYMFONY_REQUIRE

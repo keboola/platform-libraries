@@ -102,3 +102,18 @@ RUN --mount=type=bind,target=/libs,source=libs \
     composer install $COMPOSER_FLAGS
 
 COPY libs/${LIB_NAME} ./
+
+FROM base AS logging-bundle
+ARG SYMFONY_REQUIRE=6.*
+ARG COMPOSER_MIRROR_PATH_REPOS=1
+ARG COMPOSER_HOME=/tmp/composer
+ENV LIB_NAME=logging-bundle
+ENV LIB_HOME=/code/${LIB_NAME}
+WORKDIR ${LIB_HOME}
+
+COPY libs/${LIB_NAME}/composer.json ./
+RUN --mount=type=bind,target=/libs,source=libs \
+    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
+    composer install $COMPOSER_FLAGS
+
+COPY libs/${LIB_NAME} ./

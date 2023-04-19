@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
@@ -16,33 +17,42 @@ class TableColumnsHelper
         array $newTableConfiguration,
         string $backendType,
     ): void {
-        $missingColumnsData = [];
         $missingColumns = self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration);
+        if (!$missingColumns) {
+            $missingColumns = self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration);
+        }
 
+        $missingColumnsData = [];
         if ($currentTableInfo['isTyped'] === true) {
-            foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
-                $columnName = ColumnNameSanitizer::sanitize($columnName);
+            if (!empty($newTableConfiguration['column_metadata'])) {
+                foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
+                    $columnName = ColumnNameSanitizer::sanitize($columnName);
 
-                if (!in_array($columnName, $missingColumns)) {
-                    continue;
+                    if (!in_array($columnName, $missingColumns)) {
+                        continue;
+                    }
+
+                    $tableMetadata = $newTableConfiguration['metadata'] ?? [];
+                    $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
+                        ->createTableDefinitionColumn($columnName, $columnMetadata);
+
+                    $columnData = $column->toArray();
+                    $missingColumnsData[] = [
+                        $column->getName(),
+                        $columnData['definition'] ?? null,
+                        $columnData['basetype'] ?? ($columnData['definition'] ? null : BaseType::STRING),
+                    ];
                 }
-
-                $tableMetadata = $newTableConfiguration['metadata'] ?? [];
-                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
-                    ->createTableDefinitionColumn($columnName, $columnMetadata);
-
-                $columnData = $column->toArray();
-                $missingColumnsData[] = [
-                    $column->getName(),
-                    $columnData['definition'] ?? null,
-                    $columnData['basetype'] ?? null,
-                ];
+            } else {
+                foreach ($missingColumns as $columnName) {
+                    $missingColumnsData[] = [
+                        $columnName,
+                        null,
+                        BaseType::STRING,
+                    ];
+                }
             }
         } else {
-            $missingColumns = !$missingColumns
-                ? self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
-                : $missingColumns;
-
             foreach ($missingColumns as $columnName) {
                 $missingColumnsData[] = [
                     $columnName,

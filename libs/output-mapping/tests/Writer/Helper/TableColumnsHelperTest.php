@@ -52,7 +52,7 @@ class TableColumnsHelperTest extends TestCase
 
     public function addMissingColumnsToTypedTableProvider(): Generator
     {
-        yield 'typed table - extra columns in config' => [
+        yield 'typed table - extra metadata columns in config' => [
             [
                 'id' => 'in.c-output-mapping.testTable1',
                 'isTyped' => true,
@@ -76,6 +76,76 @@ class TableColumnsHelperTest extends TestCase
                     ],
                     null,
                 ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    [
+                        'type' => 'INT',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'typed table - extra columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    'STRING',
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    'STRING',
+                ],
+            ],
+        ];
+
+        yield 'typed table - extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(
+                    array_slice(
+                        self::TEST_COLUMNS_METADATA,
+                        0,
+                        -1,
+                        true
+                    )
+                ),
+                'column_metadata' => array_slice(
+                    self::TEST_COLUMNS_METADATA,
+                    -1,
+                    1,
+                    true
+                ),
+            ],
+            [
+                // only columns from column_metadata are applied
                 [
                     'in.c-output-mapping.testTable1',
                     'crm_id',
@@ -264,7 +334,7 @@ class TableColumnsHelperTest extends TestCase
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock
-            ->expects(self::exactly(2))
+            ->expects(self::exactly(count($addTableColumnWithConsecutiveParams)))
             ->method('addTableColumn')
             ->willReturnCallback(
                 function (

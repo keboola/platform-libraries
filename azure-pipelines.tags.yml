@@ -42,6 +42,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
+    - repository: api-index-client
+      type: github
+      endpoint: keboola
+      name: keboola/api-index-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -111,3 +115,11 @@ jobs:
       targetRepo: settle
       libraryPath: libs/settle
       tagPrefix: settle/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/api-index-client/')
+      sourceRepo: platform-libraries
+      targetRepo: api-index-client
+      libraryPath: libs/api-index-client
+      tagPrefix: api-index-client/

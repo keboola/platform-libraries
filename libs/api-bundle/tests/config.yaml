@@ -1,0 +1,9 @@
+framework:
+    test: true
+
+monolog:
+    handlers:
+        main:
+            type: stream
+            path: php://stdout
+            level: debug

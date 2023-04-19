@@ -175,3 +175,17 @@ services:
     build:
       context: .
       target: settle
+
+  dev-api-index-client:
+    profiles: [ dev ]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/api-api-client
+
+  ci-api-index-client:
+    profiles: [ ci ]
+    image: keboola/api-index-client
+    build:
+      context: .
+      target: api-index-client

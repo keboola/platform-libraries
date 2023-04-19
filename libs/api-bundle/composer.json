@@ -1,0 +1,61 @@
+{
+    "name": "keboola/api-bundle",
+    "description": "Keboola API Bundle",
+    "type": "symfony-bundle",
+    "require": {
+        "monolog/monolog": "^2.0",
+        "symfony/dependency-injection": "^6.0",
+        "symfony/monolog-bundle": "^3.8"
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^14.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^3.0",
+        "keboola/api-error-control": "^4.1",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-phpunit": "^1.1",
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/framework-bundle": "^6.1",
+        "symfony/security-bundle": "^6.1",
+        "symfony/yaml": "^6.1"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Keboola\\ApiBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\ApiBundle\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true,
+        "lock": false
+    },
+    "scripts": {
+        "tests": "phpunit",
+        "phpstan": "phpstan analyse -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "build": [
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    }
+}

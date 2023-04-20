@@ -145,7 +145,6 @@ class TableColumnsHelperTest extends TestCase
                 ),
             ],
             [
-                // only columns from column_metadata are applied
                 [
                     'in.c-output-mapping.testTable1',
                     'crm_id',
@@ -155,6 +154,12 @@ class TableColumnsHelperTest extends TestCase
                         'nullable' => true,
                     ],
                     null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    'STRING',
                 ],
             ],
         ];

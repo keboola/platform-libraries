@@ -6,7 +6,8 @@ composer require keboola/azure-api-client
 ```
 
 ## Usage
-The simplest way to use API client is just by creating its instance. 
+
+### Marketplaces
 
 ```php
 use Keboola\AzureApiClient\ApiClientConfiguration;
@@ -18,6 +19,52 @@ $marketplaces = new MarketplaceApiClient(new ClientCredentialsAuth(
     logger: $logger,
 ));
 ```
+
+### Event Grid
+
+> Event grid support only POST /events endpoint `EventGridApiClient::publishEvents
+
+```php
+use Keboola\AzureApiClient\ApiClientConfiguration;
+use Keboola\AzureApiClient\EventGrid\EventGridApiClient
+use Monolog\Logger;
+
+$eventGrid = new EventGridApiClient(
+    topicHostname: '<topic>.northeurope-1.eventgrid.azure.net',
+    configuration: new ApiClientConfiguration(
+        authenticator: new CustomHeaderAuth('aeg-sas-key', '<token>'),
+    )
+);
+```
+
+### Service Bus
+
+> Service bus support only subset of endpoints:
+> - There are no management endpoints
+> - Supported are only endpoints for:
+>   - sending messages `ServiceBusApiClient::sendMessage`
+>   - deleting messages `ServiceBusApiClient::deleteMessage`
+>   - peak message `ServiceBusApiClient::peekMessage`
+
+```php
+use Keboola\AzureApiClient\ApiClientConfiguration;
+use Keboola\AzureApiClient\ServiceBus\ServiceBusApiClient
+use Keboola\AzureApiClient\Authentication\Authenticator\SASTokenAuthenticatorFactory;
+use Monolog\Logger;
+
+$endpoint = 'https://<queue>.servicebus.windows.net:443/';
+$serviceBus = new ServiceBusApiClient(
+    serviceBusEndpoint: $endpoint,
+    configuration: new ApiClientConfiguration(
+        authenticator: new SASTokenAuthenticatorFactory(
+            url: $endpoint,
+            sharedAccessKeyName: 'RootManageSharedAccessKey',
+            sharedAccessKey: '<sharedAccessKey>',
+        ),
+    )
+);
+```
+
 
 ### Authentication
 By default, API client will try to authenticate using ENV variables `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and
@@ -51,7 +98,27 @@ $marketplaces = new MarketplaceApiClient(new ApiClientConfiguration(
 ));
 ```
 
-Or even use custom authentication header if needed:
+Or use sas token if service support it:
+
+```php
+use Keboola\AzureApiClient\ServiceBus\ServiceBusApiClient;
+use Keboola\AzureApiClient\ApiClientConfiguration;
+use Keboola\AzureApiClient\Authentication\Authenticator\SASTokenAuthenticatorFactory;
+
+$endpoint = 'https://<queue>.servicebus.windows.net:443/';
+$serviceBus = new ServiceBusApiClient(
+    serviceBusEndpoint: $endpoint,
+    configuration: new ApiClientConfiguration(
+        authenticator: new SASTokenAuthenticatorFactory(
+            url: $endpoint,
+            sharedAccessKeyName: 'RootManageSharedAccessKey',
+            sharedAccessKey: '<sharedAccessKey>',
+        ),
+    )
+);
+```
+
+Or custom authentication header if needed:
 
 ```php
 use Keboola\AzureApiClient\ApiClientConfiguration;

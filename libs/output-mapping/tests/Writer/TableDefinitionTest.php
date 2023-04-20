@@ -522,18 +522,24 @@ class TableDefinitionTest extends AbstractTestCase
             ],
         ];
 
-        yield 'incremental load with dummy column metadata' => [true, [
-            'Id' => $dummyColumnMetadata,
-            'Name' => $dummyColumnMetadata,
-            'birthweight' => $dummyColumnMetadata,
-            'created' => $dummyColumnMetadata,
-        ]];
-        yield 'full load with dummy column metadata' => [false, [
-            'Id' => $dummyColumnMetadata,
-            'Name' => $dummyColumnMetadata,
-            'birthweight' => $dummyColumnMetadata,
-            'created' => $dummyColumnMetadata,
-        ]];
+        yield 'incremental load with dummy column metadata' => [
+            true,
+            [
+                'Id' => $dummyColumnMetadata,
+                'Name' => $dummyColumnMetadata,
+                'birthweight' => $dummyColumnMetadata,
+                'created' => $dummyColumnMetadata,
+            ]
+        ];
+        yield 'full load with dummy column metadata' => [
+            false,
+            [
+                'Id' => $dummyColumnMetadata,
+                'Name' => $dummyColumnMetadata,
+                'birthweight' => $dummyColumnMetadata,
+                'created' => $dummyColumnMetadata,
+            ]
+        ];
     }
 
     /**

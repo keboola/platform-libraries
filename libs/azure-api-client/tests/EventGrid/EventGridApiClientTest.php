@@ -34,7 +34,6 @@ class EventGridApiClientTest extends TestCase
 
         $client = new EventGridApiClient(
             'test-eventgrid.northeurope-1.eventgrid.azure.net',
-            'token',
             new ApiClientConfiguration(
                 authenticator: new CustomHeaderAuth(
                     header: 'aeg-sas-key',

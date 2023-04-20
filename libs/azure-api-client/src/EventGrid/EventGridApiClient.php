@@ -9,6 +9,7 @@ use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientConfiguration;
 use Keboola\AzureApiClient\Authentication\Authenticator\CustomHeaderAuth;
 use Keboola\AzureApiClient\EventGrid\Model\EventGridEvent;
+use Keboola\AzureApiClient\Json;
 use Webmozart\Assert\Assert;
 
 class EventGridApiClient
@@ -48,10 +49,10 @@ class EventGridApiClient
                 'POST',
                 sprintf('/api/events?api-version=%s', self::API_VERSION),
                 [],
-                (string) json_encode(array_map(
+                Json::encodeArray(array_map(
                     static fn($event) => $event->toArray(),
                     $events
-                ), JSON_THROW_ON_ERROR),
+                )),
             ),
         );
     }

@@ -529,7 +529,7 @@ class TableDefinitionTest extends AbstractTestCase
                 'Name' => $dummyColumnMetadata,
                 'birthweight' => $dummyColumnMetadata,
                 'created' => $dummyColumnMetadata,
-            ]
+            ],
         ];
         yield 'full load with dummy column metadata' => [
             false,
@@ -538,7 +538,7 @@ class TableDefinitionTest extends AbstractTestCase
                 'Name' => $dummyColumnMetadata,
                 'birthweight' => $dummyColumnMetadata,
                 'created' => $dummyColumnMetadata,
-            ]
+            ],
         ];
     }
 

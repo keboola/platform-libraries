@@ -81,6 +81,7 @@ class EventsApiClientFunctionalTest extends TestCase
 
     public function testListWithQuery(): void
     {
+        //@TODO move logic to BaseNamespaceApiClientTestCase
         $result = self::$eventsApiClient->list([
             'fieldSelector' => 'involvedObject.name=test-pod',
         ]);

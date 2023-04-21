@@ -49,7 +49,7 @@ resource "kubernetes_role" "k8s_client" {
   rule {
     api_groups = [""]
     resources  = ["events"]
-    verbs      = ["get", "list"]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
 
   rule {
@@ -60,7 +60,7 @@ resource "kubernetes_role" "k8s_client" {
       "pods",
       "secrets",
     ]
-    verbs      = ["*"]
+    verbs      = ["*"] #TODO restrict
   }
 }
 

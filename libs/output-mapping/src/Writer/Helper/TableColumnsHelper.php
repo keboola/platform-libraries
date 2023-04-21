@@ -17,9 +17,11 @@ class TableColumnsHelper
         array $newTableConfiguration,
         string $backendType,
     ): void {
-        $missingColumns = array_merge(
-            self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration),
-            self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
+        $missingColumns = array_unique(
+            array_merge(
+                self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration),
+                self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
+            )
         );
 
         if (!$missingColumns) {

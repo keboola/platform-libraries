@@ -164,6 +164,44 @@ class TableColumnsHelperTest extends TestCase
             ],
         ];
 
+        yield 'typed table - same extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    [
+                        'type' => 'VARCHAR',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    [
+                        'type' => 'INT',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+            ],
+        ];
+
         yield 'random backend - typed table - extra columns in config' => [
             [
                 'id' => 'in.c-output-mapping.testTable2',
@@ -430,6 +468,78 @@ class TableColumnsHelperTest extends TestCase
             [
                 'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
                 'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'non-typed - extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(
+                    array_slice(
+                        self::TEST_COLUMNS_METADATA,
+                        0,
+                        -1,
+                        true
+                    )
+                ),
+                'column_metadata' => array_slice(
+                    self::TEST_COLUMNS_METADATA,
+                    -1,
+                    1,
+                    true
+                ),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'non-typed table - same extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
             [
                 [

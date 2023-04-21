@@ -68,7 +68,7 @@ class ServiceBusClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/head?timeout=10', $request->getUri()->__toString());
+        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10', $request->getUri()->__toString());
 
         $this->assertAuthorization($request);
 
@@ -101,7 +101,7 @@ class ServiceBusClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/head?timeout=10', $request->getUri()->__toString());
+        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10', $request->getUri()->__toString());
 
         $this->assertAuthorization($request);
     }

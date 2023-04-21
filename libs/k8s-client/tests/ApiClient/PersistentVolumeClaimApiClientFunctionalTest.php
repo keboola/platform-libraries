@@ -39,8 +39,7 @@ class PersistentVolumeClaimApiClientFunctionalTest extends TestCase
                     ],
                 ],
                 'volumeMode' => 'Filesystem',
-                'storageClassName' => 'local-storage',
-                'persistentVolumeReclaimPolicy' => 'Delete',
+                'storageClassName' => 'kbc-persistent-workspace-storage',
                 'volumeName' => 'pvc-functional-test',
             ],
         ]);

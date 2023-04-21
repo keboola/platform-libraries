@@ -40,7 +40,7 @@ class ServiceBusApiClient
         $response = $this->apiClient->sendRequest(
             new Request(
                 'POST',
-                sprintf('/%s/head?timeout=%d', $queueName, self::POOLING_TIMEOUT_SECONDS),
+                sprintf('/%s/messages/head?timeout=%d', $queueName, self::POOLING_TIMEOUT_SECONDS),
             )
         );
         if ($response->getStatusCode() === self::NO_MESSAGE_HTTP_CODE) {

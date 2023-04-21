@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
@@ -16,14 +17,24 @@ class TableColumnsHelper
         array $newTableConfiguration,
         string $backendType,
     ): void {
-        $missingColumnsData = [];
-        $missingColumns = self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration);
+        $missingColumns = array_unique(
+            array_merge(
+                self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration),
+                self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
+            )
+        );
 
-        if ($currentTableInfo['isTyped'] === true) {
+        if (!$missingColumns) {
+            return;
+        }
+
+        $defaultBaseTypeValue = $currentTableInfo['isTyped'] === true ? BaseType::STRING : null;
+        $missingColumnsData = [];
+        if (!empty($newTableConfiguration['column_metadata']) && $currentTableInfo['isTyped'] === true) {
             foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
                 $columnName = ColumnNameSanitizer::sanitize($columnName);
 
-                if (!in_array($columnName, $missingColumns)) {
+                if (!in_array($columnName, $missingColumns, true)) {
                     continue;
                 }
 
@@ -35,21 +46,19 @@ class TableColumnsHelper
                 $missingColumnsData[] = [
                     $column->getName(),
                     $columnData['definition'] ?? null,
-                    $columnData['basetype'] ?? null,
+                    $columnData['basetype'] ?? ($columnData['definition'] ? null : $defaultBaseTypeValue),
                 ];
-            }
-        } else {
-            $missingColumns = !$missingColumns
-                ? self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
-                : $missingColumns;
 
-            foreach ($missingColumns as $columnName) {
-                $missingColumnsData[] = [
-                    $columnName,
-                    null,
-                    null,
-                ];
+                $missingColumns = array_diff($missingColumns, [$column->getName()]);
             }
+        }
+
+        foreach ($missingColumns as $columnName) {
+            $missingColumnsData[] = [
+                $columnName,
+                null,
+                $defaultBaseTypeValue,
+            ];
         }
 
         foreach ($missingColumnsData as $missingColumnData) {

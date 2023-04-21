@@ -52,6 +52,43 @@ class TableColumnsHelperTest extends TestCase
 
     public function addMissingColumnsToTypedTableProvider(): Generator
     {
+        yield 'typed table - extra metadata columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    [
+                        'type' => 'VARCHAR',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    [
+                        'type' => 'INT',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+            ],
+        ];
+
         yield 'typed table - extra columns in config' => [
             [
                 'id' => 'in.c-output-mapping.testTable1',
@@ -63,6 +100,82 @@ class TableColumnsHelperTest extends TestCase
             ],
             [
                 'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    'STRING',
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    'STRING',
+                ],
+            ],
+        ];
+
+        yield 'typed table - extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(
+                    array_slice(
+                        self::TEST_COLUMNS_METADATA,
+                        0,
+                        -1,
+                        true
+                    )
+                ),
+                'column_metadata' => array_slice(
+                    self::TEST_COLUMNS_METADATA,
+                    -1,
+                    1,
+                    true
+                ),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    [
+                        'type' => 'INT',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    'STRING',
+                ],
+            ],
+        ];
+
+        yield 'typed table - same extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => true,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
             [
@@ -264,7 +377,7 @@ class TableColumnsHelperTest extends TestCase
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock
-            ->expects(self::exactly(2))
+            ->expects(self::exactly(count($addTableColumnWithConsecutiveParams)))
             ->method('addTableColumn')
             ->willReturnCallback(
                 function (
@@ -355,6 +468,78 @@ class TableColumnsHelperTest extends TestCase
             [
                 'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
                 'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'non-typed - extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(
+                    array_slice(
+                        self::TEST_COLUMNS_METADATA,
+                        0,
+                        -1,
+                        true
+                    )
+                ),
+                'column_metadata' => array_slice(
+                    self::TEST_COLUMNS_METADATA,
+                    -1,
+                    1,
+                    true
+                ),
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    null,
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    null,
+                    null,
+                ],
+            ],
+        ];
+
+        yield 'non-typed table - same extra metadata columns and columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'columns' => array_keys(self::TEST_COLUMNS_METADATA),
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
             [
                 [

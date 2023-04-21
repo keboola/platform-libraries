@@ -508,6 +508,161 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
     }
 
+    public function writerUpdateTableDefinitionWithUnknownDataTypesProvider(): Generator
+    {
+        yield 'incremental load with any column metadata' => [true, null];
+        yield 'full load with any column metadata' => [false, null];
+        yield 'incremental load with empty column metadata' => [true, []];
+        yield 'full load with empty column metadata' => [false, []];
+
+        $dummyColumnMetadata = [
+            [
+                'key' => 'foo',
+                'value' => 'bar',
+            ],
+        ];
+
+        yield 'incremental load with dummy column metadata' => [
+            true,
+            [
+                'Id' => $dummyColumnMetadata,
+                'Name' => $dummyColumnMetadata,
+                'birthweight' => $dummyColumnMetadata,
+                'created' => $dummyColumnMetadata,
+            ],
+        ];
+        yield 'full load with dummy column metadata' => [
+            false,
+            [
+                'Id' => $dummyColumnMetadata,
+                'Name' => $dummyColumnMetadata,
+                'birthweight' => $dummyColumnMetadata,
+                'created' => $dummyColumnMetadata,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider writerUpdateTableDefinitionWithUnknownDataTypesProvider
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testWriterUpdateTableDefinitionWithUnknownDataTypes(
+        bool $incrementalFlag,
+        ?array $columnMetadata
+    ): void {
+        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
+
+        $idDatatype = new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]);
+        $nameDatatype = new Snowflake(Snowflake::TYPE_TEXT, ['length' => '17', 'nullable' => false]);
+
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $tableId,
+            'incremental' => $incrementalFlag,
+            'columns' => ['Id', 'Name', 'birthweight', 'created'],
+            'primary_key' => ['Id', 'Name'],
+            'metadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'snowflake',
+                ],
+            ],
+        ];
+
+        if ($columnMetadata !== null) {
+            $config['column_metadata'] = $columnMetadata;
+        }
+
+        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyOutputBucketId, [
+            'name' => 'tableDefinition',
+            'primaryKeysNames' => [],
+            'columns' => [
+                [
+                    'name' => 'Id',
+                    'definition' => $idDatatype->toArray(),
+                ],
+                [
+                    'name' => 'Name',
+                    'definition' => $nameDatatype->toArray(),
+                ],
+            ],
+        ]);
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBasicClient()->setRunId($runId);
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT
+        );
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'typedTableEnabled' => true,
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            true,
+            false
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $writerJobs = array_filter(
+            $this->clientWrapper->getBasicClient()->listJobs(),
+            function (array $job) use ($runId) {
+                return $runId === $job['runId'];
+            }
+        );
+
+        self::assertCount(4, $writerJobs);
+        self::assertTableTypedColumnAddJob(
+            array_pop($writerJobs),
+            'birthweight',
+            'STRING',
+            null
+        );
+        self::assertTableTypedColumnAddJob(
+            array_pop($writerJobs),
+            'created',
+            'STRING',
+            null
+        );
+        self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
+        self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
+
+        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
+            'type' => Snowflake::TYPE_NUMBER,
+            'length' => '38,0', // default integer length
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [
+            'type' => Snowflake::TYPE_VARCHAR,
+            'length' => '17',
+            'nullable' => false,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
+            'type' => Snowflake::TYPE_VARCHAR,
+            'length' => '16777216',
+            'nullable' => true,
+        ]);
+        self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
+            'type' => Snowflake::TYPE_VARCHAR,
+            'length' => '16777216',
+            'nullable' => true,
+        ]);
+    }
+
     private static function assertDataTypeDefinition(array $metadata, array $expectedType): void
     {
         $typeMetadata = array_values(array_filter($metadata, function ($metadatum) {

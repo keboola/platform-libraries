@@ -133,6 +133,21 @@ $marketplaces = new MarketplaceApiClient(new ApiClientConfiguration(
 If even this is not enough for your use-case, you can implement your own
 `Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorFactoryInterface` and pass it as `authenticator`. 
 
+## Development
+
+To run functional tests (PHPUnit group "functional") you have to setup resources in Azure.
+
+Requirements: 
+
+- Terraform must be installed
+- To print outputs command bellow use jq
+
+```bash
+terraform -chdir="provisioning" init
+terraform -chdir="provisioning" apply -var name_prefix=<respource_group_prefix> -var az_subscription_id=<az_subscription_id> -var az_tenant_id=<az_tenant_id>
+terraform -chdir="provisioning" output -json | jq -r 'keys[] as $k | "\($k)=\(.[$k] | .value)"' >| .env
+```
+
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.

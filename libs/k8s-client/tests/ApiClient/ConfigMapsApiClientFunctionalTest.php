@@ -29,7 +29,7 @@ class ConfigMapsApiClientFunctionalTest extends TestCase
         );
     }
 
-    private function cleanupK8sResources(float $timeout = 1.0): void
+    private function cleanupK8sResources(float $timeout = 30.0): void
     {
         $startTime = microtime(true);
 

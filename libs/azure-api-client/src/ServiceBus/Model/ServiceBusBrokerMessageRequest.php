@@ -13,7 +13,7 @@ final class ServiceBusBrokerMessageRequest
     ) {
     }
 
-    public function createJson(string $id, array $message): self
+    public static function createJson(string $id, array $message): self
     {
         return new self(
             id: $id,

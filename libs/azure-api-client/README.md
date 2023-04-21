@@ -135,6 +135,7 @@ If even this is not enough for your use-case, you can implement your own
 
 ## Development
 
+### Resources
 To run functional tests (PHPUnit group "functional") you have to setup resources in Azure.
 
 Requirements: 
@@ -146,6 +147,15 @@ Requirements:
 terraform -chdir="provisioning" init
 terraform -chdir="provisioning" apply -var name_prefix=<respource_group_prefix> -var az_subscription_id=<az_subscription_id> -var az_tenant_id=<az_tenant_id>
 terraform -chdir="provisioning" output -json | jq -r 'keys[] as $k | "\($k)=\(.[$k] | .value)"' >| .env
+```
+### Tests
+
+```bash
+# Run only unit tests
+docker-compose run --rm dev-azure-api-client composer tests -- --exclude=functional
+
+# Run only functional tests
+docker-compose run --rm dev-azure-api-client composer tests -- --group=functional
 ```
 
 ## License

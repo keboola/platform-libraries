@@ -37,6 +37,8 @@ services:
       args:
         PHP_VERSION: "8.1"
     working_dir: /code/libs/azure-api-client
+    env_file:
+      - ./libs/azure-api-client/.env
     volumes:
       - .:/code
     depends_on:

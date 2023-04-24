@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 class ManageTokenAuthenticator implements TokenAuthenticatorInterface
 {
     public function __construct(
-        private readonly ManageApiClientFactory $manageApiClientFactory,
+   //     private readonly ManageApiClientFactory $manageApiClientFactory,
     ) {
     }
 

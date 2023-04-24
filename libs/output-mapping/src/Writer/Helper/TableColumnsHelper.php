@@ -28,9 +28,10 @@ class TableColumnsHelper
             return;
         }
 
-        $defaultBaseTypeValue = $currentTableInfo['isTyped'] === true ? BaseType::STRING : null;
+        $tableIsTyped = $currentTableInfo['isTyped'] || isset($currentTableInfo['definition']);
+        $defaultBaseTypeValue = $tableIsTyped ? BaseType::STRING : null;
         $missingColumnsData = [];
-        if (!empty($newTableConfiguration['column_metadata']) && $currentTableInfo['isTyped'] === true) {
+        if (!empty($newTableConfiguration['column_metadata']) && $tableIsTyped === true) {
             foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
                 $columnName = ColumnNameSanitizer::sanitize($columnName);
 
@@ -85,7 +86,7 @@ class TableColumnsHelper
             }, array_keys($newTableConfiguration['column_metadata']));
         }
 
-        return array_diff($configColumns, $tableColumns);
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 
     private static function getMissingColumnsFromColumns(array $currentTableInfo, array $newTableConfiguration): array
@@ -99,6 +100,6 @@ class TableColumnsHelper
             }, $newTableConfiguration['columns']);
         }
 
-        return array_diff($configColumns, $tableColumns);
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 }

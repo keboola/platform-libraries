@@ -230,6 +230,46 @@ class TableColumnsHelperTest extends TestCase
                 ],
             ],
         ];
+
+        // https://keboola.slack.com/archives/CQB468K63/p1682333620198169?thread_ts=1682322553.053839&cid=CQB468K63
+        // Don't read that ^ if you want to stay sane.
+        yield 'badly typed table - extra metadata columns in config' => [
+            [
+                'id' => 'in.c-output-mapping.testTable1',
+                'isTyped' => false,
+                'definition' => [],
+                'columns' => [
+                    'id',
+                    'name',
+                ],
+            ],
+            [
+                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+            [
+                [
+                    'in.c-output-mapping.testTable1',
+                    'address',
+                    [
+                        'type' => 'VARCHAR',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+                [
+                    'in.c-output-mapping.testTable1',
+                    'crm_id',
+                    [
+                        'type' => 'INT',
+                        'length' => null,
+                        'nullable' => true,
+                    ],
+                    null,
+                ],
+            ],
+        ];
     }
 
     public function doNotAddColumnsProvider(): Generator
@@ -341,6 +381,40 @@ class TableColumnsHelperTest extends TestCase
                     'name',
                     'address',
                     'crm_id',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
+        yield 'typed table - case mismatch' => [
+            [
+                'isTyped' => true,
+                'columns' => [
+                    'ID',
+                    'name',
+                    'address',
+                    'crm_id',
+                    'created',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
+
+        yield 'non-typed table - case mismatch' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'ID',
+                    'name',
+                    'address',
+                    'crm_id',
+                    'created',
                 ],
             ],
             [
@@ -613,150 +687,6 @@ class TableColumnsHelperTest extends TestCase
             $currentTableInfo,
             $newTableConfiguration,
             'snowflake'
-        );
-    }
-
-    public function testUniversalFailure(): void
-    {
-        $clientMock = $this->createMock(Client::class);
-        $clientMock->expects(self::never())
-            ->method('addTableColumn');
-
-        TableColumnsHelper::addMissingColumns(
-            $clientMock,
-            array(
-                'uri' => 'https://connection.csas.keboola.cloud/v2/storage/tables/out.c-global_control_group.dami_semaphore',
-                'id' => 'out.c-global_control_group.dami_semaphore',
-                'name' => 'dami_semaphore',
-                'displayName' => 'dami_semaphore',
-                'transactional' => false,
-                'primaryKey' => array('status'),
-                'indexType' => 'CLUSTERED COLUMNSTORE INDEX',
-                'indexKey' => array(),
-                'distributionType' => 'ROUND_ROBIN',
-                'distributionKey' => array('status'),
-                'syntheticPrimaryKeyEnabled' => false,
-                'created' => '2022-02-07T17:20:00+0100',
-                'lastImportDate' => '2023-04-20T15:06:57+0200',
-                'lastChangeDate' => '2023-04-20T15:06:57+0200',
-                'rowsCount' => 1,
-                'dataSizeBytes' => 991232,
-                'isAlias' => false,
-                'isAliasable' => true,
-                'isTyped' => false,
-                'columns' => array('status'),
-                'columnMetadata' => array(
-                    'status' => array(
-                        array(
-                            'id' => '54035897',
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                            'provider' => 'storage',
-                            'timestamp' => '2022-02-07T17:20:02+0100'
-                        ),
-                        array(
-                            'id' => '54035898',
-                            'key' => 'KBC.datatype.nullable',
-                            'value' => '',
-                            'provider' => 'storage',
-                            'timestamp' => '2022-02-07T17:20:02+0100'
-                        ),
-                        array(
-                            'id' => '54035899',
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                            'provider' => 'storage',
-                            'timestamp' => '2022-02-07T17:20:02+0100'
-                        )
-                    )
-                ),
-                'attributes' => array(),
-                'metadata' => array(
-                    array(
-                        'id' => '54035896',
-                        'key' => 'KBC.dataTypesEnabled',
-                        'value' => 'true',
-                        'provider' => 'storage',
-                        'timestamp' => '2022-02-07T17:20:02+0100'
-                    ),
-                    array(
-                        'id' => '54035900',
-                        'key' => 'KBC.lastUpdatedBy.component.id',
-                        'value' => 'keboola.ex-db-oracle',
-                        'provider' => 'system',
-                        'timestamp' => '2022-02-07T17:23:54+0100'
-                    ),
-                    array(
-                        'id' => '54035901',
-                        'key' => 'KBC.lastUpdatedBy.configuration.id',
-                        'value' => '6917568',
-                        'provider' => 'system',
-                        'timestamp' => '2022-02-07T17:23:54+0100'
-                    ),
-                    array(
-                        'id' => '54035902',
-                        'key' => 'KBC.lastUpdatedBy.configurationRow.id',
-                        'value' => '15982',
-                        'provider' => 'system',
-                        'timestamp' => '2022-02-07T17:23:54+0100'
-                    )
-                ),
-                'bucket' => array(
-                    'uri' => 'https://connection.csas.keboola.cloud/v2/storage/buckets/out.c-global_control_group',
-                    'id' => 'out.c-global_control_group',
-                    'name' => 'c-global_control_group',
-                    'displayName' => 'global_control_group',
-                    'stage' => 'out',
-                    'description' => '',
-                    'tables' => 'https://connection.csas.keboola.cloud/v2/storage/buckets/out.c-global_control_group',
-                    'created' => '2022-02-04T16:39:39+0100',
-                    'lastChangeDate' => '2023-04-22T15:06:27+0200',
-                    'isReadOnly' => false,
-                    'dataSizeBytes' => 846168064,
-                    'rowsCount' => 12968533,
-                    'isMaintenance' => false,
-                    'backend' => 'synapse',
-                    'sharing' => null,
-                    'hasExternalSchema' => false,
-                    'databaseName' => '',
-                    'metadata' => array()
-                ),
-                'definition' => array(
-                    'primaryKeysNames' => array('status'),
-                    'columns' => array(
-                        array(
-                            'name' => 'status',
-                            'definition' => array(
-                                'type' => 'INT',
-                                'nullable' => false
-                            ),
-                            'basetype' => 'INTEGER')
-                    ),
-                    'distribution' => array(
-                        'type' => 'ROUND_ROBIN',
-                        'distributionColumnsNames' => array('status')
-                    ),
-                    'index' => array(
-                        'type' => 'CLUSTERED COLUMNSTORE INDEX',
-                        'indexColumnsNames' => array()
-                    )
-                )
-            ),
-            array(
-                'destination' => 'out.c-global_control_group.dami_semaphore',
-                'incremental' => false,
-                'primary_key' => array('status'),
-                'columns' => array('STATUS'),
-                'distribution_key' => array(),
-                'delete_where_values' => array(),
-                'delete_where_operator' => 'eq',
-                'delimiter' => ',',
-                'enclosure' => '"',
-                'metadata' => array(),
-                'column_metadata' => array(),
-                'write_always' => false,
-                'tags' => array('componentId: keboola.ex-db-oracle', 'configurationId: 6917568', 'configurationRowId: 15982')),
-            'synapse'
         );
     }
 }

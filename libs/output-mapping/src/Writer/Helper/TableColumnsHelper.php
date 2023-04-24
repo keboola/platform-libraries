@@ -80,12 +80,24 @@ class TableColumnsHelper
         $configColumns = [];
 
         if (!empty($newTableConfiguration['column_metadata'])) {
-            $configColumns = array_map(function ($columnName): string {
-                return ColumnNameSanitizer::sanitize($columnName);
-            }, array_keys($newTableConfiguration['column_metadata']));
+            $configColumns = array_map(
+                function ($columnName): string {
+                    return ColumnNameSanitizer::sanitize($columnName);
+                },
+                self::filterUnsupportedColumns(
+                    array_keys($newTableConfiguration['column_metadata'])
+                )
+            );
         }
 
         return array_diff($configColumns, $tableColumns);
+    }
+
+    private static function filterUnsupportedColumns(array $columns): array
+    {
+        return array_filter($columns, function (string $column) {
+            return mb_strtolower($column) !== '_timestamp';
+        });
     }
 
     private static function getMissingColumnsFromColumns(array $currentTableInfo, array $newTableConfiguration): array
@@ -94,9 +106,12 @@ class TableColumnsHelper
         $configColumns = [];
 
         if (!empty($newTableConfiguration['columns'])) {
-            $configColumns = array_map(function ($columnName): string {
-                return ColumnNameSanitizer::sanitize($columnName);
-            }, $newTableConfiguration['columns']);
+            $configColumns = array_map(
+                function ($columnName): string {
+                    return ColumnNameSanitizer::sanitize($columnName);
+                },
+                self::filterUnsupportedColumns($newTableConfiguration['columns'])
+            );
         }
 
         return array_diff($configColumns, $tableColumns);

@@ -44,6 +44,8 @@ class TableDefinitionFactoryTest extends TestCase
                 'Name' => (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
                 'birthday' => (new GenericStorage('date'))->toMetadata(),
                 'created' => (new GenericStorage('timestamp'))->toMetadata(),
+                '_timestamp' => (new GenericStorage('timestamp'))->toMetadata(),
+                '_TIMESTAMP' => (new GenericStorage('timestamp'))->toMetadata(),
             ],
             'expectedSerialisation' => [
                 'name' => 'basicTable',

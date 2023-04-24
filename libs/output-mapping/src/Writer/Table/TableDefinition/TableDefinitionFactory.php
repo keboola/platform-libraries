@@ -22,6 +22,10 @@ class TableDefinitionFactory
         $tableDefinition->setName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
         foreach ($columnMetadata as $columnName => $metadata) {
+            if (mb_strtolower($columnName) === '_timestamp') {
+                continue;
+            }
+
             $tableDefinition->addColumn(
                 $columnName,
                 $metadata,

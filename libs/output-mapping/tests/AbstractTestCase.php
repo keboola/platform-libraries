@@ -314,4 +314,24 @@ abstract class AbstractTestCase extends TestCase
             ]
         );
     }
+
+    protected function prepareWorkspaceWithTablesClone(string $inputBucketId, string $tablePrefix = ''): void
+    {
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces->cloneIntoWorkspace(
+            $this->workspaceId,
+            [
+                'input' => [
+                    [
+                        'source' => $inputBucketId . '.test1',
+                        'destination' => $tablePrefix . 'table1a',
+                    ],
+                    [
+                        'source' => $inputBucketId . '.test2',
+                        'destination' => $tablePrefix . 'table2a',
+                    ],
+                ],
+            ]
+        );
+    }
 }

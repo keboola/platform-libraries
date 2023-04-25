@@ -17,9 +17,11 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
@@ -80,6 +82,7 @@ class TableWriter extends AbstractWriter
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
+
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
 
         $defaultBucket = $configuration['bucket'] ?? null;
@@ -103,11 +106,27 @@ class TableWriter extends AbstractWriter
                 continue;
             }
 
+            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+                try {
+                    RestrictedColumnsHelper::validateRestrictedColumnsInConfig($config);
+                } catch (InvalidOutputException $e) {
+                    throw new InvalidOutputException(
+                        sprintf(
+                            'Failed to process mapping for table %s: %s',
+                            $mappingSource->getSourceName(),
+                            $e->getMessage()
+                        ),
+                        0,
+                        $e
+                    );
+                }
+            }
+
             try {
                 $loadTableTasks[] = $this->createLoadTableTask(
                     $strategy,
                     $mappingSource->getSource(),
-                    $config,
+                    RestrictedColumnsHelper::removeRestrictedColumnsFromConfig($config),
                     $systemMetadata,
                     $createTypedTables
                 );

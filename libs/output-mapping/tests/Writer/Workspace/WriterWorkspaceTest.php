@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\Csv\CsvFile;
+use Keboola\Datatype\Definition\Common;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -32,7 +34,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
         )->getDataStorage()->getWorkspaceId();
 
-        $this->prepareWorkspaceWithTables($this->testBucketId);
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
 
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -578,5 +580,108 @@ class WriterWorkspaceTest extends AbstractTestCase
             '"id2","name2","foo2","bar2"',
             '"id3","name3","foo3","bar3"',
         ]);
+    }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
+    {
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $factory = $this->getWorkspaceStagingFactory();
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+        )->getDataStorage()->getWorkspaceId();
+
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
+
+        $root = $this->temp->getTmpFolder();
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
+                'incremental' => true,
+                'columns' => ['Id', '_timestamp'],
+            ],
+            [
+                'source' => 'table2a',
+                'destination' => $this->emptyOutputBucketId . '.table2a',
+            ],
+        ];
+        file_put_contents(
+            $root . '/table1a.manifest',
+            json_encode(
+                [
+                    'column_metadata' => [
+                        '_timestamp' => [
+                            [
+                                'key' => Common::KBC_METADATA_KEY_TYPE,
+                                'value' => Snowflake::TYPE_TIMESTAMP_NTZ,
+                            ],
+                            [
+                                'key' => Common::KBC_METADATA_KEY_BASETYPE,
+                                'value' => Snowflake::TYPE_TIMESTAMP,
+                            ],
+                        ],
+                    ],
+                ]
+            )
+        );
+        file_put_contents(
+            $root . '/table2a.manifest',
+            json_encode(
+                ['columns' => ['Id', 'Name', '_TIMESTAMP']]
+            )
+        );
+        $writer = new TableWriter($factory);
+
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake',
+            false,
+            false
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
+
+        $this->assertJobParamsMatches([
+            'incremental' => true,
+            'columns' => ['Id'],
+        ], $jobIds[0]);
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['Id', 'Name'],
+        ], $jobIds[1]);
+
+        $this->assertTablesExists(
+            $this->emptyOutputBucketId,
+            [
+                $this->emptyOutputBucketId . '.table1a',
+                $this->emptyOutputBucketId . '.table2a',
+            ]
+        );
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.table1a',
+            [
+                '"id","name","foo","bar"',
+                '"id1","name1","foo1","bar1"',
+                '"id2","name2","foo2","bar2"',
+                '"id3","name3","foo3","bar3"',
+            ]
+        );
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.table2a',
+            [
+                '"id","name","foo","bar"',
+                '"id1","name1","foo1","bar1"',
+                '"id2","name2","foo2","bar2"',
+                '"id3","name3","foo3","bar3"',
+            ]
+        );
     }
 }

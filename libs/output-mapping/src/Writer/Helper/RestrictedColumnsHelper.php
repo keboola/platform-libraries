@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+
 class RestrictedColumnsHelper
 {
     private const TIMESTAMP_COLUMN_NAME = '_timestamp';
@@ -12,7 +14,7 @@ class RestrictedColumnsHelper
     {
         if (!empty($config['columns'])) {
             $config['columns'] = array_filter($config['columns'], function ($column): bool {
-                return mb_strtolower((string) $column) !== self::TIMESTAMP_COLUMN_NAME;
+                return self::isRestrictedColumn((string) $column);
             });
         }
 
@@ -20,7 +22,7 @@ class RestrictedColumnsHelper
             $columnNames = array_keys($config['column_metadata']);
 
             $columnNamesFiltered = array_filter($columnNames, function ($column) {
-                return mb_strtolower((string) $column) !== self::TIMESTAMP_COLUMN_NAME;
+                return self::isRestrictedColumn((string) $column);
             });
 
             $config['column_metadata'] = array_diff_key(
@@ -32,5 +34,43 @@ class RestrictedColumnsHelper
         }
 
         return $config;
+    }
+
+    public static function validateRestrictedColumnsInConfig(array $config): void
+    {
+        $errors = [];
+        if (!empty($config['columns'])) {
+            $restrictedColumns = array_filter($config['columns'], function ($column): bool {
+                return !self::isRestrictedColumn((string) $column);
+            });
+            if ($restrictedColumns) {
+                $errors[] = sprintf(
+                    'System columns "%s" cannot be imported to the table.',
+                    implode(', ', $restrictedColumns),
+                );
+            }
+        }
+
+        if (!empty($config['column_metadata'])) {
+            $columnNames = array_keys($config['column_metadata']);
+            $restrictedColumns = array_filter($columnNames, function ($column): bool {
+                return !self::isRestrictedColumn((string) $column);
+            });
+            if ($restrictedColumns) {
+                $errors[] = sprintf(
+                    'Metadata for system columns "%s" cannot be imported to the table.',
+                    implode(', ', $restrictedColumns),
+                );
+            }
+        }
+
+        if ($errors) {
+            throw new InvalidOutputException(implode(' ', $errors));
+        }
+    }
+
+    private static function isRestrictedColumn(string $columnName): bool
+    {
+        return mb_strtolower($columnName) !== self::TIMESTAMP_COLUMN_NAME;
     }
 }

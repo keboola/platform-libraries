@@ -267,62 +267,6 @@ class TableColumnsHelperTest extends TestCase
             ],
         ];
 
-        $columnsMetadataWithTimestamp = self::TEST_COLUMNS_METADATA;
-        $columnsMetadataWithTimestamp += [
-            '_timestamp' => [
-                [
-                    'key' => 'KBC.datatype.type',
-                    'value' => 'VARCHAR',
-                ],
-                [
-                    'key' => 'KBC.datatype.basetype',
-                    'value' => 'STRING',
-                ],
-            ],
-            '_TIMESTAMP' => [
-                [
-                    'key' => 'KBC.datatype.type',
-                    'value' => 'VARCHAR',
-                ],
-                [
-                    'key' => 'KBC.datatype.basetype',
-                    'value' => 'STRING',
-                ],
-            ],
-        ];
-
-        yield 'typed table - extra metadata _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                ],
-            ],
-            [
-                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
-                'column_metadata' => $columnsMetadataWithTimestamp,
-            ],
-        ];
-
-        yield 'typed table - extra _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                ],
-            ],
-            [
-                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
-                'columns' => array_keys($columnsMetadataWithTimestamp),
-            ],
-        ];
-
         yield 'random backend - typed table - extra columns in table' => [
             [
                 'isTyped' => true,
@@ -337,40 +281,6 @@ class TableColumnsHelperTest extends TestCase
             [
                 'metadata' => self::TEST_RANDOM_BACKEND_TABLE_METADATA,
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-        ];
-
-        yield 'random backend - typed table - extra metadata _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => self::TEST_RANDOM_BACKEND_TABLE_METADATA,
-                'column_metadata' => $columnsMetadataWithTimestamp,
-            ],
-        ];
-
-        yield 'random backend - typed table - extra _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => true,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => self::TEST_RANDOM_BACKEND_TABLE_METADATA,
-                'columns' => array_keys($columnsMetadataWithTimestamp),
             ],
         ];
 
@@ -404,40 +314,6 @@ class TableColumnsHelperTest extends TestCase
             [
                 'metadata' => [],
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-        ];
-
-        yield 'non-typed table - extra metadata _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'column_metadata' => $columnsMetadataWithTimestamp,
-            ],
-        ];
-
-        yield 'non-typed table - extra _timestamp (case insensitive) columns' => [
-            [
-                'isTyped' => false,
-                'columns' => [
-                    'id',
-                    'name',
-                    'address',
-                    'crm_id',
-                    'created',
-                ],
-            ],
-            [
-                'metadata' => [],
-                'columns' => array_keys($columnsMetadataWithTimestamp),
             ],
         ];
 

@@ -260,6 +260,6 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_apiBundle'])
           sourceRepo: platform-libraries
-          targetRepo: settle
+          targetRepo: api-bundle
           libraryPath: libs/api-bundle
           tagPrefix: api-bundle/

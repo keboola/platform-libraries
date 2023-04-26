@@ -3,4 +3,4 @@ jobs:
     parameters:
       displayName: Tests
       serviceName: dev81
-      testCommand: bash -c 'cd libs/logging-bundle && composer install && composer ci'
+      testCommand: bash -c 'cd libs/api-bundle && composer install && composer ci'

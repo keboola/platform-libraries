@@ -68,7 +68,8 @@ stages:
                 stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
                 configurationVariablesResolver:libs/configuration-variables-resolver \
-                settle:libs/settle
+                settle:libs/settle \
+                apiBundle:libs/api-bundle
             displayName: 'Find changes'
             name: findChanges
 
@@ -155,7 +156,7 @@ stages:
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_apiBundle'])
     jobs:
-      - template: libs/settle/azure-pipelines.tests.yml
+      - template: libs/api-bundle/azure-pipelines.tests.yml
 
   - stage: testsResults
     displayName: Wait for tests results

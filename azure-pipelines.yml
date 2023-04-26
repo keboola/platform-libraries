@@ -42,6 +42,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
+    - repository: apii-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/api-bundle
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -145,6 +149,14 @@ stages:
     jobs:
       - template: libs/settle/azure-pipelines.tests.yml
 
+  - stage: tests_api_bundle
+    displayName: Tests - API Bundle
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_apiBundle'])
+    jobs:
+      - template: libs/settle/azure-pipelines.tests.yml
+
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -156,6 +168,7 @@ stages:
       - tests_staging_provider
       - tests_configuration_variables_resolver
       - tests_settle
+      - tests_api_bundle
     condition: |
       and(
         in(dependencies.tests_azureApiClient.result, 'Succeeded', 'Skipped'),
@@ -165,7 +178,8 @@ stages:
         in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_configuration_variables_resolver.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_settle.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_api_bundle.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -240,3 +254,11 @@ stages:
           targetRepo: settle
           libraryPath: libs/settle
           tagPrefix: settle/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_apiBundle'])
+          sourceRepo: platform-libraries
+          targetRepo: settle
+          libraryPath: libs/api-bundle
+          tagPrefix: api-bundle/

@@ -21,7 +21,6 @@ class ConfigMapsApiClientFunctionalTest extends TestCase
 
     public function setUp(): void
     {
-        //@TODO resolve problems with root crt that is also saved in configmap in same namespace
         parent::setUp();
         $this->setUpBaseNamespaceApiClientTest(
             ConfigMapsApi::class,

@@ -1802,6 +1802,5 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             false,
             false
         );
-
     }
 }

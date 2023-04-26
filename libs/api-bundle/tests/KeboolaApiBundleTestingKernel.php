@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AuthorizationBundle\Tests;
+namespace Keboola\ApiBundle\Tests;
 
-use Keboola\AuthorizationBundle\KeboolaAuthorizationBundle;
+use Keboola\ApiBundle\KeboolaApiBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\MonologBundle\MonologBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpKernel\Kernel;
 
-class KeboolaAuthorizationBundleTestingKernel extends Kernel
+class KeboolaApiBundleTestingKernel extends Kernel
 {
     public function registerBundles(): iterable
     {
         yield new FrameworkBundle();
         yield new MonologBundle();
-        yield new KeboolaAuthorizationBundle();
+        yield new KeboolaApiBundle();
     }
 
     public function registerContainerConfiguration(LoaderInterface $loader): void

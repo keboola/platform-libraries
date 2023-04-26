@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiIndexClient\Exception;
+namespace Keboola\ApiBundle\Exception;
 
 use RuntimeException;
 

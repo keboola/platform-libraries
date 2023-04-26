@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Tests;
+namespace Keboola\ApiBundle\Tests\Util;
 
 use Keboola\ApiBundle\Tests\Util\DummyClassicController;
 use Keboola\ApiBundle\Tests\Util\DummyInvokeController;

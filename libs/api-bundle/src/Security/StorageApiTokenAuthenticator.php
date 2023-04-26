@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AuthorizationBundle\Security;
+namespace Keboola\ApiBundle\Security;
 
 use Keboola\ErrorControl\ErrorResponse;
 use Keboola\StorageApi\ClientException;

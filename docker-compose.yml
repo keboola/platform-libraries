@@ -176,16 +176,16 @@ services:
       context: .
       target: settle
 
-  dev-api-index-client:
+  dev-api-bundle:
     profiles: [ dev ]
     build:
       context: .
       target: dev
-    working_dir: /code/libs/api-api-client
+    working_dir: /code/libs/api-bundle
 
-  ci-api-index-client:
+  ci-api-bundle:
     profiles: [ ci ]
-    image: keboola/api-index-client
+    image: keboola/api-bundle
     build:
       context: .
-      target: api-index-client
+      target: api-bundle

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AuthorizationBundle\Security;
+namespace Keboola\ApiBundle\Security;
 
 use Symfony\Component\Security\Core\User\UserInterface;
 

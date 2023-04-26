@@ -1771,4 +1771,36 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId))
         );
     }
+
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingWithTimestampColumnsThrowsError(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table1a.csv',
+            "\"Id\",\"Name\",\"_timestamp\"\n\"test\",\"test\",\"test\"\n\"aabb\",\"ccdd\",\"eeff\"\n"
+        );
+
+        $table1Mapping = [
+            'source' => 'table1a.csv',
+            'destination' => $this->emptyOutputBucketId . '.table1a',
+            'columns' => ['Id', 'Name', '_timestamp'],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Failed to process mapping for table table1a.csv: '
+            . 'System columns "_timestamp" cannot be imported to the table.');
+        $this->expectExceptionCode(0);
+
+        $writer->uploadTables(
+            'upload',
+            ['mapping' => [$table1Mapping]],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false
+        );
+    }
 }

@@ -48,19 +48,14 @@ resource "kubernetes_role" "k8s_client" {
 
   rule {
     api_groups = [""]
-    resources  = ["events"]
-    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
-  }
-
-  rule {
-    api_groups = [""]
     resources  = [
       "configmaps",
+      "events",
       "persistentvolumeclaims",
       "pods",
       "secrets",
     ]
-    verbs      = ["*"] #TODO restrict
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
 }
 

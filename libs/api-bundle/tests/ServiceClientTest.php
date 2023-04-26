@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests;
 
-use Keboola\ApiBundle\ServiceClient;
 use Keboola\ApiBundle\Exception\ServiceInvalidException;
 use Keboola\ApiBundle\Exception\ServiceNotFoundException;
+use Keboola\ApiBundle\ServiceClient;
 use PHPUnit\Framework\TestCase;
 
 class ServiceClientTest extends TestCase

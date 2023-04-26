@@ -8,6 +8,5 @@ class UnauthenticatedController
 {
     public function __invoke(): void
     {
-
     }
 }

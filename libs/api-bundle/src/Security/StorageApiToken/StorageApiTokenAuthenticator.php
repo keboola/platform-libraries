@@ -37,6 +37,9 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         assert($authAttribute instanceof StorageTokenAuth);
 
         try {
+            if (!$this->requestStack->getMainRequest()) {
+                throw new AccessDeniedException('No main request');
+            }
             $wrapper = $this->clientRequestFactory->createClientWrapper($this->requestStack->getMainRequest());
             $storageApiClient = $wrapper->getBasicClient();
             $tokenInfo = $storageApiClient->verifyToken();

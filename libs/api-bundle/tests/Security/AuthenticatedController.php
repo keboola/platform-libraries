@@ -11,6 +11,5 @@ class AuthenticatedController
 {
     public function __invoke(): void
     {
-
     }
 }

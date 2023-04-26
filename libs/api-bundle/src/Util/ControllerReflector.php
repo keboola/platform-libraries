@@ -16,6 +16,10 @@ class ControllerReflector
     ) {
     }
 
+    /**
+     * @param mixed $controllerSpec
+     * @return ReflectionMethod|null
+     */
     public function resolveControllerMethod($controllerSpec): ?ReflectionMethod
     {
         if (is_string($controllerSpec)) {
@@ -53,7 +57,7 @@ class ControllerReflector
             }
         }
 
-        if (method_exists($controllerSpec, '__invoke')) {
+        if (is_object($controllerSpec) && method_exists($controllerSpec, '__invoke')) {
             try {
                 return new ReflectionMethod($controllerSpec, '__invoke');
             } catch (ReflectionException) {

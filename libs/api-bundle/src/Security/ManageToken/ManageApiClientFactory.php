@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\ManageToken;
 
-use Keboola\ManageApi\Client;
-
 class ManageApiClientFactory
 {
+    /*
     public function __construct(
         private readonly string $appName,
         private readonly string $storageApiUrl
@@ -22,4 +21,5 @@ class ManageApiClientFactory
             'userAgent' => $this->appName,
         ]);
     }
+    */
 }

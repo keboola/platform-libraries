@@ -8,6 +8,5 @@ class DummyInvokeController
 {
     public function __invoke(): void
     {
-
     }
 }

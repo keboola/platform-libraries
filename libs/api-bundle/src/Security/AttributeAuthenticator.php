@@ -35,7 +35,7 @@ class AttributeAuthenticator extends AbstractAuthenticator implements ServiceSub
     }
 
     /**
-     * @return array<class-string<AuthAttributeInterface>, class-string<TokenAuthenticatorInterface>>
+     * //return array<class-string<AuthAttributeInterface>, class-string<TokenAuthenticatorInterface>>
      */
     public static function getSubscribedServices(): array
     {

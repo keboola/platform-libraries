@@ -8,6 +8,5 @@ class DummyClassicController
 {
     public function handleRequest(): void
     {
-
     }
 }

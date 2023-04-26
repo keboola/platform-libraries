@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security\ManageToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
-use function Keboola\ApiBundle\Security\ManageToken\in_array;
 
 class ManageToken implements TokenInterface
 {

@@ -20,6 +20,7 @@ class KeboolaApiExtension extends Extension
 
     private function configureDataDogProcessor(ContainerBuilder $container): void
     {
+        /*
         foreach ($container->getServiceIds() as $serviceId) {
             $reflectionClass = new ReflectionClass($container->get($serviceId));
             $attributes = $reflectionClass->getAttributes();
@@ -41,6 +42,7 @@ class KeboolaApiExtension extends Extension
                 throw new \Exception('Invalid ctrl auth' . $serviceId);
             }
         }
+        */
 
         //$definition = new Definition(DataDogContextProcessor::class);
         //$definition->addTag('monolog.processor');

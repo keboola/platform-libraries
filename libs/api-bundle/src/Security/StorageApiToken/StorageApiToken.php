@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
-use function Keboola\ApiBundle\Security\StorageApiToken\in_array;
 
 class StorageApiToken implements TokenInterface
 {

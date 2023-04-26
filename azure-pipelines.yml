@@ -42,7 +42,7 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
-    - repository: apii-bundle
+    - repository: api-bundle
       type: github
       endpoint: keboola
       name: keboola/api-bundle

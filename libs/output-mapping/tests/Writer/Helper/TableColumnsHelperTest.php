@@ -383,7 +383,7 @@ class TableColumnsHelperTest extends TestCase
             ],
         ];
 
-        yield 'non-typed table - case mismatch metadata columns' => [
+        yield 'non-typed table - case mismatch config columns' => [
             [
                 'isTyped' => false,
                 'columns' => [

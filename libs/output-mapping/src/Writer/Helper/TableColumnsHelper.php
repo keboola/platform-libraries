@@ -28,10 +28,9 @@ class TableColumnsHelper
             return;
         }
 
-        $tableIsTyped = $currentTableInfo['isTyped'] || isset($currentTableInfo['definition']);
-        $defaultBaseTypeValue = $tableIsTyped ? BaseType::STRING : null;
+        $defaultBaseTypeValue = $currentTableInfo['isTyped'] === true ? BaseType::STRING : null;
         $missingColumnsData = [];
-        if (!empty($newTableConfiguration['column_metadata']) && $tableIsTyped === true) {
+        if (!empty($newTableConfiguration['column_metadata']) && $currentTableInfo['isTyped'] === true) {
             foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
                 $columnName = ColumnNameSanitizer::sanitize($columnName);
 

@@ -230,46 +230,6 @@ class TableColumnsHelperTest extends TestCase
                 ],
             ],
         ];
-
-        // https://keboola.slack.com/archives/CQB468K63/p1682333620198169?thread_ts=1682322553.053839&cid=CQB468K63
-        // Don't read that ^ if you want to stay sane.
-        yield 'badly typed table - extra metadata columns in config' => [
-            [
-                'id' => 'in.c-output-mapping.testTable1',
-                'isTyped' => false,
-                'definition' => [],
-                'columns' => [
-                    'id',
-                    'name',
-                ],
-            ],
-            [
-                'metadata' => self::TEST_SNOWFLAKE_BACKEND_TABLE_METADATA,
-                'column_metadata' => self::TEST_COLUMNS_METADATA,
-            ],
-            [
-                [
-                    'in.c-output-mapping.testTable1',
-                    'address',
-                    [
-                        'type' => 'VARCHAR',
-                        'length' => null,
-                        'nullable' => true,
-                    ],
-                    null,
-                ],
-                [
-                    'in.c-output-mapping.testTable1',
-                    'crm_id',
-                    [
-                        'type' => 'INT',
-                        'length' => null,
-                        'nullable' => true,
-                    ],
-                    null,
-                ],
-            ],
-        ];
     }
 
     public function doNotAddColumnsProvider(): Generator

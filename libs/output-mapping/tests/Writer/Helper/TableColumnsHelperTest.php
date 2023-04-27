@@ -382,6 +382,28 @@ class TableColumnsHelperTest extends TestCase
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
         ];
+
+        yield 'non-typed table - case mismatch metadata columns' => [
+            [
+                'isTyped' => false,
+                'columns' => [
+                    'ID',
+                    'NAME',
+                    'address',
+                    'crm_id',
+                ],
+            ],
+            [
+                'metadata' => [],
+                'columns' => [
+                    'id',
+                    'name',
+                    'ADDRESS',
+                    'CRM_ID',
+                ],
+                'column_metadata' => self::TEST_COLUMNS_METADATA,
+            ],
+        ];
     }
 
     /**

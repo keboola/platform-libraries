@@ -62,6 +62,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         self::assertGreaterThan(0, count($blobList->getBlobs()));
     }
 
+    #[NeedsTestTables(3)]
     public function testTablesAbsWorkspace(): void
     {
         if (!$this->runSynapseTests) {
@@ -78,18 +79,18 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         );
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'test1',
             ],
             [
-                'source' => 'in.c-input-mapping-test.test2',
+                'source' => $this->secondTableId,
                 'destination' => 'test2',
                 'where_column' => 'Id',
                 'where_values' => ['id2', 'id3'],
                 'columns' => ['Id'],
             ],
             [
-                'source' => 'in.c-input-mapping-test.test3',
+                'source' => $this->thirdTableId,
                 'destination' => 'test3',
             ],
         ]);
@@ -104,29 +105,30 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
-        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
+        self::assertEquals('in.c-testTablesAbsWorkspaceTest.test1', $manifest['id']);
 
         $this->assertBlobs('download/test1');
 
         // make sure the blob exists
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
-        self::assertEquals('in.c-input-mapping-test.test2', $manifest['id']);
+        self::assertEquals('in.c-testTablesAbsWorkspaceTest.test2', $manifest['id']);
 
         $this->assertBlobs('download/test2');
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
-        self::assertEquals('in.c-input-mapping-test.test3', $manifest['id']);
+        self::assertEquals('in.c-testTablesAbsWorkspaceTest.test3', $manifest['id']);
 
         $this->assertBlobs('download/test3');
 
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table input staging.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test2" will be copied.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test3" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test1" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test2" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test3" will be copied.'));
         self::assertTrue($logger->hasInfoThatContains('Copying 3 tables to workspace.'));
         self::assertTrue($logger->hasInfoThatContains('Processing workspace export.'));
     }
 
+    #[NeedsTestTables]
     public function testTablesAbsWorkspaceSlash(): void
     {
         if (!$this->runSynapseTests) {
@@ -141,7 +143,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         ));
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'test1',
             ],
         ]);
@@ -156,11 +158,11 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test/test1.manifest');
-        self::assertEquals('in.c-input-mapping-test.test1', $manifest['id']);
+        self::assertEquals('in.c-testTablesAbsWorkspaceSlashTest.test1', $manifest['id']);
 
         $this->assertBlobs('download/test/test1');
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table input staging.'));
-        self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
+        self::assertTrue($logger->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceSlashTest.test1" will be copied.'));
     }
 
     #[NeedsTestTables]

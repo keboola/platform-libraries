@@ -13,6 +13,7 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -162,6 +163,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         self::assertTrue($logger->hasInfoThatContains('Table "in.c-input-mapping-test.test1" will be copied.'));
     }
 
+    #[NeedsTestTables]
     public function testUseViewFails(): void
     {
         $logger = new TestLogger();
@@ -173,7 +175,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         ));
         $configuration = new InputTableOptionsList([
             [
-                'source' => 'in.c-input-mapping-test.test1',
+                'source' => $this->firstTableId,
                 'destination' => 'test1',
                 'use_view' => true,
             ],

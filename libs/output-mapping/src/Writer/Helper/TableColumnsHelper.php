@@ -85,7 +85,7 @@ class TableColumnsHelper
             }, array_keys($newTableConfiguration['column_metadata']));
         }
 
-        return array_diff($configColumns, $tableColumns);
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 
     private static function getMissingColumnsFromColumns(array $currentTableInfo, array $newTableConfiguration): array
@@ -99,6 +99,6 @@ class TableColumnsHelper
             }, $newTableConfiguration['columns']);
         }
 
-        return array_diff($configColumns, $tableColumns);
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 }

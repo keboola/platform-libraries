@@ -30,7 +30,13 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             return;
         }
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket('in.c-docker-test-synapse', ['force' => true]);
+            $this->clientWrapper->getBasicClient()->dropBucket(
+                'in.c-docker-test-synapse',
+                [
+                    'force' => true,
+                    'async' => true,
+                ]
+            );
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;

@@ -54,9 +54,6 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesSynapseBackend(): void
     {
-        if (!$this->runSynapseTests) {
-            self::markTestSkipped('Synapse tests disabled');
-        }
         $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(

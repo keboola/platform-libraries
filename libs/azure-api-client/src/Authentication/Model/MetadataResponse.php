@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Authentication;
+namespace Keboola\AzureApiClient\Authentication\Model;
 
 use Keboola\AzureApiClient\ResponseModelInterface;
 

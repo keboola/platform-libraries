@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Tests\Authentication;
+namespace Keboola\AzureApiClient\Tests\Authentication\Model;
 
-use Keboola\AzureApiClient\Authentication\TokenResponse;
+use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Keboola\AzureApiClient\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Tests\Authentication;
+namespace Keboola\AzureApiClient\Tests\Authentication\Model;
 
-use Keboola\AzureApiClient\Authentication\MetadataResponse;
+use Keboola\AzureApiClient\Authentication\Model\MetadataResponse;
 use PHPUnit\Framework\TestCase;
 
 class MetadataResponseTest extends TestCase

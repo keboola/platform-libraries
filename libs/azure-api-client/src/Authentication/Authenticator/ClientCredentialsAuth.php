@@ -2,44 +2,43 @@
 
 declare(strict_types=1);
 
-namespace Keboola\AzureApiClient\Authentication;
+namespace Keboola\AzureApiClient\Authentication\Authenticator;
 
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
-use Keboola\AzureApiClient\ApiClientFactory\PlainAzureApiClientFactory;
+use Keboola\AzureApiClient\ApiClientConfiguration;
+use Keboola\AzureApiClient\Authentication\AuthenticationToken;
+use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
+use Keboola\AzureApiClient\Authentication\Model\MetadataResponse;
+use Keboola\AzureApiClient\Authentication\Model\TokenResponse;
 use Keboola\AzureApiClient\Exception\ClientException;
-use Psr\Log\LoggerInterface;
 
-class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterface
+class ClientCredentialsAuth implements BearerTokenResolver
 {
     private const ENV_AZURE_AD_RESOURCE = 'AZURE_AD_RESOURCE';
     private const ENV_AZURE_ENVIRONMENT = 'AZURE_ENVIRONMENT';
-    private const ENV_AZURE_TENANT_ID = 'AZURE_TENANT_ID';
-    private const ENV_AZURE_CLIENT_ID = 'AZURE_CLIENT_ID';
-    private const ENV_AZURE_CLIENT_SECRET = 'AZURE_CLIENT_SECRET';
 
     private const DEFAULT_ARM_URL = 'https://management.azure.com/metadata/endpoints?api-version=2020-01-01';
     private const DEFAULT_PUBLIC_CLOUD_NAME = 'AzureCloud';
 
     private ApiClient $apiClient;
 
-    private string $tenantId;
-    private string $clientId;
-    private string $clientSecret;
-
-    private string $armUrl;
     private string $cloudName;
 
     private ?string $authEndpoint = null;
 
     public function __construct(
-        PlainAzureApiClientFactory $clientFactory,
-        private readonly LoggerInterface $logger,
+        private readonly string $tenantId,
+        private readonly string $clientId,
+        private readonly string $clientSecret,
+        ?ApiClientConfiguration $configuration = null,
     ) {
-        $this->armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
-        if (!$this->armUrl) {
-            $this->armUrl = self::DEFAULT_ARM_URL;
-            $this->logger->debug(
+        $configuration ??= new ApiClientConfiguration();
+
+        $armUrl = (string) getenv(self::ENV_AZURE_AD_RESOURCE);
+        if (!$armUrl) {
+            $armUrl = self::DEFAULT_ARM_URL;
+            $configuration->logger->debug(
                 self::ENV_AZURE_AD_RESOURCE . ' environment variable is not specified, falling back to default.'
             );
         }
@@ -47,22 +46,17 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
         $this->cloudName = (string) getenv(self::ENV_AZURE_ENVIRONMENT);
         if (!$this->cloudName) {
             $this->cloudName = self::DEFAULT_PUBLIC_CLOUD_NAME;
-            $this->logger->debug(
+            $configuration->logger->debug(
                 self::ENV_AZURE_ENVIRONMENT . ' environment variable is not specified, falling back to default.'
             );
         }
 
-        $this->tenantId = (string) getenv(self::ENV_AZURE_TENANT_ID);
-        $this->clientId = (string) getenv(self::ENV_AZURE_CLIENT_ID);
-        $this->clientSecret = (string) getenv(self::ENV_AZURE_CLIENT_SECRET);
-        $this->apiClient = $clientFactory->createClient($this->armUrl);
+        $this->apiClient = new ApiClient($armUrl, $configuration);
     }
 
-    public function getAuthenticationToken(string $resource): TokenResponse
+    public function getAuthenticationToken(string $resource): AuthenticationToken
     {
-        if ($this->authEndpoint === null) {
-            $this->authEndpoint = $this->getMetadata($this->armUrl, $this->cloudName)->authenticationLoginEndpoint;
-        }
+        $this->authEndpoint ??= $this->getMetadata($this->cloudName)->authenticationLoginEndpoint;
 
         $request = new Request('POST', sprintf('%s%s/oauth2/token', $this->authEndpoint, $this->tenantId));
         $formData = [
@@ -78,28 +72,17 @@ class ClientCredentialsEnvironmentAuthenticator implements AuthenticatorInterfac
             ['form_params' => $formData]
         );
 
-        $this->logger->info('Successfully authenticated using client credentials.');
-        return $token;
+        return new AuthenticationToken(
+            $token->accessToken,
+            $token->accessTokenExpiration,
+        );
     }
 
-    public function checkUsability(): void
-    {
-        $errors = [];
-        foreach ([self::ENV_AZURE_TENANT_ID, self::ENV_AZURE_CLIENT_ID, self::ENV_AZURE_CLIENT_SECRET] as $envVar) {
-            if (!getenv($envVar)) {
-                $errors[] = sprintf('Environment variable "%s" is not set.', $envVar);
-            }
-        }
-        if ($errors) {
-            throw new ClientException(implode(' ', $errors));
-        }
-    }
-
-    private function getMetadata(string $armUrl, string $cloudName): MetadataResponse
+    private function getMetadata(string $cloudName): MetadataResponse
     {
         try {
             $metadataList = $this->apiClient->sendRequestAndMapResponse(
-                new Request('GET', $armUrl),
+                new Request('GET', ''),
                 MetadataResponse::class,
                 [],
                 true

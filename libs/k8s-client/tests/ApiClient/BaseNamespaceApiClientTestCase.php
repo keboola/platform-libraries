@@ -60,12 +60,27 @@ trait BaseNamespaceApiClientTestCase
     {
         $startTime = microtime(true);
 
+        $queries = [];
+        $excludeItemNames = $this->getExcludedItemNamesFromCleanup();
+        if ($excludeItemNames) {
+            $queries['fieldSelector'] = implode(
+                ',',
+                array_map(function (string $name): string {
+                    return sprintf(
+                        'metadata.name!=%s',
+                        $name
+                    );
+                }, $excludeItemNames)
+            );
+        }
+
         $this->baseApiClient->deleteCollection(
             (string) getenv('K8S_NAMESPACE'),
             new DeleteOptions([
                 'gracePeriodSeconds' => 0,
                 'propagationPolicy' => 'Foreground',
             ]),
+            $queries
         );
 
         while ($startTime + $timeout > microtime(true)) {
@@ -78,6 +93,15 @@ trait BaseNamespaceApiClientTestCase
             assert(is_object($result) && property_exists($result, 'items'));
             if (count($result->items) === 0) {
                 return;
+            }
+
+            if ($excludeItemNames && count($result->items) === count($excludeItemNames)) {
+                $itemNames = array_map(fn($resource) => $resource->metadata->name, $result->items);
+                $diffA = array_diff($itemNames, $excludeItemNames);
+                $diffB = array_diff($excludeItemNames, $itemNames);
+                if (count($diffA) === 0 && count($diffB) === 0) {
+                    return;
+                }
             }
 
             usleep(100_000);
@@ -265,5 +289,10 @@ trait BaseNamespaceApiClientTestCase
         $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
         assert(is_object($listResult) && property_exists($listResult, 'items'));
         self::assertCount(1, $listResult->items);
+    }
+
+    private function getExcludedItemNamesFromCleanup(): array
+    {
+        return [];
     }
 }

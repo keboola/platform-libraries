@@ -8,9 +8,7 @@ use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Kubernetes\API\ConfigMap as ConfigMapsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 class ConfigMapsApiClientFunctionalTest extends TestCase
 {
@@ -28,37 +26,9 @@ class ConfigMapsApiClientFunctionalTest extends TestCase
         );
     }
 
-    private function cleanupK8sResources(float $timeout = 30.0): void
+    private function getExcludedItemNamesFromCleanup(): array
     {
-        $startTime = microtime(true);
-
-        $this->baseApiClient->deleteCollection(
-            (string) getenv('K8S_NAMESPACE'),
-            new DeleteOptions([
-                'gracePeriodSeconds' => 0,
-                'propagationPolicy' => 'Foreground',
-            ]),
-        );
-
-        while ($startTime + $timeout > microtime(true)) {
-            $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
-
-            if ($result instanceof Status) {
-                throw new RuntimeException('Failed to read resource state: ' . $result->message);
-            }
-
-            assert(is_object($result) && property_exists($result, 'items'));
-            if (count($result->items) === 0) {
-                return;
-            }
-            if (count($result->items) === 1 && $result->items[0]->metadata->name === 'kube-root-ca.crt') {
-                return; // it is automaticaly created by cluster
-            }
-
-            usleep(100_000);
-        }
-
-        throw new RuntimeException('Timeout while waiting for resource delete');
+        return ['kube-root-ca.crt'];
     }
 
     public function testListResources(): void

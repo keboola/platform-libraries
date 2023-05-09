@@ -44,4 +44,9 @@ class PersistentVolumeClaimApiClientFunctionalTest extends TestCase
             ],
         ]);
     }
+
+    private function getExcludedItemNamesFromCleanup(): array
+    {
+        return [];
+    }
 }

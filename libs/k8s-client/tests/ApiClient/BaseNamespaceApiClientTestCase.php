@@ -134,7 +134,7 @@ trait BaseNamespaceApiClientTestCase
     public function testListResources(): void
     {
         $result = $this->apiClient->list();
-        self::assertCount(0, $result->items);
+        $this->assertResultItems([], $result->items);
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-1',
@@ -149,11 +149,7 @@ trait BaseNamespaceApiClientTestCase
 
         // list all
         $result = $this->apiClient->list();
-        self::assertCount(2, $result->items);
-        self::assertSame(
-            ['test-resource-1', 'test-resource-2'],
-            array_map(fn($resource) => $resource->metadata->name, $result->items)
-        );
+        $this->assertResultItems(['test-resource-1', 'test-resource-2'], $result->items);
 
         // list using labelSelector
         $result = $this->apiClient->list([
@@ -203,8 +199,8 @@ trait BaseNamespaceApiClientTestCase
 
         $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
         assert(is_object($result) && property_exists($result, 'items'));
-        self::assertCount(1, $result->items);
-        self::assertSame($result->items[0]->metadata->name, $createdResource->metadata->name);
+
+        $this->assertResultItems([$createdResource->metadata->name], $result->items);
     }
 
     public function testCreateResourceWithDuplicateNameThrowsException(): void
@@ -277,7 +273,7 @@ trait BaseNamespaceApiClientTestCase
 
         $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
         assert(is_object($listResult) && property_exists($listResult, 'items'));
-        self::assertCount(3, $listResult->items);
+        $this->assertResultItems(['test-resource-11', 'test-resource-12', 'test-resource-21'], $listResult->items);
 
         $this->apiClient->deleteCollection(new DeleteOptions(), [
             'labelSelector' => 'app=test-1',
@@ -288,11 +284,19 @@ trait BaseNamespaceApiClientTestCase
 
         $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
         assert(is_object($listResult) && property_exists($listResult, 'items'));
-        self::assertCount(1, $listResult->items);
+        $this->assertResultItems(['test-resource-21'], $listResult->items);
     }
 
-    private function getExcludedItemNamesFromCleanup(): array
+    abstract private function getExcludedItemNamesFromCleanup(): array;
+
+    private function assertResultItems(array $expectedNames, array $resultItems): void
     {
-        return [];
+        $expectedNames = array_merge($expectedNames, $this->getExcludedItemNamesFromCleanup());
+        self::assertCount(count($expectedNames), $resultItems);
+
+        $resultItemNames = array_map(fn($resource) => $resource->metadata->name, $resultItems);
+        sort($expectedNames);
+        sort($resultItemNames);
+        self::assertSame($expectedNames, $resultItemNames);
     }
 }

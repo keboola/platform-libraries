@@ -51,4 +51,9 @@ class EventsApiClientFunctionalTest extends TestCase
 
         self::assertGreaterThan(1, $namespaces);
     }
+
+    private function getExcludedItemNamesFromCleanup(): array
+    {
+        return [];
+    }
 }

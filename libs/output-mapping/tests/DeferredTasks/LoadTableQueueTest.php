@@ -388,7 +388,8 @@ class LoadTableQueueTest extends TestCase
         ];
     }
 
-    public function testWaitForAllDeleteTableAfterFailedLoad(): void {
+    public function testWaitForAllDeleteTableAfterFailedLoad(): void
+    {
         $storageApiMock = $this->createMock(Client::class);
         $storageApiMock->method('waitForJob')
             ->willReturn(['status' => 'error', 'error' => ['message' => 'Hi']]);
@@ -403,7 +404,6 @@ class LoadTableQueueTest extends TestCase
             ->willReturn(true);
         $loadTask->method('getDestinationTableName')
             ->willReturn('my-table');
-
 
         $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
         $this->expectException(InvalidOutputException::class);

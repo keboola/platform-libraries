@@ -75,7 +75,7 @@ class LoadTableQueue
                     $jobResult['error']['message']
                 );
                 if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->client, $task)) {
-                    $this->client->dropTable($task->getDestinationTableName());
+                    $this->client->dropTable($task->getDestinationTableName(), ['force' => true]);
                 }
             } else {
                 try {

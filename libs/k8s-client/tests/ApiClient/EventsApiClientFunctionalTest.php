@@ -31,7 +31,7 @@ class EventsApiClientFunctionalTest extends TestCase
             'metadata' => $metadata,
             'type' => 'Normal',
             'reason' => 'Testing',
-            'message' => 'EventsErikApiClientFunctionalTest event',
+            'message' => 'EventsApiClientFunctionalTest event',
             'involvedObject' => [
                 'kind' => 'ConfigMap',
                 'name' => 'kube-root-ca.crt',

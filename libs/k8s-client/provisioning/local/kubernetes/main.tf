@@ -7,10 +7,9 @@ terraform {
   }
 }
 
-# this is namespace where service account (and anything that should not be wiped by tests) exists
 resource "kubernetes_namespace" "k8s_client_account" {
   metadata {
-    name = "${var.name_prefix}-k8s-client-account"
+    name = "${var.name_prefix}-k8s-client"
   }
 }
 
@@ -33,16 +32,9 @@ resource "kubernetes_secret" "k8s_client" {
   type = "kubernetes.io/service-account-token"
 }
 
-# this is namespace used by tests, can be completely purged by tests, except the role & role-binding
-resource "kubernetes_namespace" "k8s_client_tests" {
-  metadata {
-    name = "${var.name_prefix}-k8s-client-tests"
-  }
-}
-
 resource "kubernetes_role" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client_tests.metadata.0.name
+    namespace = kubernetes_namespace.k8s_client_account.metadata.0.name
     name      = "k8s-client"
   }
 
@@ -61,7 +53,7 @@ resource "kubernetes_role" "k8s_client" {
 
 resource "kubernetes_role_binding" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client_tests.metadata.0.name
+    namespace = kubernetes_namespace.k8s_client_account.metadata.0.name
     name      = "k8s-client"
   }
 

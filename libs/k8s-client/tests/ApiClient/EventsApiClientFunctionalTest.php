@@ -42,14 +42,19 @@ class EventsApiClientFunctionalTest extends TestCase
 
     public function testListForAllNamespaces(): void
     {
+        $event = $this->createResource(['name' => 'test-1']);
+        $this->apiClient->create($event);
+
         $result = $this->apiClient->listForAllNamespaces();
-        self::assertGreaterThan(0, count($result->items));
+        self::assertGreaterThanOrEqual(1, count($result->items));
+
         $namespaces = [];
         foreach ($result->items as $event) {
             $namespaces[$event->metadata->namespace] = $event->metadata->namespace;
         }
 
         self::assertGreaterThan(1, $namespaces);
+        self::assertArrayHasKey((string) getenv('K8S_NAMESPACE'), $namespaces);
     }
 
     private function getExcludedItemNamesFromCleanup(): array

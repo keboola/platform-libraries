@@ -237,7 +237,7 @@ class KubernetesApiClientFacade
      *         never))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient
+    public function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient
     {
         return match ($resourceType) {
             ConfigMap::class => $this->configMapApiClient,
@@ -248,7 +248,7 @@ class KubernetesApiClientFacade
 
             default => throw new RuntimeException(sprintf(
                 'Unknown K8S resource type "%s"',
-                get_debug_type($resourceType),
+                $resourceType,
             )),
         };
     }

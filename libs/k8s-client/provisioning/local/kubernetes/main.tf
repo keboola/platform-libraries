@@ -46,6 +46,7 @@ resource "kubernetes_role" "k8s_client" {
       "persistentvolumeclaims",
       "pods",
       "secrets",
+      "services",
     ]
     verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }

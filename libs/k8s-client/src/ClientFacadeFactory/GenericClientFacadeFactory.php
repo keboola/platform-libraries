@@ -9,6 +9,7 @@ use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
+use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
@@ -63,6 +64,7 @@ class GenericClientFacadeFactory
             new PersistentVolumeClaimApiClient($apiClient),
             new PodsApiClient($apiClient, new Pod()),
             new SecretsApiClient($apiClient),
+            new ServicesApiClient($apiClient)
         );
     }
 }

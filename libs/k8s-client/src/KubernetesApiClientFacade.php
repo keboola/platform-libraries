@@ -9,6 +9,7 @@ use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
+use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
@@ -16,6 +17,7 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeClaim;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractModel;
@@ -34,7 +36,13 @@ class KubernetesApiClientFacade
         private readonly PersistentVolumeClaimApiClient $persistentVolumeClaimApiClient,
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
+        private readonly ServicesApiClient $servicesApiClient
     ) {
+    }
+
+    public function services(): ServicesApiClient
+    {
+        return $this->servicesApiClient;
     }
 
     public function configMaps(): ConfigMapsApiClient
@@ -85,10 +93,11 @@ class KubernetesApiClientFacade
      *       new ConfigMap(...),
      *       new Secret(...),
      *       new Pod(...),
+     *       new Service(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
-     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret)[]
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service> $resources
+     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service)[]
      */
     public function createModels(array $resources, array $queries = []): array
     {
@@ -110,9 +119,10 @@ class KubernetesApiClientFacade
      *       new ConfigMap(...),
      *       new Secret(...),
      *       new Pod(...),
+     *       new Service(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service> $resources
      * @return Status[]
      */
     public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
@@ -234,10 +244,11 @@ class KubernetesApiClientFacade
      *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimApiClient :
      *         ($resourceType is class-string<Pod> ? PodsApiClient :
      *         ($resourceType is class-string<Secret> ? SecretsApiClient :
+     *         ($resourceType is class-string<Service> ? ServicesApiClient :
      *         never))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    public function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient
+    public function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient
     {
         return match ($resourceType) {
             ConfigMap::class => $this->configMapApiClient,
@@ -245,6 +256,7 @@ class KubernetesApiClientFacade
             PersistentVolumeClaim::class => $this->persistentVolumeClaimApiClient,
             Pod::class => $this->podsApiClient,
             Secret::class => $this->secretsApiClient,
+            Service::class => $this->servicesApiClient,
 
             default => throw new RuntimeException(sprintf(
                 'Unknown K8S resource type "%s"',

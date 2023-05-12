@@ -81,6 +81,14 @@ resource "kubernetes_cluster_role" "k8s_client" {
     resources  = ["events"]
     verbs      = ["get", "list"]
   }
+
+  rule {
+    api_groups = ["networking.k8s.io"]
+    resources  = [
+      "ingresses",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
+  }
 }
 
 resource "kubernetes_cluster_role_binding" "k8s_client" {

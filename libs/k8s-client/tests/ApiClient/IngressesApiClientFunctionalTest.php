@@ -34,28 +34,28 @@ class IngressesApiClientFunctionalTest extends TestCase
     {
         return new Ingress([
             'metadata' => $metadata,
-            "spec" => [
-                "rules" => [
+            'spec' => [
+                'rules' => [
                     [
-                        "host" => "dummy.com",
-                        "http" => [
-                            "paths" => [
+                        'host' => 'dummy.com',
+                        'http' => [
+                            'paths' => [
                                 [
-                                    "path" => "/",
-                                    "pathType" => "Prefix",
-                                    "backend" => [
-                                        "service" => [
-                                            "name" => "webova-aplikace-service",
-                                            "port" => [
-                                                "name" => "http"
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
+                                    'path' => '/',
+                                    'pathType' => 'Prefix',
+                                    'backend' => [
+                                        'service' => [
+                                            'name' => 'dummy-web-server',
+                                            'port' => [
+                                                'name' => 'http',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ]);
     }

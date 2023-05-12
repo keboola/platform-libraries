@@ -37,11 +37,11 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/keboola/kubernetes-php-client"
+            "url": "git@github.com:keboola/kubernetes-php-client.git"
         },
         {
             "type": "vcs",
-            "url": "https://github.com/keboola/kubernetes-php-runtime"
+            "url": "git@github.com:keboola/kubernetes-php-runtime.git"
         }
     ],
     "config": {

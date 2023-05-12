@@ -102,6 +102,7 @@ class KubernetesApiClientFacade
      *       new Secret(...),
      *       new Pod(...),
      *       new Service(...),
+     *       new Ingress(...),
      *     ])
      *
      * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress> $resources
@@ -128,6 +129,7 @@ class KubernetesApiClientFacade
      *       new Secret(...),
      *       new Pod(...),
      *       new Service(...),
+     *       new Ingress(...),
      *     ])
      *
      * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress> $resources

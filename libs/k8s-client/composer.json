@@ -38,6 +38,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/keboola/kubernetes-php-client"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/keboola/kubernetes-php-runtime"
         }
     ],
     "config": {

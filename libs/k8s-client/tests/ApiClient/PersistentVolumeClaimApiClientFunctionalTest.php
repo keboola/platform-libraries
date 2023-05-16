@@ -39,8 +39,6 @@ class PersistentVolumeClaimApiClientFunctionalTest extends TestCase
                     ],
                 ],
                 'volumeMode' => 'Filesystem',
-                'storageClassName' => 'kbc-persistent-workspace-storage',
-                'volumeName' => 'pvc-functional-test',
             ],
         ]);
     }

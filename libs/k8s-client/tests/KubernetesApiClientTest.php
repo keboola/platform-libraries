@@ -6,6 +6,8 @@ namespace Keboola\K8sClient\Tests;
 
 use Generator;
 use Keboola\K8sClient\Exception\KubernetesResponseException;
+use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
+use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Kubernetes\API\Event as EventsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
@@ -69,6 +71,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'K8S request has failed: Some error from K8S',
+            'expextetErrorClassName' => KubernetesResponseException::class,
         ];
 
         $status = new Status();
@@ -84,6 +87,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'Resource not found: Some error from K8S',
+            'expextetErrorClassName' => ResourceNotFoundException::class,
         ];
 
         $status = new Status();
@@ -99,6 +103,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'Resource already exists: Some error from K8S',
+            'expextetErrorClassName' => ResourceAlreadyExistsException::class,
         ];
 
         $status = new Status();
@@ -114,6 +119,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'K8S request has failed: Some error from K8S',
+            'expextetErrorClassName' => KubernetesResponseException::class,
         ];
     }
 
@@ -124,7 +130,8 @@ class KubernetesApiClientTest extends TestCase
         string $method,
         array $methodArguments,
         Status $status,
-        string $expectedErrorMessage
+        string $expectedErrorMessage,
+        string $expextetErrorClassName
     ): void {
         $client = new KubernetesApiClient(
             $this->createRetryProxyMock(),
@@ -148,6 +155,7 @@ class KubernetesApiClientTest extends TestCase
 
             $this->fail('Cluster request should throw KubernetesResponseException');
         } catch (KubernetesResponseException $e) {
+            self::assertSame($expextetErrorClassName, get_class($e));
             self::assertSame($status, $e->getStatus());
             self::assertSame($expectedErrorMessage, $e->getMessage());
         }

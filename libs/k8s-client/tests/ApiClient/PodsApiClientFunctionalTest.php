@@ -39,9 +39,4 @@ class PodsApiClientFunctionalTest extends TestCase
             ],
         ]);
     }
-
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return [];
-    }
 }

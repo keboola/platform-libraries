@@ -56,9 +56,4 @@ class EventsApiClientFunctionalTest extends TestCase
         self::assertGreaterThan(1, $namespaces);
         self::assertArrayHasKey((string) getenv('K8S_NAMESPACE'), $namespaces);
     }
-
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return [];
-    }
 }

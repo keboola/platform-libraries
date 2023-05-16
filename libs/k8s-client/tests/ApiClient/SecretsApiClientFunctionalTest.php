@@ -22,6 +22,7 @@ class SecretsApiClientFunctionalTest extends TestCase
         $this->setUpBaseNamespaceApiClientTest(
             SecretsApi::class,
             SecretsApiClient::class,
+            ['k8s-client']
         );
     }
 
@@ -33,10 +34,5 @@ class SecretsApiClientFunctionalTest extends TestCase
                 'test_key' => base64_encode('test_value'),
             ],
         ]);
-    }
-
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return ['k8s-client'];
     }
 }

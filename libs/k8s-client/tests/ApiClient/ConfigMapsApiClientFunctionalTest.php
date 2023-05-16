@@ -22,12 +22,8 @@ class ConfigMapsApiClientFunctionalTest extends TestCase
         $this->setUpBaseNamespaceApiClientTest(
             ConfigMapsApi::class,
             ConfigMapsApiClient::class,
+            ['kube-root-ca.crt']
         );
-    }
-
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return ['kube-root-ca.crt'];
     }
 
     protected function createResource(array $metadata): ConfigMap

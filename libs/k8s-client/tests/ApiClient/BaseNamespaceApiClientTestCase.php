@@ -28,14 +28,19 @@ trait BaseNamespaceApiClientTestCase
     /** @var TApi */
     private BaseNamespaceApiClient $apiClient;
 
+    private array $resourceNamesExcludedFromCleanup = [];
+
     abstract protected function createResource(array $metadata): AbstractModel;
 
     /**
      * @param class-string<TBaseApi> $baseApiClientClass
      * @param class-string<TApi> $apiClientClass
      */
-    public function setUpBaseNamespaceApiClientTest(string $baseApiClientClass, string $apiClientClass): void
-    {
+    public function setUpBaseNamespaceApiClientTest(
+        string $baseApiClientClass,
+        string $apiClientClass,
+        array $resourceNamesExcludedFromCleanup = []
+    ): void {
         Client::configure(
             (string) getenv('K8S_HOST'),
             [
@@ -53,6 +58,7 @@ trait BaseNamespaceApiClientTestCase
             $this->baseApiClient,
         );
 
+        $this->resourceNamesExcludedFromCleanup = $resourceNamesExcludedFromCleanup;
         $this->cleanupK8sResources();
     }
 
@@ -61,7 +67,7 @@ trait BaseNamespaceApiClientTestCase
         $startTime = microtime(true);
 
         $queries = [];
-        $excludeItemNames = $this->getExcludedItemNamesFromCleanup();
+        $excludeItemNames = $this->resourceNamesExcludedFromCleanup;
         if ($excludeItemNames) {
             $queries['fieldSelector'] = implode(
                 ',',
@@ -287,11 +293,9 @@ trait BaseNamespaceApiClientTestCase
         $this->assertResultItems(['test-resource-21'], $listResult->items);
     }
 
-    abstract private function getExcludedItemNamesFromCleanup(): array;
-
     private function assertResultItems(array $expectedNames, array $resultItems): void
     {
-        $expectedNames = array_merge($expectedNames, $this->getExcludedItemNamesFromCleanup());
+        $expectedNames = array_merge($expectedNames, $this->resourceNamesExcludedFromCleanup);
         self::assertCount(count($expectedNames), $resultItems);
 
         $resultItemNames = array_map(fn($resource) => $resource->metadata->name, $resultItems);

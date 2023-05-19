@@ -89,6 +89,14 @@ resource "kubernetes_cluster_role" "k8s_client" {
     ]
     verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
+
+  rule {
+    api_groups = [""]
+    resources  = [
+      "persistentvolumes",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
+  }
 }
 
 resource "kubernetes_cluster_role_binding" "k8s_client" {

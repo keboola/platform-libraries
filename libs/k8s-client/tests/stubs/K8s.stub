@@ -21,7 +21,8 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
 
     class Container extends AbstractModel
     {
-
+        /** @var null|EnvVar[] */
+        public $env;
     }
 
     class ContainerStatus extends AbstractModel
@@ -33,6 +34,10 @@ namespace Kubernetes\Model\Io\K8s\Api\Core\V1
     {
         /** @var string|null */
         public $finishedAt;
+    }
+
+    class EnvVar extends AbstractModel
+    {
     }
 
     class Pod extends AbstractModel

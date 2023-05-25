@@ -122,7 +122,7 @@ namespace Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1
         /** @var array<string, string>|null */
         public $annotations;
 
-        /** @var array<string, string> */
+        /** @var array<string, string>|null */
         public $labels;
     }
 }

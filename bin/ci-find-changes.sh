@@ -59,7 +59,7 @@ for PROJECT in ${@:2}; do
   else
     PROJECT_CHANGES=$(git diff --name-only "origin/${TARGET_BRANCH}" "${PROJECT_DIR}")
 
-    if [[ $(echo -n "${PROJECT_CHANGES}" | wc -l) -gt 0 ]]; then
+    if [[ $(echo -n "${PROJECT_CHANGES}" | nl -bt - | wc -l) -gt 0 ]]; then
       HAS_CHANGES=1
       echo "has changes"
 

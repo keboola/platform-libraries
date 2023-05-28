@@ -71,7 +71,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'K8S request has failed: Some error from K8S',
-            'expextetErrorClassName' => KubernetesResponseException::class,
+            'expectetErrorClassName' => KubernetesResponseException::class,
         ];
 
         $status = new Status();
@@ -87,7 +87,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'Resource not found: Some error from K8S',
-            'expextetErrorClassName' => ResourceNotFoundException::class,
+            'expectetErrorClassName' => ResourceNotFoundException::class,
         ];
 
         $status = new Status();
@@ -103,7 +103,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'Resource already exists: Some error from K8S',
-            'expextetErrorClassName' => ResourceAlreadyExistsException::class,
+            'expectetErrorClassName' => ResourceAlreadyExistsException::class,
         ];
 
         $status = new Status();
@@ -119,7 +119,7 @@ class KubernetesApiClientTest extends TestCase
             ],
             'status' => $status,
             'expectedErrorMessage' => 'K8S request has failed: Some error from K8S',
-            'expextetErrorClassName' => KubernetesResponseException::class,
+            'expectetErrorClassName' => KubernetesResponseException::class,
         ];
     }
 
@@ -131,7 +131,7 @@ class KubernetesApiClientTest extends TestCase
         array $methodArguments,
         Status $status,
         string $expectedErrorMessage,
-        string $expextetErrorClassName
+        string $expectetErrorClassName
     ): void {
         $client = new KubernetesApiClient(
             $this->createRetryProxyMock(),
@@ -155,7 +155,7 @@ class KubernetesApiClientTest extends TestCase
 
             $this->fail('Cluster request should throw KubernetesResponseException');
         } catch (KubernetesResponseException $e) {
-            self::assertSame($expextetErrorClassName, get_class($e));
+            self::assertSame($expectetErrorClassName, get_class($e));
             self::assertSame($status, $e->getStatus());
             self::assertSame($expectedErrorMessage, $e->getMessage());
         }

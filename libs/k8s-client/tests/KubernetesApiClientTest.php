@@ -20,7 +20,7 @@ class KubernetesApiClientTest extends TestCase
 {
     private const TEST_NAMESPACE = 'test-namespace';
 
-    public function testAccesors(): void
+    public function testGetK8sNamespace(): void
     {
         $client = new KubernetesApiClient(
             $this->createMock(RetryProxy::class),

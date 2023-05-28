@@ -59,12 +59,13 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
             [
                 'fieldSelector' => implode(
                     ',',
-                    array_map(function (string $name): string {
-                        return sprintf(
-                            'metadata.name!=%s',
-                            $name
-                        );
-                    }, ['kube-root-ca.crt', 'k8s-client'])
+                    array_map(
+                        fn (string $name) => sprintf('metadata.name!=%s', $name),
+                        [
+                            'kube-root-ca.crt', // secret automatically created by K8S
+                            'k8s-client', // service account used by the client
+                        ]
+                    )
                 ),
             ]
         );

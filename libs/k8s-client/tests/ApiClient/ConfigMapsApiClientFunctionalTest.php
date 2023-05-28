@@ -21,8 +21,7 @@ class ConfigMapsApiClientFunctionalTest extends TestCase
         parent::setUp();
         $this->setUpBaseNamespaceApiClientTest(
             ConfigMapsApi::class,
-            ConfigMapsApiClient::class,
-            ['kube-root-ca.crt']
+            ConfigMapsApiClient::class
         );
     }
 

@@ -21,8 +21,7 @@ class SecretsApiClientFunctionalTest extends TestCase
         parent::setUp();
         $this->setUpBaseNamespaceApiClientTest(
             SecretsApi::class,
-            SecretsApiClient::class,
-            ['k8s-client']
+            SecretsApiClient::class
         );
     }
 

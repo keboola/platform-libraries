@@ -28,8 +28,6 @@ trait BaseNamespaceApiClientTestCase
     /** @var TApi */
     private BaseNamespaceApiClient $apiClient;
 
-    private array $resourceNamesExcludedFromCleanup = [];
-
     abstract protected function createResource(array $metadata): AbstractModel;
 
     /**
@@ -39,7 +37,6 @@ trait BaseNamespaceApiClientTestCase
     public function setUpBaseNamespaceApiClientTest(
         string $baseApiClientClass,
         string $apiClientClass,
-        array $resourceNamesExcludedFromCleanup = []
     ): void {
         Client::configure(
             (string) getenv('K8S_HOST'),
@@ -58,7 +55,6 @@ trait BaseNamespaceApiClientTestCase
             $this->baseApiClient,
         );
 
-        $this->resourceNamesExcludedFromCleanup = $resourceNamesExcludedFromCleanup;
         $this->cleanupK8sResources();
     }
 
@@ -66,19 +62,9 @@ trait BaseNamespaceApiClientTestCase
     {
         $startTime = microtime(true);
 
-        $queries = [];
-        $excludeItemNames = $this->resourceNamesExcludedFromCleanup;
-        if ($excludeItemNames) {
-            $queries['fieldSelector'] = implode(
-                ',',
-                array_map(function (string $name): string {
-                    return sprintf(
-                        'metadata.name!=%s',
-                        $name
-                    );
-                }, $excludeItemNames)
-            );
-        }
+        $queries = [
+            'labelSelector' => sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+        ];
 
         $this->baseApiClient->deleteCollection(
             (string) getenv('K8S_NAMESPACE'),
@@ -90,7 +76,7 @@ trait BaseNamespaceApiClientTestCase
         );
 
         while ($startTime + $timeout > microtime(true)) {
-            $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
+            $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'), $queries);
 
             if ($result instanceof Status) {
                 throw new RuntimeException('Failed to read resource state: ' . $result->message);
@@ -99,15 +85,6 @@ trait BaseNamespaceApiClientTestCase
             assert(is_object($result) && property_exists($result, 'items'));
             if (count($result->items) === 0) {
                 return;
-            }
-
-            if ($excludeItemNames && count($result->items) === count($excludeItemNames)) {
-                $itemNames = array_map(fn($resource) => $resource->metadata->name, $result->items);
-                $diffA = array_diff($itemNames, $excludeItemNames);
-                $diffB = array_diff($excludeItemNames, $itemNames);
-                if (count($diffA) === 0 && count($diffB) === 0) {
-                    return;
-                }
             }
 
             usleep(100_000);
@@ -140,26 +117,43 @@ trait BaseNamespaceApiClientTestCase
     public function testListResources(): void
     {
         $result = $this->apiClient->list();
-        $this->assertResultItems([], $result->items);
+
+        $originalItemNames = array_map(fn($resource) => $resource->metadata->name, $result->items);
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-1',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-2',
+            'labels' => [
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
+            ],
         ]));
 
         // list all
         $result = $this->apiClient->list();
-        $this->assertResultItems(['test-resource-1', 'test-resource-2'], $result->items);
+        $this->assertResultItems(
+            array_merge(
+                $originalItemNames,
+                ['test-resource-1', 'test-resource-2']
+            ),
+            $result->items
+        );
 
         // list using labelSelector
         $result = $this->apiClient->list([
-            'labelSelector' => 'app=test-1',
+            'labelSelector' => implode(
+                ',',
+                [
+                    'app=test-1',
+                    sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+                ]
+            ),
         ]);
         self::assertCount(1, $result->items);
         self::assertSame(
@@ -174,6 +168,7 @@ trait BaseNamespaceApiClientTestCase
             'name' => 'test-resource-1',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 
@@ -195,6 +190,7 @@ trait BaseNamespaceApiClientTestCase
             'name' => 'test-resource-1',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]);
 
@@ -203,7 +199,9 @@ trait BaseNamespaceApiClientTestCase
         self::assertNotSame($resourceToCreate, $createdResource);
         self::assertSame($resourceToCreate->metadata->name, $createdResource->metadata->name);
 
-        $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
+        $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'), [
+            'labelSelector' => sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+        ]);
         assert(is_object($result) && property_exists($result, 'items'));
 
         $this->assertResultItems([$createdResource->metadata->name], $result->items);
@@ -215,6 +213,7 @@ trait BaseNamespaceApiClientTestCase
             'name' => 'test-resource-1',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]);
 
@@ -232,12 +231,14 @@ trait BaseNamespaceApiClientTestCase
             'name' => 'test-resource-1',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-2',
             'labels' => [
                 'app' => 'test-2',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 
@@ -265,42 +266,61 @@ trait BaseNamespaceApiClientTestCase
             'name' => 'test-resource-11',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-12',
             'labels' => [
                 'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-21',
+            'labels' => [
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
+            ],
         ]));
 
-        $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
+        $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'), [
+            'labelSelector' => sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+        ]);
         assert(is_object($listResult) && property_exists($listResult, 'items'));
         $this->assertResultItems(['test-resource-11', 'test-resource-12', 'test-resource-21'], $listResult->items);
 
         $this->apiClient->deleteCollection(new DeleteOptions(), [
-            'labelSelector' => 'app=test-1',
+            'labelSelector' => implode(
+                ',',
+                [
+                    'app=test-1',
+                    sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+                ]
+            ),
         ]);
 
         $this->waitWhileResourceExists('test-resource-11');
         $this->waitWhileResourceExists('test-resource-12');
 
-        $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'));
+        $listResult = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'), [
+            'labelSelector' => sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
+        ]);
         assert(is_object($listResult) && property_exists($listResult, 'items'));
         $this->assertResultItems(['test-resource-21'], $listResult->items);
     }
 
     private function assertResultItems(array $expectedNames, array $resultItems): void
     {
-        $expectedNames = array_merge($expectedNames, $this->resourceNamesExcludedFromCleanup);
         self::assertCount(count($expectedNames), $resultItems);
 
         $resultItemNames = array_map(fn($resource) => $resource->metadata->name, $resultItems);
         sort($expectedNames);
         sort($resultItemNames);
         self::assertSame($expectedNames, $resultItemNames);
+    }
+
+    private static function getTestResourcesLabelName(): string
+    {
+        return 'k8s-client-tests-namespace';
     }
 }

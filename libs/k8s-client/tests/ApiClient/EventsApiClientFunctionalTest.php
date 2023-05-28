@@ -42,7 +42,13 @@ class EventsApiClientFunctionalTest extends TestCase
 
     public function testListForAllNamespaces(): void
     {
-        $event = $this->createResource(['name' => 'test-1']);
+        $event = $this->createResource([
+            'name' => 'test-1',
+            'labels' => [
+                'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
+            ],
+        ]);
         $this->apiClient->create($event);
 
         $result = $this->apiClient->listForAllNamespaces();

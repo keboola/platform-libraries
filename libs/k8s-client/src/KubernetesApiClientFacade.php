@@ -87,7 +87,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress
+     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
      * @phpstan-param class-string<T> $resourceType
      * @phpstan-return T
      */

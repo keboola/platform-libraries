@@ -25,11 +25,6 @@ class ServicesApiClientFunctionalTest extends TestCase
         );
     }
 
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return [];
-    }
-
     protected function createResource(array $metadata): Service
     {
         return new Service([

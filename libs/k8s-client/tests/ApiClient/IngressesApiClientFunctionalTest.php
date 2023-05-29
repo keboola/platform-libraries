@@ -25,11 +25,6 @@ class IngressesApiClientFunctionalTest extends TestCase
         );
     }
 
-    private function getExcludedItemNamesFromCleanup(): array
-    {
-        return [];
-    }
-
     protected function createResource(array $metadata): Ingress
     {
         return new Ingress([

@@ -56,7 +56,18 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
     {
         $this->apiClient->deleteAllMatching(
             new DeleteOptions(['gracePeriodSeconds' => 0]),
-            ['labelSelector' => 'app=KubernetesApiClientFacadeFunctionalTest']
+            [
+                'fieldSelector' => implode(
+                    ',',
+                    array_map(
+                        fn (string $name) => sprintf('metadata.name!=%s', $name),
+                        [
+                            'kube-root-ca.crt', // secret automatically created by K8S
+                            'k8s-client', // service account used by the client
+                        ]
+                    )
+                ),
+            ]
         );
     }
 

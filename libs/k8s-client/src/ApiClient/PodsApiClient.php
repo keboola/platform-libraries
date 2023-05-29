@@ -9,48 +9,21 @@ use Keboola\K8sClient\KubernetesApiClient;
 use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 
 /**
- * @template-implements ApiClientInterface<PodList, Pod>
+ * @template-extends BaseNamespaceApiClient<PodsApi, PodList, Pod>
  */
-class PodsApiClient implements ApiClientInterface
+class PodsApiClient extends BaseNamespaceApiClient
 {
-    private KubernetesApiClient $apiClient;
-    private PodsApi $baseApi;
-
-    public function __construct(KubernetesApiClient $apiClient)
+    public function __construct(KubernetesApiClient $apiClient, PodsApi $baseApi)
     {
-        $this->apiClient = $apiClient;
-        $this->baseApi = new PodsApi();
-    }
-
-    public function list(array $queries = []): PodList
-    {
-        return $this->apiClient->request($this->baseApi, 'list', PodList::class, $queries);
-    }
-
-    public function get(string $name, array $queries = []): Pod
-    {
-        return $this->apiClient->request($this->baseApi, 'read', Pod::class, $name, $queries);
-    }
-
-    public function create($model, array $queries = []): Pod
-    {
-        return $this->apiClient->request($this->baseApi, 'create', Pod::class, $model, $queries);
-    }
-
-    public function delete(string $name, ?DeleteOptions $options = null, array $queries = []): Status
-    {
-        $options ??= new DeleteOptions();
-        return $this->apiClient->request($this->baseApi, 'delete', Status::class, $name, $options, $queries);
-    }
-
-    public function deleteCollection(?DeleteOptions $options = null, array $queries = []): Status
-    {
-        $options ??= new DeleteOptions();
-        return $this->apiClient->request($this->baseApi, 'deleteCollection', Status::class, $options, $queries);
+        parent::__construct(
+            $apiClient,
+            $baseApi,
+            PodList::class,
+            Pod::class,
+        );
     }
 
     public function getStatus(string $name, array $queries = []): Pod

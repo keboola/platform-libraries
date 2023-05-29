@@ -7,7 +7,7 @@ terraform {
   }
 }
 
-resource "kubernetes_namespace" "k8s_client" {
+resource "kubernetes_namespace" "k8s_client_account" {
   metadata {
     name = "${var.name_prefix}-k8s-client"
   }
@@ -15,15 +15,15 @@ resource "kubernetes_namespace" "k8s_client" {
 
 resource "kubernetes_service_account" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client.metadata.0.name
+    namespace = kubernetes_namespace.k8s_client_account.metadata.0.name
     name      = "k8s-client"
   }
 }
 
 resource "kubernetes_secret" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client.metadata.0.name
-    name      = "k8s-client"
+    namespace   = kubernetes_namespace.k8s_client_account.metadata.0.name
+    name        = "k8s-client"
     annotations = {
       "kubernetes.io/service-account.name" = kubernetes_service_account.k8s_client.metadata.0.name
     }
@@ -34,26 +34,26 @@ resource "kubernetes_secret" "k8s_client" {
 
 resource "kubernetes_role" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client.metadata.0.name
+    namespace = kubernetes_namespace.k8s_client_account.metadata.0.name
     name      = "k8s-client"
   }
 
   rule {
     api_groups = [""]
-    resources  = ["events"]
-    verbs      = ["get", "list"]
-  }
-
-  rule {
-    api_groups = [""]
-    resources  = ["pods", "secrets"]
-    verbs      = ["*"]
+    resources  = [
+      "configmaps",
+      "events",
+      "persistentvolumeclaims",
+      "pods",
+      "secrets",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
 }
 
 resource "kubernetes_role_binding" "k8s_client" {
   metadata {
-    namespace = kubernetes_namespace.k8s_client.metadata.0.name
+    namespace = kubernetes_namespace.k8s_client_account.metadata.0.name
     name      = "k8s-client"
   }
 

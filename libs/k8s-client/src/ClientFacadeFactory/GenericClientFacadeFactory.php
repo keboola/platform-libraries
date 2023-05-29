@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use Kubernetes\API\Pod;
 use KubernetesRuntime\Client;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
@@ -55,9 +58,11 @@ class GenericClientFacadeFactory
         // all K8S API clients created here will use the configuration above, even if the Client is reconfigured later
         return new KubernetesApiClientFacade(
             $this->logger,
-            new PodsApiClient($apiClient),
-            new SecretsApiClient($apiClient),
+            new ConfigMapsApiClient($apiClient),
             new EventsApiClient($apiClient),
+            new PersistentVolumeClaimApiClient($apiClient),
+            new PodsApiClient($apiClient, new Pod()),
+            new SecretsApiClient($apiClient),
         );
     }
 }

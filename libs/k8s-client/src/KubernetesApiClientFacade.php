@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient;
 
+use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeClaim;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
@@ -25,10 +29,27 @@ class KubernetesApiClientFacade
 
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly ConfigMapsApiClient $configMapApiClient,
+        private readonly EventsApiClient $eventsApiClient,
+        private readonly PersistentVolumeClaimApiClient $persistentVolumeClaimApiClient,
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
-        private readonly EventsApiClient $eventsApiClient,
     ) {
+    }
+
+    public function configMaps(): ConfigMapsApiClient
+    {
+        return $this->configMapApiClient;
+    }
+
+    public function events(): EventsApiClient
+    {
+        return $this->eventsApiClient;
+    }
+
+    public function persistentVolumeClaims(): PersistentVolumeClaimApiClient
+    {
+        return $this->persistentVolumeClaimApiClient;
     }
 
     public function pods(): PodsApiClient
@@ -41,13 +62,8 @@ class KubernetesApiClientFacade
         return $this->secretsApiClient;
     }
 
-    public function events(): EventsApiClient
-    {
-        return $this->eventsApiClient;
-    }
-
     /**
-     * @phpstan-template T of Event|Pod|Secret
+     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret
      * @phpstan-param class-string<T> $resourceType
      * @phpstan-return T
      */
@@ -71,8 +87,8 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param array<Event|Pod|Secret> $resources
-     * @return (Event|Pod|Secret)[]
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
+     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret)[]
      */
     public function createModels(array $resources, array $queries = []): array
     {
@@ -96,7 +112,7 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *     ])
      *
-     * @param array<Event|Pod|Secret> $resources
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
      * @return Status[]
      */
     public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
@@ -112,7 +128,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @param array<Event|Pod|Secret> $resources
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
      */
     public function waitWhileExists(array $resources, float $timeout = INF): void
     {
@@ -152,7 +168,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @template T of Event|Pod|Secret
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret
      * @param class-string<T> $resourceType
      * @return iterable<T>
      */
@@ -189,6 +205,9 @@ class KubernetesApiClientFacade
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
         $deleteFromApis = [
+            // do not delete events
+            $this->configMapApiClient,
+            $this->persistentVolumeClaimApiClient,
             $this->podsApiClient,
             $this->secretsApiClient,
         ];
@@ -210,15 +229,20 @@ class KubernetesApiClientFacade
 
     /**
      * @param class-string<AbstractModel> $resourceType
-     * @return ($resourceType is class-string<Event> ? EventsApiClient :
+     * @return ($resourceType is class-string<ConfigMap> ? ConfigMapsApiClient :
+     *         ($resourceType is class-string<Event> ? EventsApiClient :
+     *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimApiClient :
      *         ($resourceType is class-string<Pod> ? PodsApiClient :
      *         ($resourceType is class-string<Secret> ? SecretsApiClient :
-     *         never)))
+     *         never))))))
      */
-    private function getApiForResource(string $resourceType): EventsApiClient|PodsApiClient|SecretsApiClient
+    // phpcs:ignore Generic.Files.LineLength.MaxExceeded
+    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient
     {
         return match ($resourceType) {
+            ConfigMap::class => $this->configMapApiClient,
             Event::class => $this->eventsApiClient,
+            PersistentVolumeClaim::class => $this->persistentVolumeClaimApiClient,
             Pod::class => $this->podsApiClient,
             Secret::class => $this->secretsApiClient,
 

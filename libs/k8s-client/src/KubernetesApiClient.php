@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Keboola\K8sClient;
 
 use Keboola\K8sClient\Exception\KubernetesResponseException;
+use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
+use Keboola\K8sClient\Exception\UnauthorizedException;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractAPI;
 use Retry\RetryProxy;
@@ -75,22 +77,29 @@ class KubernetesApiClient
             return $result;
         });
 
-        if ($result instanceof $expectedResult) {
-            return $result;
-        }
-
-        if ($result instanceof Status) {
+        if ($result instanceof Status && $result->status === 'Failure') {
             if ($result->code === 404) {
                 throw new ResourceNotFoundException(
                     sprintf('Resource not found: %s', $result->message),
-                    $result
+                    $result,
+                );
+            }
+
+            if ($method === 'create' && $result->reason === 'AlreadyExists') {
+                throw new ResourceAlreadyExistsException(
+                    sprintf('Resource already exists: %s', $result->message),
+                    $result,
                 );
             }
 
             throw new KubernetesResponseException(
                 sprintf('K8S request has failed: %s', $result->message),
-                $result
+                $result,
             );
+        }
+
+        if ($result instanceof $expectedResult) {
+            return $result;
         }
 
         throw new KubernetesResponseException(

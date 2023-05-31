@@ -50,11 +50,6 @@ class Local extends AbstractStrategy
 
     public function handleExports(array $exports, bool $preserve): array
     {
-        if (!$preserve) {
-            $this->logger->warning(
-                'The preserve option is not supported for local staging, it is always treated as true'
-            );
-        }
         $tableExporter = new TableExporter($this->clientWrapper->getBasicClient());
         $this->logger->info('Processing ' . count($exports) . ' local table exports.');
         return $tableExporter->exportTables($exports);

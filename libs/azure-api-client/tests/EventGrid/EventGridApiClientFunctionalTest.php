@@ -25,11 +25,11 @@ class EventGridApiClientFunctionalTest extends TestCase
     private function getClient(): EventGridApiClient
     {
         return new EventGridApiClient(
-            getenv('AZURE_API_CLIENT_CI__EVENT_GRID__TOPIC_HOSTNAME'),
+            (string) getenv('AZURE_API_CLIENT_CI__EVENT_GRID__TOPIC_HOSTNAME'),
             new ApiClientConfiguration(
                 authenticator: new CustomHeaderAuth(
                     header: 'aeg-sas-key',
-                    value: getenv('AZURE_API_CLIENT_CI__EVENT_GRID__ACCESS_KEY'),
+                    value: (string) getenv('AZURE_API_CLIENT_CI__EVENT_GRID__ACCESS_KEY'),
                 ),
             )
         );
@@ -37,14 +37,15 @@ class EventGridApiClientFunctionalTest extends TestCase
 
     private function getServiceBusClient(): ServiceBusApiClient
     {
-        $endpoint = getenv('AZURE_API_CLIENT_CI__SERVICE_BUS__ENDPOINT');
+        $endpoint = (string) getenv('AZURE_API_CLIENT_CI__SERVICE_BUS__ENDPOINT');
         return new ServiceBusApiClient(
+            //@phpstan-ignore-next-line
             serviceBusEndpoint: $endpoint,
             configuration: new ApiClientConfiguration(
                 authenticator: new SASTokenAuthenticatorFactory(
                     url: $endpoint,
                     sharedAccessKeyName: 'RootManageSharedAccessKey',
-                    sharedAccessKey: getenv('AZURE_API_CLIENT_CI__SERVICE_BUS__SHARED_ACCESS_KEY'),
+                    sharedAccessKey: (string) getenv('AZURE_API_CLIENT_CI__SERVICE_BUS__SHARED_ACCESS_KEY'),
                 ),
             )
         );
@@ -85,7 +86,10 @@ class EventGridApiClientFunctionalTest extends TestCase
             (new DateTimeImmutable($messageBody['eventTime']))->getTimestamp(),
             10 // peak has timeout 10s
         );
-        self::assertStringEndsWith('Microsoft.EventGrid/topics/' . getenv('AZURE_API_CLIENT_CI__EVENT_GRID__TOPIC_NAME'), $messageBody['topic']);
+        self::assertStringEndsWith(
+            'Microsoft.EventGrid/topics/' . getenv('AZURE_API_CLIENT_CI__EVENT_GRID__TOPIC_NAME'),
+            $messageBody['topic']
+        );
         $serviceBusClient->deleteMessage($message->lockLocation);
     }
 }

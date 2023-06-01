@@ -6,6 +6,7 @@ namespace Keboola\AzureApiClient\Authentication\Authenticator\Internal;
 
 use Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorInterface;
 use Psr\Http\Message\RequestInterface;
+use Webmozart\Assert\Assert;
 
 class SASTokenAuthenticator implements RequestAuthenticatorInterface
 {
@@ -30,7 +31,8 @@ class SASTokenAuthenticator implements RequestAuthenticatorInterface
         $encodedUrl = $this->lowerUrlencode($this->url);
         $scope = $encodedUrl . "\n" . $expiry;
         $signature = base64_encode(hash_hmac('sha256', $scope, $this->sharedAccessKey, true));
-        return sprintf(self::SAS_AUTHORIZATION,
+        return sprintf(
+            self::SAS_AUTHORIZATION,
             $this->lowerUrlencode($signature),
             $expiry,
             $this->sharedAccessKeyName,
@@ -40,10 +42,12 @@ class SASTokenAuthenticator implements RequestAuthenticatorInterface
 
     private function lowerUrlencode(string $str): string
     {
-        return preg_replace_callback(
+        $url = preg_replace_callback(
             '/%[0-9A-F]{2}/',
             static fn(array $matches) => strtolower($matches[0]),
             urlencode($str)
         );
+        Assert::notNull($url);
+        return $url;
     }
 }

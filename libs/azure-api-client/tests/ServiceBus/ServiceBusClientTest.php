@@ -16,12 +16,13 @@ use Keboola\AzureApiClient\ServiceBus\Model\ServiceBusBrokerMessageRequest;
 use Keboola\AzureApiClient\ServiceBus\ServiceBusApiClient;
 use Keboola\AzureApiClient\Tests\ReflectionPropertyAccessTestCase;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 class ServiceBusClientTest extends TestCase
 {
     use ReflectionPropertyAccessTestCase;
 
-    private function assertAuthorization(mixed $request): void
+    private function assertAuthorization(RequestInterface $request): void
     {
         self::assertTrue($request->hasHeader('Authorization'));
         self::assertStringStartsWith('SharedAccessSignature sig=', $request->getHeaderLine('Authorization'));
@@ -52,7 +53,9 @@ class ServiceBusClientTest extends TestCase
                 200,
                 [
                     'Content-Type' => 'application/json',
+                    // phpcs:ignore
                     'BrokerProperties' => '{"DeliveryCount":1,"EnqueuedSequenceNumber":0,"EnqueuedTimeUtc":"Wed, 02 Jul 2014 01:32:27 GMT","Label":"M1","LockToken":"7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547","LockedUntilUtc":"Wed, 02 Jul 2014 01:33:27 GMT","MessageId":"31907572164743c38741631acd554d6f","SequenceNumber":2,"State":"Active","TimeToLive":10}',
+                    // phpcs:ignore
                     'Location' => 'https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547',
                 ],
                 Json::encodeArray([
@@ -65,16 +68,24 @@ class ServiceBusClientTest extends TestCase
         $client = $this->getClient($requestHandler);
         $message = $client->peakMessage('testQueue');
 
+        self::assertNotNull($message);
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10', $request->getUri()->__toString());
+        self::assertSame(
+            'https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10',
+            $request->getUri()->__toString()
+        );
 
         $this->assertAuthorization($request);
 
         self::assertSame('31907572164743c38741631acd554d6f', $message->id);
         self::assertSame('{"message":"test"}', $message->body);
-        self::assertSame('https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547', $message->lockLocation);
+        self::assertSame(
+        // phpcs:ignore
+            'https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547',
+            $message->lockLocation
+        );
         self::assertSame(['message' => 'test'], $message->getJsonBody());
     }
 
@@ -86,7 +97,9 @@ class ServiceBusClientTest extends TestCase
                 204,
                 [
                     'Content-Type' => 'application/json',
+                    // phpcs:ignore
                     'BrokerProperties' => '{"DeliveryCount":1,"EnqueuedSequenceNumber":0,"EnqueuedTimeUtc":"Wed, 02 Jul 2014 01:32:27 GMT","Label":"M1","LockToken":"7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547","LockedUntilUtc":"Wed, 02 Jul 2014 01:33:27 GMT","MessageId":"31907572164743c38741631acd554d6f","SequenceNumber":2,"State":"Active","TimeToLive":10}',
+                    // phpcs:ignore
                     'Location' => 'https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547',
                 ],
                 null
@@ -101,7 +114,10 @@ class ServiceBusClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10', $request->getUri()->__toString());
+        self::assertSame(
+            'https://<namespace>.servicebus.windows.net/testQueue/messages/head?timeout=10',
+            $request->getUri()->__toString()
+        );
 
         $this->assertAuthorization($request);
     }
@@ -132,7 +148,10 @@ class ServiceBusClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/testQueue/messages', $request->getUri()->__toString());
+        self::assertSame(
+            'https://<namespace>.servicebus.windows.net/testQueue/messages',
+            $request->getUri()->__toString()
+        );
         $this->assertAuthorization($request);
 
         self::assertTrue($request->hasHeader('Content-Type'));
@@ -167,12 +186,19 @@ class ServiceBusClientTest extends TestCase
         $requestHandler->push(Middleware::history($requestsHistory));
 
         $client = $this->getClient($requestHandler);
-        $client->deleteMessage('https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547');
+        $client->deleteMessage(
+        // phpcs:ignore
+            'https://your-namespace.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547'
+        );
 
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('DELETE', $request->getMethod());
-        self::assertSame('https://<namespace>.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547', $request->getUri()->__toString());
+        self::assertSame(
+        // phpcs:ignore
+            'https://<namespace>.servicebus.windows.net/httpclientsamplequeue/messages/2/7da9cfd5-40d5-4bb1-8d64-ec5a52e1c547',
+            $request->getUri()->__toString()
+        );
 
         $this->assertAuthorization($request);
     }

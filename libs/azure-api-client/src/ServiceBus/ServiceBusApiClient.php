@@ -9,10 +9,11 @@ use DateTimeZone;
 use GuzzleHttp\Psr7\Request;
 use Keboola\AzureApiClient\ApiClient;
 use Keboola\AzureApiClient\ApiClientConfiguration;
+use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\ServiceBus\Model\BrokerProperties;
 use Keboola\AzureApiClient\ServiceBus\Model\ServiceBusBrokerMessageRequest;
 use Keboola\AzureApiClient\ServiceBus\Model\ServiceBusBrokerMessageResponse;
-use Keboola\AzureApiClient\Json;
+use RuntimeException;
 use Webmozart\Assert\Assert;
 
 class ServiceBusApiClient
@@ -24,6 +25,9 @@ class ServiceBusApiClient
 
     private ApiClient $apiClient;
 
+    /**
+     * @param non-empty-string $serviceBusEndpoint
+     */
     public function __construct(
         string $serviceBusEndpoint,
         ?ApiClientConfiguration $configuration = null,
@@ -85,6 +89,7 @@ class ServiceBusApiClient
     public function deleteMessage(string $lockLocation): void
     {
         $lockLocationArray = parse_url($lockLocation);
+        Assert::isArray($lockLocationArray, 'Lock location is not valid.');
         $lockLocationPath = '';
 
         if (array_key_exists('path', $lockLocationArray)) {

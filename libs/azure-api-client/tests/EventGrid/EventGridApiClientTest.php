@@ -57,7 +57,10 @@ class EventGridApiClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         $request = $requestsHistory[0]['request'];
         self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://test-eventgrid.northeurope-1.eventgrid.azure.net/api/events?api-version=2018-01-01', $request->getUri()->__toString());
+        self::assertSame(
+            'https://test-eventgrid.northeurope-1.eventgrid.azure.net/api/events?api-version=2018-01-01',
+            $request->getUri()->__toString()
+        );
 
         self::assertTrue($request->hasHeader('aeg-sas-key'));
         self::assertSame('token', $request->getHeaderLine('aeg-sas-key'));

@@ -30,10 +30,11 @@ class BrokerProperties
         $sequenceNumber = (int) $brokerProperties['SequenceNumber'];
 
         Assert::keyExists($brokerProperties, 'EnqueuedTimeUtc');
-        $scheduledEnqueueTimeUtc = \DateTimeImmutable::createFromFormat(
+        $scheduledEnqueueTimeUtc = DateTimeImmutable::createFromFormat(
             ServiceBusApiClient::AZURE_DATE_FORMAT,
             $brokerProperties['EnqueuedTimeUtc']
         );
+        Assert::isInstanceOf($scheduledEnqueueTimeUtc, DateTimeImmutable::class);
 
         // other broker properties are not used now
 

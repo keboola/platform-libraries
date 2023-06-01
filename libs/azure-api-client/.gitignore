@@ -1,2 +1,4 @@
 vendor/
-.env
+!.env
+.env.local
+.env.*.local

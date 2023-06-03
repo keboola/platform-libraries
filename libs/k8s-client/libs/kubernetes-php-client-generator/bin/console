@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+// application.php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use CodeGenerator\Command;
+use Symfony\Component\Console\Application;
+
+define('APP_ROOT', realpath(__DIR__ . '/../'));
+
+
+$application = new Application();
+
+// ... register commands
+$application->addCommands([
+    new Command\GenerateCommand(),
+    new Command\RunCommand(),
+]);
+
+
+$application->run();

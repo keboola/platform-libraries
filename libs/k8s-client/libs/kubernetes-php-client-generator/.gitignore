@@ -1,0 +1,4 @@
+.idea/
+openapi/
+vendor/
+*.phpunit.result.cache

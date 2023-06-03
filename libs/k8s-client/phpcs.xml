@@ -6,4 +6,5 @@
         <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint"/>
     </rule>
     <exclude-pattern>*/src/Kernel.php</exclude-pattern>
+    <exclude-pattern>libs/</exclude-pattern>
 </ruleset>

@@ -90,6 +90,8 @@ docker-compose run --rm dev composer install
 docker-compose run --rm dev composer ci
 ```
 
+## Generating client from OpenAPI
+
 
 ## Implementing new API
 Only few K8S APIs we needed are implement so far. To implement new API, do following:

@@ -119,7 +119,7 @@ abstract class AbstractClassFile extends FileGenerator
     public function getSourceFileDirectory(): string
     {
         if (!$this->sourceFileDirectory) {
-            $this->setSourceFileDirectory(realpath(__DIR__ . '/../../src/') . DIRECTORY_SEPARATOR);
+            $this->setSourceFileDirectory(realpath(__DIR__ . '/../../../kubernetes-php-client/src') . DIRECTORY_SEPARATOR);
         }
 
         return $this->sourceFileDirectory;

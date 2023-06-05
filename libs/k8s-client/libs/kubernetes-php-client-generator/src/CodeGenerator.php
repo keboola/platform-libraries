@@ -8,24 +8,25 @@ use CodeGenerator\Code\KubernetesExtentions;
 use CodeGenerator\Code\KubernetesOperations;
 use CodeGenerator\Code\Model;
 use CodeGenerator\Code\ResponseTypes;
-use KubernetesRuntime\Logger;
 use OpenAPI\Schema\V2 as Schema;
+use Psr\Log\LoggerInterface;
 
 class CodeGenerator
 {
-    /**
-     * @var
-     * Schema\SwaggerObject
-     */
+    /** @var Schema\Swagger */
     private $Swagger;
 
-    public function __construct(Schema\SwaggerObject $Swagger)
+    /** @var LoggerInterface */
+    private $logger;
+
+    public function __construct(Schema\Swagger $Swagger, LoggerInterface $logger)
     {
         $this->Swagger = $Swagger;
+        $this->logger = $logger;
     }
 
     /**
-     * @param Schema\SchemaObject[] $definitions
+     * @param Schema\Schema[] $definitions
      *
      * @throws \Exception
      */
@@ -33,13 +34,13 @@ class CodeGenerator
     {
         foreach ($definitions as $name => $SchemaObject) {
             $Model = new Model($name, $SchemaObject);
-            Logger::getInstance()->debug($Model->getFilename());
+            $this->logger->debug($Model->getFilename());
             $Model->write();
         }
     }
 
     /**
-     * @param Schema\PathItemObject[] $pathItems
+     * @param Schema\PathItem[] $pathItems
      */
     public function generateApis($pathItems)
     {
@@ -52,8 +53,8 @@ class CodeGenerator
 
             foreach (KubernetesOperations::OPERATIONS as $operation) {
                 $OperationObject = $PathItemObject->$operation;
-                if ($OperationObject instanceof Schema\OperationObject) {
-                    /** @var Schema\OperationObject $OperationObject */
+                if ($OperationObject instanceof Schema\Operation) {
+                    /** @var Schema\Operation $OperationObject */
                     if (key_exists(KubernetesExtentions::ACTION, $OperationObject->getPatternedFields())
                         && key_exists(KubernetesExtentions::GROUP_VERSION_KIND, $OperationObject->getPatternedFields())
                     ) {
@@ -77,13 +78,13 @@ class CodeGenerator
         }
 
         foreach ($apiClassGenerators as $ApiClassGenerator) {
-            Logger::getInstance()->debug($ApiClassGenerator->getFilename());
+            $this->logger->debug($ApiClassGenerator->getFilename());
             $ApiClassGenerator->write();
         }
     }
 
     /**
-     * @param Schema\PathItemObject[] $pathItems
+     * @param Schema\PathItem[] $pathItems
      */
     public function generateResponseTypes($pathItems)
     {
@@ -91,7 +92,7 @@ class CodeGenerator
         foreach ($pathItems as $path => $PathItemObject) {
             foreach (KubernetesOperations::OPERATIONS as $operation) {
                 $OperationObject = $PathItemObject->$operation;
-                if ($OperationObject instanceof Schema\OperationObject) {
+                if ($OperationObject instanceof Schema\Operation) {
                     $ResponseTypes->parseReseponseTypes($OperationObject);
                 }
             }

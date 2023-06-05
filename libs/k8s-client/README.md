@@ -91,7 +91,16 @@ docker-compose run --rm dev composer ci
 ```
 
 ## Generating client from OpenAPI
+```bash
+K8S_VERSION=v1.25.0
 
+cd libs/kubernetes-php-client-generator/
+composer install --ignore-platform-reqs
+php bin/console run $K8S_VERSION
+
+cd ../kubernetes-php-client/
+git add src/API/ src/Model/ src/ResponseTypes.php
+```
 
 ## Implementing new API
 Only few K8S APIs we needed are implement so far. To implement new API, do following:

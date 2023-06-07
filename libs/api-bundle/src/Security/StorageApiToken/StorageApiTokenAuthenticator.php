@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Attribute\ManageTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageTokenAuth;
-use Keboola\ApiBundle\Security\ManageToken\ManageToken;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\StorageApi\ClientException;

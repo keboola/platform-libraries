@@ -8,7 +8,9 @@ use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Attribute\ManageTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
+use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
  * @implements TokenAuthenticatorInterface<ManageToken>
@@ -16,7 +18,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 class ManageTokenAuthenticator implements TokenAuthenticatorInterface
 {
     public function __construct(
-        //     private readonly ManageApiClientFactory $manageApiClientFactory,
+        private readonly ManageApiClientFactory $manageApiClientFactory,
     ) {
     }
 
@@ -29,7 +31,6 @@ class ManageTokenAuthenticator implements TokenAuthenticatorInterface
     {
         assert($authAttribute instanceof ManageTokenAuth);
 
-        /*
         $manageApiClient = $this->manageApiClientFactory->getClient($token);
 
         try {
@@ -37,8 +38,8 @@ class ManageTokenAuthenticator implements TokenAuthenticatorInterface
         } catch (ManageApiClientException $e) {
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
-        */
-        return ManageToken::fromVerifyResponse([]);
+
+        return ManageToken::fromVerifyResponse($tokenData);
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

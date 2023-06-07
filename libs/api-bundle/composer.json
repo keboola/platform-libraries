@@ -3,16 +3,19 @@
     "description": "Keboola API Bundle",
     "type": "symfony-bundle",
     "require": {
+        "php": ">=8.1",
         "monolog/monolog": "^2.0",
         "symfony/dependency-injection": "^6.0",
         "symfony/monolog-bundle": "^3.8"
     },
     "require-dev": {
-        "keboola/coding-standard": "^14.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^3.0",
         "keboola/api-error-control": "^4.1",
+        "keboola/coding-standard": "^14.0",
+        "keboola/kbc-manage-api-php-client": "^7.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^3.0",
         "phpstan/phpstan": "^1.8",
         "phpstan/phpstan-phpunit": "^1.1",
+        "phpstan/phpstan-symfony": "^1.3",
         "phpunit/phpunit": "^9.5",
         "sempro/phpunit-pretty-print": "^1.4",
         "symfony/framework-bundle": "^6.1",

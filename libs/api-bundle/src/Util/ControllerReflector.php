@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Util;
 
 use ReflectionException;
-use ReflectionFunction;
 use ReflectionMethod;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -16,11 +15,7 @@ class ControllerReflector
     ) {
     }
 
-    /**
-     * @param mixed $controllerSpec
-     * @return ReflectionMethod|null
-     */
-    public function resolveControllerMethod($controllerSpec): ?ReflectionMethod
+    public function resolveControllerMethod(mixed $controllerSpec): ?ReflectionMethod
     {
         if (is_string($controllerSpec)) {
             $controllerSpec = explode('::', $controllerSpec);

@@ -106,7 +106,7 @@ abstract class AbstractTestCase extends TestCase
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
             try {
-                $workspaces->deleteWorkspace($this->workspaceId, [], true);
+                $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             } catch (ClientException $e) {
                 if ($e->getCode() !== 404) {
                     throw $e;
@@ -299,7 +299,7 @@ abstract class AbstractTestCase extends TestCase
     {
         $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
         $workspaces->loadWorkspaceData(
-            $this->workspaceId,
+            (int) $this->workspaceId,
             [
                 'input' => [
                     [
@@ -319,7 +319,7 @@ abstract class AbstractTestCase extends TestCase
     {
         $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
         $workspaces->cloneIntoWorkspace(
-            $this->workspaceId,
+            (int) $this->workspaceId,
             [
                 'input' => [
                     [

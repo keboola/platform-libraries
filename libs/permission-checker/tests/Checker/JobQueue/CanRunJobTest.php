@@ -32,6 +32,33 @@ class CanRunJobTest extends TestCase
                 allowedComponents: ['keboola.component']
             ),
         ];
+
+        yield 'developer role on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                role: 'developer',
+                features: ['queuev2', 'protected-default-branch'],
+            ),
+        ];
+
+        yield 'reviewer role on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                role: 'reviewer',
+                features: ['queuev2', 'protected-default-branch'],
+            ),
+        ];
+
+        yield 'productionManager role on protected dev branch' => [
+            'branchType' => BranchType::DEFAULT,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                role: 'productionManager',
+                features: ['queuev2', 'protected-default-branch'],
+            ),
+        ];
     }
 
     /** @dataProvider provideValidPermissionsCheckData */

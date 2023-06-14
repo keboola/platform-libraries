@@ -36,7 +36,7 @@ class CanRunJob implements PermissionCheckerInterface
         }
     }
 
-    public function checkProtectedDefaultBranch(Role $role): void
+    private function checkProtectedDefaultBranch(Role $role): void
     {
         $isAllowed = match ($role) {
             Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,

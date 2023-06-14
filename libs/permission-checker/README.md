@@ -1,104 +1,43 @@
-# Kubernetes Client
+# Permission Checker
 
-High-level K8S client library. It is based on `kubernetes/php-client` library, but enhances
-it in many ways:
-* support connection to multiple clusters
-* automatic handling of result type (you don't need to check if the result is what you expect, `Status` or something else)
-* integrated retries in case of networking problems
-* high-level operations like `create` multiple resources at once, `waitWhileExists` to wait while given resource exists etc.
+Generic permissions checker that centralizes all permission checks in one place.
 
 ## Usage
-To create a client, use one of provided client factories:
-* `GenericClientFacadeFactory` if you have cluster credentials
-* `InClusterClientFacadeFactory` if you run inside a Pod which has access to K8S API
+Library provides `Keboola\PermissionChecker\StorageApiTokenInterface` interface that is expected to be implemented by
+caller (or provided by some other compatible library). The token is then passed to `Keboola\PermissionChecker\PermissionChecker`
+along with concrete checker for the action to be validated.
+
+If the check passes, script execution continues normally. If the check fails, `Keboola\PermissionChecker\Exception\PermissionException`
+is thrown with a message that describes the reason of the failure and is safe to be presented to a user.
 
 ```php
-<?php
+use Keboola\PermissionChecker\PermissionChecker;
+use Keboola\PersmissionChecker\Checker\JobQueue\CanRunJob;
 
-use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\Container;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
+$storageToken = new MyStorageApiClass(...)
 
-$clientFactory = new GenericClientFacadeFactory($retryProxy, $logger);
-$client = $clientFactory->createClusterClient(
-    'https://api.k8s-cluster.example.com',
-    'secret-token',
-    'var/k8s/caCert.pem',
-    'default'
-);
-
-$pod = new Pod([
-    'metadata' => [
-        'name' => 'my-pod',
-    ],
-    'spec' => [
-        'restartPolicy' => 'Never',
-        'containers' => [
-            new Container([
-                'name' => 'app',
-                'image' => 'alpine',
-                'command' => ['sh', '-c', 'echo hello; sleep 3; echo bye'],
-            ]),
-        ],
-    ],
-]);
-
-// create the pod
-$client->createModels([
-    $pod,
-]);
-
-// wait for pod to finish
-do {
-    $pod = $client->pods()->getStatus($pod->metadata->name);
-
-    if (in_array($pod->status->phase, ['Succeeded', 'Failed'], true)) {
-        break;
-    }
-
-    sleep(1);
-} while (true);
-
-// check pod logs
-$client->pods()->readLog($pod->metadata->name);
-
-// delete the pod
-$client->deleteModels([
-    $pod,
-]);
+$checker = new PermissionChecker();
+$checker->checkPermissions($storageToken, new CanRunJob(BranchType::DEFAULT, 'keboola.component-id'));
 ```
 
 ## Development
 Prerequisites:
-* configured `az` and `aws` CLI tools (run `az login` and `aws configure --profile keboola-dev-platform-services`)
-* installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
-* intalled `docker` with `docker compose` to run & develop the library
+* installed `docker` with `docker compose` to run & develop the library
 
 TL;DR:
 ```
-export NAME_PREFIX= # your name/nickname to make your resource unique & recognizable
-
-cat <<EOF > ./provisioning/local/terraform.tfvars
-name_prefix = "${NAME_PREFIX}"
-EOF
-
-terraform -chdir=./provisioning/local init -backend-config="key=k8s-client/${NAME_PREFIX}.tfstate"
-terraform -chdir=./provisioning/local apply
-./provisioning/local/update-env.sh azure # or aws
-
-docker-compose run --rm dev composer install
-docker-compose run --rm dev composer ci
+docker-compose run --rm dev-permission-checker composer install
+docker-compose run --rm dev-permission-checker composer ci
 ```
 
+## Implementing new checker
+Each action that needs to be validated has its own checker - a class implementing
+`Keboola\PermissionChecker\Checker\PermissionCheckerInterface`. The interface has just a single method `checkPermission`
+which receives `Keboola\PersmissionChecker\StorageApiToken` instance 
+(different class that the token passed to `Keboola\PermissionChecker\PermissionChecker::checkPermissions()`!) 
+and throws `Keboola\PermissionChecker\Exception\PermissionException` if the check fails.
 
-## Implementing new API
-Only few K8S APIs we needed are implement so far. To implement new API, do following:
-* create API client wrapper in `Keboola\K8sClient\ApiClient`
-  * this is a wrapper around `kubernetes/php-client` API class, takes care of handling results
-* add the wrapper to `KubernetesApiClientFacade`
-  * inject the `kubernetes/php-client` client through constructor
-  * add support for the new resource to methods signatures
-* update `GenericClientFacadeFactory` to provide new API class to `KubernetesApiClientFacade`
+If the checker requires any additional data or depends on some other service, it is free to require it through its constructor.
 
 ## License
 

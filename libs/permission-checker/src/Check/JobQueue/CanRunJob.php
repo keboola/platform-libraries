@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\PermissionChecker\Checker\JobQueue;
+namespace Keboola\PermissionChecker\Check\JobQueue;
 
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
-use Keboola\PermissionChecker\PermissionCheckerInterface;
+use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 
-class CanRunJob implements PermissionCheckerInterface
+class CanRunJob implements PermissionCheckInterface
 {
     public function __construct(
         private readonly BranchType $branchType,

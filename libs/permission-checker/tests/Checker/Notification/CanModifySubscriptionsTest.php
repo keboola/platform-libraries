@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\PersmissionChecker\Tests\Checker\Notification;
 
 use Keboola\PermissionChecker\BranchType;
-use Keboola\PermissionChecker\Checker\Notification\CanModifySubscriptions;
+use Keboola\PermissionChecker\Check\Notification\CanModifySubscriptions;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;

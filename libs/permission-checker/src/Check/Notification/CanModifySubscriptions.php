@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\PermissionChecker\Checker\Notification;
+namespace Keboola\PermissionChecker\Check\Notification;
 
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
-use Keboola\PermissionChecker\PermissionCheckerInterface;
+use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 
-class CanModifySubscriptions implements PermissionCheckerInterface
+class CanModifySubscriptions implements PermissionCheckInterface
 {
     public function __construct(
         private readonly BranchType $branchType,

@@ -11,7 +11,7 @@ class PermissionChecker
     /**
      * @throws PermissionDeniedException
      */
-    public function checkPermissions(StorageApiTokenInterface $token, PermissionCheckerInterface $checker): void
+    public function checkPermissions(StorageApiTokenInterface $token, PermissionCheckInterface $checker): void
     {
         $adaptedStorageToken = StorageApiToken::fromTokenInterface($token);
         $checker->checkPermissions($adaptedStorageToken);

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\PersmissionChecker\Tests\Checker\JobQueue;
 
 use Keboola\PermissionChecker\BranchType;
-use Keboola\PermissionChecker\Checker\JobQueue\CanRunJob;
+use Keboola\PermissionChecker\Check\JobQueue\CanRunJob;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;

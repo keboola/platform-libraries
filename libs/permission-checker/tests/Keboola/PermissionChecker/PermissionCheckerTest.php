@@ -29,7 +29,7 @@ class PermissionCheckerTest extends TestCase
 
         $expectedInternalToken = StorageApiToken::fromTokenInterface($token);
 
-        $checker = $this->createMock(PermissionCheckerInterface::class);
+        $checker = $this->createMock(PermissionCheckInterface::class);
         $checker->expects(self::once())->method('checkPermissions')->with($expectedInternalToken);
 
         $permissionChecker = new PermissionChecker();

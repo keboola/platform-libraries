@@ -6,7 +6,7 @@ namespace Keboola\PermissionChecker;
 
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 
-interface PermissionCheckerInterface
+interface PermissionCheckInterface
 {
     /**
      * Checks if the token has permissions to perform the action.

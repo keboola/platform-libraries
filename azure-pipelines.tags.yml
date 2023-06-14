@@ -42,6 +42,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
+    - repository: api-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/api-bundle
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -111,3 +115,11 @@ jobs:
       targetRepo: settle
       libraryPath: libs/settle
       tagPrefix: settle/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/api-bundle/')
+      sourceRepo: platform-libraries
+      targetRepo: api-bundle
+      libraryPath: libs/api-bundle
+      tagPrefix: api-bundle/

@@ -30,6 +30,16 @@ services:
       args:
         PHP_VERSION: "8.1"
 
+  dev-api-bundle:
+    profiles: [dev]
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.1"
+    working_dir: /code/libs/api-bundle
+    volumes:
+      - .:/code
+
   dev-azure-api-client:
     profiles: [dev]
     build:
@@ -175,3 +185,10 @@ services:
     build:
       context: .
       target: settle
+
+  ci-api-bundle:
+    profiles: [ ci ]
+    image: keboola/api-bundle
+    build:
+      context: .
+      target: api-bundle

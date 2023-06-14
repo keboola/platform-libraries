@@ -1,0 +1,10 @@
+services:
+  Keboola\ApiBundle\Security\AttributeAuthenticator:
+
+  Keboola\ApiBundle\Security\AttributeListener:
+
+  Keboola\ApiBundle\Security\ManageToken\ManageApiClientFactory:
+
+  Keboola\ApiBundle\Security\ManageToken\ManageTokenAuthenticator:
+
+  Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator:

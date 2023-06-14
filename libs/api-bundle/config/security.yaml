@@ -1,0 +1,16 @@
+security:
+    enable_authenticator_manager: true
+
+    firewalls:
+        no-auth:
+            pattern: ^(/|/health-check)$
+            security: false
+
+        manage:
+            lazy: true
+            stateless: true
+            custom_authenticators:
+                - Keboola\ApiBundle\Security\AttributeAuthenticator
+
+    access_control:
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }

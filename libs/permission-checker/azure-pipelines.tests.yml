@@ -1,0 +1,12 @@
+jobs:
+  - job:
+    displayName: Tests
+    steps:
+      - template: ../../azure-pipelines/steps/restore-docker-artifacts.yml
+
+      - script: docker-compose --profile dev run --rm dev-permission-checker bash -c 'composer install && composer ci'
+        displayName: Run tests
+
+      - script: docker-compose logs
+        displayName: Show logs
+        condition: failed()

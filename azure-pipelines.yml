@@ -34,6 +34,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/output-mapping
+    - repository: permission-checker
+      type: github
+      endpoint: keboola
+      name: keboola/permission-checker
     - repository: configuration-variables-resolver
       type: github
       endpoint: keboola
@@ -63,6 +67,7 @@ stages:
                 loggingBundle:libs/logging-bundle \
                 stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
+                permissionChecker:libs/permission-checker \
                 configurationVariablesResolver:libs/configuration-variables-resolver \
                 settle:libs/settle
             displayName: 'Find changes'
@@ -121,6 +126,14 @@ stages:
     jobs:
       - template: libs/output-mapping/azure-pipelines.tests.yml
 
+  - stage: tests_permissionChecker
+    displayName: Tests - Permission Checker
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_permissionChecker'])
+    jobs:
+      - template: libs/permission-checker/azure-pipelines.tests.yml
+
   - stage: tests_staging_provider
     displayName: Tests - Staging Provider
     lockBehavior: sequential
@@ -153,6 +166,7 @@ stages:
       - tests_k8sClient
       - tests_loggingBundle
       - tests_output_mapping
+      - tests_permissionChecker
       - tests_staging_provider
       - tests_configuration_variables_resolver
       - tests_settle
@@ -163,6 +177,7 @@ stages:
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_configuration_variables_resolver.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped')
@@ -224,6 +239,14 @@ stages:
           targetRepo: output-mapping
           libraryPath: libs/output-mapping
           tagPrefix: output-mapping/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_permissionChecker'])
+          sourceRepo: platform-libraries
+          targetRepo: permission-checker
+          libraryPath: libs/permission-checker
+          tagPrefix: permission-checker/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

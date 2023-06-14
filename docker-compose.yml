@@ -16,7 +16,6 @@ services:
 
   dev74:
     <<: *dev
-    image: keboola/platform-libraries-74
     build:
       <<: *dev-build
       args:
@@ -24,7 +23,6 @@ services:
 
   dev81: &dev81
     <<: *dev
-    image: keboola/platform-libraries-81
     build:
       <<: *dev-build
       args:
@@ -41,6 +39,10 @@ services:
       - .:/code
     depends_on:
       - mockserver
+
+  dev-permission-checker:
+    <<: *dev81
+    working_dir: /code/libs/permission-checker
 
   dev-input-mapping:
     profiles: [dev]

@@ -52,32 +52,37 @@ class StorageApiToken implements TokenInterface
         return (float) ($this->tokenInfo['owner']['payAsYouGo']['purchasedCredits'] ?? 0.0);
     }
 
-    public function getRoles(): array
+    public function getSamlUserId(): ?string
     {
-        return [];
-    }
-
-    public function getPassword(): ?string
-    {
-        return null;
-    }
-
-    public function getSalt(): ?string
-    {
-        return null;
+        return $this->tokenInfo['admin']['samlParameters']['userId'] ?? null;
     }
 
     public function eraseCredentials(): void
     {
     }
 
-    public function getUsername(): string
+    public function getUserIdentifier(): string
+    {
+        return $this->getTokenId();
+    }
+
+    public function getFileStorageProvider(): string
+    {
+        return $this->tokenInfo['owner']['fileStorageProvider'];
+    }
+
+    public function getProjectName(): string
+    {
+        return $this->tokenInfo['owner']['name'];
+    }
+
+    public function getTokenDesc(): string
     {
         return $this->tokenInfo['description'];
     }
 
-    public function getUserIdentifier(): string
+    public function getRoles(): array
     {
-        return $this->getTokenId();
+        return !empty($this->tokenInfo['admin']['role']) ? [$this->tokenInfo['admin']['role']] : [];
     }
 }

@@ -14,7 +14,7 @@ use Keboola\PermissionChecker\StorageApiToken;
 class CanModifyVariable implements PermissionCheckInterface
 {
     public function __construct(
-        private readonly BranchType $branchType,
+        private readonly ?BranchType $branchType,
     ) {
     }
 
@@ -30,16 +30,16 @@ class CanModifyVariable implements PermissionCheckInterface
     private function checkProtectedDefaultBranch(Role $role): void
     {
         $isAllowed = match ($role) {
-            Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,
+            Role::PRODUCTION_MANAGER => $this->branchType === null || $this->branchType === BranchType::DEFAULT,
             Role::DEVELOPER, Role::REVIEWER => $this->branchType === BranchType::DEV,
             default => false,
         };
 
         if (!$isAllowed) {
             throw new PermissionDeniedException(sprintf(
-                'Role "%s" is not allowed to modify variables on %s branch',
+                'Role "%s" is not allowed to modify variables %s branch',
                 $role->value,
-                $this->branchType->value,
+                $this->branchType ? 'on ' . $this->branchType->value : 'without',
             ));
         }
     }

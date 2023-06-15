@@ -15,6 +15,11 @@ class CanModifyVariableTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
+        yield 'simple token without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(),
+        ];
+
         yield 'simple token on default branch' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(),
@@ -41,8 +46,16 @@ class CanModifyVariableTest extends TestCase
             ),
         ];
 
-        yield 'productionManager role on protected dev branch' => [
+        yield 'productionManager role on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(
+                features: ['protected-default-branch'],
+                role: 'productionManager',
+            ),
+        ];
+
+        yield 'productionManager role on protected-default-branch (without branch)' => [
+            'branchType' => null,
             'token' => new StorageApiToken(
                 features: ['protected-default-branch'],
                 role: 'productionManager',
@@ -52,7 +65,7 @@ class CanModifyVariableTest extends TestCase
 
     /** @dataProvider provideValidPermissionsCheckData */
     public function testValidPermissionsCheck(
-        BranchType $branchType,
+        ?BranchType $branchType,
         StorageApiToken $token,
     ): void {
         $this->expectNotToPerformAssertions();
@@ -64,20 +77,31 @@ class CanModifyVariableTest extends TestCase
     public static function provideInvalidPermissionsCheckData(): iterable
     {
         yield 'readOnly role' => [
-            'branchType' => BranchType::DEFAULT,
+            'branchType' => null,
             'token' => new StorageApiToken(
                 role: 'readOnly',
             ),
             'error' => PermissionDeniedException::roleDenied(Role::READ_ONLY, 'modify variable'),
         ];
 
-        yield 'simple token on protected dev branch' => [
-            'branchType' => BranchType::DEV,
+        yield 'simple token on protected-default-branch' => [
+            'branchType' => null,
             'token' => new StorageApiToken(
                 features: ['protected-default-branch'],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" is not allowed to modify variables on dev branch',
+                'Role "none" is not allowed to modify variables without branch',
+            ),
+        ];
+
+        yield 'developer role on protected-default-branch (without branch)' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(
+                features: ['protected-default-branch'],
+                role: 'developer',
+            ),
+            'error' => new PermissionDeniedException(
+                'Role "developer" is not allowed to modify variables without branch',
             ),
         ];
 
@@ -89,6 +113,17 @@ class CanModifyVariableTest extends TestCase
             ),
             'error' => new PermissionDeniedException(
                 'Role "developer" is not allowed to modify variables on default branch',
+            ),
+        ];
+
+        yield 'reviewer role on protected-default-branch (without branch)' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(
+                features: ['protected-default-branch'],
+                role: 'reviewer',
+            ),
+            'error' => new PermissionDeniedException(
+                'Role "reviewer" is not allowed to modify variables without branch',
             ),
         ];
 
@@ -117,7 +152,7 @@ class CanModifyVariableTest extends TestCase
 
     /** @dataProvider provideInvalidPermissionsCheckData */
     public function testInvalidPermissionsCheck(
-        BranchType $branchType,
+        ?BranchType $branchType,
         StorageApiToken $token,
         PermissionDeniedException $error,
     ): void {

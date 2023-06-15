@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\ManageToken;
+namespace Keboola\ApiBundle\Security\ManageApiToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
 
-class ManageToken implements TokenInterface
+class ManageApiToken implements TokenInterface
 {
     public function __construct(
         private readonly int $id,

@@ -7,7 +7,7 @@ namespace Keboola\ApiBundle\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class ManageTokenAuth implements AuthAttributeInterface
+class ManageApiTokenAuth implements AuthAttributeInterface
 {
     public function __construct(
         readonly array $scopes = [],

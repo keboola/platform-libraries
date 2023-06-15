@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Security;
 
-use Keboola\ApiBundle\Attribute\StorageTokenAuth;
+use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 
-#[StorageTokenAuth(['foo-feature'])]
+#[StorageApiTokenAuth(['foo-feature'])]
 class AuthenticatedController
 {
     public function __invoke(): void

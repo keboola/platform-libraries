@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\PersmissionChecker\Tests\Checker\JobQueue;
+namespace Keboola\PersmissionChecker\Tests\Check\JobQueue;
 
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Check\JobQueue\CanRunJob;

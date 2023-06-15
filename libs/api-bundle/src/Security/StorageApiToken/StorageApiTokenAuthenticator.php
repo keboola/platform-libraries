@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Attribute\StorageTokenAuth;
+use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\StorageApi\ClientException;
@@ -32,7 +32,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): StorageApiToken
     {
-        assert($authAttribute instanceof StorageTokenAuth);
+        assert($authAttribute instanceof StorageApiTokenAuth);
 
         try {
             if (!$this->requestStack->getMainRequest()) {
@@ -50,7 +50,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void
     {
-        assert($authAttribute instanceof StorageTokenAuth);
+        assert($authAttribute instanceof StorageApiTokenAuth);
         assert($token instanceof StorageApiToken);
 
         $missingFeatures = array_diff($authAttribute->features, $token->getFeatures());

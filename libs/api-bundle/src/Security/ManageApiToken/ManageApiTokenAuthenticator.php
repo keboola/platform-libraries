@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\ManageToken;
+namespace Keboola\ApiBundle\Security\ManageApiToken;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Attribute\ManageTokenAuth;
+use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
@@ -13,9 +13,9 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
- * @implements TokenAuthenticatorInterface<ManageToken>
+ * @implements TokenAuthenticatorInterface<ManageApiToken>
  */
-class ManageTokenAuthenticator implements TokenAuthenticatorInterface
+class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
     public function __construct(
         private readonly ManageApiClientFactory $manageApiClientFactory,
@@ -27,9 +27,9 @@ class ManageTokenAuthenticator implements TokenAuthenticatorInterface
         return 'X-KBC-ManageApiToken';
     }
 
-    public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): ManageToken
+    public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): ManageApiToken
     {
-        assert($authAttribute instanceof ManageTokenAuth);
+        assert($authAttribute instanceof ManageApiTokenAuth);
 
         $manageApiClient = $this->manageApiClientFactory->getClient($token);
 
@@ -39,13 +39,13 @@ class ManageTokenAuthenticator implements TokenAuthenticatorInterface
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
 
-        return ManageToken::fromVerifyResponse($tokenData);
+        return ManageApiToken::fromVerifyResponse($tokenData);
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void
     {
-        assert($authAttribute instanceof ManageTokenAuth);
-        assert($token instanceof ManageToken);
+        assert($authAttribute instanceof ManageApiTokenAuth);
+        assert($token instanceof ManageApiToken);
 
         $missingScopes = array_diff($authAttribute->scopes, $token->getScopes());
         if (count($missingScopes) > 0) {

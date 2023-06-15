@@ -7,10 +7,10 @@ namespace Keboola\ApiBundle\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class StorageTokenAuth implements AuthAttributeInterface
+class StorageApiTokenAuth implements AuthAttributeInterface
 {
     public function __construct(
-        public readonly array $features,
+        public readonly array $features = [],
     ) {
     }
 }

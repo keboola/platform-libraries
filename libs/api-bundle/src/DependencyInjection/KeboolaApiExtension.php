@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\DependencyInjection;
 
-use Keboola\ApiBundle\Attribute\ManageTokenAuth;
-use Keboola\ApiBundle\Security\ManageToken\ManageApiClientFactory;
-use Keboola\ApiBundle\Security\ManageToken\ManageTokenAuthenticator;
+use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
+use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ManageApi\Client as ManageApiClient;
@@ -52,7 +53,7 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$requestStack', new Reference('request_stack'))
         ;
 
-        $authenticators[StorageApiToken::class] = new Reference(StorageApiTokenAuthenticator::class);
+        $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }
 
     private function setupManageApiAuthenticator(
@@ -69,10 +70,10 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$storageApiUrl', $config['storage_api_url'])
         ;
 
-        $container->register(ManageTokenAuthenticator::class)
+        $container->register(ManageApiTokenAuthenticator::class)
             ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
         ;
 
-        $authenticators[ManageTokenAuth::class] = new Reference(ManageTokenAuthenticator::class);
+        $authenticators[ManageApiTokenAuth::class] = new Reference(ManageApiTokenAuthenticator::class);
     }
 }

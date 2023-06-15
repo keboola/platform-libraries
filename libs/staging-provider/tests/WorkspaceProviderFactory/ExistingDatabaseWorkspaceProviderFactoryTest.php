@@ -14,7 +14,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
 {
     public function testWorkspaceIsFetched(): void
     {
-        $workspaceId = 'my.workspace';
+        $workspaceId = '1234';
         $workspacePassword = 'pwd';
         $stagingClass = SnowflakeWorkspaceStaging::class;
 
@@ -58,7 +58,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
 
     public function testWorkspaceBackendTypeIsChecked(): void
     {
-        $workspaceId = 'my.workspace';
+        $workspaceId = '1234';
         $workspacePassword = 'pwd';
         $stagingClass = SnowflakeWorkspaceStaging::class;
 

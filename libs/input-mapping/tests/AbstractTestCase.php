@@ -78,7 +78,7 @@ abstract class AbstractTestCase extends TestCase
     {
         if ($this->workspaceId) {
             $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
-            $workspaces->deleteWorkspace($this->workspaceId, [], true);
+            $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             $this->workspaceId = null;
         }
         parent::tearDown();

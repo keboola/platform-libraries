@@ -23,7 +23,7 @@ class ExistingDatabaseWorkspaceProviderFactory extends AbstractCachedWorkspacePr
      */
     protected function getWorkspaceData(string $workspaceClass): array
     {
-        $data = $this->workspacesApiClient->getWorkspace($this->workspaceId);
+        $data = $this->workspacesApiClient->getWorkspace((int) $this->workspaceId);
         $data['connection']['password'] = $this->workspacePassword;
 
         if ($data['connection']['backend'] !== $workspaceClass::getType()) {

@@ -15,7 +15,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
 {
     public function testWorkspaceIsFetched(): void
     {
-        $workspaceId = 'my.workspace';
+        $workspaceId = '1234';
         $workspaceConnectionString = 'someRandomString';
         $stagingClass = AbsWorkspaceStaging::class;
 
@@ -48,7 +48,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
 
     public function testWorkspaceBackendTypeIsChecked(): void
     {
-        $workspaceId = 'my.workspace';
+        $workspaceId = '1234';
         $workspaceConnectionString = 'someRandomString';
         $stagingClass = SnowflakeWorkspaceStaging::class;
 

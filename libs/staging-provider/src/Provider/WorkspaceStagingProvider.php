@@ -43,7 +43,7 @@ class WorkspaceStagingProvider extends AbstractStagingProvider
 
     public function cleanup(): void
     {
-        $this->workspacesApiClient->deleteWorkspace($this->getWorkspaceId(), [], true);
+        $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);
     }
 
     public function getBackendSize(): ?string

@@ -24,7 +24,7 @@ class ExistingFilesystemWorkspaceProviderFactory extends AbstractCachedWorkspace
      */
     protected function getWorkspaceData(string $workspaceClass): array
     {
-        $data = $this->workspacesApiClient->getWorkspace($this->workspaceId);
+        $data = $this->workspacesApiClient->getWorkspace((int) $this->workspaceId);
         $data['connection']['connectionString'] = $this->connectionString;
 
         if ($data['connection']['backend'] !== $workspaceClass::getType()) {

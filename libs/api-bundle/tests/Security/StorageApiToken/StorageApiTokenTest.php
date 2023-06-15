@@ -30,6 +30,7 @@ class StorageApiTokenTest extends TestCase
                     ],
                     'role' => 'admin',
                 ],
+                'componentAccess' => ['keboola.component'],
             ],
             'tokenValue',
         );
@@ -46,7 +47,9 @@ class StorageApiTokenTest extends TestCase
         self::assertSame('aws', $token->getFileStorageProvider());
         self::assertSame('my project', $token->getProjectName());
         self::assertSame('token description', $token->getTokenDesc());
+        self::assertSame('admin', $token->getRole());
         self::assertSame(['admin'], $token->getRoles());
+        self::assertSame(['keboola.component'], $token->getAllowedComponents());
 
         self::assertSame(
             [
@@ -67,6 +70,7 @@ class StorageApiTokenTest extends TestCase
                     ],
                     'role' => 'admin',
                 ],
+                'componentAccess' => ['keboola.component'],
             ],
             $token->getTokenInfo(),
         );
@@ -96,6 +100,24 @@ class StorageApiTokenTest extends TestCase
             'tokenValue',
         );
 
+        self::assertNull($token->getRole());
         self::assertSame([], $token->getRoles());
+    }
+
+    public function testNoComponentAccessLimits(): void
+    {
+        $token = new StorageApiToken(
+            [
+                'id' => '123',
+                'owner' => [
+                    'id' => '456',
+                    'name' => 'my project',
+                    'features' => [],
+                ],
+            ],
+            'tokenValue',
+        );
+
+        self::assertSame([], $token->getAllowedComponents());
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Util\ControllerReflector;
+use Keboola\PermissionChecker\PermissionChecker;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -23,5 +24,8 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             service('service_container'),
         ])
+
+        ->set(PermissionChecker::class)
+        ->alias('keboola.api_bundle.security.permission_checker', PermissionChecker::class)
     ;
 };

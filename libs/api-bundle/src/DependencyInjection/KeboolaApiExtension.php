@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\DependencyInjection;
 
 use Keboola\ApiBundle\Attribute\ManageTokenAuth;
+use Keboola\ApiBundle\Attribute\StorageTokenAuth;
 use Keboola\ApiBundle\Security\ManageToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageToken\ManageTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
@@ -52,7 +53,7 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$requestStack', new Reference('request_stack'))
         ;
 
-        $authenticators[StorageApiToken::class] = new Reference(StorageApiTokenAuthenticator::class);
+        $authenticators[StorageTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }
 
     private function setupManageApiAuthenticator(

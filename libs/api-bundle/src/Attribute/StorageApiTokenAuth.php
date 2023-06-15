@@ -10,7 +10,7 @@ use Attribute;
 class StorageApiTokenAuth implements AuthAttributeInterface
 {
     public function __construct(
-        public readonly array $features,
+        public readonly array $features = [],
     ) {
     }
 }

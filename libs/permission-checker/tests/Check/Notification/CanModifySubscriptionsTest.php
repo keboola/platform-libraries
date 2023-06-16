@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\PersmissionChecker\Tests\Checker\Notification;
+namespace Keboola\PersmissionChecker\Tests\Check\Notification;
 
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Check\Notification\CanModifySubscriptions;

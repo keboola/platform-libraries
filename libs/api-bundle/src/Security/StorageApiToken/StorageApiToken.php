@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
+use Keboola\PermissionChecker\StorageApiTokenInterface;
 
-class StorageApiToken implements TokenInterface
+class StorageApiToken implements TokenInterface, StorageApiTokenInterface
 {
     public function __construct(
         private readonly array $tokenInfo,
@@ -81,8 +82,18 @@ class StorageApiToken implements TokenInterface
         return $this->tokenInfo['description'];
     }
 
+    public function getRole(): ?string
+    {
+        return $this->tokenInfo['admin']['role'] ?? null;
+    }
+
     public function getRoles(): array
     {
         return !empty($this->tokenInfo['admin']['role']) ? [$this->tokenInfo['admin']['role']] : [];
+    }
+
+    public function getAllowedComponents(): ?array
+    {
+        return $this->tokenInfo['componentAccess'] ?? [];
     }
 }

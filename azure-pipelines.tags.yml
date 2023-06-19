@@ -46,6 +46,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/api-bundle
+    - repository: permission-checker
+      type: github
+      endpoint: keboola
+      name: keboola/permission-checker
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -123,3 +127,11 @@ jobs:
       targetRepo: api-bundle
       libraryPath: libs/api-bundle
       tagPrefix: api-bundle/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/permission-checker/')
+      sourceRepo: platform-libraries
+      targetRepo: permission-checker
+      libraryPath: libs/permission-checker
+      tagPrefix: permission-checker/

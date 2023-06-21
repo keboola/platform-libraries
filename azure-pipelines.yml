@@ -50,6 +50,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
+    - repository: vault-api-client
+      type: github
+      endpoint: keboola
+      name: keboola/vault-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -74,7 +78,8 @@ stages:
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
                 settle:libs/settle \
-                stagingProvider:libs/staging-provider
+                stagingProvider:libs/staging-provider \
+                vaultApiClient:libs/vault-api-client
             displayName: 'Find changes'
             name: findChanges
 
@@ -171,6 +176,14 @@ stages:
     jobs:
       - template: libs/staging-provider/azure-pipelines.tests.yml
 
+  - stage: tests_vaultApiClient
+    displayName: Tests - Vault API Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_vaultApiClient'])
+    jobs:
+      - template: libs/vault-api-client/azure-pipelines.tests.yml
+
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -185,6 +198,7 @@ stages:
       - tests_permissionChecker
       - tests_settle
       - tests_stagingProvider
+      - tests_vaultApiClient
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
@@ -196,7 +210,8 @@ stages:
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -287,3 +302,11 @@ stages:
           targetRepo: staging-provider
           libraryPath: libs/staging-provider
           tagPrefix: staging-provider/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_vaultApiClient'])
+          sourceRepo: platform-libraries
+          targetRepo: vault-api-client
+          libraryPath: libs/vault-api-client
+          tagPrefix: vault-api-client/

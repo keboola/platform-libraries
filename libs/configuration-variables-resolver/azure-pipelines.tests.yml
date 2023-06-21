@@ -4,7 +4,8 @@ jobs:
     parameters:
       jobName: configuration_variables_resolver_tests
       displayName: Configuration Variables Resolver Tests
-      serviceName: ci-configuration-variables-resolver
+      serviceName: dev-configuration-variables-resolver
+      testCommand: bash -c 'composer install && composer ci'
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
       secrets:

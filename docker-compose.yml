@@ -50,9 +50,16 @@ services:
     depends_on:
       - mockserver
 
-  dev-permission-checker:
-    <<: *dev81
-    working_dir: /code/libs/permission-checker
+  dev-configuration-variables-resolver:
+    profiles: [ dev ]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/configuration-variables-resolver
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
 
   dev-input-mapping:
     profiles: [dev]
@@ -62,20 +69,6 @@ services:
     working_dir: /code/libs/input-mapping
     volumes:
       - .:/code
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
-
-  ci-input-mapping:
-    profiles: [ci]
-    image: keboola/input-mapping
-    build:
-      context: .
-      target: input-mapping
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
@@ -94,21 +87,6 @@ services:
     volumes:
       - .:/code
 
-  dev-staging-provider:
-    profiles: [dev]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/staging-provider
-    volumes:
-      - .:/code
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
-
   dev-output-mapping:
     profiles: [dev]
     build:
@@ -125,14 +103,60 @@ services:
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
 
-  ci-staging-provider:
-    profiles: [ci]
-    image: keboola/staging-provider
+  dev-permission-checker:
+    <<: *dev81
+    working_dir: /code/libs/permission-checker
+
+  dev-settle:
+    profiles: [ dev ]
     build:
       context: .
-      target: staging-provider
+      target: dev
+    working_dir: /code/libs/settle
+
+  dev-staging-provider:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    working_dir: /code/libs/staging-provider
+    volumes:
+      - .:/code
     environment:
       - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL
+
+
+  ci-api-bundle:
+    profiles: [ ci ]
+    image: keboola/api-bundle
+    build:
+      context: .
+      target: api-bundle
+
+  ci-configuration-variables-resolver:
+    profiles: [ ci ]
+    image: keboola/configuration-variables-resolver
+    build:
+      context: .
+      target: configuration-variables-resolver
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
+      - STORAGE_API_URL
+
+  ci-input-mapping:
+    profiles: [ci]
+    image: keboola/input-mapping
+    build:
+      context: .
+      target: input-mapping
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
@@ -152,35 +176,6 @@ services:
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
 
-  dev-configuration-variables-resolver:
-    profiles: [ dev ]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/configuration-variables-resolver
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-
-  ci-configuration-variables-resolver:
-    profiles: [ ci ]
-    image: keboola/configuration-variables-resolver
-    build:
-      context: .
-      target: configuration-variables-resolver
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-
-  dev-settle:
-    profiles: [ dev ]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/settle
-
   ci-settle:
     profiles: [ ci ]
     image: keboola/settle
@@ -188,9 +183,15 @@ services:
       context: .
       target: settle
 
-  ci-api-bundle:
-    profiles: [ ci ]
-    image: keboola/api-bundle
+  ci-staging-provider:
+    profiles: [ci]
+    image: keboola/staging-provider
     build:
       context: .
-      target: api-bundle
+      target: staging-provider
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL

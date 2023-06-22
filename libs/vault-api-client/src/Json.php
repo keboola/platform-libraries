@@ -10,7 +10,7 @@ class Json
 {
     public static function encodeArray(array $data): string
     {
-        return (string) json_encode($data, JSON_THROW_ON_ERROR);
+        return json_encode($data, JSON_THROW_ON_ERROR);
     }
 
     public static function decodeArray(string $data): array

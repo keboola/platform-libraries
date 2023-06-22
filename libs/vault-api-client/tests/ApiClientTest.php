@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Keboola\VaultApiClient\Tests;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -24,6 +21,7 @@ use Psr\Log\LoggerInterface;
 
 class ApiClientTest extends TestCase
 {
+    use ApiClientTestTrait;
     use ReflectionPropertyAccessTestCase;
 
     private const BASE_URL = 'https://vault.keboola.com';
@@ -319,6 +317,36 @@ class ApiClientTest extends TestCase
         $apiClient->sendRequest(new Request('DELETE', 'foo/bar'));
     }
 
+    public function testSendRequestWitServerErrorAndDisabledRetry(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                500,
+                [],
+                'Internal Server Error',
+            ),
+        ]);
+
+        $apiClient = new ApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            new ApiClientConfiguration(
+                backoffMaxTries: 0,
+                requestHandler: $requestHandler(...)
+            )
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
+            <<<EOF
+            Server error: `DELETE https://vault.keboola.com/foo/bar` resulted in a `500 Internal Server Error` response:
+            Internal Server Error
+            EOF,
+        );
+
+        $apiClient->sendRequest(new Request('DELETE', 'foo/bar'));
+    }
+
     public function testSendRequestAndMapResponseFailingOnResponseMapping(): void
     {
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -344,37 +372,5 @@ class ApiClientTest extends TestCase
             new Request('GET', 'foo/bar'),
             DummyTestResponse::class,
         );
-    }
-
-    /**
-     * @param list<array{request: Request, response: Response}> $requestsHistory
-     * @param list<Response>                                    $responses
-     * @return HandlerStack
-     */
-    private static function createRequestHandler(?array &$requestsHistory, array $responses): HandlerStack
-    {
-        $requestsHistory = [];
-
-        $stack = HandlerStack::create(new MockHandler($responses));
-        $stack->push(Middleware::history($requestsHistory));
-
-        return $stack;
-    }
-
-    private static function assertRequestEquals(
-        string $method,
-        string $uri,
-        array $headers,
-        ?string $body,
-        Request $request,
-    ): void {
-        self::assertSame($method, $request->getMethod());
-        self::assertSame($uri, $request->getUri()->__toString());
-
-        foreach ($headers as $headerName => $headerValue) {
-            self::assertSame($headerValue, $request->getHeaderLine($headerName));
-        }
-
-        self::assertSame($body ?? '', $request->getBody()->getContents());
     }
 }

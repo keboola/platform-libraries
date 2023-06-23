@@ -50,7 +50,7 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
-    - repository: vault-api-client
+    - repository: vault-api-php-client
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
@@ -307,6 +307,6 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_vaultApiClient'])
           sourceRepo: platform-libraries
-          targetRepo: vault-api-client
+          targetRepo: vault-api-php-client
           libraryPath: libs/vault-api-client
           tagPrefix: vault-api-client/

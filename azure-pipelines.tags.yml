@@ -50,7 +50,7 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
-    - repository: vault-api-client
+    - repository: vault-api-php-client
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
@@ -145,6 +145,6 @@ jobs:
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/vault-api-client/')
       sourceRepo: platform-libraries
-      targetRepo: vault-api-client
+      targetRepo: vault-api-php-client
       libraryPath: libs/vault-api-client
       tagPrefix: vault-api-client/

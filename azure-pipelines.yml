@@ -10,10 +10,18 @@ pool:
 
 resources:
   repositories:
+    - repository: api-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/api-bundle
     - repository: azure-api-client
       type: github
       endpoint: keboola
       name: keboola/azure-api-client
+    - repository: configuration-variables-resolver
+      type: github
+      endpoint: keboola
+      name: keboola/configuration-variables-resolver
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -26,10 +34,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/logging-bundle
-    - repository: staging-provider
-      type: github
-      endpoint: keboola
-      name: keboola/staging-provider
     - repository: output-mapping
       type: github
       endpoint: keboola
@@ -38,18 +42,14 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
-    - repository: configuration-variables-resolver
-      type: github
-      endpoint: keboola
-      name: keboola/configuration-variables-resolver
     - repository: settle
       type: github
       endpoint: keboola
       name: keboola/settle
-    - repository: api-bundle
+    - repository: staging-provider
       type: github
       endpoint: keboola
-      name: keboola/api-bundle
+      name: keboola/staging-provider
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -65,16 +65,16 @@ stages:
         steps:
           - script: |
               ./bin/ci-find-changes.sh main \
+                apiBundle:libs/api-bundle \
                 azureApiClient:libs/azure-api-client \
+                configurationVariablesResolver:libs/configuration-variables-resolver \
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
                 loggingBundle:libs/logging-bundle \
-                stagingProvider:libs/staging-provider \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
-                configurationVariablesResolver:libs/configuration-variables-resolver \
                 settle:libs/settle \
-                apiBundle:libs/api-bundle
+                stagingProvider:libs/staging-provider
             displayName: 'Find changes'
             name: findChanges
 
@@ -91,6 +91,14 @@ stages:
             artifact: docker-images
             displayName: Publish artifacts
 
+  - stage: tests_apiBundle
+    displayName: Tests - API Bundle
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_apiBundle'])
+    jobs:
+      - template: libs/api-bundle/azure-pipelines.tests.yml
+
   - stage: tests_azureApiClient
     displayName: Tests - Azure API Client
     lockBehavior: sequential
@@ -99,7 +107,15 @@ stages:
     jobs:
       - template: libs/azure-api-client/azure-pipelines.tests.yml
 
-  - stage: tests_input_mapping
+  - stage: tests_configurationVariablesResolver
+    displayName: Tests - Variables Resolver
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_configurationVariablesResolver'])
+    jobs:
+      - template: libs/configuration-variables-resolver/azure-pipelines.tests.yml
+
+  - stage: tests_inputMapping
     displayName: Tests - Input Mapping
     lockBehavior: sequential
     dependsOn: build
@@ -123,7 +139,7 @@ stages:
     jobs:
       - template: libs/logging-bundle/azure-pipelines.tests.yml
 
-  - stage: tests_output_mapping
+  - stage: tests_outputMapping
     displayName: Tests - Output Mapping
     lockBehavior: sequential
     dependsOn: build
@@ -139,22 +155,6 @@ stages:
     jobs:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
-  - stage: tests_staging_provider
-    displayName: Tests - Staging Provider
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_stagingProvider'])
-    jobs:
-      - template: libs/staging-provider/azure-pipelines.tests.yml
-
-  - stage: tests_configuration_variables_resolver
-    displayName: Tests - Variables Resolver
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_configurationVariablesResolver'])
-    jobs:
-      - template: libs/configuration-variables-resolver/azure-pipelines.tests.yml
-
   - stage: tests_settle
     displayName: Tests - Settle
     lockBehavior: sequential
@@ -163,39 +163,40 @@ stages:
     jobs:
       - template: libs/settle/azure-pipelines.tests.yml
 
-  - stage: tests_api_bundle
-    displayName: Tests - API Bundle
+  - stage: tests_stagingProvider
+    displayName: Tests - Staging Provider
     lockBehavior: sequential
     dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_apiBundle'])
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_stagingProvider'])
     jobs:
-      - template: libs/api-bundle/azure-pipelines.tests.yml
+      - template: libs/staging-provider/azure-pipelines.tests.yml
 
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
+      - build
+      - tests_apiBundle
       - tests_azureApiClient
-      - tests_input_mapping
+      - tests_configurationVariablesResolver
+      - tests_inputMapping
       - tests_k8sClient
       - tests_loggingBundle
-      - tests_output_mapping
+      - tests_outputMapping
       - tests_permissionChecker
-      - tests_staging_provider
-      - tests_configuration_variables_resolver
       - tests_settle
-      - tests_api_bundle
+      - tests_stagingProvider
     condition: |
       and(
+        in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_azureApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_input_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_configurationVariablesResolver.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_inputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_output_mapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_staging_provider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_configuration_variables_resolver.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_api_bundle.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -209,11 +210,27 @@ stages:
     jobs:
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_apiBundle'])
+          sourceRepo: platform-libraries
+          targetRepo: api-bundle
+          libraryPath: libs/api-bundle
+          tagPrefix: api-bundle/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_azureApiClient'])
           sourceRepo: platform-libraries
           targetRepo: azure-api-client
           libraryPath: libs/azure-api-client
           tagPrefix: azure-api-client/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_configurationVariablesResolver'])
+          sourceRepo: platform-libraries
+          targetRepo: configuration-variables-resolver
+          libraryPath: libs/configuration-variables-resolver
+          tagPrefix: configuration-variables-resolver/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
@@ -241,14 +258,6 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_stagingProvider'])
-          sourceRepo: platform-libraries
-          targetRepo: staging-provider
-          libraryPath: libs/staging-provider
-          tagPrefix: staging-provider/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_outputMapping'])
           sourceRepo: platform-libraries
           targetRepo: output-mapping
@@ -265,14 +274,6 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_configurationVariablesResolver'])
-          sourceRepo: platform-libraries
-          targetRepo: configuration-variables-resolver
-          libraryPath: libs/configuration-variables-resolver
-          tagPrefix: configuration-variables-resolver/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_settle'])
           sourceRepo: platform-libraries
           targetRepo: settle
@@ -281,8 +282,8 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_apiBundle'])
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_stagingProvider'])
           sourceRepo: platform-libraries
-          targetRepo: api-bundle
-          libraryPath: libs/api-bundle
-          tagPrefix: api-bundle/
+          targetRepo: staging-provider
+          libraryPath: libs/staging-provider
+          tagPrefix: staging-provider/

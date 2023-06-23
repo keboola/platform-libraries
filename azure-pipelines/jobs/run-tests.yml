@@ -43,7 +43,7 @@ jobs:
     steps:
       - template: ../steps/restore-docker-artifacts.yml
 
-      - script: docker-compose --profile ci run --rm ${{ parameters.serviceName }} ${{ parameters.testCommand }}
+      - script: docker-compose run --rm ${{ parameters.serviceName }} bash -c "${{ parameters.testCommand }}"
         displayName: Run tests
         env: ${{ parameters.secrets }}
 

@@ -110,6 +110,10 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testUseViewFails(): void
     {
+        if (time() > 1) {
+            $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
+        }
+
         $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(

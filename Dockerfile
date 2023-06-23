@@ -2,7 +2,7 @@
 
 ARG PHP_VERSION=8.1
 
-FROM php:${PHP_VERSION}-cli AS base
+FROM php:${PHP_VERSION}-cli as dev
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_FLAGS="--prefer-dist --no-interaction"
@@ -24,95 +24,4 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN pecl install xdebug-3.1.6 \
  && docker-php-ext-enable xdebug
 
-
-FROM base AS dev
 WORKDIR /code
-
-
-FROM base AS input-mapping
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=input-mapping
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./
-
-
-FROM base AS staging-provider
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=staging-provider
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./
-
-
-FROM base AS output-mapping
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=output-mapping
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./
-
-
-FROM base AS configuration-variables-resolver
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=configuration-variables-resolver
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./
-
-
-FROM base AS settle
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=settle
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./
-
-FROM base AS api-bundle
-ARG COMPOSER_MIRROR_PATH_REPOS=1
-ARG COMPOSER_HOME=/tmp/composer
-ENV LIB_NAME=api-bundle
-ENV LIB_HOME=/code/${LIB_NAME}
-WORKDIR ${LIB_HOME}
-
-COPY libs/${LIB_NAME}/composer.json ./
-RUN --mount=type=bind,target=/libs,source=libs \
-    --mount=type=cache,id=composer,target=${COMPOSER_HOME} \
-    composer install $COMPOSER_FLAGS
-
-COPY libs/${LIB_NAME} ./

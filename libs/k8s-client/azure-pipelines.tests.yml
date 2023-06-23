@@ -19,7 +19,7 @@ jobs:
           AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
           AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
 
-      - script: docker-compose --profile dev run --rm dev-k8s-client bash -c 'composer install && composer ci'
+      - script: docker-compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
         displayName: Run tests
 
       - script: docker-compose logs
@@ -46,7 +46,7 @@ jobs:
           AWS_ACCESS_KEY_ID: $(K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID)
           AWS_SECRET_ACCESS_KEY: $(K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY)
 
-      - script: docker-compose --profile dev run --rm dev-k8s-client bash -c 'composer install && composer ci'
+      - script: docker-compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
         displayName: Run tests
 
       - script: docker-compose logs

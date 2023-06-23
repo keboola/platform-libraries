@@ -4,4 +4,5 @@ jobs:
     parameters:
       jobName: settle_tests
       displayName: Settle Tests
-      serviceName: ci-settle
+      serviceName: dev-settle
+      testCommand: bash -c 'composer install && composer ci'

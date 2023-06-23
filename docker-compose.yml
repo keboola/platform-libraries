@@ -5,10 +5,8 @@ services:
     image: mockserver/mockserver:5.13.2
 
   dev: &dev
-    profiles: [ ci, dev ]
     build: &dev-build
       context: .
-      target: dev
     working_dir: /code
     command: [/bin/bash]
     volumes:
@@ -29,53 +27,30 @@ services:
         PHP_VERSION: "8.1"
 
   dev-api-bundle:
-    profiles: [dev]
-    build:
-      <<: *dev-build
-      args:
-        PHP_VERSION: "8.1"
+    <<: *dev81
+    image: keboola/api-bundle
     working_dir: /code/libs/api-bundle
-    volumes:
-      - .:/code
 
   dev-azure-api-client:
-    profiles: [dev]
-    build:
-      <<: *dev-build
-      args:
-        PHP_VERSION: "8.1"
+    <<: *dev81
+    image: keboola/azure-api-client
     working_dir: /code/libs/azure-api-client
-    volumes:
-      - .:/code
     depends_on:
       - mockserver
 
-  dev-permission-checker:
-    <<: *dev81
-    working_dir: /code/libs/permission-checker
-
-  dev-input-mapping:
-    profiles: [dev]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/input-mapping
-    volumes:
-      - .:/code
+  dev-configuration-variables-resolver:
+    <<: *dev
+    image: keboola/configuration-variables-resolver
+    working_dir: /code/libs/configuration-variables-resolver
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
 
-  ci-input-mapping:
-    profiles: [ci]
+  dev-input-mapping:
+    <<: *dev
     image: keboola/input-mapping
-    build:
-      context: .
-      target: input-mapping
+    working_dir: /code/libs/input-mapping
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
@@ -85,65 +60,14 @@ services:
       - SYNAPSE_STORAGE_API_URL
 
   dev-k8s-client:
-    profiles: [dev]
-    build:
-      <<: *dev-build
-      args:
-        PHP_VERSION: "8.1"
+    <<: *dev81
+    image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
-    volumes:
-      - .:/code
-
-  dev-staging-provider:
-    profiles: [dev]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/staging-provider
-    volumes:
-      - .:/code
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
 
   dev-output-mapping:
-    profiles: [dev]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/output-mapping
-    volumes:
-      - .:/code
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
-
-  ci-staging-provider:
-    profiles: [ci]
-    image: keboola/staging-provider
-    build:
-      context: .
-      target: staging-provider
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_URL
-      - RUN_SYNAPSE_TESTS
-      - SYNAPSE_STORAGE_API_TOKEN
-      - SYNAPSE_STORAGE_API_URL
-
-  ci-output-mapping:
-    profiles: [ci]
+    <<: *dev
     image: keboola/output-mapping
-    build:
-      context: .
-      target: output-mapping
+    working_dir: /code/libs/output-mapping
     environment:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
@@ -152,45 +76,23 @@ services:
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
 
-  dev-configuration-variables-resolver:
-    profiles: [ dev ]
-    build:
-      context: .
-      target: dev
-    working_dir: /code/libs/configuration-variables-resolver
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
-
-  ci-configuration-variables-resolver:
-    profiles: [ ci ]
-    image: keboola/configuration-variables-resolver
-    build:
-      context: .
-      target: configuration-variables-resolver
-    environment:
-      - STORAGE_API_TOKEN
-      - STORAGE_API_TOKEN_MASTER
-      - STORAGE_API_URL
+  dev-permission-checker:
+    <<: *dev81
+    image: keboola/permission-checker
+    working_dir: /code/libs/permission-checker
 
   dev-settle:
-    profiles: [ dev ]
-    build:
-      context: .
-      target: dev
+    <<: *dev
+    image: keboola/settle
     working_dir: /code/libs/settle
 
-  ci-settle:
-    profiles: [ ci ]
-    image: keboola/settle
-    build:
-      context: .
-      target: settle
-
-  ci-api-bundle:
-    profiles: [ ci ]
-    image: keboola/api-bundle
-    build:
-      context: .
-      target: api-bundle
+  dev-staging-provider:
+    <<: *dev
+    image: keboola/staging-provider
+    working_dir: /code/libs/staging-provider
+    environment:
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+      - RUN_SYNAPSE_TESTS
+      - SYNAPSE_STORAGE_API_TOKEN
+      - SYNAPSE_STORAGE_API_URL

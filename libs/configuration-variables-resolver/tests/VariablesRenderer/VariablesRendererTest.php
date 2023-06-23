@@ -70,27 +70,6 @@ class VariablesRendererTest extends TestCase
         );
     }
 
-    public function testResolveJsonBreakingValue(): void
-    {
-        $this->expectException(UserException::class);
-        $this->expectExceptionMessage(
-            'Variable replacement resulted in invalid configuration, error: ' .
-            'Control character error, possibly incorrectly encoded',
-        );
-
-        $renderer = new VariablesRenderer($this->logger);
-        $renderer->renderVariables(
-            [
-                'parameters' => [
-                    'param' => '{{ key1 }}',
-                ],
-            ],
-            [
-                'key1' => '"',
-            ]
-        );
-    }
-
     public function testResolveVariablesSpecialCharacterReplacement(): void
     {
         $renderer = new VariablesRenderer($this->logger);
@@ -114,5 +93,50 @@ class VariablesRendererTest extends TestCase
             $configuration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
+    }
+
+    public function testResolveValueEndingWithQuote(): void
+    {
+        $renderer = new VariablesRenderer($this->logger);
+        $configuration = $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => '{{ key1 }}',
+                ],
+            ],
+            [
+                'key1' => '"',
+            ]
+        );
+
+        self::assertSame(
+            [
+                'parameters' => [
+                    'param' => '"',
+                ],
+            ],
+            $configuration,
+        );
+    }
+
+    public function testResolveJsonBreakingValue(): void
+    {
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
+            'Variable replacement resulted in invalid configuration, error: ' .
+            'Control character error, possibly incorrectly encoded',
+        );
+
+        $renderer = new VariablesRenderer($this->logger);
+        $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => '{{{ key1 }}}',
+                ],
+            ],
+            [
+                'key1' => 'value"',
+            ]
+        );
     }
 }

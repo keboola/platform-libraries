@@ -17,7 +17,11 @@ class VariablesRenderer
         private readonly LoggerInterface $logger,
     ) {
         $this->moustache = new Mustache_Engine([
-            'escape' => fn($string) => trim((string) json_encode($string), '"'),
+            // value is always string, so after escaping it using json_encode, it has extra " around it
+            // originally we have used trim((string) json_encode($string), '"') to remove quotes, but it removed also
+            // any quote at the end of the value
+            // instead of trim(), we can just simply remove first and last character as it's always the extra quote
+            'escape' => fn($value) => substr((string) json_encode($value), 1, -1),
         ]);
     }
 

@@ -50,6 +50,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
+    - repository: vault-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/vault-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -135,3 +139,12 @@ jobs:
       targetRepo: staging-provider
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
+
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/vault-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: vault-api-php-client
+      libraryPath: libs/vault-api-client
+      tagPrefix: vault-api-client/

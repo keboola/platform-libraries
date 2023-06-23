@@ -26,6 +26,14 @@ services:
       args:
         PHP_VERSION: "8.1"
 
+  dev82: &dev82
+    <<: *dev
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.2"
+        XDEBUG_VERSION: ""
+
   dev-api-bundle:
     <<: *dev81
     image: keboola/api-bundle
@@ -96,3 +104,8 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+
+  dev-vault-api-client:
+    <<: *dev82
+    image: keboola/vault-api-client
+    working_dir: /code/libs/vault-api-client

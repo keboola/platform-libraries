@@ -7,6 +7,8 @@ namespace Keboola\ConfigurationVariablesResolver\Tests;
 use Keboola\ConfigurationVariablesResolver\ComponentsClientHelper;
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
 use Keboola\ConfigurationVariablesResolver\VariableResolver;
+use Keboola\ConfigurationVariablesResolver\VariablesLoader\ConfigurationVariablesLoader;
+use Keboola\ConfigurationVariablesResolver\VariablesLoader\VaultVariablesLoader;
 use Keboola\StorageApi\Client as StorageClient;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\DevBranches;
@@ -14,562 +16,232 @@ use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
 
 class VariableResolverTest extends TestCase
 {
-    private ClientWrapper $clientWrapper;
-
-    private TestLogger $testLogger;
+    private readonly TestHandler $logsHandler;
+    private readonly LoggerInterface $logger;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->clientWrapper = $this->getClientWrapper();
-        $this->testLogger = new TestLogger();
+
+        $this->logsHandler = new TestHandler();
+        $this->logger = new Logger('tests', [$this->logsHandler]);
     }
 
-    private function getClientWrapper(): ClientWrapper
+    public function testResolveVariables(): void
     {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-            )
+        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
+        $configurationVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                'key1' => 'val1-conf',
+                'key2' => 'val2-conf',
+            ])
+        ;
+
+        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
+        $vaultVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                'key1' => 'val1-vault',
+                'key3' => 'val3-vault',
+            ])
+        ;
+
+        $resolver = new VariableResolver(
+            $configurationVariablesLoader,
+            $vaultVariablesLoader,
+            $this->logger,
         );
-    }
-
-    private function getVariableResolver(): VariableResolver
-    {
-        return VariableResolver::create($this->clientWrapper, $this->testLogger);
-    }
-
-    private function createVariablesConfiguration(StorageClient $storageClient, array $data, array $rowData): array
-    {
-        $components = new Components($storageClient);
-        $configuration = new StorageConfiguration();
-        $configuration->setComponentId(ComponentsClientHelper::KEBOOLA_VARIABLES);
-        $configuration->setName('variables-resolver-test');
-        $configuration->setConfiguration($data);
-        $configId = $components->addConfiguration($configuration)['id'];
-        $configuration->setConfigurationId($configId);
-        $row = new ConfigurationRow($configuration);
-        $row->setName('variables-resolver-test-row');
-        $row->setConfiguration($rowData);
-        $rowId = $components->addConfigurationRow($row)['id'];
-
-        return [$configId, $rowId];
-    }
-
-    public function createBranch(string $branchName, ClientWrapper $clientWrapper): int
-    {
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === $branchName) {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        return $branches->createBranch($branchName)['id'];
-    }
-
-    public function testResolveVariablesValuesId(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, $vRowId, []);
-
-        self::assertEquals(
+        $configuration = $resolver->resolveVariables(
             [
                 'parameters' => [
-                    'some_parameter' => 'foo is bar.',
+                    'param' => 'key1: {{ key1 }}, key2: {{ key2 }}, key3: {{ key3 }}',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesValuesData(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
-            $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        self::assertEquals(
-            [
-                'parameters' => [
-                    'some_parameter' => 'foo is bar',
-                ],
-                'variables_id' => $vConfigurationId,
-            ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesDefaultValues(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'variables_values_id' => $vRowId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, null, null);
-        self::assertEquals(
-            [
-                'parameters' => [
-                    'some_parameter' => 'foo is bar',
-                ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => $vRowId,
-            ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using default values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesDefaultValuesOverride(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'variables_values_id' => 'not-used',
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, $vRowId, null);
-        self::assertEquals(
-            [
-                'parameters' => [
-                    'some_parameter' => 'foo is bar',
-                ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => 'not-used',
-            ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesDefaultValuesOverrideData(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'variables_values_id' => $vRowId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
-            $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bazooka']]]
         );
-        self::assertEquals(
+
+        self::assertSame(
             [
                 'parameters' => [
-                    'some_parameter' => 'foo is bazooka',
+                    'param' => 'key1: val1-conf, key2: val2-conf, key3: val3-vault',
                 ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => $vRowId,
             ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesNoValues(): void
-    {
-        list ($vConfigurationId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'No variable values provided for variables configuration "' .
-            $vConfigurationId . '".'
-        );
-        $variableResolver->resolveVariables($configuration, null, null);
-    }
-
-    public function testResolveVariablesInvalidDefaultValues(): void
-    {
-        list ($vConfigurationId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'variables_values_id' => 'non-existent',
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".'
-        );
-        $variableResolver->resolveVariables($configuration, null, null);
-    }
-
-    public function testResolveVariablesInvalidProvidedValues(): void
-    {
-        list ($vConfigurationId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".'
-        );
-        $variableResolver->resolveVariables($configuration, 'non-existent', null);
-    }
-
-    public function testResolveVariablesInvalidProvidedArguments(): void
-    {
-        list ($vConfigurationId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = VariableResolver::create($this->clientWrapper, $this->testLogger);
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Only one of variableValuesId and variableValuesData can be entered.'
-        );
-        $variableResolver->resolveVariables(
             $configuration,
-            'non-existent',
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
         );
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: key1, key2, key3.'));
     }
 
-    public function testResolveVariablesWithEmptyValuesArray(): void
+    public function testResolveMissingVariable(): void
     {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
-            $configuration,
-            $vRowId,
-            ['values' => []]
-        );
-        self::assertEquals(
-            [
-                'parameters' => [
-                    'some_parameter' => 'foo is bar',
-                ],
-                'variables_id' => $vConfigurationId,
-            ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
+        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
+        $configurationVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                'key1' => 'val1',
+            ])
+        ;
 
-    public function testResolveVariablesNonExistentVariableConfiguration(): void
-    {
-        $configuration = [
-            'variables_id' => 'non-existent',
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Variable configuration cannot be read: Configuration non-existent not found'
-        );
-        $variableResolver->resolveVariables($configuration, 'non-existent', null);
-    }
+        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
+        $vaultVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([])
+        ;
 
-    public function testResolveVariablesInvalidVariableConfiguration(): void
-    {
-        list ($vConfigurationId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['invalid' => 'data'],
-            []
+        $resolver = new VariableResolver(
+            $configurationVariablesLoader,
+            $vaultVariablesLoader,
+            $this->logger,
         );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Variable configuration is invalid: Unrecognized option "invalid" under "variables". ' .
-            'Available option is "variables".'
-        );
-        $variableResolver->resolveVariables($configuration, 'non-existent', null);
-    }
-
-    public function testResolveVariablesNoVariables(): void
-    {
-        $configuration = [
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
 
         $this->expectException(UserException::class);
-        $this->expectExceptionMessage('Missing values for placeholders: foo');
-        $variableResolver->resolveVariables($configuration, '123', []);
+        $this->expectExceptionMessage('Missing values for placeholders: key2, key3');
+        $resolver->resolveVariables(
+            [
+                'parameters' => [
+                    'param' => '{{ key1 }} {{ key2 }} {{ key3 }}',
+                ],
+            ],
+            null,
+            null,
+        );
     }
 
-    public function testInvalidValuesConfiguration(): void
+    public function testResolveJsonBreakingValue(): void
     {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['invalid' => [['name' => 'foo', 'value' => 'bar']]]
+        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
+        $configurationVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                'key1' => '"',
+            ])
+        ;
+
+        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
+        $vaultVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([])
+        ;
+
+        $resolver = new VariableResolver(
+            $configurationVariablesLoader,
+            $vaultVariablesLoader,
+            $this->logger,
         );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }} and {{ notreplaced }}.'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
-            'Variable values configuration is invalid: Unrecognized option "invalid" under "values". ' .
-            'Available option is "values".'
+
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
+            'Variable replacement resulted in invalid configuration, error: Control character error, possibly incorrectly encoded',
         );
-        $variableResolver->resolveVariables($configuration, $vRowId, []);
+        $resolver->resolveVariables(
+            [
+                'parameters' => [
+                    'param' => '{{ key1 }}',
+                ],
+            ],
+            null,
+            null,
+        );
     }
 
     public function testResolveVariablesSpecialCharacterReplacement(): void
     {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
+        $configurationVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                'foo' => 'special " \' { } characters',
+            ])
+        ;
+
+        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
+        $vaultVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([])
+        ;
+
+        $resolver = new VariableResolver(
+            $configurationVariablesLoader,
+            $vaultVariablesLoader,
+            $this->logger,
         );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
-            $configuration,
-            null,
-            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]]
-        );
-        self::assertEquals(
+
+        $configuration = $resolver->resolveVariables(
             [
                 'parameters' => [
-                    'some_parameter' => 'foo is special " \' { } characters',
+                    'param' => 'foo is {{ foo }}',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
-        );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
-    }
-
-    public function testResolveVariablesSpecialCharacterNonEscapedReplacement(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{{ foo }}}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage('Variable replacement resulted in invalid configuration, error: Syntax error');
-        $variableResolver->resolveVariables(
-            $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]]
-        );
-    }
-
-    public function testResolveVariablesMissingValues(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string'], ['name' => 'goo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage('No value provided for variable "goo".');
-        $variableResolver->resolveVariables(
-            $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-    }
-
-    public function testResolveVariablesMissingValuesInBody(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
-        );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }} and bar is {{ bar }} and baz is {{ baz }}.'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage('Missing values for placeholders: bar, baz');
-        $variableResolver->resolveVariables(
-            $configuration,
-            null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-    }
-
-    public function testResolveVariablesValuesBranch(): void
-    {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
-        );
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            )
         );
 
-        $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                (string) $branchId
-            )
-        );
-
-        // modify the dev branch variable configuration to "dev-bar"
-        $components = new Components($this->clientWrapper->getBranchClient());
-        $configuration = new StorageConfiguration();
-        $configuration->setComponentId('keboola.variables');
-        $configuration->setConfigurationId($vConfigurationId);
-        $newRow = new ConfigurationRow($configuration);
-        $newRow->setRowId($vRowId);
-        $newRow->setConfiguration(['values' => [['name' => 'foo', 'value' => 'dev-bar']]]);
-        $components->updateConfigurationRow($newRow);
-
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, $vRowId, []);
-        self::assertEquals(
+        self::assertSame(
             [
                 'parameters' => [
-                    'some_parameter' => 'foo is dev-bar.',
+                    'param' => 'foo is special " \' { } characters',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $configuration,
         );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
     }
 
-    public function testResolveVariablesIntegerNameAndValue(): void
+    public function testResolveVariablesWithNumericKey(): void
     {
-        list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
-            $this->clientWrapper->getBasicClient(),
-            ['variables' => [['name' => 4321, 'type' => 'string']]],
-            []
+        // PHP converts numeric keys in arrays to integers, it can cause problems if not handled properly
+
+        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
+        $configurationVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+               '123' => '321',
+               '789' => '987',
+            ])
+        ;
+
+        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
+        $vaultVariablesLoader
+            ->method('loadVariables')
+            ->willReturn([
+                '456' => '654',
+                '789' => '147',
+            ])
+        ;
+
+        $resolver = new VariableResolver(
+            $configurationVariablesLoader,
+            $vaultVariablesLoader,
+            $this->logger,
         );
-        $configuration = [
-            'variables_id' => $vConfigurationId,
-            'parameters' => ['some_parameter' => 'foo is {{ 4321 }}'],
-        ];
-        $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
-            $configuration,
-            null,
-            ['values' => [['name' => 4321, 'value' => 1234]]]
-        );
-        self::assertEquals(
+        $configuration = $resolver->resolveVariables(
             [
                 'parameters' => [
-                    'some_parameter' => 'foo is 1234',
+                    'param' => 'key1: {{ 123 }}, key2: {{ 456 }}, key3: {{ 789 }}',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            null,
+            null,
         );
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: 4321.'));
+
+        self::assertSame(
+            [
+                'parameters' => [
+                    'param' => 'key1: 321, key2: 654, key3: 987',
+                ],
+            ],
+            $configuration,
+        );
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: 123, 456, 789.'));
     }
 }

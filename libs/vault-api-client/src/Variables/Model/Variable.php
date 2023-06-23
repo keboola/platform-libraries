@@ -8,6 +8,13 @@ use Keboola\VaultApiClient\ResponseModelInterface;
 
 final readonly class Variable implements ResponseModelInterface
 {
+    /**
+     * @param non-empty-string $hash
+     * @param non-empty-string $key
+     * @param string $value
+     * @param bool $isEncrypted
+     * @param array<non-empty-string, string> $attributes
+     */
     public function __construct(
         public string $hash,
         public string $key,

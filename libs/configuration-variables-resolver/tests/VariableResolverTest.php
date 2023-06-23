@@ -43,7 +43,7 @@ class VariableResolverTest extends TestCase
 
     private function getVariableResolver(): VariableResolver
     {
-        return new VariableResolver($this->clientWrapper, $this->testLogger);
+        return VariableResolver::create($this->clientWrapper, $this->testLogger);
     }
 
     private function createVariablesConfiguration(StorageClient $storageClient, array $data, array $rowData): array
@@ -98,7 +98,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesValuesData(): void
@@ -128,7 +128,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesDefaultValues(): void
@@ -156,7 +156,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using default values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesDefaultValuesOverride(): void
@@ -184,7 +184,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesDefaultValuesOverrideData(): void
@@ -216,7 +216,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesNoValues(): void
@@ -290,7 +290,7 @@ class VariableResolverTest extends TestCase
             'variables_id' => $vConfigurationId,
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
-        $variableResolver = new VariableResolver($this->clientWrapper, $this->testLogger);
+        $variableResolver = VariableResolver::create($this->clientWrapper, $this->testLogger);
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'Only one of variableValuesId and variableValuesData can be entered.'
@@ -329,7 +329,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesNonExistentVariableConfiguration(): void
@@ -372,16 +372,10 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariableResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, '123', []);
-        self::assertEquals(
-            [
-                'parameters' => [
-                    'some_parameter' => 'foo is {{ foo }}',
-                ],
-            ],
-            $newConfiguration
-        );
-        self::assertFalse($this->testLogger->hasInfoThatContains('Replacing variables using default values with ID:'));
+
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('Missing values for placeholders: foo');
+        $variableResolver->resolveVariables($configuration, '123', []);
     }
 
     public function testInvalidValuesConfiguration(): void
@@ -431,7 +425,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesSpecialCharacterNonEscapedReplacement(): void
@@ -489,7 +483,7 @@ class VariableResolverTest extends TestCase
         ];
         $variableResolver = $this->getVariableResolver();
         self::expectException(UserException::class);
-        self::expectExceptionMessage('Missing values for placeholders: "bar, baz"');
+        self::expectExceptionMessage('Missing values for placeholders: bar, baz');
         $variableResolver->resolveVariables(
             $configuration,
             null,
@@ -546,7 +540,7 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using values with ID:'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "foo".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: foo.'));
     }
 
     public function testResolveVariablesIntegerNameAndValue(): void
@@ -576,6 +570,6 @@ class VariableResolverTest extends TestCase
             $newConfiguration
         );
         self::assertTrue($this->testLogger->hasInfoThatContains('Replacing variables using inline values.'));
-        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: "4321".'));
+        self::assertTrue($this->testLogger->hasInfoThatContains('Replaced values for variables: 4321.'));
     }
 }

@@ -6,16 +6,15 @@ namespace Keboola\ConfigurationVariablesResolver;
 
 class VariablesContext
 {
-    private array $missingVariables;
-    private array $values;
+    private array $replacedVariables = [];
+    private array $missingVariables = [];
 
-    public function __construct(array $configurationRow)
-    {
-        $this->values = [];
-        foreach ($configurationRow['values'] as $row) {
-            $this->values[$row['name']] = $row['value'];
-        }
-        $this->missingVariables = [];
+    /**
+     * @param array<non-empty-string, string> $values
+     */
+    public function __construct(
+        private readonly array $values,
+    ) {
     }
 
     public function __isset(string $name): bool
@@ -23,17 +22,24 @@ class VariablesContext
         if (isset($this->values[$name])) {
             return true;
         }
-        $this->missingVariables[] = $name;
+
+        $this->missingVariables[$name] = true;
         return false;
     }
 
     public function __get(string $name): string
     {
-        return (string) $this->values[$name];
+        $this->replacedVariables[$name] = true;
+        return $this->values[$name];
+    }
+
+    public function getReplacedVariables(): array
+    {
+        return array_keys($this->replacedVariables);
     }
 
     public function getMissingVariables(): array
     {
-        return $this->missingVariables;
+        return array_keys($this->missingVariables);
     }
 }

@@ -46,6 +46,11 @@ class ComponentsClientHelper
         }
     }
 
+    /**
+     * @param non-empty-string $variablesId
+     * @param non-empty-string $variableValuesId
+     * @return array{values: list<array{name: scalar, value: scalar}>}
+     */
     public function getVariablesConfigurationRow(string $variablesId, string $variableValuesId): array
     {
         try {
@@ -54,7 +59,9 @@ class ComponentsClientHelper
                 $variablesId,
                 $variableValuesId
             );
-            return (new VariableValues())->process($vRow['configuration']);
+            /** @var array{values: list<array{name: non-empty-string, value: scalar}>} $normalized */
+            $normalized = (new VariableValues())->process($vRow['configuration']);
+            return $normalized;
         } catch (ClientException $e) {
             throw new UserException(
                 sprintf(

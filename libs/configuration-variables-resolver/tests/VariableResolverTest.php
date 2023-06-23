@@ -4,24 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver\Tests;
 
-use Keboola\ConfigurationVariablesResolver\ComponentsClientHelper;
-use Keboola\ConfigurationVariablesResolver\Exception\UserException;
 use Keboola\ConfigurationVariablesResolver\VariableResolver;
 use Keboola\ConfigurationVariablesResolver\VariablesLoader\ConfigurationVariablesLoader;
 use Keboola\ConfigurationVariablesResolver\VariablesLoader\VaultVariablesLoader;
-use Keboola\StorageApi\Client as StorageClient;
-use Keboola\StorageApi\Components;
-use Keboola\StorageApi\DevBranches;
-use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
-use Keboola\StorageApi\Options\Components\ConfigurationRow;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
+use Keboola\ConfigurationVariablesResolver\VariablesRenderer\VariablesRenderer;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 
 class VariableResolverTest extends TestCase
 {
@@ -59,7 +49,7 @@ class VariableResolverTest extends TestCase
         $resolver = new VariableResolver(
             $configurationVariablesLoader,
             $vaultVariablesLoader,
-            $this->logger,
+            new VariablesRenderer($this->logger),
         );
         $configuration = $resolver->resolveVariables(
             [
@@ -79,122 +69,6 @@ class VariableResolverTest extends TestCase
             ],
             $configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: key1, key2, key3.'));
-    }
-
-    public function testResolveMissingVariable(): void
-    {
-        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
-        $configurationVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([
-                'key1' => 'val1',
-            ])
-        ;
-
-        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
-        $vaultVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([])
-        ;
-
-        $resolver = new VariableResolver(
-            $configurationVariablesLoader,
-            $vaultVariablesLoader,
-            $this->logger,
-        );
-
-        $this->expectException(UserException::class);
-        $this->expectExceptionMessage('Missing values for placeholders: key2, key3');
-        $resolver->resolveVariables(
-            [
-                'parameters' => [
-                    'param' => '{{ key1 }} {{ key2 }} {{ key3 }}',
-                ],
-            ],
-            null,
-            null,
-        );
-    }
-
-    public function testResolveJsonBreakingValue(): void
-    {
-        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
-        $configurationVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([
-                'key1' => '"',
-            ])
-        ;
-
-        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
-        $vaultVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([])
-        ;
-
-        $resolver = new VariableResolver(
-            $configurationVariablesLoader,
-            $vaultVariablesLoader,
-            $this->logger,
-        );
-
-        $this->expectException(UserException::class);
-        $this->expectExceptionMessage(
-            'Variable replacement resulted in invalid configuration, error: Control character error, possibly incorrectly encoded',
-        );
-        $resolver->resolveVariables(
-            [
-                'parameters' => [
-                    'param' => '{{ key1 }}',
-                ],
-            ],
-            null,
-            null,
-        );
-    }
-
-    public function testResolveVariablesSpecialCharacterReplacement(): void
-    {
-        $configurationVariablesLoader = $this->createMock(ConfigurationVariablesLoader::class);
-        $configurationVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([
-                'foo' => 'special " \' { } characters',
-            ])
-        ;
-
-        $vaultVariablesLoader = $this->createMock(VaultVariablesLoader::class);
-        $vaultVariablesLoader
-            ->method('loadVariables')
-            ->willReturn([])
-        ;
-
-        $resolver = new VariableResolver(
-            $configurationVariablesLoader,
-            $vaultVariablesLoader,
-            $this->logger,
-        );
-
-        $configuration = $resolver->resolveVariables(
-            [
-                'parameters' => [
-                    'param' => 'foo is {{ foo }}',
-                ],
-            ],
-            null,
-            null,
-        );
-
-        self::assertSame(
-            [
-                'parameters' => [
-                    'param' => 'foo is special " \' { } characters',
-                ],
-            ],
-            $configuration,
-        );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
     }
 
     public function testResolveVariablesWithNumericKey(): void
@@ -222,7 +96,7 @@ class VariableResolverTest extends TestCase
         $resolver = new VariableResolver(
             $configurationVariablesLoader,
             $vaultVariablesLoader,
-            $this->logger,
+            new VariablesRenderer($this->logger),
         );
         $configuration = $resolver->resolveVariables(
             [
@@ -242,6 +116,5 @@ class VariableResolverTest extends TestCase
             ],
             $configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: 123, 456, 789.'));
     }
 }

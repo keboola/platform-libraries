@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ConfigurationVariablesResolver;
+namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 
 class VariablesContext
 {

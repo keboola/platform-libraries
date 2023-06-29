@@ -4,7 +4,7 @@
     "type": "symfony-bundle",
     "require": {
         "php": ">=8.1",
-        "keboola/permission-checker": "^0.1.0",
+        "keboola/permission-checker": "^1.0",
         "monolog/monolog": "^2.0",
         "symfony/dependency-injection": "^6.0",
         "symfony/monolog-bundle": "^3.8"

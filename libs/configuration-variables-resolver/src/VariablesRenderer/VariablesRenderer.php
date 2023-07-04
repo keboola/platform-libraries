@@ -26,7 +26,7 @@ class VariablesRenderer
     }
 
     /**
-     * @param array<non-empty-string, string> $variables
+     * @param array<non-empty-string, string|array> $variables
      */
     public function renderVariables(array $configuration, array $variables): array
     {

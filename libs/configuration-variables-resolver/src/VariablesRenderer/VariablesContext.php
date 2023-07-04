@@ -6,17 +6,35 @@ namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 
 class VariablesContext
 {
+    /** @var array<non-empty-string, string|self>  */
+    private readonly array $values;
+
+    /** @var array<non-empty-string, true>  */
     private array $replacedVariables = [];
+
+    /** @var array<non-empty-string, true>  */
     private array $missingVariables = [];
 
     /**
-     * @param array<non-empty-string, string> $values
+     * @param array<non-empty-string, string|array> $values
      */
-    public function __construct(
-        private readonly array $values,
-    ) {
+    public function __construct(array $values)
+    {
+        $normalizedValues = [];
+        foreach ($values as $name => $value) {
+            if (is_array($value)) {
+                $normalizedValues[$name] = new self($value);
+            } else {
+                $normalizedValues[$name] = $value;
+            }
+        }
+
+        $this->values = $normalizedValues;
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public function __isset(string $name): bool
     {
         if (isset($this->values[$name])) {
@@ -27,7 +45,10 @@ class VariablesContext
         return false;
     }
 
-    public function __get(string $name): string
+    /**
+     * @param non-empty-string $name
+     */
+    public function __get(string $name): string|self
     {
         $this->replacedVariables[$name] = true;
         return $this->values[$name];
@@ -35,11 +56,40 @@ class VariablesContext
 
     public function getReplacedVariables(): array
     {
-        return array_keys($this->replacedVariables);
+        $variables = [];
+        foreach ($this->replacedVariables as $name => $true) {
+            $value = $this->values[$name];
+            if ($value instanceof self) {
+                $variables = array_merge(
+                    $variables,
+                    array_map(
+                        fn(string $variable) => $name . '.' . $variable,
+                        $value->getReplacedVariables(),
+                    ),
+                );
+            } else {
+                $variables[] = $name;
+            }
+        }
+
+        return $variables;
     }
 
     public function getMissingVariables(): array
     {
-        return array_keys($this->missingVariables);
+        $variables = array_keys($this->missingVariables);
+        foreach ($this->values as $name => $value) {
+            if ($value instanceof self) {
+                $variables = array_merge(
+                    $variables,
+                    array_map(
+                        fn(string $variable) => $name . '.' . $variable,
+                        $value->getMissingVariables(),
+                    ),
+                );
+            }
+        }
+
+        return $variables;
     }
 }

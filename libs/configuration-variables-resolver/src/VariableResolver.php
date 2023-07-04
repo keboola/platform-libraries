@@ -39,7 +39,6 @@ class VariableResolver
      * @param non-empty-string $branchId
      * @param non-empty-string|null $variableValuesId
      * @param array{values?: list<array{name: scalar, value: scalar}>|null}|null $variableValuesData
-     * @return array<non-empty-string, string>
      */
     public function resolveVariables(
         array $configuration,
@@ -47,11 +46,15 @@ class VariableResolver
         ?string $variableValuesId,
         ?array $variableValuesData,
     ): array {
-        // !!! do not use array_merge() here as it can break numeric keys, array union is safe
-        $variables =
-            $this->configurationVariablesLoader->loadVariables($configuration, $variableValuesId, $variableValuesData) +
-            $this->vaultVariablesLoader->loadVariables($branchId)
-        ;
+        // populate global scope with configuration variables
+        $variables = $this->configurationVariablesLoader->loadVariables(
+            $configuration,
+            $variableValuesId,
+            $variableValuesData,
+        );
+
+        // populate "vault" namespace with vault variables
+        $variables['vault'] = $this->vaultVariablesLoader->loadVariables($branchId);
 
         return $this->variablesRenderer->renderVariables($configuration, $variables);
     }

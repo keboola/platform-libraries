@@ -31,7 +31,6 @@ class VariablesRendererTest extends TestCase
             [
                 'parameters' => [
                     'param' => 'foo is {{ foo }}, goo is {{ goo }}',
-                    'other' => '{{ foo }}',
                 ],
             ],
             [
@@ -44,7 +43,6 @@ class VariablesRendererTest extends TestCase
             [
                 'parameters' => [
                     'param' => 'foo is bar, goo is gar',
-                    'other' => 'bar',
                 ],
             ],
             $configuration,
@@ -52,25 +50,79 @@ class VariablesRendererTest extends TestCase
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo, goo'));
     }
 
-    public function testResolveMissingVariable(): void
+    public function testRenderSingleVariableMultipleTimes(): void
+    {
+        $renderer = new VariablesRenderer($this->logger);
+        $configuration = $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => 'foo is {{ foo }} and {{ foo }}',
+                ],
+            ],
+            [
+                'foo' => 'bar',
+            ]
+        );
+
+        self::assertSame(
+            [
+                'parameters' => [
+                    'param' => 'foo is bar and bar',
+                ],
+            ],
+            $configuration,
+        );
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
+    }
+
+    public function testRenderNestedVariables(): void
+    {
+        $renderer = new VariablesRenderer($this->logger);
+        $configuration = $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => 'global key1: {{ key1 }}, vault key1: {{ vault.key1 }}',
+                ],
+            ],
+            [
+                'key1' => 'val1',
+                'vault' => [
+                    'key1' => 'val2',
+                ],
+            ]
+        );
+
+        self::assertSame(
+            [
+                'parameters' => [
+                    'param' => 'global key1: val1, vault key1: val2',
+                ],
+            ],
+            $configuration,
+        );
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: key1, vault.key1'));
+    }
+
+    public function testRenderMissingVariable(): void
     {
         $this->expectException(UserException::class);
-        $this->expectExceptionMessage('Missing values for placeholders: key2, key3');
+        $this->expectExceptionMessage('Missing values for placeholders: key2, vault.key1');
 
         $renderer = new VariablesRenderer($this->logger);
         $renderer->renderVariables(
             [
                 'parameters' => [
-                    'param' => '{{ key1 }} {{ key2 }} {{ key3 }}',
+                    'param' => '{{ key1 }} {{ key2 }} {{ vault.key1 }}',
                 ],
             ],
             [
                 'key1' => 'val1',
+                'vault' => [],
             ]
         );
     }
 
-    public function testResolveVariablesSpecialCharacterReplacement(): void
+    public function testRenderVariablesSpecialCharacterReplacement(): void
     {
         $renderer = new VariablesRenderer($this->logger);
         $configuration = $renderer->renderVariables(
@@ -95,7 +147,7 @@ class VariablesRendererTest extends TestCase
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
     }
 
-    public function testResolveValueEndingWithQuote(): void
+    public function testRenderValueEndingWithQuote(): void
     {
         $renderer = new VariablesRenderer($this->logger);
         $configuration = $renderer->renderVariables(
@@ -119,7 +171,7 @@ class VariablesRendererTest extends TestCase
         );
     }
 
-    public function testResolveJsonBreakingValue(): void
+    public function testRenderJsonBreakingValue(): void
     {
         $this->expectException(UserException::class);
         $this->expectExceptionMessage(

@@ -187,10 +187,8 @@ class ApiClientTest extends TestCase
                 400,
                 ['Content-Type' => 'application/json'],
                 Json::encodeArray([
-                    'error' => [
-                        'code' => 400,
-                        'message' => 'Missing data',
-                    ],
+                    'error' => 'Missing data',
+                    'code' => 400,
                 ]),
             ),
         ]);

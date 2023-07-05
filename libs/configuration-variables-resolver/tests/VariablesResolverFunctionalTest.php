@@ -34,7 +34,7 @@ class VariablesResolverFunctionalTest extends TestCase
     private readonly VariablesApiClient $variablesApiClient;
 
     /** @var non-empty-string */
-    private readonly string $mainBranchId;
+    private string $mainBranchId;
 
     public function setUp(): void
     {
@@ -66,6 +66,7 @@ class VariablesResolverFunctionalTest extends TestCase
                 break;
             }
         }
+        self::assertTrue(isset($this->mainBranchId), 'Main branch not found.');
     }
 
     private function setupConfigurationVariables(array $data, array $rowData): void

@@ -79,7 +79,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($this->emptyOutputBucketId . '.test2'));
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+            $this->emptyOutputBucketId . '.test2'
+        ));
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals($this->thirdTableId, $manifest['id']);
@@ -89,7 +91,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
         );
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($this->emptyOutputBucketId . '.test3'));
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+            $this->emptyOutputBucketId . '.test3'
+        ));
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
         self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)));

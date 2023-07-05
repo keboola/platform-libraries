@@ -55,7 +55,10 @@ class SourceRewriteHelperTest extends TestCase
 
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
         if ($outBucketId) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket((string) $outBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $outBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
 
         $outDevBucketId = TestSatisfyer::getBucketIdByDisplayName(
@@ -64,12 +67,18 @@ class SourceRewriteHelperTest extends TestCase
             Client::STAGE_OUT
         );
         if ($outDevBucketId) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket((string) $outDevBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $outDevBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
 
         foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-output-mapping-test$/ui', $bucket['name'])) {
-                $clientWrapper->getTableAndFileStorageClient()->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true]
+                );
             }
         }
 
@@ -237,8 +246,16 @@ class SourceRewriteHelperTest extends TestCase
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
 
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync($this->outBranchBucketId, 'my-table', $csvFile);
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync($this->outBranchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table',
+            $csvFile
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table-2',
+            $csvFile
+        );
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -311,8 +328,16 @@ class SourceRewriteHelperTest extends TestCase
         $temp = new Temp(uniqid('input-mapping'));
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync($this->outBranchBucketId, 'my-table', $csvFile);
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync($this->outBranchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table',
+            $csvFile
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table-2',
+            $csvFile
+        );
         $testLogger = new TestLogger();
         $inputTablesStates = new InputTableStateList([
             [

@@ -74,7 +74,10 @@ class Reader
         ReaderOptions $readerOptions
     ): Result {
         // assuming yes on https://keboolaglobal.slack.com/archives/C05BK5V8N1Z/p1688578793224979
-        $tableResolver = new TableDefinitionResolver($this->clientWrapper->getTableAndFileStorageClient(), $this->logger);
+        $tableResolver = new TableDefinitionResolver(
+            $this->clientWrapper->getTableAndFileStorageClient(),
+            $this->logger
+        );
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
             $tablesState,
             $this->clientWrapper,

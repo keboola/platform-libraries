@@ -93,7 +93,10 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect($this->redshiftBucketId . '.empty', $options);
+        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+            $this->redshiftBucketId . '.empty',
+            $options
+        );
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([

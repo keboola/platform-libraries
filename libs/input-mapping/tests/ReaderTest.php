@@ -227,7 +227,10 @@ class ReaderTest extends TestCase
             Client::STAGE_IN
         );
         if ($branchBucketId) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket((string) $branchBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $branchBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
         $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,
@@ -235,11 +238,17 @@ class ReaderTest extends TestCase
             Client::STAGE_IN
         );
         if ($inBucketId) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket((string) $inBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $inBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
         foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-input-mapping-test/ui', $bucket['name'])) {
-                $clientWrapper->getTableAndFileStorageClient()->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true]
+                );
             }
         }
 
@@ -251,7 +260,10 @@ class ReaderTest extends TestCase
         }
         $branchId = (string) $branchesApi->createBranch('my-branch')['id'];
 
-        $inBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket('input-mapping-test', Client::STAGE_IN);
+        $inBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
+            'input-mapping-test',
+            Client::STAGE_IN
+        );
         // we need to know the $inBucketId, which is known only after creation, but we need the bucket not to exist
         // hence - create the bucket, get it id, and drop it
         $clientWrapper->getTableAndFileStorageClient()->dropBucket($inBucketId, ['force' => true, 'async' => true]);

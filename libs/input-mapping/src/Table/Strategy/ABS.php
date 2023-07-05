@@ -15,7 +15,10 @@ class ABS extends AbstractStrategy
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
-        $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport($table->getSource(), $exportOptions);
+        $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
+            $table->getSource(),
+            $exportOptions
+        );
         return [$jobId, $table];
     }
 

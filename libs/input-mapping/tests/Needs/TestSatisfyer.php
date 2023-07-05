@@ -59,7 +59,11 @@ class TestSatisfyer
             }
             return $bucketId;
         }
-        return $clientWrapper->getTableAndFileStorageClient()->createBucket(name: $bucketName, stage: $stage, backend: $backend);
+        return $clientWrapper->getTableAndFileStorageClient()->createBucket(
+            name: $bucketName,
+            stage: $stage,
+            backend: $backend
+        );
     }
 
     /**

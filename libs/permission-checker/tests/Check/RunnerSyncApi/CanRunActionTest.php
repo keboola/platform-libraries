@@ -43,8 +43,8 @@ class CanRunActionTest extends TestCase
                         : ' with dummy-component access';
                     yield $providedDataLabel => [
                         'token' => new StorageApiToken(
-                            role: $role,
                             features: ['queuev2'],
+                            role: $role,
                             allowedComponents: $allowedComponents
                         ),
                         'branchType' => $branchType,
@@ -56,33 +56,33 @@ class CanRunActionTest extends TestCase
         // sox projects
         yield 'sox productionManager role on default branch' => [
             'token' => new StorageApiToken(
-                role: 'productionManager',
                 features: [
                     'protected-default-branch',
                     'queuev2',
-                ]
+                ],
+                role: 'productionManager'
             ),
             'branchType' => BranchType::DEFAULT,
         ];
 
         yield 'sox developer role on dev branch' => [
             'token' => new StorageApiToken(
-                role: 'developer',
                 features: [
                     'protected-default-branch',
                     'queuev2',
-                ]
+                ],
+                role: 'developer'
             ),
             'branchType' => BranchType::DEV,
         ];
 
         yield 'sox reviewer role on dev branch' => [
             'token' => new StorageApiToken(
-                role: 'reviewer',
                 features: [
                     'protected-default-branch',
                     'queuev2',
-                ]
+                ],
+                role: 'reviewer'
             ),
             'branchType' => BranchType::DEV,
         ];
@@ -142,8 +142,8 @@ class CanRunActionTest extends TestCase
 
             yield $label => [
                 'token' => new StorageApiToken(
-                    role: 'readOnly',
                     features: ['queuev2'],
+                    role: 'readOnly',
                 ),
                 'branchType' => $branchType,
                 'errorMessage' => 'Role "readOnly" is not allowed to run actions',
@@ -168,11 +168,11 @@ class CanRunActionTest extends TestCase
 
                 yield $label => [
                     'token' => new StorageApiToken(
-                        role: $role,
                         features: [
                             'queuev2',
                             'protected-default-branch',
-                        ]
+                        ],
+                        role: $role
                     ),
                     'branchType' => $branchType,
                     'errorMessage' => sprintf(

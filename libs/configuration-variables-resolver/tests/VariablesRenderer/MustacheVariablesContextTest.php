@@ -14,23 +14,16 @@ class MustacheVariablesContextTest extends TestCase
         $context = new MustacheVariablesContext([
             'a' => 'b',
             'c' => 'd',
-            'nested' => [
-                'a' => 'c',
-            ],
         ]);
 
         self::assertTrue(isset($context->a));
         self::assertTrue(isset($context->c));
         self::assertFalse(isset($context->e));
-        self::assertTrue(isset($context->nested));
-        self::assertTrue(isset($context->nested->a));
-        self::assertFalse(isset($context->nested->b));
 
         self::assertSame('b', $context->a);
         self::assertSame('d', $context->c);
-        self::assertSame('c', $context->nested->a);
 
-        self::assertSame(['nested.a', 'a', 'c'], $context->getReplacedVariables());
-        self::assertSame(['e', 'nested.b'], $context->getMissingVariables());
+        self::assertSame(['a', 'c'], $context->getReplacedVariables());
+        self::assertSame(['e'], $context->getMissingVariables());
     }
 }

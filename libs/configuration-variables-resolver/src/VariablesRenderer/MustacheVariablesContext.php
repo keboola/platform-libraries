@@ -6,9 +6,6 @@ namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 
 class MustacheVariablesContext
 {
-    /** @var array<non-empty-string, string|self>  */
-    private readonly array $values;
-
     /** @var array<non-empty-string, true>  */
     private array $replacedVariables = [];
 
@@ -16,20 +13,11 @@ class MustacheVariablesContext
     private array $missingVariables = [];
 
     /**
-     * @param array<non-empty-string, string|array> $values
+     * @param array<non-empty-string, string> $values
      */
-    public function __construct(array $values)
-    {
-        $normalizedValues = [];
-        foreach ($values as $name => $value) {
-            if (is_array($value)) {
-                $normalizedValues[$name] = new self($value);
-            } else {
-                $normalizedValues[$name] = $value;
-            }
-        }
-
-        $this->values = $normalizedValues;
+    public function __construct(
+        private readonly array $values,
+    ) {
     }
 
     /**
@@ -54,42 +42,19 @@ class MustacheVariablesContext
         return $this->values[$name];
     }
 
+    /**
+     * @return list<non-empty-string>
+     */
     public function getReplacedVariables(): array
     {
-        $variables = [];
-        foreach ($this->replacedVariables as $name => $true) {
-            $value = $this->values[$name];
-            if ($value instanceof self) {
-                $variables = array_merge(
-                    $variables,
-                    array_map(
-                        fn(string $variable) => $name . '.' . $variable,
-                        $value->getReplacedVariables(),
-                    ),
-                );
-            } else {
-                $variables[] = (string) $name;
-            }
-        }
-
-        return $variables;
+        return array_map(strval(...), array_keys($this->replacedVariables)); // @phpstan-ignore-line
     }
 
+    /**
+     * @return list<non-empty-string>
+     */
     public function getMissingVariables(): array
     {
-        $variables = array_map(strval(...), array_keys($this->missingVariables));
-        foreach ($this->values as $name => $value) {
-            if ($value instanceof self) {
-                $variables = array_merge(
-                    $variables,
-                    array_map(
-                        fn(string $variable) => $name . '.' . $variable,
-                        $value->getMissingVariables(),
-                    ),
-                );
-            }
-        }
-
-        return $variables;
+        return array_map(strval(...), array_keys($this->missingVariables)); // @phpstan-ignore-line
     }
 }

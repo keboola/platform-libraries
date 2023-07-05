@@ -63,60 +63,30 @@ class MustacheRendererTest extends TestCase
         self::assertSame([], $results->missingVariables);
     }
 
-    public function testRenderNestedVariables(): void
-    {
-        $renderer = new MustacheRenderer();
-        $results = $renderer->renderVariables(
-            [
-                'parameters' => [
-                    'param' => 'global key1: {{ key1 }}, vault key1: {{ vault.key1 }}',
-                ],
-            ],
-            [
-                'key1' => 'val1',
-                'vault' => [
-                    'key1' => 'val2',
-                ],
-            ]
-        );
-
-        self::assertSame(
-            [
-                'parameters' => [
-                    'param' => 'global key1: val1, vault key1: val2',
-                ],
-            ],
-            $results->configuration,
-        );
-        self::assertSame(['key1', 'vault.key1'], $results->replacedVariables);
-        self::assertSame([], $results->missingVariables);
-    }
-
     public function testRenderMissingVariable(): void
     {
         $renderer = new MustacheRenderer();
         $results = $renderer->renderVariables(
             [
                 'parameters' => [
-                    'param' => '{{ key1 }} {{ key2 }} {{ vault.key1 }}',
+                    'param' => '{{ key1 }} {{ key2 }}',
                 ],
             ],
             [
                 'key1' => 'val1',
-                'vault' => [],
             ]
         );
 
         self::assertSame(
             [
                 'parameters' => [
-                    'param' => 'val1  ',
+                    'param' => 'val1 ',
                 ],
             ],
             $results->configuration,
         );
         self::assertSame(['key1'], $results->replacedVariables);
-        self::assertSame(['key2', 'vault.key1'], $results->missingVariables);
+        self::assertSame(['key2'], $results->missingVariables);
     }
 
     public function testRenderVariablesSpecialCharacterReplacement(): void

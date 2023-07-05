@@ -25,7 +25,7 @@ class MustacheRenderer
     }
 
     /**
-     * @param array<non-empty-string, string|array> $variables
+     * @param array<non-empty-string, string> $variables
      */
     public function renderVariables(array $configuration, array $variables): RenderResults
     {

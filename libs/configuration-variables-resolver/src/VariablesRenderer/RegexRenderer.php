@@ -9,13 +9,15 @@ use Keboola\ConfigurationVariablesResolver\Exception\UserException;
 
 class RegexRenderer
 {
+    private const PREFIX_SEPARATOR = '.';
+
     /**
      * @param array<string> $values
      */
     public function renderVariables(array $configuration, string $namePrefix, array $values): RenderResults
     {
         if ($namePrefix !== '') {
-            $namePrefix = $namePrefix . '.';
+            $namePrefix = $namePrefix . self::PREFIX_SEPARATOR;
         }
 
         $missingVariables = [];

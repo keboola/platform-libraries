@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver;
 
+use Keboola\StorageApi\Components;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -17,7 +18,9 @@ class SharedCodeResolver
     {
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
-        $this->componentsHelper = new ComponentsClientHelper($this->clientWrapper);
+        $this->componentsHelper = new ComponentsClientHelper(
+            new Components($this->clientWrapper->getBranchClientIfAvailable()),
+        );
     }
 
     public function resolveSharedCode(array $configuration): array

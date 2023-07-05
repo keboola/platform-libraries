@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 
-class VariablesContext
+class MustacheVariablesContext
 {
     /** @var array<non-empty-string, string|self>  */
     private readonly array $values;
@@ -68,7 +68,7 @@ class VariablesContext
                     ),
                 );
             } else {
-                $variables[] = $name;
+                $variables[] = (string) $name;
             }
         }
 
@@ -77,7 +77,7 @@ class VariablesContext
 
     public function getMissingVariables(): array
     {
-        $variables = array_keys($this->missingVariables);
+        $variables = array_map(strval(...), array_keys($this->missingVariables));
         foreach ($this->values as $name => $value) {
             if ($value instanceof self) {
                 $variables = array_merge(

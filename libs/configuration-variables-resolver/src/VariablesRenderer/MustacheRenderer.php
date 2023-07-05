@@ -9,14 +9,13 @@ use Keboola\ConfigurationVariablesResolver\Exception\UserException;
 use Mustache_Engine;
 use Psr\Log\LoggerInterface;
 
-class VariablesRenderer
+class MustacheRenderer
 {
-    private readonly Mustache_Engine $moustache;
+    private readonly Mustache_Engine $mustache;
 
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-        $this->moustache = new Mustache_Engine([
+    public function __construct()
+    {
+        $this->mustache = new Mustache_Engine([
             // value is always string, so after escaping it using json_encode, it has extra " around it
             // originally we have used trim((string) json_encode($string), '"') to remove quotes, but it removed also
             // any quote at the end of the value
@@ -28,33 +27,27 @@ class VariablesRenderer
     /**
      * @param array<non-empty-string, string|array> $variables
      */
-    public function renderVariables(array $configuration, array $variables): array
+    public function renderVariables(array $configuration, array $variables): RenderResults
     {
-        $context = new VariablesContext($variables);
+        $context = new MustacheVariablesContext($variables);
 
-        $renderedConfiguration = $this->moustache->render(
+        $renderedConfiguration = $this->mustache->render(
             (string) json_encode($configuration, JSON_THROW_ON_ERROR),
             $context,
         );
 
-        if ($context->getMissingVariables()) {
-            throw new UserException(sprintf(
-                'Missing values for placeholders: %s',
-                implode(', ', $context->getMissingVariables())
-            ));
-        }
-
-        $this->logger->info(sprintf(
-            'Replaced values for variables: %s',
-            implode(', ', $context->getReplacedVariables()),
-        ));
-
         try {
-            return (array) json_decode($renderedConfiguration, true, flags: JSON_THROW_ON_ERROR);
+            $configuration = (array) json_decode($renderedConfiguration, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new UserException(
                 'Variable replacement resulted in invalid configuration, error: ' . $e->getMessage()
             );
         }
+
+        return new RenderResults(
+            $configuration,
+            $context->getReplacedVariables(),
+            $context->getMissingVariables(),
+        );
     }
 }

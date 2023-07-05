@@ -2,28 +2,32 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ConfigurationVariablesResolver\VariablesLoader;
+namespace Keboola\ConfigurationVariablesResolver\VariablesResolver;
 
 use Keboola\ConfigurationVariablesResolver\ComponentsClientHelper;
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
+use Keboola\ConfigurationVariablesResolver\VariablesRenderer\MustacheRenderer;
+use Keboola\ConfigurationVariablesResolver\VariablesRenderer\RenderResults;
 use Psr\Log\LoggerInterface;
 
-class ConfigurationVariablesLoader
+class ConfigurationVariablesResolver
 {
     public function __construct(
         private readonly ComponentsClientHelper $componentsHelper,
+        private readonly MustacheRenderer $renderer,
         private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * @param array{variables_id?: string|null, variables_values_id?: string|null} $configuration
      * @param non-empty-string|null $variableValuesId
      * @param array{values?: list<array{name: scalar, value: scalar}>|null}|null $variableValuesData
-     * @return array<non-empty-string, string>
      */
-    public function loadVariables(array $configuration, ?string $variableValuesId, ?array $variableValuesData): array
-    {
+    public function resolveVariables(
+        array $configuration,
+        ?string $variableValuesId,
+        ?array $variableValuesData,
+    ): RenderResults {
         if ($variableValuesId && !empty($variableValuesData['values'])) {
             throw new UserException('Only one of variableValuesId and variableValuesData can be entered.');
         }
@@ -32,9 +36,40 @@ class ConfigurationVariablesLoader
         $variablesValuesId = $configuration['variables_values_id'] ?? null;
 
         if (!$variablesId) {
-            return [];
+            return new RenderResults(
+                $configuration,
+                [],
+                [],
+            );
         }
 
+        $configurationVariables = $this->loadVariables(
+            $variablesId,
+            $variablesValuesId,
+            $variableValuesId,
+            $variableValuesData,
+        );
+
+        return $this->renderer->renderVariables(
+            $configuration,
+            $configurationVariables,
+        );
+    }
+
+
+    /**
+     * @param non-empty-string $variablesId
+     * @param non-empty-string|null $variablesValuesId
+     * @param non-empty-string|null $variableValuesId
+     * @param array{values?: list<array{name: scalar, value: scalar}>|null}|null $variableValuesData
+     * @return array<non-empty-string, string>
+     */
+    public function loadVariables(
+        string $variablesId,
+        ?string $variablesValuesId,
+        ?string $variableValuesId,
+        ?array $variableValuesData
+    ): array {
         $variablesConfiguration = $this->componentsHelper->getVariablesConfiguration($variablesId);
         $variablesData = $this->loadVariablesData(
             $variablesId,
@@ -43,7 +78,7 @@ class ConfigurationVariablesLoader
             $variableValuesData,
         );
 
-        $values = [];
+        $keyValue = [];
         foreach ($variablesData['values'] as $row) {
             $key = (string) $row['name'];
             $value = (string) $row['value'];
@@ -52,16 +87,16 @@ class ConfigurationVariablesLoader
                 throw new UserException('Variable name cannot be empty.');
             }
 
-            $values[$key] = $value;
+            $keyValue[$key] = $value;
         }
 
         foreach ($variablesConfiguration['variables'] as $variable) {
-            if (!array_key_exists($variable['name'], $values)) {
+            if (!array_key_exists($variable['name'], $keyValue)) {
                 throw new UserException(sprintf('No value provided for variable "%s".', $variable['name']));
             }
         }
 
-        return $values;
+        return $keyValue;
     }
 
     /**

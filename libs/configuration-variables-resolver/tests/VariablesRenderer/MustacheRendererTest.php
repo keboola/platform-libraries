@@ -5,29 +5,15 @@ declare(strict_types=1);
 namespace Keboola\ConfigurationVariablesResolver\Tests\VariablesRenderer;
 
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
-use Keboola\ConfigurationVariablesResolver\VariablesRenderer\VariablesRenderer;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
+use Keboola\ConfigurationVariablesResolver\VariablesRenderer\MustacheRenderer;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
-class VariablesRendererTest extends TestCase
+class MustacheRendererTest extends TestCase
 {
-    private readonly TestHandler $logsHandler;
-    private readonly LoggerInterface $logger;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $this->logsHandler = new TestHandler();
-        $this->logger = new Logger('tests', [$this->logsHandler]);
-    }
-
     public function testRenderVariables(): void
     {
-        $renderer = new VariablesRenderer($this->logger);
-        $configuration = $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => 'foo is {{ foo }}, goo is {{ goo }}',
@@ -45,15 +31,16 @@ class VariablesRendererTest extends TestCase
                     'param' => 'foo is bar, goo is gar',
                 ],
             ],
-            $configuration,
+            $results->configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo, goo'));
+        self::assertSame(['foo', 'goo'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 
     public function testRenderSingleVariableMultipleTimes(): void
     {
-        $renderer = new VariablesRenderer($this->logger);
-        $configuration = $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => 'foo is {{ foo }} and {{ foo }}',
@@ -70,15 +57,16 @@ class VariablesRendererTest extends TestCase
                     'param' => 'foo is bar and bar',
                 ],
             ],
-            $configuration,
+            $results->configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
+        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 
     public function testRenderNestedVariables(): void
     {
-        $renderer = new VariablesRenderer($this->logger);
-        $configuration = $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => 'global key1: {{ key1 }}, vault key1: {{ vault.key1 }}',
@@ -98,18 +86,16 @@ class VariablesRendererTest extends TestCase
                     'param' => 'global key1: val1, vault key1: val2',
                 ],
             ],
-            $configuration,
+            $results->configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: key1, vault.key1'));
+        self::assertSame(['key1', 'vault.key1'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 
     public function testRenderMissingVariable(): void
     {
-        $this->expectException(UserException::class);
-        $this->expectExceptionMessage('Missing values for placeholders: key2, vault.key1');
-
-        $renderer = new VariablesRenderer($this->logger);
-        $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => '{{ key1 }} {{ key2 }} {{ vault.key1 }}',
@@ -120,12 +106,23 @@ class VariablesRendererTest extends TestCase
                 'vault' => [],
             ]
         );
+
+        self::assertSame(
+            [
+                'parameters' => [
+                    'param' => 'val1  ',
+                ],
+            ],
+            $results->configuration,
+        );
+        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key2', 'vault.key1'], $results->missingVariables);
     }
 
     public function testRenderVariablesSpecialCharacterReplacement(): void
     {
-        $renderer = new VariablesRenderer($this->logger);
-        $configuration = $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => 'foo is {{ foo }}',
@@ -142,15 +139,16 @@ class VariablesRendererTest extends TestCase
                     'param' => 'foo is special " \' { } characters',
                 ],
             ],
-            $configuration,
+            $results->configuration,
         );
-        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
+        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 
     public function testRenderValueEndingWithQuote(): void
     {
-        $renderer = new VariablesRenderer($this->logger);
-        $configuration = $renderer->renderVariables(
+        $renderer = new MustacheRenderer();
+        $results = $renderer->renderVariables(
             [
                 'parameters' => [
                     'param' => '{{ key1 }}',
@@ -167,8 +165,10 @@ class VariablesRendererTest extends TestCase
                     'param' => '"',
                 ],
             ],
-            $configuration,
+            $results->configuration,
         );
+        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 
     public function testRenderJsonBreakingValue(): void
@@ -179,7 +179,7 @@ class VariablesRendererTest extends TestCase
             'Control character error, possibly incorrectly encoded',
         );
 
-        $renderer = new VariablesRenderer($this->logger);
+        $renderer = new MustacheRenderer();
         $renderer->renderVariables(
             [
                 'parameters' => [

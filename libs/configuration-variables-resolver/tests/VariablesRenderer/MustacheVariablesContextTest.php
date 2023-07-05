@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver\Tests\VariablesRenderer;
 
-use Keboola\ConfigurationVariablesResolver\VariablesRenderer\VariablesContext;
+use Keboola\ConfigurationVariablesResolver\VariablesRenderer\MustacheVariablesContext;
 use PHPUnit\Framework\TestCase;
 
-class VariablesContextTest extends TestCase
+class MustacheVariablesContextTest extends TestCase
 {
     public function testContext(): void
     {
-        $context = new VariablesContext([
+        $context = new MustacheVariablesContext([
             'a' => 'b',
             'c' => 'd',
             'nested' => [

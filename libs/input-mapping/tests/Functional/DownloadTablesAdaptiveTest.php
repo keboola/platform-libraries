@@ -28,7 +28,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
                 'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ],
         ]);
-        $testTableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
+        $testTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $inputTablesState = new InputTableStateList([
             [
                 'source' => $this->firstTableId,
@@ -77,13 +77,13 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
-        $this->clientWrapper->getBasicClient()->writeTableAsync(
+        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
             $this->firstTableId,
             $csv,
             ['incremental' => true]
         );
 
-        $updatedTestTableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
+        $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $secondTablesResult = $reader->downloadTables(
             $configuration,
             $firstTablesResult->getInputTableStateList(),

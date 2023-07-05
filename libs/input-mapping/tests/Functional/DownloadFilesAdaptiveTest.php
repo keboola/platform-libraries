@@ -16,11 +16,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
@@ -57,11 +57,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertFileExists($root . '/download/' . $id2 . '_upload.manifest');
 
         // now load some new files and make sure we just grab the latest since the last run
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
         );
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
         );
@@ -93,15 +93,15 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
-        $idExclude = $this->clientWrapper->getBasicClient()->uploadFile(
+        $idExclude = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'exclude'])
         );
@@ -146,11 +146,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         self::assertFileDoesNotExist($root . '/download/' . $idExclude . '_upload');
 
         // now load some new files and make sure we just grab the latest since the last run
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
         );
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
         );
@@ -203,11 +203,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );
@@ -259,11 +259,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
         );

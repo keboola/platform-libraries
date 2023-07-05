@@ -15,7 +15,7 @@ class ABS extends AbstractStrategy
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
-        $jobId = $this->clientWrapper->getBasicClient()->queueTableExport($table->getSource(), $exportOptions);
+        $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport($table->getSource(), $exportOptions);
         return [$jobId, $table];
     }
 
@@ -36,8 +36,8 @@ class ABS extends AbstractStrategy
             list ($jobId, $table) = $export;
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
-            $fileInfo = $this->clientWrapper->getBasicClient()->getFile(
+            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
+            $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true)
             )

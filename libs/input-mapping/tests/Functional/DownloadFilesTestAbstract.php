@@ -22,9 +22,9 @@ class DownloadFilesTestAbstract extends AbstractTestCase
         $options = new ListFilesOptions();
         $options->setTags([self::DEFAULT_TEST_FILE_TAG, self::TEST_FILE_TAG_FOR_BRANCH]);
         $options->setLimit(1000);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         foreach ($files as $file) {
-            $this->clientWrapper->getBasicClient()->deleteFile($file['id']);
+            $this->clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
         }
         sleep(2);
     }

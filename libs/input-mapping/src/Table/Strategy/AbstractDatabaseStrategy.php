@@ -14,7 +14,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
 
     public function downloadTable(InputTableOptions $table): array
     {
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         if (LoadTypeDecider::canClone($tableInfo, $this->getWorkspaceType(), $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
@@ -113,7 +113,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,

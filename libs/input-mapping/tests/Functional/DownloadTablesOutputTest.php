@@ -22,7 +22,7 @@ class DownloadTablesOutputTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testDownloadTablesResult(): void
     {
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadataApi->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions(
                 $this->firstTableId,
@@ -59,8 +59,8 @@ class DownloadTablesOutputTest extends AbstractTestCase
             AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
         );
-        $test1TableInfo = $this->clientWrapper->getBasicClient()->getTable($this->firstTableId);
-        $test2TableInfo = $this->clientWrapper->getBasicClient()->getTable($this->secondTableId);
+        $test1TableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $test2TableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->secondTableId);
         self::assertEquals(
             $test1TableInfo['lastImportDate'],
             $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()

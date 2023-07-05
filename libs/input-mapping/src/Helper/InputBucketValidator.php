@@ -44,7 +44,7 @@ class InputBucketValidator
     private static function isDevBucket(string $bucketId, ClientWrapper $clientWrapper): bool
     {
         try {
-            $metadata = new Metadata($clientWrapper->getBasicClient());
+            $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
             $metadata = $metadata->listBucketMetadata($bucketId);
             foreach ($metadata as $metadatum) {
                 if (($metadatum['key'] === 'KBC.lastUpdatedBy.branch.id') ||

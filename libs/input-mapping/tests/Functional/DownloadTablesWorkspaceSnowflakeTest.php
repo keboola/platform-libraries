@@ -63,7 +63,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
-            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->firstTableId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
             );
@@ -75,21 +75,21 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         // this is copy, so it doesn't contain the _timestamp column
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
-        self::assertTrue($this->clientWrapper->getBasicClient()->tableExists($this->emptyOutputBucketId . '.test2'));
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($this->emptyOutputBucketId . '.test2'));
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
         self::assertEquals($this->thirdTableId, $manifest['id']);
         /* we want to check that the table exists in the workspace, so we try to load it. This time it
             doesn't fail because keep_internal_timestamp_column=false was provided */
-        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
         );
-        self::assertTrue($this->clientWrapper->getBasicClient()->tableExists($this->emptyOutputBucketId . '.test3'));
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($this->emptyOutputBucketId . '.test3'));
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
         self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)));
@@ -99,7 +99,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($logger->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getBasicClient()->listJobs(['limit' => 20]);
+        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);
         $params = null;
         foreach ($jobs as $job) {
             if ($job['operationName'] === 'workspaceLoadClone') {
@@ -179,7 +179,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $manifest['columns']
         );
         // check that the table exists in the workspace
-        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
@@ -268,7 +268,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $manifest['columns']
         );
         // check that the table exists in the workspace
-        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );
@@ -304,7 +304,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
-            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns']
             );
@@ -396,7 +396,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
         // the initial_table should not be present in the workspace anymore
         try {
-            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 [
                     'dataWorkspaceId' => $this->workspaceId,
@@ -414,7 +414,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         // check that the tables exist in the workspace. the cloned table will throw the _timestamp col error
         try {
-            $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 [
                     'dataWorkspaceId' => $this->workspaceId,
@@ -426,7 +426,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             self::assertStringContainsString('Invalid columns: _timestamp:', $exception->getMessage());
         }
 
-        $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table']
         );

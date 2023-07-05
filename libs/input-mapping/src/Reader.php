@@ -29,6 +29,8 @@ class Reader
     private LoggerInterface $logger;
     private StrategyFactory $strategyFactory;
 
+    public const PROTECTED_DEFAULT_BRANCH_FEATURE = 'protected-default-branch';
+
     public function __construct(StrategyFactory $strategyFactory)
     {
         $this->logger = $strategyFactory->getLogger();
@@ -71,7 +73,8 @@ class Reader
         string $stagingType,
         ReaderOptions $readerOptions
     ): Result {
-        $tableResolver = new TableDefinitionResolver($this->clientWrapper->getBasicClient(), $this->logger);
+        // assuming yes on https://keboolaglobal.slack.com/archives/C05BK5V8N1Z/p1688578793224979
+        $tableResolver = new TableDefinitionResolver($this->clientWrapper->getTableAndFileStorageClient(), $this->logger);
         $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
             $tablesState,
             $this->clientWrapper,
@@ -127,7 +130,7 @@ class Reader
             $clientWrapper,
             $logger
         );
-        $storageClient = $clientWrapper->getBasicClient();
+        $storageClient = $clientWrapper->getTableAndFileStorageClient();
 
         if (isset($fileConfigurationRewritten['query']) && $clientWrapper->hasBranch()) {
             throw new InvalidInputException(

@@ -63,7 +63,7 @@ class SourceRewriteHelper
             $source,
             $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName']
         );
-        if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
+        if ($clientWrapper->getTableAndFileStorageClient()->tableExists($newSource)) {
             $logger->info(
                 sprintf('Using dev input "%s" instead of "%s".', $newSource, $source)
             );

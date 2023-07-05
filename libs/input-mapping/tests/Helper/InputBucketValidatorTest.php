@@ -17,7 +17,7 @@ class InputBucketValidatorTest extends AbstractTestCase
     private function initBuckets(bool $hasMetadata): void
     {
         if ($hasMetadata) {
-            $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+            $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
             $metadataApi->postBucketMetadata(
                 $this->emptyOutputBucketId,
                 'test',

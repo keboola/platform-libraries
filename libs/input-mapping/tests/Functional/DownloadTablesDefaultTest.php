@@ -140,7 +140,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 ],
             ],
         ];
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions(
                 $this->firstTableId,
@@ -208,7 +208,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 'value' => 'testReadTablesWithSourceSearch',
             ],
         ];
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata)
         );
@@ -274,7 +274,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             ],
         ];
 
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions(
                 $this->firstTableId,
@@ -394,7 +394,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableLimitTest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $tokenInfo['owner']['limits'][Local::EXPORT_SIZE_LIMIT_NAME] = [
             'name' => Local::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
@@ -408,7 +408,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $client->method('verifyToken')->willReturn($tokenInfo);
         /** @var Client $client */
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($client);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
@@ -450,7 +451,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 'destination' => 'test2.csv',
             ],
         ]);
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadata->postBucketMetadata(
             $this->testBucketId,
             'test',

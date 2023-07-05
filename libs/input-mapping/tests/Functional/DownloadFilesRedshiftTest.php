@@ -69,8 +69,8 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
         $csv = new CsvFile($root . '/upload.csv');
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
-        $tableId = $clientWrapper->getBasicClient()->createTableAsync($this->redshiftBucketId, 'test_file', $csv);
-        $table = $clientWrapper->getBasicClient()->exportTableAsync($tableId);
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync($this->redshiftBucketId, 'test_file', $csv);
+        $table = $clientWrapper->getTableAndFileStorageClient()->exportTableAsync($tableId);
         $fileId = $table['file']['id'];
 
         $reader = new Reader($this->getStagingFactory($clientWrapper, $root));

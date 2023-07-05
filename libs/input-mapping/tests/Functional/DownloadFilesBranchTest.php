@@ -53,9 +53,9 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', sprintf('%s-tag-2', $branchId)]);
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -157,11 +157,11 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
 
-        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag])
         );
-        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
@@ -217,23 +217,23 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $branchProcessedTag = sprintf('%s-processed-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
         $excludeTag = sprintf('exclude-%s', self::TEST_FILE_TAG_FOR_BRANCH);
 
-        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag])
         );
-        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
-        $processedFileId = $clientWrapper->getBasicClient()->uploadFile(
+        $processedFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, $processedTag])
         );
-        $branchProcessedFileId = $clientWrapper->getBasicClient()->uploadFile(
+        $branchProcessedFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag])
         );
-        $excludeFileId = $clientWrapper->getBasicClient()->uploadFile(
+        $excludeFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, $excludeTag])
         );
@@ -285,10 +285,10 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             [$branchTag, $processedTag]
         );
 
-        $clientWrapper->getBasicClient()->deleteFile($file1Id);
-        $clientWrapper->getBasicClient()->deleteFile($excludeFileId);
-        $clientWrapper->getBasicClient()->deleteFile($processedFileId);
-        $clientWrapper->getBasicClient()->deleteFile($branchProcessedFileId);
+        $clientWrapper->getTableAndFileStorageClient()->deleteFile($file1Id);
+        $clientWrapper->getTableAndFileStorageClient()->deleteFile($excludeFileId);
+        $clientWrapper->getTableAndFileStorageClient()->deleteFile($processedFileId);
+        $clientWrapper->getTableAndFileStorageClient()->deleteFile($branchProcessedFileId);
     }
 
     private function assertManifestTags(string $manifestPath, array $tags): void

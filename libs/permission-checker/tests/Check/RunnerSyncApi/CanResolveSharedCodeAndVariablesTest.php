@@ -15,8 +15,8 @@ class CanResolveSharedCodeAndVariablesTest extends TestCase
     public function testValidPermissionsCheck(): void
     {
         $expectedComponentIds = [
-            'keboola.variables',
             'keboola.shared-code',
+            'keboola.variables',
         ];
 
         $tokenMock = $this->createMock(StorageApiToken::class);
@@ -52,12 +52,12 @@ class CanResolveSharedCodeAndVariablesTest extends TestCase
     {
         yield 'for any component' => [
             [],
-            'You do not have permission to read configurations of "keboola.variables" component',
+            'You do not have permission to read configurations of "keboola.shared-code" component',
         ];
 
         yield 'unnecessary component permission' => [
             ['keboola.orchestrator'],
-            'You do not have permission to read configurations of "keboola.variables" component',
+            'You do not have permission to read configurations of "keboola.shared-code" component',
         ];
 
         yield 'only one of required permissions - shared-code' => [

@@ -13,8 +13,8 @@ class CanResolveSharedCodeAndVariables implements PermissionCheckInterface
     public function checkPermissions(StorageApiToken $token): void
     {
         $componentIds = [
-            'keboola.variables',
             'keboola.shared-code',
+            'keboola.variables',
         ];
 
         foreach ($componentIds as $componentId) {

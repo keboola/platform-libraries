@@ -8,7 +8,6 @@ use Generator;
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Check\RunnerSyncApi\CanRunAction;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
-use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 

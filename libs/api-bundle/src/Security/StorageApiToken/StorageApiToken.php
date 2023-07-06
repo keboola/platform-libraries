@@ -94,6 +94,6 @@ class StorageApiToken implements TokenInterface, StorageApiTokenInterface
 
     public function getAllowedComponents(): ?array
     {
-        return $this->tokenInfo['componentAccess'] ?? [];
+        return $this->tokenInfo['componentAccess'] ?? null;
     }
 }

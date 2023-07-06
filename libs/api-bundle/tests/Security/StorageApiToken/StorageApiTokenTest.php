@@ -114,10 +114,28 @@ class StorageApiTokenTest extends TestCase
                     'name' => 'my project',
                     'features' => [],
                 ],
+                'componentAccess' => [],
             ],
             'tokenValue',
         );
 
         self::assertSame([], $token->getAllowedComponents());
+    }
+
+    public function testAllComponentAccessLimits(): void
+    {
+        $token = new StorageApiToken(
+            [
+                'id' => '123',
+                'owner' => [
+                    'id' => '456',
+                    'name' => 'my project',
+                    'features' => [],
+                ],
+            ],
+            'tokenValue',
+        );
+
+        self::assertSame(null, $token->getAllowedComponents());
     }
 }

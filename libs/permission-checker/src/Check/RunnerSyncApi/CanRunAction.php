@@ -21,10 +21,6 @@ class CanRunAction implements PermissionCheckInterface
 
     public function checkPermissions(StorageApiToken $token): void
     {
-        if (!$token->hasFeature(Feature::QUEUE_V2)) {
-            throw PermissionDeniedException::missingFeature(Feature::QUEUE_V2);
-        }
-
         if (!$token->hasAllowedComponent($this->componentId)) {
             throw PermissionDeniedException::missingComponent($this->componentId);
         }

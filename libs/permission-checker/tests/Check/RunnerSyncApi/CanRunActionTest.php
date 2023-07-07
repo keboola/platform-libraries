@@ -42,7 +42,6 @@ class CanRunActionTest extends TestCase
                         : ' with dummy-component access';
                     yield $providedDataLabel => [
                         'token' => new StorageApiToken(
-                            features: ['queuev2'],
                             role: $role,
                             allowedComponents: $allowedComponents
                         ),
@@ -57,7 +56,6 @@ class CanRunActionTest extends TestCase
             'token' => new StorageApiToken(
                 features: [
                     'protected-default-branch',
-                    'queuev2',
                 ],
                 role: 'productionManager'
             ),
@@ -68,7 +66,6 @@ class CanRunActionTest extends TestCase
             'token' => new StorageApiToken(
                 features: [
                     'protected-default-branch',
-                    'queuev2',
                 ],
                 role: 'developer'
             ),
@@ -79,7 +76,6 @@ class CanRunActionTest extends TestCase
             'token' => new StorageApiToken(
                 features: [
                     'protected-default-branch',
-                    'queuev2',
                 ],
                 role: 'reviewer'
             ),
@@ -103,21 +99,11 @@ class CanRunActionTest extends TestCase
         $branchTypes = [BranchType::DEFAULT, BranchType::DEV];
 
         foreach ($branchTypes as $branchType) {
-            $label = 'project without new queue';
-            $label .= sprintf(' on %s branch', $branchType->value);
-
-            yield $label => [
-                'token' => new StorageApiToken(),
-                'branchType' => $branchType,
-                'errorMessage' => 'Project does not have feature "queuev2" enabled',
-            ];
-
             $label = 'regular token without required component access';
             $label .= sprintf(' on %s branch', $branchType->value);
 
             yield $label => [
                 'token' => new StorageApiToken(
-                    features: ['queuev2'],
                     allowedComponents: ['keboola.orchestrator']
                 ),
                 'branchType' => $branchType,
@@ -129,7 +115,6 @@ class CanRunActionTest extends TestCase
 
             yield $label => [
                 'token' => new StorageApiToken(
-                    features: ['queuev2'],
                     allowedComponents: []
                 ),
                 'branchType' => $branchType,
@@ -141,7 +126,6 @@ class CanRunActionTest extends TestCase
 
             yield $label => [
                 'token' => new StorageApiToken(
-                    features: ['queuev2'],
                     role: 'readOnly',
                 ),
                 'branchType' => $branchType,
@@ -168,7 +152,6 @@ class CanRunActionTest extends TestCase
                 yield $label => [
                     'token' => new StorageApiToken(
                         features: [
-                            'queuev2',
                             'protected-default-branch',
                         ],
                         role: $role

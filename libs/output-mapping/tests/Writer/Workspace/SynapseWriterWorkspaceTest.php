@@ -41,12 +41,12 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
 
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_OUT);
         if ($outBucketId !== null) {
-            $tables = $this->clientWrapper->getBasicClient()->listTables($outBucketId, ['include' => '']);
+            $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($outBucketId, ['include' => '']);
             foreach ($tables as $table) {
-                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+                $this->clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
             }
         } else {
-            $outBucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+            $outBucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_OUT,
                 backend: 'synapse'
@@ -55,12 +55,12 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
 
         $bucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_IN);
         if ($bucketId !== null) {
-            $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId, ['include' => '']);
+            $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
             foreach ($tables as $table) {
-                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+                $this->clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
             }
         } else {
-            $bucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+            $bucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_IN,
                 backend: 'synapse'
@@ -76,7 +76,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         $tableIds = [];
         // Create table
         for ($i = 0; $i < 2; $i++) {
-            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+            $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $bucketId,
                 'test' . ($i + 1),
                 $csv
@@ -131,7 +131,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($outBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($outBucketId);
         self::assertCount(2, $tables);
         $sortedTables = [$tables[0]['id'] => $tables[0], $tables[1]['id'] => $tables[1]];
         ksort($sortedTables);

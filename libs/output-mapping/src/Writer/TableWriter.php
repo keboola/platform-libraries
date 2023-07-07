@@ -29,6 +29,7 @@ use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Throwable;
 
@@ -53,7 +54,7 @@ class TableWriter extends AbstractWriter
     {
         parent::__construct($strategyFactory);
 
-        $this->metadataClient = new Metadata($this->clientWrapper->getBasicClient());
+        $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
             $strategyFactory->getClientWrapper(),
             $strategyFactory->getLogger()
@@ -144,15 +145,15 @@ class TableWriter extends AbstractWriter
             }
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper->getBasicClient(), $this->logger, $loadTableTasks);
+        $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
         return $tableQueue;
     }
 
-    private function getDestinationTableInfoIfExists(string $tableId, Client $storageApiClient): ?array
+    private function getDestinationTableInfoIfExists(string $tableId, ClientWrapper $clientWrapper): ?array
     {
         try {
-            return $storageApiClient->getTable($tableId);
+            return $clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;
@@ -187,12 +188,14 @@ class TableWriter extends AbstractWriter
         }
 
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
-        $storageApiClient = $this->clientWrapper->getBasicClient();
-        $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId(), $storageApiClient);
+        $destinationTableInfo = $this->getDestinationTableInfoIfExists(
+            $destination->getTableId(),
+            $this->clientWrapper
+        );
 
         if ($destinationTableInfo !== null) {
             TableColumnsHelper::addMissingColumns(
-                $storageApiClient,
+                $this->clientWrapper->getTableAndFileStorageClient(),
                 $destinationTableInfo,
                 $config,
                 $destinationBucket['backend']
@@ -201,7 +204,7 @@ class TableWriter extends AbstractWriter
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
-                    $storageApiClient,
+                    $this->clientWrapper->getTableAndFileStorageClient(),
                     $destination->getTableId(),
                     $destinationTableInfo['primaryKey'],
                     $config['primary_key']
@@ -215,7 +218,10 @@ class TableWriter extends AbstractWriter
                     'whereOperator' => $config['delete_where_operator'],
                     'whereValues' => $config['delete_where_values'],
                 ];
-                $storageApiClient->deleteTableRows($destination->getTableId(), $deleteOptions);
+                $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
+                    $destination->getTableId(),
+                    $deleteOptions
+                );
             }
         }
 
@@ -308,7 +314,9 @@ class TableWriter extends AbstractWriter
     {
         $destinationBucketId = $destination->getBucketId();
         try {
-            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            $destinationBucketDetails = $this->clientWrapper->getTableAndFileStorageClient()->getBucket(
+                $destinationBucketId
+            );
             $this->checkDevBucketMetadata($destination);
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
@@ -316,7 +324,9 @@ class TableWriter extends AbstractWriter
             }
             // bucket doesn't exist so we need to create it
             $this->createDestinationBucket($destination, $systemMetadata);
-            $destinationBucketDetails = $this->clientWrapper->getBasicClient()->getBucket($destinationBucketId);
+            $destinationBucketDetails = $this->clientWrapper->getTableAndFileStorageClient()->getBucket(
+                $destinationBucketId
+            );
         }
 
         return [
@@ -327,7 +337,7 @@ class TableWriter extends AbstractWriter
 
     private function createDestinationBucket(MappingDestination $destination, array $systemMetadata): void
     {
-        $this->clientWrapper->getBasicClient()->createBucket(
+        $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
             $destination->getBucketName(),
             $destination->getBucketStage()
         );
@@ -346,7 +356,7 @@ class TableWriter extends AbstractWriter
         $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv')->getPathname());
         $headerCsvFile->writeRow($columns);
 
-        $this->clientWrapper->getBasicClient()->createTableAsync(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $destination->getBucketId(),
             $destination->getTableName(),
             $headerCsvFile,
@@ -359,7 +369,7 @@ class TableWriter extends AbstractWriter
         $requestData = $tableDefinition->getRequestData();
 
         try {
-            $this->clientWrapper->getBasicClient()->createTableDefinition(
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
                 $destination->getBucketId(),
                 $requestData
             );
@@ -382,7 +392,7 @@ class TableWriter extends AbstractWriter
             return;
         }
         $bucketId = $destination->getBucketId();
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         try {
             foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
                 if (($metadatum['key'] === TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID) ||

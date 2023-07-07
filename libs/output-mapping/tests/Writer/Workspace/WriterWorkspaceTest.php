@@ -27,7 +27,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMapping(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
@@ -169,7 +169,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testMappingMerge(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -229,7 +229,7 @@ class WriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $metadata = new Metadata($this->clientWrapper->getBasicClient());
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $tableMetadata = $metadata->listTableMetadata($this->emptyOutputBucketId . '.table1a');
         $tableMetadataValues = [];
         self::assertCount(4, $tableMetadata);
@@ -249,7 +249,7 @@ class WriterWorkspaceTest extends AbstractTestCase
 
     public function testTableOutputMappingMissingDestinationManifest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -291,7 +291,7 @@ class WriterWorkspaceTest extends AbstractTestCase
 
     public function testTableOutputMappingMissingDestinationNoManifest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -327,7 +327,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputBucketNoDestination(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -397,7 +397,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             )
         );
 
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -465,7 +465,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeMultipleMappingOfSameSource(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -531,7 +531,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testWriteOnlyOnJobFailure(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(
             null,
             'json',
@@ -585,7 +585,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
         $factory->getTableOutputStrategy(

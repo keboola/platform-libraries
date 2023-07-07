@@ -92,7 +92,10 @@ class LocalTableStrategy extends AbstractTableStrategy
             ->setTags($tags)
         ;
 
-        return (string) $this->clientWrapper->getBasicClient()->uploadSlicedFile($sliceFiles, $fileUploadOptions);
+        return (string) $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile(
+            $sliceFiles,
+            $fileUploadOptions
+        );
     }
 
     private function uploadRegularFile(SplFileInfo $source, array $tags): string
@@ -102,6 +105,9 @@ class LocalTableStrategy extends AbstractTableStrategy
             ->setTags($tags)
         ;
 
-        return (string) $this->clientWrapper->getBasicClient()->uploadFile($source->getPathname(), $fileUploadOptions);
+        return (string) $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $source->getPathname(),
+            $fileUploadOptions
+        );
     }
 }

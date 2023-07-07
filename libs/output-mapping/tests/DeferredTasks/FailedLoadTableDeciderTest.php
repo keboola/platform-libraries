@@ -10,6 +10,7 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 
@@ -67,8 +68,11 @@ class FailedLoadTableDeciderTest extends TestCase
         $client->expects(self::once())->method('getTable')
             ->with('in.c-test.table')
             ->willReturn($tableInfo);
+        $clientWrapperMock = self::createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($client);
         $task = new LoadTableTask(new MappingDestination('in.c-test.table'), [], $freshlyCreated);
-        $result = FailedLoadTableDecider::decideTableDelete($logger, $client, $task);
+        $result = FailedLoadTableDecider::decideTableDelete($logger, $clientWrapperMock, $task);
         self::assertSame($expectedResult, $result);
     }
 
@@ -79,8 +83,11 @@ class FailedLoadTableDeciderTest extends TestCase
         $client->expects(self::once())->method('getTable')
             ->with('in.c-test.table')
             ->willThrowException(new ClientException('Table not foundd', 404));
+        $clientWrapperMock = self::createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($client);
         $task = new LoadTableTask(new MappingDestination('in.c-test.table'), [], true);
-        $result = FailedLoadTableDecider::decideTableDelete($logger, $client, $task);
+        $result = FailedLoadTableDecider::decideTableDelete($logger, $clientWrapperMock, $task);
         self::assertSame(false, $result);
     }
 }

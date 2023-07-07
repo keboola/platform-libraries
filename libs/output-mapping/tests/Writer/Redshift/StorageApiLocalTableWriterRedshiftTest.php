@@ -37,13 +37,15 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyRedshiftOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyRedshiftOutputBucketId . '.table3d', $tables[0]['id']);
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table3d', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(1, $table);
         self::assertCount(2, $table[0]);
         self::assertArrayHasKey('Id', $table[0]);
@@ -97,13 +99,13 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $exporter->exportTable(
             $this->emptyRedshiftOutputBucketId . '.table61',
             $root . DIRECTORY_SEPARATOR . 'download.csv',
             []
         );
-        $table = $this->clientWrapper->getBasicClient()->parseCsv(
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
             (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv')
         );
         usort($table, function ($a, $b) {

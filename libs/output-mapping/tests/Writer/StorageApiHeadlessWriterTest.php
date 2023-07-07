@@ -40,15 +40,17 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
         self::assertEquals(1, $tableQueue->getTaskCount());
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
@@ -80,13 +82,15 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(0, $table);
     }
 
@@ -123,16 +127,18 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.table', $tables[0]['id']);
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(1, $table);
         self::assertEquals([['Id' => 'test', 'Name' => 'test']], $table);
     }
@@ -163,17 +169,19 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.table', $tables[0]['id']);
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['primaryKey']);
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(1, $table);
         self::assertEquals([['Id' => 'test', 'Name' => 'test']], $table);
     }
@@ -183,10 +191,14 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
     {
         $csvFile = new CsvFile($this->temp->createFile('header')->getPathname());
         $csvFile->writeRow(['Id', 'Name']);
-        $this->clientWrapper->getBasicClient()->createTable($this->emptyOutputBucketId, 'table', $csvFile);
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTable(
+            $this->emptyOutputBucketId,
+            'table',
+            $csvFile
+        );
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
         $root = $this->temp->getTmpFolder();
@@ -212,15 +224,17 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
-        $table = $this->clientWrapper->getBasicClient()->getTable($this->emptyOutputBucketId . '.table');
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
-        $exporter = new TableExporter($this->clientWrapper->getBasicClient());
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
-        $table = $this->clientWrapper->getBasicClient()->parseCsv((string) file_get_contents($downloadedFile));
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
+            (string) file_get_contents($downloadedFile)
+        );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);

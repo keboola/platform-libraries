@@ -73,7 +73,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
             ->setIsEncrypted($storageConfig['is_encrypted'])
             ->setIsPublic($storageConfig['is_public'])
             ->setNotify($storageConfig['notify']);
-        return (string) $this->clientWrapper->getBasicClient()
+        return (string) $this->clientWrapper->getTableAndFileStorageClient()
             ->uploadFile($this->dataStorage->getPath() . '/' . $file, $options);
     }
 

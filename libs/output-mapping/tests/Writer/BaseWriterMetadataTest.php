@@ -35,7 +35,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($inputBucket, 'table88', $csv);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync($inputBucket, 'table88', $csv);
 
         $csv = new CsvFile($root . '/upload/table88b.csv');
         $csv->writeRow(['Id', 'Name', 'Foo']);
@@ -74,7 +74,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         ];
 
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
-        $this->clientWrapper->getBasicClient()->setRunId($runId);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $writer = new TableWriter($this->getLocalStagingFactory());
         $tableQueue =  $writer->uploadTables(
@@ -89,7 +89,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
 
         $writerJobs = array_filter(
-            $this->clientWrapper->getBasicClient()->listJobs(),
+            $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
             }
@@ -100,7 +100,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         self::assertTableColumnAddJob(array_pop($writerJobs), 'Foo');
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
 
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $idColMetadata = $metadataApi->listColumnMetadata($inputBucket . '.table88.Id');
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -131,7 +131,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($inputBucket, 'table88', $csv);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync($inputBucket, 'table88', $csv);
 
         $csv = new CsvFile($root . '/upload/table88b.csv', ';', '\'');
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
@@ -175,7 +175,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $nameColMetadata = $metadataApi->listColumnMetadata($inputBucket . '.table88.Name');
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -199,7 +199,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $csv->writeRow(['Id with special chars', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($inputBucket, 'table88', $csv);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync($inputBucket, 'table88', $csv);
 
         $csv = new CsvFile($root . '/upload/table88b.csv');
         $csv->writeRow(['Id with special chars', 'Name', 'Foo']);
@@ -247,7 +247,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $idColMetadata = $metadataApi->listColumnMetadata(
             $inputBucket . '.table88.Id_with_special_chars'
         );
@@ -280,7 +280,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
         $csv->writeRow(['aabb', 'ccdd']);
-        $this->clientWrapper->getBasicClient()->createTableAsync($inputBucket, 'table99', $csv);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync($inputBucket, 'table99', $csv);
 
         mkdir($root . '/upload/table99b', 0777, true);
         $csv = new CsvFile($root . '/upload/table99b/slice1.csv');
@@ -330,7 +330,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $idColMetadata = $metadataApi->listColumnMetadata($inputBucket . '.table99.Id');
         $expectedColumnMetadata = [
             'testComponent' => [

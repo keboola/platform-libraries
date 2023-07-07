@@ -189,13 +189,13 @@ class LocalTest extends AbstractTestCase
             'manifest data'
         );
         $fileId = $strategy->loadFileToStorage('/data/out/files/my-file_one', []);
-        $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
-        $this->clientWrapper->getBasicClient()->downloadFile($fileId, $destination);
+        $this->clientWrapper->getTableAndFileStorageClient()->downloadFile($fileId, $destination);
         $contents = (string) file_get_contents($destination);
         self::assertEquals('my-data', $contents);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals([], $file['tags']);
@@ -233,13 +233,13 @@ class LocalTest extends AbstractTestCase
                 'is_encrypted' => true,
             ]
         );
-        $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
-        $this->clientWrapper->getBasicClient()->downloadFile($fileId, $destination);
+        $this->clientWrapper->getTableAndFileStorageClient()->downloadFile($fileId, $destination);
         $contents = (string) file_get_contents($destination);
         self::assertEquals('my-data', $contents);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals(['first-tag', 'second-tag'], $file['tags']);

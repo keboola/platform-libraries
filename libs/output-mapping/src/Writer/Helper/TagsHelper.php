@@ -13,7 +13,7 @@ class TagsHelper
     public static function rewriteTags(array $storageConfig, ClientWrapper $clientWrapper): array
     {
         if (!empty($storageConfig['tags']) && $clientWrapper->hasBranch()) {
-            $prefix = $clientWrapper->getBasicClient()->webalizeDisplayName(
+            $prefix = $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
                 (string) $clientWrapper->getBranchId()
             )['displayName'];
             $storageConfig['tags'] = array_map(function ($tag) use ($prefix) {

@@ -75,7 +75,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(3, $files);
 
         $file1 = $file2 = $file3 = null;
@@ -147,7 +147,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         // no files should be uploaded since, isFailedJob was true and write_always is not implemented for files
         self::assertCount(0, $files);
     }
@@ -178,7 +178,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
         $file1 = null;
@@ -245,7 +245,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([sprintf('%s-' . self::FILE_TAG, $branchId)]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
         $file1 = null;
@@ -299,7 +299,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
         $file1 = null;
@@ -441,11 +441,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
             (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
             (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
@@ -455,9 +455,9 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($id1);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
         self::assertTrue(in_array('downloaded', $file['tags']));
-        $file = $this->clientWrapper->getBasicClient()->getFile($id2);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
         self::assertTrue(in_array('downloaded', $file['tags']));
     }
 
@@ -466,11 +466,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
             (new FileUploadOptions())->setTags([self::FILE_TAG])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
             (new FileUploadOptions())->setTags(['12345-' . self::FILE_TAG])
         );
@@ -483,9 +483,9 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $writer->tagFiles($configuration);
 
         // first file shouldn't be marked as processed because a branch file exists
-        $file1 = $this->clientWrapper->getBasicClient()->getFile($id1);
+        $file1 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
         self::assertTrue(!in_array('12345-downloaded', $file1['tags']));
-        $file2 = $this->clientWrapper->getBasicClient()->getFile($id2);
+        $file2 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
         self::assertTrue(in_array('12345-downloaded', $file2['tags']));
         self::assertTrue(in_array('12345-' . self::FILE_TAG, $file2['tags']));
     }
@@ -525,7 +525,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
         $expectedTags = [

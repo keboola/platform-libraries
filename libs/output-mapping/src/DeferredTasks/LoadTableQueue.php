@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\DeferredTasks;
 
-use DateInterval;
-use DateTimeImmutable;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
-use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class LoadTableQueue
 {
-    private Client $client;
+    private ClientWrapper $clientWrapper;
     private LoggerInterface $logger;
 
     /** @var LoadTableTaskInterface[] */
@@ -28,9 +25,9 @@ class LoadTableQueue
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
      */
-    public function __construct(Client $client, LoggerInterface $logger, array $loadTableTasks)
+    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, array $loadTableTasks)
     {
-        $this->client = $client;
+        $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->loadTableTasks = $loadTableTasks;
         $this->tableResult = new Result();
@@ -40,7 +37,7 @@ class LoadTableQueue
     {
         foreach ($this->loadTableTasks as $loadTableTask) {
             try {
-                $loadTableTask->startImport($this->client);
+                $loadTableTask->startImport($this->clientWrapper->getTableAndFileStorageClient());
             } catch (ClientException $e) {
                 if ($e->getCode() < 500) {
                     throw new InvalidOutputException(
@@ -57,7 +54,7 @@ class LoadTableQueue
 
     public function waitForAll(): array
     {
-        $metadataApiClient = new Metadata($this->client);
+        $metadataApiClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
 
         $jobIds = [];
         $errors = [];
@@ -66,7 +63,7 @@ class LoadTableQueue
             $jobId = $task->getStorageJobId();
             $jobIds[] = $jobId;
             /** @var array $jobResult */
-            $jobResult = $this->client->waitForJob($jobId);
+            $jobResult = $this->clientWrapper->getBasicClient()->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf(
@@ -74,8 +71,11 @@ class LoadTableQueue
                     $task->getDestinationTableName(),
                     $jobResult['error']['message']
                 );
-                if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->client, $task)) {
-                    $this->client->dropTable($task->getDestinationTableName(), ['force' => true]);
+                if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
+                    $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
+                        $task->getDestinationTableName(),
+                        ['force' => true]
+                    );
                 }
             } else {
                 try {
@@ -95,12 +95,18 @@ class LoadTableQueue
 
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
-                        $this->tableResult->addTable(new TableInfo($this->client->getTable($jobResult['tableId'])));
+                        $this->tableResult->addTable(
+                            new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                                $jobResult['tableId']
+                            ))
+                        );
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
                         $this->tableResult->addTable(
-                            new TableInfo($this->client->getTable($jobResult['results']['id']))
+                            new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                                $jobResult['results']['id']
+                            ))
                         );
                         $jobResults[] = $jobResult;
                         break;

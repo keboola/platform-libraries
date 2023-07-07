@@ -145,7 +145,7 @@ class FileWriter extends AbstractWriter
     {
         $prefix = null;
         if ($this->clientWrapper->hasBranch()) {
-            $prefix = $this->clientWrapper->getBasicClient()->webalizeDisplayName(
+            $prefix = $this->clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
                 (string) $this->clientWrapper->getBranchId()
             )['displayName'];
         }
@@ -159,7 +159,7 @@ class FileWriter extends AbstractWriter
                 );
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
-                        $this->clientWrapper->getBasicClient()->addFileTag(
+                        $this->clientWrapper->getTableAndFileStorageClient()->addFileTag(
                             $file['id'],
                             $prefix ? $prefix . '-' . $tag : $tag
                         );

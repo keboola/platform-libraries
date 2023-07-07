@@ -25,7 +25,7 @@ class TableDefinitionTest extends AbstractTestCase
             'tables-definition',
         ];
 
-        $tokenData = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenData = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         foreach ($requiredFeatures as $requiredFeature) {
             if (!in_array($requiredFeature, $tokenData['owner']['features'])) {
                 self::fail(sprintf(
@@ -72,7 +72,7 @@ class TableDefinitionTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertFalse($tableDetails['isTyped']);
     }
 
@@ -149,7 +149,7 @@ class TableDefinitionTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($config['destination']);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($config['destination']);
         self::assertTrue($tableDetails['isTyped']);
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], $expectedTypes['Id']);
@@ -277,7 +277,7 @@ class TableDefinitionTest extends AbstractTestCase
             ],
         ];
 
-        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyInputBucketId, [
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyInputBucketId, [
             'name' => 'tableDefinition',
             'primaryKeysNames' => [],
             'columns' => [
@@ -293,7 +293,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
 
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
-        $this->clientWrapper->getBasicClient()->setRunId($runId);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -320,7 +320,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
 
         $writerJobs = array_filter(
-            $this->clientWrapper->getBasicClient()->listJobs(),
+            $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
             }
@@ -352,7 +352,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertSame($incrementalFlag, $job['operationParams']['params']['incremental']);
         self::assertSame([], $job['results']['newColumns']);
 
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertTrue($tableDetails['isTyped']);
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
@@ -410,7 +410,7 @@ class TableDefinitionTest extends AbstractTestCase
             ],
         ];
 
-        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyOutputBucketId, [
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyOutputBucketId, [
             'name' => 'tableDefinition',
             'primaryKeysNames' => [],
             'columns' => [
@@ -426,7 +426,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
 
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
-        $this->clientWrapper->getBasicClient()->setRunId($runId);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -453,7 +453,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
 
         $writerJobs = array_filter(
-            $this->clientWrapper->getBasicClient()->listJobs(),
+            $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
             }
@@ -483,7 +483,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
 
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertTrue($tableDetails['isTyped']);
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
@@ -573,7 +573,7 @@ class TableDefinitionTest extends AbstractTestCase
             $config['column_metadata'] = $columnMetadata;
         }
 
-        $this->clientWrapper->getBasicClient()->createTableDefinition($this->emptyOutputBucketId, [
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyOutputBucketId, [
             'name' => 'tableDefinition',
             'primaryKeysNames' => [],
             'columns' => [
@@ -589,7 +589,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
 
         $runId = $this->clientWrapper->getBasicClient()->generateRunId();
-        $this->clientWrapper->getBasicClient()->setRunId($runId);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -616,7 +616,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
 
         $writerJobs = array_filter(
-            $this->clientWrapper->getBasicClient()->listJobs(),
+            $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
             }
@@ -638,7 +638,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
 
-        $tableDetails = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertTrue($tableDetails['isTyped']);
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [

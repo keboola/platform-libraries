@@ -72,9 +72,9 @@ abstract class AbstractTestCase extends TestCase
         $options = new ListFilesOptions();
         $options->setTags($tags);
         sleep(1);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         foreach ($files as $file) {
-            $this->clientWrapper->getBasicClient()->deleteFile($file['id']);
+            $this->clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
         }
     }
 
@@ -90,21 +90,21 @@ abstract class AbstractTestCase extends TestCase
             })
             ->setUserAgent(implode('::', Test::describe($this)));
         $this->clientWrapper = new ClientWrapper($clientOptions);
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
+            $this->clientWrapper->getBranchClientIfAvailable()->getApiUrl()
         ));
     }
 
     public function tearDown(): void
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
             try {
                 $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             } catch (ClientException $e) {
@@ -236,7 +236,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function assertTablesExists(string $bucketId, array $expectedTables): void
     {
-        $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($bucketId);
         $tableIds = array_column($tables, 'id');
 
         // order of listed tables is not guaranteed
@@ -248,7 +248,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function assertTableRowsEquals(string $tableName, array $expectedRows): void
     {
-        $data = $this->clientWrapper->getBasicClient()->getTableDataPreview($tableName);
+        $data = $this->clientWrapper->getTableAndFileStorageClient()->getTableDataPreview($tableName);
 
         $rows = explode("\n", trim($data));
         // convert to lowercase because of https://keboola.atlassian.net/browse/KBC-864

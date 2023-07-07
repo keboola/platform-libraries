@@ -19,25 +19,15 @@ class ComponentsClientHelper
 
     public const KEBOOLA_SHARED_CODE = 'keboola.shared-code';
 
-    private ClientWrapper $clientWrapper;
-
-    public function __construct(ClientWrapper $clientWrapper)
-    {
-        $this->clientWrapper = $clientWrapper;
-    }
-
-    private function getClient(): Components
-    {
-        if ($this->clientWrapper->hasBranch()) {
-            return new Components($this->clientWrapper->getBranchClient());
-        }
-        return new Components($this->clientWrapper->getBasicClient());
+    public function __construct(
+        private readonly Components $componentsApiClient,
+    ) {
     }
 
     public function getVariablesConfiguration(string $variablesId): array
     {
         try {
-            $vConfiguration = $this->getClient()->getConfiguration(self::KEBOOLA_VARIABLES, $variablesId);
+            $vConfiguration = $this->componentsApiClient->getConfiguration(self::KEBOOLA_VARIABLES, $variablesId);
             return (new Variables())->process($vConfiguration['configuration']);
         } catch (ClientException $e) {
             throw new UserException('Variable configuration cannot be read: ' . $e->getMessage(), 400, $e);
@@ -46,15 +36,22 @@ class ComponentsClientHelper
         }
     }
 
+    /**
+     * @param non-empty-string $variablesId
+     * @param non-empty-string $variableValuesId
+     * @return array{values: list<array{name: scalar, value: scalar}>}
+     */
     public function getVariablesConfigurationRow(string $variablesId, string $variableValuesId): array
     {
         try {
-            $vRow = $this->getClient()->getConfigurationRow(
+            $vRow = $this->componentsApiClient->getConfigurationRow(
                 self::KEBOOLA_VARIABLES,
                 $variablesId,
                 $variableValuesId
             );
-            return (new VariableValues())->process($vRow['configuration']);
+            /** @var array{values: list<array{name: non-empty-string, value: scalar}>} $normalized */
+            $normalized = (new VariableValues())->process($vRow['configuration']);
+            return $normalized;
         } catch (ClientException $e) {
             throw new UserException(
                 sprintf(
@@ -73,7 +70,7 @@ class ComponentsClientHelper
     public function getSharedCodeConfigurationRow(string $sharedCodeId, string $sharedCodeRowId): array
     {
         try {
-            $sharedCodeConfiguration = $this->getClient()->getConfigurationRow(
+            $sharedCodeConfiguration = $this->componentsApiClient->getConfigurationRow(
                 self::KEBOOLA_SHARED_CODE,
                 $sharedCodeId,
                 $sharedCodeRowId

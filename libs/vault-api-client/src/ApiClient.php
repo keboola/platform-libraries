@@ -129,13 +129,12 @@ class ApiClient
             return new ClientException(trim($e->getMessage()), $response->getStatusCode(), $e);
         }
 
-        $error = is_array($data['error'] ?? null) ? $data['error'] : $data;
-        if (empty($error['message']) || empty($error['code'])) {
+        if (empty($data['error']) || empty($data['code'])) {
             return null;
         }
 
         return new ClientException(
-            trim($error['code'] . ': ' . $error['message']),
+            trim($data['code'] . ': ' . $data['error']),
             $response->getStatusCode(),
             $e
         );

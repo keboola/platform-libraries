@@ -47,7 +47,7 @@ services:
       - mockserver
 
   dev-configuration-variables-resolver:
-    <<: *dev
+    <<: *dev82
     image: keboola/configuration-variables-resolver
     working_dir: /code/libs/configuration-variables-resolver
     environment:

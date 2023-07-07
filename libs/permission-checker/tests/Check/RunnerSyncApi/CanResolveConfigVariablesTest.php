@@ -14,24 +14,17 @@ class CanResolveConfigVariablesTest extends TestCase
 {
     public function testValidPermissionsCheck(): void
     {
-        $expectedComponentIds = [
-            'keboola.shared-code',
-            'keboola.variables',
-        ];
+        $this->expectNotToPerformAssertions();
 
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::exactly(2))
-            ->method('hasAllowedComponent')
-            ->willReturnCallback(function (string $componentId) use (&$expectedComponentIds) {
-                self::assertSame(
-                    array_shift($expectedComponentIds),
-                    $componentId
-                );
-                return true;
-            });
+        $token = new StorageApiToken(
+            allowedComponents: [
+                'keboola.shared-code',
+                'keboola.variables',
+            ]
+        );
 
         $checker = new CanResolveConfigVariables();
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 
     /** @dataProvider provideInvalidPermissionsCheckData */

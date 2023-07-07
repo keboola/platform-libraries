@@ -27,18 +27,15 @@ class CanRunActionTest extends TestCase
      */
     public function testPermissionCheckForTokensWithoutPermissionToComponent(BranchType $branchType): void
     {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasAllowedComponent')
-            ->with('dummy-component')
-            ->willReturn(false)
-        ;
+        $token = new StorageApiToken(
+            allowedComponents: []
+        );
 
         $this->expectException(PermissionDeniedException::class);
         $this->expectExceptionMessage('Token is not allowed to run component "dummy-component"');
 
         $checker = new CanRunAction($branchType, 'dummy-component');
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 
     /**
@@ -46,35 +43,16 @@ class CanRunActionTest extends TestCase
      */
     public function testPermissionCheckFailOnReadOnlyRole(BranchType $branchType): void
     {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasAllowedComponent')
-            ->with('dummy-component')
-            ->willReturn(true)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('hasFeature')
-            ->with(Feature::PROTECTED_DEFAULT_BRANCH)
-            ->willReturn(false)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('isRole')
-            ->with(Role::READ_ONLY)
-            ->willReturn(true)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('getRole')
-            ->willReturn(Role::READ_ONLY)
-        ;
+        $token = new StorageApiToken(
+            role: Role::READ_ONLY->value,
+            allowedComponents: ['dummy-component']
+        );
 
         $this->expectException(PermissionDeniedException::class);
         $this->expectExceptionMessage('Role "readOnly" is not allowed to run actions');
 
         $checker = new CanRunAction($branchType, 'dummy-component');
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 
     public function validPermissionsCheckProvider(): Generator
@@ -102,21 +80,15 @@ class CanRunActionTest extends TestCase
      */
     public function testValidPermissionsCheck(Role $role, BranchType $branchType): void
     {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasAllowedComponent')
-            ->with('dummy-component')
-            ->willReturn(true)
-        ;
+        $this->expectNotToPerformAssertions();
 
-        $tokenMock->expects(self::once())
-            ->method('hasFeature')
-            ->with(Feature::PROTECTED_DEFAULT_BRANCH)
-            ->willReturn(false)
-        ;
+        $token = new StorageApiToken(
+            role: $role !== Role::NONE ? $role->value : null,
+            allowedComponents: ['dummy-component']
+        );
 
         $checker = new CanRunAction($branchType, 'dummy-component');
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 
     public function permissionCheckFailOnSoxProjectsProvider(): Generator
@@ -154,29 +126,17 @@ class CanRunActionTest extends TestCase
         BranchType $branchType,
         string $expectedErrorMessage
     ): void {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasAllowedComponent')
-            ->with('dummy-component')
-            ->willReturn(true)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('hasFeature')
-            ->with(Feature::PROTECTED_DEFAULT_BRANCH)
-            ->willReturn(true)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('getRole')
-            ->willReturn($role)
-        ;
+        $token = new StorageApiToken(
+            features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
+            role: $role !== Role::NONE ? $role->value : null,
+            allowedComponents: ['dummy-component']
+        );
 
         $this->expectException(PermissionDeniedException::class);
         $this->expectExceptionMessage($expectedErrorMessage);
 
         $checker = new CanRunAction($branchType, 'dummy-component');
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 
     public function validPermissionsCheckOnSoxProjectsProvider(): Generator
@@ -200,25 +160,15 @@ class CanRunActionTest extends TestCase
      */
     public function testValidPermissionsCheckOnSoxProjects(Role $role, BranchType $branchType): void
     {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasAllowedComponent')
-            ->with('dummy-component')
-            ->willReturn(true)
-        ;
+        $this->expectNotToPerformAssertions();
 
-        $tokenMock->expects(self::once())
-            ->method('hasFeature')
-            ->with(Feature::PROTECTED_DEFAULT_BRANCH)
-            ->willReturn(true)
-        ;
-
-        $tokenMock->expects(self::once())
-            ->method('getRole')
-            ->willReturn($role)
-        ;
+        $token = new StorageApiToken(
+            features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
+            role: $role !== Role::NONE ? $role->value : null,
+            allowedComponents: ['dummy-component']
+        );
 
         $checker = new CanRunAction($branchType, 'dummy-component');
-        $checker->checkPermissions($tokenMock);
+        $checker->checkPermissions($token);
     }
 }

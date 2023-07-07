@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Keboola\PersmissionChecker\Tests\Check\RunnerSyncApi;
 
 use Generator;
-use Keboola\PermissionChecker\Check\RunnerSyncApi\CanResolveSharedCodeAndVariables;
+use Keboola\PermissionChecker\Check\RunnerSyncApi\CanResolveConfigVariables;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 
-class CanResolveSharedCodeAndVariablesTest extends TestCase
+class CanResolveConfigVariablesTest extends TestCase
 {
     public function testValidPermissionsCheck(): void
     {
@@ -30,7 +30,7 @@ class CanResolveSharedCodeAndVariablesTest extends TestCase
                 return true;
             });
 
-        $checker = new CanResolveSharedCodeAndVariables();
+        $checker = new CanResolveConfigVariables();
         $checker->checkPermissions($tokenMock);
     }
 
@@ -44,7 +44,7 @@ class CanResolveSharedCodeAndVariablesTest extends TestCase
         $this->expectException(PermissionDeniedException::class);
         $this->expectExceptionMessage($errorMessage);
 
-        $checker = new CanResolveSharedCodeAndVariables();
+        $checker = new CanResolveConfigVariables();
         $checker->checkPermissions($token);
     }
 

@@ -8,7 +8,7 @@ use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\StorageApiToken;
 
-class CanResolveSharedCodeAndVariables implements PermissionCheckInterface
+class CanResolveConfigVariables implements PermissionCheckInterface
 {
     public function checkPermissions(StorageApiToken $token): void
     {

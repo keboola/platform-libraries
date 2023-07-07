@@ -447,9 +447,9 @@ class WriterWorkspaceTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
-        $jobDetail = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
         $tableIds[] = $jobDetail['tableId'];
-        $jobDetail = $this->clientWrapper->getBasicClient()->getJob($jobIds[1]);
+        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[1]);
         $tableIds[] = $jobDetail['tableId'];
 
         self::assertMatchesRegularExpression(

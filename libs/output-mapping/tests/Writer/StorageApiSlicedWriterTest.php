@@ -69,7 +69,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals([], $file['tags']);
@@ -103,6 +103,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $client->method('verifyToken')->willReturn($tokenInfo);
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $writer = new TableWriter($this->getWorkspaceStagingFactory($clientWrapper));
 
         $tableQueue =  $writer->uploadTables(
@@ -131,7 +132,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBasicClient()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(

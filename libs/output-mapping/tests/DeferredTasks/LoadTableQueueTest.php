@@ -26,6 +26,7 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($this->createMock(Client::class));
+
         $loadQueue = new LoadTableQueue(
             $clientWrapperMock,
             new NullLogger(),
@@ -146,6 +147,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
 
@@ -223,6 +226,8 @@ class LoadTableQueueTest extends TestCase
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
             ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
@@ -305,6 +310,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $loadQueue->waitForAll();
@@ -363,6 +370,8 @@ class LoadTableQueueTest extends TestCase
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
             ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
@@ -433,6 +442,8 @@ class LoadTableQueueTest extends TestCase
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
             ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);

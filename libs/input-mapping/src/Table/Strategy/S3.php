@@ -27,7 +27,7 @@ class S3 extends AbstractStrategy
         $jobIds = array_map(function ($export) {
             return $export['jobId'];
         }, $exports);
-        $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($jobIds);
+        $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($jobResults as $result) {
             $keyedResults[$result['id']] = $result;

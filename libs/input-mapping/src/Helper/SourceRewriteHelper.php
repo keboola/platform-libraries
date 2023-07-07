@@ -61,7 +61,7 @@ class SourceRewriteHelper
     {
         $newSource = self::getNewSource(
             $source,
-            $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName']
+            $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName']
         );
         if ($clientWrapper->getTableAndFileStorageClient()->tableExists($newSource)) {
             $logger->info(

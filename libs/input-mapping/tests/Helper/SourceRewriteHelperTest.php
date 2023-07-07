@@ -386,7 +386,7 @@ class SourceRewriteHelperTest extends TestCase
             fn ($argument) => ['displayName' => $argument]
         );
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($basicClientMock);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
@@ -433,7 +433,7 @@ class SourceRewriteHelperTest extends TestCase
             fn ($argument) => ['displayName' => $argument]
         );
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($basicClientMock);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn($hasBranch);
         $clientWrapper->method('getBranchId')->willReturn('123456');

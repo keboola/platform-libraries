@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ConfigurationVariablesResolver\Tests;
 
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
-use Keboola\ConfigurationVariablesResolver\VariablesRenderer\RegexRenderer;
 use Keboola\ConfigurationVariablesResolver\VariablesRenderer\RenderResults;
 use Keboola\ConfigurationVariablesResolver\VariablesResolver;
 use Keboola\ConfigurationVariablesResolver\VariablesResolver\ConfigurationVariablesResolver;
@@ -87,7 +86,6 @@ class VariablesResolverTest extends TestCase
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
     }
-
 
     public function testResolveMissingVariables(): void
     {

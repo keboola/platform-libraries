@@ -12,14 +12,15 @@ class RegexRenderer
     private const PREFIX_SEPARATOR = '.';
 
     /**
-     * @param array<string> $values
+     * @param callable(): array<string> $valuesLoader
      */
-    public function renderVariables(array $configuration, string $namePrefix, array $values): RenderResults
+    public function renderVariables(array $configuration, string $namePrefix, callable $valuesLoader): RenderResults
     {
         if ($namePrefix !== '') {
             $namePrefix = $namePrefix . self::PREFIX_SEPARATOR;
         }
 
+        $values = null;
         $missingVariables = [];
         $replacedVariables = [];
 
@@ -29,8 +30,12 @@ class RegexRenderer
             // %s[a-zA-Z0-9_-]+ - match variable name (with prefix if supplied)
             // \s*}} - match optional whitespaces and closing braces
             sprintf('/(?<!{){{\s*(%s([a-zA-Z0-9_-]+))\s*}}/', preg_quote($namePrefix, '/')),
-            function (array $match) use ($values, &$missingVariables, &$replacedVariables): string {
+            function (array $match) use (&$values, $valuesLoader, &$missingVariables, &$replacedVariables): string {
                 [$placeholder, $prefixedName, $localName] = $match;
+
+                if ($values === null) {
+                    $values = $valuesLoader();
+                }
 
                 if (!isset($values[$localName])) {
                     $missingVariables[$prefixedName] = true;

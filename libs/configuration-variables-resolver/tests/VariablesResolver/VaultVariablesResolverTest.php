@@ -30,25 +30,15 @@ class VaultVariablesResolverTest extends TestCase
             ])
         ;
 
-        $renderResults = new RenderResults(
-            [
-                'parameters' => [
-                    'foo' => 'bar',
-                ],
-            ],
-            ['vault.foo'],
-            [],
-        );
-
-        $renderer = $this->createMock(RegexRenderer::class);
-        $renderer->expects(self::once())
-            ->method('renderVariables')
-            ->with($configuration, 'vault', ['foo' => 'bar'])
-            ->willReturn($renderResults)
-        ;
-
-        $resolver = new VaultVariablesResolver($vaultApiClient, $renderer);
+        $resolver = new VaultVariablesResolver($vaultApiClient, new RegexRenderer());
         $results = $resolver->resolveVariables($configuration, 'branch-id');
-        self::assertSame($renderResults, $results);
+
+        self::assertSame([
+            'parameters' => [
+                'foo' => 'bar',
+            ],
+        ], $results->configuration);
+        self::assertSame(['vault.foo'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
     }
 }

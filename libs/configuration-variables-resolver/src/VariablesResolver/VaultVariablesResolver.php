@@ -21,17 +21,21 @@ class VaultVariablesResolver
      */
     public function resolveVariables(array $configuration, string $branchId): RenderResults
     {
-        $variables = $this->variablesApiClient->listMergedVariablesForBranch($branchId);
+        $loadVariables = function () use ($branchId): array {
+            $variables = $this->variablesApiClient->listMergedVariablesForBranch($branchId);
 
-        $keyVal = [];
-        foreach ($variables as $variable) {
-            $keyVal[$variable->key] = $variable->value;
-        }
+            $keyVal = [];
+            foreach ($variables as $variable) {
+                $keyVal[$variable->key] = $variable->value;
+            }
+
+            return $keyVal;
+        };
 
         return $this->renderer->renderVariables(
             $configuration,
             'vault',
-            $keyVal,
+            $loadVariables,
         );
     }
 }

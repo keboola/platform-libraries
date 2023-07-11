@@ -249,4 +249,69 @@ class RegexRendererTest extends TestCase
         self::assertSame([], $results->replacedVariables);
         self::assertSame([], $results->missingVariables);
     }
+
+    public function testLazyLoadVariables(): void
+    {
+        $invocationCount = 0;
+
+        $renderer = new RegexRenderer();
+        $results = $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => 'key1 is {{ key1 }}, key2 is {{ key2 }}',
+                ],
+            ],
+            '',
+            function () use (&$invocationCount) {
+                $invocationCount += 1;
+                return [
+                    'key1' => 'value1',
+                    'key2' => 'value2',
+                ];
+            },
+        );
+
+        self::assertSame(1, $invocationCount);
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'param' => 'key1 is value1, key2 is value2',
+                ],
+            ],
+            $results->configuration,
+        );
+        self::assertSame(['key1', 'key2'], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
+    }
+
+    public function testLazyLoadVariablesIsNotTriggeredWhenNoVariableIsPresent(): void
+    {
+        $invocationCount = 0;
+
+        $renderer = new RegexRenderer();
+        $results = $renderer->renderVariables(
+            [
+                'parameters' => [
+                    'param' => 'key1 is {{ other.key1 }}',
+                ],
+            ],
+            '',
+            function () use (&$invocationCount) {
+                $invocationCount += 1;
+                return [];
+            },
+        );
+
+        self::assertSame(0, $invocationCount);
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'param' => 'key1 is {{ other.key1 }}',
+                ],
+            ],
+            $results->configuration,
+        );
+        self::assertSame([], $results->replacedVariables);
+        self::assertSame([], $results->missingVariables);
+    }
 }

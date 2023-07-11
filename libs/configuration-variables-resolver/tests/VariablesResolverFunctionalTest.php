@@ -278,4 +278,46 @@ class VariablesResolverFunctionalTest extends TestCase
             [],
         );
     }
+
+    public function testVaultIsNotCalledWhenNoVaultVariableIsPresent(): void
+    {
+        $this->setupConfigurationVariables(
+            ['variables' => [['name' => 'foo', 'type' => 'string']]],
+            ['values' => [['name' => 'foo', 'value' => 'config foo']]]
+        );
+
+        $configuration = [
+            'variables_id' => self::CONFIG_ID,
+            'parameters' => [
+                'some_parameter' => 'foo is {{ foo }}',
+            ],
+        ];
+
+        $vaultApiClient = $this->createMock(VariablesApiClient::class);
+        $vaultApiClient->expects(self::never())->method(self::anything());
+
+        $variableResolver = VariablesResolver::create(
+            $this->clientWrapper,
+            $vaultApiClient,
+            $this->logger,
+        );
+
+        $newConfiguration = $variableResolver->resolveVariables(
+            $configuration,
+            $this->mainBranchId,
+            self::CONFIG_ROW_ID,
+            [],
+        );
+        self::assertEquals(
+            [
+                'parameters' => [
+                    'some_parameter' => 'foo is config foo',
+                ],
+                'variables_id' => self::CONFIG_ID,
+            ],
+            $newConfiguration
+        );
+
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
+    }
 }

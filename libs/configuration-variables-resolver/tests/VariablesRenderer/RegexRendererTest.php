@@ -19,7 +19,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'key1' => 'value1',
             ],
         );
@@ -46,7 +46,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             'prefix',
-            [
+            fn() => [
                 'key1' => 'value1',
             ],
         );
@@ -73,7 +73,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'key1' => '\' { @ "',
             ],
         );
@@ -100,7 +100,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             'prefix',
-            [],
+            fn() => [],
         );
 
         self::assertEquals(
@@ -125,7 +125,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'key1' => 'value1',
             ],
         );
@@ -152,7 +152,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'key1' => 'value1',
             ],
         );
@@ -179,7 +179,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'key1' => 'value1',
             ],
         );
@@ -206,7 +206,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 '123' => 'value1',
             ],
         );
@@ -233,7 +233,7 @@ class RegexRendererTest extends TestCase
                 ],
             ],
             '',
-            [
+            fn() => [
                 'not@valid' => 'value1',
             ],
         );

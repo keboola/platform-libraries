@@ -97,7 +97,7 @@ class TagsRewriteHelper
         $options->setTags($tags);
         $options->setLimit(1);
 
-        return count($clientWrapper->getBasicClient()->listFiles($options)) > 0;
+        return count($clientWrapper->getTableAndFileStorageClient()->listFiles($options)) > 0;
     }
 
     private static function overwriteSourceTags(string $prefix, array $tags): array
@@ -114,6 +114,6 @@ class TagsRewriteHelper
         $options->setQuery(BuildQueryFromConfigurationHelper::buildQueryForSourceTags($tags));
         $options->setLimit(1);
 
-        return count($clientWrapper->getBasicClient()->listFiles($options)) > 0;
+        return count($clientWrapper->getTableAndFileStorageClient()->listFiles($options)) > 0;
     }
 }

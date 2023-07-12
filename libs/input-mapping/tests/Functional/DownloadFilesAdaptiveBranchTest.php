@@ -46,11 +46,11 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
 
-        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag])
         );
-        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
         );
@@ -103,7 +103,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             )
         ));
         // add another valid file and assert that it gets downloaded and the previous doesn't
-        $file3Id = $clientWrapper->getBasicClient()->uploadFile(
+        $file3Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)])
         );

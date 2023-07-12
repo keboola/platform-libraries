@@ -57,11 +57,11 @@ class Synapse extends AbstractStrategy
         );
 
         $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-        $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks($workspaceJobs);
+        $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($workspaceJobs);
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,

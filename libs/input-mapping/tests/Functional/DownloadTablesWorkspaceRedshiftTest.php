@@ -68,10 +68,13 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
             Client::STAGE_OUT
         );
         if ($bucketId !== null) {
-            $this->clientWrapper->getBasicClient()->dropBucket($bucketId, ['force' => true, 'async' => true]);
+            $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                $bucketId,
+                ['force' => true, 'async' => true]
+            );
         }
 
-        $this->emptyOutputBucketId = $this->clientWrapper->getBasicClient()->createBucket(
+        $this->emptyOutputBucketId = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
             'input-mapping-test-rs',
             Client::STAGE_OUT,
             'Docker Testsuite',
@@ -82,17 +85,17 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals($this->firstTableId, $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $bucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
         );
         self::assertEquals($bucketId . '.test1', $tableId);
-        $table = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        $tableId = $this->clientWrapper->getBasicClient()->createTableAsyncDirect(
+        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $bucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
         );

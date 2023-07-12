@@ -72,7 +72,7 @@ abstract class AbstractStrategy implements StrategyInterface
                 $outputStateConfiguration = [];
             }
             foreach ($files as $file) {
-                $fileInfo = $this->clientWrapper->getBasicClient()->getFile($file['id'], $fileOptions);
+                $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo['name']);
                 $overwrite = $fileConfiguration['overwrite'];
 

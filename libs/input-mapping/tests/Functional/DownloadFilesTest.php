@@ -26,11 +26,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload_second',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
@@ -73,7 +73,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );
@@ -120,15 +120,15 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
 
         $configuration = [
@@ -168,9 +168,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -218,9 +218,9 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file3 = new FileUploadOptions();
         $file3->setTags(['tag-1', 'tag-2', 'tag-3']);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file3);
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file2);
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file3);
 
         sleep(5);
 
@@ -269,8 +269,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $file2 = new FileUploadOptions();
         $file2->setTags(['tag-1', 'tag-2']);
 
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file1);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $file2);
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file1);
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file2);
 
         sleep(5);
 
@@ -310,15 +310,15 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fo = new FileUploadOptions();
         $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
 
-        $this->clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $this->clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
+        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
+        $id5 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
 
         $configuration = [
@@ -351,7 +351,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         // make at least 100 files in the project
         for ($i = 0; $i < 102; $i++) {
-            $this->clientWrapper->getBasicClient()->uploadFile(
+            $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
                 $root . '/upload',
                 (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
             );
@@ -412,7 +412,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
     public function testReadSlicedFileSnowflake(): void
     {
         // Create table and export it to produce a sliced file
-        $table = $this->clientWrapper->getBasicClient()->exportTableAsync($this->firstTableId);
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->exportTableAsync($this->firstTableId);
         sleep(2);
         $fileId = $table['file']['id'];
 
@@ -458,7 +458,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('empty_file');
-        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
         $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper));
@@ -488,7 +488,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id = $this->clientWrapper->getBasicClient()->uploadFile(
+        $id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
         );

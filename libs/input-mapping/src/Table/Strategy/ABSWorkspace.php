@@ -57,12 +57,12 @@ class ABSWorkspace extends AbstractStrategy
         $jobResults = [];
         if ($workspaceJobId) {
             $this->logger->info('Processing workspace export.');
-            $jobResults = $this->clientWrapper->getBasicClient()->handleAsyncTasks([$workspaceJobId]);
+            $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table) .
                     '.manifest';
-                $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+                $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
                 $this->manifestCreator->writeTableManifest(
                     $tableInfo,
                     $manifestPath,

@@ -61,9 +61,11 @@ class SourceRewriteHelper
     {
         $newSource = self::getNewSource(
             $source,
-            $clientWrapper->getBasicClient()->webalizeDisplayName((string) $clientWrapper->getBranchId())['displayName']
+            $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
+                (string) $clientWrapper->getBranchId()
+            )['displayName']
         );
-        if ($clientWrapper->getBasicClient()->tableExists($newSource)) {
+        if ($clientWrapper->getTableAndFileStorageClient()->tableExists($newSource)) {
             $logger->info(
                 sprintf('Using dev input "%s" instead of "%s".', $newSource, $source)
             );

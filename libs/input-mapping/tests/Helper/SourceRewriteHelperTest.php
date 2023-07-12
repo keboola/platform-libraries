@@ -55,7 +55,10 @@ class SourceRewriteHelperTest extends TestCase
 
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
         if ($outBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $outBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $outBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
 
         $outDevBucketId = TestSatisfyer::getBucketIdByDisplayName(
@@ -64,17 +67,23 @@ class SourceRewriteHelperTest extends TestCase
             Client::STAGE_OUT
         );
         if ($outDevBucketId) {
-            $clientWrapper->getBasicClient()->dropBucket((string) $outDevBucketId, ['force' => true, 'async' => true]);
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $outDevBucketId,
+                ['force' => true, 'async' => true]
+            );
         }
 
-        foreach ($clientWrapper->getBasicClient()->listBuckets() as $bucket) {
+        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-output-mapping-test$/ui', $bucket['name'])) {
-                $clientWrapper->getBasicClient()->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true]
+                );
             }
         }
 
-        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_OUT);
-        $this->outBranchBucketId = $clientWrapper->getBasicClient()->createBucket(
+        $this->outBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket('main', Client::STAGE_OUT);
+        $this->outBranchBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
             $this->branchId . '-main',
             Client::STAGE_OUT
         );
@@ -237,8 +246,16 @@ class SourceRewriteHelperTest extends TestCase
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
 
-        $clientWrapper->getBasicClient()->createTableAsync($this->outBranchBucketId, 'my-table', $csvFile);
-        $clientWrapper->getBasicClient()->createTableAsync($this->outBranchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table',
+            $csvFile
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table-2',
+            $csvFile
+        );
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -311,8 +328,16 @@ class SourceRewriteHelperTest extends TestCase
         $temp = new Temp(uniqid('input-mapping'));
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
-        $clientWrapper->getBasicClient()->createTableAsync($this->outBranchBucketId, 'my-table', $csvFile);
-        $clientWrapper->getBasicClient()->createTableAsync($this->outBranchBucketId, 'my-table-2', $csvFile);
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table',
+            $csvFile
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBranchBucketId,
+            'my-table-2',
+            $csvFile
+        );
         $testLogger = new TestLogger();
         $inputTablesStates = new InputTableStateList([
             [
@@ -353,14 +378,16 @@ class SourceRewriteHelperTest extends TestCase
 
     public function testHasBranchRewriteWithPrefix(): void
     {
-        $clientMock = self::createMock(Client::class);
-        $clientMock->expects(self::once())->method('tableExists')
+        $storageClientMock = self::createMock(Client::class);
+        $storageClientMock->expects(self::once())->method('tableExists')
             ->with('out.c-123456-main.my-table')->willReturn(true);
-        $clientMock->expects(self::once())->method('webalizeDisplayName')->willReturnCallback(
+        $basicClientMock = self::createMock(Client::class);
+        $basicClientMock->expects(self::once())->method('webalizeDisplayName')->willReturnCallback(
             fn ($argument) => ['displayName' => $argument]
         );
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($clientMock);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $inputTablesOptions = new InputTableOptionsList([
@@ -398,14 +425,16 @@ class SourceRewriteHelperTest extends TestCase
         int $checkCount,
         bool $hasBranch,
     ): void {
-        $clientMock = self::createMock(Client::class);
-        $clientMock->expects(self::exactly($checkCount))->method('tableExists')
+        $storageClientMock = self::createMock(Client::class);
+        $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')
             ->with($destinationTable)->willReturn(true);
-        $clientMock->expects(self::exactly($checkCount))->method('webalizeDisplayName')->willReturnCallback(
+        $basicClientMock = self::createMock(Client::class);
+        $basicClientMock->expects(self::exactly($checkCount))->method('webalizeDisplayName')->willReturnCallback(
             fn ($argument) => ['displayName' => $argument]
         );
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($clientMock);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn($hasBranch);
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $inputTablesOptions = new InputTableOptionsList([

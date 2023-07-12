@@ -137,11 +137,11 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         $root = $temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         $clientWrapper = $this->getClientWrapper(null);
-        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
-        $id2 = $clientWrapper->getBasicClient()->uploadFile(
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
@@ -207,7 +207,7 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         file_put_contents($root . '/upload', 'test');
 
         $clientWrapper = $this->getClientWrapper(null);
-        $id1 = $clientWrapper->getBasicClient()->uploadFile(
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags(['download-files-test'])
         );
@@ -271,15 +271,15 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         $fo = new FileUploadOptions();
         $fo->setTags(['download-files-test']);
 
-        $clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
         $configuration = [
             [
@@ -368,15 +368,15 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         $fo = new FileUploadOptions();
         $fo->setTags(['download-files-test']);
 
-        $clientWrapper->getBasicClient()->setRunId('xyz');
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567');
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $clientWrapper->getBasicClient()->setRunId('1234567.8901234');
-        $id5 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
+        $id3 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
+        $id5 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id6 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(5);
         $configuration = [
             [
@@ -463,8 +463,8 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         $fo = new FileUploadOptions();
         $fo->setTags(['download-files-test']);
 
-        $id1 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(2);
         $configuration = [[
             'tags' => ['download-files-test'],
@@ -498,8 +498,8 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
             'download/upload/' . $id2 . '.manifest'
         );
 
-        $id3 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $clientWrapper->getBasicClient()->uploadFile($root . '/upload', $fo);
+        $id3 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
+        $id4 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
         sleep(2);
 
         $newOutputFileStateList = $reader->downloadFiles(

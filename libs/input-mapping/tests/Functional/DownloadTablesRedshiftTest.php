@@ -80,11 +80,11 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getBasicClient()->createTableAsync(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->redshiftBucketId,
             'empty',
             $headerCsvFile,
@@ -93,7 +93,10 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect($this->redshiftBucketId . '.empty', $options);
+        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+            $this->redshiftBucketId . '.empty',
+            $options
+        );
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([

@@ -30,7 +30,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             return;
         }
         try {
-            $this->clientWrapper->getBasicClient()->dropBucket(
+            $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 'in.c-docker-test-synapse',
                 [
                     'force' => true,
@@ -42,7 +42,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
                 throw $e;
             }
         }
-        $this->clientWrapper->getBasicClient()->createBucket(
+        $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
             'docker-test-synapse',
             Client::STAGE_IN,
             'Docker Testsuite',
@@ -53,7 +53,11 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
-        $this->clientWrapper->getBasicClient()->createTableAsync('in.c-docker-test-synapse', 'test', $csv);
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            'in.c-docker-test-synapse',
+            'test',
+            $csv
+        );
     }
 
     protected function initClient(): void
@@ -65,14 +69,14 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             ),
         );
 
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
+            $this->clientWrapper->getBranchClientIfAvailable()->getApiUrl()
         ));
     }
 
@@ -144,11 +148,11 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->getBasicClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getBasicClient()->createTableAsync(
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             'in.c-docker-test-synapse',
             'empty',
             $headerCsvFile,
@@ -157,7 +161,10 @@ class DownloadTablesSynapseTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getBasicClient()->writeTableAsyncDirect('in.c-docker-test-synapse.empty', $options);
+        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+            'in.c-docker-test-synapse.empty',
+            $options
+        );
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([

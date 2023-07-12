@@ -31,11 +31,11 @@ class TagsRewriteHelperTest extends TestCase
         $this->tmpDir = $temp->getTmpFolder();
         sleep(2);
         $clientWrapper = self::getClientWrapper(null);
-        $files = $clientWrapper->getBasicClient()->listFiles(
+        $files = $clientWrapper->getTableAndFileStorageClient()->listFiles(
             (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG, self::$branchTag])
         );
         foreach ($files as $file) {
-            $clientWrapper->getBasicClient()->deleteFile($file['id']);
+            $clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
         }
     }
 
@@ -84,7 +84,7 @@ class TagsRewriteHelperTest extends TestCase
         $root = $this->tmpDir;
         file_put_contents($root . '/upload', 'test');
         $clientWrapper = self::getClientWrapper(self::$branchId);
-        $clientWrapper->getBasicClient()->uploadFile(
+        $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([self::$branchTag])
         );
@@ -109,7 +109,7 @@ class TagsRewriteHelperTest extends TestCase
 
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $clientWrapper
-            ->getBasicClient()
+            ->getTableAndFileStorageClient()
             ->uploadFile($root . '/upload', (new FileUploadOptions())->setTags([self::$branchTag]));
         sleep(2);
 
@@ -201,7 +201,7 @@ class TagsRewriteHelperTest extends TestCase
         file_put_contents($this->tmpDir . '/upload', 'test');
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $clientWrapper
-            ->getBasicClient()
+            ->getTableAndFileStorageClient()
             ->uploadFile(
                 $this->tmpDir . '/upload',
                 (new FileUploadOptions())->setTags([self::$branchTag, $branchProcessedTag])
@@ -244,7 +244,7 @@ class TagsRewriteHelperTest extends TestCase
         file_put_contents($this->tmpDir . '/upload', 'test');
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $clientWrapper
-            ->getBasicClient()
+            ->getTableAndFileStorageClient()
             ->uploadFile(
                 $this->tmpDir . '/upload',
                 (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG, 'processed'])

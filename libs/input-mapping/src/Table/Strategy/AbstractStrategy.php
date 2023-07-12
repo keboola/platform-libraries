@@ -55,7 +55,7 @@ abstract class AbstractStrategy implements StrategyInterface
         $exports = [];
         $result = new Result();
         foreach ($tables as $table) {
-            $tableInfo = $this->clientWrapper->getBasicClient()->getTable($table->getSource());
+            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
             $outputStateConfiguration[] = [
                 'source' => $table->getSource(),
                 'lastImportDate' => $tableInfo['lastImportDate'],

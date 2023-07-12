@@ -410,6 +410,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
+        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123']);
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([

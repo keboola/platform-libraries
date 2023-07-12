@@ -20,6 +20,27 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals('test', $definition->getSource());
     }
 
+    public function testSetSource(): void
+    {
+        $definition = new InputTableOptions(['source' => 'test']);
+        $definition->setSource('test2');
+        self::assertSame('test2', $definition->getSource());
+    }
+
+    public function testGetSourceBranchId(): void
+    {
+        $definition = new InputTableOptions(['source' => 'test']);
+        self::assertNull($definition->getSourceBranchId());
+    }
+
+    public function testSetSourceBranchId(): void
+    {
+        $definition = new InputTableOptions(['source' => 'test']);
+        $definition->setSourceBranchId('12345');
+        self::assertSame(12345, $definition->getSourceBranchId());
+    }
+
+
     public function testGetDestination(): void
     {
         $definition = new InputTableOptions(['source' => 'test', 'destination' => 'dest']);
@@ -206,6 +227,23 @@ class InputTableOptionsTest extends TestCase
             'whereOperator' => 'ne',
             'limit' => 100,
             'overwrite' => false,
+        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
+    }
+
+    public function testGetExportOptionsSourceBranchId(): void
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'destination' => 'dest',
+            'columns' => ['col1', 'col2'],
+            'limit' => 100,
+        ]);
+        $definition->setSourceBranchId('12345');
+        self::assertEquals([
+            'columns' => ['col1', 'col2'],
+            'limit' => 100,
+            'overwrite' => false,
+            'sourceBranchId' => 12345,
         ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 

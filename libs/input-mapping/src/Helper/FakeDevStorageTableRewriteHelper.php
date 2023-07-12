@@ -10,22 +10,23 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class SourceRewriteHelper
+class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
 {
-    public static function rewriteTableOptionsSources(
+    public function rewriteTableOptionsSources(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
     ): InputTableOptionsList {
-        if ($clientWrapper->hasBranch()) {
-            foreach ($tablesDefinition->getTables() as $tableOptions) {
-                $tableOptions->setSource(self::rewriteSource($tableOptions->getSource(), $clientWrapper, $logger));
+        foreach ($tablesDefinition->getTables() as $tableOptions) {
+            if ($clientWrapper->hasBranch()) {
+                $tableOptions->setSource($this->rewriteSource($tableOptions->getSource(), $clientWrapper, $logger));
             }
+            $tableOptions->setSourceBranchId($clientWrapper->getDefaultBranch()['branchId']);
         }
         return $tablesDefinition;
     }
 
-    public static function rewriteTableStatesDestinations(
+    public function rewriteTableStatesDestinations(
         InputTableStateList $tableStates,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
@@ -33,14 +34,14 @@ class SourceRewriteHelper
         if ($clientWrapper->hasBranch()) {
             $tableStates = $tableStates->jsonSerialize();
             foreach ($tableStates as &$tableState) {
-                $tableState['source'] = self::rewriteSource($tableState['source'], $clientWrapper, $logger);
+                $tableState['source'] = $this->rewriteSource($tableState['source'], $clientWrapper, $logger);
             }
             return new InputTableStateList($tableStates);
         }
         return $tableStates;
     }
 
-    private static function getNewSource(string $source, string $branchName): string
+    private function getNewSource(string $source, string $branchId): string
     {
         $tableIdParts = explode('.', $source);
         if (count($tableIdParts) !== 3) {
@@ -52,14 +53,14 @@ class SourceRewriteHelper
             $bucketId = substr($bucketId, 2);
             $prefix = 'c-';
         }
-        $bucketId = $branchName . '-' . $bucketId;
+        $bucketId = $branchId . '-' . $bucketId;
         $tableIdParts[1] = $prefix . $bucketId;
         return implode('.', $tableIdParts);
     }
 
-    private static function rewriteSource(string $source, ClientWrapper $clientWrapper, LoggerInterface $logger): string
+    private function rewriteSource(string $source, ClientWrapper $clientWrapper, LoggerInterface $logger): string
     {
-        $newSource = self::getNewSource(
+        $newSource = $this->getNewSource(
             $source,
             $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
                 (string) $clientWrapper->getBranchId()

@@ -7,7 +7,7 @@ namespace Keboola\InputMapping\Tests\Helper;
 use Generator;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InputOperationException;
-use Keboola\InputMapping\Helper\SourceRewriteHelper;
+use Keboola\InputMapping\Helper\FakeDevStorageTableRewriteHelper;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
@@ -19,7 +19,7 @@ use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 
-class SourceRewriteHelperTest extends TestCase
+class FakeDevStorageTableRewriteHelperTest extends TestCase
 {
     private string $branchId;
     private string $outBucketId;
@@ -107,7 +107,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -129,6 +129,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -148,6 +149,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -167,7 +169,7 @@ class SourceRewriteHelperTest extends TestCase
         ]);
         $this->expectException(InputOperationException::class);
         $this->expectExceptionMessage('Invalid destination: "out.c-main"');
-        SourceRewriteHelper::rewriteTableOptionsSources(
+        (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -192,7 +194,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -214,6 +216,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -233,6 +236,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -270,7 +274,7 @@ class SourceRewriteHelperTest extends TestCase
                 'columns' => ['foo', 'bar'],
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -293,6 +297,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -313,6 +318,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -349,7 +355,7 @@ class SourceRewriteHelperTest extends TestCase
                 'lastImportDate' => '1605741600',
             ],
         ]);
-        $destinations = SourceRewriteHelper::rewriteTableStatesDestinations(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableStatesDestinations(
             $inputTablesStates,
             $clientWrapper,
             $testLogger
@@ -390,6 +396,7 @@ class SourceRewriteHelperTest extends TestCase
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
+        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => 'out.c-main.my-table',
@@ -397,7 +404,7 @@ class SourceRewriteHelperTest extends TestCase
             ],
         ]);
         $testLogger = new TestLogger();
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -413,6 +420,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -437,6 +445,7 @@ class SourceRewriteHelperTest extends TestCase
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('hasBranch')->willReturn($hasBranch);
         $clientWrapper->method('getBranchId')->willReturn('123456');
+        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123456']);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $sourceTable,
@@ -444,7 +453,7 @@ class SourceRewriteHelperTest extends TestCase
             ],
         ]);
         $testLogger = new TestLogger();
-        $destinations = SourceRewriteHelper::rewriteTableOptionsSources(
+        $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
             $testLogger
@@ -460,6 +469,7 @@ class SourceRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );

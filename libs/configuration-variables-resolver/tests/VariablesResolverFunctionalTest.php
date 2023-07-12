@@ -55,7 +55,7 @@ class VariablesResolverFunctionalTest extends TestCase
             self::getRequiredEnv('STORAGE_API_TOKEN'),
         );
 
-        $branchesApiClient = new DevBranches($this->clientWrapper->getBranchClientIfAvailable());
+        $branchesApiClient = new DevBranches($this->clientWrapper->getBasicClient());
         $branches = $branchesApiClient->listBranches();
         foreach ($branches as $branch) {
             if ($branch['isDefault']) {

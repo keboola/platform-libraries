@@ -193,7 +193,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         self::assertEquals([self::FILE_TAG], $file1['tags']);
     }
 
-    public function testWriteFilesOutputMappingDevMode(): void
+    public function testWriteFilesOutputMappingFakeDevMode(): void
     {
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
@@ -262,6 +262,84 @@ class StorageApiFileWriterTest extends AbstractTestCase
             sprintf('%s-configurationRowId: 12345', $branchId),
             sprintf('%s-branchId: %s', $branchId, $branchId),
             sprintf('%s-runId: 999', $branchId),
+        ];
+
+        self::assertNotNull($file1);
+        self::assertEquals(4, $file1['sizeBytes']);
+        self::assertEquals($expectedTags, $file1['tags']);
+    }
+
+    public function testWriteFilesOutputMappingRealDevMode(): void
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                null
+            )
+        );
+        $branchName = self::class;
+        $branchId = $this->createBranch($clientWrapper, $branchName);
+        $this->clearFileUploads([$branchName . '-' . self::FILE_TAG]);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN'),
+                branchId: $branchId,
+                useBranchStorage: true, // This is the important setting
+            )
+        );
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/file1', 'test');
+
+        $configs = [
+            [
+                'source' => 'file1',
+                'tags' => [self::FILE_TAG],
+            ],
+        ];
+
+        // pass the special client wrapper to the factory
+        $writer = new FileWriter($this->getLocalStagingFactory($this->clientWrapper));
+
+        $systemMetadata = [
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '12345',
+            'branchId' => $branchId,
+            'runId' => '999',
+        ];
+
+        $writer->uploadFiles(
+            '/upload',
+            ['mapping' => $configs],
+            $systemMetadata,
+            AbstractStrategyFactory::LOCAL,
+            [],
+            false
+        );
+        sleep(1);
+
+        $options = new ListFilesOptions();
+        $options->setTags([self::FILE_TAG]);
+        $files = $this->clientWrapper->getBranchClient()->listFiles($options);
+        self::assertCount(1, $files);
+
+        $file1 = null;
+        foreach ($files as $file) {
+            if ($file['name'] === 'file1') {
+                $file1 = $file;
+            }
+        }
+
+        $expectedTags = [
+            self::FILE_TAG,
+            'componentId: testComponent',
+            'configurationId: metadata-write-test',
+            'configurationRowId: 12345',
+            sprintf('branchId: %s', $branchId),
+            'runId: 999',
         ];
 
         self::assertNotNull($file1);

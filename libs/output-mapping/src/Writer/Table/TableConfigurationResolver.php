@@ -159,6 +159,9 @@ class TableConfigurationResolver
 
         $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
 
-        return DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
+        if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()) {
+            return DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
+        }
+        return $config;
     }
 }

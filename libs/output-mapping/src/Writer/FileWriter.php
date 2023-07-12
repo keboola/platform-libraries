@@ -114,7 +114,9 @@ class FileWriter extends AbstractWriter
             }
             try {
                 $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata, $this->logger);
-                $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
+                if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()) {
+                    $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
+                }
                 $strategy->loadFileToStorage($file->getPathName(), $storageConfig);
             } catch (ClientException $e) {
                 throw new InvalidOutputException(

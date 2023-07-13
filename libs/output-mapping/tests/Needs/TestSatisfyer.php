@@ -36,7 +36,7 @@ class TestSatisfyer
     ): ?string {
         // the client has method getBucketId, but it does not work with display name, and actually it is not
         // useful at all https://keboola.slack.com/archives/CFVRE56UA/p1680696020855349
-        $buckets = $clientWrapper->getBasicClient()->listBuckets();
+        $buckets = $clientWrapper->getTableAndFileStorageClient()->listBuckets();
         foreach ($buckets as $bucket) {
             if ($bucket['displayName'] === $bucketDisplayName && $bucket['stage'] === $stage) {
                 return $bucket['id'];
@@ -53,13 +53,17 @@ class TestSatisfyer
     ): string {
         $bucketId = self::getBucketIdByDisplayName($clientWrapper, $bucketName, $stage);
         if ($bucketId !== null) {
-            $tables = $clientWrapper->getBasicClient()->listTables($bucketId, ['include' => '']);
+            $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
             foreach ($tables as $table) {
-                $clientWrapper->getBasicClient()->dropTable($table['id']);
+                $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
             }
             return $bucketId;
         }
-        return $clientWrapper->getBasicClient()->createBucket(name: $bucketName, stage: $stage, backend: $backend);
+        return $clientWrapper->getTableAndFileStorageClient()->createBucket(
+            name: $bucketName,
+            stage: $stage,
+            backend: $backend
+        );
     }
 
     /**
@@ -147,7 +151,7 @@ class TestSatisfyer
             // Create table
             $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
             for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
-                $tableIds[$i] = $clientWrapper->getBasicClient()->createTableAsync(
+                $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                     $testBucketId,
                     'test' . ($i + 1),
                     $csv

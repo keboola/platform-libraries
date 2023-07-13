@@ -81,7 +81,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
 
         $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId . '.table55');
         $expectedTableMetadata = [
@@ -234,7 +234,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $metadataApi = new Metadata($this->clientWrapper->getBasicClient());
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
 
         $tableMetadata = $metadataApi->listTableMetadata($this->emptyOutputBucketId . '.table66');
         $expectedTableMetadata = [

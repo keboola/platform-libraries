@@ -42,7 +42,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         $mock->method('getWorkspaceId')->willReturnCallback(
             function () use ($data): string {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
@@ -53,7 +53,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         $mock->method('getCredentials')->willReturnCallback(
             function () use ($data): array {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
@@ -100,7 +100,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             $this->getProvider(),
             'json'
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');
@@ -177,7 +177,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             $this->getProvider(),
             'json'
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');
@@ -251,13 +251,13 @@ class ABSWorkspaceTest extends AbstractTestCase
             'manifest'
         );
         $fileId = $strategy->loadFileToStorage('data/out/files/my-file_one', []);
-        $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
-        $this->clientWrapper->getBasicClient()->downloadFile($fileId, $destination);
+        $this->clientWrapper->getTableAndFileStorageClient()->downloadFile($fileId, $destination);
         $contents = (string) file_get_contents($destination);
         self::assertEquals('my-data', $contents);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals([], $file['tags']);
@@ -298,13 +298,13 @@ class ABSWorkspaceTest extends AbstractTestCase
                 'is_encrypted' => true,
             ]
         );
-        $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
-        $this->clientWrapper->getBasicClient()->downloadFile($fileId, $destination);
+        $this->clientWrapper->getTableAndFileStorageClient()->downloadFile($fileId, $destination);
         $contents = (string) file_get_contents($destination);
         self::assertEquals('my-data', $contents);
 
-        $file = $this->clientWrapper->getBasicClient()->getFile($fileId);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals($fileId, $file['id']);
         self::assertEquals('my_file_one', $file['name']);
         self::assertEquals(['first-tag', 'second-tag'], $file['tags']);

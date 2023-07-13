@@ -146,7 +146,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             ->setIsEncrypted($storageConfig['is_encrypted'])
             ->setIsPublic($storageConfig['is_public'])
             ->setNotify($storageConfig['notify']);
-        return (string) $this->clientWrapper->getBasicClient()->uploadFile($tmpFileName, $options);
+        return (string) $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($tmpFileName, $options);
     }
 
     public function readFileManifest(string $manifestFile): array

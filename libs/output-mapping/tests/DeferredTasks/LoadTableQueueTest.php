@@ -15,6 +15,7 @@ use Keboola\OutputMapping\Table\Result\TableMetrics;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -22,8 +23,12 @@ class LoadTableQueueTest extends TestCase
 {
     public function testTaskCount(): void
     {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
         $loadQueue = new LoadTableQueue(
-            $this->createMock(Client::class),
+            $clientWrapperMock,
             new NullLogger(),
             [
                 $this->createMock(LoadTableTask::class),
@@ -36,8 +41,6 @@ class LoadTableQueueTest extends TestCase
 
     public function testStart(): void
     {
-        $storageApiMock = $this->createMock(Client::class);
-
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::once())
             ->method('startImport')
@@ -46,15 +49,16 @@ class LoadTableQueueTest extends TestCase
                 return true;
             }))
         ;
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
 
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $loadQueue->start();
     }
 
     public function testStartFailureWithSapiUserErrorThrowsInvalidOutputException(): void
     {
-        $storageApiMock = $this->createMock(Client::class);
-
         $clientException = new ClientException('Hi', 444);
 
         $loadTask = $this->createMock(LoadTableTask::class);
@@ -71,8 +75,12 @@ class LoadTableQueueTest extends TestCase
             ->willReturn('out.c-test.test-table')
         ;
 
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
         try {
-            $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+            $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
             $loadQueue->start();
             self::fail('LoadTableQueue should fail with InvalidOutputException');
         } catch (InvalidOutputException $e) {
@@ -84,8 +92,6 @@ class LoadTableQueueTest extends TestCase
 
     public function testStartFailureWithSapiAppErrorPropagatesErrorFromClient(): void
     {
-        $storageApiMock = $this->createMock(Client::class);
-
         $clientException = new ClientException('Hi', 500);
 
         $loadTask = $this->createMock(LoadTableTask::class);
@@ -98,8 +104,12 @@ class LoadTableQueueTest extends TestCase
             ->willThrowException($clientException)
         ;
 
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
         try {
-            $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+            $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
             $loadQueue->start();
             self::fail('LoadTableQueue should fail with ClientException');
         } catch (ClientException $e) {
@@ -109,8 +119,8 @@ class LoadTableQueueTest extends TestCase
 
     public function testWaitForAllWithErrorThrowsInvalidOutputException(): void
     {
-        $storageApiMock = $this->createMock(Client::class);
-        $storageApiMock->expects(self::once())
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn([
@@ -134,7 +144,13 @@ class LoadTableQueueTest extends TestCase
             ->willReturn('123')
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
 
         try {
             $loadQueue->waitForAll();
@@ -161,8 +177,8 @@ class LoadTableQueueTest extends TestCase
     {
         $tableName = 'myTable';
         $expectedTableId = 'in.c-myBucket.' . $tableName;
-        $storageApiMock = $this->createMock(Client::class);
-        $storageApiMock->expects(self::once())
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn([
@@ -175,7 +191,7 @@ class LoadTableQueueTest extends TestCase
                 ],
             ])
         ;
-        $storageApiMock->expects(self::once())
+        $clientMock->expects(self::once())
             ->method('getTable')
             ->with($expectedTableId)
             ->willReturn([
@@ -207,7 +223,14 @@ class LoadTableQueueTest extends TestCase
             ->method('applyMetadata')
             ->willThrowException($clientException)
         ;
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
 
         try {
             $loadQueue->waitForAll();
@@ -249,8 +272,8 @@ class LoadTableQueueTest extends TestCase
         int $expectedCompressedBytes,
         int $expectedUncompressedBytes
     ): void {
-        $storageApiMock = $this->createMock(Client::class);
-        $storageApiMock->expects(self::once())
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
             ->method('getTable')
             ->with($expectedTableId)
             ->willReturn([
@@ -262,7 +285,7 @@ class LoadTableQueueTest extends TestCase
                 'lastChangeDate' => null,
             ])
         ;
-        $storageApiMock->expects(self::once())
+        $clientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn($jobResult)
@@ -284,7 +307,13 @@ class LoadTableQueueTest extends TestCase
             }))
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $loadQueue->waitForAll();
 
         $tablesResult = $loadQueue->getTableResult();
@@ -316,8 +345,8 @@ class LoadTableQueueTest extends TestCase
         int $expectedCompressedBytes,
         int $expectedUncompressedBytes
     ): void {
-        $storageApiMock = $this->createMock(Client::class);
-        $storageApiMock->expects(self::once())
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn($jobResult)
@@ -339,7 +368,13 @@ class LoadTableQueueTest extends TestCase
             ->willThrowException($clientException)
         ;
 
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         try {
             $loadQueue->waitForAll();
             self::fail('WaitForAll shoud fail with ClientException.');
@@ -390,13 +425,13 @@ class LoadTableQueueTest extends TestCase
 
     public function testWaitForAllDeleteTableAfterFailedLoad(): void
     {
-        $storageApiMock = $this->createMock(Client::class);
-        $storageApiMock->method('waitForJob')
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->method('waitForJob')
             ->willReturn(['status' => 'error', 'error' => ['message' => 'Hi']]);
-        $storageApiMock->expects(self::once())
+        $clientMock->expects(self::once())
             ->method('dropTable')
             ->with('my-table', ['force' => true]);
-        $storageApiMock->method('getTable')
+        $clientMock->method('getTable')
             ->willReturn(['rowsCount' => 0, 'metadata' => []]);
 
         $loadTask = $this->createMock(LoadTableTask::class);
@@ -405,7 +440,13 @@ class LoadTableQueueTest extends TestCase
         $loadTask->method('getDestinationTableName')
             ->willReturn('my-table');
 
-        $loadQueue = new LoadTableQueue($storageApiMock, new NullLogger(), [$loadTask]);
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClientIfAvailable')
+            ->willReturn($clientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table "my-table": Hi');
         $loadQueue->waitForAll();

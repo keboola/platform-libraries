@@ -50,12 +50,12 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $bucketName = 'testAbsTableSlicedManifestOutputMapping';
         $bucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_IN);
         if ($bucketId !== null) {
-            $tables = $this->clientWrapper->getBasicClient()->listTables($bucketId, ['include' => '']);
+            $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
             foreach ($tables as $table) {
-                $this->clientWrapper->getBasicClient()->dropTable($table['id']);
+                $this->clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
             }
         } else {
-            $bucketId  = $this->clientWrapper->getBasicClient()->createBucket(
+            $bucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_IN,
                 backend: 'synapse'
@@ -69,7 +69,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         for ($i = 0; $i < 2; $i++) {
-            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+            $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $bucketId,
                 'test' . ($i + 1),
                 $csv
@@ -108,7 +108,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
 
@@ -178,7 +178,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $tables = $this->clientWrapper->getBasicClient()->listTables($this->emptyOutputBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
         self::assertNotEmpty($jobIds[0]);
@@ -356,7 +356,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
 
         $options = new ListFilesOptions();
         $options->setTags([self::FILE_TAG]);
-        $files = $this->clientWrapper->getBasicClient()->listFiles($options);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(3, $files);
 
         $file1 = $file2 = $file3 = null;

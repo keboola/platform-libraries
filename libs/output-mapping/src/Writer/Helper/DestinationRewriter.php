@@ -29,7 +29,7 @@ class DestinationRewriter
         }
 
         try {
-            $webalizeResult = $clientWrapper->getBasicClient()->webalizeDisplayName(
+            $webalizeResult = $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
                 (string) $clientWrapper->getBranchId()
             );
         } catch (ClientException $e) {

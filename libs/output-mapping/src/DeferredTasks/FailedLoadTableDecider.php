@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\DeferredTasks;
 
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class FailedLoadTableDecider
 {
     public static function decideTableDelete(
         LoggerInterface $logger,
-        Client $client,
+        ClientWrapper $clientWrapper,
         LoadTableTaskInterface $task
     ): bool {
         try {
-            $tableInfo = $client->getTable($task->getDestinationTableName());
+            $tableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($task->getDestinationTableName());
         } catch (ClientException $e) {
             // likely the table doesn't exist, but any other error really prevents us from positive decision
             return false;

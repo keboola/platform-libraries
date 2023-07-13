@@ -17,7 +17,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $csv = new CsvFile($this->temp->getTmpFolder() . '/import.csv');
         $csv->writeRow($columns);
-        return $this->clientWrapper->getBasicClient()->createTableAsync(
+        return $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'test-table',
             $csv,
@@ -136,12 +136,12 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $logger = new TestLogger();
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             ['id', 'name'],
             ['id', 'foo']
@@ -149,7 +149,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
         self::assertTrue($logger->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $tableId)
         ));
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
@@ -158,12 +158,12 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $logger = new TestLogger();
         $tableId = $this->createTable(['id', 'name', 'foo'], '');
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             [ ],
             ['id', 'foo']
@@ -171,7 +171,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
         self::assertTrue($logger->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "" to "id, foo".', $tableId)
         ));
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
     }
 
@@ -180,12 +180,12 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $logger = new TestLogger();
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,foo');
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             $tableInfo['primaryKey'],
             []
@@ -193,7 +193,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
         self::assertTrue($logger->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, foo" to "".', $tableId)
         ));
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
     }
 
@@ -202,13 +202,13 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $logger = new TestLogger();
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
         $invalidTableId = $tableId . '-non-existent';
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper->getTableAndFileStorageClient(),
             $invalidTableId,
             ['id', 'name'],
             ['id', 'foo']
@@ -224,7 +224,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
                 $this->emptyOutputBucketId
             )
         ));
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
     }
 
@@ -233,12 +233,12 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     {
         $logger = new TestLogger();
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
 
         PrimaryKeyHelper::modifyPrimaryKey(
             $logger,
-            $this->clientWrapper->getBasicClient(),
+            $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             ['id', 'name'],
             ['id', 'bar']
@@ -252,7 +252,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
                 $tableId
             )
         ));
-        $tableInfo = $this->clientWrapper->getBasicClient()->getTable($tableId);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
     }
 }

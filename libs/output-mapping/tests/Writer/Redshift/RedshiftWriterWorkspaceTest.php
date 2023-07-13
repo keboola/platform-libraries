@@ -33,7 +33,7 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
         $tableIds = [];
         // Create table
         for ($i = 0; $i < 2; $i++) {
-            $tableIds[$i] = $this->clientWrapper->getBasicClient()->createTableAsync(
+            $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $this->emptyRedshiftInputBucketId,
                 'test' . ($i + 1),
                 $csv

@@ -97,7 +97,7 @@ class DestinationRewriterTest extends TestCase
             }
         );
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($clientMock);
+        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($clientMock);
         $clientWrapper->method('getBranchId')->willReturn($branchId);
         $clientWrapper->method('hasBranch')->willReturn($branchId !== null);
 

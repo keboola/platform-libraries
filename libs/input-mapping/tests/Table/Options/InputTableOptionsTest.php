@@ -20,27 +20,6 @@ class InputTableOptionsTest extends TestCase
         self::assertEquals('test', $definition->getSource());
     }
 
-    public function testSetSource(): void
-    {
-        $definition = new InputTableOptions(['source' => 'test']);
-        $definition->setSource('test2');
-        self::assertSame('test2', $definition->getSource());
-    }
-
-    public function testGetSourceBranchId(): void
-    {
-        $definition = new InputTableOptions(['source' => 'test']);
-        self::assertNull($definition->getSourceBranchId());
-    }
-
-    public function testSetSourceBranchId(): void
-    {
-        $definition = new InputTableOptions(['source' => 'test']);
-        $definition->setSourceBranchId('12345');
-        self::assertSame(12345, $definition->getSourceBranchId());
-    }
-
-
     public function testGetDestination(): void
     {
         $definition = new InputTableOptions(['source' => 'test', 'destination' => 'dest']);
@@ -158,93 +137,6 @@ class InputTableOptionsTest extends TestCase
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('Cannot set both parameters "days" and "changed_since".');
         new InputTableOptions(['source' => 'test', 'days' => 1, 'changed_since' => '-2 days']);
-    }
-
-    public function testGetExportOptionsEmptyValue(): void
-    {
-        $definition = new InputTableOptions(['source' => 'test']);
-        self::assertEquals(
-            ['overwrite' => false],
-            $definition->getStorageApiExportOptions(new InputTableStateList([]))
-        );
-    }
-
-    public function testGetExportOptionsSimpleColumns(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'destination' => 'dest',
-            'columns' => ['col1', 'col2'],
-            'changed_since' => '-1 days',
-            'where_column' => 'col1',
-            'where_operator' => 'ne',
-            'where_values' => ['1', '2'],
-            'limit' => 100,
-        ]);
-        self::assertEquals([
-            'columns' => ['col1', 'col2'],
-            'changedSince' => '-1 days',
-            'whereColumn' => 'col1',
-            'whereValues' => ['1', '2'],
-            'whereOperator' => 'ne',
-            'limit' => 100,
-            'overwrite' => false,
-        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
-    }
-
-    public function testGetExportOptionsExtendColumns(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'destination' => 'dest',
-            'column_types' => [
-                [
-                    'source' => 'col1',
-                    'type' => 'VARCHAR',
-                    'length' => '200',
-                    'destination' => 'colone',
-                    'nullable' => false,
-                    'convert_empty_values_to_null' => true,
-                ],
-                [
-                    'source' => 'col2',
-                    'type' => 'VARCHAR',
-                    'nullable' => true,
-                    'convert_empty_values_to_null' => false,
-                ],
-            ],
-            'changed_since' => '-1 days',
-            'where_column' => 'col1',
-            'where_operator' => 'ne',
-            'where_values' => ['1', '2'],
-            'limit' => 100,
-        ]);
-        self::assertEquals([
-            'columns' => ['col1', 'col2'],
-            'changedSince' => '-1 days',
-            'whereColumn' => 'col1',
-            'whereValues' => ['1', '2'],
-            'whereOperator' => 'ne',
-            'limit' => 100,
-            'overwrite' => false,
-        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
-    }
-
-    public function testGetExportOptionsSourceBranchId(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'destination' => 'dest',
-            'columns' => ['col1', 'col2'],
-            'limit' => 100,
-        ]);
-        $definition->setSourceBranchId('12345');
-        self::assertEquals([
-            'columns' => ['col1', 'col2'],
-            'limit' => 100,
-            'overwrite' => false,
-            'sourceBranchId' => 12345,
-        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
     }
 
     public function testGetLoadOptionsSimpleColumns(): void
@@ -376,46 +268,6 @@ class InputTableOptionsTest extends TestCase
             'where_values' => ['1', '2'],
             'limit' => 100,
         ]);
-    }
-
-    public function testGetExportOptionsDays(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'days' => 2,
-        ]);
-        self::assertEquals([
-            'changedSince' => '-2 days',
-            'overwrite' => false,
-        ], $definition->getStorageApiExportOptions(new InputTableStateList([])));
-    }
-
-    public function testGetExportOptionsAdaptiveInputMapping(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
-        ]);
-        $tablesState = new InputTableStateList([
-            [
-                'source' => 'test',
-                'lastImportDate' => '1989-11-17T21:00:00+0200',
-            ],
-        ]);
-        self::assertEquals([
-            'changedSince' => '1989-11-17T21:00:00+0200',
-            'overwrite' => false,
-        ], $definition->getStorageApiExportOptions($tablesState));
-    }
-
-    public function testGetExportOptionsAdaptiveInputMappingMissingTable(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
-        ]);
-        $tablesState = new InputTableStateList([]);
-        self::assertEquals(['overwrite' => false], $definition->getStorageApiExportOptions($tablesState));
     }
 
     public function testGetLoadOptionsAdaptiveInputMapping(): void

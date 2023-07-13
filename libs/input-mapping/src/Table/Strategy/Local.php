@@ -6,6 +6,7 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\TableExporter;
 
 class Local extends AbstractStrategy
@@ -13,7 +14,7 @@ class Local extends AbstractStrategy
     public const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
     public const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';
 
-    public function downloadTable(InputTableOptions $table): array
+    public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
@@ -23,7 +24,7 @@ class Local extends AbstractStrategy
 
         $file = $this->ensurePathDelimiter($this->dataStorage->getPath()) .
             $this->getDestinationFilePath($this->destination, $table);
-        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
+        $tableInfo = $table->getTableInfo();
         if ($tableInfo['dataSizeBytes'] > $exportLimit) {
             throw new InvalidInputException(sprintf(
                 'Table "%s" with size %s bytes exceeds the input mapping limit of %s bytes. ' .

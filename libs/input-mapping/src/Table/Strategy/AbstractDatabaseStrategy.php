@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Helper\LoadTypeDecider;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Workspaces;
 
 abstract class AbstractDatabaseStrategy extends AbstractStrategy
 {
     abstract protected function getWorkspaceType(): string;
 
-    public function downloadTable(InputTableOptions $table): array
+    public function downloadTable(RewrittenInputTableOptions $table): array
     {
-        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
-        if (LoadTypeDecider::canClone($tableInfo, $this->getWorkspaceType(), $loadOptions)) {
+        if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return [
                 'table' => $table,
@@ -38,7 +37,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
 
         foreach ($exports as $export) {
             if ($export['type'] === 'clone') {
-                /** @var InputTableOptions $table */
+                /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
                 $cloneInput = [
                     'source' => $table->getSource(),
@@ -125,9 +124,8 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
             $this->manifestCreator->writeTableManifest(
-                $tableInfo,
+                $table->getTableInfo(),
                 $manifestPath,
                 $table->getColumnNamesFromTypes(),
                 $this->format

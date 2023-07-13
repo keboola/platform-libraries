@@ -9,9 +9,12 @@ use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\InputMapping\Table\StrategyInterface;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -45,7 +48,7 @@ abstract class AbstractStrategy implements StrategyInterface
     }
 
     /**
-     * @param InputTableOptions[] $tables
+     * @param RewrittenInputTableOptions[] $tables
      * @param bool $preserve
      * @return Result
      */
@@ -55,14 +58,13 @@ abstract class AbstractStrategy implements StrategyInterface
         $exports = [];
         $result = new Result();
         foreach ($tables as $table) {
-            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
             $outputStateConfiguration[] = [
                 'source' => $table->getSource(),
-                'lastImportDate' => $tableInfo['lastImportDate'],
+                'lastImportDate' => $table->getTableInfo()['lastImportDate'],
             ];
             $exports[] = $this->downloadTable($table);
             $this->logger->info('Fetched table ' . $table->getSource() . '.');
-            $result->addTable(new TableInfo($tableInfo));
+            $result->addTable(new TableInfo($table->getTableInfo()));
         }
 
         $result->setMetrics($this->handleExports($exports, $preserve));

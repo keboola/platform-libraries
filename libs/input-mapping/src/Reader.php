@@ -86,7 +86,9 @@ class Reader
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
-        if ($readerOptions->devInputsDisabled()) {
+        if ($readerOptions->devInputsDisabled()
+            && !$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()
+        ) {
             /* this is irrelevant for protected branch projects, because dev & prod buckets have same name, thus there
             is no difference which one is stored in the configuration */
             InputBucketValidator::checkDevBuckets(

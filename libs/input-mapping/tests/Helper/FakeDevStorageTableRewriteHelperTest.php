@@ -53,6 +53,14 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     {
         $clientWrapper = $this->getClientWrapper(null);
 
+        $inBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_IN);
+        if ($inBucketId) {
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $inBucketId,
+                ['force' => true, 'async' => true]
+            );
+        }
+
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
         if ($outBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
@@ -93,6 +101,26 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     {
         $this->initBuckets();
         $clientWrapper = $this->getClientWrapper(null);
+        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_IN);
+        $temp = new Temp();
+        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        // Create table
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table',
+            $csv
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            'in.c-main',
+            'my-table-2',
+            $csv
+        );
+
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -179,6 +207,27 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     public function testBranchRewriteNoTables(): void
     {
         $this->initBuckets();
+        $clientWrapper = $this->getClientWrapper(null);
+        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_IN);
+        $temp = new Temp();
+        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        // Create table
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table',
+            $csv
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table-2',
+            $csv
+        );
+
         $clientWrapper = $this->getClientWrapper($this->branchId);
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
@@ -391,6 +440,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $basicClientMock->expects(self::once())->method('webalizeDisplayName')->willReturnCallback(
             fn ($argument) => ['displayName' => $argument]
         );
+        $storageClientMock->expects(self::once())->method('getTable')
+            ->willReturn(['id' => 'out.c-123456-main.my-table']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
@@ -420,7 +471,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => (int) $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -440,6 +491,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $basicClientMock->expects(self::exactly($checkCount))->method('webalizeDisplayName')->willReturnCallback(
             fn ($argument) => ['displayName' => $argument]
         );
+        $storageClientMock->expects(self::once())->method('getTable')
+            ->willReturn(['id' => 'out.c-123456-main.my-table']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClientIfAvailable')->willReturn($basicClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
@@ -469,7 +522,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => (int) $clientWrapper->getDefaultBranch()['branchId'],
             ],
             $destinations->getTables()[0]->getDefinition()
         );

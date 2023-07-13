@@ -6,6 +6,8 @@ namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -15,7 +17,7 @@ interface TableRewriteHelperInterface
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ): InputTableOptionsList;
+    ): RewrittenInputTableOptionsList;
 
     public function rewriteTableStatesDestinations(
         InputTableStateList $tableStates,

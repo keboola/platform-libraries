@@ -6,12 +6,13 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
 class ABS extends AbstractStrategy
 {
 
-    public function downloadTable(InputTableOptions $table): array
+    public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
@@ -35,11 +36,11 @@ class ABS extends AbstractStrategy
         }
 
         foreach ($exports as $export) {
-            /** @var InputTableOptions $table */
+            /** @var RewrittenInputTableOptions $table */
             list ($jobId, $table) = $export;
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
+            $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true)

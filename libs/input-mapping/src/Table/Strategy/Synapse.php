@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Workspaces;
 
 class Synapse extends AbstractStrategy
 {
-    public function downloadTable(InputTableOptions $table): array
+    public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
@@ -61,7 +62,7 @@ class Synapse extends AbstractStrategy
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
-            $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
+            $tableInfo = $table->getTableInfo();
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
                 $manifestPath,

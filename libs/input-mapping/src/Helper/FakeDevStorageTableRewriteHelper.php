@@ -7,6 +7,8 @@ namespace Keboola\InputMapping\Helper;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -16,14 +18,23 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ): InputTableOptionsList {
+    ): RewrittenInputTableOptionsList {
+        $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
+            $source = $tableOptions->getSource();
             if ($clientWrapper->hasBranch()) {
-                $tableOptions->setSource($this->rewriteSource($tableOptions->getSource(), $clientWrapper, $logger));
+                $source = $this->rewriteSource($tableOptions->getSource(), $clientWrapper, $logger);
             }
-            $tableOptions->setSourceBranchId($clientWrapper->getDefaultBranch()['branchId']);
+            $sourceBranchId = $clientWrapper->getDefaultBranch()['branchId'];
+            $tableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($source);
+            $newTables[] = new RewrittenInputTableOptions(
+                $tableOptions->getDefinition(),
+                $source,
+                (int) $sourceBranchId,
+                $tableInfo,
+            );
         }
-        return $tablesDefinition;
+        return new RewrittenInputTableOptionsList($newTables);
     }
 
     public function rewriteTableStatesDestinations(

@@ -22,7 +22,7 @@ class InputTableOptions
 {
     public const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
 
-    private array $definition;
+    protected array $definition;
 
     public function __construct(array $configuration)
     {
@@ -74,24 +74,6 @@ class InputTableOptions
     public function getSource(): string
     {
         return $this->definition['source'];
-    }
-
-    public function setSource(string $newSource): void
-    {
-        $this->definition['source'] = $newSource;
-    }
-
-    public function getSourceBranchId(): ?int
-    {
-        if (isset($this->definition['sourceBranchId'])) {
-            return (int) $this->definition['sourceBranchId'];
-        }
-        return null;
-    }
-
-    public function setSourceBranchId(string $sourceBranchId): void
-    {
-        $this->definition['sourceBranchId'] = $sourceBranchId;
     }
 
     public function getDestination(): string

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Helper;
 
-use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class TableRewriteHelperFactory
 {
-    public static function getTableRewriteHelper(ReaderOptions $readerOptions): TableRewriteHelperInterface
+    public static function getTableRewriteHelper(ClientOptions $clientOptions): TableRewriteHelperInterface
     {
-        if ($readerOptions->hasProtectedDefaultBranch()) {
+        if ($clientOptions->useBranchStorage()) {
             return new RealDevStorageTableRewriteHelper();
         } else {
             return new FakeDevStorageTableRewriteHelper();

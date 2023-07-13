@@ -77,12 +77,13 @@ class Reader
             $this->clientWrapper->getTableAndFileStorageClient(),
             $this->logger
         );
-        $tablesState = TableRewriteHelperFactory::getTableRewriteHelper($readerOptions)
-            ->rewriteTableStatesDestinations(
-                $tablesState,
-                $this->clientWrapper,
-                $this->logger
-            );
+        $tablesState = TableRewriteHelperFactory::getTableRewriteHelper(
+            $this->clientWrapper->getClientOptionsReadOnly()
+        )->rewriteTableStatesDestinations(
+            $tablesState,
+            $this->clientWrapper,
+            $this->logger
+        );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
         if ($readerOptions->devInputsDisabled()) {
@@ -93,12 +94,13 @@ class Reader
                 $this->clientWrapper
             );
         }
-        $tablesDefinition = TableRewriteHelperFactory::getTableRewriteHelper($readerOptions)
-            ->rewriteTableOptionsSources(
-                $tablesDefinition,
-                $this->clientWrapper,
-                $this->logger
-            );
+        $tablesDefinition = TableRewriteHelperFactory::getTableRewriteHelper(
+            $this->clientWrapper->getClientOptionsReadOnly()
+        )->rewriteTableOptionsSources(
+            $tablesDefinition,
+            $this->clientWrapper,
+            $this->logger
+        );
         /** @var TableAbstractStrategy $strategy */
         return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
     }

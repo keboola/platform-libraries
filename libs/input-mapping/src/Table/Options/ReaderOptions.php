@@ -9,7 +9,6 @@ class ReaderOptions
     public function __construct(
         private readonly bool $devInputsDisabled,
         private readonly bool $preserveWorkspace = true,
-        private readonly bool $hasProtectedDefaultBranch = false,
     ) {
     }
 
@@ -21,10 +20,5 @@ class ReaderOptions
     public function preserveWorkspace(): bool
     {
         return $this->preserveWorkspace;
-    }
-
-    public function hasProtectedDefaultBranch(): bool
-    {
-        return $this->hasProtectedDefaultBranch;
     }
 }

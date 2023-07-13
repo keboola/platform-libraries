@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\Tests\Helper;
 use Keboola\InputMapping\Helper\FakeDevStorageTableRewriteHelper;
 use Keboola\InputMapping\Helper\RealDevStorageTableRewriteHelper;
 use Keboola\InputMapping\Helper\TableRewriteHelperFactory;
-use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 

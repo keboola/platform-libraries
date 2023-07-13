@@ -15,8 +15,7 @@ class TableRewriteHelperFactoryTest extends TestCase
 {
     public function testGetRewriteHelper(): void
     {
-        $helper = TableRewriteHelperFactory::getTableRewriteHelper(new ClientOptions(
-            ));
+        $helper = TableRewriteHelperFactory::getTableRewriteHelper(new ClientOptions());
         self::assertInstanceOf(FakeDevStorageTableRewriteHelper::class, $helper);
 
         $helper = TableRewriteHelperFactory::getTableRewriteHelper(new ClientOptions(

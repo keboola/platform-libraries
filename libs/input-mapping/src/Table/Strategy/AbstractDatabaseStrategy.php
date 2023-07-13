@@ -40,7 +40,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             if ($export['type'] === 'clone') {
                 /** @var InputTableOptions $table */
                 $table = $export['table'];
-                $cloneInputs[] = [
+                $cloneInput = [
                     'source' => $table->getSource(),
                     'destination' => $table->getDestination(),
                     'sourceBranchId' => $table->getSourceBranchId(),
@@ -50,8 +50,9 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 if ($table->getSourceBranchId() !== null) {
                     // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
                     // and passing null causes application error in connection, so here is a useless condition.
-                    $cloneInputs['sourceBranchId'] = $table->getSourceBranchId();
+                    $cloneInput['sourceBranchId'] = $table->getSourceBranchId();
                 }
+                $cloneInputs[] = $cloneInput;
                 $workspaceTables[] = $table;
             }
             if ($export['type'] === 'copy') {

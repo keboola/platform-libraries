@@ -8,7 +8,7 @@ class ReaderOptions
 {
     public function __construct(
         private readonly bool $devInputsDisabled,
-        private readonly bool $preserveWorkspace = true
+        private readonly bool $preserveWorkspace = true,
     ) {
     }
 

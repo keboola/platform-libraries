@@ -13,7 +13,10 @@ class ReaderOptionsTest extends TestCase
     {
         $options = new ReaderOptions(true);
         self::assertTrue($options->devInputsDisabled());
-        $options = new ReaderOptions(false);
+        self::assertTrue($options->preserveWorkspace());
+
+        $options = new ReaderOptions(false, false);
         self::assertFalse($options->devInputsDisabled());
+        self::assertFalse($options->preserveWorkspace());
     }
 }

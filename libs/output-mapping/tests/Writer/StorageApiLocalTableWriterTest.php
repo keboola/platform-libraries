@@ -169,19 +169,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
-    public function testWriteTableOutputMappingDevMode(): void
+    public function testWriteTableOutputMappingFakeDevMode(): void
     {
-        $this->clientWrapper = new ClientWrapper(
+        $clientWrapper= new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER')
             ),
         );
-        $branchId = $this->createBranch($this->clientWrapper, self::class);
+        $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                (string) getenv('STORAGE_API_TOKEN'),
                 $branchId
             ),
         );
@@ -227,13 +227,85 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         sort($tableIds);
         self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table11a#',
+            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table11a#',
             $tableIds[0]
         );
 
         self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table21a#',
+            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table21a#',
             $tableIds[1]
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingRealDevMode(): void
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                useBranchStorage: true, // this is the important part
+            ),
+        );
+        $branchId = $this->createBranch($clientWrapper, self::class);
+        $this->clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN'),
+                branchId: $branchId,
+                useBranchStorage: true,
+            ),
+        );
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table11a.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+        );
+        file_put_contents(
+            $root . '/upload/table21a.csv',
+            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n"
+        );
+
+        $configs = [
+            [
+                'source' => 'table11a.csv',
+                'destination' => $this->emptyOutputBucketId . '.table11a',
+            ],
+            [
+                'source' => 'table21a.csv',
+                'destination' => $this->emptyOutputBucketId . '.table21a',
+            ],
+        ];
+        // pass the special client wrapper
+        $writer = new TableWriter($this->getLocalStagingFactory($this->clientWrapper));
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo', 'branchId' => $branchId],
+            'local',
+            false,
+            false
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(2, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+        self::assertNotEmpty($jobIds[1]);
+
+        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $tableIds[] = $jobDetail['results']['id'];
+        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[1]);
+        $tableIds[] = $jobDetail['results']['id'];
+
+        sort($tableIds);
+        self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a', $tableIds[0]);
+        self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a', $tableIds[1]);
+        // tables exist in the branch
+        $this->clientWrapper->getBranchClient()->tableExists(
+            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a'
+        );
+        $this->clientWrapper->getBranchClient()->tableExists(
+            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a'
         );
     }
 

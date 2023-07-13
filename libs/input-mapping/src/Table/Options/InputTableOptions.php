@@ -81,6 +81,19 @@ class InputTableOptions
         $this->definition['source'] = $newSource;
     }
 
+    public function getSourceBranchId(): ?int
+    {
+        if (isset($this->definition['sourceBranchId'])) {
+            return (int) $this->definition['sourceBranchId'];
+        }
+        return null;
+    }
+
+    public function setSourceBranchId(string $sourceBranchId): void
+    {
+        $this->definition['sourceBranchId'] = $sourceBranchId;
+    }
+
     public function getDestination(): string
     {
         if (isset($this->definition['destination'])) {
@@ -116,6 +129,11 @@ class InputTableOptions
     public function getStorageApiExportOptions(InputTableStateList $states): array
     {
         $exportOptions = [];
+        if ($this->getSourceBranchId() !== null) {
+            // practically, sourceBranchId should never be null, but i'm not able to make that statically safe and
+            // passing null causes application error in connection, so here is a useless condition.
+            $exportOptions['sourceBranchId'] = $this->getSourceBranchId();
+        }
         if (count($this->definition['column_types'])) {
             $exportOptions['columns'] = $this->getColumnNamesFromTypes();
         }

@@ -8,7 +8,7 @@ use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
 use Keboola\InputMapping\Helper\InputBucketValidator;
-use Keboola\InputMapping\Helper\SourceRewriteHelper;
+use Keboola\InputMapping\Helper\TableRewriteHelperFactory;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
@@ -73,12 +73,13 @@ class Reader
         string $stagingType,
         ReaderOptions $readerOptions
     ): Result {
-        // assuming yes on https://keboolaglobal.slack.com/archives/C05BK5V8N1Z/p1688578793224979
         $tableResolver = new TableDefinitionResolver(
             $this->clientWrapper->getTableAndFileStorageClient(),
             $this->logger
         );
-        $tablesState = SourceRewriteHelper::rewriteTableStatesDestinations(
+        $tablesState = TableRewriteHelperFactory::getTableRewriteHelper(
+            $this->clientWrapper->getClientOptionsReadOnly()
+        )->rewriteTableStatesDestinations(
             $tablesState,
             $this->clientWrapper,
             $this->logger
@@ -86,12 +87,16 @@ class Reader
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
         if ($readerOptions->devInputsDisabled()) {
+            /* this is irrelevant for protected branch projects, because dev & prod buckets have same name, thus there
+            is no difference which one is stored in the configuration */
             InputBucketValidator::checkDevBuckets(
                 $tablesDefinition,
                 $this->clientWrapper
             );
         }
-        $tablesDefinition = SourceRewriteHelper::rewriteTableOptionsSources(
+        $tablesDefinition = TableRewriteHelperFactory::getTableRewriteHelper(
+            $this->clientWrapper->getClientOptionsReadOnly()
+        )->rewriteTableOptionsSources(
             $tablesDefinition,
             $this->clientWrapper,
             $this->logger

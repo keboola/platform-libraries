@@ -39,12 +39,15 @@ class BigQueryTest extends AbstractTestCase
         self::assertEquals(
             [
                 'table' => [
-                    new InputTableOptions(
+                    new RewrittenInputTableOptions(
                         [
                             'source' => $this->firstTableId,
                             'destination' => 'my-table',
                             'columns' => ['foo', 'bar'],
-                        ]
+                        ],
+                        $this->firstTableId,
+                        (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+                        $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
                     ),
                     [
                         'columns' => [

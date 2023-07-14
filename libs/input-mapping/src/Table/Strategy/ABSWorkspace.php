@@ -62,7 +62,7 @@ class ABSWorkspace extends AbstractStrategy
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table) .
                     '.manifest';
-                $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($table->getSource());
+                $tableInfo = $table->getTableInfo();
                 $this->manifestCreator->writeTableManifest(
                     $tableInfo,
                     $manifestPath,

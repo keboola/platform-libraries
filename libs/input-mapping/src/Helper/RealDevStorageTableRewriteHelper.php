@@ -6,6 +6,8 @@ namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -15,13 +17,22 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ): InputTableOptionsList {
+    ): RewrittenInputTableOptionsList {
+        $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
-            $tableOptions->setSourceBranchId(
-                $this->rewriteSourceBranchId($tableOptions->getSource(), $clientWrapper, $logger)
+            list($tableInfo, $sourceBranchId) = $this->rewriteSourceBranchId(
+                $tableOptions->getSource(),
+                $clientWrapper,
+                $logger
+            );
+            $newTables[] = new RewrittenInputTableOptions(
+                $tableOptions->getDefinition(),
+                $tableOptions->getSource(),
+                (int) $sourceBranchId,
+                $tableInfo,
             );
         }
-        return $tablesDefinition;
+        return new RewrittenInputTableOptionsList($newTables);
     }
 
     public function rewriteTableStatesDestinations(
@@ -37,7 +48,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         string $source,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ): string {
+    ): array {
         if ($clientWrapper->hasBranch() && $clientWrapper->getBranchClient()->tableExists($source)) {
             $logger->info(sprintf(
                 'Using dev input "%s" from branch "%s" instead of main branch "%s".',
@@ -45,7 +56,8 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
                 $clientWrapper->getBranchId(),
                 $clientWrapper->getDefaultBranch()['branchId']
             ));
-            return (string) $clientWrapper->getBranchId();
+            $tableInfo = $clientWrapper->getBranchClient()->getTable($source);
+            return [$tableInfo, $clientWrapper->getBranchId()];
         }
         $logger->info(sprintf(
             'Using fallback to default branch "%s" for input "%s".',
@@ -53,6 +65,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
             $source,
         ));
         // use production table
-        return $clientWrapper->getDefaultBranch()['branchId'];
+        $tableInfo = $clientWrapper->getBasicClient()->getTable($source);
+        return [$tableInfo, $clientWrapper->getDefaultBranch()['branchId']];
     }
 }

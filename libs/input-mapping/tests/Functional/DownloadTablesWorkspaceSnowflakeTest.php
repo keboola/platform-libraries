@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
@@ -15,6 +16,10 @@ use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\DevBranches;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
+use Keboola\Temp\Temp;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
@@ -354,7 +359,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
     }
 
-    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    #[NeedsTestTables(1), NeedsEmptyOutputBucket]
     public function testDownloadTablesPreserveFalse(): void
     {
         // first we create the workspace and load there some data.
@@ -434,5 +439,175 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table']
         );
+    }
+
+    #[NeedsTestTables(2)]
+    public function testWorkspaceInputMappingRealDevStorage(): void
+    {
+        // create a branch
+        $masterClientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            ),
+        );
+        $branchesApi = new DevBranches($masterClientWrapper->getBasicClient());
+        foreach ($branchesApi->listBranches() as $branch) {
+            if ($branch['name'] === self::class) {
+                $branchesApi->deleteBranch($branch['id']);
+            }
+        }
+        $branchId = (string) $branchesApi->createBranch(self::class)['id'];
+
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN'),
+                branchId: $branchId,
+                useBranchStorage: true,
+            )
+        );
+        $this->clientWrapper = $clientWrapper;
+
+        // create a table in the branch
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        $buckets = [
+            'in.c-testWorkspaceInputMappingRealDevStorageTest',
+            'out.c-testWorkspaceInputMappingRealDevStorageTest',
+        ];
+        foreach ($buckets as $bucket) {
+            try {
+                // drop buckets in branch, test satisfyer can't touch this #mc-hammer
+                $clientWrapper->getBranchClient()->dropBucket($bucket, ['force' => true, 'async' => true]);
+            } catch (ClientException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
+            }
+        }
+
+        // create input bucket in branch
+        $clientWrapper->getBranchClient()->createBucket(
+            'testWorkspaceInputMappingRealDevStorageTest',
+            'in'
+        );
+        $clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
+
+        // create output bucket in branch
+        $this->emptyOutputBucketId = $clientWrapper->getBranchClient()->createBucket(
+            'testWorkspaceInputMappingRealDevStorageTest',
+            'out',
+        );
+
+        $logger = new TestLogger();
+        $reader = new Reader($this->getWorkspaceStagingFactory($clientWrapper, logger: $logger));
+        $configuration = new InputTableOptionsList([
+            [ // cloned table from production
+                'source' => $this->firstTableId,
+                'destination' => 'first_clone_table',
+                'keep_internal_timestamp_column' => false,
+            ],
+            [ // copied table from production
+                'source' => $this->firstTableId,
+                'destination' => 'first_copy_table',
+                'where_column' => 'Id',
+                'where_values' => ['id2', 'id3'],
+                'columns' => ['Id'],
+            ],
+            [ // cloned table from branch
+                'source' => $this->secondTableId,
+                'destination' => 'second_clone_table',
+                'keep_internal_timestamp_column' => false,
+            ],
+            [ // copied table from branch
+                'source' => $this->secondTableId,
+                'destination' => 'second_copy_table',
+                'where_column' => 'Id',
+                'where_values' => ['id2', 'id3'],
+                'columns' => ['Id'],
+            ],
+        ]);
+
+        $result = $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true)
+        );
+
+        // there were 2 jobs, clone and copy, so should have 2 metrics entries
+        $metrics = $result->getMetrics()?->getTableMetrics();
+        self::assertNotNull($metrics);
+        self::assertCount(2, iterator_to_array($metrics));
+
+        $adapter = new Adapter();
+
+        $tables = [
+            'first_clone_table' => $this->firstTableId,
+            'first_copy_table' => $this->firstTableId,
+            'second_clone_table' => $this->secondTableId,
+            'second_copy_table' => $this->secondTableId,
+        ];
+
+        foreach ($tables as $table_name => $table_id) {
+            $manifest = $adapter->readFromFile(
+                $this->temp->getTmpFolder() . '/download/' . $table_name . '.manifest'
+            );
+            self::assertEquals($table_id, $manifest['id']);
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+                $this->emptyOutputBucketId,
+                [
+                    'dataWorkspaceId' => $this->workspaceId,
+                    'dataTableName' => $table_name,
+                    'name' => 'test' . $table_name,
+                ]
+            );
+            self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+                $this->emptyOutputBucketId . '.test' . $table_name
+            ));
+        }
+        self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue($logger->hasInfoThatContains(
+            sprintf(
+                'Using fallback to default branch "%s" for input "%s".',
+                $clientWrapper->getDefaultBranch()['branchId'],
+                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+            )
+        ));
+        self::assertTrue($logger->hasInfoThatContains(
+            sprintf(
+                'Using fallback to default branch "%s" for input "%s".',
+                $clientWrapper->getDefaultBranch()['branchId'],
+                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+            )
+        ));
+        self::assertTrue($logger->hasInfoThatContains(
+            sprintf(
+                'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
+                $branchId,
+                $clientWrapper->getDefaultBranch()['branchId'],
+            )
+        ));
+        self::assertTrue(
+            $logger->hasInfoThatContains(
+                sprintf(
+                    'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                    'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
+                    $branchId,
+                    $clientWrapper->getDefaultBranch()['branchId'],
+                )
+            )
+        );
+
+        self::assertTrue($logger->hasInfoThatContains('Cloning 2 tables to workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Copying 2 tables to workspace.'));
+        self::assertTrue($logger->hasInfoThatContains('Processed 2 workspace exports.'));
     }
 }

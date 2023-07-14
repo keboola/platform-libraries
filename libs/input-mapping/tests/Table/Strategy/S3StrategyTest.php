@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Tests\Table\Strategy;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\S3;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
@@ -25,12 +26,15 @@ class S3StrategyTest extends AbstractTestCase
             new InputTableStateList([]),
             '.'
         );
-        $tableOptions = new InputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'columns' => ['Id', 'Name'],
-            ]
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertArrayHasKey('jobId', $result);
@@ -57,7 +61,7 @@ class S3StrategyTest extends AbstractTestCase
             new InputTableStateList([]),
             '.'
         );
-        $tableOptions = new InputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
@@ -73,7 +77,10 @@ class S3StrategyTest extends AbstractTestCase
                         'type' => 'NUMERIC',
                     ],
                 ],
-            ]
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertArrayHasKey('jobId', $result);

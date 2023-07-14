@@ -15,9 +15,11 @@ use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
 
 class DownloadTablesDefaultTest extends AbstractTestCase
@@ -488,6 +490,106 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             'download',
             AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true)
+        );
+    }
+
+    #[NeedsTestTables(1)]
+    public function testReadTablesDevBucketProtectedBranch(): void
+    {
+        $clientWrapper = new ClientWrapper(new ClientOptions(
+            url: (string) getenv('STORAGE_API_URL'),
+            token: (string) getenv('STORAGE_API_TOKEN'),
+            useBranchStorage: true,
+        ));
+        $logger = new TestLogger();
+        $reader = new Reader($this->getLocalStagingFactory(clientWrapper: $clientWrapper, logger: $logger));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'test.csv',
+            ],
+        ]);
+        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata->postBucketMetadata(
+            $this->testBucketId,
+            'test',
+            [
+                [
+                    'key' => 'KBC.lastUpdatedBy.branch.id',
+                    'value' => '1234',
+                ],
+            ]
+        );
+
+        // without the check it passes
+        $result = $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            AbstractStrategyFactory::LOCAL,
+            new ReaderOptions(false)
+        );
+
+        // with the check it passes too
+        $result = $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            AbstractStrategyFactory::LOCAL,
+            new ReaderOptions(true)
+        );
+        self::assertCount(1, $result->getTables());
+    }
+
+    #[NeedsTestTables(1)]
+    public function testReadTablesDevBranchFallback(): void
+    {
+        // create a branch
+        $masterClientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            ),
+        );
+        $branchesApi = new DevBranches($masterClientWrapper->getBasicClient());
+        foreach ($branchesApi->listBranches() as $branch) {
+            if ($branch['name'] === self::class) {
+                $branchesApi->deleteBranch($branch['id']);
+            }
+        }
+        $branchId = (string) $branchesApi->createBranch(self::class)['id'];
+
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN'),
+                branchId: $branchId,
+                useBranchStorage: true,
+            )
+        );
+        $this->clientWrapper = $clientWrapper;
+
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'test.csv',
+                'changed_since' => '',
+                // fails in TableExporter:175 'columns' => ['Id', 'Name'],
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            AbstractStrategyFactory::LOCAL,
+            new ReaderOptions(true)
+        );
+        self::assertCSVEquals(
+            "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
+            "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
         );
     }
 }

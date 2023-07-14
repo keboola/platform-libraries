@@ -52,6 +52,14 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     {
         $clientWrapper = $this->getClientWrapper(null);
 
+        $inBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_IN);
+        if ($inBucketId) {
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                (string) $inBucketId,
+                ['force' => true, 'async' => true]
+            );
+        }
+
         $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
         if ($outBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
@@ -94,6 +102,26 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     {
         $this->initBuckets();
         $clientWrapper = $this->getClientWrapper(null);
+        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_IN);
+        $temp = new Temp();
+        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        // Create table
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table',
+            $csv
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            'in.c-main',
+            'my-table-2',
+            $csv
+        );
+
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -160,7 +188,26 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     public function testBranchRewriteNoTables(): void
     {
         $this->initBuckets();
-        $clientWrapper = $this->getClientWrapper($this->branchId);
+        $temp = new Temp();
+        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+        $clientWrapper = $this->getClientWrapper(null);
+        // Create table
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table',
+            $csv
+        );
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table-2',
+            $csv
+        );
+
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -321,6 +368,19 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     public function testBranchRewriteTableStates(): void
     {
         $this->initBuckets();
+        $temp = new Temp();
+        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+        $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+        $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+        $clientWrapper = $this->getClientWrapper(null);
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->outBucketId,
+            'my-table-2',
+            $csv
+        );
+
         $clientWrapper = $this->getClientWrapper($this->branchId);
         $temp = new Temp(uniqid('input-mapping'));
         file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
@@ -346,7 +406,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             $clientWrapper,
             $testLogger
         );
-        // nothing is rewriteen regardless of whether the table exist or not
+        // nothing is rewritten regardless of whether the bramch table exist or not
         self::assertEquals(
             [
                 [
@@ -365,8 +425,10 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     public function testHasBranchRewriteTableExists(): void
     {
         $storageClientMock = self::createMock(BranchAwareClient::class);
-        $storageClientMock->expects(self::once())   ->method('tableExists')
+        $storageClientMock->expects(self::once())->method('tableExists')
             ->with('out.c-main.my-table')->willReturn(true);
+        $storageClientMock->expects(self::once())->method('getTable')
+            ->with('out.c-main.my-table')->willReturn(['name' => 'my-name']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
         $clientWrapper->method('hasBranch')->willReturn(true);
@@ -396,10 +458,11 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => '123456',
+                'sourceBranchId' => 123456,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
+        self::assertSame(['name' => 'my-name'], $destinations->getTables()[0]->getTableInfo());
     }
 
     /** @dataProvider provideBranchRewriteOptions */
@@ -408,13 +471,23 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         int $checkCount,
         bool $branchTableExists,
         bool $hasBranch,
+        string $expectedName,
+        int $expectedBranchCalls,
+        int $expectedBasicCalls,
     ): void {
         $sourceTable = 'out.c-main.my-table';
         $storageClientMock = self::createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')
             ->with($sourceTable)->willReturn($branchTableExists);
+        $storageClientMock->expects(self::exactly($expectedBranchCalls))->method('getTable')
+            ->with($sourceTable)->willReturn(['name' => 'my-branch-name']);
+
+        $basicStorageClientMock = self::createMock(Client::class);
+        $basicStorageClientMock->expects(self::exactly($expectedBasicCalls))->method('getTable')
+            ->with($sourceTable)->willReturn(['name' => 'my-name']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
+        $clientWrapper->method('getBasicClient')->willReturn($basicStorageClientMock);
         $clientWrapper->method('hasBranch')->willReturn($hasBranch);
         $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
         $clientWrapper->method('getBranchId')->willReturn('123456');
@@ -441,9 +514,13 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $sourceBranchId,
+                'sourceBranchId' => (int) $sourceBranchId,
             ],
             $destinations->getTables()[0]->getDefinition()
+        );
+        self::assertSame(
+            ['name' => $expectedName],
+            $destinations->getTables()[0]->getTableInfo()
         );
     }
 
@@ -454,24 +531,36 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'checkCount' => 1,
             'branchTableExists' => true,
             'hasBranch' => true,
+            'expectedName' => 'my-branch-name',
+            'expectedBranchCalls' => 1,
+            'expectedBasicCalls' => 0,
         ];
         yield 'does not exist with branch' => [
             'sourceBranchId' => '654321',
             'checkCount' => 1,
             'branchTableExists' => false,
             'hasBranch' => true,
+            'expectedName' => 'my-name',
+            'expectedBranchCalls' => 0,
+            'expectedBasicCalls' => 1,
         ];
         yield 'exists without branch' => [
             'sourceBranchId' => '654321',
             'checkCount' => 0,
             'branchTableExists' => true,
             'hasBranch' => false,
+            'expectedName' => 'my-name',
+            'expectedBranchCalls' => 0,
+            'expectedBasicCalls' => 1,
         ];
         yield 'does not exist without branch' => [
             'sourceBranchId' => '654321',
             'checkCount' => 0,
             'branchTableExists' => false,
             'hasBranch' => false,
+            'expectedName' => 'my-name',
+            'expectedBranchCalls' => 0,
+            'expectedBasicCalls' => 1,
         ];
     }
 }

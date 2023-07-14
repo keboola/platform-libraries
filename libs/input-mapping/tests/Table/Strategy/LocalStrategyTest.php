@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
@@ -40,12 +41,15 @@ class LocalStrategyTest extends AbstractTestCase
             new InputTableStateList([]),
             'boo'
         );
-        $tableOptions = new InputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
                 'columns' => ['Id', 'Name'],
-            ]
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(
@@ -55,6 +59,7 @@ class LocalStrategyTest extends AbstractTestCase
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
+                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()['branchId'],
                 ],
             ],
             $result
@@ -72,7 +77,7 @@ class LocalStrategyTest extends AbstractTestCase
             new InputTableStateList([]),
             'boo'
         );
-        $tableOptions = new InputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'some-table.csv',
@@ -88,7 +93,10 @@ class LocalStrategyTest extends AbstractTestCase
                         'type' => 'NUMERIC',
                     ],
                 ],
-            ]
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
         self::assertEquals(
@@ -98,6 +106,7 @@ class LocalStrategyTest extends AbstractTestCase
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
+                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()['branchId'],
                 ],
             ],
             $result

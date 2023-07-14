@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Tests\Table\Strategy;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\BigQuery;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
@@ -25,12 +26,15 @@ class BigQueryTest extends AbstractTestCase
             new InputTableStateList([]),
             'test'
         );
-        $result = $strategy->downloadTable(new InputTableOptions(
+        $result = $strategy->downloadTable(new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'my-table',
                 'columns' => ['foo', 'bar'],
-            ]
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         ));
         self::assertEquals(
             [

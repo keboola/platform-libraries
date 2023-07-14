@@ -26,7 +26,7 @@ class Synapse extends AbstractStrategy
         $workspaceTables = [];
 
         foreach ($exports as $export) {
-            /** @var InputTableOptions $table */
+            /** @var RewrittenInputTableOptions $table */
             [$table, $exportOptions] = $export['table'];
             $copyInput = array_merge(
                 [

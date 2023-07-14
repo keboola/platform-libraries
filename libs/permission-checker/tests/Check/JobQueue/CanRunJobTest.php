@@ -33,6 +33,26 @@ class CanRunJobTest extends TestCase
             ),
         ];
 
+        yield 'token with canRunJobs permission on protected default branch' => [
+            'branchType' => BranchType::DEFAULT,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                features: ['queuev2', 'protected-default-branch'],
+                role: 'none',
+                permissions: ['canRunJobs'],
+            ),
+        ];
+
+        yield 'token with canRunJobs permission on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                features: ['queuev2', 'protected-default-branch'],
+                role: 'none',
+                permissions: ['canRunJobs'],
+            ),
+        ];
+
         yield 'developer role on protected dev branch' => [
             'branchType' => BranchType::DEV,
             'componentId' => 'keboola.component',
@@ -140,7 +160,9 @@ class CanRunJobTest extends TestCase
             'token' => new StorageApiToken(
                 features: ['queuev2', 'protected-default-branch'],
             ),
-            'error' => new PermissionDeniedException('Role "none" is not allowed to run jobs on default branch'),
+            'error' => new PermissionDeniedException(
+                'Role "none" without "canRunJobs" permission is not allowed to run jobs on default branch'
+            ),
         ];
 
         yield 'regular token on dev branch of protected default branch project' => [
@@ -149,7 +171,19 @@ class CanRunJobTest extends TestCase
             'token' => new StorageApiToken(
                 features: ['queuev2', 'protected-default-branch'],
             ),
-            'error' => new PermissionDeniedException('Role "none" is not allowed to run jobs on dev branch'),
+            'error' => new PermissionDeniedException(
+                'Role "none" without "canRunJobs" permission is not allowed to run jobs on dev branch'
+            ),
+        ];
+
+        yield 'guest on default branch of protected default branch project' => [
+            'branchType' => BranchType::DEFAULT,
+            'componentId' => 'keboola.component',
+            'token' => new StorageApiToken(
+                features: ['queuev2', 'protected-default-branch'],
+                role: 'guest',
+            ),
+            'error' => new PermissionDeniedException('Role "guest" is not allowed to run jobs on default branch'),
         ];
     }
 

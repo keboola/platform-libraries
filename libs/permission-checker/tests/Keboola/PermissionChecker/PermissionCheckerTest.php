@@ -25,6 +25,11 @@ class PermissionCheckerTest extends TestCase
             {
                 return null;
             }
+
+            public function getPermissions(): array
+            {
+                return [];
+            }
         };
 
         $expectedInternalToken = StorageApiToken::fromTokenInterface($token);

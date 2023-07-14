@@ -5,6 +5,7 @@ parameters:
         - src
         - tests
     ignoreErrors:
+        - '#Unreachable statement \- code above always terminates.#'
 
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

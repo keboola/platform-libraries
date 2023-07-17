@@ -10,6 +10,7 @@ class StorageApiToken
         private readonly array $features = [],
         private readonly ?string $role = null,
         private readonly ?array $allowedComponents = null,
+        private readonly array $permissions = [],
     ) {
     }
 
@@ -19,6 +20,7 @@ class StorageApiToken
             $token->getFeatures(),
             $token->getRole(),
             $token->getAllowedComponents(),
+            $token->getPermissions(),
         );
     }
 
@@ -48,5 +50,28 @@ class StorageApiToken
     public function hasAllowedComponent(string $componentId): bool
     {
         return $this->allowedComponents === null || in_array($componentId, $this->allowedComponents, true);
+    }
+
+    /**
+     * @return TokenPermission[]
+     */
+    public function getPermissions(): array
+    {
+        return array_filter(
+            array_map(
+                function (string $value) {
+                    return TokenPermission::tryFrom($value);
+                },
+                $this->permissions
+            ),
+            function (?TokenPermission $permission) {
+                return $permission !== null;
+            }
+        );
+    }
+
+    public function hasPermission(TokenPermission $permission): bool
+    {
+        return in_array($permission, $this->getPermissions());
     }
 }

@@ -14,4 +14,7 @@ interface StorageApiTokenInterface
 
     /** @return non-empty-string[]|null */
     public function getAllowedComponents(): ?array;
+
+    /** @return non-empty-string[] */
+    public function getPermissions(): array;
 }

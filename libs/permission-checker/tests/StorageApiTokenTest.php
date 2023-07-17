@@ -8,6 +8,7 @@ use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 use Keboola\PermissionChecker\StorageApiTokenInterface;
+use Keboola\PermissionChecker\TokenPermission;
 use PHPUnit\Framework\TestCase;
 use ValueError;
 
@@ -90,6 +91,11 @@ class StorageApiTokenTest extends TestCase
             {
                 return ['component-1', 'component-2'];
             }
+
+            public function getPermissions(): array
+            {
+                return ['canRunJobs', 'canManageBuckets'];
+            }
         });
 
         self::assertTrue($token->hasFeature(Feature::QUEUE_V2));
@@ -97,5 +103,8 @@ class StorageApiTokenTest extends TestCase
         self::assertTrue($token->isRole(Role::READ_ONLY));
         self::assertTrue($token->hasAllowedComponent('component-1'));
         self::assertFalse($token->hasAllowedComponent('component-3'));
+        self::assertTrue($token->hasPermission(TokenPermission::CAN_RUN_JOBS));
+        self::assertFalse($token->hasPermission(TokenPermission::CAN_MANAGE_TOKENS));
+        self::assertSame([TokenPermission::CAN_RUN_JOBS], $token->getPermissions());
     }
 }

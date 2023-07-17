@@ -96,4 +96,18 @@ class StorageApiToken implements TokenInterface, StorageApiTokenInterface
     {
         return $this->tokenInfo['componentAccess'] ?? null;
     }
+
+    public function getPermissions(): array
+    {
+        return array_filter(
+            array_keys(
+                array_filter($this->tokenInfo, function ($value) {
+                    return $value === true;
+                })
+            ),
+            function (string $value) {
+                return preg_match('/^can[a-z]+$/ui', $value);
+            }
+        );
+    }
 }

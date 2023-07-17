@@ -15,6 +15,9 @@ class StorageApiTokenTest extends TestCase
             [
                 'id' => '123',
                 'description' => 'token description',
+                'canManageBuckets' => true,
+                'canManageTokens' => false,
+                'canCreateJobs' => true,
                 'owner' => [
                     'id' => '456',
                     'name' => 'my project',
@@ -50,11 +53,15 @@ class StorageApiTokenTest extends TestCase
         self::assertSame('admin', $token->getRole());
         self::assertSame(['admin'], $token->getRoles());
         self::assertSame(['keboola.component'], $token->getAllowedComponents());
+        self::assertSame(['canManageBuckets', 'canCreateJobs'], $token->getPermissions());
 
         self::assertSame(
             [
                 'id' => '123',
                 'description' => 'token description',
+                'canManageBuckets' => true,
+                'canManageTokens' => false,
+                'canCreateJobs' => true,
                 'owner' => [
                     'id' => '456',
                     'name' => 'my project',

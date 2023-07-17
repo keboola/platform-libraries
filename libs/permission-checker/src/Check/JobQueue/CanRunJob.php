@@ -10,6 +10,7 @@ use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
+use Keboola\PermissionChecker\TokenPermission;
 
 class CanRunJob implements PermissionCheckInterface
 {
@@ -30,24 +31,34 @@ class CanRunJob implements PermissionCheckInterface
         }
 
         if ($token->hasFeature(Feature::PROTECTED_DEFAULT_BRANCH)) {
-            $this->checkProtectedDefaultBranch($token->getRole());
+            $this->checkProtectedDefaultBranch($token);
         } elseif ($token->isRole(Role::READ_ONLY)) {
             throw PermissionDeniedException::roleDenied($token->getRole(), 'run jobs');
         }
     }
 
-    private function checkProtectedDefaultBranch(Role $role): void
+    private function checkProtectedDefaultBranch(StorageApiToken $token): void
     {
-        $isAllowed = match ($role) {
+        $isAllowed = match ($token->getRole()) {
             Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,
             Role::DEVELOPER, Role::REVIEWER => $this->branchType !== BranchType::DEFAULT,
+            Role::NONE => $token->hasPermission(TokenPermission::CAN_RUN_JOBS),
             default => false,
         };
 
         if (!$isAllowed) {
+            if ($token->getRole() === Role::NONE) {
+                throw new PermissionDeniedException(sprintf(
+                    'Role "%s" without "%s" permission is not allowed to run jobs on %s branch',
+                    $token->getRole()->value,
+                    TokenPermission::CAN_RUN_JOBS->value,
+                    $this->branchType->value,
+                ));
+            }
+
             throw new PermissionDeniedException(sprintf(
                 'Role "%s" is not allowed to run jobs on %s branch',
-                $role->value,
+                $token->getRole()->value,
                 $this->branchType->value,
             ));
         }

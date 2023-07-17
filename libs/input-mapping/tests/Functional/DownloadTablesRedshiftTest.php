@@ -36,7 +36,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
             new ReaderOptions(true)
         );
 
-        self::assertEquals(
+        self::assertCSVEquals(
             // phpcs:ignore Generic.Files.LineLength
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
             file_get_contents($this->temp->getTmpFolder(). '/download/test-redshift.csv')

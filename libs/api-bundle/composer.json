@@ -4,10 +4,11 @@
     "type": "symfony-bundle",
     "require": {
         "php": ">=8.1",
-        "keboola/permission-checker": "^1.0",
+        "keboola/permission-checker": "^2.0",
         "monolog/monolog": "^2.0",
         "symfony/dependency-injection": "^6.0",
-        "symfony/monolog-bundle": "^3.8"
+        "symfony/monolog-bundle": "^3.8",
+        "symfony/security-bundle": "^6.1"
     },
     "require-dev": {
         "keboola/api-error-control": "^4.1",
@@ -20,7 +21,6 @@
         "phpunit/phpunit": "^9.5",
         "sempro/phpunit-pretty-print": "^1.4",
         "symfony/framework-bundle": "^6.1",
-        "symfony/security-bundle": "^6.1",
         "symfony/yaml": "^6.1"
     },
     "license": "MIT",

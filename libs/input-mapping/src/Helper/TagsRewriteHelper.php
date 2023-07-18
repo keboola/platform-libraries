@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Helper;
 
+use Keboola\InputMapping\File\Options\InputFileOptions;
+use Keboola\InputMapping\File\Options\RewrittenInputFileOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -14,13 +16,19 @@ class TagsRewriteHelper
     public const MATCH_TYPE_INCLUDE = 'include';
 
     public static function rewriteFileTags(
-        array $fileConfiguration,
+        InputFileOptions $fileConfigurationOriginal,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
-    ): array {
+    ): RewrittenInputFileOptions {
         if (!$clientWrapper->hasBranch()) {
-            return $fileConfiguration;
+            return new RewrittenInputFileOptions(
+                $fileConfigurationOriginal->getDefinition(),
+                $fileConfigurationOriginal->isDevBranch(),
+                $fileConfigurationOriginal->getRunId(),
+                $fileConfigurationOriginal->getDefinition(),
+            );
         }
+        $fileConfiguration = $fileConfigurationOriginal->getDefinition();
 
         $prefix = (string) $clientWrapper->getBranchId();
 
@@ -35,9 +43,15 @@ class TagsRewriteHelper
                         implode(', ', $oldTagsList)
                     )
                 );
-                return array_replace($fileConfiguration, [
+                $fileConfiguration = array_replace($fileConfiguration, [
                     'tags' => $newTagsList,
                 ]);
+                return new RewrittenInputFileOptions(
+                    $fileConfiguration,
+                    $fileConfigurationOriginal->isDevBranch(),
+                    $fileConfigurationOriginal->getRunId(),
+                    $fileConfigurationOriginal->getDefinition(),
+                );
             }
         }
 
@@ -81,7 +95,12 @@ class TagsRewriteHelper
             }
             $fileConfiguration['source']['tags'] = array_merge($includeTags, $excludeTags);
         }
-        return $fileConfiguration;
+        return new RewrittenInputFileOptions(
+            $fileConfiguration,
+            $fileConfigurationOriginal->isDevBranch(),
+            $fileConfigurationOriginal->getRunId(),
+            $fileConfigurationOriginal->getDefinition(),
+        );
     }
 
     private static function overwriteTags(string $prefix, array $tags): array

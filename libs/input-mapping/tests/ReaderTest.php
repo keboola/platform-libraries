@@ -147,7 +147,8 @@ class ReaderTest extends TestCase
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
             self::assertStringContainsString(
-                "Invalid file mapping, 'tags', 'query' and 'source.tags' are all empty.",
+                'Invalid configuration for path "file": At least one of ' .
+                '"tags", "source.tags" or "query" parameters must be defined.',
                 $e->getMessage()
             );
         }
@@ -183,7 +184,7 @@ class ReaderTest extends TestCase
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException $e) {
             self::assertStringContainsString(
-                'Invalid file mapping, both \'tags\' and \'source.tags\' cannot be set.',
+                'Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.',
                 $e->getMessage()
             );
         }

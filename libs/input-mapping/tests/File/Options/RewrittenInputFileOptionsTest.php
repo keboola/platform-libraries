@@ -45,8 +45,7 @@ class RewrittenInputFileOptionsTest extends TestCase
         InputFileStateList $fileStates,
         ListFilesOptions $expectedOptions,
         ?array $originalFileOptions,
-    ): void
-    {
+    ): void {
         if ($originalFileOptions === null) {
             $originalFileOptions = $rewrittenFileOptions;
         }

@@ -6,6 +6,6 @@ namespace Keboola\PermissionChecker;
 
 enum TokenPermission: string
 {
-    case CAN_RUN_JOBS = 'canRunJobs';
+    case CAN_CREATE_JOBS = 'canCreateJobs';
     case CAN_MANAGE_TOKENS = 'canManageTokens';
 }

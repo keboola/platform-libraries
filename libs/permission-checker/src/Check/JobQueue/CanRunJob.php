@@ -42,7 +42,7 @@ class CanRunJob implements PermissionCheckInterface
         $isAllowed = match ($token->getRole()) {
             Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,
             Role::DEVELOPER, Role::REVIEWER => $this->branchType !== BranchType::DEFAULT,
-            Role::NONE => $token->hasPermission(TokenPermission::CAN_RUN_JOBS),
+            Role::NONE => $token->hasPermission(TokenPermission::CAN_CREATE_JOBS),
             default => false,
         };
 
@@ -51,7 +51,7 @@ class CanRunJob implements PermissionCheckInterface
                 throw new PermissionDeniedException(sprintf(
                     'Role "%s" without "%s" permission is not allowed to run jobs on %s branch',
                     $token->getRole()->value,
-                    TokenPermission::CAN_RUN_JOBS->value,
+                    TokenPermission::CAN_CREATE_JOBS->value,
                     $this->branchType->value,
                 ));
             }

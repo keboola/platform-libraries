@@ -94,7 +94,7 @@ class StorageApiTokenTest extends TestCase
 
             public function getPermissions(): array
             {
-                return ['canRunJobs', 'canManageBuckets'];
+                return ['canCreateJobs', 'canManageBuckets'];
             }
         });
 
@@ -103,8 +103,8 @@ class StorageApiTokenTest extends TestCase
         self::assertTrue($token->isRole(Role::READ_ONLY));
         self::assertTrue($token->hasAllowedComponent('component-1'));
         self::assertFalse($token->hasAllowedComponent('component-3'));
-        self::assertTrue($token->hasPermission(TokenPermission::CAN_RUN_JOBS));
+        self::assertTrue($token->hasPermission(TokenPermission::CAN_CREATE_JOBS));
         self::assertFalse($token->hasPermission(TokenPermission::CAN_MANAGE_TOKENS));
-        self::assertSame([TokenPermission::CAN_RUN_JOBS], $token->getPermissions());
+        self::assertSame([TokenPermission::CAN_CREATE_JOBS], $token->getPermissions());
     }
 }

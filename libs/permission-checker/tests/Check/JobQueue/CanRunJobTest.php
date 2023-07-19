@@ -33,23 +33,23 @@ class CanRunJobTest extends TestCase
             ),
         ];
 
-        yield 'token with canRunJobs permission on protected default branch' => [
+        yield 'token with canCreateJobs permission on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
             'componentId' => 'keboola.component',
             'token' => new StorageApiToken(
                 features: ['queuev2', 'protected-default-branch'],
                 role: 'none',
-                permissions: ['canRunJobs'],
+                permissions: ['canCreateJobs'],
             ),
         ];
 
-        yield 'token with canRunJobs permission on protected dev branch' => [
+        yield 'token with canCreateJobs permission on protected dev branch' => [
             'branchType' => BranchType::DEV,
             'componentId' => 'keboola.component',
             'token' => new StorageApiToken(
                 features: ['queuev2', 'protected-default-branch'],
                 role: 'none',
-                permissions: ['canRunJobs'],
+                permissions: ['canCreateJobs'],
             ),
         ];
 
@@ -161,7 +161,7 @@ class CanRunJobTest extends TestCase
                 features: ['queuev2', 'protected-default-branch'],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" without "canRunJobs" permission is not allowed to run jobs on default branch'
+                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on default branch'
             ),
         ];
 
@@ -172,7 +172,7 @@ class CanRunJobTest extends TestCase
                 features: ['queuev2', 'protected-default-branch'],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" without "canRunJobs" permission is not allowed to run jobs on dev branch'
+                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on dev branch'
             ),
         ];
 

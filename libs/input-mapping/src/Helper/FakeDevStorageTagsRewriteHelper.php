@@ -10,12 +10,12 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class TagsRewriteHelper
+class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
 {
     public const MATCH_TYPE_EXCLUDE = 'exclude';
     public const MATCH_TYPE_INCLUDE = 'include';
 
-    public static function rewriteFileTags(
+    public function rewriteFileTags(
         InputFileOptions $fileConfigurationOriginal,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
@@ -26,6 +26,7 @@ class TagsRewriteHelper
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
+                (int) $clientWrapper->getDefaultBranch()['branchId'],
             );
         }
         $fileConfiguration = $fileConfigurationOriginal->getDefinition();
@@ -51,8 +52,11 @@ class TagsRewriteHelper
                     $fileConfigurationOriginal->isDevBranch(),
                     $fileConfigurationOriginal->getRunId(),
                     $fileConfigurationOriginal->getDefinition(),
+                    (int) $clientWrapper->getDefaultBranch()['branchId'],
                 );
             }
+            /* else jump to the end of the method, as nothing is going
+                 to change (tags & source tags cannot be set together). */
         }
 
         if (!empty($fileConfiguration['source']['tags'])) {
@@ -92,14 +96,35 @@ class TagsRewriteHelper
                     )
                 );
                 $includeTags = $newIncludeTags;
+                /* at this point we set both new includeTags and new excludeTags - this is means that actual input
+                    tags are rewritten and also the processed ("output") tags are rewritten  */
+                $fileConfiguration['source']['tags'] = array_merge($includeTags, $excludeTags);
+                return new RewrittenInputFileOptions(
+                    $fileConfiguration,
+                    $fileConfigurationOriginal->isDevBranch(),
+                    $fileConfigurationOriginal->getRunId(),
+                    $fileConfigurationOriginal->getDefinition(),
+                    (int) $clientWrapper->getDefaultBranch()['branchId'],
+                );
             }
+            /* at this point we set new excludeTags but not new includeTags, this means that only the
+                processed ("output") tags are rewritten, but the actual inputs remain the same */
             $fileConfiguration['source']['tags'] = array_merge($includeTags, $excludeTags);
+            return new RewrittenInputFileOptions(
+                $fileConfiguration,
+                $fileConfigurationOriginal->isDevBranch(),
+                $fileConfigurationOriginal->getRunId(),
+                $fileConfigurationOriginal->getDefinition(),
+                (int) $clientWrapper->getDefaultBranch()['branchId'],
+            );
         }
+        /* at this point, nothing has changed - neither the actual input tags nor the processed ("output") tags */
         return new RewrittenInputFileOptions(
             $fileConfiguration,
             $fileConfigurationOriginal->isDevBranch(),
             $fileConfigurationOriginal->getRunId(),
             $fileConfigurationOriginal->getDefinition(),
+            (int) $clientWrapper->getDefaultBranch()['branchId'],
         );
     }
 

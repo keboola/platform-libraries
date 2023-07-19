@@ -14,11 +14,23 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 class RewrittenInputFileOptions extends InputFileOptions
 {
     private array $originalDefinition;
+    private int $sourceBranchId;
 
-    public function __construct(array $definition, bool $isDevBranch, string $runId, array $originalDefinition)
-    {
+    public function __construct(
+        array $definition,
+        bool $isDevBranch,
+        string $runId,
+        array $originalDefinition,
+        int $sourceBranchId,
+    ) {
         parent::__construct($definition, $isDevBranch, $runId);
         $this->originalDefinition = $originalDefinition;
+        $this->sourceBranchId = $sourceBranchId;
+    }
+
+    public function getSourceBranchId(): int
+    {
+        return $this->sourceBranchId;
     }
 
     public function getFileConfigurationIdentifier(): array

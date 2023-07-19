@@ -13,8 +13,8 @@ class RewrittenInputFileOptionsListTest extends TestCase
     public function testGetFiles(): void
     {
         $definitions = new RewrittenInputFileOptionsList([
-            new RewrittenInputFileOptions(['tags' => ['foo']], false, '1234', ['tags' => ['foo']]),
-            new RewrittenInputFileOptions(['tags' => ['bar']], false, '1234', ['tags' => ['baz']]),
+            new RewrittenInputFileOptions(['tags' => ['foo']], false, '1234', ['tags' => ['foo']], 123),
+            new RewrittenInputFileOptions(['tags' => ['bar']], false, '1234', ['tags' => ['baz']], 345),
         ]);
         $files = $definitions->getFiles();
         self::assertCount(2, $files);
@@ -26,5 +26,7 @@ class RewrittenInputFileOptionsListTest extends TestCase
         self::assertFalse($files[1]->isDevBranch());
         self::assertSame([['name' => 'foo']], $files[0]->getFileConfigurationIdentifier());
         self::assertSame([['name' => 'baz']], $files[1]->getFileConfigurationIdentifier());
+        self::assertSame(123, $files[0]->getSourceBranchId());
+        self::assertSame(345, $files[1]->getSourceBranchId());
     }
 }

@@ -10,6 +10,7 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\AbstractStrategy as AbstractFileStrategy;
 use Keboola\InputMapping\State\InputFileStateList;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Workspaces;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
@@ -50,7 +51,7 @@ class ABSWorkspace extends AbstractFileStrategy
         return $this->blobClient;
     }
 
-    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite): void
+    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite, Client $client): void
     {
         $this->inputs[] = [
             'dataFileId' => $fileInfo['id'],

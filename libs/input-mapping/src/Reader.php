@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Keboola\InputMapping;
 
 use Keboola\InputMapping\File\Options\InputFileOptions;
+use Keboola\InputMapping\File\Options\RewrittenInputFileOptions;
 use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\TableRewriteHelperFactory;
-use Keboola\InputMapping\Helper\TagsRewriteHelper;
+use Keboola\InputMapping\Helper\TagsRewriteHelperFactory;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
@@ -127,21 +128,19 @@ class Reader
         array $fileConfiguration,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
-        InputFileStateList $fileStateList
-    ): array {
+    ): RewrittenInputFileOptions {
         $fileOptions = new InputFileOptions(
             $fileConfiguration,
             $clientWrapper->hasBranch(),
             (string) $clientWrapper->getTableAndFileStorageClient()->getRunId()
         );
-        $fileOptionsRewritten = TagsRewriteHelper::rewriteFileTags(
+        $fileOptionsRewritten = TagsRewriteHelperFactory::getTagsRewriteHelper(
+            $clientWrapper->getClientOptionsReadOnly()
+        )->rewriteFileTags(
             $fileOptions,
             $clientWrapper,
             $logger
         );
-        $options = $fileOptionsRewritten->getStorageApiFileListOptions($fileStateList);
-        $storageClient = $clientWrapper->getTableAndFileStorageClient();
-
-        return $storageClient->listFiles($options);
+        return $fileOptionsRewritten;
     }
 }

@@ -32,7 +32,7 @@ class BuildQueryFromConfigurationHelper
             ' AND ',
             array_map(function (array $tag) {
                 $queryPart = sprintf('tags:"%s"', $tag['name']);
-                if ($tag['match'] === TagsRewriteHelper::MATCH_TYPE_EXCLUDE) {
+                if ($tag['match'] === FakeDevStorageTagsRewriteHelper::MATCH_TYPE_EXCLUDE) {
                     $queryPart = 'NOT ' . $queryPart;
                 }
                 return $queryPart;

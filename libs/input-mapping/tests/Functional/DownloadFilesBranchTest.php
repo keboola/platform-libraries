@@ -130,7 +130,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         }
 
         try {
-            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger(), new InputFileStateList([]));
+            Reader::getFiles($fileConfiguration, $clientWrapper, new NullLogger());
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
             self::assertSame(
@@ -140,7 +140,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         }
     }
 
-    public function testReadFilesForBranch(): void
+    public function testReadFilesForBranchFakeDevStorage(): void
     {
         $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
         foreach ($branches->listBranches() as $branch) {
@@ -193,6 +193,96 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
+        ));
+    }
+
+    public function testReadFilesForBranchRealDevStorage(): void
+    {
+        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === 'my-branch') {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+
+        var_dump(getenv('STORAGE_API_TOKEN_MASTER'));
+        $branchId = (string) $branches->createBranch('my-branch')['id'];
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                url: (string) getenv('STORAGE_API_URL'),
+                token: (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                branchId: $branchId,
+                useBranchStorage: true,
+            ),
+        );
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload', 'test');
+
+        $file1Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1'])
+        );
+        $file2Id = $clientWrapper->getBasicClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'])
+        );
+        $file3Id = $clientWrapper->getBranchClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'])
+        );
+        sleep(5);
+
+        $testLogger = new TestLogger();
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+
+        $configuration = [
+            [
+                'tags' => ['tag-1'],
+                'overwrite' => true,
+            ],
+            [
+                'tags' => ['tag-2'],
+                'overwrite' => true,
+            ],
+        ];
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            AbstractStrategyFactory::LOCAL,
+            new InputFileStateList([])
+        );
+        self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
+        self::assertFileDoesNotExist($root . '/download/' . $file2Id . '_upload');
+        self::assertEquals('test', file_get_contents($root . '/download/' . $file3Id . '_upload'));
+
+        $adapter = new Adapter();
+        $manifest1 = $adapter->readFromFile($root . '/download/' . $file1Id . '_upload.manifest');
+
+        self::assertArrayHasKey('id', $manifest1);
+        self::assertArrayHasKey('tags', $manifest1);
+        self::assertEquals($file1Id, $manifest1['id']);
+        self::assertEquals([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1'], $manifest1['tags']);
+
+        $manifest3 = $adapter->readFromFile($root . '/download/' . $file3Id . '_upload.manifest');
+
+        self::assertArrayHasKey('id', $manifest3);
+        self::assertArrayHasKey('tags', $manifest3);
+        self::assertEquals($file3Id, $manifest3['id']);
+        self::assertEquals([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'], $manifest3['tags']);
+
+        self::assertTrue($testLogger->hasInfoThatContains(
+            sprintf(
+                'Using files from default branch "%s" for tags "tag-1".',
+                $clientWrapper->getDefaultBranch()['branchId'],
+            )
+        ));
+
+        self::assertTrue($testLogger->hasInfoThatContains(
+            sprintf(
+                'Using files from development branch "%s" for tags "tag-2".',
+                $clientWrapper->getClientOptionsReadOnly()->getBranchId(),
+            )
         ));
     }
 

@@ -18,6 +18,9 @@ use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @runTestsInSeparateProcesses because of env variables
+ */
 class ClientCredentialsAuthTest extends TestCase
 {
     private readonly LoggerInterface $logger;
@@ -29,12 +32,6 @@ class ClientCredentialsAuthTest extends TestCase
 
         $this->logsHandler = new TestHandler();
         $this->logger = new Logger('tests', [$this->logsHandler]);
-
-        putenv('AZURE_TENANT_ID');
-        putenv('AZURE_CLIENT_ID');
-        putenv('AZURE_CLIENT_SECRET');
-        putenv('AZURE_AD_RESOURCE');
-        putenv('AZURE_ENVIRONMENT');
     }
 
     public function testOptionalEnvsFallback(): void

@@ -16,6 +16,9 @@ use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @runTestsInSeparateProcesses because of env variables
+ */
 class SystemAuthenticatorResolverTest extends TestCase
 {
     private readonly LoggerInterface $logger;
@@ -27,10 +30,6 @@ class SystemAuthenticatorResolverTest extends TestCase
 
         $this->logsHandler = new TestHandler();
         $this->logger = new Logger('tests', [$this->logsHandler]);
-
-        putenv('AZURE_TENANT_ID');
-        putenv('AZURE_CLIENT_ID');
-        putenv('AZURE_CLIENT_SECRET');
     }
 
     public function testClientCredentialsAuthenticatorIsUsedWhenEnvIsSet(): void

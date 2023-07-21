@@ -58,7 +58,17 @@ abstract class AbstractStrategy implements StrategyInterface
         $fileOptions->setFederationToken(true);
         $outputStateList = [];
         foreach ($fileConfigurations as $fileConfiguration) {
-            $files = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger, $this->fileStateList);
+            $fileOptionsRewritten = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
+            $options = $fileOptionsRewritten->getStorageApiFileListOptions($this->fileStateList);
+            if ($fileOptionsRewritten->getSourceBranchId() ===
+                (int) $this->clientWrapper->getDefaultBranch()['branchId']
+            ) {
+                $storageClient = $this->clientWrapper->getBasicClient();
+            } else {
+                $storageClient = $this->clientWrapper->getBranchClient();
+            }
+            $files = $storageClient->listFiles($options);
+
             $biggestFileId = 0;
             try {
                 $currentState = $this->fileStateList->getFile(
@@ -72,7 +82,7 @@ abstract class AbstractStrategy implements StrategyInterface
                 $outputStateConfiguration = [];
             }
             foreach ($files as $file) {
-                $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile($file['id'], $fileOptions);
+                $fileInfo = $storageClient->getFile($file['id'], $fileOptions);
                 $fileDestinationPath = $this->getFileDestinationPath($destination, $fileInfo['id'], $fileInfo['name']);
                 $overwrite = $fileConfiguration['overwrite'];
 
@@ -84,7 +94,7 @@ abstract class AbstractStrategy implements StrategyInterface
                     $biggestFileId = (int) $fileInfo['id'];
                 }
                 try {
-                    $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite);
+                    $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite, $storageClient);
                 } catch (Throwable $e) {
                     throw new InputOperationException(
                         sprintf(

@@ -7,11 +7,12 @@ namespace Keboola\InputMapping\File\Strategy;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\StrategyInterface;
+use Keboola\StorageApi\Client;
 use Symfony\Component\Filesystem\Filesystem;
 
 class Local extends AbstractStrategy implements StrategyInterface
 {
-    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite): void
+    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite, Client $client): void
     {
         if ($overwrite === false) {
             throw new InvalidInputException('Overwrite cannot be turned off for local mapping.');
@@ -19,13 +20,13 @@ class Local extends AbstractStrategy implements StrategyInterface
         $fs = new Filesystem();
         if ($fileInfo['isSliced']) {
             $fs->mkdir($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath);
-            $this->clientWrapper->getTableAndFileStorageClient()->downloadSlicedFile(
+            $client->downloadSlicedFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         } else {
             $fs->mkdir(dirname($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath));
-            $this->clientWrapper->getTableAndFileStorageClient()->downloadFile(
+            $client->downloadFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );

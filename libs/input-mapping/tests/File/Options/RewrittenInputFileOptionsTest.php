@@ -19,6 +19,7 @@ class RewrittenInputFileOptionsTest extends TestCase
             false,
             '1234',
             ['tags' => ['bar']],
+            123,
         );
 
         self::assertSame(['foo'], $options->getTags());
@@ -35,6 +36,7 @@ class RewrittenInputFileOptionsTest extends TestCase
             [['name' => 'bar']],
             $options->getFileConfigurationIdentifier()
         );
+        self::assertSame(123, $options->getSourceBranchId());
     }
 
     /** @dataProvider provideFileListOptionsValues */
@@ -54,6 +56,7 @@ class RewrittenInputFileOptionsTest extends TestCase
             $isDevBranch,
             $runId,
             $originalFileOptions,
+            123,
         );
         $options = $inputFileOptions->getStorageApiFileListOptions($fileStates);
         self::assertEquals($expectedOptions, $options);

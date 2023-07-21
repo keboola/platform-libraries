@@ -205,7 +205,6 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             }
         }
 
-        var_dump(getenv('STORAGE_API_TOKEN_MASTER'));
         $branchId = (string) $branches->createBranch('my-branch')['id'];
         $clientWrapper = new ClientWrapper(
             new ClientOptions(

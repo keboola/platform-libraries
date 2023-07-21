@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping;
 
-use Keboola\InputMapping\Exception\FileNotFoundException;
-use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Helper\BuildQueryFromConfigurationHelper;
+use Keboola\InputMapping\File\Options\InputFileOptions;
 use Keboola\InputMapping\Helper\InputBucketValidator;
 use Keboola\InputMapping\Helper\TableRewriteHelperFactory;
 use Keboola\InputMapping\Helper\TagsRewriteHelper;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Strategy\AbstractStrategy as TableAbstractStrategy;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
-use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -28,8 +24,6 @@ class Reader
     protected ClientWrapper $clientWrapper;
     private LoggerInterface $logger;
     private StrategyFactory $strategyFactory;
-
-    public const PROTECTED_DEFAULT_BRANCH_FEATURE = 'protected-default-branch';
 
     public function __construct(StrategyFactory $strategyFactory)
     {
@@ -135,66 +129,19 @@ class Reader
         LoggerInterface $logger,
         InputFileStateList $fileStateList
     ): array {
-        $fileConfigurationRewritten = TagsRewriteHelper::rewriteFileTags(
+        $fileOptions = new InputFileOptions(
             $fileConfiguration,
+            $clientWrapper->hasBranch(),
+            (string) $clientWrapper->getTableAndFileStorageClient()->getRunId()
+        );
+        $fileOptionsRewritten = TagsRewriteHelper::rewriteFileTags(
+            $fileOptions,
             $clientWrapper,
             $logger
         );
+        $options = $fileOptionsRewritten->getStorageApiFileListOptions($fileStateList);
         $storageClient = $clientWrapper->getTableAndFileStorageClient();
 
-        if (isset($fileConfigurationRewritten['query']) && $clientWrapper->hasBranch()) {
-            throw new InvalidInputException(
-                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
-            );
-        }
-        $options = new ListFilesOptions();
-        if (empty($fileConfigurationRewritten['tags']) && empty($fileConfigurationRewritten['query'])
-            && empty($fileConfigurationRewritten['source']['tags'])
-        ) {
-            throw new InvalidInputException("Invalid file mapping, 'tags', 'query' and 'source.tags' are all empty.");
-        }
-        if (!empty($fileConfigurationRewritten['tags']) && !empty($fileConfigurationRewritten['source']['tags'])) {
-            throw new InvalidInputException("Invalid file mapping, both 'tags' and 'source.tags' cannot be set.");
-        }
-        if (!empty($fileConfigurationRewritten['query']) && isset($fileConfigurationRewritten['changed_since'])) {
-            throw new InvalidInputException('Invalid file mapping, changed_since is not supported for query mappings');
-        }
-        if (!empty($fileConfigurationRewritten['filter_by_run_id'])) {
-            $options->setRunId(Reader::getParentRunId((string) $storageClient->getRunId()));
-        }
-        if (isset($fileConfigurationRewritten['tags']) && count($fileConfigurationRewritten['tags'])) {
-            $options->setTags($fileConfigurationRewritten['tags']);
-        }
-        if (isset($fileConfigurationRewritten['query']) || isset($fileConfigurationRewritten['source']['tags'])) {
-            $options->setQuery(
-                BuildQueryFromConfigurationHelper::buildQuery($fileConfigurationRewritten)
-            );
-        } elseif (isset($fileConfigurationRewritten['changed_since'])
-            && $fileConfigurationRewritten['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
-            // need to set the query for the case where query nor source tags are present, but changed_since is
-            $options->setQuery(BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion(
-                $fileConfigurationRewritten['changed_since']
-            ));
-        }
-        if (empty($fileConfigurationRewritten['limit'])) {
-            $fileConfigurationRewritten['limit'] = 100;
-        }
-        $options->setLimit($fileConfigurationRewritten['limit']);
-
-        if (isset($fileConfigurationRewritten['changed_since'])
-            && $fileConfigurationRewritten['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE
-        ) {
-            try {
-                // apply the state configuration limits
-                $options->setSinceId(
-                    $fileStateList->getFile(
-                        $fileStateList->getFileConfigurationIdentifier($fileConfiguration)
-                    )->getLastImportId()
-                );
-            } catch (FileNotFoundException) {
-                // intentionally blank, no state configuration
-            }
-        }
         return $storageClient->listFiles($options);
     }
 }

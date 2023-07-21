@@ -22,7 +22,6 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testTablesRedshiftBackend(): void
     {
-        self::markTestSkipped('does not work');
         $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(

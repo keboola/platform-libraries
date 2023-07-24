@@ -539,6 +539,33 @@ class StorageApiFileWriterTest extends AbstractTestCase
         self::assertTrue(in_array('downloaded', $file['tags']));
     }
 
+    public function testTagProcessedFilesIsIgnoredWhenBranchStorageFlagIsUsed(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/test', 'test');
+
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload/test',
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
+        );
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload/test',
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
+        );
+        sleep(1);
+
+        $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
+            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true)
+        )));
+        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $writer->tagFiles($configuration);
+
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
+        self::assertSame(['StorageApiFileWriterTest'], $file['tags']);
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
+        self::assertSame(['StorageApiFileWriterTest'], $file['tags']);
+    }
+
     public function testTagBranchProcessedFiles(): void
     {
         $clientWrapper = new ClientWrapper(
@@ -576,6 +603,46 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $file2 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
         self::assertTrue(in_array($branchId . '-downloaded', $file2['tags']));
         self::assertTrue(in_array($branchId . '-' . self::FILE_TAG, $file2['tags']));
+    }
+
+    public function testTagBranchProcessedFilesIsIgnoredWhenBranchStorageFlagIsUsed(): void
+    {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                (string) getenv('STORAGE_API_URL'),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                null
+            )
+        );
+        $branchName = self::class;
+        $branchId = $this->createBranch($clientWrapper, $branchName);
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/test', 'test');
+
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload/test',
+            (new FileUploadOptions())->setTags([self::FILE_TAG])
+        );
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload/test',
+            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG])
+        );
+        sleep(1);
+        // set it to use a branch
+        $this->initClient($branchId);
+
+        $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
+            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true)
+        )));
+        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $writer->tagFiles($configuration);
+
+        // first file shouldn't be marked as processed because a branch file exists
+        $file1 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
+        self::assertSame(['StorageApiFileWriterTest'], $file1['tags']);
+        $file2 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
+        self::assertSame([$branchId . '-StorageApiFileWriterTest'], $file2['tags']);
     }
 
     public function testTableFiles(): void

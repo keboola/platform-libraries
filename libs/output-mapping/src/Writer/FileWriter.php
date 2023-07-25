@@ -145,6 +145,11 @@ class FileWriter extends AbstractWriter
      */
     public function tagFiles(array $configuration): void
     {
+        // processed_tags are disabled for real branch storage
+        // https://github.com/keboola/platform-libraries/pull/135/files#diff-e0fdfb86e35c6693c4179557bf8a093ac9c9cf51cf888af18201ee4fe789c367R74
+        if ($this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()) {
+            return;
+        }
         $prefix = null;
         if ($this->clientWrapper->hasBranch()) {
             $prefix = $this->clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
@@ -153,12 +158,13 @@ class FileWriter extends AbstractWriter
         }
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {
-                $files = Reader::getFiles(
+                $fileInputOptions = Reader::getFiles(
                     $fileConfiguration,
                     $this->clientWrapper,
                     $this->logger,
-                    new InputFileStateList([])
                 );
+                $listFileOptions = $fileInputOptions->getStorageApiFileListOptions(new InputFileStateList([]));
+                $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($listFileOptions);
                 foreach ($files as $file) {
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getTableAndFileStorageClient()->addFileTag(

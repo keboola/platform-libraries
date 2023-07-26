@@ -30,6 +30,7 @@ class ServiceClientTest extends TestCase
         self::assertSame('https://spark.north-europe.azure.keboola.com', $client->getSparkServiceUrl());
         self::assertSame('https://sync-actions.north-europe.azure.keboola.com', $client->getSyncActionsServiceUrl());
         self::assertSame('https://templates.north-europe.azure.keboola.com', $client->getTemplatesUrl());
+        self::assertSame('https://vault.north-europe.azure.keboola.com', $client->getVaultUrl());
     }
 
     public function testInvalidService(): void

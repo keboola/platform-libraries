@@ -25,6 +25,8 @@ class ServiceClient
     public const SYNC_ACTIONS_SERVICE = 'sync-actions';
     public const QUEUE_SERVICE = 'queue';
     public const TEMPLATES_SERVICE = 'templates';
+    public const VAULT_SERVICE = 'vault';
+
     private const KNOWN_SERVICES = [
         self::AI_SERVICE,
         self::BILLING_SERVICE,
@@ -42,6 +44,7 @@ class ServiceClient
         self::SYNC_ACTIONS_SERVICE,
         self::QUEUE_SERVICE,
         self::TEMPLATES_SERVICE,
+        self::VAULT_SERVICE,
     ];
 
     public function __construct(private readonly string $hostnameSuffix)
@@ -139,5 +142,10 @@ class ServiceClient
     public function getTemplatesUrl(): string
     {
         return $this->getServiceUrl(self::TEMPLATES_SERVICE);
+    }
+
+    public function getVaultUrl(): string
+    {
+        return $this->getServiceUrl(self::VAULT_SERVICE);
     }
 }

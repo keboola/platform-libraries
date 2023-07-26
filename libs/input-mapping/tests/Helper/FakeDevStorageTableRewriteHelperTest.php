@@ -437,9 +437,6 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $storageClientMock->expects(self::once())->method('tableExists')
             ->with('out.c-123456-main.my-table')->willReturn(true);
         $basicClientMock = self::createMock(Client::class);
-        $basicClientMock->expects(self::once())->method('webalizeDisplayName')->willReturnCallback(
-            fn ($argument) => ['displayName' => $argument]
-        );
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
         $clientWrapper = self::createMock(ClientWrapper::class);
@@ -488,9 +485,6 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')
             ->with($destinationTable)->willReturn(true);
         $basicClientMock = self::createMock(Client::class);
-        $basicClientMock->expects(self::exactly($checkCount))->method('webalizeDisplayName')->willReturnCallback(
-            fn ($argument) => ['displayName' => $argument]
-        );
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
         $clientWrapper = self::createMock(ClientWrapper::class);

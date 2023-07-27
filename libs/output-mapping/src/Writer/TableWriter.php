@@ -388,7 +388,7 @@ class TableWriter extends AbstractWriter
 
     private function checkDevBucketMetadata(MappingDestination $destination): void
     {
-        if (!$this->clientWrapper->hasBranch()) {
+        if (!$this->clientWrapper->isDevelopmentBranch()) {
             return;
         }
         $bucketId = $destination->getBucketId();

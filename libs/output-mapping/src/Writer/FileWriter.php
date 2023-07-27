@@ -151,10 +151,8 @@ class FileWriter extends AbstractWriter
             return;
         }
         $prefix = null;
-        if ($this->clientWrapper->hasBranch()) {
-            $prefix = $this->clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
-                (string) $this->clientWrapper->getBranchId()
-            )['displayName'];
+        if ($this->clientWrapper->isDevelopmentBranch()) {
+            $prefix = (string) $this->clientWrapper->getBranchId();
         }
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {

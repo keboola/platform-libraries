@@ -75,7 +75,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals([], $file['tags']);
@@ -123,7 +123,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $client = $this->getMockBuilder(Client::class)
             ->setConstructorArgs([[
                 'url' => (string) getenv('STORAGE_API_URL'),
@@ -134,7 +134,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getBasicClient')->willReturn($client);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $writer = new TableWriter($this->getLocalStagingFactory($clientWrapper));
 
@@ -159,7 +159,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ]
         );
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(
@@ -220,9 +220,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
 
-        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $tableIds[] = $jobDetail['results']['id'];
-        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[1]);
+        $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[1]);
         $tableIds[] = $jobDetail['results']['id'];
 
         sort($tableIds);
@@ -292,9 +292,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
 
-        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $tableIds[] = $jobDetail['results']['id'];
-        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[1]);
+        $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[1]);
         $tableIds[] = $jobDetail['results']['id'];
 
         sort($tableIds);
@@ -618,7 +618,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($jobIds);
+        $this->clientWrapper->getTableAndFileStorageClient()->handleAsyncTasks($jobIds);
 
         // And again, check first incremental table
         $tableQueue =  $writer->uploadTables(
@@ -845,7 +845,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($jobIds);
+        $this->clientWrapper->getTableAndFileStorageClient()->handleAsyncTasks($jobIds);
         self::assertFalse($testLogger->hasWarningThatContains('Output mapping does not match destination table'));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
             $this->emptyOutputBucketId . '.table12'
@@ -1181,7 +1181,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-        $jobDetail = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $tableId = $jobDetail['results']['id'];
         $tableParts = explode('.', $tableId);
         array_pop($tableParts);

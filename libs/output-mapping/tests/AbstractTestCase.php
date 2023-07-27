@@ -90,21 +90,21 @@ abstract class AbstractTestCase extends TestCase
             })
             ->setUserAgent(implode('::', Test::describe($this)));
         $this->clientWrapper = new ClientWrapper($clientOptions);
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClientIfAvailable()->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 
     public function tearDown(): void
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
             try {
                 $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             } catch (ClientException $e) {
@@ -134,7 +134,7 @@ abstract class AbstractTestCase extends TestCase
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () use ($backend) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
@@ -145,7 +145,7 @@ abstract class AbstractTestCase extends TestCase
         $mockWorkspace->method('getCredentials')->willReturnCallback(
             function () use ($backend) {
                 if (!$this->workspaceCredentials) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
@@ -264,7 +264,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function assertJobParamsMatches(array $expectedParams, string $jobId): void
     {
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobId);
+        $job = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobId);
         foreach ($expectedParams as $expectedParam) {
             self::assertContains($expectedParam, $job['operationParams']['params']);
         }
@@ -297,7 +297,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function prepareWorkspaceWithTables(string $inputBucketId, string $tablePrefix = ''): void
     {
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->loadWorkspaceData(
             (int) $this->workspaceId,
             [
@@ -317,7 +317,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function prepareWorkspaceWithTablesClone(string $inputBucketId, string $tablePrefix = ''): void
     {
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->cloneIntoWorkspace(
             (int) $this->workspaceId,
             [

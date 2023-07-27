@@ -80,7 +80,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -114,7 +114,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
 
         $configuration = new InputFileOptions(
             $configuration,
-            $clientWrapper->hasBranch(),
+            $clientWrapper->isDevelopmentBranch(),
             (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
         );
 
@@ -166,7 +166,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -220,7 +220,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 ['tags' => [self::TEST_REWRITE_BASE_TAG]],
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -270,7 +270,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -340,7 +340,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,

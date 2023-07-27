@@ -422,7 +422,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         );
     }
 
-    public function testHasBranchRewriteTableExists(): void
+    public function testIsDevelopmentBranchRewriteTableExists(): void
     {
         $storageClientMock = self::createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::once())->method('tableExists')
@@ -431,7 +431,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             ->with('out.c-main.my-table')->willReturn(['name' => 'my-name']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
-        $clientWrapper->method('hasBranch')->willReturn(true);
+        $clientWrapper->method('isDevelopmentBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
 
@@ -466,14 +466,14 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     }
 
     /** @dataProvider provideBranchRewriteOptions */
-    public function testHasBranchRewriteWithoutPrefix(
+    public function testIsDevelopmentBranchRewriteWithoutPrefix(
         string $sourceBranchId,
-        int $checkCount,
-        bool $branchTableExists,
-        bool $hasBranch,
+        int    $checkCount,
+        bool   $branchTableExists,
+        bool   $isDevelopmentBranch,
         string $expectedName,
-        int $expectedBranchCalls,
-        int $expectedBasicCalls,
+        int    $expectedBranchCalls,
+        int    $expectedBasicCalls,
     ): void {
         $sourceTable = 'out.c-main.my-table';
         $storageClientMock = self::createMock(BranchAwareClient::class);
@@ -488,7 +488,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
         $clientWrapper->method('getBasicClient')->willReturn($basicStorageClientMock);
-        $clientWrapper->method('hasBranch')->willReturn($hasBranch);
+        $clientWrapper->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);
         $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $inputTablesOptions = new InputTableOptionsList([

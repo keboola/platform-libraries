@@ -45,7 +45,7 @@ class ABSWorkspace extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaceJobId = $workspaces->queueWorkspaceLoadData(
             (int) $this->dataStorage->getWorkspaceId(),
             [

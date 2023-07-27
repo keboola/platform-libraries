@@ -131,7 +131,7 @@ class Reader
     ): RewrittenInputFileOptions {
         $fileOptions = new InputFileOptions(
             $fileConfiguration,
-            $clientWrapper->hasBranch(),
+            $clientWrapper->isDevelopmentBranch(),
             (string) $clientWrapper->getTableAndFileStorageClient()->getRunId()
         );
         $fileOptionsRewritten = TagsRewriteHelperFactory::getTagsRewriteHelper(

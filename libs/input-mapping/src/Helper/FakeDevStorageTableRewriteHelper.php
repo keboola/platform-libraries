@@ -73,9 +73,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     {
         $newSource = $this->getNewSource(
             $source,
-            $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
-                (string) $clientWrapper->getBranchId()
-            )['displayName']
+            (string) $clientWrapper->getBranchId()
         );
         if ($clientWrapper->getTableAndFileStorageClient()->tableExists($newSource)) {
             $logger->info(

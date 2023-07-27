@@ -39,7 +39,7 @@
         "ext-json": "*",
         "keboola/common-exceptions": "^1.1",
         "keboola/storage-api-client": "^14.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^3.1",
+        "keboola/storage-api-php-client-branch-wrapper": "^4.0",
         "keboola/vault-api-client": "*@dev",
         "mustache/mustache": "^2.13",
         "psr/log": "^1.1",

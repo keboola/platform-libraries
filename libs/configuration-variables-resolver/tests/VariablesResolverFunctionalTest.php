@@ -71,7 +71,7 @@ class VariablesResolverFunctionalTest extends TestCase
 
     private function setupConfigurationVariables(array $data, array $rowData): void
     {
-        $components = new Components($this->clientWrapper->getBranchClientIfAvailable());
+        $components = new Components($this->clientWrapper->getBranchClient());
 
         try {
             $components->deleteConfiguration(ComponentsClientHelper::KEBOOLA_VARIABLES, self::CONFIG_ID);

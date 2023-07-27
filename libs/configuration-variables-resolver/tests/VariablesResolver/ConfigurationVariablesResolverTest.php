@@ -50,7 +50,7 @@ class ConfigurationVariablesResolverTest extends TestCase
     {
         return new ConfigurationVariablesResolver(
             new ComponentsClientHelper(
-                new Components($this->clientWrapper->getBranchClientIfAvailable()),
+                new Components($this->clientWrapper->getBranchClient()),
             ),
             new MustacheRenderer(),
             $this->logger,

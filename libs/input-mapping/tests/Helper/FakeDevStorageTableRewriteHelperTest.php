@@ -478,8 +478,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     public function testIsDevelopmentBranchRewriteWithoutPrefix(
         string $sourceTable,
         string $destinationTable,
-        int    $checkCount,
-        bool   $isDevelopmentBranch,
+        int $checkCount,
+        bool $isDevelopmentBranch,
     ): void {
         $storageClientMock = self::createMock(Client::class);
         $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')

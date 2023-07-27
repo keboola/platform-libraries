@@ -63,21 +63,21 @@ abstract class AbstractTestCase extends TestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClientIfAvailable()->getApiUrl()
+            $this->clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 
     public function tearDown(): void
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
             $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             $this->workspaceId = null;
         }
@@ -152,7 +152,7 @@ abstract class AbstractTestCase extends TestCase
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () use ($backend) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];

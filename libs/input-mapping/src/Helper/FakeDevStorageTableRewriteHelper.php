@@ -22,7 +22,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
             $source = $tableOptions->getSource();
-            if ($clientWrapper->hasBranch()) {
+            if ($clientWrapper->isDevelopmentBranch()) {
                 $source = $this->rewriteSource($tableOptions->getSource(), $clientWrapper, $logger);
             }
             $sourceBranchId = $clientWrapper->getDefaultBranch()['branchId'];
@@ -42,7 +42,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
     ): InputTableStateList {
-        if ($clientWrapper->hasBranch()) {
+        if ($clientWrapper->isDevelopmentBranch()) {
             $tableStates = $tableStates->jsonSerialize();
             foreach ($tableStates as &$tableState) {
                 $tableState['source'] = $this->rewriteSource($tableState['source'], $clientWrapper, $logger);

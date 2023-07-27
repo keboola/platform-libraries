@@ -70,7 +70,7 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
     public function tearDown(): void
     {
         if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->getClientWrapper(null)->getBranchClientIfAvailable());
+            $workspaces = new Workspaces($this->getClientWrapper(null)->getBranchClient());
             $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
             $this->workspaceId = null;
         }
@@ -93,7 +93,7 @@ class DownloadFilesAbsWorkspaceTest extends TestCase
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () use ($clientWrapper) {
                 if (empty($this->workspaceId)) {
-                    $workspaces = new Workspaces($clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];

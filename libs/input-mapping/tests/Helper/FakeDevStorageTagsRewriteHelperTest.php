@@ -74,7 +74,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -101,7 +101,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
 
         $configuration = new InputFileOptions(
             $configuration,
-            $clientWrapper->hasBranch(),
+            $clientWrapper->isDevelopmentBranch(),
             (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
         );
 
@@ -145,7 +145,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -178,7 +178,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -212,7 +212,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -261,7 +261,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,
@@ -308,7 +308,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
-                $clientWrapper->hasBranch(),
+                $clientWrapper->isDevelopmentBranch(),
                 (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
             ),
             $clientWrapper,

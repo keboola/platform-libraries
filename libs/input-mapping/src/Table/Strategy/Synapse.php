@@ -47,7 +47,7 @@ class Synapse extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
 
         $workspaceJobs[] = $workspaces->queueWorkspaceLoadData(
             (int) $this->dataStorage->getWorkspaceId(),
@@ -58,7 +58,7 @@ class Synapse extends AbstractStrategy
         );
 
         $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
-        $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($workspaceJobs);
+        $jobResults = $this->clientWrapper->getTableAndFileStorageClient()->handleAsyncTasks($workspaceJobs);
         foreach ($workspaceTables as $table) {
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';

@@ -39,14 +39,14 @@ class ReaderTest extends TestCase
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
         $clientWrapper = $this->getClientWrapper(null);
-        $tokenInfo = $clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $clientWrapper->getBasicClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $clientWrapper->getBranchClientIfAvailable()->getApiUrl()
+            $clientWrapper->getBasicClient()->getApiUrl()
         ));
     }
 

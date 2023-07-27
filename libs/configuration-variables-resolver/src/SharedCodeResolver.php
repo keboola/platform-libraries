@@ -19,7 +19,7 @@ class SharedCodeResolver
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->componentsHelper = new ComponentsClientHelper(
-            new Components($this->clientWrapper->getBranchClientIfAvailable()),
+            new Components($this->clientWrapper->getBranchClient()),
         );
     }
 

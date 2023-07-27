@@ -31,7 +31,7 @@ class VariablesResolver
         return new self(
             new ConfigurationVariablesResolver(
                 new ComponentsClientHelper(
-                    new Components($clientWrapper->getBranchClientIfAvailable()),
+                    new Components($clientWrapper->getBranchClient()),
                 ),
                 new MustacheRenderer(),
                 $logger,

@@ -468,12 +468,12 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     /** @dataProvider provideBranchRewriteOptions */
     public function testIsDevelopmentBranchRewriteWithoutPrefix(
         string $sourceBranchId,
-        int    $checkCount,
-        bool   $branchTableExists,
-        bool   $isDevelopmentBranch,
+        int $checkCount,
+        bool $branchTableExists,
+        bool $isDevelopmentBranch,
         string $expectedName,
-        int    $expectedBranchCalls,
-        int    $expectedBasicCalls,
+        int $expectedBranchCalls,
+        int $expectedBasicCalls,
     ): void {
         $sourceTable = 'out.c-main.my-table';
         $storageClientMock = self::createMock(BranchAwareClient::class);

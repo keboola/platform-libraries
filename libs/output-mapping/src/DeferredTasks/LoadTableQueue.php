@@ -63,7 +63,7 @@ class LoadTableQueue
             $jobId = $task->getStorageJobId();
             $jobIds[] = $jobId;
             /** @var array $jobResult */
-            $jobResult = $this->clientWrapper->getBranchClientIfAvailable()->waitForJob($jobId);
+            $jobResult = $this->clientWrapper->getTableAndFileStorageClient()->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
                 $errors[] = sprintf(

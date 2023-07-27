@@ -42,7 +42,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         $mock->method('getWorkspaceId')->willReturnCallback(
             function () use ($data): string {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
@@ -53,7 +53,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         $mock->method('getCredentials')->willReturnCallback(
             function () use ($data): array {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => 'abs'], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspace = $data ?: $workspace;
@@ -100,7 +100,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             $this->getProvider(),
             'json'
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');
@@ -177,7 +177,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             $this->getProvider(),
             'json'
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('Failed to list files: "The specified container does not exist.".');

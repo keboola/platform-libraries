@@ -71,7 +71,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals([], $file['tags']);
@@ -93,7 +93,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ],
         ];
 
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
         $client = $this->getMockBuilder(Client::class)
             ->setConstructorArgs([[
                 'url' => (string) getenv('STORAGE_API_URL'),
@@ -104,7 +104,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getBasicClient')->willReturn($client);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $writer = new TableWriter($this->getLocalStagingFactory($clientWrapper));
 
@@ -136,7 +136,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(

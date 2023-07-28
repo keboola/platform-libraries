@@ -95,7 +95,8 @@ class DestinationRewriterTest extends TestCase
 
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($clientMock);
-        $clientWrapper->method('getBranchId')->willReturn($branchId);
+        // let's say 456 is branchId of default branch
+        $clientWrapper->method('getBranchId')->willReturn($branchId ?? '456');
         $clientWrapper->method('isDevelopmentBranch')->willReturn($branchId !== null);
 
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);

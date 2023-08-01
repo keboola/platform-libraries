@@ -397,7 +397,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableLimitTest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $tokenInfo['owner']['limits'][Local::EXPORT_SIZE_LIMIT_NAME] = [
             'name' => Local::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
@@ -421,7 +421,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
 
         /** @var Client $client */
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($client);
         $clientWrapper->method('getBranchClient')->willReturn($branchClient);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123']);

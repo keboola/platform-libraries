@@ -63,14 +63,14 @@ abstract class AbstractTestCase extends TestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl()
         ));
     }
 

@@ -39,14 +39,14 @@ class ReaderTest extends TestCase
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
         $clientWrapper = $this->getClientWrapper(null);
-        $tokenInfo = $clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $clientWrapper->getBasicClient()->getApiUrl()
+            $clientWrapper->getBranchClient()->getApiUrl()
         ));
     }
 
@@ -72,7 +72,7 @@ class ReaderTest extends TestCase
             $format
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
+            ->onlyMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
             function () {

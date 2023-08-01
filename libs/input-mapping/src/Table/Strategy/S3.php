@@ -28,7 +28,7 @@ class S3 extends AbstractStrategy
         $jobIds = array_map(function ($export) {
             return $export['jobId'];
         }, $exports);
-        $jobResults = $this->clientWrapper->getTableAndFileStorageClient()->handleAsyncTasks($jobIds);
+        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($jobResults as $result) {
             $keyedResults[$result['id']] = $result;

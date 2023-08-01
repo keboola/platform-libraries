@@ -11,6 +11,7 @@ use Keboola\InputMapping\Helper\FakeDevStorageTableRewriteHelper;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -436,11 +437,12 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $storageClientMock = self::createMock(Client::class);
         $storageClientMock->expects(self::once())->method('tableExists')
             ->with('out.c-123456-main.my-table')->willReturn(true);
-        $basicClientMock = self::createMock(Client::class);
+        $branchClientMock = self::createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
+
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($basicClientMock);
+        $clientWrapper->method('getBranchClient')->willReturn($branchClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
@@ -484,11 +486,12 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $storageClientMock = self::createMock(Client::class);
         $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')
             ->with($destinationTable)->willReturn(true);
-        $basicClientMock = self::createMock(Client::class);
+        $branchClientMock = self::createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
+
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBasicClient')->willReturn($basicClientMock);
+        $clientWrapper->method('getBranchClient')->willReturn($branchClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);
         $clientWrapper->method('getBranchId')->willReturn('123456');

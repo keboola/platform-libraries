@@ -14,7 +14,7 @@ use Keboola\PermissionChecker\StorageApiToken;
 class CanModifySubscriptions implements PermissionCheckInterface
 {
     public function __construct(
-        private readonly BranchType $branchType,
+        private readonly ?BranchType $branchType,
     ) {
     }
 
@@ -23,6 +23,7 @@ class CanModifySubscriptions implements PermissionCheckInterface
         if ($token->hasFeature(Feature::PROTECTED_DEFAULT_BRANCH)) {
             $isRoleAllowed = match ($token->getRole()) {
                 Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,
+                Role::DEVELOPER, Role::REVIEWER => $this->branchType === BranchType::DEV,
                 default => false,
             };
         } else {

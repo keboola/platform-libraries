@@ -24,15 +24,30 @@ class CanModifySubscriptionsTest extends TestCase
             'token' => new StorageApiToken(role: null),
         ];
 
+        yield 'regular token on regular project without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(role: null),
+        ];
+
         yield 'productionManager on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
+        ];
+
+        yield 'developer on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'developer'),
+        ];
+
+        yield 'reviewer on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'reviewer'),
         ];
     }
 
     /** @dataProvider provideValidPermissionsCheckData */
     public function testValidPermissionsCheck(
-        BranchType $branchType,
+        ?BranchType $branchType,
         StorageApiToken $token,
     ): void {
         $this->expectNotToPerformAssertions();
@@ -67,8 +82,20 @@ class CanModifySubscriptionsTest extends TestCase
             'error' => new PermissionDeniedException('Role "developer" is not allowed to modify subscriptions'),
         ];
 
+        yield 'developer role without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'developer'),
+            'error' => new PermissionDeniedException('Role "developer" is not allowed to modify subscriptions'),
+        ];
+
         yield 'reviewer role on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'reviewer'),
+            'error' => new PermissionDeniedException('Role "reviewer" is not allowed to modify subscriptions'),
+        ];
+
+        yield 'reviewer role without branch' => [
+            'branchType' => null,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'reviewer'),
             'error' => new PermissionDeniedException('Role "reviewer" is not allowed to modify subscriptions'),
         ];
@@ -78,11 +105,17 @@ class CanModifySubscriptionsTest extends TestCase
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
             'error' => new PermissionDeniedException('Role "productionManager" is not allowed to modify subscriptions'),
         ];
+
+        yield 'productionManager role without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
+            'error' => new PermissionDeniedException('Role "productionManager" is not allowed to modify subscriptions'),
+        ];
     }
 
     /** @dataProvider provideInvalidPermissionsCheckData */
     public function testInvalidPermissionsCheck(
-        BranchType $branchType,
+        ?BranchType $branchType,
         StorageApiToken $token,
         PermissionDeniedException $error,
     ): void {

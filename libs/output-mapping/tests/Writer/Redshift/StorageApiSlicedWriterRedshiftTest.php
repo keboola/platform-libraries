@@ -101,7 +101,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
                 [
                     'url' => (string) getenv('STORAGE_API_URL'),
                     'token' => (string) getenv('STORAGE_API_TOKEN'),
-                ]
+                ],
             ])
             ->onlyMethods(['verifyToken'])
             ->getMock();

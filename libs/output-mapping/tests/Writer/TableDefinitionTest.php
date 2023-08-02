@@ -25,7 +25,7 @@ class TableDefinitionTest extends AbstractTestCase
             'tables-definition',
         ];
 
-        $tokenData = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenData = $this->clientWrapper->getBranchClient()->verifyToken();
         foreach ($requiredFeatures as $requiredFeature) {
             if (!in_array($requiredFeature, $tokenData['owner']['features'])) {
                 self::fail(sprintf(

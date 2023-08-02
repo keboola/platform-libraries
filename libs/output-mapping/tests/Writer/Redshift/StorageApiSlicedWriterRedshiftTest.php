@@ -96,10 +96,13 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
 
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $client = $this->getMockBuilder(BranchAwareClient::class)
-            ->setConstructorArgs([[
-                'url' => (string) getenv('STORAGE_API_URL'),
-                'token' => (string) getenv('STORAGE_API_TOKEN'),
-            ]])
+            ->setConstructorArgs([
+                ClientWrapper::BRANCH_DEFAULT,
+                [
+                    'url' => (string) getenv('STORAGE_API_URL'),
+                    'token' => (string) getenv('STORAGE_API_TOKEN'),
+                ]
+            ])
             ->onlyMethods(['verifyToken'])
             ->getMock();
         $tokenInfo['owner']['features'][] = 'tag-staging-files';

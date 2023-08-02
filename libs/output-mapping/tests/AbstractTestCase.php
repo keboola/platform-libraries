@@ -90,14 +90,14 @@ abstract class AbstractTestCase extends TestCase
             })
             ->setUserAgent(implode('::', Test::describe($this)));
         $this->clientWrapper = new ClientWrapper($clientOptions);
-        $tokenInfo = $this->clientWrapper->getBasicClient()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBasicClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl()
         ));
     }
 

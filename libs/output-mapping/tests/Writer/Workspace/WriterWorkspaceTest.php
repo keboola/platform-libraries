@@ -584,7 +584,6 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
         $factory->getTableOutputStrategy(

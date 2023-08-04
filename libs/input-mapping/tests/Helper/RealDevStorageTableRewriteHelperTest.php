@@ -158,7 +158,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -178,7 +178,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -244,7 +244,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -264,14 +264,14 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "out.c-main.my-table-2".',
-                $clientWrapper->getDefaultBranch()['branchId']
+                $clientWrapper->getDefaultBranch()->id
             )
         ));
     }
@@ -360,7 +360,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             sprintf(
                 'Using dev input "out.c-main.my-table-2" from branch "%s" instead of main branch "%s".',
                 $this->branchId,
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
             )
         ));
     }

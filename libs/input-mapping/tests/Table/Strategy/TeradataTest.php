@@ -33,7 +33,7 @@ class TeradataTest extends AbstractTestCase
                 'columns' => ['foo', 'bar'],
             ],
             $this->firstTableId,
-            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         ));
         self::assertEquals(
@@ -46,7 +46,7 @@ class TeradataTest extends AbstractTestCase
                             'columns' => ['foo', 'bar'],
                         ],
                         $this->firstTableId,
-                        (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+                        (int) $this->clientWrapper->getDefaultBranch()->id,
                         $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
                     ),
                     [

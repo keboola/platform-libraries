@@ -33,7 +33,7 @@ class S3StrategyTest extends AbstractTestCase
                 'columns' => ['Id', 'Name'],
             ],
             $this->firstTableId,
-            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
@@ -79,7 +79,7 @@ class S3StrategyTest extends AbstractTestCase
                 ],
             ],
             $this->firstTableId,
-            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);

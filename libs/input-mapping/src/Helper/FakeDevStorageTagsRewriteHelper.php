@@ -26,7 +26,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
-                (int) $clientWrapper->getDefaultBranch()['branchId'],
+                (int) $clientWrapper->getDefaultBranch()->id,
             );
         }
         $fileConfiguration = $fileConfigurationOriginal->getDefinition();
@@ -52,7 +52,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     $fileConfigurationOriginal->isDevBranch(),
                     $fileConfigurationOriginal->getRunId(),
                     $fileConfigurationOriginal->getDefinition(),
-                    (int) $clientWrapper->getDefaultBranch()['branchId'],
+                    (int) $clientWrapper->getDefaultBranch()->id,
                 );
             }
             /* else jump to the end of the method, as nothing is going
@@ -104,7 +104,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     $fileConfigurationOriginal->isDevBranch(),
                     $fileConfigurationOriginal->getRunId(),
                     $fileConfigurationOriginal->getDefinition(),
-                    (int) $clientWrapper->getDefaultBranch()['branchId'],
+                    (int) $clientWrapper->getDefaultBranch()->id,
                 );
             }
             /* at this point we set new excludeTags but not new includeTags, this means that only the
@@ -115,7 +115,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
-                (int) $clientWrapper->getDefaultBranch()['branchId'],
+                (int) $clientWrapper->getDefaultBranch()->id,
             );
         }
         /* at this point, nothing has changed - neither the actual input tags nor the processed ("output") tags */
@@ -124,7 +124,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
             $fileConfigurationOriginal->isDevBranch(),
             $fileConfigurationOriginal->getRunId(),
             $fileConfigurationOriginal->getDefinition(),
-            (int) $clientWrapper->getDefaultBranch()['branchId'],
+            (int) $clientWrapper->getDefaultBranch()->id,
         );
     }
 

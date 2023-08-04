@@ -576,14 +576,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($logger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
             )
         ));
         self::assertTrue($logger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
             )
         ));
@@ -592,7 +592,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 'Using dev input "%s" from branch "%s" instead of main branch "%s".',
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                 $branchId,
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
             )
         ));
         self::assertTrue(
@@ -601,7 +601,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'Using dev input "%s" from branch "%s" instead of main branch "%s".',
                     'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                     $branchId,
-                    $clientWrapper->getDefaultBranch()['branchId'],
+                    $clientWrapper->getDefaultBranch()->id,
                 )
             )
         );

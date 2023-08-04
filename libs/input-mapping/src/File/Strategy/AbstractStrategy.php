@@ -60,13 +60,9 @@ abstract class AbstractStrategy implements StrategyInterface
         foreach ($fileConfigurations as $fileConfiguration) {
             $fileOptionsRewritten = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             $options = $fileOptionsRewritten->getStorageApiFileListOptions($this->fileStateList);
-            if ($fileOptionsRewritten->getSourceBranchId() ===
-                (int) $this->clientWrapper->getDefaultBranch()['branchId']
-            ) {
-                $storageClient = $this->clientWrapper->getBasicClient();
-            } else {
-                $storageClient = $this->clientWrapper->getBranchClient();
-            }
+            $storageClient = $this->clientWrapper->getClientForBranch(
+                (string) $fileOptionsRewritten->getSourceBranchId()
+            );
             $files = $storageClient->listFiles($options);
 
             $biggestFileId = 0;
@@ -94,7 +90,12 @@ abstract class AbstractStrategy implements StrategyInterface
                     $biggestFileId = (int) $fileInfo['id'];
                 }
                 try {
-                    $this->downloadFile($fileInfo, $fileDestinationPath, $overwrite, $storageClient);
+                    $this->downloadFile(
+                        $fileInfo,
+                        (string) $fileOptionsRewritten->getSourceBranchId(),
+                        $fileDestinationPath,
+                        $overwrite,
+                    );
                 } catch (Throwable $e) {
                     throw new InputOperationException(
                         sprintf(

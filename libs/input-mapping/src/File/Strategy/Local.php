@@ -12,21 +12,25 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class Local extends AbstractStrategy implements StrategyInterface
 {
-    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite, Client $client): void
-    {
+    public function downloadFile(
+        array $fileInfo,
+        string $sourceBranchId,
+        string $destinationPath,
+        bool $overwrite,
+    ): void {
         if ($overwrite === false) {
             throw new InvalidInputException('Overwrite cannot be turned off for local mapping.');
         }
         $fs = new Filesystem();
         if ($fileInfo['isSliced']) {
             $fs->mkdir($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath);
-            $client->downloadSlicedFile(
+            $this->clientWrapper->getClientForBranch($sourceBranchId)->downloadSlicedFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );
         } else {
             $fs->mkdir(dirname($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath));
-            $client->downloadFile(
+            $this->clientWrapper->getClientForBranch($sourceBranchId)->downloadFile(
                 $fileInfo['id'],
                 $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
             );

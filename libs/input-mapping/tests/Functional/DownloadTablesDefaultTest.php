@@ -19,6 +19,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
+use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
@@ -423,7 +424,9 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($branchClient);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
-        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123']);
+        $clientWrapper->method('getDefaultBranch')->willReturn(
+            new Branch('123', 'main', true, null)
+        );
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([

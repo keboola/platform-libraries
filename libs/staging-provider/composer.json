@@ -31,7 +31,7 @@
         "ext-json": "*",
         "keboola/input-mapping": "*@dev",
         "keboola/output-mapping": "*@dev",
-        "keboola/storage-api-client": "^14.6",
+        "keboola/storage-api-client": "^14.11.1",
         "keboola/storage-api-php-client-branch-wrapper": "^4.0"
     },
     "require-dev": {

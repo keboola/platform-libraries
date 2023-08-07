@@ -273,7 +273,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using files from default branch "%s" for tags "tag-1".',
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
             )
         ));
 

@@ -13,6 +13,7 @@ use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
+use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
@@ -158,7 +159,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -178,7 +179,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
@@ -244,7 +245,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition()
         );
@@ -264,14 +265,14 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()['branchId'],
+                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition()
         );
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "out.c-main.my-table-2".',
-                $clientWrapper->getDefaultBranch()['branchId']
+                $clientWrapper->getDefaultBranch()->id
             )
         ));
     }
@@ -360,7 +361,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             sprintf(
                 'Using dev input "out.c-main.my-table-2" from branch "%s" instead of main branch "%s".',
                 $this->branchId,
-                $clientWrapper->getDefaultBranch()['branchId'],
+                $clientWrapper->getDefaultBranch()->id,
             )
         ));
     }
@@ -433,7 +434,9 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
         $clientWrapper->method('isDevelopmentBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
-        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
+        $clientWrapper->method('getDefaultBranch')->willReturn(
+            new Branch('654321', 'main', true, null)
+        );
 
         $inputTablesOptions = new InputTableOptionsList([
             [
@@ -482,14 +485,16 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $storageClientMock->expects(self::exactly($expectedBranchCalls))->method('getTable')
             ->with($sourceTable)->willReturn(['name' => 'my-branch-name']);
 
-        $basicStorageClientMock = self::createMock(Client::class);
-        $basicStorageClientMock->expects(self::exactly($expectedBasicCalls))->method('getTable')
+        $defaultClientMock = self::createMock(BranchAwareClient::class);
+        $defaultClientMock->expects(self::exactly($expectedBasicCalls))->method('getTable')
             ->with($sourceTable)->willReturn(['name' => 'my-name']);
         $clientWrapper = self::createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($storageClientMock);
-        $clientWrapper->method('getBasicClient')->willReturn($basicStorageClientMock);
+        $clientWrapper->method('getClientForDefaultBranch')->willReturn($defaultClientMock);
         $clientWrapper->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);
-        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
+        $clientWrapper->method('getDefaultBranch')->willReturn(
+            new Branch('654321', 'main', true, null)
+        );
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $inputTablesOptions = new InputTableOptionsList([
             [

@@ -25,7 +25,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
             if ($clientWrapper->isDevelopmentBranch()) {
                 $source = $this->rewriteSource($tableOptions->getSource(), $clientWrapper, $logger);
             }
-            $sourceBranchId = $clientWrapper->getDefaultBranch()['branchId'];
+            $sourceBranchId = $clientWrapper->getDefaultBranch()->id;
             $tableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($source);
             $newTables[] = new RewrittenInputTableOptions(
                 $tableOptions->getDefinition(),

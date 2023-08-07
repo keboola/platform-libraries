@@ -51,8 +51,12 @@ class ABSWorkspace extends AbstractFileStrategy
         return $this->blobClient;
     }
 
-    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite, Client $client): void
-    {
+    public function downloadFile(
+        array $fileInfo,
+        string $sourceBranchId,
+        string $destinationPath,
+        bool $overwrite
+    ): void {
         $this->inputs[] = [
             'dataFileId' => $fileInfo['id'],
             'destination' => $destinationPath,

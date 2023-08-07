@@ -9,6 +9,11 @@ use Keboola\StorageApi\Client;
 
 interface StrategyInterface
 {
-    public function downloadFile(array $fileInfo, string $destinationPath, bool $overwrite, Client $client): void;
+    public function downloadFile(
+        array $fileInfo,
+        string $sourceBranchId,
+        string $destinationPath,
+        bool $overwrite,
+    ): void;
     public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList;
 }

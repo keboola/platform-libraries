@@ -93,7 +93,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 false,
                 '',
                 ['tags' => [self::TEST_REWRITE_BASE_TAG], 'overwrite' => true],
-                (int) $clientWrapper->getDefaultBranch()['branchId'],
+                (int) $clientWrapper->getDefaultBranch()->id,
             ),
             $processedConfiguration
         );
@@ -238,7 +238,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                     'tags' => [self::TEST_REWRITE_BASE_TAG],
                     'overwrite' => true,
                 ],
-                (int) $clientWrapper->getDefaultBranch()['branchId'],
+                (int) $clientWrapper->getDefaultBranch()->id,
             ),
             $processedConfiguration
         );
@@ -246,7 +246,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
-                    $clientWrapper->getDefaultBranch()['branchId']
+                    $clientWrapper->getDefaultBranch()->id
                 )
             )
         );
@@ -302,7 +302,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                     ],
                     'overwrite' => true,
                 ],
-                (int) $clientWrapper->getDefaultBranch()['branchId'],
+                (int) $clientWrapper->getDefaultBranch()->id,
             ),
             $processedConfiguration
         );
@@ -310,7 +310,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
-                    $clientWrapper->getDefaultBranch()['branchId']
+                    $clientWrapper->getDefaultBranch()->id
                 )
             )
         );

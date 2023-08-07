@@ -54,18 +54,18 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
                 'Using dev input "%s" from branch "%s" instead of main branch "%s".',
                 $source,
                 $clientWrapper->getBranchId(),
-                $clientWrapper->getDefaultBranch()['branchId']
+                $clientWrapper->getDefaultBranch()->id,
             ));
             $tableInfo = $clientWrapper->getBranchClient()->getTable($source);
             return [$tableInfo, $clientWrapper->getBranchId()];
         }
         $logger->info(sprintf(
             'Using fallback to default branch "%s" for input "%s".',
-            $clientWrapper->getDefaultBranch()['branchId'],
+            $clientWrapper->getDefaultBranch()->id,
             $source,
         ));
         // use production table
-        $tableInfo = $clientWrapper->getBasicClient()->getTable($source);
-        return [$tableInfo, $clientWrapper->getDefaultBranch()['branchId']];
+        $tableInfo = $clientWrapper->getClientForDefaultBranch()->getTable($source);
+        return [$tableInfo, $clientWrapper->getDefaultBranch()->id];
     }
 }

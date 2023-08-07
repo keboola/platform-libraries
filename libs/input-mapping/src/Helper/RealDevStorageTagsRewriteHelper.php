@@ -52,7 +52,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 $logger->info(
                     sprintf(
                         'Using files from default branch "%s" for tags "%s".',
-                        $clientWrapper->getDefaultBranch()['branchId'],
+                        $clientWrapper->getDefaultBranch()->id,
                         implode(', ', $fileConfiguration['tags'])
                     )
                 );
@@ -61,7 +61,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     $fileConfigurationOriginal->isDevBranch(),
                     $fileConfigurationOriginal->getRunId(),
                     $fileConfigurationOriginal->getDefinition(),
-                    (int) $clientWrapper->getDefaultBranch()['branchId'], // use prod branch
+                    (int) $clientWrapper->getDefaultBranch()->id, // use prod branch
                 );
             }
         }
@@ -96,7 +96,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
             $logger->info(
                 sprintf(
                     'Using files from default branch "%s" for tags "%s".',
-                    $clientWrapper->getDefaultBranch()['branchId'],
+                    $clientWrapper->getDefaultBranch()->id,
                     implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags))
                 )
             );
@@ -105,7 +105,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
-                (int) $clientWrapper->getDefaultBranch()['branchId']
+                (int) $clientWrapper->getDefaultBranch()->id
             );
         }
         /* at this point, nothing has changed - no tags are specified in the configuration */
@@ -114,7 +114,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
             $fileConfigurationOriginal->isDevBranch(),
             $fileConfigurationOriginal->getRunId(),
             $fileConfigurationOriginal->getDefinition(),
-            (int) $clientWrapper->getDefaultBranch()['branchId']
+            (int) $clientWrapper->getDefaultBranch()->id
         );
     }
 

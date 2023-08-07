@@ -48,7 +48,7 @@ class LocalStrategyTest extends AbstractTestCase
                 'columns' => ['Id', 'Name'],
             ],
             $this->firstTableId,
-            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
@@ -59,7 +59,7 @@ class LocalStrategyTest extends AbstractTestCase
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
-                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
             $result
@@ -95,7 +95,7 @@ class LocalStrategyTest extends AbstractTestCase
                 ],
             ],
             $this->firstTableId,
-            (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+            (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
         $result = $strategy->downloadTable($tableOptions);
@@ -106,7 +106,7 @@ class LocalStrategyTest extends AbstractTestCase
                 'exportOptions' => [
                     'columns' => ['Id', 'Name'],
                     'overwrite' => false,
-                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()['branchId'],
+                    'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
             $result

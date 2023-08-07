@@ -14,6 +14,7 @@ use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
+use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
@@ -446,7 +447,9 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
-        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '654321']);
+        $clientWrapper->method('getDefaultBranch')->willReturn(
+            new Branch('654321', 'main', true, null)
+        );
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => 'out.c-main.my-table',
@@ -495,7 +498,9 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);
         $clientWrapper->method('getBranchId')->willReturn('123456');
-        $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123456']);
+        $clientWrapper->method('getDefaultBranch')->willReturn(
+            new Branch('654321', 'main', true, null)
+        );
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $sourceTable,

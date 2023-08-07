@@ -10,6 +10,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -69,7 +70,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals([], $file['tags']);
@@ -91,18 +92,21 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ],
         ];
 
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
-        $client = $this->getMockBuilder(Client::class)
-            ->setConstructorArgs([[
-                'url' => (string) getenv('STORAGE_API_URL'),
-                'token' => (string) getenv('STORAGE_API_TOKEN'),
-            ]])
-            ->setMethods(['verifyToken'])
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $client = $this->getMockBuilder(BranchAwareClient::class)
+            ->setConstructorArgs([
+                ClientWrapper::BRANCH_DEFAULT,
+                [
+                    'url' => (string) getenv('STORAGE_API_URL'),
+                    'token' => (string) getenv('STORAGE_API_TOKEN'),
+                ],
+            ])
+            ->onlyMethods(['verifyToken'])
             ->getMock();
         $tokenInfo['owner']['features'][] = 'tag-staging-files';
         $client->method('verifyToken')->willReturn($tokenInfo);
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getBranchClient')->willReturn($client);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $writer = new TableWriter($this->getWorkspaceStagingFactory($clientWrapper));
 
@@ -132,7 +136,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
-        $job = $this->clientWrapper->getBranchClientIfAvailable()->getJob($jobIds[0]);
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(

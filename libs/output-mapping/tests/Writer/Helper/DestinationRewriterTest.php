@@ -8,6 +8,7 @@ use Generator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -90,16 +91,13 @@ class DestinationRewriterTest extends TestCase
     /** @dataProvider rewriteConfigProvider  */
     public function testRewritePrefixes(array $config, ?string $branchId, string $expectedDestination): void
     {
-        $clientMock = self::createMock(Client::class);
-        $clientMock->method('webalizeDisplayName')->willReturnCallback(
-            function (string $name): array {
-                return ['displayName' => $name];
-            }
-        );
+        $clientMock = self::createMock(BranchAwareClient::class);
+
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($clientMock);
-        $clientWrapper->method('getBranchId')->willReturn($branchId);
-        $clientWrapper->method('hasBranch')->willReturn($branchId !== null);
+        $clientWrapper->method('getBranchClient')->willReturn($clientMock);
+        // let's say 456 is branchId of default branch
+        $clientWrapper->method('getBranchId')->willReturn($branchId ?? '456');
+        $clientWrapper->method('isDevelopmentBranch')->willReturn($branchId !== null);
 
         $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
         self::assertEquals($expectedDestination, $expectedConfig['destination']);

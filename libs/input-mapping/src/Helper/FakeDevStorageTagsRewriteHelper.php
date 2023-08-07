@@ -20,7 +20,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
         ClientWrapper $clientWrapper,
         LoggerInterface $logger
     ): RewrittenInputFileOptions {
-        if (!$clientWrapper->hasBranch()) {
+        if (!$clientWrapper->isDevelopmentBranch()) {
             return new RewrittenInputFileOptions(
                 $fileConfigurationOriginal->getDefinition(),
                 $fileConfigurationOriginal->isDevBranch(),

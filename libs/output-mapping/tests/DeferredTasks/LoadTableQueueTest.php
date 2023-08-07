@@ -12,6 +12,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
@@ -119,7 +120,7 @@ class LoadTableQueueTest extends TestCase
 
     public function testWaitForAllWithErrorThrowsInvalidOutputException(): void
     {
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = $this->createMock(BranchAwareClient::class);
         $clientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
@@ -147,7 +148,7 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
-        $clientWrapperMock->method('getBranchClientIfAvailable')
+        $clientWrapperMock->method('getBranchClient')
             ->willReturn($clientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
@@ -177,8 +178,9 @@ class LoadTableQueueTest extends TestCase
     {
         $tableName = 'myTable';
         $expectedTableId = 'in.c-myBucket.' . $tableName;
-        $clientMock = $this->createMock(Client::class);
-        $clientMock->expects(self::once())
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn([
@@ -191,6 +193,8 @@ class LoadTableQueueTest extends TestCase
                 ],
             ])
         ;
+
+        $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::once())
             ->method('getTable')
             ->with($expectedTableId)
@@ -227,8 +231,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
-        $clientWrapperMock->method('getBranchClientIfAvailable')
-            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
 
@@ -285,7 +289,9 @@ class LoadTableQueueTest extends TestCase
                 'lastChangeDate' => null,
             ])
         ;
-        $clientMock->expects(self::once())
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn($jobResult)
@@ -310,8 +316,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
-        $clientWrapperMock->method('getBranchClientIfAvailable')
-            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $loadQueue->waitForAll();
@@ -346,7 +352,8 @@ class LoadTableQueueTest extends TestCase
         int $expectedUncompressedBytes
     ): void {
         $clientMock = $this->createMock(Client::class);
-        $clientMock->expects(self::once())
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
             ->method('waitForJob')
             ->with(123)
             ->willReturn($jobResult)
@@ -371,8 +378,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
-        $clientWrapperMock->method('getBranchClientIfAvailable')
-            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         try {
@@ -425,9 +432,11 @@ class LoadTableQueueTest extends TestCase
 
     public function testWaitForAllDeleteTableAfterFailedLoad(): void
     {
-        $clientMock = $this->createMock(Client::class);
-        $clientMock->method('waitForJob')
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->method('waitForJob')
             ->willReturn(['status' => 'error', 'error' => ['message' => 'Hi']]);
+
+        $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::once())
             ->method('dropTable')
             ->with('my-table', ['force' => true]);
@@ -443,8 +452,8 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($clientMock);
-        $clientWrapperMock->method('getBranchClientIfAvailable')
-            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $this->expectException(InvalidOutputException::class);

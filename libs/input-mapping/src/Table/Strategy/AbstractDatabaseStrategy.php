@@ -82,7 +82,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         $copyJobResult = [];
         $hasBeenCleaned = false;
 
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
 
         if ($cloneInputs) {
             $this->logger->info(
@@ -99,7 +99,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                     'preserve' => $preserve ? 1 : 0,
                 ]
             );
-            $cloneJobResult = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks([$jobId]);
+            $cloneJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
             if (!$preserve) {
                 $hasBeenCleaned = true;
             }
@@ -116,7 +116,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                     'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
                 ]
             );
-            $copyJobResult = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks([$jobId]);
+            $copyJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
         }
         $jobResults = array_merge($cloneJobResult, $copyJobResult);
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');

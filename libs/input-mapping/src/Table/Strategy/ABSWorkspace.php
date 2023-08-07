@@ -45,7 +45,7 @@ class ABSWorkspace extends AbstractStrategy
         $this->logger->info(
             sprintf('Copying %s tables to workspace.', count($copyInputs))
         );
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaceJobId = $workspaces->queueWorkspaceLoadData(
             (int) $this->dataStorage->getWorkspaceId(),
             [
@@ -57,7 +57,7 @@ class ABSWorkspace extends AbstractStrategy
         $jobResults = [];
         if ($workspaceJobId) {
             $this->logger->info('Processing workspace export.');
-            $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks([$workspaceJobId]);
+            $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$workspaceJobId]);
             foreach ($workspaceTables as $table) {
                 $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                     $this->getDestinationFilePath($this->ensureNoPathDelimiter($this->destination), $table) .

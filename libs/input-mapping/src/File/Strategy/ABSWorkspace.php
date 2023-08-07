@@ -69,7 +69,7 @@ class ABSWorkspace extends AbstractFileStrategy
     {
         $inputFileStateList = parent::downloadFiles($fileConfigurations, $destination);
         if ($this->inputs) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClientIfAvailable());
+            $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
             $workspaceId = $this->dataStorage->getWorkspaceId();
             foreach ($this->inputs as $input) {
                 $workspaces->loadWorkspaceData((int) $workspaceId, [

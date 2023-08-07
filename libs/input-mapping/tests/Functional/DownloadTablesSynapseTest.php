@@ -69,14 +69,14 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             ),
         );
 
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClientIfAvailable()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl()
         ));
     }
 

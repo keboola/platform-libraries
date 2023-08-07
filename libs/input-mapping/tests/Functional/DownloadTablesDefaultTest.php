@@ -14,6 +14,7 @@ use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Metadata;
@@ -396,21 +397,31 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableLimitTest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $tokenInfo['owner']['limits'][Local::EXPORT_SIZE_LIMIT_NAME] = [
             'name' => Local::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
         ];
         $client = self::getMockBuilder(Client::class)
-            ->setMethods(['verifyToken'])
+            ->onlyMethods(['verifyToken'])
             ->setConstructorArgs([
                 ['token' => (string) getenv('STORAGE_API_TOKEN'), 'url' => (string) getenv('STORAGE_API_URL')],
             ])
             ->getMock();
         $client->method('verifyToken')->willReturn($tokenInfo);
+
+        $branchClient = self::getMockBuilder(BranchAwareClient::class)
+            ->onlyMethods(['verifyToken'])
+            ->setConstructorArgs([
+                ClientWrapper::BRANCH_DEFAULT,
+                ['token' => (string) getenv('STORAGE_API_TOKEN'), 'url' => (string) getenv('STORAGE_API_URL')],
+            ])
+            ->getMock();
+        $branchClient->method('verifyToken')->willReturn($tokenInfo);
+
         /** @var Client $client */
         $clientWrapper = self::createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClientIfAvailable')->willReturn($client);
+        $clientWrapper->method('getBranchClient')->willReturn($branchClient);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $clientWrapper->method('getDefaultBranch')->willReturn(['branchId' => '123']);
 

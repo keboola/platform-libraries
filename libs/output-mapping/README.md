@@ -9,18 +9,10 @@ Files are imported from local directory.
 
 ## Development
 
+Create `.env.local` file from this `.env` template and fill the missing envs:
 
-```
-git clone https://github.com/keboola/output-mapping
-cd output-mapping
-```
-
-Copy `.env.template` to `.env` and fill parameters.
-
-```
-docker-compose build
-docker-compose run dev composer install
-docker-compose run dev composer ci
+```ini
+cp .env .env.local
 ```
 
 To run Synapse tests, set RUN_SYNAPSE_TESTS to 1 and supply a Storage API token to a project with Synapse backend. Synapse tests are by default skipped (unless the above env is set).

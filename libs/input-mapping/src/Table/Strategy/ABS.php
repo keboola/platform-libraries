@@ -29,7 +29,7 @@ class ABS extends AbstractStrategy
         $jobIds = array_map(function ($export) {
             return $export[0];
         }, $exports);
-        $jobResults = $this->clientWrapper->getBranchClientIfAvailable()->handleAsyncTasks($jobIds);
+        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
         $keyedResults = [];
         foreach ($jobResults as $result) {
             $keyedResults[$result['id']] = $result;

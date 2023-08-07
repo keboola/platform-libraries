@@ -12,7 +12,7 @@ class DestinationRewriter
 {
     public static function rewriteDestination(array $config, ClientWrapper $clientWrapper): array
     {
-        if (!$clientWrapper->hasBranch()) {
+        if (!$clientWrapper->isDevelopmentBranch()) {
             return $config;
         }
 
@@ -28,23 +28,7 @@ class DestinationRewriter
             $prefix = 'c-';
         }
 
-        try {
-            $webalizeResult = $clientWrapper->getBranchClientIfAvailable()->webalizeDisplayName(
-                (string) $clientWrapper->getBranchId()
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot upload file to table "%s" in Storage API: %s',
-                    $config['destination'],
-                    $e->getMessage()
-                ),
-                $e->getCode(),
-                $e
-            );
-        }
-
-        $bucketId = $webalizeResult['displayName'] . '-' . $bucketId;
+        $bucketId = $clientWrapper->getBranchId() . '-' . $bucketId;
 
         // this assumes that bucket id starts with c-
         // https://github.com/keboola/output-mapping/blob/f6451d2faa825913db2ce986952a9ad6db082e50/src/Writer/TableWriter.php#L498

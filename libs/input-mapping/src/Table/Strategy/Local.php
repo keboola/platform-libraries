@@ -16,7 +16,7 @@ class Local extends AbstractStrategy
 
     public function downloadTable(RewrittenInputTableOptions $table): array
     {
-        $tokenInfo = $this->clientWrapper->getBranchClientIfAvailable()->verifyToken();
+        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
         if (!empty($tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME])) {
             $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];

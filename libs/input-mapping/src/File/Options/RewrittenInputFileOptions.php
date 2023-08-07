@@ -61,7 +61,9 @@ class RewrittenInputFileOptions extends InputFileOptions
                 $this->definition['changed_since']
             ));
         }
-        $options->setLimit($this->definition['limit']);
+        if (isset($this->definition['limit'])) {
+            $options->setLimit($this->definition['limit']);
+        }
 
         if (isset($this->definition['changed_since'])
             && $this->definition['changed_since'] === InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE

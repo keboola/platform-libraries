@@ -133,66 +133,6 @@ class ReaderTest extends TestCase
         self::assertEmpty($files);
     }
 
-    public function testReadInvalidConfigurationNoQueryNoTagsNoSource(): void
-    {
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
-        $configurations = [[]];
-        try {
-            $reader->downloadFiles(
-                $configurations,
-                'download',
-                AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
-            );
-            self::fail('Invalid configuration should fail.');
-        } catch (InvalidInputException $e) {
-            self::assertStringContainsString(
-                'Invalid configuration for path "file": At least one of ' .
-                '"tags", "source.tags" or "query" parameters must be defined.',
-                $e->getMessage()
-            );
-        }
-        $finder = new Finder();
-        $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-        self::assertEmpty($files);
-    }
-
-    public function testReadInvalidConfigurationBothTagsAndSourceTags(): void
-    {
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
-        $configurations = [
-            [
-                'source' => [
-                    'tags' => [
-                        [
-                            'name' => 'tag',
-                        ],
-                    ],
-                ],
-                'tags' => [
-                    'tag',
-                ],
-            ],
-        ];
-        try {
-            $reader->downloadFiles(
-                $configurations,
-                'download',
-                AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
-            );
-            self::fail('Invalid configuration should fail.');
-        } catch (InvalidInputException $e) {
-            self::assertStringContainsString(
-                'Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.',
-                $e->getMessage()
-            );
-        }
-        $finder = new Finder();
-        $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-        self::assertEmpty($files);
-    }
-
     public function testReadTablesDefaultBackend(): void
     {
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));

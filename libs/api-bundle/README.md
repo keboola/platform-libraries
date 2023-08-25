@@ -1,11 +1,13 @@
-# Keboola Logging Bundle
+# Keboola API Bundle
+Symfony bundle providing common functionality for Keboola API applications.
+
 Features:
-* adds DataDog APM metadata to logs
+* authentication using Storage and Manage API tokens
 
 ## Installation
 Install the package with Composer:
 ```shell
-composer require keboola/logging-bundle
+composer require keboola/api-bundle
 ```
 
 To use authentication using attributes, add the following to your `config/packages/security.yaml`:
@@ -18,10 +20,17 @@ security:
         custom_authenticators:
           - keboola.api_bundle.security.attribute_authenticator
 ```
+
 ## Configuration
 No configuration is required.
 
-Based on if the DataDog extension is available, the bundle will automatically register the log processor.
+Authentication attributes are configured automatically based on API clients installed:
+* to use `StorageApiTokenAuth`, install `keboola/storage-api-client`
+* to use `ManageApiTokenAuth`, install `keboola/kbc-manage-api-php-client`
+
+> [!NOTE]
+> If you forget to install appropriate client, you will get exception like
+> `Service "Keboola\ApiBundle\Attribute\ManageApiTokenAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
 ## License
 

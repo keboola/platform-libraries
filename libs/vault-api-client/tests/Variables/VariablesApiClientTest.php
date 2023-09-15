@@ -177,7 +177,7 @@ class VariablesApiClientTest extends TestCase
         );
     }
 
-    public function testListMergedVariablesFor(): void
+    public function testListScopedVariablesForBranch(): void
     {
         $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
@@ -200,12 +200,12 @@ class VariablesApiClientTest extends TestCase
             ),
         );
 
-        $variables = $client->listMergedVariablesForBranch('123');
+        $variables = $client->listScopedVariablesForBranch('123');
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
             'GET',
-            self::BASE_URL . '/variables/merged/branch?branchId=123',
+            self::BASE_URL . '/variables/scoped/branch/123',
             [
                 'X-StorageApi-Token' => self::API_TOKEN,
             ],

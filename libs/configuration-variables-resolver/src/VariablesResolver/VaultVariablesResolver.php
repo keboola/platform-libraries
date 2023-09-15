@@ -22,7 +22,7 @@ class VaultVariablesResolver
     public function resolveVariables(array $configuration, string $branchId): RenderResults
     {
         $loadVariables = function () use ($branchId): array {
-            $variables = $this->variablesApiClient->listMergedVariablesForBranch($branchId);
+            $variables = $this->variablesApiClient->listScopedVariablesForBranch($branchId);
 
             $keyVal = [];
             foreach ($variables as $variable) {

@@ -52,7 +52,7 @@ class VariableResolverTest extends TestCase
     {
         $variablesApiClient = $this->createMock(VariablesApiClient::class);
         $variablesApiClient
-            ->method('listMergedVariablesForBranch')
+            ->method('listScopedVariablesForBranch')
             ->with(self::BRANCH_ID)
             ->willReturn([])
         ;

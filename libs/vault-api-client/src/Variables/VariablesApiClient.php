@@ -87,14 +87,12 @@ class VariablesApiClient
      * @param non-empty-string $branchId
      * @return array<Variable>
      */
-    public function listMergedVariablesForBranch(string $branchId): array
+    public function listScopedVariablesForBranch(string $branchId): array
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
-                'variables/merged/branch?' . http_build_query([
-                    'branchId' => $branchId,
-                ]),
+                'variables/scoped/branch/' . $branchId,
             ),
             Variable::class,
             [],

@@ -32,7 +32,7 @@ class VariablesApiClientTest extends TestCase
                     'hash' => 'hash',
                     'key' => 'key',
                     'value' => 'val',
-                    'isEncrypted' => true,
+                    'flags' => ['encrypted'],
                     'attributes' => [
                         'branchId' => '123',
                     ],
@@ -51,10 +51,8 @@ class VariablesApiClientTest extends TestCase
         $variable = $client->createVariable(
             'key',
             'val',
-            true,
-            [
-                'branchId' => '123',
-            ]
+            [Variable::FLAG_ENCRYPTED],
+            ['branchId' => '123'],
         );
 
         self::assertCount(1, $requestsHistory);
@@ -68,7 +66,7 @@ class VariablesApiClientTest extends TestCase
             Json::encodeArray([
                 'key' => 'key',
                 'value' => 'val',
-                'isEncrypted' => true,
+                'flags' => ['encrypted'],
                 'attributes' => [
                     'branchId' => '123',
                 ],
@@ -81,7 +79,7 @@ class VariablesApiClientTest extends TestCase
                 hash: 'hash',
                 key: 'key',
                 value: 'val',
-                isEncrypted: true,
+                flags: [Variable::FLAG_ENCRYPTED],
                 attributes: [
                     'branchId' => '123',
                 ],
@@ -127,8 +125,8 @@ class VariablesApiClientTest extends TestCase
                     'Content-Type' => 'application/json',
                 ],
                 Json::encodeArray([
-                    ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'isEncrypted' => false, 'attributes' => []],
-                    ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'isEncrypted' => false, 'attributes' => []],
+                    ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'flags' => [], 'attributes' => []],
+                    ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'flags' => [], 'attributes' => []],
                 ])
             ),
         ]);
@@ -160,7 +158,7 @@ class VariablesApiClientTest extends TestCase
                 hash: 'hash1',
                 key: 'key1',
                 value: 'val1',
-                isEncrypted: false,
+                flags: [],
                 attributes: [],
             ),
             $variables[0],
@@ -170,7 +168,7 @@ class VariablesApiClientTest extends TestCase
                 hash: 'hash2',
                 key: 'key2',
                 value: 'val2',
-                isEncrypted: false,
+                flags: [],
                 attributes: [],
             ),
             $variables[1],
@@ -186,8 +184,8 @@ class VariablesApiClientTest extends TestCase
                     'Content-Type' => 'application/json',
                 ],
                 Json::encodeArray([
-                    ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'isEncrypted' => false, 'attributes' => []],
-                    ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'isEncrypted' => false, 'attributes' => []],
+                    ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'flags' => [], 'attributes' => []],
+                    ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'flags' => [], 'attributes' => []],
                 ])
             ),
         ]);
@@ -219,7 +217,7 @@ class VariablesApiClientTest extends TestCase
                 hash: 'hash1',
                 key: 'key1',
                 value: 'val1',
-                isEncrypted: false,
+                flags: [],
                 attributes: [],
             ),
             $variables[0],
@@ -229,7 +227,7 @@ class VariablesApiClientTest extends TestCase
                 hash: 'hash2',
                 key: 'key2',
                 value: 'val2',
-                isEncrypted: false,
+                flags: [],
                 attributes: [],
             ),
             $variables[1],

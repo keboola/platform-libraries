@@ -29,11 +29,12 @@ class VariablesApiClient
 
     /**
      * @param non-empty-string $key
+     * @param array<Variable::FLAG_*> $flags
      */
     public function createVariable(
         string $key,
         string $value,
-        bool $isEncrypted = false,
+        array $flags = [],
         array $attributes = [],
     ): Variable {
         return $this->apiClient->sendRequestAndMapResponse(
@@ -46,7 +47,7 @@ class VariablesApiClient
                 Json::encodeArray([
                     'key' => $key,
                     'value' => $value,
-                    'isEncrypted' => $isEncrypted,
+                    'flags' => $flags,
                     'attributes' => $attributes,
                 ])
             ),

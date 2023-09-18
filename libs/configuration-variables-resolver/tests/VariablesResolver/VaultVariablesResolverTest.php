@@ -26,7 +26,7 @@ class VaultVariablesResolverTest extends TestCase
             ->method('listScopedVariablesForBranch')
             ->with('branch-id')
             ->willReturn([
-                new Variable('hash1', 'foo', 'bar', false, ['branchId' => 'branch-id']),
+                new Variable('hash1', 'foo', 'bar', [], ['branchId' => 'branch-id']),
             ])
         ;
 

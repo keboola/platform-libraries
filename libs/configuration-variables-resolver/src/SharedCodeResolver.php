@@ -39,16 +39,16 @@ class SharedCodeResolver
         foreach ($sharedCodeRowIds as $sharedCodeRowId) {
             $sharedCodeConfiguration = $this->componentsHelper->getSharedCodeConfigurationRow(
                 $sharedCodeId,
-                $sharedCodeRowId
+                $sharedCodeRowId,
             );
             $context->pushValue(
                 $sharedCodeRowId,
-                $sharedCodeConfiguration['code_content']
+                $sharedCodeConfiguration['code_content'],
             );
         }
         $this->logger->info(sprintf(
             'Loaded shared code snippets with ids: "%s".',
-            implode(', ', $context->getKeys())
+            implode(', ', $context->getKeys()),
         ));
 
         $newConfiguration = $configuration;
@@ -90,7 +90,7 @@ class SharedCodeResolver
                 $matches,
                 function (&$v) {
                     $v = trim($v);
-                }
+                },
             );
             $filteredMatches = array_intersect($context->getKeys(), $matches);
             if (count($filteredMatches) === 0) {

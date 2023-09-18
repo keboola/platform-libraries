@@ -44,7 +44,7 @@ class VariableResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-            )
+            ),
         );
     }
 
@@ -97,7 +97,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -113,7 +113,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -124,7 +124,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -135,7 +135,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         self::assertEquals(
             [
@@ -144,7 +144,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -155,7 +155,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -172,7 +172,7 @@ class VariableResolverTest extends TestCase
                 'variables_id' => $vConfigurationId,
                 'variables_values_id' => $vRowId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using default values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -183,7 +183,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -200,7 +200,7 @@ class VariableResolverTest extends TestCase
                 'variables_id' => $vConfigurationId,
                 'variables_values_id' => 'not-used',
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -211,7 +211,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -223,7 +223,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bazooka']]]
+            ['values' => [['name' => 'foo', 'value' => 'bazooka']]],
         );
         self::assertEquals(
             [
@@ -233,7 +233,7 @@ class VariableResolverTest extends TestCase
                 'variables_id' => $vConfigurationId,
                 'variables_values_id' => $vRowId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -244,7 +244,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -255,7 +255,7 @@ class VariableResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'No variable values provided for variables configuration "' .
-            $vConfigurationId . '".'
+            $vConfigurationId . '".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, null, null);
     }
@@ -265,7 +265,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -275,7 +275,7 @@ class VariableResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".'
+            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, null, null);
     }
@@ -285,7 +285,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -294,7 +294,7 @@ class VariableResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".'
+            'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
     }
@@ -304,7 +304,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -313,13 +313,13 @@ class VariableResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Only one of variableValuesId and variableValuesData can be entered.'
+            'Only one of variableValuesId and variableValuesData can be entered.',
         );
         $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             'non-existent',
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
     }
 
@@ -328,7 +328,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -339,7 +339,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             $vRowId,
-            ['values' => []]
+            ['values' => []],
         );
         self::assertEquals(
             [
@@ -348,7 +348,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -363,7 +363,7 @@ class VariableResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Variable configuration cannot be read: Configuration non-existent not found'
+            'Variable configuration cannot be read: Configuration non-existent not found',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
     }
@@ -373,7 +373,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['invalid' => 'data'],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -383,7 +383,7 @@ class VariableResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'Variable configuration is invalid: Unrecognized option "invalid" under "variables". ' .
-            'Available option is "variables".'
+            'Available option is "variables".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
     }
@@ -401,7 +401,7 @@ class VariableResolverTest extends TestCase
                     'some_parameter' => 'foo is {{ foo }}',
                 ],
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertFalse($this->logsHandler->hasInfoThatContains('Replacing variables using default values with ID:'));
     }
@@ -411,7 +411,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['invalid' => [['name' => 'foo', 'value' => 'bar']]]
+            ['invalid' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -421,7 +421,7 @@ class VariableResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'Variable values configuration is invalid: Unrecognized option "invalid" under "values". ' .
-            'Available option is "values".'
+            'Available option is "values".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, []);
     }
@@ -431,7 +431,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -442,7 +442,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]]
+            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]],
         );
         self::assertEquals(
             [
@@ -451,7 +451,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -462,7 +462,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string'], ['name' => 'goo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -475,7 +475,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
     }
 
@@ -484,7 +484,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -497,7 +497,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
     }
 
@@ -506,13 +506,13 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            )
+            ),
         );
 
         $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
@@ -520,8 +520,8 @@ class VariableResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                (string) $branchId
-            )
+                (string) $branchId,
+            ),
         );
 
         // modify the dev branch variable configuration to "dev-bar"
@@ -547,7 +547,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -558,7 +558,7 @@ class VariableResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 4321, 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -569,7 +569,7 @@ class VariableResolverTest extends TestCase
             $configuration,
             self::BRANCH_ID,
             null,
-            ['values' => [['name' => 4321, 'value' => 1234]]]
+            ['values' => [['name' => 4321, 'value' => 1234]]],
         );
         self::assertEquals(
             [
@@ -578,7 +578,7 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: 4321'));

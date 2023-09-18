@@ -47,7 +47,7 @@ class ComponentsClientHelper
             $vRow = $this->componentsApiClient->getConfigurationRow(
                 self::KEBOOLA_VARIABLES,
                 $variablesId,
-                $variableValuesId
+                $variableValuesId,
             );
             /** @var array{values: list<array{name: non-empty-string, value: scalar}>} $normalized */
             $normalized = (new VariableValues())->process($vRow['configuration']);
@@ -60,7 +60,7 @@ class ComponentsClientHelper
                     $variablesId,
                 ),
                 400,
-                $e
+                $e,
             );
         } catch (InvalidConfigurationException $e) {
             throw new UserException('Variable values configuration is invalid: ' . $e->getMessage(), 400, $e);
@@ -73,7 +73,7 @@ class ComponentsClientHelper
             $sharedCodeConfiguration = $this->componentsApiClient->getConfigurationRow(
                 self::KEBOOLA_SHARED_CODE,
                 $sharedCodeId,
-                $sharedCodeRowId
+                $sharedCodeRowId,
             );
             return (new SharedCodeRow())->process($sharedCodeConfiguration['configuration']);
         } catch (ClientException $e) {

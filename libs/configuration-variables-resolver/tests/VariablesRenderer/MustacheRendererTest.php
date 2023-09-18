@@ -22,7 +22,7 @@ class MustacheRendererTest extends TestCase
             [
                 'foo' => 'bar',
                 'goo' => 'gar',
-            ]
+            ],
         );
 
         self::assertSame(
@@ -48,7 +48,7 @@ class MustacheRendererTest extends TestCase
             ],
             [
                 'foo' => 'bar',
-            ]
+            ],
         );
 
         self::assertSame(
@@ -74,7 +74,7 @@ class MustacheRendererTest extends TestCase
             ],
             [
                 'key1' => 'val1',
-            ]
+            ],
         );
 
         self::assertSame(
@@ -100,7 +100,7 @@ class MustacheRendererTest extends TestCase
             ],
             [
                 'foo' => 'special " \' { } characters',
-            ]
+            ],
         );
 
         self::assertSame(
@@ -126,7 +126,7 @@ class MustacheRendererTest extends TestCase
             ],
             [
                 'key1' => '"',
-            ]
+            ],
         );
 
         self::assertSame(
@@ -158,7 +158,7 @@ class MustacheRendererTest extends TestCase
             ],
             [
                 'key1' => 'value"',
-            ]
+            ],
         );
     }
 }

@@ -74,7 +74,7 @@ class VariablesResolver
         if (count($missingVariables) > 0) {
             throw new UserException(sprintf(
                 'Missing values for placeholders: %s',
-                implode(', ', $missingVariables)
+                implode(', ', $missingVariables),
             ));
         }
 

@@ -29,11 +29,12 @@ class VariablesApiClient
 
     /**
      * @param non-empty-string $key
+     * @param array<Variable::FLAG_*> $flags
      */
     public function createVariable(
         string $key,
         string $value,
-        bool $isEncrypted = false,
+        array $flags = [],
         array $attributes = [],
     ): Variable {
         return $this->apiClient->sendRequestAndMapResponse(
@@ -46,7 +47,7 @@ class VariablesApiClient
                 Json::encodeArray([
                     'key' => $key,
                     'value' => $value,
-                    'isEncrypted' => $isEncrypted,
+                    'flags' => $flags,
                     'attributes' => $attributes,
                 ])
             ),
@@ -87,14 +88,12 @@ class VariablesApiClient
      * @param non-empty-string $branchId
      * @return array<Variable>
      */
-    public function listMergedVariablesForBranch(string $branchId): array
+    public function listScopedVariablesForBranch(string $branchId): array
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
-                'variables/merged/branch?' . http_build_query([
-                    'branchId' => $branchId,
-                ]),
+                'variables/scoped/branch/' . $branchId,
             ),
             Variable::class,
             [],

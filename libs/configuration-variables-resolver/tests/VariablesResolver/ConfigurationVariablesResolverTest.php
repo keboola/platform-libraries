@@ -42,7 +42,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-            )
+            ),
         );
     }
 
@@ -90,7 +90,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -118,7 +118,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -128,7 +128,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         self::assertEquals(
             [
@@ -149,7 +149,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -178,7 +178,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -207,7 +207,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -218,7 +218,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bazooka']]]
+            ['values' => [['name' => 'foo', 'value' => 'bazooka']]],
         );
         self::assertEquals(
             [
@@ -240,7 +240,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -251,7 +251,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(sprintf(
             'No variable values provided for variables configuration "%s".',
-            $vConfigurationId
+            $vConfigurationId,
         ));
         $variableResolver->resolveVariables($configuration, null, null);
     }
@@ -261,7 +261,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -282,7 +282,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -302,7 +302,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -314,7 +314,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $variableResolver->resolveVariables(
             $configuration,
             'non-existent',
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
     }
 
@@ -323,7 +323,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -333,7 +333,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             $vRowId,
-            ['values' => []]
+            ['values' => []],
         );
         self::assertEquals(
             [
@@ -366,7 +366,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['invalid' => 'data'],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -376,7 +376,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'Variable configuration is invalid: Unrecognized option "invalid" under "variables". ' .
-            'Available option is "variables".'
+            'Available option is "variables".',
         );
         $variableResolver->resolveVariables($configuration, 'non-existent', null);
     }
@@ -404,7 +404,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['invalid' => [['name' => 'foo', 'value' => 'bar']]]
+            ['invalid' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -414,7 +414,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         self::expectException(UserException::class);
         self::expectExceptionMessage(
             'Variable values configuration is invalid: Unrecognized option "invalid" under "values". ' .
-            'Available option is "values".'
+            'Available option is "values".',
         );
         $variableResolver->resolveVariables($configuration, $vRowId, []);
     }
@@ -424,7 +424,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -434,7 +434,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]]
+            ['values' => [['name' => 'foo', 'value' => 'special " \' { } characters']]],
         );
         self::assertEquals(
             [
@@ -455,7 +455,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string'], ['name' => 'goo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -467,7 +467,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
     }
 
@@ -476,7 +476,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -486,7 +486,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         self::assertSame([
             'variables_id' => $vConfigurationId,
@@ -501,13 +501,13 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'bar']]]
+            ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            )
+            ),
         );
 
         $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
@@ -515,8 +515,8 @@ class ConfigurationVariablesResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                (string) $branchId
-            )
+                (string) $branchId,
+            ),
         );
 
         // modify the dev branch variable configuration to "dev-bar"
@@ -554,7 +554,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         list ($vConfigurationId, $vRowId) = $this->createVariablesConfiguration(
             $this->clientWrapper->getBasicClient(),
             ['variables' => [['name' => 4321, 'type' => 'string']]],
-            []
+            [],
         );
         $configuration = [
             'variables_id' => $vConfigurationId,
@@ -564,7 +564,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $results = $variableResolver->resolveVariables(
             $configuration,
             null,
-            ['values' => [['name' => 4321, 'value' => 1234]]]
+            ['values' => [['name' => 4321, 'value' => 1234]]],
         );
         self::assertEquals(
             [

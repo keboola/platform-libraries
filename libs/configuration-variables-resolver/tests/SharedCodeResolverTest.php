@@ -32,7 +32,7 @@ class SharedCodeResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-            )
+            ),
         );
         $components = new Components($this->clientWrapper->getBasicClient());
         $listOptions = new ListComponentConfigurationsOptions();
@@ -89,7 +89,7 @@ class SharedCodeResolverTest extends TestCase
                 'first_code' => ['code_content' => ['SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id']],
                 // bwd compatible shared code configuration where the code is not array
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
@@ -158,7 +158,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".')
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -169,7 +169,7 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_row_ids' => $sharedCodeRowIds,
@@ -187,10 +187,10 @@ class SharedCodeResolverTest extends TestCase
                 ],
                 'shared_code_row_ids' => ['first_code', 'secondCode'],
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertFalse(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".')
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -201,7 +201,7 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
@@ -219,10 +219,10 @@ class SharedCodeResolverTest extends TestCase
                 ],
                 'shared_code_id' => $sharedConfigurationId,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertFalse(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".')
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -233,7 +233,7 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => 'non-existent',
@@ -245,7 +245,7 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver = $this->getSharedCodeResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Shared code configuration cannot be read: Configuration non-existent not found'
+            'Shared code configuration cannot be read: Configuration non-existent not found',
         );
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
@@ -257,7 +257,7 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['code_content' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
@@ -269,7 +269,7 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver = $this->getSharedCodeResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Shared code configuration cannot be read: Row foo not found'
+            'Shared code configuration cannot be read: Row foo not found',
         );
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
@@ -281,7 +281,7 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['this is broken' => 'SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id'],
                 'secondCode' => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
@@ -293,7 +293,7 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver = $this->getSharedCodeResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Shared code configuration is invalid: Unrecognized option "this is broken" under "configuration"'
+            'Shared code configuration is invalid: Unrecognized option "this is broken" under "configuration"',
         );
         $sharedCodeResolver->resolveSharedCode($configuration);
     }
@@ -305,21 +305,21 @@ class SharedCodeResolverTest extends TestCase
             [
                 'first_code' => ['code_content' => ['SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id']],
                 'secondCode' => ['code_content' => ['bar']],
-            ]
+            ],
         );
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            )
+            ),
         );
         $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-                (string) $branchId
-            )
+                (string) $branchId,
+            ),
         );
 
         // modify the dev branch shared code configuration to "dev-bar"
@@ -357,10 +357,10 @@ class SharedCodeResolverTest extends TestCase
                 'shared_code_id' => $sharedConfigurationId,
                 'shared_code_row_ids' => [0 => 'first_code', 1 => 'secondCode'],
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".')
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -372,7 +372,7 @@ class SharedCodeResolverTest extends TestCase
                 '123456' => ['code_content' => ['SELECT * FROM {{tab1}} LEFT JOIN {{tab2}} ON b.a_id = a.id']],
                 // bwd compatible shared code configuration where the code is not array
                 1234567 => ['code_content' => 'bar'],
-            ]
+            ],
         );
         $configuration = [
             'shared_code_id' => $sharedConfigurationId,
@@ -396,10 +396,10 @@ class SharedCodeResolverTest extends TestCase
                     '1234567',
                 ],
             ],
-            $newConfiguration
+            $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "123456, 1234567".')
+            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "123456, 1234567".'),
         );
     }
 }

@@ -15,7 +15,7 @@ class VariableTest extends TestCase
             'hash' => 'hash',
             'key' => 'key',
             'value' => 'value',
-            'isEncrypted' => true,
+            'flags' => ['encrypted'],
             'attributes' => [
                 'attr1' => 'val1',
                 'attr2' => 'val2',
@@ -27,7 +27,7 @@ class VariableTest extends TestCase
             hash: 'hash',
             key: 'key',
             value: 'value',
-            isEncrypted: true,
+            flags: [Variable::FLAG_ENCRYPTED],
             attributes: [
                 'attr1' => 'val1',
                 'attr2' => 'val2',

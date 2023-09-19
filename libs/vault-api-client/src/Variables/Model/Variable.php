@@ -8,18 +8,21 @@ use Keboola\VaultApiClient\ResponseModelInterface;
 
 final readonly class Variable implements ResponseModelInterface
 {
+    public const FLAG_ENCRYPTED = 'encrypted';
+    public const FLAG_OAUTH_CREDENTIALS_ID = 'oauthCredentialsId';
+
     /**
      * @param non-empty-string $hash
      * @param non-empty-string $key
      * @param string $value
-     * @param bool $isEncrypted
+     * @param array<self::FLAG_*> $flags
      * @param array<non-empty-string, string> $attributes
      */
     public function __construct(
         public string $hash,
         public string $key,
         public string $value,
-        public bool $isEncrypted,
+        public array $flags,
         public array $attributes,
     ) {
     }
@@ -30,7 +33,7 @@ final readonly class Variable implements ResponseModelInterface
             $data['hash'],
             $data['key'],
             $data['value'],
-            $data['isEncrypted'] ?? false,
+            $data['flags'] ?? [],
             $data['attributes'] ?? [],
         );
     }

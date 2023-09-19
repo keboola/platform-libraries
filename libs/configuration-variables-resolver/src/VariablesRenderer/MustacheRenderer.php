@@ -40,7 +40,7 @@ class MustacheRenderer
             $configuration = (array) json_decode($renderedConfiguration, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new UserException(
-                'Variable replacement resulted in invalid configuration, error: ' . $e->getMessage()
+                'Variable replacement resulted in invalid configuration, error: ' . $e->getMessage(),
             );
         }
 

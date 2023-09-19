@@ -68,7 +68,7 @@ class ConfigurationVariablesResolver
         string $variablesId,
         ?string $variablesValuesId,
         ?string $variableValuesId,
-        ?array $variableValuesData
+        ?array $variableValuesData,
     ): array {
         $variablesConfiguration = $this->componentsHelper->getVariablesConfiguration($variablesId);
         $variablesData = $this->loadVariablesData(
@@ -139,7 +139,7 @@ class ConfigurationVariablesResolver
 
         throw new UserException(sprintf(
             'No variable values provided for variables configuration "%s".',
-            $variablesId
+            $variablesId,
         ));
     }
 }

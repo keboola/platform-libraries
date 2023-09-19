@@ -47,7 +47,7 @@ class VariablesResolverFunctionalTest extends TestCase
             new ClientOptions(
                 self::getRequiredEnv('STORAGE_API_URL'),
                 self::getRequiredEnv('STORAGE_API_TOKEN'),
-            )
+            ),
         );
 
         $this->variablesApiClient = new VariablesApiClient(
@@ -122,7 +122,7 @@ class VariablesResolverFunctionalTest extends TestCase
     {
         $this->setupConfigurationVariables(
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'config foo']]]
+            ['values' => [['name' => 'foo', 'value' => 'config foo']]],
         );
         $this->setupVaultVariables([
             'foo' => 'vault foo',
@@ -154,7 +154,7 @@ class VariablesResolverFunctionalTest extends TestCase
                 ],
                 'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
@@ -164,7 +164,7 @@ class VariablesResolverFunctionalTest extends TestCase
     {
         $this->setupConfigurationVariables(
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'main config foo']]]
+            ['values' => [['name' => 'foo', 'value' => 'main config foo']]],
         );
         $this->setupVaultVariables([
             'foo' => 'main vault foo',
@@ -241,7 +241,7 @@ class VariablesResolverFunctionalTest extends TestCase
                 ],
                 'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
@@ -251,7 +251,7 @@ class VariablesResolverFunctionalTest extends TestCase
     {
         $this->setupConfigurationVariables(
             ['variables' => []],
-            []
+            [],
         );
         $this->setupVaultVariables([]);
 
@@ -283,7 +283,7 @@ class VariablesResolverFunctionalTest extends TestCase
     {
         $this->setupConfigurationVariables(
             ['variables' => [['name' => 'foo', 'type' => 'string']]],
-            ['values' => [['name' => 'foo', 'value' => 'config foo']]]
+            ['values' => [['name' => 'foo', 'value' => 'config foo']]],
         );
 
         $configuration = [
@@ -315,7 +315,7 @@ class VariablesResolverFunctionalTest extends TestCase
                 ],
                 'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration
+            $newConfiguration,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));

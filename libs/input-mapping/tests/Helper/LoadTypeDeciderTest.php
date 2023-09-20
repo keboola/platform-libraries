@@ -11,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 class LoadTypeDeciderTest extends TestCase
 {
     /**
-     * @dataProvider decideProvider
+     * @dataProvider decideCanCLoneProvider
      */
-    public function testDecide(
+    public function testDecideCanClone(
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
@@ -22,7 +22,7 @@ class LoadTypeDeciderTest extends TestCase
         self::assertEquals($expected, LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions));
     }
 
-    public function decideProvider(): Generator
+    public function decideCanCLoneProvider(): Generator
     {
         yield 'Different Backends' => [
             [

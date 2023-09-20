@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 class LoadTypeDeciderTest extends TestCase
 {
     /**
-     * @dataProvider decideCanCLoneProvider
+     * @dataProvider decideCanCloneProvider
      */
     public function testDecideCanClone(
         array $tableInfo,
@@ -22,7 +22,7 @@ class LoadTypeDeciderTest extends TestCase
         self::assertEquals($expected, LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions));
     }
 
-    public function decideCanCLoneProvider(): Generator
+    public function decideCanCloneProvider(): Generator
     {
         yield 'Different Backends' => [
             [
@@ -121,6 +121,68 @@ class LoadTypeDeciderTest extends TestCase
             'snowflake',
             ['overwrite' => false],
             false,
+        ];
+    }
+    /**
+     * @dataProvider decideCanUseViewProvider
+     */
+    public function testDecideCanUseView(
+        array $tableInfo,
+        string $workspaceType,
+        array $exportOptions,
+        bool $expected
+    ): void {
+        self::assertEquals($expected, LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions));
+    }
+
+    public function decideCanUseViewProvider(): Generator
+    {
+        yield 'BigQuery Table Alias' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table Overwrite' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => ['overwrite' => true],
+            'expected' => true,
+        ];
+
+        yield 'Table Overwrite Different Backend' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'snowflake',
+            'exportOptions' => ['overwrite' => true],
+            'expected' => false,
         ];
     }
 }

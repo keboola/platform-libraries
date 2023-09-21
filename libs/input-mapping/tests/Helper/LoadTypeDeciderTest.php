@@ -123,6 +123,7 @@ class LoadTypeDeciderTest extends TestCase
             false,
         ];
     }
+
     /**
      * @dataProvider decideCanUseViewProvider
      */
@@ -130,7 +131,7 @@ class LoadTypeDeciderTest extends TestCase
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
-        bool $expected
+        bool $expected,
     ): void {
         self::assertEquals($expected, LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions));
     }

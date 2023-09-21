@@ -392,7 +392,10 @@ class InputProviderInitializerTest extends TestCase
         );
         self::assertInstanceOf(
             InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_EXASOL, new InputFileStateList([])),
+            $stagingFactory->getFileInputStrategy(
+                AbstractStrategyFactory::WORKSPACE_EXASOL,
+                new InputFileStateList([]),
+            ),
         );
         self::assertInstanceOf(
             InputTableExasol::class,

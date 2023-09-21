@@ -38,7 +38,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
             ),
         );
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
@@ -48,7 +48,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl(),
         ));
     }
 
@@ -74,8 +74,8 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
                 null,
                 'json',
                 $logger,
-                [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
-            )
+                [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
+            ),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -100,7 +100,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_ABS,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -139,7 +139,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             null,
             'json',
             $logger,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         ));
         $configuration = new InputTableOptionsList([
             [
@@ -153,7 +153,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             new InputTableStateList([]),
             'download/test/',
             AbstractStrategyFactory::WORKSPACE_ABS,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -163,7 +163,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         $this->assertBlobs('download/test/test1');
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-abs" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains(
-            'Table "in.c-testTablesAbsWorkspaceSlashTest.test1" will be copied.'
+            'Table "in.c-testTablesAbsWorkspaceSlashTest.test1" will be copied.',
         ));
     }
 
@@ -179,7 +179,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             null,
             'json',
             $logger,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         ));
         $configuration = new InputTableOptionsList([
             [
@@ -191,7 +191,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'View load for table "download/test1" using backend "abs" can\'t be used, only Synapse is supported.'
+            'View load for table "download/test1" using backend "abs" can\'t be used, only Synapse is supported.',
         );
 
         $reader->downloadTables(
@@ -199,7 +199,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_ABS,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 }

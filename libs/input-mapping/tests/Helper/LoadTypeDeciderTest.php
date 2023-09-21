@@ -17,7 +17,7 @@ class LoadTypeDeciderTest extends TestCase
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
-        bool $expected
+        bool $expected,
     ): void {
         self::assertEquals($expected, LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions));
     }

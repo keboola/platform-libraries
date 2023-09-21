@@ -34,13 +34,13 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         sleep(2);
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $files = $clientWrapper->getBasicClient()->listFiles(
-            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG])
+            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG]),
         );
         foreach ($files as $file) {
             $clientWrapper->getBasicClient()->deleteFile($file['id']);
         }
         $files = $clientWrapper->getBranchClient()->listFiles(
-            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG])
+            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG]),
         );
         foreach ($files as $file) {
             $clientWrapper->getBranchClient()->deleteFile($file['id']);
@@ -67,7 +67,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -81,7 +81,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
             $testLogger,
@@ -95,7 +95,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 ['tags' => [self::TEST_REWRITE_BASE_TAG], 'overwrite' => true],
                 (int) $clientWrapper->getDefaultBranch()->id,
             ),
-            $processedConfiguration
+            $processedConfiguration,
         );
     }
 
@@ -106,7 +106,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $clientWrapper->getBranchClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG])
+            (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG]),
         );
         sleep(2);
 
@@ -115,14 +115,14 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
         $configuration = new InputFileOptions(
             $configuration,
             $clientWrapper->isDevelopmentBranch(),
-            (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+            (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
         );
 
         $testLogger = new TestLogger();
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             $configuration,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
 
         self::assertEquals(
@@ -133,10 +133,10 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 ['tags' => [self::TEST_REWRITE_BASE_TAG], 'overwrite' => true],
                 (int) self::$branchId,
             ),
-            $processedConfiguration
+            $processedConfiguration,
         );
         self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using files from development branch "%s" for tags "im-files-test".', self::$branchId)
+            sprintf('Using files from development branch "%s" for tags "im-files-test".', self::$branchId),
         ));
     }
 
@@ -167,10 +167,10 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
 
         self::assertEquals(
@@ -200,15 +200,15 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 ],
                 (int) self::$branchId,
             ),
-            $processedConfiguration
+            $processedConfiguration,
         );
         self::assertTrue(
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using files from development branch "%s" for tags "im-files-test".',
-                    self::$branchId
-                )
-            )
+                    self::$branchId,
+                ),
+            ),
         );
     }
 
@@ -221,7 +221,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 ['tags' => [self::TEST_REWRITE_BASE_TAG]],
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
             $testLogger,
@@ -240,15 +240,15 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 ],
                 (int) $clientWrapper->getDefaultBranch()->id,
             ),
-            $processedConfiguration
+            $processedConfiguration,
         );
         self::assertTrue(
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
-                    $clientWrapper->getDefaultBranch()->id
-                )
-            )
+                    $clientWrapper->getDefaultBranch()->id,
+                ),
+            ),
         );
     }
 
@@ -271,10 +271,10 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
 
         self::assertEquals(
@@ -304,15 +304,15 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
                 ],
                 (int) $clientWrapper->getDefaultBranch()->id,
             ),
-            $processedConfiguration
+            $processedConfiguration,
         );
         self::assertTrue(
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
-                    $clientWrapper->getDefaultBranch()->id
-                )
-            )
+                    $clientWrapper->getDefaultBranch()->id,
+                ),
+            ),
         );
     }
 
@@ -341,10 +341,10 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
     }
 }

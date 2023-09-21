@@ -18,12 +18,12 @@ class TagsRewriteHelperFactoryTest extends TestCase
         self::assertInstanceOf(FakeDevStorageTagsRewriteHelper::class, $helper);
 
         $helper = TagsRewriteHelperFactory::getTagsRewriteHelper(new ClientOptions(
-            useBranchStorage: false
+            useBranchStorage: false,
         ));
         self::assertInstanceOf(FakeDevStorageTagsRewriteHelper::class, $helper);
 
         $helper = TagsRewriteHelperFactory::getTagsRewriteHelper(new ClientOptions(
-            useBranchStorage: true
+            useBranchStorage: true,
         ));
         self::assertInstanceOf(RealDevStorageTagsRewriteHelper::class, $helper);
     }

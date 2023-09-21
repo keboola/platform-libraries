@@ -49,7 +49,7 @@ class InputTableOptions
             if ($diff) {
                 throw new InvalidInputException(sprintf(
                     'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "%s".',
-                    implode(', ', $diff)
+                    implode(', ', $diff),
                 ));
             }
             $diff = array_diff($colNamesFromTypes, $this->definition['columns']);
@@ -57,7 +57,7 @@ class InputTableOptions
                 throw new InvalidInputException(sprintf(
                     'Both "columns" and "column_types" are specified, ' .
                     '"column_types" field contains surplus columns: "%s".',
-                    implode(', ', $diff)
+                    implode(', ', $diff),
                 ));
             }
         }
@@ -150,18 +150,18 @@ class InputTableOptions
         }
         if (!empty($this->definition['days'])) {
             throw new InvalidInputException(
-                'Days option is not supported on workspace, use changed_since instead.'
+                'Days option is not supported on workspace, use changed_since instead.',
             );
         }
         if (!empty($this->definition['changed_since'])) {
             if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
                 throw new InvalidInputException(
-                    'Adaptive input mapping is not supported on input mapping to workspace.'
+                    'Adaptive input mapping is not supported on input mapping to workspace.',
                 );
             } else {
                 if (strtotime($this->definition['changed_since']) === false) {
                     throw new InvalidInputException(
-                        sprintf('Error parsing changed_since expression "%s".', $this->definition['changed_since'])
+                        sprintf('Error parsing changed_since expression "%s".', $this->definition['changed_since']),
                     );
                 }
                 $exportOptions['seconds'] = time() - strtotime($this->definition['changed_since']);

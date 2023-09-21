@@ -110,7 +110,7 @@ class FileConfigurationTest extends TestCase
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage(
             'Invalid configuration for path "file": ' .
-            'At least one of "tags", "source.tags" or "query" parameters must be defined.'
+            'At least one of "tags", "source.tags" or "query" parameters must be defined.',
         );
         (new File())->parse(['config' => []]);
     }
@@ -119,7 +119,7 @@ class FileConfigurationTest extends TestCase
     {
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage(
-            'Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.'
+            'Invalid configuration for path "file": Both "tags" and "source.tags" cannot be defined.',
         );
         (new File())->parse(['config' => [
             'tags' => ['tag1'],

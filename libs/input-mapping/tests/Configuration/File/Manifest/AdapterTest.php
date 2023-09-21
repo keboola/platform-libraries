@@ -29,7 +29,7 @@ class AdapterTest extends AbstractManifestAdapterTest
     public function testInitWithFormat(
         string $format,
         string $expectedFormat,
-        string $expectedExtension
+        string $expectedExtension,
     ): void {
         $adapter = $this->createAdapter($format);
 
@@ -70,7 +70,7 @@ EOF,
      */
     public function testSetConfigAndSerialize(
         string $format,
-        string $expectedData
+        string $expectedData,
     ): void {
         $adapter = $this->createAdapter($format);
         $adapter->setConfig(['id' => 12345678]);
@@ -121,7 +121,7 @@ EOF,
      */
     public function testFileOperations(
         string $format,
-        string $expectedData
+        string $expectedData,
     ): void {
         $temp = new Temp('docker');
 

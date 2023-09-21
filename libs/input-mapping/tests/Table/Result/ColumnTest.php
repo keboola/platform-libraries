@@ -33,7 +33,7 @@ class ColumnTest extends TestCase
                 new MetadataItem($metadata[0]),
                 new MetadataItem($metadata[1]),
             ],
-            iterator_to_array($column->getMetadata())
+            iterator_to_array($column->getMetadata()),
         );
     }
 }

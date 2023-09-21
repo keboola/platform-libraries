@@ -16,12 +16,12 @@ interface TableRewriteHelperInterface
     public function rewriteTableOptionsSources(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputTableOptionsList;
 
     public function rewriteTableStatesDestinations(
         InputTableStateList $tableStates,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): InputTableStateList;
 }

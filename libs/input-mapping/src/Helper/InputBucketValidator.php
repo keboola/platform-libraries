@@ -27,7 +27,7 @@ class InputBucketValidator
             throw new InvalidInputException(sprintf(
                 'The buckets "%s" come from a development branch ' .
                     'and must not be used directly in input mapping.',
-                implode(', ', $bucketIds)
+                implode(', ', $bucketIds),
             ));
         }
     }

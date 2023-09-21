@@ -46,7 +46,7 @@ class ReaderTest extends TestCase
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $clientWrapper->getBranchClient()->getApiUrl()
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
     }
 
@@ -56,7 +56,7 @@ class ReaderTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -64,12 +64,12 @@ class ReaderTest extends TestCase
     protected function getStagingFactory(
         ClientWrapper $clientWrapper,
         string $format = 'json',
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
             $clientWrapper,
             $logger ?: new NullLogger(),
-            $format
+            $format,
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->onlyMethods(['getPath'])
@@ -77,7 +77,7 @@ class ReaderTest extends TestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         $stagingFactory->addProvider(
             $mockLocal,
@@ -86,7 +86,7 @@ class ReaderTest extends TestCase
                     Scope::TABLE_DATA, Scope::TABLE_METADATA,
                     Scope::FILE_DATA, Scope::FILE_METADATA,
                 ]),
-            ]
+            ],
         );
         return $stagingFactory;
     }
@@ -97,22 +97,22 @@ class ReaderTest extends TestCase
         $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
         $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
         $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432.4563456');
         self::assertEquals(
             '123456789.98765432',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
         $clientWrapper->getTableAndFileStorageClient()->setRunId(null);
         self::assertEquals(
             '',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId())
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
     }
 
@@ -126,7 +126,7 @@ class ReaderTest extends TestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
@@ -145,14 +145,14 @@ class ReaderTest extends TestCase
 
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, workspace-abs,'
+            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, workspace-abs,',
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
             'invalid',
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -165,30 +165,30 @@ class ReaderTest extends TestCase
         $branchBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,
             'my-branch-input-mapping-test',
-            Client::STAGE_IN
+            Client::STAGE_IN,
         );
         if ($branchBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 (string) $branchBucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
         $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,
             'input-mapping-test',
-            Client::STAGE_IN
+            Client::STAGE_IN,
         );
         if ($inBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 (string) $inBucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
         foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-input-mapping-test/ui', $bucket['name'])) {
                 $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
-                    ['force' => true, 'async' => true]
+                    ['force' => true, 'async' => true],
                 );
             }
         }
@@ -203,14 +203,14 @@ class ReaderTest extends TestCase
 
         $inBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
             'input-mapping-test',
-            Client::STAGE_IN
+            Client::STAGE_IN,
         );
         // we need to know the $inBucketId, which is known only after creation, but we need the bucket not to exist
         // hence - create the bucket, get it id, and drop it
         $clientWrapper->getTableAndFileStorageClient()->dropBucket($inBucketId, ['force' => true, 'async' => true]);
         $branchBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
             sprintf('%s-input-mapping-test', $branchId),
-            Client::STAGE_IN
+            Client::STAGE_IN,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync($branchBucketId, 'test', $csvFile);
         $reader = new Reader($this->getStagingFactory($this->getClientWrapper($branchId)));
@@ -232,11 +232,11 @@ class ReaderTest extends TestCase
             $state,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         self::assertStringContainsString(
             "\"foo\",\"bar\"\n\"1\",\"2\"",
-            (string) file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv')
+            (string) file_get_contents($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'),
         );
         $data = $result->getInputTableStateList()->jsonSerialize();
         self::assertEquals(sprintf('%s.test', $branchBucketId), $data[0]['source']);

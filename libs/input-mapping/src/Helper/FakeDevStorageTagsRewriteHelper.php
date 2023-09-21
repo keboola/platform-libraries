@@ -18,7 +18,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
     public function rewriteFileTags(
         InputFileOptions $fileConfigurationOriginal,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputFileOptions {
         if (!$clientWrapper->isDevelopmentBranch()) {
             return new RewrittenInputFileOptions(
@@ -41,8 +41,8 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     sprintf(
                         'Using dev tags "%s" instead of "%s".',
                         implode(', ', $newTagsList),
-                        implode(', ', $oldTagsList)
-                    )
+                        implode(', ', $oldTagsList),
+                    ),
                 );
                 $fileConfiguration = array_replace($fileConfiguration, [
                     'tags' => $newTagsList,
@@ -82,7 +82,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     $newProcessedExcludeTags,
                     array_filter($excludeTags, function ($tag) use ($processedTags) {
                         return !in_array($tag['name'], $processedTags);
-                    })
+                    }),
                 );
                 $excludeTags = $newExcludeTags;
             }
@@ -92,8 +92,8 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     sprintf(
                         'Using dev source tags "%s" instead of "%s".',
                         implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($newIncludeTags)),
-                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags))
-                    )
+                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags)),
+                    ),
                 );
                 $includeTags = $newIncludeTags;
                 /* at this point we set both new includeTags and new excludeTags - this is means that actual input

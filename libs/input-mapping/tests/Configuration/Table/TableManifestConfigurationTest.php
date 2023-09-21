@@ -34,7 +34,7 @@ class TableManifestConfigurationTest extends TestCase
         array $primaryKey,
         array $distributionKey,
         array $columns,
-        array $columnsMetadata
+        array $columnsMetadata,
     ): void {
         $config = [
             'id' => 'in.c-docker-test.test',

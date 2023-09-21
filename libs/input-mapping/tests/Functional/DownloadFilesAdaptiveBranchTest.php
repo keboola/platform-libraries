@@ -22,7 +22,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -48,11 +48,11 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag])
+            (new FileUploadOptions())->setTags([$branchTag]),
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
         );
         sleep(2);
 
@@ -78,7 +78,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $lastFileState = $outputStateFileList->getFile($convertedTags);
         self::assertEquals($file1Id, $lastFileState->getLastImportId());
@@ -99,20 +99,20 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
                 $branchId,
                 self::TEST_FILE_TAG_FOR_BRANCH,
                 $branchId,
-                self::TEST_FILE_TAG_FOR_BRANCH
-            )
+                self::TEST_FILE_TAG_FOR_BRANCH,
+            ),
         ));
         // add another valid file and assert that it gets downloaded and the previous doesn't
         $file3Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)])
+            (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)]),
         );
         sleep(2);
         $newOutputStateFileList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',
             AbstractStrategyFactory::LOCAL,
-            $outputStateFileList
+            $outputStateFileList,
         );
         $lastFileState = $newOutputStateFileList->getFile($convertedTags);
         self::assertEquals($file3Id, $lastFileState->getLastImportId());

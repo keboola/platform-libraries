@@ -18,11 +18,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
         );
         sleep(2);
 
@@ -39,7 +39,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $convertedTags = [
             [
@@ -59,11 +59,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         // now load some new files and make sure we just grab the latest since the last run
         $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3']),
         );
         $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4']),
         );
         sleep(2);
 
@@ -72,7 +72,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download-adaptive',
             AbstractStrategyFactory::LOCAL,
-            $outputStateList
+            $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($convertedTags);
         self::assertEquals($id4, $lastFileState->getLastImportId());
@@ -95,15 +95,15 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
         );
         $idExclude = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'exclude'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'exclude']),
         );
         sleep(2);
 
@@ -134,7 +134,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $fileState = $outputStateList->getFile($sourceConfigTags);
         self::assertEquals($id2, $fileState->getLastImportId());
@@ -148,11 +148,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         // now load some new files and make sure we just grab the latest since the last run
         $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3']),
         );
         $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4']),
         );
         sleep(2);
 
@@ -161,7 +161,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download-adaptive',
             AbstractStrategyFactory::LOCAL,
-            $outputStateList
+            $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($sourceConfigTags);
         self::assertEquals($id4, $lastFileState->getLastImportId());
@@ -193,7 +193,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEmpty($outputStateList->jsonSerialize());
     }
@@ -205,11 +205,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
         );
         sleep(2);
 
@@ -226,7 +226,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $convertedTags = [
             [
@@ -248,7 +248,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download-adaptive',
             AbstractStrategyFactory::LOCAL,
-            $outputStateList
+            $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($convertedTags);
         self::assertEquals($id2, $lastFileState->getLastImportId());
@@ -261,11 +261,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2'])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
         );
         sleep(2);
 
@@ -282,7 +282,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
 
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));

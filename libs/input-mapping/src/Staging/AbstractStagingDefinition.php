@@ -22,7 +22,7 @@ abstract class AbstractStagingDefinition
         protected ?ProviderInterface $fileDataProvider = null,
         protected ?ProviderInterface $fileMetadataProvider = null,
         protected ?ProviderInterface $tableDataProvider = null,
-        protected ?ProviderInterface $tableMetadataProvider = null
+        protected ?ProviderInterface $tableMetadataProvider = null,
     ) {
     }
 
@@ -88,24 +88,24 @@ abstract class AbstractStagingDefinition
             case self::STAGING_FILE:
                 if (empty($this->fileDataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined file data provider in "%s" staging.', $this->name)
+                        sprintf('Undefined file data provider in "%s" staging.', $this->name),
                     );
                 }
                 if (empty($this->fileMetadataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined file metadata provider in "%s" staging.', $this->name)
+                        sprintf('Undefined file metadata provider in "%s" staging.', $this->name),
                     );
                 }
                 break;
             case self::STAGING_TABLE:
                 if (empty($this->tableDataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined table data provider in "%s" staging.', $this->name)
+                        sprintf('Undefined table data provider in "%s" staging.', $this->name),
                     );
                 }
                 if (empty($this->tableMetadataProvider)) {
                     throw new StagingException(
-                        sprintf('Undefined table metadata provider in "%s" staging.', $this->name)
+                        sprintf('Undefined table metadata provider in "%s" staging.', $this->name),
                     );
                 }
                 break;

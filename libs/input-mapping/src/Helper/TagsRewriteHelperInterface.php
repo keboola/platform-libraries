@@ -14,6 +14,6 @@ interface TagsRewriteHelperInterface
     public function rewriteFileTags(
         InputFileOptions $fileConfigurationOriginal,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputFileOptions;
 }

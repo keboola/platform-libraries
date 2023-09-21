@@ -43,7 +43,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             null,
             new NullProvider(),
             null,
-            null
+            null,
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined file data provider in "foo" staging.');
@@ -59,7 +59,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             new NullProvider(),
             null,
             null,
-            null
+            null,
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined file metadata provider in "foo" staging.');
@@ -75,7 +75,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             new NullProvider(),
             new NullProvider(),
             null,
-            null
+            null,
         );
         $definition->validateFor(AbstractStagingDefinition::STAGING_FILE);
         self::assertTrue(true);
@@ -90,7 +90,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             null,
             null,
             null,
-            new NullProvider()
+            new NullProvider(),
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined table data provider in "foo" staging.');
@@ -106,7 +106,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             null,
             null,
             new NullProvider(),
-            null
+            null,
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined table metadata provider in "foo" staging.');
@@ -122,7 +122,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             null,
             null,
             new NullProvider(),
-            new NullProvider()
+            new NullProvider(),
         );
         $definition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         self::assertTrue(true);
@@ -137,7 +137,7 @@ class InputMappingStagingDefinitionTest extends TestCase
             null,
             null,
             new NullProvider(),
-            null
+            null,
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Unknown staging type: "invalid".');

@@ -337,7 +337,7 @@ class TableConfigurationTest extends TestCase
      */
     public function testValidConfigDefinition(
         array $config,
-        array $expected
+        array $expected,
     ): void {
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         self::assertEquals($expected, $processedConfiguration);
@@ -394,7 +394,7 @@ class TableConfigurationTest extends TestCase
     public function testInvalidConfigDefinition(
         array $config,
         string $exception,
-        string $exceptionMessage
+        string $exceptionMessage,
     ): void {
         $this->expectException($exception);
         $this->expectExceptionMessage($exceptionMessage);

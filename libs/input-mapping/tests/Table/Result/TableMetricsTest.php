@@ -18,7 +18,7 @@ class TableMetricsTest extends TestCase
                     'outBytesUncompressed' => 123,
                     'outBytes' => 0,
                 ],
-            ]
+            ],
         );
         self::assertSame(0, $tableMetrics->getCompressedBytes());
         self::assertSame(123, $tableMetrics->getUncompressedBytes());

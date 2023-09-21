@@ -38,52 +38,52 @@ class StrategyFactory extends AbstractStrategyFactory
                 self::ABS => new InputMappingStagingDefinition(
                     self::ABS,
                     FileLocal::class,
-                    TableABS::class
+                    TableABS::class,
                 ),
                 self::LOCAL => new InputMappingStagingDefinition(
                     self::LOCAL,
                     FileLocal::class,
-                    TableLocal::class
+                    TableLocal::class,
                 ),
                 self::S3 => new InputMappingStagingDefinition(
                     self::S3,
                     FileLocal::class,
-                    TableS3::class
+                    TableS3::class,
                 ),
                 self::WORKSPACE_ABS => new InputMappingStagingDefinition(
                     self::WORKSPACE_ABS,
                     FileABSWorkspace::class,
-                    TableABSWorkspace::class
+                    TableABSWorkspace::class,
                 ),
                 self::WORKSPACE_REDSHIFT => new InputMappingStagingDefinition(
                     self::WORKSPACE_REDSHIFT,
                     FileLocal::class,
-                    TableRedshift::class
+                    TableRedshift::class,
                 ),
                 self::WORKSPACE_SNOWFLAKE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     FileLocal::class,
-                    TableSnowflake::class
+                    TableSnowflake::class,
                 ),
                 self::WORKSPACE_SYNAPSE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SYNAPSE,
                     FileLocal::class,
-                    TableSynapse::class
+                    TableSynapse::class,
                 ),
                 self::WORKSPACE_EXASOL => new InputMappingStagingDefinition(
                     self::WORKSPACE_EXASOL,
                     FileLocal::class,
-                    TableExasol::class
+                    TableExasol::class,
                 ),
                 self::WORKSPACE_TERADATA => new InputMappingStagingDefinition(
                     self::WORKSPACE_TERADATA,
                     FileLocal::class,
-                    TableTeradata::class
+                    TableTeradata::class,
                 ),
                 self::WORKSPACE_BIGQUERY => new InputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,
                     FileLocal::class,
-                    TableBigQuery::class
+                    TableBigQuery::class,
                 ),
             ];
         }
@@ -97,8 +97,8 @@ class StrategyFactory extends AbstractStrategyFactory
                 sprintf(
                     'Input mapping on type "%s" is not supported. Supported types are "%s".',
                     $stagingType,
-                    implode(', ', array_keys($this->getStrategyMap()))
-                )
+                    implode(', ', array_keys($this->getStrategyMap())),
+                ),
             );
         }
         return $this->getStrategyMap()[$stagingType];
@@ -113,7 +113,7 @@ class StrategyFactory extends AbstractStrategyFactory
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" file input backend.', $stagingDefinition->getName()),
                 0,
-                $e
+                $e,
             );
         }
         $this->getLogger()->info(sprintf('Using "%s" file input staging.', $stagingDefinition->getName()));
@@ -124,14 +124,14 @@ class StrategyFactory extends AbstractStrategyFactory
             $stagingDefinition->getFileDataProvider(),
             $stagingDefinition->getFileMetadataProvider(),
             $fileStateList,
-            $this->format
+            $this->format,
         );
     }
 
     public function getTableInputStrategy(
         string $stagingType,
         string $destination,
-        InputTableStateList $tablesState
+        InputTableStateList $tablesState,
     ): TableStrategyInterface {
         $stagingDefinition = $this->getStagingDefinition($stagingType);
         try {
@@ -140,7 +140,7 @@ class StrategyFactory extends AbstractStrategyFactory
             throw new InvalidInputException(
                 sprintf('The project does not support "%s" table input backend.', $stagingDefinition->getName()),
                 0,
-                $e
+                $e,
             );
         }
         $this->getLogger()->info(sprintf('Using "%s" table input staging.', $stagingDefinition->getName()));
@@ -152,7 +152,7 @@ class StrategyFactory extends AbstractStrategyFactory
             $stagingDefinition->getTableMetadataProvider(),
             $tablesState,
             $destination,
-            $this->format
+            $this->format,
         );
     }
 }

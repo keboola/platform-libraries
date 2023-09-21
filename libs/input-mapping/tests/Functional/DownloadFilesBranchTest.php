@@ -24,7 +24,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -83,7 +83,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
@@ -93,9 +93,9 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using dev source tags "%s" instead of "tag-1, tag-2".',
-                    implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)])
-                )
-            )
+                    implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]),
+                ),
+            ),
         );
     }
 
@@ -119,13 +119,13 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
                 [$fileConfiguration],
                 'dummy',
                 AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
+                new InputFileStateList([]),
             );
             self::fail('Must throw exception');
         } catch (InvalidInputException $e) {
             self::assertSame(
                 "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 
@@ -135,7 +135,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         } catch (InvalidInputException $e) {
             self::assertSame(
                 "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
     }
@@ -159,11 +159,11 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag])
+            (new FileUploadOptions())->setTags([$branchTag]),
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
         );
         sleep(5);
 
@@ -178,7 +178,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
         self::assertFileDoesNotExist($root . '/download/' . $file2Id . '_upload');
@@ -192,7 +192,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertEquals([$branchTag], $manifest1['tags']);
 
         self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH)
+            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH),
         ));
     }
 
@@ -220,15 +220,15 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         $file1Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1'])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1']),
         );
         $file2Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2']),
         );
         $file3Id = $clientWrapper->getBranchClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2']),
         );
         sleep(5);
 
@@ -249,7 +249,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
         self::assertFileDoesNotExist($root . '/download/' . $file2Id . '_upload');
@@ -274,14 +274,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             sprintf(
                 'Using files from default branch "%s" for tags "tag-1".',
                 $clientWrapper->getDefaultBranch()->id,
-            )
+            ),
         ));
 
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using files from development branch "%s" for tags "tag-2".',
                 $clientWrapper->getClientOptionsReadOnly()->getBranchId(),
-            )
+            ),
         ));
     }
 
@@ -308,23 +308,23 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag])
+            (new FileUploadOptions())->setTags([$branchTag]),
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH])
+            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
         );
         $processedFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $processedTag])
+            (new FileUploadOptions())->setTags([$branchTag, $processedTag]),
         );
         $branchProcessedFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag])
+            (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag]),
         );
         $excludeFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, $excludeTag])
+            (new FileUploadOptions())->setTags([$branchTag, $excludeTag]),
         );
         sleep(5);
 
@@ -357,7 +357,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
         self::assertEquals('test', file_get_contents($root . '/download/' . $processedFileId . '_upload'));
@@ -367,11 +367,11 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 
         $this->assertManifestTags(
             $root . '/download/' . $file1Id . '_upload.manifest',
-            [$branchTag]
+            [$branchTag],
         );
         $this->assertManifestTags(
             $root . '/download/' . $processedFileId . '_upload.manifest',
-            [$branchTag, $processedTag]
+            [$branchTag, $processedTag],
         );
 
         $clientWrapper->getTableAndFileStorageClient()->deleteFile($file1Id);

@@ -19,7 +19,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
     public function rewriteFileTags(
         InputFileOptions $fileConfigurationOriginal,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputFileOptions {
         if (!$clientWrapper->isDevelopmentBranch()) {
             return new RewrittenInputFileOptions(
@@ -27,7 +27,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
-                (int) $clientWrapper->getBranchId()
+                (int) $clientWrapper->getBranchId(),
             );
         }
         $fileConfiguration = $fileConfigurationOriginal->getDefinition();
@@ -38,8 +38,8 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     sprintf(
                         'Using files from development branch "%s" for tags "%s".',
                         $clientWrapper->getBranchId(),
-                        implode(', ', $fileConfiguration['tags'])
-                    )
+                        implode(', ', $fileConfiguration['tags']),
+                    ),
                 );
                 return new RewrittenInputFileOptions(
                     $fileConfiguration,
@@ -53,8 +53,8 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     sprintf(
                         'Using files from default branch "%s" for tags "%s".',
                         $clientWrapper->getDefaultBranch()->id,
-                        implode(', ', $fileConfiguration['tags'])
-                    )
+                        implode(', ', $fileConfiguration['tags']),
+                    ),
                 );
                 return new RewrittenInputFileOptions(
                     $fileConfiguration,
@@ -72,7 +72,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
             });
             if (!empty($fileConfiguration['processed_tags'])) {
                 throw new InvalidInputException(
-                    'The "processed_tags" property is not supported for development storage.'
+                    'The "processed_tags" property is not supported for development storage.',
                 );
             }
 
@@ -81,8 +81,8 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                     sprintf(
                         'Using files from development branch "%s" for tags "%s".',
                         $clientWrapper->getBranchId(),
-                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags))
-                    )
+                        implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags)),
+                    ),
                 );
                 return new RewrittenInputFileOptions(
                     $fileConfiguration,
@@ -97,15 +97,15 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 sprintf(
                     'Using files from default branch "%s" for tags "%s".',
                     $clientWrapper->getDefaultBranch()->id,
-                    implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags))
-                )
+                    implode(', ', BuildQueryFromConfigurationHelper::getTagsFromSourceTags($includeTags)),
+                ),
             );
             return new RewrittenInputFileOptions(
                 $fileConfiguration,
                 $fileConfigurationOriginal->isDevBranch(),
                 $fileConfigurationOriginal->getRunId(),
                 $fileConfigurationOriginal->getDefinition(),
-                (int) $clientWrapper->getDefaultBranch()->id
+                (int) $clientWrapper->getDefaultBranch()->id,
             );
         }
         /* at this point, nothing has changed - no tags are specified in the configuration */
@@ -114,7 +114,7 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
             $fileConfigurationOriginal->isDevBranch(),
             $fileConfigurationOriginal->getRunId(),
             $fileConfigurationOriginal->getDefinition(),
-            (int) $clientWrapper->getDefaultBranch()->id
+            (int) $clientWrapper->getDefaultBranch()->id,
         );
     }
 

@@ -26,7 +26,7 @@ class InputBucketValidatorTest extends AbstractTestCase
                         'key' => 'KBC.createdBy.branch.id',
                         'value' => '1234',
                     ],
-                ]
+                ],
             );
             $metadataApi->postBucketMetadata(
                 $this->emptyInputBucketId,
@@ -36,7 +36,7 @@ class InputBucketValidatorTest extends AbstractTestCase
                         'key' => 'KBC.lastUpdatedBy.branch.id',
                         'value' => '1235',
                     ],
-                ]
+                ],
             );
         }
     }
@@ -83,7 +83,7 @@ class InputBucketValidatorTest extends AbstractTestCase
         $this->expectExceptionMessage(sprintf(
             'The buckets "%s, %s" come from a development branch and must not be used directly in input mapping.',
             $this->emptyInputBucketId,
-            $this->emptyOutputBucketId
+            $this->emptyOutputBucketId,
         ));
         InputBucketValidator::checkDevBuckets($inputTablesOptions, $this->clientWrapper);
     }

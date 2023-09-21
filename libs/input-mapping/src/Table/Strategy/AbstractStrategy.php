@@ -32,7 +32,7 @@ abstract class AbstractStrategy implements StrategyInterface
         protected readonly ProviderInterface $metadataStorage,
         protected readonly InputTableStateList $tablesState,
         protected readonly string $destination,
-        protected readonly string $format = 'json'
+        protected readonly string $format = 'json',
     ) {
         $this->manifestCreator = new ManifestCreator();
     }

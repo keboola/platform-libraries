@@ -34,7 +34,7 @@ class RewrittenInputFileOptionsTest extends TestCase
         );
         self::assertSame(
             [['name' => 'bar']],
-            $options->getFileConfigurationIdentifier()
+            $options->getFileConfigurationIdentifier(),
         );
         self::assertSame(123, $options->getSourceBranchId());
     }

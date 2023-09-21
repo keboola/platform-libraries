@@ -25,7 +25,7 @@ class InputMappingStagingDefinition extends AbstractStagingDefinition
         ?ProviderInterface $fileDataProvider = null,
         ?ProviderInterface $fileMetadataProvider = null,
         ?ProviderInterface $tableDataProvider = null,
-        ?ProviderInterface $tableMetadataProvider = null
+        ?ProviderInterface $tableMetadataProvider = null,
     ) {
         parent::__construct(
             $name,
@@ -34,7 +34,7 @@ class InputMappingStagingDefinition extends AbstractStagingDefinition
             $fileDataProvider,
             $fileMetadataProvider,
             $tableDataProvider,
-            $tableMetadataProvider
+            $tableMetadataProvider,
         );
         $this->fileStagingClass = $fileStagingClass;
         $this->tableStagingClass = $tableStagingClass;

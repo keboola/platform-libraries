@@ -18,7 +18,7 @@ class ABS extends AbstractStrategy
         $exportOptions['gzip'] = true;
         $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
             $table->getSource(),
-            $exportOptions
+            $exportOptions,
         );
         return [$jobId, $table];
     }
@@ -43,7 +43,7 @@ class ABS extends AbstractStrategy
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],
-                (new GetFileOptions())->setFederationToken(true)
+                (new GetFileOptions())->setFederationToken(true),
             )
             ;
             $tableInfo['abs'] = $this->getABSInfo($fileInfo);
@@ -51,7 +51,7 @@ class ABS extends AbstractStrategy
                 $tableInfo,
                 $manifestPath,
                 $table->getColumnNamesFromTypes(),
-                $this->format
+                $this->format,
             );
         }
         return $jobResults;

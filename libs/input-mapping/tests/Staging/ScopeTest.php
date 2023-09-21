@@ -15,7 +15,7 @@ class ScopeTest extends TestCase
         $scope = new Scope([Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA]);
         self::assertSame(
             [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA],
-            $scope->getScopeTypes()
+            $scope->getScopeTypes(),
         );
         $scope = new Scope([Scope::FILE_DATA]);
         self::assertSame([Scope::FILE_DATA], $scope->getScopeTypes());

@@ -33,7 +33,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         sleep(2);
         $clientWrapper = self::getClientWrapper(null);
         $files = $clientWrapper->getTableAndFileStorageClient()->listFiles(
-            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG, self::$branchTag])
+            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG, self::$branchTag]),
         );
         foreach ($files as $file) {
             $clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
@@ -61,7 +61,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -75,7 +75,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
             $testLogger,
@@ -93,7 +93,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::$branchTag])
+            (new FileUploadOptions())->setTags([self::$branchTag]),
         );
         sleep(2);
 
@@ -102,18 +102,18 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         $configuration = new InputFileOptions(
             $configuration,
             $clientWrapper->isDevelopmentBranch(),
-            (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+            (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
         );
 
         $testLogger = new TestLogger();
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             $configuration,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         )->getDefinition();
 
         self::assertTrue($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag)
+            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
         ));
 
         self::assertEquals([self::$branchTag], $expectedConfiguration['tags']);
@@ -146,18 +146,18 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         )->getDefinition();
         self::assertTrue(
             $testLogger->hasInfoThatContains(
                 sprintf(
                     'Using dev source tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".',
-                    self::$branchTag
-                )
-            )
+                    self::$branchTag,
+                ),
+            ),
         );
 
         self::assertEquals(
@@ -165,7 +165,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
                 'name' => self::$branchTag,
                 'match' => 'include',
             ]],
-            $expectedConfiguration['source']['tags']
+            $expectedConfiguration['source']['tags'],
         );
     }
 
@@ -179,14 +179,14 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
             $testLogger,
         )->getDefinition();
 
         self::assertFalse($testLogger->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag)
+            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
         ));
         $expectedConfiguration = $configuration;
         $expectedConfiguration['overwrite'] = true;
@@ -213,16 +213,16 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         )->getDefinition();
 
         self::assertFalse(
             $testLogger->hasInfoThatContains(
-                sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag)
-            )
+                sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
+            ),
         );
         $expectedConfiguration = $configuration;
         $expectedConfiguration['overwrite'] = true;
@@ -239,7 +239,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ->getTableAndFileStorageClient()
             ->uploadFile(
                 $this->tmpDir . '/upload',
-                (new FileUploadOptions())->setTags([self::$branchTag, $branchProcessedTag])
+                (new FileUploadOptions())->setTags([self::$branchTag, $branchProcessedTag]),
             );
         sleep(2);
         $configuration = [
@@ -262,10 +262,10 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         )->getDefinition();
         // it should rewrite the processed exclude tag
         self::assertContains(
@@ -273,7 +273,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
                 'name' => $branchProcessedTag,
                 'match' => 'exclude',
             ],
-            $expectedConfiguration['source']['tags']
+            $expectedConfiguration['source']['tags'],
         );
     }
 
@@ -286,7 +286,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ->getTableAndFileStorageClient()
             ->uploadFile(
                 $this->tmpDir . '/upload',
-                (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG, 'processed'])
+                (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG, 'processed']),
             );
         sleep(2);
         $configuration = [
@@ -309,10 +309,10 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             new InputFileOptions(
                 $configuration,
                 $clientWrapper->isDevelopmentBranch(),
-                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId()
+                (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
             ),
             $clientWrapper,
-            $testLogger
+            $testLogger,
         )->getDefinition();
         // it should NOT rewrite the include tag because there is no branch file that exists
         // but it SHOULD rewrite the processed tag for this branch
@@ -324,7 +324,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
                 'name' => $branchProcessedTag,
                 'match' => 'exclude',
             ]],
-            $expectedConfiguration['source']['tags']
+            $expectedConfiguration['source']['tags'],
         );
     }
 }

@@ -24,7 +24,7 @@ abstract class AbstractStrategyFactory
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
-        protected readonly string $format
+        protected readonly string $format,
     ) {
     }
 
@@ -43,7 +43,7 @@ abstract class AbstractStrategyFactory
                 throw new StagingException(sprintf(
                     'Staging "%s" is unknown. Known types are "%s".',
                     $stagingType,
-                    implode(', ', array_keys($this->getStrategyMap()))
+                    implode(', ', array_keys($this->getStrategyMap())),
                 ));
             }
             $staging = $this->getStrategyMap()[$stagingType];

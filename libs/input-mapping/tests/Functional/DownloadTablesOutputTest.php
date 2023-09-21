@@ -36,8 +36,8 @@ class DownloadTablesOutputTest extends AbstractTestCase
                         'key' => 'someKey',
                         'value' => 'someValue',
                     ]],
-                ]
-            )
+                ],
+            ),
         );
 
         $reader = new Reader($this->getLocalStagingFactory());
@@ -57,27 +57,27 @@ class DownloadTablesOutputTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $test1TableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $test2TableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->secondTableId);
         self::assertEquals(
             $test1TableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate(),
         );
         self::assertEquals(
             $test2TableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable($this->secondTableId)->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->secondTableId)->getLastImportDate(),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test2.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test2.csv',
         );
         self::assertCount(2, $tablesResult->getInputTableStateList()->jsonSerialize());
         $tableMetrics = $tablesResult->getMetrics()?->getTableMetrics();

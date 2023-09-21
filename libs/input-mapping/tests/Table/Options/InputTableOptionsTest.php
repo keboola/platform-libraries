@@ -120,7 +120,7 @@ class InputTableOptionsTest extends TestCase
     public function testGetColumnsExtended(): void
     {
         $definition = new InputTableOptions(
-            ['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]]
+            ['source' => 'test', 'column_types' => [['source' => 'col1'], ['source' => 'col2']]],
         );
         self::assertEquals(['col1', 'col2'], $definition->getColumnNamesFromTypes());
     }
@@ -222,7 +222,7 @@ class InputTableOptionsTest extends TestCase
     {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "col1".'
+            'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "col1".',
         );
         new InputTableOptions([
             'source' => 'test',
@@ -246,7 +246,7 @@ class InputTableOptionsTest extends TestCase
     {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "col2".'
+            'Both "columns" and "column_types" are specified, "column_types" field contains surplus columns: "col2".',
         );
         new InputTableOptions([
             'source' => 'test',

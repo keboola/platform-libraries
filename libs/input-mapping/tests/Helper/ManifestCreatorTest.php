@@ -37,7 +37,7 @@ class ManifestCreatorTest extends TestCase
     public function testCreateFileManifest(
         bool $expectedIsPublic,
         bool $expectedIsSliced,
-        bool $expectedIsEncrypted
+        bool $expectedIsEncrypted,
     ): void {
         $fileInfo = [
             'id' => 18311387,
@@ -269,7 +269,7 @@ EOF,
     public function testWriteTableManifest(
         string $format,
         array $columns,
-        string $expectedData
+        string $expectedData,
     ): void {
         $temp = new Temp('docker');
         $filePathname = (string) $temp->createTmpFile();

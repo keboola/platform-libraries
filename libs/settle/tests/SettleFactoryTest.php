@@ -30,7 +30,7 @@ class SettleFactoryTest extends TestCase
         } catch (RuntimeException $e) {
             self::assertSame(
                 'Failed to settle condition, actual value "false" does not match expectation',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 

@@ -62,21 +62,21 @@ class SettleTest extends TestCase
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
             fn ($v) => $v['message'] === 'Checking current value' &&
                 $v['context']['attempt'] === 1,
-            Logger::DEBUG
+            Logger::DEBUG,
         ));
         self::assertLogsCount(1, 'Condition settled');
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
             fn ($v) => $v['message'] === 'Condition settled' &&
                 $v['context']['currentValue'] === '2' &&
                 $v['context']['attempts'] === 4,
-            Logger::DEBUG
+            Logger::DEBUG,
         ));
         self::assertLogsCount(3, 'Current value does not match expectation');
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
             fn ($v) => $v['message'] === 'Current value does not match expectation' &&
                 $v['context']['currentValue'] === '1' &&
                 $v['context']['attempts'] === 1,
-            Logger::DEBUG
+            Logger::DEBUG,
         ));
     }
 
@@ -93,7 +93,7 @@ class SettleTest extends TestCase
         } catch (RuntimeException $e) {
             self::assertSame(
                 'Failed to settle condition, actual value "1" does not match expectation',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 
@@ -152,7 +152,7 @@ class SettleTest extends TestCase
     {
         self::assertCount(
             $expectedCount,
-            array_filter(self::$logsHandler->getRecords(), fn(array $log) => $log['message'] === $message)
+            array_filter(self::$logsHandler->getRecords(), fn(array $log) => $log['message'] === $message),
         );
     }
 }

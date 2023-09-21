@@ -33,11 +33,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table1a.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
         file_put_contents(
             $root . '/upload/table2a.csv',
-            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n"
+            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n",
         );
 
         $configs = [
@@ -59,7 +59,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -70,7 +70,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         sort($tableIds);
         self::assertEquals(
             [$this->emptyOutputBucketId . '.table1a', $this->emptyOutputBucketId . '.table2a'],
-            $tableIds
+            $tableIds,
         );
         self::assertCount(2, $jobIds);
         self::assertNotEmpty($jobIds[0]);
@@ -106,11 +106,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table1a.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
         file_put_contents(
             $root . '/upload/table2a.csv',
-            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n"
+            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n",
         );
 
         $configs = [
@@ -148,7 +148,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -160,7 +160,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             [
                 $this->emptyOutputBucketId . '.table1a',
                 $this->emptyOutputBucketId . '.table2a',
-            ]
+            ],
         );
 
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
@@ -168,7 +168,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(
             ['componentId: foo'],
-            $file['tags']
+            $file['tags'],
         );
     }
 
@@ -178,7 +178,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $clientWrapper= new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER')
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
             ),
         );
         $branchId = $this->createBranch($clientWrapper, self::class);
@@ -186,18 +186,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-                $branchId
+                $branchId,
             ),
         );
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table11a.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
         file_put_contents(
             $root . '/upload/table21a.csv',
-            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n"
+            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n",
         );
 
         $configs = [
@@ -217,7 +217,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -232,12 +232,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         sort($tableIds);
         self::assertMatchesRegularExpression(
             '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table11a#',
-            $tableIds[0]
+            $tableIds[0],
         );
 
         self::assertMatchesRegularExpression(
             '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table21a#',
-            $tableIds[1]
+            $tableIds[1],
         );
     }
 
@@ -264,11 +264,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table11a.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
         file_put_contents(
             $root . '/upload/table21a.csv',
-            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n"
+            "\"Id2\",\"Name2\"\n\"test2\",\"test2\"\n\"aabb2\",\"ccdd2\"\n",
         );
 
         $configs = [
@@ -289,7 +289,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -306,10 +306,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a', $tableIds[1]);
         // tables exist in the branch
         $this->clientWrapper->getBranchClient()->tableExists(
-            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a'
+            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a',
         );
         $this->clientWrapper->getBranchClient()->tableExists(
-            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a'
+            'out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a',
         );
     }
 
@@ -319,7 +319,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table21.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -336,7 +336,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -348,7 +348,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -365,7 +365,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table31',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -383,7 +383,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -413,12 +413,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(
-            'Failed to load table "' . $this->emptyOutputBucketId . '.table41": There are no data in import file'
+            'Failed to load table "' . $this->emptyOutputBucketId . '.table41": There are no data in import file',
         );
         $tableQueue->waitForAll();
     }
@@ -429,11 +429,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/table2.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/table2.csv.manifest',
-            '{"destination": "' . $this->emptyOutputBucketId . '.table2","primary_key": ["Id"]}'
+            '{"destination": "' . $this->emptyOutputBucketId . '.table2","primary_key": ["Id"]}',
         );
 
         $configs = [
@@ -451,7 +451,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -468,11 +468,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyOutputBucketId . '.table3b.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyOutputBucketId . '.table3b.csv.manifest',
-            '{"destination": "' . $this->emptyOutputBucketId . '.table3","primary_key": "Id"}'
+            '{"destination": "' . $this->emptyOutputBucketId . '.table3","primary_key": "Id"}',
         );
 
         $writer = new TableWriter($this->getLocalStagingFactory());
@@ -484,7 +484,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -494,11 +494,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyOutputBucketId . '.table3c.csv',
-            "'Id'\t'Name'\n'test'\t'test''s'\n"
+            "'Id'\t'Name'\n'test'\t'test''s'\n",
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyOutputBucketId . '.table3c.csv.manifest',
-            '{"destination": "' . $this->emptyOutputBucketId . '.table3c","delimiter": "\t","enclosure": "\'"}'
+            '{"destination": "' . $this->emptyOutputBucketId . '.table3c","delimiter": "\t","enclosure": "\'"}',
         );
 
         $writer = new TableWriter($this->getLocalStagingFactory());
@@ -509,7 +509,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -521,7 +521,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table3c', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(1, $table);
         self::assertCount(2, $table[0]);
@@ -537,7 +537,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/table.csv.manifest',
-            '{"destination": "' . $this->emptyOutputBucketId . '.table3e","primary_key": ["Id", "Name"]}'
+            '{"destination": "' . $this->emptyOutputBucketId . '.table3e","primary_key": ["Id", "Name"]}',
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
@@ -548,7 +548,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -570,7 +570,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -586,7 +586,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             [],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -596,7 +596,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table51.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -618,7 +618,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -631,7 +631,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -641,10 +641,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $exporter->exportTable(
             $this->emptyOutputBucketId . '.table51',
             $root . DIRECTORY_SEPARATOR . 'download.csv',
-            []
+            [],
         );
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv')
+            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv'),
         );
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);
@@ -676,7 +676,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -687,7 +687,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         self::assertEquals($this->emptyOutputBucketId . '.table71', $tables[0]['id']);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table71'
+            $this->emptyOutputBucketId . '.table71',
         );
         self::assertEquals(['Id', 'Name'], $tableInfo['columns']);
     }
@@ -707,7 +707,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -739,12 +739,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table16'
+            $this->emptyOutputBucketId . '.table16',
         );
         self::assertEquals(['Id'], $tableInfo['primaryKey']);
     }
@@ -770,7 +770,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
 
@@ -789,13 +789,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table15'
+            $this->emptyOutputBucketId . '.table15',
         );
         self::assertEquals(['Id'], $tableInfo['primaryKey']);
     }
@@ -822,11 +822,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table12'
+            $this->emptyOutputBucketId . '.table12',
         );
         self::assertEquals([], $tableInfo['primaryKey']);
 
@@ -845,14 +845,14 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
         self::assertFalse($testLogger->hasWarningThatContains('Output mapping does not match destination table'));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table12'
+            $this->emptyOutputBucketId . '.table12',
         );
         self::assertEquals([], $tableInfo['primaryKey']);
     }
@@ -879,7 +879,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -887,7 +887,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger));
         file_put_contents(
             $root . '/upload/table11.csv.manifest',
-            '{"destination": "' . $this->emptyOutputBucketId . '.table11","primary_key": [""]}'
+            '{"destination": "' . $this->emptyOutputBucketId . '.table11","primary_key": [""]}',
         );
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -895,18 +895,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         self::assertFalse(
             $testLogger->hasWarningThatContains(
                 "Output mapping does not match destination table: primary key '' does not match '' in '" .
-                $this->emptyOutputBucketId . ".table9'."
-            )
+                $this->emptyOutputBucketId . ".table9'.",
+            ),
         );
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table11'
+            $this->emptyOutputBucketId . '.table11',
         );
         self::assertEquals([], $tableInfo['primaryKey']);
     }
@@ -917,7 +917,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
@@ -934,7 +934,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
 
@@ -943,13 +943,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         self::assertEquals($this->emptyOutputBucketId . '.table10', $tables[0]['id']);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table10'
+            $this->emptyOutputBucketId . '.table10',
         );
         self::assertEquals(['Id', 'Name'], $tableInfo['columns']);
 
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
-            "\"foo\",\"bar\"\n\"baz\",\"bat\"\n"
+            "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
@@ -967,12 +967,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessageMatches(
-            '/Some columns are missing in the csv file. Missing columns: id,name./i'
+            '/Some columns are missing in the csv file. Missing columns: id,name./i',
         );
         $tableQueue->waitForAll();
     }
@@ -983,11 +983,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10a.csv',
-            "\"id\",\"name\"\n\"test\",\"test\"\n"
+            "\"id\",\"name\"\n\"test\",\"test\"\n",
         );
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10b.csv',
-            "\"foo\",\"bar\"\n\"baz\",\"bat\"\n"
+            "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
@@ -1009,18 +1009,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(2, $tables);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table10a'
+            $this->emptyOutputBucketId . '.table10a',
         );
         self::assertEquals(['id', 'name'], $tableInfo['columns']);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table10b'
+            $this->emptyOutputBucketId . '.table10b',
         );
         self::assertEquals(['foo', 'bar'], $tableInfo['columns']);
 
@@ -1045,7 +1045,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         try {
             $tableQueue->waitForAll();
@@ -1055,13 +1055,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 'Failed to load table "' . $this->emptyOutputBucketId . '.table10a": Some columns are ' .
                 'missing in the csv file. Missing columns: id,name. Expected columns: id,name,Boing,Tschak. ' .
                 'Please check if the expected delimiter "," is used in the csv file.',
-                $e->getMessage()
+                $e->getMessage(),
             );
             self::assertStringContainsString(
                 'Failed to load table "' . $this->emptyOutputBucketId . '.table10b": Some columns are ' .
                 'missing in the csv file. Missing columns: foo,bar. Expected columns: foo,bar,bum,tschak. ' .
                 'Please check if the expected delimiter "," is used in the csv file.',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
     }
@@ -1073,7 +1073,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER')
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
             ),
         );
 
@@ -1082,13 +1082,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
 
         file_put_contents(
             $root . '/upload/table21.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -1105,7 +1105,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1130,7 +1130,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME .
             '" (ID "%s"), but the bucket is not assigned ' .
             'to any development branch.',
-            $branchId
+            $branchId,
         ));
         $writer->uploadTables(
             '/upload',
@@ -1138,7 +1138,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
     }
 
@@ -1158,13 +1158,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
 
         file_put_contents(
             $root . '/upload/table21.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -1181,7 +1181,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1206,7 +1206,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                             'key' => $metadatum['key'],
                             'value' => '12345',
                         ],
-                    ]
+                    ],
                 );
             }
         }
@@ -1216,7 +1216,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             'Trying to create a table in the development bucket ' .
             '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME . '" (ID "%s"). ' .
             'The bucket metadata marks it as assigned to branch with ID "12345".',
-            $branchId
+            $branchId,
         ));
         $writer->uploadTables(
             '/upload',
@@ -1224,7 +1224,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
     }
 
@@ -1237,7 +1237,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         ?string $defaultBucketTemplate,
         ?array $mappingTemplate,
         array $expectedTablesTemplate,
-        bool $isFailedJob = false
+        bool $isFailedJob = false,
     ): void {
         $manifest = $manifestTemplate;
         if (is_array($manifest)) {
@@ -1274,7 +1274,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            $isFailedJob
+            $isFailedJob,
         );
         $queue->waitForAll();
 
@@ -1366,7 +1366,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         ?array $manifest,
         ?string $defaultBucket,
         ?array $mapping,
-        string $expectedError
+        string $expectedError,
     ): void {
         $defaultBucket = is_string($defaultBucket) ? sprintf($defaultBucket, $this->emptyOutputBucketId) : null;
         $root = $this->temp->getTmpFolder() . '/upload/';
@@ -1387,7 +1387,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
     }
@@ -1436,7 +1436,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     public function testWriteTableBareAllowedVariants(
         string $fileName,
         ?string $defaultBucket,
-        string $expectedTableName
+        string $expectedTableName,
     ): void {
         $expectedTableName = sprintf($expectedTableName, $this->emptyOutputBucketId);
         $fileName = sprintf($fileName, $this->emptyOutputBucketId);
@@ -1456,13 +1456,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         self::assertTrue($logger->hasWarningThatContains(
-            'This behaviour was DEPRECATED and will be removed in the future.'
+            'This behaviour was DEPRECATED and will be removed in the future.',
         ));
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
@@ -1502,7 +1502,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     public function testWriteTableBareForbiddenVariants(
         string $fileName,
         ?string $defaultBucket,
-        string $expectedError
+        string $expectedError,
     ): void {
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
@@ -1519,7 +1519,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -1547,7 +1547,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             [],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -1567,7 +1567,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -1591,7 +1591,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 
@@ -1619,7 +1619,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            true
+            true,
         );
         $queue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
@@ -1652,7 +1652,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            true
+            true,
         );
         $queue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
@@ -1680,12 +1680,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table14'
+            $this->emptyOutputBucketId . '.table14',
         );
         $this->assertEquals(['Id'], $tableInfo['primaryKey']);
 
@@ -1703,13 +1703,13 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
 
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table14'
+            $this->emptyOutputBucketId . '.table14',
         );
         $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
     }
@@ -1734,12 +1734,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table13'
+            $this->emptyOutputBucketId . '.table13',
         );
         $this->assertEquals(['Id'], $tableInfo['primaryKey']);
 
@@ -1757,12 +1757,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table13'
+            $this->emptyOutputBucketId . '.table13',
         );
         $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
     }
@@ -1774,7 +1774,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table_failed_upload.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n",
         );
 
         $configs = [
@@ -1800,7 +1800,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         try {
             $jobIds = $tableQueue->waitForAll();
@@ -1809,12 +1809,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             self::assertStringContainsString(
                 // phpcs:ignore Generic.Files.LineLength.MaxExceeded
                 'An exception occurred while executing a query: Field delimiter \',\' found while expecting record delimiter',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
         self::assertTrue(
-            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId))
+            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
         );
     }
 
@@ -1825,7 +1825,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table_failed_upload.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n",
         );
 
         $configs = [
@@ -1847,7 +1847,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table_failed_upload',
-            $csv
+            $csv,
         );
 
         $testLogger = new TestLogger();
@@ -1859,7 +1859,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         try {
             $jobIds = $tableQueue->waitForAll();
@@ -1868,12 +1868,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             self::assertStringContainsString(
                 // phpcs:ignore Generic.Files.LineLength.MaxExceeded
                 'An exception occurred while executing a query: Field delimiter \',\' found while expecting record delimiter',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
         self::assertFalse(
-            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId))
+            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
         );
     }
 
@@ -1883,7 +1883,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table1a.csv',
-            "\"Id\",\"Name\",\"_timestamp\"\n\"test\",\"test\",\"test\"\n\"aabb\",\"ccdd\",\"eeff\"\n"
+            "\"Id\",\"Name\",\"_timestamp\"\n\"test\",\"test\",\"test\"\n\"aabb\",\"ccdd\",\"eeff\"\n",
         );
 
         $table1Mapping = [
@@ -1905,7 +1905,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
     }
 }

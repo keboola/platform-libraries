@@ -43,7 +43,7 @@ class LoadTableQueue
                     throw new InvalidOutputException(
                         sprintf('%s [%s]', $e->getMessage(), $loadTableTask->getDestinationTableName()),
                         $e->getCode(),
-                        $e
+                        $e,
                     );
                 }
 
@@ -69,12 +69,12 @@ class LoadTableQueue
                 $errors[] = sprintf(
                     'Failed to load table "%s": %s',
                     $task->getDestinationTableName(),
-                    $jobResult['error']['message']
+                    $jobResult['error']['message'],
                 );
                 if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
                     $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
                         $task->getDestinationTableName(),
-                        ['force' => true]
+                        ['force' => true],
                     );
                 }
             } else {
@@ -89,7 +89,7 @@ class LoadTableQueue
                         'Failed to update metadata for table "%s": %s (%s)',
                         $task->getDestinationTableName(),
                         $e->getMessage(),
-                        json_encode($extendedInfo)
+                        json_encode($extendedInfo),
                     );
                 }
 
@@ -97,16 +97,16 @@ class LoadTableQueue
                     case 'tableImport':
                         $this->tableResult->addTable(
                             new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                                $jobResult['tableId']
-                            ))
+                                $jobResult['tableId'],
+                            )),
                         );
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
                         $this->tableResult->addTable(
                             new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                                $jobResult['results']['id']
-                            ))
+                                $jobResult['results']['id'],
+                            )),
                         );
                         $jobResults[] = $jobResult;
                         break;

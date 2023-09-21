@@ -36,7 +36,7 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
             $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $this->emptyRedshiftInputBucketId,
                 'test' . ($i + 1),
-                $csv
+                $csv,
             );
         }
 
@@ -44,7 +44,7 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
+            [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT)
@@ -65,14 +65,14 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -82,7 +82,7 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::WORKSPACE_REDSHIFT,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -94,7 +94,7 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
             [
                 $this->emptyRedshiftOutputBucketId . '.table1a',
                 $this->emptyRedshiftOutputBucketId . '.table2a',
-            ]
+            ],
         );
         self::assertTableRowsEquals($this->emptyRedshiftOutputBucketId . '.table1a', [
             '"id","name","foo","bar"',

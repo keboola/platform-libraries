@@ -30,7 +30,7 @@ class WriterWorkspaceTest extends AbstractTestCase
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
@@ -54,14 +54,14 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -71,7 +71,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -93,7 +93,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             [
                 $this->emptyOutputBucketId . '.table1a',
                 $this->emptyOutputBucketId . '.table2a',
-            ]
+            ],
         );
         $this->assertTableRowsEquals(
             $this->emptyOutputBucketId . '.table1a',
@@ -102,7 +102,7 @@ class WriterWorkspaceTest extends AbstractTestCase
                 '"id1","name1","foo1","bar1"',
                 '"id2","name2","foo2","bar2"',
                 '"id3","name3","foo3","bar3"',
-            ]
+            ],
         );
     }
 
@@ -119,15 +119,15 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($this->getWorkspaceStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(
             'Failed to load table "' . $this->emptyOutputBucketId .
-            '.table1a": Table "table1a" not found in schema "WORKSPACE_'
+            '.table1a": Table "table1a" not found in schema "WORKSPACE_',
         );
 
         $tableQueue = $writer->uploadTables(
@@ -136,7 +136,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
     }
@@ -160,7 +160,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $tableQueue->waitForAll();
     }
@@ -173,11 +173,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
 
         $root = $this->temp->getTmpFolder();
@@ -212,8 +212,8 @@ class WriterWorkspaceTest extends AbstractTestCase
                             'value' => 'baz',
                         ],
                     ],
-                ]
-            )
+                ],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -223,7 +223,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -242,7 +242,7 @@ class WriterWorkspaceTest extends AbstractTestCase
                 'KBC.createdBy.component.id' => 'foo',
                 'KBC.lastUpdatedBy.component.id' => 'foo',
             ],
-            $tableMetadataValues
+            $tableMetadataValues,
         );
     }
 
@@ -253,11 +253,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
         $root = $this->temp->getTmpFolder();
         $configs = [
@@ -271,8 +271,8 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -284,7 +284,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
     }
 
@@ -295,11 +295,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
         $configs = [
             [
@@ -319,7 +319,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
     }
 
@@ -331,11 +331,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -350,8 +350,8 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -361,7 +361,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -384,8 +384,8 @@ class WriterWorkspaceTest extends AbstractTestCase
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER')
-            )
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            ),
         );
         $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
@@ -393,7 +393,7 @@ class WriterWorkspaceTest extends AbstractTestCase
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
                 $branchId,
-            )
+            ),
         );
 
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
@@ -401,11 +401,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTables($this->testBucketId);
@@ -425,14 +425,14 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -442,7 +442,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -453,11 +453,11 @@ class WriterWorkspaceTest extends AbstractTestCase
 
         self::assertMatchesRegularExpression(
             '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table1a#',
-            $tableIds[0]
+            $tableIds[0],
         );
         self::assertMatchesRegularExpression(
             '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table2a#',
-            $tableIds[1]
+            $tableIds[1],
         );
     }
 
@@ -469,11 +469,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -499,7 +499,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -511,7 +511,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             [
                 $this->emptyOutputBucketId . '.table1a',
                 $this->emptyOutputBucketId . '.table1a_2',
-            ]
+            ],
         );
         $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
             '"id","name","foo","bar"',
@@ -535,11 +535,11 @@ class WriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']]
+            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -568,7 +568,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            true
+            true,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -587,7 +587,7 @@ class WriterWorkspaceTest extends AbstractTestCase
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
         )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
@@ -622,14 +622,14 @@ class WriterWorkspaceTest extends AbstractTestCase
                             ],
                         ],
                     ],
-                ]
-            )
+                ],
+            ),
         );
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name', '_TIMESTAMP']]
-            )
+                ['columns' => ['Id', 'Name', '_TIMESTAMP']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -639,7 +639,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -661,7 +661,7 @@ class WriterWorkspaceTest extends AbstractTestCase
             [
                 $this->emptyOutputBucketId . '.table1a',
                 $this->emptyOutputBucketId . '.table2a',
-            ]
+            ],
         );
         $this->assertTableRowsEquals(
             $this->emptyOutputBucketId . '.table1a',
@@ -670,7 +670,7 @@ class WriterWorkspaceTest extends AbstractTestCase
                 '"id1","name1","foo1","bar1"',
                 '"id2","name2","foo2","bar2"',
                 '"id3","name3","foo3","bar3"',
-            ]
+            ],
         );
         $this->assertTableRowsEquals(
             $this->emptyOutputBucketId . '.table2a',
@@ -679,7 +679,7 @@ class WriterWorkspaceTest extends AbstractTestCase
                 '"id1","name1","foo1","bar1"',
                 '"id2","name2","foo2","bar2"',
                 '"id3","name3","foo3","bar3"',
-            ]
+            ],
         );
     }
 }

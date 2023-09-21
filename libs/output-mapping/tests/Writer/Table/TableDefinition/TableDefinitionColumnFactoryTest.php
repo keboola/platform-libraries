@@ -18,7 +18,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
         array $columnMetadata,
         array $tableMetadata,
         string $backendType,
-        array $expectedSerialisation
+        array $expectedSerialisation,
     ): void {
         $columnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
         $column = $columnFactory->createTableDefinitionColumn($columnName, $columnMetadata);

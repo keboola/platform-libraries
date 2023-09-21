@@ -28,15 +28,15 @@ class PrimaryKeyHelper
                     }
                     $logger->warning('Found empty column name in key array.');
                     return false;
-                })
-            )
+                }),
+            ),
         );
     }
 
     public static function modifyPrimaryKeyDecider(
         LoggerInterface $logger,
         array $currentTableInfo,
-        array $newTableConfiguration
+        array $newTableConfiguration,
     ): bool {
         $configPK = self::normalizeKeyArray($logger, $newTableConfiguration['primary_key']);
         if (count($currentTableInfo['primaryKey']) !== count($configPK)) {
@@ -54,13 +54,13 @@ class PrimaryKeyHelper
         Client $client,
         string $tableId,
         array $tablePrimaryKey,
-        array $configPrimaryKey
+        array $configPrimaryKey,
     ): void {
         $logger->warning(sprintf(
             'Modifying primary key of table "%s" from "%s" to "%s".',
             $tableId,
             join(', ', $tablePrimaryKey),
-            join(', ', $configPrimaryKey)
+            join(', ', $configPrimaryKey),
         ));
         if (self::removePrimaryKey($logger, $client, $tableId, $tablePrimaryKey)) {
             // modify primary key
@@ -71,7 +71,7 @@ class PrimaryKeyHelper
             } catch (Throwable $e) {
                 // warn and try to rollback to original state
                 $logger->warning(
-                    "Error changing primary key of table {$tableId}: " . $e->getMessage()
+                    "Error changing primary key of table {$tableId}: " . $e->getMessage(),
                 );
                 if (count($tablePrimaryKey) > 0) {
                     $client->createTablePrimaryKey($tableId, $tablePrimaryKey);
@@ -84,7 +84,7 @@ class PrimaryKeyHelper
         LoggerInterface $logger,
         Client $client,
         string $tableId,
-        array $tablePrimaryKey
+        array $tablePrimaryKey,
     ): bool {
         if (count($tablePrimaryKey) > 0) {
             try {
@@ -92,7 +92,7 @@ class PrimaryKeyHelper
             } catch (Throwable $e) {
                 // warn and go on
                 $logger->warning(
-                    "Error deleting primary key of table {$tableId}: " . $e->getMessage()
+                    "Error deleting primary key of table {$tableId}: " . $e->getMessage(),
                 );
                 return false;
             }

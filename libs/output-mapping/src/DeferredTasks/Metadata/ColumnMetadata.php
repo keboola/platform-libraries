@@ -14,7 +14,7 @@ class ColumnMetadata implements MetadataInterface
     public function __construct(
         private readonly string $tableId,
         private readonly string $provider,
-        private readonly array $metadata
+        private readonly array $metadata,
     ) {
     }
 
@@ -42,7 +42,7 @@ class ColumnMetadata implements MetadataInterface
                 $this->tableId,
                 $this->provider,
                 null,
-                $columnsMetadata
+                $columnsMetadata,
             );
 
             $apiClient->postTableMetadataWithColumns($options);

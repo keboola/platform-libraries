@@ -135,7 +135,7 @@ class ColumnMetadataTest extends TestCase
                             'provider' => 'keboola.sample-component',
                             'columnsMetadata' => $columnsMetadata,
                         ],
-                        $options->toParamsArray()
+                        $options->toParamsArray(),
                     );
                     return true;
                 })];
@@ -145,7 +145,7 @@ class ColumnMetadataTest extends TestCase
         $columnMetadata = new ColumnMetadata(
             self::TEST_TABLE_ID,
             self::TEST_PROVIDER,
-            self::TEST_METADATA
+            self::TEST_METADATA,
         );
 
         $columnMetadata->apply($metadataClientMock, $bulkSize);

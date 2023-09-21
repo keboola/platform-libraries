@@ -31,7 +31,7 @@ class TableDefinitionTest extends AbstractTestCase
                 self::fail(sprintf(
                     '%s is not enabled for project "%s".',
                     ucfirst(str_replace('-', ' ', $requiredFeature)),
-                    $tokenData['owner']['id']
+                    $tokenData['owner']['id'],
                 ));
             }
         }
@@ -55,7 +55,7 @@ class TableDefinitionTest extends AbstractTestCase
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
-            EOT
+            EOT,
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
 
@@ -68,7 +68,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -96,7 +96,7 @@ class TableDefinitionTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionCode(400);
         $this->expectExceptionMessageMatches(
-            '/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u'
+            '/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u',
         );
         $this->expectExceptionMessage('Selected columns are not included in table definition');
 
@@ -109,7 +109,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
     }
 
@@ -119,7 +119,7 @@ class TableDefinitionTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriterCreateTableDefinition(
         array $configTemplate,
-        array $expectedTypes
+        array $expectedTypes,
     ): void {
         array_walk_recursive($configTemplate, function (&$value) {
             $value = is_string($value) ? sprintf($value, $this->emptyOutputBucketId) : $value;
@@ -132,7 +132,7 @@ class TableDefinitionTest extends AbstractTestCase
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
-            EOT
+            EOT,
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
 
@@ -145,7 +145,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -211,11 +211,11 @@ class TableDefinitionTest extends AbstractTestCase
                 'column_metadata' => [
                     'Id' => (new Snowflake(
                         Snowflake::TYPE_INTEGER,
-                        ['nullable' => false]
+                        ['nullable' => false],
                     ))->toMetadata(),
                     'Name' => (new Snowflake(
                         Snowflake::TYPE_TEXT,
-                        ['length' => '17', 'nullable' => false]
+                        ['length' => '17', 'nullable' => false],
                     ))->toMetadata(),
                     'birthweight' => (new Snowflake(Snowflake::TYPE_DECIMAL, ['length' => '10,2']))->toMetadata(),
                     'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
@@ -301,7 +301,7 @@ class TableDefinitionTest extends AbstractTestCase
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
-            EOT
+            EOT,
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
 
@@ -314,7 +314,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -323,7 +323,7 @@ class TableDefinitionTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
-            }
+            },
         );
 
         self::assertCount(4, $writerJobs);
@@ -434,7 +434,7 @@ class TableDefinitionTest extends AbstractTestCase
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
-            EOT
+            EOT,
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
 
@@ -447,7 +447,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -456,7 +456,7 @@ class TableDefinitionTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
-            }
+            },
         );
 
         self::assertCount(4, $writerJobs);
@@ -468,7 +468,7 @@ class TableDefinitionTest extends AbstractTestCase
                 'type' => 'DECIMAL',
                 'length' => '10,2',
                 'nullable' => true,
-            ]
+            ],
         );
         self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
@@ -478,7 +478,7 @@ class TableDefinitionTest extends AbstractTestCase
                 'type' => 'TIMESTAMP_TZ',
                 'length' => null,
                 'nullable' => true,
-            ]
+            ],
         );
         self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
@@ -548,7 +548,7 @@ class TableDefinitionTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriterUpdateTableDefinitionWithUnknownDataTypes(
         bool $incrementalFlag,
-        ?array $columnMetadata
+        ?array $columnMetadata,
     ): void {
         $tableId = $this->emptyOutputBucketId . '.tableDefinition';
 
@@ -597,7 +597,7 @@ class TableDefinitionTest extends AbstractTestCase
             <<< EOT
             "1","bob","10.11","2021-12-12 16:45:21"
             "2","alice","5.63","2020-12-12 15:45:21"
-            EOT
+            EOT,
         );
         $writer = new TableWriter($this->getLocalStagingFactory());
 
@@ -610,7 +610,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -619,7 +619,7 @@ class TableDefinitionTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
-            }
+            },
         );
 
         self::assertCount(4, $writerJobs);
@@ -627,13 +627,13 @@ class TableDefinitionTest extends AbstractTestCase
             array_pop($writerJobs),
             'birthweight',
             'STRING',
-            null
+            null,
         );
         self::assertTableTypedColumnAddJob(
             array_pop($writerJobs),
             'created',
             'STRING',
-            null
+            null,
         );
         self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
@@ -691,7 +691,7 @@ class TableDefinitionTest extends AbstractTestCase
         array $jobData,
         string $expectedColumnName,
         ?string $expectedBaseType,
-        ?array $expectedDefinition
+        ?array $expectedDefinition,
     ): void {
         self::assertSame('tableColumnAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);

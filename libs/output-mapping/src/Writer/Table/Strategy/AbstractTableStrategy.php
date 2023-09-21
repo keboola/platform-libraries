@@ -19,7 +19,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
         protected readonly ProviderInterface $dataStorage,
         protected readonly ProviderInterface $metadataStorage,
         protected readonly string $format,
-        protected readonly bool $isFailedJob = false
+        protected readonly bool $isFailedJob = false,
     ) {
     }
 
@@ -75,7 +75,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
             if (!$this->isFailedJob) {
                 throw new InvalidOutputException(
                     sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
-                    404
+                    404,
                 );
             }
         }

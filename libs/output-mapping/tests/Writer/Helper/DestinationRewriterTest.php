@@ -46,7 +46,7 @@ class DestinationRewriterTest extends TestCase
                 null,
                 null,
                 null,
-                1
+                1,
             ),
         );
     }

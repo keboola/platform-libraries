@@ -56,7 +56,7 @@ class MappingDestinationTest extends TestCase
         string $bucketId,
         string $stageId,
         string $bucketName,
-        string $tableName
+        string $tableName,
     ): void {
         $destination = new MappingDestination($value);
         self::assertSame($tableId, $destination->getTableId());

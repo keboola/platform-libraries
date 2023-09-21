@@ -40,7 +40,7 @@ class TagsHelperTest extends TestCase
                 sprintf('%s-first-tag', $branchId),
                 sprintf('%s-secondary-tag', $branchId),
             ],
-            $expectedConfig['tags']
+            $expectedConfig['tags'],
         );
         unset($expectedConfig['tags']);
         unset($storageConfig['tags']);
@@ -67,7 +67,7 @@ class TagsHelperTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -82,7 +82,7 @@ class TagsHelperTest extends TestCase
                 'first-tag',
                 'secondary-tag',
             ],
-            $expectedConfig['tags']
+            $expectedConfig['tags'],
         );
         unset($expectedConfig['tags']);
         unset($storageConfig['tags']);

@@ -42,7 +42,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
-            $configuration['mapping'] ?? []
+            $configuration['mapping'] ?? [],
         );
     }
 
@@ -60,7 +60,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
             throw new InvalidArgumentException(sprintf(
                 'Argument $source is expected to be instance of %s, %s given',
                 WorkspaceItemSource::class,
-                get_class($source)
+                get_class($source),
             ));
         }
 

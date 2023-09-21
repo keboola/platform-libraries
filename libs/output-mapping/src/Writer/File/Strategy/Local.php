@@ -95,10 +95,10 @@ class Local extends AbstractFileStrategy implements StrategyInterface
                     'Failed to parse manifest file "%s" as "%s": %s',
                     $manifestFile,
                     $this->format,
-                    $e->getMessage()
+                    $e->getMessage(),
                 ),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
     }

@@ -48,7 +48,7 @@ class ABSWorkspaceTest extends AbstractTestCase
                     $this->workspace = $data ?: $workspace;
                 }
                 return $this->workspaceId;
-            }
+            },
         );
         $mock->method('getCredentials')->willReturnCallback(
             function () use ($data): array {
@@ -59,7 +59,7 @@ class ABSWorkspaceTest extends AbstractTestCase
                     $this->workspace = $data ?: $workspace;
                 }
                 return $this->workspace['connection'];
-            }
+            },
         );
         /** @var ProviderInterface $mock */
         return $mock;
@@ -74,7 +74,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
             $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
-            'json'
+            'json',
         );
     }
 
@@ -85,7 +85,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $files = $strategy->listFiles('data/out/files');
         self::assertSame([], $files);
@@ -98,7 +98,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
@@ -114,30 +114,30 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-file'
+            'data/out/files/my-file',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-file.manifest'
+            'data/out/files/my-file.manifest',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-second-file'
+            'data/out/files/my-second-file',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-second-file.manifest'
+            'data/out/files/my-second-file.manifest',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/tables/my-other-file'
+            'data/out/tables/my-other-file',
         );
         $files = $strategy->listFiles('data/out/files');
         $fileNames = [];
@@ -155,10 +155,10 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         for ($i = 0; $i < 1000; $i++) {
             $blobClient->createAppendBlob($this->workspace['connection']['container'], 'data/out/files/my-file' . $i);
@@ -175,7 +175,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaces->deleteWorkspace($this->workspace['id'], [], true);
@@ -191,30 +191,30 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-file'
+            'data/out/files/my-file',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-file.manifest'
+            'data/out/files/my-file.manifest',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-second-file'
+            'data/out/files/my-second-file',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/files/my-second-file.manifest'
+            'data/out/files/my-second-file.manifest',
         );
         $blobClient->createAppendBlob(
             $this->workspace['connection']['container'],
-            'data/out/tables/my-other-file'
+            'data/out/tables/my-other-file',
         );
         $files = $strategy->listManifests('data/out/files');
         $fileNames = [];
@@ -223,7 +223,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         }
         self::assertEquals(
             ['data/out/files/my-file.manifest', 'data/out/files/my-second-file.manifest'],
-            array_keys($fileNames)
+            array_keys($fileNames),
         );
         self::assertStringEndsWith('data/out/files', $fileNames['data/out/files/my-file.manifest']);
     }
@@ -235,20 +235,20 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            'manifest'
+            'manifest',
         );
         $fileId = $strategy->loadFileToStorage('data/out/files/my-file_one', []);
         $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
@@ -273,20 +273,20 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            'manifest'
+            'manifest',
         );
         $fileId = $strategy->loadFileToStorage(
             'data/out/files/my-file_one',
@@ -296,7 +296,7 @@ class ABSWorkspaceTest extends AbstractTestCase
                 'is_public' => true,
                 'is_permanent' => true,
                 'is_encrypted' => true,
-            ]
+            ],
         );
         $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
@@ -320,12 +320,12 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
             'File "data/out/files/my-file_one" does not exist in container "' .
-            $this->workspace['connection']['container'] . '".'
+            $this->workspace['connection']['container'] . '".',
         );
         $strategy->loadFileToStorage('data/out/files/my-file_one', []);
     }
@@ -337,7 +337,7 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('File "\'\'" is empty.');
@@ -351,15 +351,15 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         $sourceData = [
             'is_public' => true,
@@ -374,12 +374,12 @@ class ABSWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            (string) json_encode($sourceData)
+            (string) json_encode($sourceData),
         );
         $manifestData = $strategy->readFileManifest('data/out/files/my-file_one.manifest');
         self::assertEquals(
             $sourceData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -390,15 +390,15 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'yaml'
+            'yaml',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         $sourceData = [
             'is_public' => true,
@@ -413,12 +413,12 @@ class ABSWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            Yaml::dump($sourceData)
+            Yaml::dump($sourceData),
         );
         $manifestData = $strategy->readFileManifest('data/out/files/my-file_one.manifest');
         self::assertEquals(
             $sourceData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -429,15 +429,15 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         $expectedData = [
             'is_public' => false,
@@ -449,12 +449,12 @@ class ABSWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            (string) json_encode(new stdClass())
+            (string) json_encode(new stdClass()),
         );
         $manifestData = $strategy->readFileManifest('data/out/files/my-file_one.manifest');
         self::assertEquals(
             $expectedData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -465,11 +465,11 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
-            'Failed to read manifest "data/out/files/my-file_one.manifest": "The specified blob does not exist.'
+            'Failed to read manifest "data/out/files/my-file_one.manifest": "The specified blob does not exist.',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
@@ -481,19 +481,19 @@ class ABSWorkspaceTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $blobClient = ClientFactory::createClientFromConnectionString(
-            $this->workspace['connection']['connectionString']
+            $this->workspace['connection']['connectionString'],
         );
         $blobClient->createBlockBlob(
             $this->workspace['connection']['container'],
             'data/out/files/my-file_one.manifest',
-            'not a valid json'
+            'not a valid json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
-            'Failed to parse manifest file "data/out/files/my-file_one.manifest" as "json": Syntax error'
+            'Failed to parse manifest file "data/out/files/my-file_one.manifest" as "json": Syntax error',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }

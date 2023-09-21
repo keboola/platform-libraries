@@ -23,7 +23,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             'StorageApiSlicedWriterRedshiftTest',
             'out',
             '',
-            $backendType
+            $backendType,
         );
     }
 
@@ -50,7 +50,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -58,7 +58,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -66,7 +66,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -118,7 +118,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -126,7 +126,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -134,7 +134,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -145,7 +145,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(
             ['componentId: foo'],
-            $file['tags']
+            $file['tags'],
         );
     }
 
@@ -170,13 +170,13 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -184,7 +184,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -198,7 +198,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyRedshiftOutputBucketId,
             'table16',
-            $csv
+            $csv,
         );
 
         $root = $this->temp->getTmpFolder();
@@ -219,13 +219,13 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table16'
+            $this->emptyRedshiftOutputBucketId . '.table16',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -233,7 +233,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table16', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -259,13 +259,13 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table15'
+            $this->emptyRedshiftOutputBucketId . '.table15',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -273,7 +273,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table15', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -287,7 +287,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyRedshiftOutputBucketId,
             'table17',
-            $csv
+            $csv,
         );
 
         $root = $this->temp->getTmpFolder();
@@ -308,13 +308,13 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table17'
+            $this->emptyRedshiftOutputBucketId . '.table17',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -322,7 +322,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table17', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -349,7 +349,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
     }
 
@@ -361,12 +361,12 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyRedshiftOutputBucketId,
             'table',
-            $csvFile
+            $csvFile,
         );
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -391,7 +391,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -399,7 +399,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -407,7 +407,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -440,7 +440,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -448,7 +448,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -456,7 +456,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -492,7 +492,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -500,11 +500,11 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(2, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table'
+            $this->emptyRedshiftOutputBucketId . '.table',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table2'
+            $this->emptyRedshiftOutputBucketId . '.table2',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -512,7 +512,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -522,7 +522,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table2', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -555,7 +555,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -563,7 +563,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyRedshiftOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyRedshiftOutputBucketId . '.table18'
+            $this->emptyRedshiftOutputBucketId . '.table18',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -571,7 +571,7 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table18', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);

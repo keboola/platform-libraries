@@ -49,7 +49,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             $outBucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_OUT,
-                backend: 'synapse'
+                backend: 'synapse',
             );
         }
 
@@ -63,7 +63,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             $bucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_IN,
-                backend: 'synapse'
+                backend: 'synapse',
             );
         }
 
@@ -79,7 +79,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $bucketId,
                 'test' . ($i + 1),
-                $csv
+                $csv,
             );
         }
 
@@ -87,7 +87,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse']
+            [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse'],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE)
@@ -109,14 +109,14 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         file_put_contents(
             $root . '/table2a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
         $writer = new TableWriter($factory);
 
@@ -126,7 +126,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::WORKSPACE_SYNAPSE,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -137,7 +137,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         ksort($sortedTables);
         self::assertEquals(
             [$outBucketId . '.table1a', $outBucketId . '.table2a'],
-            array_keys($sortedTables)
+            array_keys($sortedTables),
         );
         self::assertArrayHasKey('distributionKey', $sortedTables[$outBucketId . '.table2a']);
         self::assertEquals(['Id'], $sortedTables[$outBucketId . '.table2a']['distributionKey']);
@@ -151,7 +151,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
                 '"id1","name1","foo1","bar1"',
                 '"id2","name2","foo2","bar2"',
                 '"id3","name3","foo3","bar3"',
-            ]
+            ],
         );
     }
 }

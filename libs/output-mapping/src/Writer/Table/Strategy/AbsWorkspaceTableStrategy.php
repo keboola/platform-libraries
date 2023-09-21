@@ -26,7 +26,7 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
             $sourceName,
             $this->dataStorage->getWorkspaceId(),
             $sourcePath,
-            $isSliced
+            $isSliced,
         );
     }
 

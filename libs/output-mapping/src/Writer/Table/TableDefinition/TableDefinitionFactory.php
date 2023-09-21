@@ -26,7 +26,7 @@ class TableDefinitionFactory
                 $columnName,
                 $metadata,
                 $this->tableMetadata,
-                $this->backendType
+                $this->backendType,
             );
         }
         return $tableDefinition;

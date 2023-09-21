@@ -12,7 +12,7 @@ class MappingSource
     public function __construct(
         private readonly SourceInterface $source,
         private ?SplFileInfo $manifestFile = null,
-        private ?array $mapping = null
+        private ?array $mapping = null,
     ) {
     }
 

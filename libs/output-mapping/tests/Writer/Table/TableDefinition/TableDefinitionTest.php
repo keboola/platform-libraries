@@ -22,7 +22,7 @@ class TableDefinitionTest extends TestCase
         string $columnName,
         array $columnMetadata,
         string $backendType,
-        TableDefinitionColumnInterface $expectedColumn
+        TableDefinitionColumnInterface $expectedColumn,
     ): void {
         $definition->addColumn($columnName, $columnMetadata, $tableMetadata, $backendType);
         self::assertCount(1, $definition->getColumns());
@@ -53,7 +53,7 @@ class TableDefinitionTest extends TestCase
             'backendType' => 'synapse',
             'expectedColumn' => new NativeTableDefinitionColumn(
                 'testColumn',
-                new Synapse('varchar', ['length' => '25'])
+                new Synapse('varchar', ['length' => '25']),
             ),
         ];
     }

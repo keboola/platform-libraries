@@ -13,7 +13,7 @@ class FileItem
     public function __construct(
         private readonly string $pathName,
         private readonly string $path,
-        private readonly string $name
+        private readonly string $name,
     ) {
     }
 

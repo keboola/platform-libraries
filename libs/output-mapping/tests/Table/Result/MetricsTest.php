@@ -36,7 +36,7 @@ class MetricsTest extends TestCase
                 new TableMetrics($jobResults[0]),
                 new TableMetrics($jobResults[1]),
             ],
-            iterator_to_array($metrics->getTableMetrics())
+            iterator_to_array($metrics->getTableMetrics()),
         );
     }
 }

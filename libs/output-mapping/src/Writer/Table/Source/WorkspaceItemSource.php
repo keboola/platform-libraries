@@ -10,7 +10,7 @@ class WorkspaceItemSource implements SourceInterface
         private readonly string $sourceName,
         private readonly string $workspaceId,
         private readonly string $dataObject,
-        private readonly bool $isSliced
+        private readonly bool $isSliced,
     ) {
     }
 

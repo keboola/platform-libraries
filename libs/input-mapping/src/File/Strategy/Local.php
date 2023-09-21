@@ -26,13 +26,13 @@ class Local extends AbstractStrategy implements StrategyInterface
             $fs->mkdir($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath);
             $this->clientWrapper->getClientForBranch($sourceBranchId)->downloadSlicedFile(
                 $fileInfo['id'],
-                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
+                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath,
             );
         } else {
             $fs->mkdir(dirname($this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath));
             $this->clientWrapper->getClientForBranch($sourceBranchId)->downloadFile(
                 $fileInfo['id'],
-                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath
+                $this->ensurePathDelimiter($this->dataStorage->getPath()) . $destinationPath,
             );
         }
         $manifest = $this->manifestCreator->createFileManifest($fileInfo);
@@ -56,7 +56,7 @@ class Local extends AbstractStrategy implements StrategyInterface
             '%s/%s_%s',
             $this->ensureNoPathDelimiter($destinationPath),
             $fileId,
-            $fileName
+            $fileName,
         );
     }
 }

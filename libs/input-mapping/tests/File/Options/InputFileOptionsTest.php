@@ -29,7 +29,7 @@ class InputFileOptionsTest extends TestCase
     {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Invalid file mapping, the \'query\' attribute is unsupported in the dev/branch context.'
+            'Invalid file mapping, the \'query\' attribute is unsupported in the dev/branch context.',
         );
         new InputFileOptions(['query' => 'will not work'], true, '1234');
     }

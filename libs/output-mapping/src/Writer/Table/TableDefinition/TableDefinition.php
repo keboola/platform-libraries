@@ -39,7 +39,7 @@ class TableDefinition
         string $name,
         array $columnMetadata,
         array $tableMetadata,
-        string $backendType
+        string $backendType,
     ): self {
         $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
         $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $columnMetadata);

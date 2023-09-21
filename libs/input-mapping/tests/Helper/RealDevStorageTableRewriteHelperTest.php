@@ -44,7 +44,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
@@ -57,7 +57,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         if ($inBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 (string) $inBucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
 
@@ -65,19 +65,19 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         if ($outBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 (string) $outBucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
 
         $outDevBucketId = TestSatisfyer::getBucketIdByDisplayName(
             $clientWrapper,
             'dev-branch-main',
-            Client::STAGE_OUT
+            Client::STAGE_OUT,
         );
         if ($outDevBucketId) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 (string) $outDevBucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
 
@@ -85,7 +85,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             if (preg_match('/^(c-)?[0-9]+-output-mapping-test$/ui', $bucket['name'])) {
                 $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
-                    ['force' => true, 'async' => true]
+                    ['force' => true, 'async' => true],
                 );
             }
         }
@@ -95,7 +95,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper = $this->getClientWrapper($this->branchId);
         $clientWrapper->getBranchClient()->createBucket(
             'main',
-            Client::STAGE_OUT
+            Client::STAGE_OUT,
         );
     }
 
@@ -115,12 +115,12 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->outBucketId,
             'my-table',
-            $csv
+            $csv,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             'in.c-main',
             'my-table-2',
-            $csv
+            $csv,
         );
 
         $testLogger = new TestLogger();
@@ -140,7 +140,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         self::assertEquals($this->outBucketId . '.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
@@ -161,7 +161,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
-            $destinations->getTables()[0]->getDefinition()
+            $destinations->getTables()[0]->getDefinition(),
         );
         self::assertEquals('in.c-main.my-table-2', $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
@@ -181,7 +181,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
-            $destinations->getTables()[1]->getDefinition()
+            $destinations->getTables()[1]->getDefinition(),
         );
     }
 
@@ -201,12 +201,12 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->outBucketId,
             'my-table',
-            $csv
+            $csv,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->outBucketId,
             'my-table-2',
-            $csv
+            $csv,
         );
 
         $testLogger = new TestLogger();
@@ -226,7 +226,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         self::assertEquals($this->outBucketId . '.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
@@ -247,7 +247,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
-            $destinations->getTables()[0]->getDefinition()
+            $destinations->getTables()[0]->getDefinition(),
         );
         self::assertEquals($this->outBucketId . '.my-table-2', $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
@@ -267,13 +267,13 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
             ],
-            $destinations->getTables()[1]->getDefinition()
+            $destinations->getTables()[1]->getDefinition(),
         );
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "out.c-main.my-table-2".',
-                $clientWrapper->getDefaultBranch()->id
-            )
+                $clientWrapper->getDefaultBranch()->id,
+            ),
         ));
     }
 
@@ -288,12 +288,12 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->getBranchClient()->createTableAsync(
             $this->outBucketId,
             'my-table',
-            $csvFile
+            $csvFile,
         );
         $clientWrapper->getBranchClient()->createTableAsync(
             $this->outBucketId,
             'my-table-2',
-            $csvFile
+            $csvFile,
         );
         $testLogger = new TestLogger();
         $inputTablesOptions = new InputTableOptionsList([
@@ -312,7 +312,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         $expectedTableId = sprintf('%s.my-table', $this->outBucketId);
         self::assertEquals($expectedTableId, $destinations->getTables()[0]->getSource());
@@ -334,7 +334,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $this->branchId,
             ],
-            $destinations->getTables()[0]->getDefinition()
+            $destinations->getTables()[0]->getDefinition(),
         );
         $expectedTableId = sprintf('%s.my-table-2', $this->outBucketId);
         self::assertEquals($expectedTableId, $destinations->getTables()[1]->getSource());
@@ -355,14 +355,14 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => $this->branchId,
             ],
-            $destinations->getTables()[1]->getDefinition()
+            $destinations->getTables()[1]->getDefinition(),
         );
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
                 'Using dev input "out.c-main.my-table-2" from branch "%s" instead of main branch "%s".',
                 $this->branchId,
                 $clientWrapper->getDefaultBranch()->id,
-            )
+            ),
         ));
     }
 
@@ -379,7 +379,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->outBucketId,
             'my-table-2',
-            $csv
+            $csv,
         );
 
         $clientWrapper = $this->getClientWrapper($this->branchId);
@@ -389,7 +389,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->outBucketId,
             'my-table',
-            $csvFile
+            $csvFile,
         );
         $testLogger = new TestLogger();
         $inputTablesStates = new InputTableStateList([
@@ -405,7 +405,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableStatesDestinations(
             $inputTablesStates,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         // nothing is rewritten regardless of whether the bramch table exist or not
         self::assertEquals(
@@ -419,7 +419,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                     'lastImportDate' => '1605741600',
                 ],
             ],
-            $destinations->jsonSerialize()
+            $destinations->jsonSerialize(),
         );
     }
 
@@ -435,7 +435,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->method('isDevelopmentBranch')->willReturn(true);
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $clientWrapper->method('getDefaultBranch')->willReturn(
-            new Branch('654321', 'main', true, null)
+            new Branch('654321', 'main', true, null),
         );
 
         $inputTablesOptions = new InputTableOptionsList([
@@ -448,7 +448,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         self::assertSame(
             [
@@ -463,7 +463,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => 123456,
             ],
-            $destinations->getTables()[0]->getDefinition()
+            $destinations->getTables()[0]->getDefinition(),
         );
         self::assertSame(['name' => 'my-name'], $destinations->getTables()[0]->getTableInfo());
     }
@@ -493,7 +493,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $clientWrapper->method('getClientForDefaultBranch')->willReturn($defaultClientMock);
         $clientWrapper->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);
         $clientWrapper->method('getDefaultBranch')->willReturn(
-            new Branch('654321', 'main', true, null)
+            new Branch('654321', 'main', true, null),
         );
         $clientWrapper->method('getBranchId')->willReturn('123456');
         $inputTablesOptions = new InputTableOptionsList([
@@ -506,7 +506,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
-            $testLogger
+            $testLogger,
         );
         self::assertSame(
             [
@@ -521,11 +521,11 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'keep_internal_timestamp_column' => true,
                 'sourceBranchId' => (int) $sourceBranchId,
             ],
-            $destinations->getTables()[0]->getDefinition()
+            $destinations->getTables()[0]->getDefinition(),
         );
         self::assertSame(
             ['name' => $expectedName],
-            $destinations->getTables()[0]->getTableInfo()
+            $destinations->getTables()[0]->getTableInfo(),
         );
     }
 

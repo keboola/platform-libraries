@@ -26,8 +26,8 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 logger: $logger,
-                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
-            )
+                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
+            ),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -57,7 +57,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         /* because of https://keboola.atlassian.net/browse/KBC-228 we have to create redshift bucket to
@@ -65,12 +65,12 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         $bucketId = TestSatisfyer::getBucketIdByDisplayName(
             $this->clientWrapper,
             'input-mapping-test-rs',
-            Client::STAGE_OUT
+            Client::STAGE_OUT,
         );
         if ($bucketId !== null) {
             $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 $bucketId,
-                ['force' => true, 'async' => true]
+                ['force' => true, 'async' => true],
             );
         }
 
@@ -78,7 +78,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
             'input-mapping-test-rs',
             Client::STAGE_OUT,
             'Docker Testsuite',
-            'redshift'
+            'redshift',
         );
 
         $adapter = new Adapter();
@@ -87,7 +87,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         // test that the table exists in the workspace
         $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $bucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
         );
         self::assertEquals($bucketId . '.test1', $tableId);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
@@ -97,15 +97,15 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         self::assertEquals($this->secondTableId, $manifest['id']);
         $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $bucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
         self::assertEquals($bucketId . '.test2', $tableId);
 
         self::assertTrue($logger->hasInfoThatContains(
-            sprintf('Table "%s" will be copied.', $this->firstTableId)
+            sprintf('Table "%s" will be copied.', $this->firstTableId),
         ));
         self::assertTrue($logger->hasInfoThatContains(
-            sprintf('Table "%s" will be copied.', $this->secondTableId)
+            sprintf('Table "%s" will be copied.', $this->secondTableId),
         ));
         self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
     }
@@ -121,8 +121,8 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 logger: $logger,
-                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift']
-            )
+                backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
+            ),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -134,7 +134,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'View load for table "test1" using backend "redshift" can\'t be used, only Synapse is supported.'
+            'View load for table "test1" using backend "redshift" can\'t be used, only Synapse is supported.',
         );
 
         $reader->downloadTables(
@@ -142,7 +142,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 }

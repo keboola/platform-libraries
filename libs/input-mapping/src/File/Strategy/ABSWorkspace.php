@@ -33,7 +33,7 @@ class ABSWorkspace extends AbstractFileStrategy
             $credentials = $this->dataStorage->getCredentials();
             if (empty($credentials['connectionString']) || empty($credentials['container'])) {
                 throw new InputOperationException(
-                    'Invalid credentials received: ' . implode(', ', array_keys($credentials))
+                    'Invalid credentials received: ' . implode(', ', array_keys($credentials)),
                 );
             }
             $this->credentials = $credentials;
@@ -45,7 +45,7 @@ class ABSWorkspace extends AbstractFileStrategy
     {
         if (!$this->blobClient) {
             $this->blobClient = ClientFactory::createClientFromConnectionString(
-                $this->getCredentials()['connectionString']
+                $this->getCredentials()['connectionString'],
             );
         }
         return $this->blobClient;
@@ -55,7 +55,7 @@ class ABSWorkspace extends AbstractFileStrategy
         array $fileInfo,
         string $sourceBranchId,
         string $destinationPath,
-        bool $overwrite
+        bool $overwrite,
     ): void {
         $this->inputs[] = [
             'dataFileId' => $fileInfo['id'],
@@ -93,17 +93,17 @@ class ABSWorkspace extends AbstractFileStrategy
             $blobClient->createBlockBlob(
                 $this->getCredentials()['container'],
                 $destination,
-                $contents
+                $contents,
             );
         } catch (ServiceException $e) {
             throw new InvalidInputException(
                 sprintf(
                     'Failed writing manifest to "%s" in container "%s".',
                     $destination,
-                    $this->getCredentials()['container']
+                    $this->getCredentials()['container'],
                 ),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
     }
@@ -111,14 +111,14 @@ class ABSWorkspace extends AbstractFileStrategy
     protected function getFileDestinationPath(
         string $destinationPath,
         int $fileId,
-        string $fileName
+        string $fileName,
     ): string {
         /* Contrary to local strategy, in case of ABSWorkspace, the path is always a directory to which a
             file is exported with the name being fileId. */
         return sprintf(
             '%s/%s',
             $this->ensureNoPathDelimiter($destinationPath),
-            $fileName
+            $fileName,
         );
     }
 }

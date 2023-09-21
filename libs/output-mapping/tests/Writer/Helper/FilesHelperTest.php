@@ -32,7 +32,7 @@ class FilesHelperTest extends TestCase
                 $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.csv.manifest',
                 $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.root.file.manifest',
             ],
-            $result
+            $result,
         );
     }
 
@@ -57,7 +57,7 @@ class FilesHelperTest extends TestCase
                 $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'my.csv',
                 $temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'sub-dir',
             ],
-            $result
+            $result,
         );
     }
 }

@@ -27,7 +27,7 @@ class InputFileOptions
         }
         if (isset($this->definition['query']) && $this->isDevBranch) {
             throw new InvalidInputException(
-                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context."
+                "Invalid file mapping, the 'query' attribute is unsupported in the dev/branch context.",
             );
         }
     }

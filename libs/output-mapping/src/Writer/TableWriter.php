@@ -57,7 +57,7 @@ class TableWriter extends AbstractWriter
         $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
             $strategyFactory->getClientWrapper(),
-            $strategyFactory->getLogger()
+            $strategyFactory->getLogger(),
         );
         $this->logger = $strategyFactory->getLogger();
     }
@@ -76,7 +76,7 @@ class TableWriter extends AbstractWriter
         array $systemMetadata,
         string $stagingStorageOutput,
         bool $createTypedTables,
-        bool $isFailedJob
+        bool $isFailedJob,
     ): LoadTableQueue {
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
@@ -94,7 +94,7 @@ class TableWriter extends AbstractWriter
                 $config = $this->tableConfigurationResolver->resolveTableConfiguration(
                     $mappingSource,
                     $defaultBucket,
-                    $systemMetadata
+                    $systemMetadata,
                 );
             } catch (Throwable $e) {
                 if (!$isFailedJob) {
@@ -115,10 +115,10 @@ class TableWriter extends AbstractWriter
                         sprintf(
                             'Failed to process mapping for table %s: %s',
                             $mappingSource->getSourceName(),
-                            $e->getMessage()
+                            $e->getMessage(),
                         ),
                         0,
-                        $e
+                        $e,
                     );
                 }
             }
@@ -129,7 +129,7 @@ class TableWriter extends AbstractWriter
                     $mappingSource->getSource(),
                     RestrictedColumnsHelper::removeRestrictedColumnsFromConfig($config),
                     $systemMetadata,
-                    $createTypedTables
+                    $createTypedTables,
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
@@ -137,10 +137,10 @@ class TableWriter extends AbstractWriter
                         'Cannot upload file "%s" to table "%s" in Storage API: %s',
                         $mappingSource->getSourceName(),
                         $config['destination'],
-                        $e->getMessage()
+                        $e->getMessage(),
                     ),
                     $e->getCode(),
-                    $e
+                    $e,
                 );
             }
         }
@@ -168,13 +168,13 @@ class TableWriter extends AbstractWriter
         SourceInterface $source,
         array $config,
         array $systemMetadata,
-        bool $createTypedTables
+        bool $createTypedTables,
     ): LoadTableTaskInterface {
         $hasColumns = !empty($config['columns']);
         $hasColumnsMetadata = !empty($config['column_metadata']);
         if (!$hasColumns && $source->isSliced()) {
             throw new InvalidOutputException(
-                sprintf('Sliced file "%s" columns specification missing.', $source->getName())
+                sprintf('Sliced file "%s" columns specification missing.', $source->getName()),
             );
         }
 
@@ -183,14 +183,14 @@ class TableWriter extends AbstractWriter
         } catch (InvalidArgumentException $e) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve valid destination. "%s" is not a valid table ID.',
-                $config['destination']
+                $config['destination'],
             ), 0, $e);
         }
 
         $destinationBucket = $this->ensureDestinationBucket($destination, $systemMetadata);
         $destinationTableInfo = $this->getDestinationTableInfoIfExists(
             $destination->getTableId(),
-            $this->clientWrapper
+            $this->clientWrapper,
         );
 
         if ($destinationTableInfo !== null) {
@@ -198,7 +198,7 @@ class TableWriter extends AbstractWriter
                 $this->clientWrapper->getTableAndFileStorageClient(),
                 $destinationTableInfo,
                 $config,
-                $destinationBucket['backend']
+                $destinationBucket['backend'],
             );
 
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
@@ -207,7 +207,7 @@ class TableWriter extends AbstractWriter
                     $this->clientWrapper->getTableAndFileStorageClient(),
                     $destination->getTableId(),
                     $destinationTableInfo['primaryKey'],
-                    $config['primary_key']
+                    $config['primary_key'],
                 );
             }
 
@@ -220,7 +220,7 @@ class TableWriter extends AbstractWriter
                 ];
                 $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
                     $destination->getTableId(),
-                    $deleteOptions
+                    $deleteOptions,
                 );
             }
         }
@@ -234,13 +234,13 @@ class TableWriter extends AbstractWriter
         if ($destinationTableInfo === null && isset($config['distribution_key'])) {
             $loadOptions['distributionKey'] = implode(
                 ',',
-                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key'])
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']),
             );
         }
 
         $loadOptions = array_merge(
             $loadOptions,
-            $strategy->prepareLoadTaskOptions($source, $config)
+            $strategy->prepareLoadTaskOptions($source, $config),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
@@ -249,12 +249,12 @@ class TableWriter extends AbstractWriter
         if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && $hasColumnsMetadata)) {
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
-                $destinationBucket['backend']
+                $destinationBucket['backend'],
             );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),
                 PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
-                $config['column_metadata']
+                $config['column_metadata'],
             );
             $this->createTableDefinition($destination, $tableDefinition);
             $tableCreated = true;
@@ -275,21 +275,21 @@ class TableWriter extends AbstractWriter
             $loadTask->addMetadata(new TableMetadata(
                 $destination->getTableId(),
                 TableWriter::SYSTEM_METADATA_PROVIDER,
-                $this->getCreatedMetadata($systemMetadata)
+                $this->getCreatedMetadata($systemMetadata),
             ));
         }
 
         $loadTask->addMetadata(new TableMetadata(
             $destination->getTableId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
-            $this->getUpdatedMetadata($systemMetadata)
+            $this->getUpdatedMetadata($systemMetadata),
         ));
 
         if (!empty($config['metadata'])) {
             $loadTask->addMetadata(new TableMetadata(
                 $destination->getTableId(),
                 $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['metadata']
+                $config['metadata'],
             ));
         }
 
@@ -297,7 +297,7 @@ class TableWriter extends AbstractWriter
             $loadTask->addMetadata(new ColumnMetadata(
                 $destination->getTableId(),
                 $systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
-                $config['column_metadata']
+                $config['column_metadata'],
             ));
         }
 
@@ -315,7 +315,7 @@ class TableWriter extends AbstractWriter
         $destinationBucketId = $destination->getBucketId();
         try {
             $destinationBucketDetails = $this->clientWrapper->getTableAndFileStorageClient()->getBucket(
-                $destinationBucketId
+                $destinationBucketId,
             );
             $this->checkDevBucketMetadata($destination);
         } catch (ClientException $e) {
@@ -325,7 +325,7 @@ class TableWriter extends AbstractWriter
             // bucket doesn't exist so we need to create it
             $this->createDestinationBucket($destination, $systemMetadata);
             $destinationBucketDetails = $this->clientWrapper->getTableAndFileStorageClient()->getBucket(
-                $destinationBucketId
+                $destinationBucketId,
             );
         }
 
@@ -339,13 +339,13 @@ class TableWriter extends AbstractWriter
     {
         $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
             $destination->getBucketName(),
-            $destination->getBucketStage()
+            $destination->getBucketStage(),
         );
 
         $this->metadataClient->postBucketMetadata(
             $destination->getBucketId(),
             TableWriter::SYSTEM_METADATA_PROVIDER,
-            $this->getCreatedMetadata($systemMetadata)
+            $this->getCreatedMetadata($systemMetadata),
         );
     }
 
@@ -360,7 +360,7 @@ class TableWriter extends AbstractWriter
             $destination->getBucketId(),
             $destination->getTableName(),
             $headerCsvFile,
-            $loadOptions
+            $loadOptions,
         );
     }
 
@@ -371,17 +371,17 @@ class TableWriter extends AbstractWriter
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
                 $destination->getBucketId(),
-                $requestData
+                $requestData,
             );
         } catch (ClientException $e) {
             throw new InvalidOutputException(
                 sprintf(
                     'Cannot create table "%s" definition in Storage API: %s',
                     $destination->getTableName(),
-                    json_encode((array) $e->getContextParams())
+                    json_encode((array) $e->getContextParams()),
                 ),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
     }
@@ -407,7 +407,7 @@ class TableWriter extends AbstractWriter
                         $bucketId,
                         $this->clientWrapper->getBranchName(),
                         $this->clientWrapper->getBranchId(),
-                        $metadatum['value']
+                        $metadatum['value'],
                     ));
                 }
             }
@@ -424,7 +424,7 @@ class TableWriter extends AbstractWriter
             'bucket "%s" on branch "%s" (ID "%s"), but the bucket is not assigned to any development branch.',
             $bucketId,
             $this->clientWrapper->getBranchName(),
-            $this->clientWrapper->getBranchId()
+            $this->clientWrapper->getBranchId(),
         ));
     }
 

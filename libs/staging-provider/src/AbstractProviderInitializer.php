@@ -16,7 +16,7 @@ abstract class AbstractProviderInitializer
     public function __construct(
         private readonly AbstractStrategyFactory $stagingFactory,
         private readonly WorkspaceProviderFactoryInterface $workspaceProviderFactory,
-        private readonly string $dataDirectory
+        private readonly string $dataDirectory,
     ) {
     }
 

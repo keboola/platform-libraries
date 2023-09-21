@@ -48,7 +48,7 @@ class InputFileStateListTest extends TestCase
                     'name' => 'test2',
                     'match' => 'exclude',
                 ],
-            ])->getLastImportId()
+            ])->getLastImportId(),
         );
         self::assertEquals(
             '21323',
@@ -57,7 +57,7 @@ class InputFileStateListTest extends TestCase
                     'name' => 'test3',
                     'match' => 'include',
                 ],
-            ])->getLastImportId()
+            ])->getLastImportId(),
         );
     }
 
@@ -66,7 +66,7 @@ class InputFileStateListTest extends TestCase
         $states = new InputFileStateList([]);
         $this->expectException(FileNotFoundException::class);
         $this->expectExceptionMessage(
-            'State for files defined by "[{"name":"test","match":"include"}]" not found.'
+            'State for files defined by "[{"name":"test","match":"include"}]" not found.',
         );
         $states->getFile([['name' => 'test', 'match' => 'include']]);
     }

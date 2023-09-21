@@ -24,7 +24,7 @@ class TableDefinitionResolverTest extends TestCase
                     ],
                     'destination' => 'test',
                 ],
-            ]
+            ],
         );
     }
 
@@ -36,7 +36,7 @@ class TableDefinitionResolverTest extends TestCase
 
         $this->expectException(Throwable::class);
         $this->expectExceptionMessage(
-            'Table with metadata key: "bdm.scaffold.tag" and value: "test_table" was not found.'
+            'Table with metadata key: "bdm.scaffold.tag" and value: "test_table" was not found.',
         );
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }
@@ -57,7 +57,7 @@ class TableDefinitionResolverTest extends TestCase
         $this->expectException(Throwable::class);
         $this->expectExceptionMessage(
             'More than one table with metadata key: "bdm.scaffold.tag" ' .
-            'and value: "test_table" was found: table1,table1.'
+            'and value: "test_table" was found: table1,table1.',
         );
         $resolver->resolve($this->getSingleTableSearchOptionsList());
     }

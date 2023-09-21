@@ -38,7 +38,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::ABS,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -72,7 +72,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::S3,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 }

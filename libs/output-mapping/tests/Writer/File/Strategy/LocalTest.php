@@ -29,7 +29,7 @@ class LocalTest extends AbstractTestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         return $mockLocal;
     }
@@ -41,7 +41,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $files = $strategy->listFiles('');
         self::assertSame([], $files);
@@ -54,7 +54,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
@@ -68,34 +68,34 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file',
-            'my-contents'
+            'my-contents',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file.manifest',
-            'manifest data'
+            'manifest data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-second-file',
-            'second file'
+            'second file',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest',
-            '2nd manifest data'
+            '2nd manifest data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/tables/my-file',
-            'my-contents'
+            'my-contents',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest',
-            'table manifest'
+            'table manifest',
         );
         $files = $strategy->listFiles('/data/out/files');
         $fileNames = [];
@@ -115,7 +115,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         self::expectException(OutputOperationException::class);
         self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
@@ -129,34 +129,34 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/tables');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file',
-            'my-contents'
+            'my-contents',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file.manifest',
-            'manifest data'
+            'manifest data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-second-file',
-            'second file'
+            'second file',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-second-file.manifest',
-            '2nd manifest data'
+            '2nd manifest data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/tables/my-file',
-            'my-contents'
+            'my-contents',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/tables/my-file.manifest',
-            'table manifest'
+            'table manifest',
         );
         $files = $strategy->listManifests('data/out/files');
         $fileNames = [];
@@ -176,17 +176,17 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            'manifest data'
+            'manifest data',
         );
         $fileId = $strategy->loadFileToStorage('/data/out/files/my-file_one', []);
         $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
@@ -211,17 +211,17 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one',
-            'my-data'
+            'my-data',
         );
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            'manifest data'
+            'manifest data',
         );
         $fileId = $strategy->loadFileToStorage(
             'data/out/files/my-file_one',
@@ -231,7 +231,7 @@ class LocalTest extends AbstractTestCase
                 'is_public' => false,
                 'is_permanent' => true,
                 'is_encrypted' => true,
-            ]
+            ],
         );
         $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         $destination = $this->temp->getTmpFolder() . 'destination';
@@ -255,7 +255,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -271,7 +271,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -288,12 +288,12 @@ class LocalTest extends AbstractTestCase
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            json_encode($sourceData)
+            json_encode($sourceData),
         );
         $manifestData = $strategy->readFileManifest('data/out/files/my-file_one.manifest');
         self::assertEquals(
             $sourceData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -304,7 +304,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'yaml'
+            'yaml',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -321,12 +321,12 @@ class LocalTest extends AbstractTestCase
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            Yaml::dump($sourceData)
+            Yaml::dump($sourceData),
         );
         $manifestData = $strategy->readFileManifest('data/out/files/my-file_one.manifest');
         self::assertEquals(
             $sourceData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -337,7 +337,7 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -351,12 +351,12 @@ class LocalTest extends AbstractTestCase
         ];
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            json_encode(new stdClass())
+            json_encode(new stdClass()),
         );
         $manifestData = $strategy->readFileManifest('/data/out/files/my-file_one.manifest');
         self::assertEquals(
             $expectedData,
-            $manifestData
+            $manifestData,
         );
     }
 
@@ -367,13 +367,13 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
-            '/data/out/files/my-file_one.manifest\' not found.'
+            '/data/out/files/my-file_one.manifest\' not found.',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
@@ -385,17 +385,17 @@ class LocalTest extends AbstractTestCase
             new TestLogger(),
             $this->getProvider(),
             $this->getProvider(),
-            'json'
+            'json',
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            'not a valid json'
+            'not a valid json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage(
-            'data/out/files/my-file_one.manifest" as "json": Syntax error'
+            'data/out/files/my-file_one.manifest" as "json": Syntax error',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }

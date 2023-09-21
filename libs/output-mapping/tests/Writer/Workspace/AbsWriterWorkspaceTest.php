@@ -44,7 +44,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         );
 
         $bucketName = 'testAbsTableSlicedManifestOutputMapping';
@@ -58,7 +58,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             $bucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
                 name: $bucketName,
                 stage: Client::STAGE_IN,
-                backend: 'synapse'
+                backend: 'synapse',
             );
         }
         $tableIds = [];
@@ -72,7 +72,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $bucketId,
                 'test' . ($i + 1),
-                $csv
+                $csv,
             );
         }
 
@@ -92,8 +92,8 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/someday/table1a.manifest',
             json_encode(
-                ['columns' => ['Id', 'Name']]
-            )
+                ['columns' => ['Id', 'Name']],
+            ),
         );
 
         $writer = new TableWriter($factory);
@@ -103,7 +103,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-abs',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -132,7 +132,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS)->getDataStorage()->getWorkspaceId();
@@ -142,13 +142,13 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/out/tables/table1a.csv/slice1',
-            $content
+            $content,
         );
         $content = "\"secondRow1\",\"secondRow2\"\n";
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/out/tables/table1a.csv/slice2',
-            $content
+            $content,
         );
 
         $configs = [
@@ -162,8 +162,8 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/data/out/tables/table1a.csv.manifest',
             json_encode(
-                ['columns' => ['First column', 'Second column']]
-            )
+                ['columns' => ['First column', 'Second column']],
+            ),
         );
 
         $writer = new TableWriter($factory);
@@ -173,7 +173,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-abs',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -202,11 +202,11 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         );
         // initialize the workspace mock
         $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_ABS
+            AbstractStrategyFactory::WORKSPACE_ABS,
         )->getDataStorage()->getWorkspaceId();
 
         $root = $this->temp->getTmpFolder();
@@ -216,13 +216,13 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/out/tables/table1a.csv',
-            $content
+            $content,
         );
         $content = "\"First column\",\"Id\"\n\"first\",\"second\"\n\"third\",\"fourth\"";
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'data/out/tables/table1a.csv2',
-            $content
+            $content,
         );
 
         $configs = [
@@ -242,14 +242,14 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         file_put_contents(
             $root . '/data/out/tables/table1a.csv.manifest',
             json_encode(
-                ['columns' => ['first column', 'second column']]
-            )
+                ['columns' => ['first column', 'second column']],
+            ),
         );
         file_put_contents(
             $root . '/data/out/tables/table1a.csv2.manifest',
             json_encode(
-                ['columns' => ['first column', 'second column']]
-            )
+                ['columns' => ['first column', 'second column']],
+            ),
         );
 
         $writer = new TableWriter($factory);
@@ -259,7 +259,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-abs',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -281,7 +281,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             [
                 $this->emptyOutputBucketId . '.table1a',
                 $this->emptyOutputBucketId . '.table2a',
-            ]
+            ],
         );
         $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
             '"first_column"',
@@ -302,7 +302,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             null,
             'json',
             null,
-            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs']
+            [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         );
         // initialize the workspace mock
         $factory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS);
@@ -312,17 +312,17 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'upload/file2.manifest',
-            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}'
+            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}',
         );
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'upload/file3',
-            'test'
+            'test',
         );
         $blobClient->createBlockBlob(
             $this->workspaceCredentials['container'],
             'upload/file3.manifest',
-            '{"tags": ["' . self::FILE_TAG . '"],"is_permanent": true}'
+            '{"tags": ["' . self::FILE_TAG . '"],"is_permanent": true}',
         );
         $configs = [
             [
@@ -350,7 +350,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::WORKSPACE_ABS,
             [],
-            false
+            false,
         );
         sleep(1);
 

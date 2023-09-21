@@ -68,7 +68,7 @@ class ManifestTest extends TestCase
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage(
             'Invalid configuration for path "table.delete_where_operator": ' .
-            'Invalid operator in delete_where_operator "abc"'
+            'Invalid operator in delete_where_operator "abc"',
         );
         (new Table\Manifest())->parse(['config' => $config]);
     }

@@ -34,7 +34,7 @@ class LoadTableQueueTest extends TestCase
             [
                 $this->createMock(LoadTableTask::class),
                 $this->createMock(LoadTableTask::class),
-            ]
+            ],
         );
 
         self::assertSame(2, $loadQueue->getTaskCount());
@@ -159,7 +159,7 @@ class LoadTableQueueTest extends TestCase
         } catch (InvalidOutputException $e) {
             self::assertSame(
                 'Failed to load table "myTable": Table with displayName "test" already exists.',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 
@@ -242,7 +242,7 @@ class LoadTableQueueTest extends TestCase
         } catch (InvalidOutputException $e) {
             self::assertSame(
                 'Failed to update metadata for table "myTable": Hi ({"bar":"Kochba"})',
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
 
@@ -274,7 +274,7 @@ class LoadTableQueueTest extends TestCase
         array $jobResult,
         string $expectedTableId,
         int $expectedCompressedBytes,
-        int $expectedUncompressedBytes
+        int $expectedUncompressedBytes,
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::once())
@@ -349,7 +349,7 @@ class LoadTableQueueTest extends TestCase
         array $jobResult,
         string $expectedTableId,
         int $expectedCompressedBytes,
-        int $expectedUncompressedBytes
+        int $expectedUncompressedBytes,
     ): void {
         $clientMock = $this->createMock(Client::class);
         $branchClientMock = $this->createMock(BranchAwareClient::class);

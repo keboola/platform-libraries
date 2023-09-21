@@ -32,7 +32,7 @@ class ABSWorkspace extends AbstractStrategy
                     'source' => $table->getSource(),
                     'destination' => $this->ensureNoPathDelimiter($destination),
                 ],
-                $exportOptions
+                $exportOptions,
             );
 
             if ($table->isUseView()) {
@@ -43,7 +43,7 @@ class ABSWorkspace extends AbstractStrategy
             $copyInputs[] = $copyInput;
         }
         $this->logger->info(
-            sprintf('Copying %s tables to workspace.', count($copyInputs))
+            sprintf('Copying %s tables to workspace.', count($copyInputs)),
         );
         $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
         $workspaceJobId = $workspaces->queueWorkspaceLoadData(
@@ -51,7 +51,7 @@ class ABSWorkspace extends AbstractStrategy
             [
                 'input' => $copyInputs,
                 'preserve' => 1,
-            ]
+            ],
         );
 
         $jobResults = [];
@@ -67,7 +67,7 @@ class ABSWorkspace extends AbstractStrategy
                     $tableInfo,
                     $manifestPath,
                     $table->getColumnNamesFromTypes(),
-                    $this->format
+                    $this->format,
                 );
             }
         }

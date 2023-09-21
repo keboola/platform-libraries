@@ -18,12 +18,12 @@ class TableRewriteHelperFactoryTest extends TestCase
         self::assertInstanceOf(FakeDevStorageTableRewriteHelper::class, $helper);
 
         $helper = TableRewriteHelperFactory::getTableRewriteHelper(new ClientOptions(
-            useBranchStorage: false
+            useBranchStorage: false,
         ));
         self::assertInstanceOf(FakeDevStorageTableRewriteHelper::class, $helper);
 
         $helper = TableRewriteHelperFactory::getTableRewriteHelper(new ClientOptions(
-            useBranchStorage: true
+            useBranchStorage: true,
         ));
         self::assertInstanceOf(RealDevStorageTableRewriteHelper::class, $helper);
     }

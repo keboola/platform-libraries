@@ -41,7 +41,7 @@ trait InitSynapseStorageClientTrait
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $clientWrapper->getBranchClient()->getApiUrl()
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
         return $clientWrapper;
     }

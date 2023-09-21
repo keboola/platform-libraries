@@ -19,7 +19,7 @@ class AbstractFileStrategy
         protected readonly LoggerInterface $logger,
         protected readonly ProviderInterface $dataStorage,
         protected readonly ProviderInterface $metadataStorage,
-        protected readonly string $format
+        protected readonly string $format,
     ) {
     }
 

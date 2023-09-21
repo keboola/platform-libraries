@@ -35,12 +35,12 @@ class TableDefinitionColumnFactory
         if ($this->nativeDatatypeClass) {
             return new NativeTableDefinitionColumn(
                 $columnName,
-                $this->getNativeDataType($metadata)
+                $this->getNativeDataType($metadata),
             );
         }
         return new BaseTypeTableDefinitionColumn(
             $columnName,
-            $this->getBaseTypeFromMetadata($metadata)
+            $this->getBaseTypeFromMetadata($metadata),
         );
     }
 

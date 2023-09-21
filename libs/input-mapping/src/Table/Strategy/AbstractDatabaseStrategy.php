@@ -66,7 +66,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                         'source' => $table->getSource(),
                         'destination' => $table->getDestination(),
                     ],
-                    $exportOptions
+                    $exportOptions,
                 );
 
                 if ($table->isUseView()) {
@@ -86,7 +86,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
 
         if ($cloneInputs) {
             $this->logger->info(
-                sprintf('Cloning %s tables to workspace.', count($cloneInputs))
+                sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
             );
             // here we are waiting for the jobs to finish. handleAsyncTask = true
             // We need to process clone and copy jobs separately because there is no lock on the table and there
@@ -97,7 +97,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 [
                     'input' => $cloneInputs,
                     'preserve' => $preserve ? 1 : 0,
-                ]
+                ],
             );
             $cloneJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
             if (!$preserve) {
@@ -107,14 +107,14 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
 
         if ($copyInputs) {
             $this->logger->info(
-                sprintf('Copying %s tables to workspace.', count($copyInputs))
+                sprintf('Copying %s tables to workspace.', count($copyInputs)),
             );
             $jobId = $workspaces->queueWorkspaceLoadData(
                 (int) $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $copyInputs,
                     'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
-                ]
+                ],
             );
             $copyJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
         }
@@ -128,7 +128,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 $table->getTableInfo(),
                 $manifestPath,
                 $table->getColumnNamesFromTypes(),
-                $this->format
+                $this->format,
             );
         }
         return $jobResults;

@@ -14,13 +14,13 @@ class BuildQueryFromConfigurationHelper
             return sprintf(
                 '%s AND (%s)',
                 $configuration['query'],
-                self::buildQueryForSourceTags($configuration['source']['tags'])
+                self::buildQueryForSourceTags($configuration['source']['tags']),
             );
         }
         if (isset($configuration['source']['tags'])) {
             return self::buildQueryForSourceTags(
                 $configuration['source']['tags'],
-                $configuration['changed_since'] ?? null
+                $configuration['changed_since'] ?? null,
             );
         }
         return $configuration['query'];
@@ -36,7 +36,7 @@ class BuildQueryFromConfigurationHelper
                     $queryPart = 'NOT ' . $queryPart;
                 }
                 return $queryPart;
-            }, $tags)
+            }, $tags),
         );
         if ($changedSince && $changedSince !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
             $query = '(' . $query . ') AND ' . self::getChangedSinceQueryPortion($changedSince);
@@ -48,7 +48,7 @@ class BuildQueryFromConfigurationHelper
     {
         return sprintf(
             'created:["%s" TO *]',
-            date('c', (int) strtotime($changedSince))
+            date('c', (int) strtotime($changedSince)),
         );
     }
 

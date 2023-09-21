@@ -25,7 +25,7 @@ class StrategyFactoryTest extends TestCase
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN')
+                (string) getenv('STORAGE_API_TOKEN'),
             ),
         );
         $logger = new NullLogger();
@@ -35,7 +35,7 @@ class StrategyFactoryTest extends TestCase
         self::assertEquals(
             ['local', 'workspace-abs', 'workspace-redshift', 'workspace-snowflake', 'workspace-synapse',
                 'workspace-exasol', 'workspace-teradata', 'workspace-bigquery'],
-            array_keys($factory->getStrategyMap())
+            array_keys($factory->getStrategyMap()),
         );
     }
 
@@ -45,11 +45,11 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('The project does not support "local" file output backend.');
@@ -62,19 +62,19 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $factory->addProvider(
             new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])],
         );
         self::assertInstanceOf(
             Local::class,
-            $factory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $factory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
     }
 
@@ -84,11 +84,11 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         self::expectException(InvalidOutputException::class);
         self::expectExceptionMessage('The project does not support "local" table output backend.');
@@ -101,19 +101,19 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $factory->addProvider(
             new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $factory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $factory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
     }
 
@@ -123,11 +123,11 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         self::expectException(StagingException::class);
         self::expectExceptionMessage('Staging "0" is unknown. Known types are "local, workspace-abs, ');
@@ -140,11 +140,11 @@ class StrategyFactoryTest extends TestCase
             new ClientWrapper(
                 new ClientOptions(
                     (string) getenv('STORAGE_API_URL'),
-                    (string) getenv('STORAGE_API_TOKEN')
+                    (string) getenv('STORAGE_API_TOKEN'),
                 ),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         self::expectException(InvalidInputException::class);
         self::expectExceptionMessage('Input mapping on type "invalid" is not supported. Supported types are "local,');

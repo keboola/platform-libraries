@@ -20,8 +20,8 @@ class TableColumnsHelper
         $missingColumns = array_unique(
             array_merge(
                 self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration),
-                self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration)
-            )
+                self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration),
+            ),
         );
 
         if (!$missingColumns) {
@@ -67,14 +67,14 @@ class TableColumnsHelper
                 $currentTableInfo['id'],
                 $columnName,
                 $columnDefinition,
-                $columnBasetype
+                $columnBasetype,
             );
         }
     }
 
     private static function getMissingColumnsFromColumnMetadata(
         array $currentTableInfo,
-        array $newTableConfiguration
+        array $newTableConfiguration,
     ): array {
         $tableColumns = $currentTableInfo['columns'];
         $configColumns = [];

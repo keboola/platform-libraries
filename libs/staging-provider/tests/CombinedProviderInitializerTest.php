@@ -30,7 +30,7 @@ class CombinedProviderInitializerTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-            )
+            ),
         );
         $logger = new NullLogger();
 
@@ -51,39 +51,39 @@ class CombinedProviderInitializerTest extends TestCase
                 $workspacesApi,
                 $componentId,
                 $configId,
-                new WorkspaceBackendConfig(null)
+                new WorkspaceBackendConfig(null),
             );
 
             $inputStagingFactory = new InputStrategyFactory($clientWrapper, $logger, 'json');
             $inputInitializer = new InputProviderInitializer(
                 $inputStagingFactory,
                 $providerFactory,
-                '/tmp/random/data'
+                '/tmp/random/data',
             );
             $inputInitializer->initializeProviders(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
-                ]
+                ],
             );
 
             $outputStagingFactory = new OutputStrategyFactory($clientWrapper, $logger, 'json');
             $outputInitializer = new OutputProviderInitializer(
                 $outputStagingFactory,
                 $providerFactory,
-                '/tmp/random/data'
+                '/tmp/random/data',
             );
             $outputInitializer->initializeProviders(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 [
                     'owner' => ['hasSnowflake' => true],
-                ]
+                ],
             );
 
             $inputStrategy = $inputStagingFactory->getTableInputStrategy(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 'test',
-                new InputTableStateList([])
+                new InputTableStateList([]),
             );
             $reflection = new ReflectionProperty($inputStrategy, 'dataStorage');
             $reflection->setAccessible(true);
@@ -92,7 +92,7 @@ class CombinedProviderInitializerTest extends TestCase
             $workspaceId1 = $dataStorage->getWorkspaceId();
 
             $outputStrategy = $outputStagingFactory->getTableOutputStrategy(
-                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             );
             $reflection = new ReflectionProperty($outputStrategy, 'dataStorage');
             $reflection->setAccessible(true);

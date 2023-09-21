@@ -23,7 +23,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             'StorageApiSlicedWriterTest',
             'out',
             '',
-            $backendType
+            $backendType,
         );
     }
 
@@ -50,7 +50,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -64,7 +64,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -116,7 +116,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -130,7 +130,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -141,7 +141,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
         self::assertEquals(
             ['componentId: foo'],
-            $file['tags']
+            $file['tags'],
         );
     }
 
@@ -166,7 +166,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -178,7 +178,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -192,7 +192,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table16',
-            $csv
+            $csv,
         );
 
         $root = $this->temp->getTmpFolder();
@@ -213,13 +213,13 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table16'
+            $this->emptyOutputBucketId . '.table16',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -227,7 +227,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table16', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -253,13 +253,13 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table15'
+            $this->emptyOutputBucketId . '.table15',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -267,7 +267,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table15', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -281,7 +281,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table17',
-            $csv
+            $csv,
         );
 
         $root = $this->temp->getTmpFolder();
@@ -302,13 +302,13 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table17'
+            $this->emptyOutputBucketId . '.table17',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -316,7 +316,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table17', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(0, $table);
     }
@@ -343,7 +343,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
     }
 
@@ -355,7 +355,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table',
-            $csvFile
+            $csvFile,
         );
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
@@ -383,7 +383,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -397,7 +397,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -415,7 +415,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table',
-            $csvFile
+            $csvFile,
         );
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
@@ -447,7 +447,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -456,7 +456,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
-            }
+            },
         );
 
         self::assertCount(2, $writerJobs);
@@ -473,7 +473,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test', 'City' => 'test'], $table);
@@ -506,7 +506,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -520,7 +520,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -556,7 +556,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -572,7 +572,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -582,7 +582,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table2', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
@@ -615,7 +615,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -623,7 +623,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-            $this->emptyOutputBucketId . '.table18'
+            $this->emptyOutputBucketId . '.table18',
         );
         self::assertEquals(['Id', 'Name'], $table['columns']);
 
@@ -631,7 +631,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyOutputBucketId . '.table18', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(2, $table);
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);

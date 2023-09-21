@@ -20,7 +20,7 @@ class TestSatisfyer
     private static function getAttribute(
         ReflectionObject $reflection,
         string $methodName,
-        string $attribute
+        string $attribute,
     ): ?ReflectionAttribute {
         $attributes = $reflection->getMethod($methodName)->getAttributes($attribute);
         if (count($attributes) > 0) {
@@ -32,7 +32,7 @@ class TestSatisfyer
     public static function getBucketIdByDisplayName(
         ClientWrapper $clientWrapper,
         string $bucketDisplayName,
-        string $stage
+        string $stage,
     ): ?string {
         // the client has method getBucketId, but it does not work with display name, and actually it is not
         // useful at all https://keboola.slack.com/archives/CFVRE56UA/p1680696020855349
@@ -49,7 +49,7 @@ class TestSatisfyer
         ClientWrapper $clientWrapper,
         string $bucketName,
         string $stage,
-        string $backend = 'snowflake'
+        string $backend = 'snowflake',
     ): string {
         $bucketId = self::getBucketIdByDisplayName($clientWrapper, $bucketName, $stage);
         if ($bucketId !== null) {
@@ -62,7 +62,7 @@ class TestSatisfyer
         return $clientWrapper->getTableAndFileStorageClient()->createBucket(
             name: $bucketName,
             stage: $stage,
-            backend: $backend
+            backend: $backend,
         );
     }
 
@@ -100,7 +100,7 @@ class TestSatisfyer
         $redshiftTestTable = self::getAttribute(
             $reflection,
             $methodName,
-            NeedsTestRedshiftTable::class
+            NeedsTestRedshiftTable::class,
         );
         $emptyInputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyInputBucket::class);
 
@@ -131,7 +131,7 @@ class TestSatisfyer
                 $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                     $testBucketId,
                     'test' . ($i + 1),
-                    $csv
+                    $csv,
                 );
             }
         }
@@ -141,7 +141,7 @@ class TestSatisfyer
                 $clientWrapper,
                 $methodName . 'Redshift',
                 Client::STAGE_IN,
-                'redshift'
+                'redshift',
             );
 
             $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
@@ -153,7 +153,7 @@ class TestSatisfyer
             $redshiftTableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                 $testRedshiftBucketId,
                 'test',
-                $csv
+                $csv,
             );
         }
         return [

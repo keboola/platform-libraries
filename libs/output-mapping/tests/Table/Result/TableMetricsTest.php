@@ -53,7 +53,7 @@ class TableMetricsTest extends TestCase
         array $jobResult,
         string $expectedTableId,
         int $expectedCompressedBytes,
-        int $expectedUncompressedBytes
+        int $expectedUncompressedBytes,
     ): void {
         $tableMetrics = new TableMetrics($jobResult);
 

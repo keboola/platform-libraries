@@ -29,7 +29,7 @@ class CreateAndLoadTableTaskTest extends TestCase
                 [
                     'foo' => 'bar',
                     'name' => 'test-table',
-                ]
+                ],
             )
             ->willReturn('123456')
         ;

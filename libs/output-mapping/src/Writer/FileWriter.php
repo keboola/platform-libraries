@@ -34,7 +34,7 @@ class FileWriter extends AbstractWriter
         array $systemMetadata,
         string $storage,
         array $tableFiles,
-        bool $isFailedJob
+        bool $isFailedJob,
     ): void {
         if ($isFailedJob) {
             return;
@@ -72,7 +72,7 @@ class FileWriter extends AbstractWriter
         foreach ($manifests as $manifest) {
             if (!in_array(substr(basename($manifest->getName()), 0, -9), $fileNames)) {
                 throw new InvalidOutputException(
-                    'Found orphaned file manifest: \'' . basename($manifest->getName()) . "'"
+                    'Found orphaned file manifest: \'' . basename($manifest->getName()) . "'",
                 );
             }
         }
@@ -109,7 +109,7 @@ class FileWriter extends AbstractWriter
                 throw new InvalidOutputException(
                     "Failed to write manifest for table {$file->getPathName()}.",
                     0,
-                    $e
+                    $e,
                 );
             }
             try {
@@ -122,7 +122,7 @@ class FileWriter extends AbstractWriter
                 throw new InvalidOutputException(
                     "Cannot upload file '{$file->getName()}' to Storage API: " . $e->getMessage(),
                     $e->getCode(),
-                    $e
+                    $e,
                 );
             }
         }
@@ -130,11 +130,11 @@ class FileWriter extends AbstractWriter
         $processedOutputMappingFiles = array_unique($processedOutputMappingFiles);
         $diff = array_diff(
             array_merge($outputMappingFiles, $processedOutputMappingFiles),
-            $processedOutputMappingFiles
+            $processedOutputMappingFiles,
         );
         if (count($diff)) {
             throw new InvalidOutputException(
-                "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'."
+                "Couldn't process output mapping for file(s) '" . join("', '", $diff) . "'.",
             );
         }
     }
@@ -167,7 +167,7 @@ class FileWriter extends AbstractWriter
                     foreach ($fileConfiguration['processed_tags'] as $tag) {
                         $this->clientWrapper->getTableAndFileStorageClient()->addFileTag(
                             $file['id'],
-                            $prefix ? $prefix . '-' . $tag : $tag
+                            $prefix ? $prefix . '-' . $tag : $tag,
                         );
                     }
                 }

@@ -134,14 +134,14 @@ class TableColumnsHelperTest extends TestCase
                         self::TEST_COLUMNS_METADATA,
                         0,
                         -1,
-                        true
-                    )
+                        true,
+                    ),
                 ),
                 'column_metadata' => array_slice(
                     self::TEST_COLUMNS_METADATA,
                     -1,
                     1,
-                    true
+                    true,
                 ),
             ],
             [
@@ -419,7 +419,7 @@ class TableColumnsHelperTest extends TestCase
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
-            'snowflake'
+            'snowflake',
         );
     }
 
@@ -429,7 +429,7 @@ class TableColumnsHelperTest extends TestCase
     public function testAddMissingColumnsToTypedTable(
         array $currentTableInfo,
         array $newTableConfiguration,
-        array $addTableColumnWithConsecutiveParams
+        array $addTableColumnWithConsecutiveParams,
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock
@@ -440,7 +440,7 @@ class TableColumnsHelperTest extends TestCase
                     string $tableId,
                     string $columnName,
                     ?array $definition,
-                    ?string $baseType
+                    ?string $baseType,
                 ) use (&$addTableColumnWithConsecutiveParams) {
                     list (
                         $xpectedTableId,
@@ -452,24 +452,24 @@ class TableColumnsHelperTest extends TestCase
                     self::assertSame(
                         $xpectedTableId,
                         $tableId,
-                        'Table id does not match'
+                        'Table id does not match',
                     );
                     self::assertSame(
                         $expectedColumnName,
                         $columnName,
-                        'Column name does not match'
+                        'Column name does not match',
                     );
                     self::assertSame(
                         $expectedDefinition,
                         $definition,
-                        'Column definition does not match'
+                        'Column definition does not match',
                     );
                     self::assertSame(
                         $expectedDataTypes,
                         $baseType,
-                        'Column datatype does not match'
+                        'Column datatype does not match',
                     );
-                }
+                },
             )
         ;
 
@@ -477,7 +477,7 @@ class TableColumnsHelperTest extends TestCase
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
-            'snowflake'
+            'snowflake',
         );
     }
 
@@ -557,14 +557,14 @@ class TableColumnsHelperTest extends TestCase
                         self::TEST_COLUMNS_METADATA,
                         0,
                         -1,
-                        true
-                    )
+                        true,
+                    ),
                 ),
                 'column_metadata' => array_slice(
                     self::TEST_COLUMNS_METADATA,
                     -1,
                     1,
-                    true
+                    true,
                 ),
             ],
             [
@@ -620,7 +620,7 @@ class TableColumnsHelperTest extends TestCase
     public function testAddMissingColumnsToNonTypedTable(
         array $currentTableInfo,
         array $newTableConfiguration,
-        array $addTableColumnWithConsecutiveParams
+        array $addTableColumnWithConsecutiveParams,
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock
@@ -631,7 +631,7 @@ class TableColumnsHelperTest extends TestCase
                     string $tableId,
                     string $columnName,
                     ?array $definition,
-                    ?string $baseType
+                    ?string $baseType,
                 ) use (&$addTableColumnWithConsecutiveParams) {
                     list (
                         $xpectedTableId,
@@ -643,24 +643,24 @@ class TableColumnsHelperTest extends TestCase
                     self::assertSame(
                         $xpectedTableId,
                         $tableId,
-                        'Table id does not match'
+                        'Table id does not match',
                     );
                     self::assertSame(
                         $expectedColumnName,
                         $columnName,
-                        'Column name does not match'
+                        'Column name does not match',
                     );
                     self::assertSame(
                         $expectedDefinition,
                         $definition,
-                        'Column definition does not match'
+                        'Column definition does not match',
                     );
                     self::assertSame(
                         $expectedDataTypes,
                         $baseType,
-                        'Column datatype does not match'
+                        'Column datatype does not match',
                     );
-                }
+                },
             )
         ;
 
@@ -668,7 +668,7 @@ class TableColumnsHelperTest extends TestCase
             $clientMock,
             $currentTableInfo,
             $newTableConfiguration,
-            'snowflake'
+            'snowflake',
         );
     }
 }

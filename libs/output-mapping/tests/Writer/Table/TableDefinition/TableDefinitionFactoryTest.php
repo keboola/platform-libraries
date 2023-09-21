@@ -19,13 +19,13 @@ class TableDefinitionFactoryTest extends TestCase
         string $tableName,
         array $primaryKeyNames,
         array $columnMetadata,
-        array $expectedSerialization
+        array $expectedSerialization,
     ): void {
         $tableDefinitionFactory = new TableDefinitionFactory($tableMetadata, $backendType);
         $tableDefinition = $tableDefinitionFactory->createTableDefinition(
             $tableName,
             $primaryKeyNames,
-            $columnMetadata
+            $columnMetadata,
         );
         self::assertSame($expectedSerialization, $tableDefinition->getRequestData());
     }

@@ -37,7 +37,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
             ),
         );
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
@@ -47,7 +47,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl(),
         ));
     }
 
@@ -63,8 +63,8 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
                 null,
                 'json',
                 $logger,
-                [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse']
-            )
+                [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse'],
+            ),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -99,7 +99,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -110,7 +110,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         // test that the table exists in the workspace
         $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
         );
         self::assertEquals($this->emptyOutputBucketId . '.test1', $tableId);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
@@ -120,7 +120,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         self::assertEquals($this->secondTableId, $manifest['id']);
         $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
         self::assertEquals($this->emptyOutputBucketId . '.test2', $tableId);
 
@@ -131,7 +131,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
             );
 
             self::fail('Exception was expected');
@@ -158,13 +158,13 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-            new ReaderOptions(true, false)
+            new ReaderOptions(true, false),
         );
         // the initially loaded tables should not be present in the workspace anymore
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {
@@ -173,7 +173,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {

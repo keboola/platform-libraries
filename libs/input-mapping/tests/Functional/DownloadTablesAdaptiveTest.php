@@ -40,16 +40,16 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $inputTablesState,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertEquals(
             $testTableInfo['lastImportDate'],
-            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
+            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate(),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
         self::assertCount(1, $tablesResult->getInputTableStateList()->jsonSerialize());
     }
@@ -70,7 +70,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         // Update table
@@ -80,7 +80,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
             $this->firstTableId,
             $csv,
-            ['incremental' => true]
+            ['incremental' => true],
         );
 
         $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
@@ -89,16 +89,16 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $firstTablesResult->getInputTableStateList(),
             'data/in/tables/',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertEquals(
             $updatedTestTableInfo['lastImportDate'],
-            $secondTablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate()
+            $secondTablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate(),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id4\",\"name4\",\"foo4\",\"bar4\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'data/in/tables/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'data/in/tables/test.csv',
         );
         self::assertCount(1, $secondTablesResult->getInputTableStateList()->jsonSerialize());
     }
@@ -129,7 +129,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $inputTablesState,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 }

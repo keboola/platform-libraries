@@ -27,7 +27,7 @@ class BigQueryWorkspaceStagingTest extends TestCase
                 'schema' => 'schema',
                 'credentials' => '{"foo":"value"}}',
             ],
-            $staging->getCredentials()
+            $staging->getCredentials(),
         );
     }
 }

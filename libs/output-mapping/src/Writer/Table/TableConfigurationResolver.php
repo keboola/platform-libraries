@@ -27,7 +27,7 @@ class TableConfigurationResolver
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
-        private string $format = Adapter::FORMAT_JSON
+        private string $format = Adapter::FORMAT_JSON,
     ) {
     }
 
@@ -42,7 +42,7 @@ class TableConfigurationResolver
     public function resolveTableConfiguration(
         MappingSource $mappingSource,
         ?string $defaultBucket,
-        array $systemMetadata
+        array $systemMetadata,
     ): array {
         $configFromManifest = [];
         $configFromMapping = [];
@@ -53,7 +53,7 @@ class TableConfigurationResolver
             $configFromManifest['destination'] = $this->normalizeManifestDestination(
                 $configFromManifest['destination'] ?? null,
                 $mappingSource->getSource(),
-                $defaultBucket
+                $defaultBucket,
             );
         }
 
@@ -69,20 +69,20 @@ class TableConfigurationResolver
                 'Source table "%s" has neither manifest file nor mapping set, ' .
                 'falling back to the source name as a destination.' .
                 'This behaviour was DEPRECATED and will be removed in the future.',
-                $mappingSource->getSourceName()
+                $mappingSource->getSourceName(),
             ));
 
             $config['destination'] = $this->normalizeManifestDestination(
                 null,
                 $mappingSource->getSource(),
-                $defaultBucket
+                $defaultBucket,
             );
         }
 
         if (empty($config['destination']) || !MappingDestination::isTableId($config['destination'])) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve destination for output table "%s".',
-                $mappingSource->getSourceName()
+                $mappingSource->getSourceName(),
             ));
         }
 
@@ -107,10 +107,10 @@ class TableConfigurationResolver
                 sprintf(
                     'Failed to read table manifest from file %s %s',
                     $manifestFile->getBasename(),
-                    $e->getMessage()
+                    $e->getMessage(),
                 ),
                 0,
-                $e
+                $e,
             );
         }
     }
@@ -118,7 +118,7 @@ class TableConfigurationResolver
     private function normalizeManifestDestination(
         ?string $destination,
         SourceInterface $source,
-        ?string $defaultBucket
+        ?string $defaultBucket,
     ): string {
         if (MappingDestination::isTableId($destination)) {
             return (string) $destination;
@@ -150,10 +150,10 @@ class TableConfigurationResolver
                 sprintf(
                     'Failed to prepare mapping configuration for table %s: %s',
                     $source->getSourceName(),
-                    $e->getMessage()
+                    $e->getMessage(),
                 ),
                 0,
-                $e
+                $e,
             );
         }
 

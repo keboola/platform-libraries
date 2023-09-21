@@ -24,7 +24,7 @@ class LocalStrategyTest extends AbstractTestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         /** @var ProviderInterface $mockLocal */
         return $mockLocal;
@@ -39,7 +39,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             $this->getProvider(),
             new InputTableStateList([]),
-            'boo'
+            'boo',
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -62,7 +62,7 @@ class LocalStrategyTest extends AbstractTestCase
                     'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
-            $result
+            $result,
         );
     }
 
@@ -75,7 +75,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             $this->getProvider(),
             new InputTableStateList([]),
-            'boo'
+            'boo',
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -109,7 +109,7 @@ class LocalStrategyTest extends AbstractTestCase
                     'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
-            $result
+            $result,
         );
     }
 }

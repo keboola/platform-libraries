@@ -28,11 +28,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload_second',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
         );
         sleep(5);
 
@@ -42,7 +42,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
 
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
@@ -75,7 +75,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
         );
         sleep(3);
 
@@ -86,7 +86,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
         file_put_contents((string) file_get_contents($root . '/download/' . $id1 . '_upload'), 'new data');
@@ -96,7 +96,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
 
@@ -108,7 +108,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
     }
 
@@ -142,7 +142,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
 
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -196,7 +196,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
@@ -250,7 +250,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertTrue(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
@@ -297,7 +297,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
@@ -332,7 +332,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertFalse(file_exists($root . '/download/' . $id2 . '_upload'));
@@ -353,7 +353,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         for ($i = 0; $i < 102; $i++) {
             $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
                 $root . '/upload',
-                (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+                (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
             );
         }
         sleep(5);
@@ -365,7 +365,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         // invalid configuration
         $reader = new Reader($this->getLocalStagingFactory());
@@ -375,7 +375,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 $configuration,
                 'download',
                 AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
+                new InputFileStateList([]),
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException) {
@@ -387,7 +387,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $finder = new Finder();
         $finder->files()->in($this->temp->getTmpFolder() . '/download')->notName('*.manifest');
@@ -401,7 +401,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $finder = new Finder();
         $finder->files()->in($this->temp->getTmpFolder() . '/download')->notName('*.manifest');
@@ -423,7 +423,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
 
         $fs = new Filesystem();
@@ -441,7 +441,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertEquals(
             // phpcs:ignore Generic.Files.LineLength
             "\"id1\",\"name1\",\"foo1\",\"bar1\"\n\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $resultFileContent
+            $resultFileContent,
         );
 
         $manifestFile = $downloadDir . '/' . $fileName . '.manifest';
@@ -472,11 +472,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile(
-            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest'
+            $this->temp->getTmpFolder() . '/download/' . $uploadFileId . '_empty_file.manifest',
         );
         self::assertEquals($uploadFileId, $manifest['id']);
         self::assertEquals('empty_file', $manifest['name']);
@@ -490,7 +490,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG])
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
         );
         sleep(5);
 
@@ -503,7 +503,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
             $configuration,
             'download',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id . '_upload'));
 

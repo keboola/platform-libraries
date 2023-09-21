@@ -17,12 +17,12 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyRedshiftOutputBucketId . '.table3d.csv',
-            "'Id'\t'Name'\n'test'\t'test''s'\n"
+            "'Id'\t'Name'\n'test'\t'test''s'\n",
         );
         file_put_contents(
             $root . DIRECTORY_SEPARATOR . 'upload/' . $this->emptyRedshiftOutputBucketId . '.table3d.csv.manifest',
             '{"destination": "' . $this->emptyRedshiftOutputBucketId . '.table3d","delimiter": "'
-            . "\\t" . '","enclosure": "\'"}'
+            . "\\t" . '","enclosure": "\'"}',
         );
 
         $writer = new TableWriter($this->getLocalStagingFactory());
@@ -32,7 +32,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -44,7 +44,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
         $exporter->exportTable($this->emptyRedshiftOutputBucketId . '.table3d', $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($downloadedFile)
+            (string) file_get_contents($downloadedFile),
         );
         self::assertCount(1, $table);
         self::assertCount(2, $table[0]);
@@ -60,7 +60,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/table61.csv',
-            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n"
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
 
         $configs = [
@@ -82,7 +82,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -94,7 +94,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -103,10 +103,10 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
         $exporter->exportTable(
             $this->emptyRedshiftOutputBucketId . '.table61',
             $root . DIRECTORY_SEPARATOR . 'download.csv',
-            []
+            [],
         );
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
-            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv')
+            (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'download.csv'),
         );
         usort($table, function ($a, $b) {
             return strcasecmp($a['Id'], $b['Id']);

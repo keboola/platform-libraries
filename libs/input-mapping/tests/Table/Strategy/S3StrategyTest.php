@@ -24,7 +24,7 @@ class S3StrategyTest extends AbstractTestCase
             new NullProvider(),
             new NullProvider(),
             new InputTableStateList([]),
-            '.'
+            '.',
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -42,11 +42,11 @@ class S3StrategyTest extends AbstractTestCase
         $job = $this->clientWrapper->getBranchClient()->getJob($result['jobId']);
         self::assertEquals(
             'tableExport',
-            $job['operationName']
+            $job['operationName'],
         );
         self::assertEquals(
             ['Id', 'Name'],
-            $job['operationParams']['export']['columns']
+            $job['operationParams']['export']['columns'],
         );
     }
 
@@ -59,7 +59,7 @@ class S3StrategyTest extends AbstractTestCase
             new NullProvider(),
             new NullProvider(),
             new InputTableStateList([]),
-            '.'
+            '.',
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -88,11 +88,11 @@ class S3StrategyTest extends AbstractTestCase
         $job = $this->clientWrapper->getBranchClient()->getJob($result['jobId']);
         self::assertEquals(
             'tableExport',
-            $job['operationName']
+            $job['operationName'],
         );
         self::assertEquals(
             ['Id', 'Name'],
-            $job['operationParams']['export']['columns']
+            $job['operationParams']['export']['columns'],
         );
     }
 }

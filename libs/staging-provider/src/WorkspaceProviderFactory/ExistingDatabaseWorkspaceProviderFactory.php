@@ -13,7 +13,7 @@ class ExistingDatabaseWorkspaceProviderFactory extends AbstractCachedWorkspacePr
     public function __construct(
         private readonly Workspaces $workspacesApiClient,
         private readonly string $workspaceId,
-        private readonly string $workspacePassword
+        private readonly string $workspacePassword,
     ) {
         parent::__construct($workspacesApiClient);
     }
@@ -30,7 +30,7 @@ class ExistingDatabaseWorkspaceProviderFactory extends AbstractCachedWorkspacePr
             throw new StagingProviderException(sprintf(
                 'Incompatible workspace type. Expected workspace backend is "%s", actual backend is "%s"',
                 $workspaceClass::getType(),
-                $data['connection']['backend']
+                $data['connection']['backend'],
             ));
         }
 

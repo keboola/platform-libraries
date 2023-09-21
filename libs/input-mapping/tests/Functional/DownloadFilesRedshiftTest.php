@@ -30,14 +30,14 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId
+                $branchId,
             ),
         );
     }
 
     protected function getStagingFactory(
         ClientWrapper $clientWrapper,
-        string $tempDir
+        string $tempDir,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory($clientWrapper, new NullLogger(), 'json');
         $mockLocal = self::getMockBuilder(NullProvider::class)
@@ -46,14 +46,14 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () use ($tempDir): string {
                 return $tempDir;
-            }
+            },
         );
         /** @var ProviderInterface $mockLocal */
         $stagingFactory->addProvider(
             $mockLocal,
             [
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ]
+            ],
         );
         return $stagingFactory;
     }
@@ -72,7 +72,7 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
         $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->redshiftBucketId,
             'test_file',
-            $csv
+            $csv,
         );
         $table = $clientWrapper->getTableAndFileStorageClient()->exportTableAsync($tableId);
         $fileId = $table['file']['id'];
@@ -85,7 +85,7 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
             $configuration,
             '/download/',
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
         $fileName = $fileId . '_' . $tableId . '.csv';
 

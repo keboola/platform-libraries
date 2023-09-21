@@ -52,13 +52,13 @@ class RewrittenInputFileOptions extends InputFileOptions
         }
         if (isset($this->definition['query']) || isset($this->definition['source']['tags'])) {
             $options->setQuery(
-                BuildQueryFromConfigurationHelper::buildQuery($this->definition)
+                BuildQueryFromConfigurationHelper::buildQuery($this->definition),
             );
         } elseif (isset($this->definition['changed_since'])
             && $this->definition['changed_since'] !== InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE) {
             // need to set the query for the case where query nor source tags are present, but changed_since is
             $options->setQuery(BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion(
-                $this->definition['changed_since']
+                $this->definition['changed_since'],
             ));
         }
         if (isset($this->definition['limit'])) {
@@ -71,7 +71,7 @@ class RewrittenInputFileOptions extends InputFileOptions
             try {
                 // apply the state configuration limits
                 $options->setSinceId(
-                    $states->getFile($this->getFileConfigurationIdentifier())->getLastImportId()
+                    $states->getFile($this->getFileConfigurationIdentifier())->getLastImportId(),
                 );
             } catch (FileNotFoundException) {
                 // intentionally blank, no state configuration

@@ -26,7 +26,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             [
                 'backend' => $stagingClass::getType(),
             ],
-            true
+            true,
         )->willReturn([
             'id' => '1',
             'connection' => [
@@ -42,7 +42,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $workspaceApi,
             $componentId,
             $configId,
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -65,7 +65,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             [
                 'backend' => $stagingClass::getType(),
             ],
-            true
+            true,
         )->willReturn([
             'id' => 'test-workspace',
             'connection' => [
@@ -78,7 +78,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $workspaceApi,
             $componentId,
             $configId,
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -104,7 +104,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $workspaceApi,
             $componentId,
             $configId,
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
 
         $provider1 = $factory->getProvider($stagingClass);
@@ -139,7 +139,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $workspaceApi,
             $componentId,
             $configId,
-            new WorkspaceBackendConfig($backendSize)
+            new WorkspaceBackendConfig($backendSize),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -174,7 +174,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $componentId,
             $configId,
             new WorkspaceBackendConfig(null),
-            true
+            true,
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -209,7 +209,7 @@ class ComponentWorkspaceProviderFactoryTest extends TestCase
             $componentId,
             $configId,
             new WorkspaceBackendConfig(null),
-            false
+            false,
         );
 
         $provider = $factory->getProvider($stagingClass);

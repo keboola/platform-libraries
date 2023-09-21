@@ -17,7 +17,7 @@ class S3 extends AbstractStrategy
         $exportOptions['gzip'] = true;
         $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
             $table->getSource(),
-            $exportOptions
+            $exportOptions,
         );
         return ['jobId' => $jobId, 'table' => $table];
     }
@@ -41,7 +41,7 @@ class S3 extends AbstractStrategy
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$export['jobId']]['results']['file']['id'],
-                (new GetFileOptions())->setFederationToken(true)
+                (new GetFileOptions())->setFederationToken(true),
             )
             ;
             $tableInfo['s3'] = $this->getS3Info($fileInfo);
@@ -49,7 +49,7 @@ class S3 extends AbstractStrategy
                 $tableInfo,
                 $manifestPath,
                 $table->getColumnNamesFromTypes(),
-                $this->format
+                $this->format,
             );
         }
         return $jobResults;

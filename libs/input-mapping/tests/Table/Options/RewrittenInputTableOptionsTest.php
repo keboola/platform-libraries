@@ -18,7 +18,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             ['source' => 'test'],
             'source',
             24,
-            ['a' => 'b']
+            ['a' => 'b'],
         );
         self::assertSame('source', $definition->getSource());
         self::assertSame(24, $definition->getSourceBranchId());
@@ -110,7 +110,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             ],
             'source',
             12345,
-            ['a' => 'b']
+            ['a' => 'b'],
         );
 
         self::assertEquals(
@@ -120,7 +120,7 @@ class RewrittenInputTableOptionsTest extends TestCase
                 'overwrite' => false,
                 'sourceBranchId' => 12345,
             ],
-            $definition->getStorageApiExportOptions(new InputTableStateList([]))
+            $definition->getStorageApiExportOptions(new InputTableStateList([])),
         );
     }
 
@@ -134,7 +134,7 @@ class RewrittenInputTableOptionsTest extends TestCase
         );
         self::assertEquals(
             ['overwrite' => false, 'sourceBranchId' => 12345],
-            $definition->getStorageApiExportOptions(new InputTableStateList([]))
+            $definition->getStorageApiExportOptions(new InputTableStateList([])),
         );
     }
 
@@ -147,7 +147,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             ],
             'source',
             12345,
-            ['a' => 'b']
+            ['a' => 'b'],
         );
         self::assertEquals(
             [
@@ -155,7 +155,7 @@ class RewrittenInputTableOptionsTest extends TestCase
                 'overwrite' => false,
                 'sourceBranchId' => 12345,
             ],
-            $definition->getStorageApiExportOptions(new InputTableStateList([]))
+            $definition->getStorageApiExportOptions(new InputTableStateList([])),
         );
     }
 
@@ -168,7 +168,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             ],
             'test',
             12345,
-            ['a' => 'b']
+            ['a' => 'b'],
         );
         $tablesState = new InputTableStateList([[
             'source' => 'test',
@@ -180,7 +180,7 @@ class RewrittenInputTableOptionsTest extends TestCase
                 'overwrite' => false,
                 'sourceBranchId' => 12345,
             ],
-            $definition->getStorageApiExportOptions($tablesState)
+            $definition->getStorageApiExportOptions($tablesState),
         );
     }
 
@@ -193,7 +193,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             ],
             'source',
             12345,
-            ['a' => 'b']
+            ['a' => 'b'],
         );
         $tablesState = new InputTableStateList([]);
         self::assertEquals(
@@ -201,7 +201,7 @@ class RewrittenInputTableOptionsTest extends TestCase
                 'overwrite' => false,
                 'sourceBranchId' => 12345,
             ],
-            $definition->getStorageApiExportOptions($tablesState)
+            $definition->getStorageApiExportOptions($tablesState),
         );
     }
 }

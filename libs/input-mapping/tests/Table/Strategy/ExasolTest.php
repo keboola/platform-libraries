@@ -24,7 +24,7 @@ class ExasolTest extends AbstractTestCase
             new NullProvider(),
             new NullProvider(),
             new InputTableStateList([]),
-            'test'
+            'test',
         );
         $result = $strategy->downloadTable(new RewrittenInputTableOptions(
             [
@@ -59,7 +59,7 @@ class ExasolTest extends AbstractTestCase
                 ],
                 'type' => 'copy',
             ],
-            $result
+            $result,
         );
     }
 }

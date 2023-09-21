@@ -18,7 +18,7 @@ class ManifestCreator
         array $tableInfo,
         string $destination,
         array $columns,
-        string $format = Adapter::FORMAT_JSON
+        string $format = Adapter::FORMAT_JSON,
     ): void {
         $manifest = [
             'id' => $tableInfo['id'],
@@ -56,10 +56,10 @@ class ManifestCreator
                 sprintf(
                     'Failed to write manifest for table %s - %s.',
                     $tableInfo['id'],
-                    $tableInfo['name']
+                    $tableInfo['name'],
                 ),
                 0,
-                $e
+                $e,
             );
         }
     }

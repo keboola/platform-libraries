@@ -47,7 +47,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $expectedCSVContent =  "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
@@ -55,7 +55,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
 
         self::assertCSVEquals(
             $expectedCSVContent,
-            $this->temp->getTmpFolder() . '/download/test.csv'
+            $this->temp->getTmpFolder() . '/download/test.csv',
         );
 
         $adapter = new Adapter();
@@ -64,7 +64,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
 
         self::assertCSVEquals(
             $expectedCSVContent,
-            $this->temp->getTmpFolder() . '/download/test2.csv'
+            $this->temp->getTmpFolder() . '/download/test2.csv',
         );
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.csv.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
@@ -88,12 +88,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
     }
 
@@ -114,12 +114,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
     }
 
@@ -150,8 +150,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $this->firstTableId,
                 'dataLoaderTest',
                 $tableMetadata,
-                $columnMetadata
-            )
+                $columnMetadata,
+            ),
         );
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
@@ -166,7 +166,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -214,7 +214,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         ];
         $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
-            new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata)
+            new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata),
         );
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
@@ -232,7 +232,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -284,8 +284,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $this->firstTableId,
                 'dataLoaderTest',
                 $tableMetadata,
-                $columnMetadata
-            )
+                $columnMetadata,
+            ),
         );
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
@@ -301,13 +301,13 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertCSVEquals(
             "\"bar\",\"foo\",\"Id\"\n\"bar1\",\"foo1\",\"id1\"" .
             "\n\"bar2\",\"foo2\",\"id2\"\n\"bar3\",\"foo3\",\"id3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
 
         $adapter = new Adapter();
@@ -374,13 +374,13 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertCSVEquals(
             "\"bar\",\"foo\"\n\"bar1\",\"foo1\"" .
             "\n\"bar2\",\"foo2\"\n\"bar3\",\"foo3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
 
         $adapter = new Adapter();
@@ -425,7 +425,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $clientWrapper->method('getBranchClient')->willReturn($branchClient);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
         $clientWrapper->method('getDefaultBranch')->willReturn(
-            new Branch('123', 'main', true, null)
+            new Branch('123', 'main', true, null),
         );
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
@@ -441,15 +441,15 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             sprintf(
                 '#Table "%s" with size [0-9]+ bytes exceeds the input mapping limit ' .
                 'of 10 bytes\. Please contact support to raise this limit$#',
-                preg_quote($this->firstTableId, '#')
-            )
+                preg_quote($this->firstTableId, '#'),
+            ),
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -477,7 +477,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                     'key' => 'KBC.lastUpdatedBy.branch.id',
                     'value' => '1234',
                 ],
-            ]
+            ],
         );
 
         // without the check it passes
@@ -486,7 +486,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(false)
+            new ReaderOptions(false),
         );
 
         // with the check it fails
@@ -495,15 +495,15 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             sprintf(
                 'The buckets "%s" come from a development ' .
                 'branch and must not be used directly in input mapping.',
-                $this->testBucketId
-            )
+                $this->testBucketId,
+            ),
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -532,7 +532,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                     'key' => 'KBC.lastUpdatedBy.branch.id',
                     'value' => '1234',
                 ],
-            ]
+            ],
         );
 
         // without the check it passes
@@ -541,7 +541,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(false)
+            new ReaderOptions(false),
         );
 
         // with the check it passes too
@@ -550,7 +550,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         self::assertCount(1, $result->getTables());
     }
@@ -579,7 +579,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 token: (string) getenv('STORAGE_API_TOKEN'),
                 branchId: $branchId,
                 useBranchStorage: true,
-            )
+            ),
         );
         $this->clientWrapper = $clientWrapper;
 
@@ -598,12 +598,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         self::assertCSVEquals(
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n" .
             "\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv'
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.csv',
         );
     }
 }

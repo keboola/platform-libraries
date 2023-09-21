@@ -97,7 +97,7 @@ abstract class AbstractTestCase extends TestCase
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl(),
         ));
     }
 
@@ -121,12 +121,12 @@ abstract class AbstractTestCase extends TestCase
         ?ClientWrapper $clientWrapper = null,
         string $format = 'json',
         ?LoggerInterface $logger = null,
-        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake']
+        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'],
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
             $clientWrapper ?: $this->clientWrapper,
             $logger ?: new NullLogger(),
-            $format
+            $format,
         );
         $mockWorkspace = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getWorkspaceId', 'getCredentials'])
@@ -140,7 +140,7 @@ abstract class AbstractTestCase extends TestCase
                     $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceId;
-            }
+            },
         );
         $mockWorkspace->method('getCredentials')->willReturnCallback(
             function () use ($backend) {
@@ -151,7 +151,7 @@ abstract class AbstractTestCase extends TestCase
                     $this->workspaceCredentials = $workspace['connection'];
                 }
                 return $this->workspaceCredentials;
-            }
+            },
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
@@ -159,7 +159,7 @@ abstract class AbstractTestCase extends TestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         /** @var ProviderInterface $mockLocal */
         /** @var ProviderInterface $mockWorkspace */
@@ -167,13 +167,13 @@ abstract class AbstractTestCase extends TestCase
             $mockLocal,
             [
                 $backend[0] => new Scope([Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-            ]
+            ],
         );
         $stagingFactory->addProvider(
             $mockWorkspace,
             [
                 $backend[0] => new Scope([Scope::FILE_DATA, Scope::TABLE_DATA]),
-            ]
+            ],
         );
 
         $mockLocal = self::getMockBuilder(NullProvider::class)
@@ -182,20 +182,20 @@ abstract class AbstractTestCase extends TestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         /** @var ProviderInterface $mockLocal */
         $stagingFactory->addProvider(
             $mockLocal,
             [
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-            ]
+            ],
         );
         $stagingFactory->addProvider(
             $mockLocal,
             [
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ]
+            ],
         );
         return $stagingFactory;
     }
@@ -203,12 +203,12 @@ abstract class AbstractTestCase extends TestCase
     protected function getLocalStagingFactory(
         ?ClientWrapper $clientWrapper = null,
         string $format = 'json',
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
             $clientWrapper ?: $this->clientWrapper,
             $logger ?: new NullLogger(),
-            $format
+            $format,
         );
         $mockLocal = self::getMockBuilder(NullProvider::class)
             ->setMethods(['getPath'])
@@ -216,20 +216,20 @@ abstract class AbstractTestCase extends TestCase
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
-            }
+            },
         );
         /** @var ProviderInterface $mockLocal */
         $stagingFactory->addProvider(
             $mockLocal,
             [
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-            ]
+            ],
         );
         $stagingFactory->addProvider(
             $mockLocal,
             [
                 AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ]
+            ],
         );
         return $stagingFactory;
     }
@@ -280,7 +280,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected static function assertTableColumnAddJob(
         array $jobData,
-        string $expectedColumnName
+        string $expectedColumnName,
     ): void {
         self::assertSame('tableColumnAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
@@ -311,7 +311,7 @@ abstract class AbstractTestCase extends TestCase
                         'destination' => $tablePrefix . 'table2a',
                     ],
                 ],
-            ]
+            ],
         );
     }
 
@@ -331,7 +331,7 @@ abstract class AbstractTestCase extends TestCase
                         'destination' => $tablePrefix . 'table2a',
                     ],
                 ],
-            ]
+            ],
         );
     }
 }

@@ -16,14 +16,14 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     public function rewriteTableOptionsSources(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputTableOptionsList {
         $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
             list($tableInfo, $sourceBranchId) = $this->rewriteSourceBranchId(
                 $tableOptions->getSource(),
                 $clientWrapper,
-                $logger
+                $logger,
             );
             $newTables[] = new RewrittenInputTableOptions(
                 $tableOptions->getDefinition(),
@@ -38,7 +38,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     public function rewriteTableStatesDestinations(
         InputTableStateList $tableStates,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): InputTableStateList {
         // Table names remain the same in this case
         return $tableStates;
@@ -47,7 +47,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     private function rewriteSourceBranchId(
         string $source,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): array {
         if ($clientWrapper->isDevelopmentBranch() && $clientWrapper->getBranchClient()->tableExists($source)) {
             $logger->info(sprintf(

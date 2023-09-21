@@ -33,7 +33,7 @@ class Synapse extends AbstractStrategy
                     'source' => $table->getSource(),
                     'destination' => $table->getDestination(),
                 ],
-                $exportOptions
+                $exportOptions,
             );
 
             if ($table->isUseView()) {
@@ -45,7 +45,7 @@ class Synapse extends AbstractStrategy
         }
         $workspaceJobs = [];
         $this->logger->info(
-            sprintf('Copying %s tables to workspace.', count($copyInputs))
+            sprintf('Copying %s tables to workspace.', count($copyInputs)),
         );
         $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
 
@@ -54,7 +54,7 @@ class Synapse extends AbstractStrategy
             [
                 'input' => $copyInputs,
                 'preserve' => $preserve,
-            ]
+            ],
         );
 
         $this->logger->info('Processing ' . count($workspaceJobs) . ' workspace exports.');
@@ -67,7 +67,7 @@ class Synapse extends AbstractStrategy
                 $tableInfo,
                 $manifestPath,
                 $table->getColumnNamesFromTypes(),
-                $this->format
+                $this->format,
             );
         }
         return $jobResults;

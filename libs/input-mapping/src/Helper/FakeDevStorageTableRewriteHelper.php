@@ -17,7 +17,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     public function rewriteTableOptionsSources(
         InputTableOptionsList $tablesDefinition,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): RewrittenInputTableOptionsList {
         $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
@@ -40,7 +40,7 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     public function rewriteTableStatesDestinations(
         InputTableStateList $tableStates,
         ClientWrapper $clientWrapper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): InputTableStateList {
         if ($clientWrapper->isDevelopmentBranch()) {
             $tableStates = $tableStates->jsonSerialize();
@@ -73,11 +73,11 @@ class FakeDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     {
         $newSource = $this->getNewSource(
             $source,
-            (string) $clientWrapper->getBranchId()
+            (string) $clientWrapper->getBranchId(),
         );
         if ($clientWrapper->getTableAndFileStorageClient()->tableExists($newSource)) {
             $logger->info(
-                sprintf('Using dev input "%s" instead of "%s".', $newSource, $source)
+                sprintf('Using dev input "%s" instead of "%s".', $newSource, $source),
             );
             return $newSource;
         } else {

@@ -20,7 +20,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                 [
                     'name' => 'configurationId: 123',
                 ],
-            ])
+            ]),
         );
     }
 
@@ -38,7 +38,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             BuildQueryFromConfigurationHelper::getSourceTagsFromTags([
                 'componentId: keboola.ex-gmail',
                 'configurationId: 123',
-            ])
+            ]),
         );
     }
 
@@ -49,7 +49,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             BuildQueryFromConfigurationHelper::buildQueryForSourceTags([
                 ['name' => 'componentId: keboola.ex-gmail', 'match' => 'include'],
                 ['name' => 'configurationId: 123', 'match' => 'include'],
-            ])
+            ]),
         );
     }
 
@@ -60,7 +60,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             BuildQueryFromConfigurationHelper::buildQueryForSourceTags([
                 ['name' => 'componentId: keboola.ex-gmail', 'match' => 'include'],
                 ['name' => 'configurationId: 123', 'match' => 'exclude'],
-            ])
+            ]),
         );
     }
 
@@ -70,7 +70,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             'tag:123',
             BuildQueryFromConfigurationHelper::buildQuery([
                 'query' => 'tag:123',
-            ])
+            ]),
         );
     }
 
@@ -91,7 +91,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                         ],
                     ],
                 ],
-            ])
+            ]),
         );
     }
 
@@ -113,7 +113,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                         ],
                     ],
                 ],
-            ])
+            ]),
         );
     }
 
@@ -121,7 +121,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
     {
         self::assertEquals(
             sprintf('created:["%s" TO *]', date('c', strtotime('-5 days'))),
-            BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion('-5 days')
+            BuildQueryFromConfigurationHelper::getChangedSinceQueryPortion('-5 days'),
         );
     }
 
@@ -132,7 +132,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             BuildQueryFromConfigurationHelper::buildQuery([
                 'query' => 'tag:123',
                 'changed_since' => '-5days',
-            ])
+            ]),
         );
     }
 
@@ -141,7 +141,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
         self::assertEquals(
             sprintf(
                 '(tags:"componentId: keboola.ex-gmail" AND tags:"configurationId: 123") AND created:["%s" TO *]',
-                date('c', strtotime('-5 days'))
+                date('c', strtotime('-5 days')),
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -157,7 +157,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                     ],
                 ],
                 'changed_since' => '-5days',
-            ])
+            ]),
         );
     }
 
@@ -167,7 +167,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             sprintf(
                 // phpcs:ignore Generic.Files.LineLength
                 '(tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND tags:"configurationId: 123") AND created:["%s" TO *]',
-                date('c', strtotime('-5 days'))
+                date('c', strtotime('-5 days')),
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -187,7 +187,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                     ],
                 ],
                 'changed_since' => '-5days',
-            ])
+            ]),
         );
     }
 
@@ -197,7 +197,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
             sprintf(
                 // phpcs:ignore Generic.Files.LineLength
                 '(NOT tags:"componentId: keboola.ex-gmail" AND NOT tags:"runId: 12345" AND NOT tags:"configurationId: 123") AND created:["%s" TO *]',
-                date('c', strtotime('-5 days'))
+                date('c', strtotime('-5 days')),
             ),
             BuildQueryFromConfigurationHelper::buildQuery([
                 'source' => [
@@ -217,7 +217,7 @@ class BuildQueryFromConfigurationHelperTest extends TestCase
                     ],
                 ],
                 'changed_since' => '-5days',
-            ])
+            ]),
         );
     }
 }

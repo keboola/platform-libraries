@@ -32,42 +32,42 @@ class StrategyFactory extends AbstractStrategyFactory
                 self::LOCAL => new OutputMappingStagingDefinition(
                     self::LOCAL,
                     Local::class,
-                    LocalTableStrategy::class
+                    LocalTableStrategy::class,
                 ),
                 self::WORKSPACE_ABS => new OutputMappingStagingDefinition(
                     self::WORKSPACE_ABS,
                     ABSWorkspace::class,
-                    AbsWorkspaceTableStrategy::class
+                    AbsWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_REDSHIFT => new OutputMappingStagingDefinition(
                     self::WORKSPACE_REDSHIFT,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_SNOWFLAKE => new OutputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_SYNAPSE => new OutputMappingStagingDefinition(
                     self::WORKSPACE_SYNAPSE,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_EXASOL => new OutputMappingStagingDefinition(
                     self::WORKSPACE_EXASOL,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_TERADATA => new OutputMappingStagingDefinition(
                     self::WORKSPACE_TERADATA,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
                 self::WORKSPACE_BIGQUERY => new OutputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,
                     Local::class,
-                    SqlWorkspaceTableStrategy::class
+                    SqlWorkspaceTableStrategy::class,
                 ),
             ];
         }
@@ -83,8 +83,8 @@ class StrategyFactory extends AbstractStrategyFactory
             sprintf(
                 'Input mapping on type "%s" is not supported. Supported types are "%s".',
                 $stagingType,
-                implode(', ', array_keys($this->getStrategyMap()))
-            )
+                implode(', ', array_keys($this->getStrategyMap())),
+            ),
         );
     }
 
@@ -97,7 +97,7 @@ class StrategyFactory extends AbstractStrategyFactory
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" file output backend.', $stagingDefinition->getName()),
                 0,
-                $e
+                $e,
             );
         }
         $this->getLogger()->info(sprintf('Using "%s" file output staging.', $stagingDefinition->getName()));
@@ -107,7 +107,7 @@ class StrategyFactory extends AbstractStrategyFactory
             $this->logger,
             $stagingDefinition->getFileDataProvider(),
             $stagingDefinition->getFileMetadataProvider(),
-            $this->format
+            $this->format,
         );
     }
 
@@ -120,7 +120,7 @@ class StrategyFactory extends AbstractStrategyFactory
             throw new InvalidOutputException(
                 sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),
                 0,
-                $e
+                $e,
             );
         }
         $this->getLogger()->info(sprintf('Using "%s" table output staging.', $stagingDefinition->getName()));
@@ -131,7 +131,7 @@ class StrategyFactory extends AbstractStrategyFactory
             $stagingDefinition->getTableDataProvider(),
             $stagingDefinition->getTableMetadataProvider(),
             $this->format,
-            $isFailedJob
+            $isFailedJob,
         );
     }
 }

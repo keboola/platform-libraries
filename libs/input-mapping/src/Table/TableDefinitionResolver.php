@@ -17,7 +17,7 @@ class TableDefinitionResolver
 {
     public function __construct(
         private readonly Client $storageApiClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -46,7 +46,7 @@ class TableDefinitionResolver
         $this->logger->info(sprintf(
             'Resolving table by metadata key: "%s" and value: "%s".',
             $searchSourceConfig['key'],
-            $searchSourceConfig['value']
+            $searchSourceConfig['value'],
         ));
 
         switch (count($tables)) {
@@ -55,13 +55,13 @@ class TableDefinitionResolver
                 throw new InvalidInputException(sprintf(
                     'Table with metadata key: "%s" and value: "%s" was not found.',
                     $searchSourceConfig['key'],
-                    $searchSourceConfig['value']
+                    $searchSourceConfig['value'],
                 ));
             case 1:
                 // one table found
                 $this->logger->info(sprintf(
                     'Table with id: "%s" was found.',
-                    $tables[0]['id']
+                    $tables[0]['id'],
                 ));
 
                 $tableDefinition['source'] = $tables[0]['id'];
@@ -79,7 +79,7 @@ class TableDefinitionResolver
             'More than one table with metadata key: "%s" and value: "%s" was found: %s.',
             $searchSourceConfig['key'],
             $searchSourceConfig['value'],
-            implode(',', $tableNames)
+            implode(',', $tableNames),
         ));
     }
 }

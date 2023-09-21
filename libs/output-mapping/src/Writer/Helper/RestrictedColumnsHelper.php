@@ -28,8 +28,8 @@ class RestrictedColumnsHelper
             $config['column_metadata'] = array_diff_key(
                 $config['column_metadata'],
                 array_flip(
-                    array_diff($columnNames, $columnNamesFiltered)
-                )
+                    array_diff($columnNames, $columnNamesFiltered),
+                ),
             );
         }
 

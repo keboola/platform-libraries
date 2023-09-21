@@ -31,7 +31,7 @@ abstract class AbstractStrategy implements StrategyInterface
         protected readonly ProviderInterface $dataStorage,
         protected readonly ProviderInterface $metadataStorage,
         protected readonly InputFileStateList $fileStateList,
-        protected readonly string $format = Adapter::FORMAT_JSON
+        protected readonly string $format = Adapter::FORMAT_JSON,
     ) {
         $this->manifestCreator = new ManifestCreator();
     }
@@ -49,7 +49,7 @@ abstract class AbstractStrategy implements StrategyInterface
     abstract protected function getFileDestinationPath(
         string $destinationPath,
         int $fileId,
-        string $fileName
+        string $fileName,
     ): string;
 
     public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList
@@ -61,14 +61,14 @@ abstract class AbstractStrategy implements StrategyInterface
             $fileOptionsRewritten = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             $options = $fileOptionsRewritten->getStorageApiFileListOptions($this->fileStateList);
             $storageClient = $this->clientWrapper->getClientForBranch(
-                (string) $fileOptionsRewritten->getSourceBranchId()
+                (string) $fileOptionsRewritten->getSourceBranchId(),
             );
             $files = $storageClient->listFiles($options);
 
             $biggestFileId = 0;
             try {
                 $currentState = $this->fileStateList->getFile(
-                    $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration)
+                    $this->fileStateList->getFileConfigurationIdentifier($fileConfiguration),
                 );
                 $outputStateConfiguration = [
                     'tags' => $currentState->getTags(),
@@ -102,10 +102,10 @@ abstract class AbstractStrategy implements StrategyInterface
                             'Failed to download file %s (%s): %s',
                             $fileInfo['name'],
                             $file['id'],
-                            $e->getMessage()
+                            $e->getMessage(),
                         ),
                         0,
-                        $e
+                        $e,
                     );
                 }
                 $this->logger->info(sprintf('Fetched file "%s".', basename($fileDestinationPath)));

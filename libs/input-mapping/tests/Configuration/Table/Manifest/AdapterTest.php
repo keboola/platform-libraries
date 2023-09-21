@@ -29,7 +29,7 @@ class AdapterTest extends AbstractManifestAdapterTest
     public function testInitWithFormat(
         string $format,
         string $expectedFormat,
-        string $expectedExtension
+        string $expectedExtension,
     ): void {
         $adapter = $this->createAdapter($format);
 
@@ -72,7 +72,7 @@ EOF,
      */
     public function testSetConfigAndSerialize(
         string $format,
-        string $expectedData
+        string $expectedData,
     ): void {
         $adapter = $this->createAdapter($format);
         $adapter->setConfig(['id' => 'in.c-bucket.test']);
@@ -125,7 +125,7 @@ EOF,
      */
     public function testFileOperations(
         string $format,
-        string $expectedFilePathname
+        string $expectedFilePathname,
     ): void {
         $temp = new Temp('docker');
         $filePathname = (string) $temp->createTmpFile();

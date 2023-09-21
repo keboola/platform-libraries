@@ -35,7 +35,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
                 [
                     'force' => true,
                     'async' => true,
-                ]
+                ],
             );
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
@@ -46,7 +46,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             'docker-test-synapse',
             Client::STAGE_IN,
             'Docker Testsuite',
-            'synapse'
+            'synapse',
         );
 
         // Create table
@@ -56,7 +56,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             'in.c-docker-test-synapse',
             'test',
-            $csv
+            $csv,
         );
     }
 
@@ -65,7 +65,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN')
+                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
             ),
         );
 
@@ -76,7 +76,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl()
+            $this->clientWrapper->getBranchClient()->getApiUrl(),
         ));
     }
 
@@ -98,12 +98,12 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertEquals(
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
-            file_get_contents($this->temp->getTmpFolder(). '/download/test-synapse.csv')
+            file_get_contents($this->temp->getTmpFolder(). '/download/test-synapse.csv'),
         );
 
         $adapter = new Adapter();
@@ -130,7 +130,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::ABS,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $adapter = new Adapter();
 
@@ -156,14 +156,14 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             'in.c-docker-test-synapse',
             'empty',
             $headerCsvFile,
-            []
+            [],
         );
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
             'in.c-docker-test-synapse.empty',
-            $options
+            $options,
         );
 
         $reader = new Reader($this->getLocalStagingFactory());
@@ -179,7 +179,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $file = file_get_contents($this->temp->getTmpFolder() . '/download/empty.csv');
         self::assertEquals("\"Id\",\"Name\"\n", $file);

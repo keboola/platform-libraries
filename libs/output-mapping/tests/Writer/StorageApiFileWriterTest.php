@@ -33,12 +33,12 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file2', 'test');
         file_put_contents(
             $root . '/upload/file2.manifest',
-            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}'
+            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}',
         );
         file_put_contents($root . '/upload/file3', 'test');
         file_put_contents(
             $root . '/upload/file3.manifest',
-            '{"tags": ["' . self::FILE_TAG . '"],"is_public": true}'
+            '{"tags": ["' . self::FILE_TAG . '"],"is_public": true}',
         );
 
         $systemMetadata = [
@@ -69,7 +69,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
         sleep(1);
 
@@ -141,7 +141,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             [],
-            true
+            true,
         );
         sleep(1);
 
@@ -172,7 +172,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             [],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
         sleep(1);
 
@@ -199,8 +199,8 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null
-            )
+                null,
+            ),
         );
         $branchName = self::class;
         $branchId = $this->createBranch($clientWrapper, $branchName);
@@ -209,8 +209,8 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-                $branchId
-            )
+                $branchId,
+            ),
         );
 
         $root = $this->temp->getTmpFolder();
@@ -239,7 +239,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
         sleep(1);
 
@@ -275,8 +275,8 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null
-            )
+                null,
+            ),
         );
         $branchName = self::class;
         $branchId = $this->createBranch($clientWrapper, $branchName);
@@ -287,7 +287,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
                 token: (string) getenv('STORAGE_API_TOKEN'),
                 branchId: $branchId,
                 useBranchStorage: true, // This is the important setting
-            )
+            ),
         );
 
         $root = $this->temp->getTmpFolder();
@@ -317,7 +317,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
         sleep(1);
 
@@ -353,7 +353,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": true}'
+            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": true}',
         );
 
         $configs = [
@@ -371,7 +371,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
         sleep(1);
 
@@ -417,7 +417,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             [],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
     }
 
@@ -445,7 +445,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             [],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
     }
 
@@ -455,7 +455,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}'
+            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}',
         );
 
         $configs = [
@@ -475,7 +475,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             [],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
     }
 
@@ -484,7 +484,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}'
+            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}',
         );
         $writer = new FileWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
@@ -495,7 +495,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             [],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
     }
 
@@ -510,7 +510,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ['configurationId' => '123'],
             AbstractStrategyFactory::LOCAL,
             [],
-            false
+            false,
         );
     }
 
@@ -521,11 +521,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         sleep(1);
 
@@ -546,16 +546,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         sleep(1);
 
         $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
-            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true)
+            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
         )));
         $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
@@ -572,8 +572,8 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null
-            )
+                null,
+            ),
         );
         $branchName = self::class;
         $branchId = $this->createBranch($clientWrapper, $branchName);
@@ -583,11 +583,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG])
+            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG]),
         );
         sleep(1);
         // set it to use a branch
@@ -611,8 +611,8 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null
-            )
+                null,
+            ),
         );
         $branchName = self::class;
         $branchId = $this->createBranch($clientWrapper, $branchName);
@@ -622,18 +622,18 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG])
+            (new FileUploadOptions())->setTags([self::FILE_TAG]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG])
+            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG]),
         );
         sleep(1);
         // set it to use a branch
         $this->initClient($branchId);
 
         $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
-            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true)
+            $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
         )));
         $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
@@ -652,7 +652,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         // in this case there may be a table manifest present
         file_put_contents(
             $root . '/upload/file.manifest',
-            '{"primary_key": ["Id", "Name"]}'
+            '{"primary_key": ["Id", "Name"]}',
         );
         $systemMetadata = [
             'componentId' => 'testComponent',
@@ -674,7 +674,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             $tableFiles,
-            false
+            false,
         );
         sleep(1);
 

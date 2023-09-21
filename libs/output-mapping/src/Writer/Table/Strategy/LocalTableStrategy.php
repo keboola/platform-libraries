@@ -46,7 +46,7 @@ class LocalTableStrategy extends AbstractTableStrategy
 
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
-            $configuration['mapping'] ?? []
+            $configuration['mapping'] ?? [],
         );
     }
 
@@ -56,7 +56,7 @@ class LocalTableStrategy extends AbstractTableStrategy
             throw new InvalidArgumentException(sprintf(
                 'Argument $source is expected to be instance of %s, %s given',
                 LocalFileSource::class,
-                get_class($source)
+                get_class($source),
             ));
         }
 
@@ -94,7 +94,7 @@ class LocalTableStrategy extends AbstractTableStrategy
 
         return (string) $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile(
             $sliceFiles,
-            $fileUploadOptions
+            $fileUploadOptions,
         );
     }
 
@@ -107,7 +107,7 @@ class LocalTableStrategy extends AbstractTableStrategy
 
         return (string) $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $source->getPathname(),
-            $fileUploadOptions
+            $fileUploadOptions,
         );
     }
 }

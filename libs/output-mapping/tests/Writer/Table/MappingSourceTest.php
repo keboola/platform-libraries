@@ -20,7 +20,7 @@ class MappingSourceTest extends TestCase
         $mappingSource = new MappingSource(
             $source,
             $manifestFile,
-            $mapping
+            $mapping,
         );
 
         self::assertSame($source, $mappingSource->getSource());

@@ -39,7 +39,7 @@ class TableInfoTest extends TestCase
                 new Column('time_spent_in_shop', []),
                 new Column('number_of_items', []),
             ],
-            iterator_to_array($tableInfo->getColumns())
+            iterator_to_array($tableInfo->getColumns()),
         );
     }
 
@@ -51,7 +51,7 @@ class TableInfoTest extends TestCase
         $tableInfo = new TableInfo($tableInfoArray);
         self::assertEquals(
             $expected,
-            iterator_to_array($tableInfo->getColumns())
+            iterator_to_array($tableInfo->getColumns()),
         );
     }
 
@@ -100,10 +100,10 @@ class TableInfoTest extends TestCase
                         'value' => 'INTEGER',
                         'provider' => 'user',
                         'timestamp' => '2019-08-14T16:55:34+0200',
-                    ]]
+                    ]],
                 ),
             ],
-            iterator_to_array($tableInfo->getColumns())
+            iterator_to_array($tableInfo->getColumns()),
         );
     }
 
@@ -143,7 +143,7 @@ class TableInfoTest extends TestCase
                         'value' => 'INTEGER',
                         'provider' => 'user',
                         'timestamp' => '2019-08-14T16:55:34+0200',
-                    ]]
+                    ]],
                 ),
             ],
         ];
@@ -181,7 +181,7 @@ class TableInfoTest extends TestCase
                         'value' => 'INTEGER',
                         'provider' => 'user',
                         'timestamp' => '2019-08-14T16:55:34+0200',
-                    ]]
+                    ]],
                 ),
             ],
         ];
@@ -227,7 +227,7 @@ class TableInfoTest extends TestCase
                         'value' => 'INTEGER',
                         'provider' => 'user',
                         'timestamp' => '2019-08-14T16:55:34+0200',
-                    ]]
+                    ]],
                 ),
             ],
         ];

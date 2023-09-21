@@ -21,7 +21,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->emptyOutputBucketId,
             'test-table',
             $csv,
-            ['primaryKey' => $primaryKey]
+            ['primaryKey' => $primaryKey],
         );
     }
 
@@ -59,12 +59,12 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     public function testModifyPrimaryKeyDecider(
         array $currentTableInfo,
         array $newTableConfiguration,
-        bool $result
+        bool $result,
     ): void {
         self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(
             new NullLogger(),
             $currentTableInfo,
-            $newTableConfiguration
+            $newTableConfiguration,
         ));
     }
 
@@ -144,10 +144,10 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             ['id', 'name'],
-            ['id', 'foo']
+            ['id', 'foo'],
         );
         self::assertTrue($logger->hasWarningThatContains(
-            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $tableId)
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -166,10 +166,10 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             [ ],
-            ['id', 'foo']
+            ['id', 'foo'],
         );
         self::assertTrue($logger->hasWarningThatContains(
-            sprintf('Modifying primary key of table "%s" from "" to "id, foo".', $tableId)
+            sprintf('Modifying primary key of table "%s" from "" to "id, foo".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -188,10 +188,10 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             $tableInfo['primaryKey'],
-            []
+            [],
         );
         self::assertTrue($logger->hasWarningThatContains(
-            sprintf('Modifying primary key of table "%s" from "id, foo" to "".', $tableId)
+            sprintf('Modifying primary key of table "%s" from "id, foo" to "".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
@@ -211,18 +211,18 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient(),
             $invalidTableId,
             ['id', 'name'],
-            ['id', 'foo']
+            ['id', 'foo'],
         );
         self::assertTrue($logger->hasWarningThatContains(
-            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $invalidTableId)
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $invalidTableId),
         ));
         self::assertTrue($logger->hasWarningThatContains(
             sprintf(
                 'Error deleting primary key of table %s: The table "test-table-non-existent" ' .
                 'was not found in the bucket "%s" in the project',
                 $invalidTableId,
-                $this->emptyOutputBucketId
-            )
+                $this->emptyOutputBucketId,
+            ),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -241,16 +241,16 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient(),
             $tableId,
             ['id', 'name'],
-            ['id', 'bar']
+            ['id', 'bar'],
         );
         self::assertTrue($logger->hasWarningThatContains(
-            sprintf('Modifying primary key of table "%s" from "id, name" to "id, bar".', $tableId)
+            sprintf('Modifying primary key of table "%s" from "id, name" to "id, bar".', $tableId),
         ));
         self::assertTrue($logger->hasWarningThatContains(
             sprintf(
                 'Error changing primary key of table %s: Primary key columns "bar" not found in "id, name, foo"',
-                $tableId
-            )
+                $tableId,
+            ),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);

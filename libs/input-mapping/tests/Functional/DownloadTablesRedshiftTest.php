@@ -33,13 +33,13 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         self::assertCSVEquals(
             // phpcs:ignore Generic.Files.LineLength
             "\"Id\",\"Name\",\"foo\",\"bar\"\n\"id1\",\"name1\",\"foo1\",\"bar1\"\n\"id2\",\"name2\",\"foo2\",\"bar2\"\n\"id3\",\"name3\",\"foo3\",\"bar3\"\n",
-            $this->temp->getTmpFolder(). '/download/test-redshift.csv'
+            $this->temp->getTmpFolder(). '/download/test-redshift.csv',
         );
 
         $adapter = new Adapter();
@@ -64,7 +64,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::S3,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $adapter = new Adapter();
 
@@ -88,14 +88,14 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
             $this->redshiftBucketId,
             'empty',
             $headerCsvFile,
-            []
+            [],
         );
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
             $this->redshiftBucketId . '.empty',
-            $options
+            $options,
         );
 
         $reader = new Reader($this->getLocalStagingFactory());
@@ -111,7 +111,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::LOCAL,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $file = file_get_contents($this->temp->getTmpFolder() . '/download/empty.csv');
         self::assertEquals("\"Id\",\"Name\"\n", $file);

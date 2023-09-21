@@ -13,7 +13,7 @@ class FailedLoadTableDecider
     public static function decideTableDelete(
         LoggerInterface $logger,
         ClientWrapper $clientWrapper,
-        LoadTableTaskInterface $task
+        LoadTableTaskInterface $task,
     ): bool {
         try {
             $tableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($task->getDestinationTableName());

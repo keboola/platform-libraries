@@ -14,7 +14,7 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
             $sourceName,
             $this->dataStorage->getWorkspaceId(),
             $sourceName,
-            false
+            false,
         );
     }
 }

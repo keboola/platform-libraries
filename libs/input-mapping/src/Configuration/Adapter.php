@@ -88,7 +88,7 @@ abstract class Adapter
             $serialized = $encoder->encode(
                 $this->getConfig(),
                 $encoder::FORMAT,
-                ['json_encode_options' => JSON_PRETTY_PRINT]
+                ['json_encode_options' => JSON_PRETTY_PRINT],
             );
         } else {
             throw $this->getInvalidConfigurationFormatException();
@@ -135,7 +135,7 @@ abstract class Adapter
             $serialized = $encoder->encode(
                 $this->getConfig(),
                 $encoder::FORMAT,
-                ['json_encode_options' => JSON_PRETTY_PRINT]
+                ['json_encode_options' => JSON_PRETTY_PRINT],
             );
         } else {
             throw $this->getInvalidConfigurationFormatException();

@@ -40,13 +40,13 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
         LoggerInterface $logger,
         ProviderInterface $dataStorage,
         ProviderInterface $metadataStorage,
-        string $format
+        string $format,
     ) {
         parent::__construct($clientWrapper, $logger, $dataStorage, $metadataStorage, $format);
         $credentials = $this->dataStorage->getCredentials();
         if (empty($credentials['connectionString']) || empty($credentials['container'])) {
             throw new OutputOperationException(
-                'Invalid credentials received: ' . implode(', ', array_keys($credentials))
+                'Invalid credentials received: ' . implode(', ', array_keys($credentials)),
             );
         }
         $this->blobClient = ClientFactory::createClientFromConnectionString($credentials['connectionString']);
@@ -73,7 +73,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             throw new InvalidOutputException(
                 sprintf('Failed to list files: "%s".', $e->getErrorText()),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
     }
@@ -86,7 +86,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                 $files[$blob->getName()] = new FileItem(
                     $blob->getName(),
                     dirname($blob->getName()),
-                    basename($blob->getName())
+                    basename($blob->getName()),
                 );
             }
         }
@@ -101,7 +101,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                 $manifestFileNames[$blob->getName()] = new FileItem(
                     $blob->getName(),
                     dirname($blob->getName()),
-                    basename($blob->getName())
+                    basename($blob->getName()),
                 );
             }
         }
@@ -122,7 +122,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             throw new InvalidOutputException(
                 sprintf('File "%s" does not exist in container "%s".', $file, $this->container),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
 
@@ -158,7 +158,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
             throw new InvalidOutputException(
                 sprintf('Failed to read manifest "%s": "%s', $manifestFile, $e->getErrorText()),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
         try {
@@ -170,10 +170,10 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                     'Failed to parse manifest file "%s" as "%s": %s',
                     $manifestFile,
                     $this->format,
-                    $e->getMessage()
+                    $e->getMessage(),
                 ),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
     }

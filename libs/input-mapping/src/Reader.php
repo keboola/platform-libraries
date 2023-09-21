@@ -44,7 +44,7 @@ class Reader
         array $configuration,
         string $destination,
         string $stagingType,
-        InputFileStateList $filesState
+        InputFileStateList $filesState,
     ): InputFileStateList {
         $strategy = $this->strategyFactory->getFileInputStrategy($stagingType, $filesState);
         if (!$configuration) {
@@ -66,18 +66,18 @@ class Reader
         InputTableStateList $tablesState,
         string $destination,
         string $stagingType,
-        ReaderOptions $readerOptions
+        ReaderOptions $readerOptions,
     ): Result {
         $tableResolver = new TableDefinitionResolver(
             $this->clientWrapper->getTableAndFileStorageClient(),
-            $this->logger
+            $this->logger,
         );
         $tablesState = TableRewriteHelperFactory::getTableRewriteHelper(
-            $this->clientWrapper->getClientOptionsReadOnly()
+            $this->clientWrapper->getClientOptionsReadOnly(),
         )->rewriteTableStatesDestinations(
             $tablesState,
             $this->clientWrapper,
-            $this->logger
+            $this->logger,
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
@@ -88,15 +88,15 @@ class Reader
             is no difference which one is stored in the configuration */
             InputBucketValidator::checkDevBuckets(
                 $tablesDefinition,
-                $this->clientWrapper
+                $this->clientWrapper,
             );
         }
         $tablesDefinition = TableRewriteHelperFactory::getTableRewriteHelper(
-            $this->clientWrapper->getClientOptionsReadOnly()
+            $this->clientWrapper->getClientOptionsReadOnly(),
         )->rewriteTableOptionsSources(
             $tablesDefinition,
             $this->clientWrapper,
-            $this->logger
+            $this->logger,
         );
         /** @var TableAbstractStrategy $strategy */
         return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
@@ -132,14 +132,14 @@ class Reader
         $fileOptions = new InputFileOptions(
             $fileConfiguration,
             $clientWrapper->isDevelopmentBranch(),
-            (string) $clientWrapper->getTableAndFileStorageClient()->getRunId()
+            (string) $clientWrapper->getTableAndFileStorageClient()->getRunId(),
         );
         $fileOptionsRewritten = TagsRewriteHelperFactory::getTagsRewriteHelper(
-            $clientWrapper->getClientOptionsReadOnly()
+            $clientWrapper->getClientOptionsReadOnly(),
         )->rewriteFileTags(
             $fileOptions,
             $clientWrapper,
-            $logger
+            $logger,
         );
         return $fileOptionsRewritten;
     }

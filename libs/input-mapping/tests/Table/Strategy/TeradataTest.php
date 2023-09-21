@@ -24,7 +24,7 @@ class TeradataTest extends AbstractTestCase
             new NullProvider(),
             new NullProvider(),
             new InputTableStateList([]),
-            'test'
+            'test',
         );
         $result = $strategy->downloadTable(new RewrittenInputTableOptions(
             [
@@ -59,7 +59,7 @@ class TeradataTest extends AbstractTestCase
                 ],
                 'type' => 'copy',
             ],
-            $result
+            $result,
         );
     }
 }

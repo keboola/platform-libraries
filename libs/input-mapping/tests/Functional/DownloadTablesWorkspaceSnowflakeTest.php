@@ -53,7 +53,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         // there were 2 jobs, clone and copy, so should have 2 metrics entries
@@ -70,7 +70,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->firstTableId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
@@ -82,10 +82,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertEquals($this->secondTableId, $manifest['id']);
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
-            $this->emptyOutputBucketId . '.test2'
+            $this->emptyOutputBucketId . '.test2',
         ));
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test3.manifest');
@@ -94,10 +94,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             doesn't fail because keep_internal_timestamp_column=false was provided */
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
         );
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
-            $this->emptyOutputBucketId . '.test3'
+            $this->emptyOutputBucketId . '.test3',
         ));
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
@@ -145,7 +145,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -176,7 +176,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         $adapter = new Adapter();
@@ -185,12 +185,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertEquals($this->firstTableId, $manifest['id']);
         self::assertEquals(
             ['Id'],
-            $manifest['columns']
+            $manifest['columns'],
         );
         // check that the table exists in the workspace
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
 
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
@@ -221,14 +221,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Likely datatype conversion: odbc_execute(): SQL error: Numeric value \'id2\' is not recognized'
+            'Likely datatype conversion: odbc_execute(): SQL error: Numeric value \'id2\' is not recognized',
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -249,7 +249,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -266,7 +266,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $adapter = new Adapter();
 
@@ -274,12 +274,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertEquals($this->firstTableId, $manifest['id']);
         self::assertEquals(
             ['Id'],
-            $manifest['columns']
+            $manifest['columns'],
         );
         // check that the table exists in the workspace
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
 
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
@@ -300,7 +300,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $adapter = new Adapter();
 
@@ -308,14 +308,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertEquals($this->firstTableId, $manifest['id']);
         self::assertEquals(
             ['Id', 'Name', 'foo', 'bar'],
-            $manifest['columns']
+            $manifest['columns'],
         );
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns']
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns'],
             );
             self::fail('Must throw exception');
         } catch (ClientException $e) {
@@ -347,7 +347,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.'
+            'View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.',
         );
 
         $reader->downloadTables(
@@ -355,7 +355,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
     }
 
@@ -381,7 +381,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
         $configuration = new InputTableOptionsList([
             [
@@ -401,7 +401,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true, false)
+            new ReaderOptions(true, false),
         );
         // the initial_table should not be present in the workspace anymore
         try {
@@ -411,13 +411,13 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'dataWorkspaceId' => $this->workspaceId,
                     'dataTableName' => 'initial_table',
                     'name' => 'initial_table',
-                ]
+                ],
             );
             self::fail('should throw 404 for workspace table not found');
         } catch (ClientException $exception) {
             self::assertStringContainsString(
                 'Table "initial_table" not found in schema',
-                $exception->getMessage()
+                $exception->getMessage(),
             );
         }
 
@@ -429,7 +429,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'dataWorkspaceId' => $this->workspaceId,
                     'dataTableName' => 'new_clone_table',
                     'name' => 'new_clone_table',
-                ]
+                ],
             );
         } catch (ClientException $exception) {
             self::assertStringContainsString('Invalid columns: _timestamp:', $exception->getMessage());
@@ -437,7 +437,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table']
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table'],
         );
     }
 
@@ -465,7 +465,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 token: (string) getenv('STORAGE_API_TOKEN'),
                 branchId: $branchId,
                 useBranchStorage: true,
-            )
+            ),
         );
         $this->clientWrapper = $clientWrapper;
 
@@ -494,7 +494,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         // create input bucket in branch
         $clientWrapper->getBranchClient()->createBucket(
             'testWorkspaceInputMappingRealDevStorageTest',
-            'in'
+            'in',
         );
         $clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
 
@@ -538,7 +538,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            new ReaderOptions(true)
+            new ReaderOptions(true),
         );
 
         // there were 2 jobs, clone and copy, so should have 2 metrics entries
@@ -557,7 +557,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         foreach ($tables as $table_name => $table_id) {
             $manifest = $adapter->readFromFile(
-                $this->temp->getTmpFolder() . '/download/' . $table_name . '.manifest'
+                $this->temp->getTmpFolder() . '/download/' . $table_name . '.manifest',
             );
             self::assertEquals($table_id, $manifest['id']);
             $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
@@ -566,10 +566,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'dataWorkspaceId' => $this->workspaceId,
                     'dataTableName' => $table_name,
                     'name' => 'test' . $table_name,
-                ]
+                ],
             );
             self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
-                $this->emptyOutputBucketId . '.test' . $table_name
+                $this->emptyOutputBucketId . '.test' . $table_name,
             ));
         }
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
@@ -578,14 +578,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 'Using fallback to default branch "%s" for input "%s".',
                 $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
-            )
+            ),
         ));
         self::assertTrue($logger->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
                 $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
-            )
+            ),
         ));
         self::assertTrue($logger->hasInfoThatContains(
             sprintf(
@@ -593,7 +593,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                 $branchId,
                 $clientWrapper->getDefaultBranch()->id,
-            )
+            ),
         ));
         self::assertTrue(
             $logger->hasInfoThatContains(
@@ -602,8 +602,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                     $branchId,
                     $clientWrapper->getDefaultBranch()->id,
-                )
-            )
+                ),
+            ),
         );
 
         self::assertTrue($logger->hasInfoThatContains('Cloning 2 tables to workspace.'));

@@ -27,7 +27,7 @@ class AdapterTest extends TestCase
                 'is_encrypted' => true,
                 'notify' => false,
             ],
-            $adapter->getConfig()
+            $adapter->getConfig(),
         );
     }
 
@@ -43,7 +43,7 @@ class AdapterTest extends TestCase
                 'is_encrypted' => true,
                 'notify' => false,
             ],
-            $data
+            $data,
         );
     }
 
@@ -59,7 +59,7 @@ class AdapterTest extends TestCase
                 'is_encrypted' => true,
                 'notify' => false,
             ],
-            $data
+            $data,
         );
     }
 }

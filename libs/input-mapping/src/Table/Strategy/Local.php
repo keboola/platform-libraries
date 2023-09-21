@@ -31,7 +31,7 @@ class Local extends AbstractStrategy
                 'Please contact support to raise this limit',
                 $table->getSource(),
                 $tableInfo['dataSizeBytes'],
-                $exportLimit
+                $exportLimit,
             ));
         }
 
@@ -40,7 +40,7 @@ class Local extends AbstractStrategy
             $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest',
             $table->getColumnNamesFromTypes(),
-            $this->format
+            $this->format,
         );
         return [
             'tableId' => $table->getSource(),

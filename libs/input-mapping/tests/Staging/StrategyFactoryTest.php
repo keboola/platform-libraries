@@ -35,7 +35,7 @@ class StrategyFactoryTest extends TestCase
                 'workspace-snowflake', 'workspace-synapse', 'workspace-exasol', 'workspace-teradata',
                 'workspace-bigquery',
             ],
-            array_keys($factory->getStrategyMap())
+            array_keys($factory->getStrategyMap()),
         );
     }
 
@@ -46,13 +46,13 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('The project does not support "local" file input backend.');
         $factory->getFileInputStrategy(
             AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([])
+            new InputFileStateList([]),
         );
     }
 
@@ -63,18 +63,18 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $factory->addProvider(
             new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])]
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])],
         );
         self::assertInstanceOf(
             LocalFile::class,
             $factory->getFileInputStrategy(
                 AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([])
-            )
+                new InputFileStateList([]),
+            ),
         );
     }
 
@@ -85,7 +85,7 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('The project does not support "local" table input backend.');
@@ -99,15 +99,15 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $factory->addProvider(
             new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]
+            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
         );
         self::assertInstanceOf(
             LocalTable::class,
-            $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([]))
+            $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([])),
         );
     }
 
@@ -118,13 +118,13 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage(
             'Staging "0" is unknown. Known types are "abs, local, s3, workspace-abs, ' .
             'workspace-redshift, workspace-snowflake, workspace-synapse, workspace-exasol, workspace-teradata, ' .
-            'workspace-bigquery'
+            'workspace-bigquery',
         );
         $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
     }
@@ -136,11 +136,11 @@ class StrategyFactoryTest extends TestCase
                 new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
             ),
             new NullLogger(),
-            'json'
+            'json',
         );
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local,'
+            'Input mapping on type "invalid" is not supported. Supported types are "abs, local,',
         );
         $factory->getTableInputStrategy('invalid', 'test', new InputTableStateList([]));
     }

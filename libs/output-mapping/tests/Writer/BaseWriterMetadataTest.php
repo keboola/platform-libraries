@@ -83,7 +83,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -92,7 +92,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             $this->clientWrapper->getTableAndFileStorageClient()->listJobs(),
             function (array $job) use ($runId) {
                 return $runId === $job['runId'];
-            }
+            },
         );
 
         self::assertCount(2, $writerJobs);
@@ -170,7 +170,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -242,14 +242,14 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $idColMetadata = $metadataApi->listColumnMetadata(
-            $inputBucket . '.table88.Id_with_special_chars'
+            $inputBucket . '.table88.Id_with_special_chars',
         );
         $expectedColumnMetadata = [
             'testComponent' => [
@@ -325,7 +325,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false
+            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

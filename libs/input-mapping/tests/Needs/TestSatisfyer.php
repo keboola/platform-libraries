@@ -91,8 +91,6 @@ class TestSatisfyer
      * @return array{
      *      emptyOutputBucketId: ?string,
      *      emptyInputBucketId: ?string,
-     *      redshiftBucketId: ?string,
-     *      redshiftTableId: ?string,
      *      testBucketId: ?string,
      *      firstTableId: ?string,
      *      secondTableId: ?string,
@@ -108,11 +106,6 @@ class TestSatisfyer
         $storageBackend = self::getStorageBackendFromAttribute($reflection) ?: 'snowflake';
 
         $emptyOutputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyOutputBucket::class);
-        $redshiftTestTable = self::getAttribute(
-            $reflection,
-            $methodName,
-            NeedsTestRedshiftTable::class,
-        );
         $emptyInputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyInputBucket::class);
 
         $testTable = self::getAttribute($reflection, $methodName, NeedsTestTables::class);
@@ -162,31 +155,9 @@ class TestSatisfyer
             }
         }
 
-        if ($redshiftTestTable) {
-            $testRedshiftBucketId = self::ensureEmptyBucket(
-                $clientWrapper,
-                $methodName . 'Redshift',
-                Client::STAGE_IN,
-                'redshift',
-            );
-
-            $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-            $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
-            $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
-            $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
-            $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-
-            $redshiftTableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                $testRedshiftBucketId,
-                'test',
-                $csv,
-            );
-        }
         return [
             'emptyOutputBucketId' => !empty($emptyOutputBucketId) ? (string) $emptyOutputBucketId : null,
             'emptyInputBucketId' => !empty($emptyInputBucketId) ? (string) $emptyInputBucketId : null,
-            'redshiftBucketId' => !empty($testRedshiftBucketId) ? (string) $testRedshiftBucketId : null,
-            'redshiftTableId' => !empty($redshiftTableId) ? (string) $redshiftTableId : null,
             'testBucketId' => !empty($testBucketId) ? (string) $testBucketId : null,
             'firstTableId' => !empty($tableIds[0]) ? (string) $tableIds[0] : null,
             'secondTableId' => !empty($tableIds[1]) ? (string) $tableIds[1] : null,

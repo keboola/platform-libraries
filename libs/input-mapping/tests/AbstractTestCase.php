@@ -30,8 +30,6 @@ abstract class AbstractTestCase extends TestCase
 
     protected string $emptyInputBucketId;
     protected string $emptyOutputBucketId;
-    protected string $redshiftBucketId;
-    protected string $redshiftTableId;
     protected string $testBucketId;
     protected string $firstTableId;
     protected string $secondTableId;

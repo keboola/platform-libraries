@@ -12,18 +12,20 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
-use Keboola\InputMapping\Tests\Needs\NeedsTestRedshiftTable;
+use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Options\FileUploadOptions;
 
+#[NeedsStorageBackend('redshift')]
 class DownloadTablesRedshiftTest extends AbstractTestCase
 {
-    #[NeedsTestRedshiftTable]
+    #[NeedsTestTables]
     public function testReadTablesRedshift(): void
     {
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => $this->redshiftTableId,
+                'source' => $this->firstTableId,
                 'destination' => 'test-redshift.csv',
             ],
         ]);
@@ -45,16 +47,16 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-redshift.csv.manifest');
-        self::assertEquals($this->redshiftTableId, $manifest['id']);
+        self::assertEquals($this->firstTableId, $manifest['id']);
     }
 
-    #[NeedsTestRedshiftTable]
+    #[NeedsTestTables]
     public function testReadTablesS3Redshift(): void
     {
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => $this->redshiftTableId,
+                'source' => $this->firstTableId,
                 'destination' => 'test-redshift.csv',
             ],
         ]);
@@ -69,11 +71,11 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
         $adapter = new Adapter();
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test-redshift.csv.manifest');
-        self::assertEquals($this->redshiftTableId, $manifest['id']);
+        self::assertEquals($this->firstTableId, $manifest['id']);
         $this->assertS3info($manifest);
     }
 
-    #[NeedsTestRedshiftTable]
+    #[NeedsTestTables]
     public function testReadTablesEmptySlices(): void
     {
         $fileUploadOptions = new FileUploadOptions();
@@ -85,7 +87,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->redshiftBucketId,
+            $this->firstTableId,
             'empty',
             $headerCsvFile,
             [],
@@ -94,14 +96,14 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
         $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
-            $this->redshiftBucketId . '.empty',
+            $this->testBucketId . '.empty',
             $options,
         );
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = new InputTableOptionsList([
             [
-                'source' => $this->redshiftBucketId . '.empty',
+                'source' => $this->testBucketId . '.empty',
                 'destination' => 'empty.csv',
             ],
         ]);
@@ -118,6 +120,6 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
 
         $adapter = new Adapter();
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/empty.csv.manifest');
-        self::assertEquals($this->redshiftBucketId . '.empty', $manifest['id']);
+        self::assertEquals($this->testBucketId . '.empty', $manifest['id']);
     }
 }

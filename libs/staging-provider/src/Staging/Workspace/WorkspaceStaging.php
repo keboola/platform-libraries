@@ -16,7 +16,7 @@ abstract class WorkspaceStaging implements WorkspaceStagingInterface
             throw new StagingProviderException(sprintf(
                 'Backend configuration does not match the workspace type. Expected "%s", got "%s"',
                 static::getType(),
-                $data['connection']['backend']
+                $data['connection']['backend'],
             ));
         }
 

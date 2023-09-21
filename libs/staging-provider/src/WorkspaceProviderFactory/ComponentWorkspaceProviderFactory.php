@@ -17,7 +17,7 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
         private readonly string $componentId,
         private readonly ?string $configId,
         private readonly WorkspaceBackendConfig $workspaceBackendConfig,
-        private readonly ?bool $useWorkspaceWithReadonlyRole = null
+        private readonly ?bool $useWorkspaceWithReadonlyRole = null,
     ) {
         parent::__construct($workspacesApiClient);
     }
@@ -46,7 +46,7 @@ class ComponentWorkspaceProviderFactory extends AbstractCachedWorkspaceProviderF
                 $this->componentId,
                 $this->configId,
                 $options,
-                true
+                true,
             );
         }
 

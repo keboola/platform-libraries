@@ -30,7 +30,7 @@ class WorkspaceStagingProviderTest extends TestCase
                         'backend' => SnowflakeWorkspaceStaging::getType(),
                     ],
                 ]);
-            }
+            },
         );
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
@@ -124,7 +124,7 @@ class WorkspaceStagingProviderTest extends TestCase
                         'password' => 'password',
                     ],
                 ]);
-            }
+            },
         );
 
         /* intentionally assertEquals instead of assertSame because otherwise phpstan is confused and things

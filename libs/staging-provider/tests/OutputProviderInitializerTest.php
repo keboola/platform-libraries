@@ -29,12 +29,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputLocal(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -42,21 +42,21 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
         $init->initializeProviders(
             AbstractStrategyFactory::LOCAL,
-            []
+            [],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
@@ -67,12 +67,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputRedshift(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -80,7 +80,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -93,23 +93,23 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_REDSHIFT),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
@@ -120,12 +120,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputSnowflake(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -133,7 +133,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -146,23 +146,23 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-redshift" table output backend.');
@@ -173,12 +173,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputSynapse(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -186,7 +186,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -199,24 +199,24 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
 
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
@@ -234,12 +234,12 @@ class OutputProviderInitializerTest extends TestCase
             new ClientOptions(
                 (string) getenv('SYNAPSE_STORAGE_API_URL'),
                 (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-            )
+            ),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $components = new Components($stagingFactory->getClientWrapper()->getBasicClient());
@@ -262,7 +262,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($stagingFactory->getClientWrapper()->getBasicClient()),
             'keboola.runner-workspace-abs-test',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -275,24 +275,24 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
 
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             ABSWorkspace::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS),
         );
         self::assertInstanceOf(
             AbsWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_ABS),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
@@ -303,12 +303,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputExasol(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -316,7 +316,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -330,23 +330,23 @@ class OutputProviderInitializerTest extends TestCase
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_EXASOL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_EXASOL),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_EXASOL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_EXASOL),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
@@ -357,12 +357,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputTeradata(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -370,7 +370,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -385,23 +385,23 @@ class OutputProviderInitializerTest extends TestCase
                     'hasTeradata' => true,
                     'fileStorageProvider' => 'azure',
                 ],
-            ]
+            ],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_TERADATA)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_TERADATA),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_TERADATA)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_TERADATA),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');
@@ -412,12 +412,12 @@ class OutputProviderInitializerTest extends TestCase
     public function testInitializeOutputBigQuery(): void
     {
         $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN'))
+            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
         );
         $stagingFactory = new OutputStrategyFactory(
             $clientWrapper,
             new NullLogger(),
-            'json'
+            'json',
         );
 
         $providerFactory = new ComponentWorkspaceProviderFactory(
@@ -425,7 +425,7 @@ class OutputProviderInitializerTest extends TestCase
             new Workspaces($clientWrapper->getBasicClient()),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null)
+            new WorkspaceBackendConfig(null),
         );
         $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
 
@@ -436,23 +436,23 @@ class OutputProviderInitializerTest extends TestCase
                     'hasBigquery' => true,
                     'fileStorageProvider' => 'aws',
                 ],
-            ]
+            ],
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             LocalTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::LOCAL),
         );
         self::assertInstanceOf(
             OutputFileLocal::class,
-            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_BIGQUERY)
+            $stagingFactory->getFileOutputStrategy(AbstractStrategyFactory::WORKSPACE_BIGQUERY),
         );
         self::assertInstanceOf(
             SqlWorkspaceTableStrategy::class,
-            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_BIGQUERY)
+            $stagingFactory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_BIGQUERY),
         );
 
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table output backend.');

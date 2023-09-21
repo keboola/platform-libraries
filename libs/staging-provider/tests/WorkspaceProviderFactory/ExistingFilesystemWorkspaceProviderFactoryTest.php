@@ -31,7 +31,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString
+            $workspaceConnectionString,
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -42,7 +42,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
                 'container' => 'someContainer',
                 'connectionString' => 'someRandomString',
             ],
-            $credentials
+            $credentials,
         );
     }
 
@@ -62,7 +62,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString
+            $workspaceConnectionString,
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -71,7 +71,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $this->expectExceptionMessage(sprintf(
             'Incompatible workspace type. Expected workspace backend is "%s", actual backend is "%s"',
             $stagingClass::getType(),
-            'foo'
+            'foo',
         ));
 
         $provider->getWorkspaceId();
@@ -89,7 +89,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString
+            $workspaceConnectionString,
         );
 
         $provider1 = $factory->getProvider($stagingClass);

@@ -35,7 +35,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspacePassword,
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -52,7 +52,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
                 'warehouse' => 'someWarehouse',
                 'account' => 'someHost',
             ],
-            $credentials
+            $credentials,
         );
     }
 
@@ -72,7 +72,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspacePassword,
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -81,7 +81,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $this->expectExceptionMessage(sprintf(
             'Incompatible workspace type. Expected workspace backend is "%s", actual backend is "%s"',
             $stagingClass::getType(),
-            'foo'
+            'foo',
         ));
 
         $provider->getWorkspaceId();
@@ -99,7 +99,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword
+            $workspacePassword,
         );
 
         $provider1 = $factory->getProvider($stagingClass);

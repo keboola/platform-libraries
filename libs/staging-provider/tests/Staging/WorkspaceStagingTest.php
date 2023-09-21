@@ -26,7 +26,7 @@ class WorkspaceStagingTest extends TestCase
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage(sprintf(
             'Backend configuration does not match the workspace type. Expected "%s", got "dummy"',
-            $expectedType
+            $expectedType,
         ));
 
         new $workspaceClass([

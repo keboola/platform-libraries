@@ -27,7 +27,7 @@ abstract class AbstractCachedWorkspaceProviderFactory implements WorkspaceProvid
             $this->workspacesApiClient,
             function () use ($stagingClass) {
                 return new $stagingClass($this->getWorkspaceData($stagingClass));
-            }
+            },
         );
     }
 

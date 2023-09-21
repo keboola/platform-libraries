@@ -29,17 +29,17 @@ class TestSatisfyer
         return null;
     }
 
-    public static function getBucketIdByDisplayName(
+    public static function getBucketByDisplayName(
         ClientWrapper $clientWrapper,
         string $bucketDisplayName,
         string $stage,
-    ): ?string {
+    ): ?array {
         // the client has method getBucketId, but it does not work with display name, and actually it is not
         // useful at all https://keboola.slack.com/archives/CFVRE56UA/p1680696020855349
         $buckets = $clientWrapper->getTableAndFileStorageClient()->listBuckets();
         foreach ($buckets as $bucket) {
             if ($bucket['displayName'] === $bucketDisplayName && $bucket['stage'] === $stage) {
-                return $bucket['id'];
+                return $bucket;
             }
         }
         return null;
@@ -51,14 +51,23 @@ class TestSatisfyer
         string $stage,
         string $backend,
     ): string {
-        $bucketId = self::getBucketIdByDisplayName($clientWrapper, $bucketName, $stage);
-        if ($bucketId !== null) {
-            $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
-            foreach ($tables as $table) {
-                $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
+        $bucket = self::getBucketByDisplayName($clientWrapper, $bucketName, $stage);
+        if ($bucket !== null) {
+            $bucketId = $bucket['id'];
+            if ($bucket['backend'] === $backend) {
+                $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
+                foreach ($tables as $table) {
+                    $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
+                }
+                return $bucketId;
             }
-            return $bucketId;
+
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                $bucketId,
+                ['force' => true, 'async' => true],
+            );
         }
+
         return $clientWrapper->getTableAndFileStorageClient()->createBucket(
             name: $bucketName,
             stage: $stage,
@@ -185,9 +194,6 @@ class TestSatisfyer
         ];
     }
 
-    /**
-     * @param class-string $attribute
-     */
     private static function getStorageBackendFromAttribute(ReflectionObject $reflection): ?string
     {
         $attributes = $reflection->getAttributes(NeedsStorageBackend::class);

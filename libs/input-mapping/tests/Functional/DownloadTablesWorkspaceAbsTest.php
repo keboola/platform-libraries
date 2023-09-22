@@ -13,6 +13,7 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -20,6 +21,7 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\Test\TestLogger;
 
+#[NeedsStorageBackend('synapse')]
 class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 {
     private bool $runSynapseTests;

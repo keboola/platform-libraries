@@ -27,8 +27,7 @@ class LoadTypeDecider
             return false;
         }
 
-        if (array_keys($exportOptions) !== ['overwrite'] ||
-            ($tableInfo['bucket']['backend'] !== $workspaceType) ||
+        if (($tableInfo['bucket']['backend'] !== $workspaceType) ||
             ($workspaceType !== 'bigquery')
         ) {
             return false;

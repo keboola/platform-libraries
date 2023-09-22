@@ -159,7 +159,7 @@ class LoadTypeDeciderTest extends TestCase
             ],
             'workspaceType' => 'bigquery',
             'exportOptions' => [],
-            'expected' => false,
+            'expected' => true,
         ];
 
         yield 'BigQuery Table Overwrite' => [

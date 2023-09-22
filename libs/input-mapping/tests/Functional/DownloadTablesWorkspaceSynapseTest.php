@@ -12,6 +12,7 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -19,6 +20,7 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\Test\TestLogger;
 use Throwable;
 
+#[NeedsStorageBackend('synapse')]
 class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
 {
     private bool $runSynapseTests = false;

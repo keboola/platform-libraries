@@ -113,7 +113,7 @@ class TestSatisfyer
         if ($emptyOutputBucket !== null) {
             $emptyOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty' . ucfirst($storageBackend),
+                $methodName . 'Empty',
                 Client::STAGE_OUT,
                 $storageBackend,
             );
@@ -122,7 +122,7 @@ class TestSatisfyer
         if ($emptyInputBucket !== null) {
             $emptyInputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty'. ucfirst($storageBackend),
+                $methodName . 'Empty',
                 Client::STAGE_IN,
                 $storageBackend,
             );
@@ -131,7 +131,7 @@ class TestSatisfyer
         if ($testTable !== null) {
             $testBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Test'. ucfirst($storageBackend),
+                $methodName . 'Test',
                 Client::STAGE_IN,
                 $storageBackend,
             );

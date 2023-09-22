@@ -29,7 +29,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will created as view.', $table->getSource()));
             return [
-                'table' => $table,
+                'table' => [$table, $loadOptions],
                 'type' => self::LOAD_TYPE_VIEW,
             ];
         }
@@ -47,7 +47,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         $workspaceTables = [];
 
         foreach ($exports as $export) {
-            if ($export['type'] === 'clone') {
+            if ($export['type'] === self::LOAD_TYPE_CLONE) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
                 $cloneInput = [

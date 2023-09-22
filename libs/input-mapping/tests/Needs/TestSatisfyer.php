@@ -145,8 +145,7 @@ class TestSatisfyer
             $tableCount = self::getTableCount($testTable);
             $tableIds = [];
             // Create table
-            $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
-            for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+            for ($i = 0; $i < $tableCount; $i++) {
                 $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                     $testBucketId,
                     'test' . ($i + 1),

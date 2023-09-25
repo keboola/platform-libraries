@@ -185,5 +185,89 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => ['overwrite' => true],
             'expected' => false,
         ];
+
+        yield 'Filtered BigQuery Table' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'seconds' => 5,
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with limit' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'rows' => 1,
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereOperator' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereOperator' => 'and',
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereColumn' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereColumn' => 'name',
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereValues' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereValues' => ['foo'],
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with columns' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'columns' => [],
+            ],
+            'expected' => false,
+        ];
     }
 }

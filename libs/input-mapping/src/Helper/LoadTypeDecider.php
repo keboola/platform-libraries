@@ -32,6 +32,11 @@ class LoadTypeDecider
         ) {
             return false;
         }
+
+        if ($exportOptions && array_keys($exportOptions) !== ['overwrite']) {
+            return false;
+        }
+
         return true;
     }
 }

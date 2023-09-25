@@ -22,7 +22,7 @@ class CanModifyAuthorization implements PermissionCheckInterface
     {
         if ($token->hasFeature(Feature::PROTECTED_DEFAULT_BRANCH)) {
             $isRoleAllowed = match ($token->getRole()) {
-                Role::PRODUCTION_MANAGER => $this->branchType === BranchType::DEFAULT,
+                Role::PRODUCTION_MANAGER => $this->branchType === null || $this->branchType === BranchType::DEFAULT,
                 Role::DEVELOPER, Role::REVIEWER => $this->branchType === BranchType::DEV,
                 default => false,
             };

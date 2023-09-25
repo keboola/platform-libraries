@@ -34,6 +34,11 @@ class CanModifyAuthorizationTest extends TestCase
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
         ];
 
+        yield 'productionManager without branch (project-wide)' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
+        ];
+
         yield 'developer on protected dev branch' => [
             'branchType' => BranchType::DEV,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'developer'),
@@ -102,12 +107,6 @@ class CanModifyAuthorizationTest extends TestCase
 
         yield 'productionManager role on protected dev branch' => [
             'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
-            'error' => new PermissionDeniedException('Role "productionManager" is not allowed to modify authorization'),
-        ];
-
-        yield 'productionManager role without branch' => [
-            'branchType' => null,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
             'error' => new PermissionDeniedException('Role "productionManager" is not allowed to modify authorization'),
         ];

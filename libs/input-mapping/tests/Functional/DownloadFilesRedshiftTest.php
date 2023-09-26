@@ -14,7 +14,8 @@ use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\AbstractTestCase;
-use Keboola\InputMapping\Tests\Needs\NeedsTestRedshiftTable;
+use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
+use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
@@ -22,6 +23,7 @@ use Psr\Log\NullLogger;
 use SplFileInfo;
 use Symfony\Component\Finder\Finder;
 
+#[NeedsStorageBackend('redshift')]
 class DownloadFilesRedshiftTest extends AbstractTestCase
 {
     protected function getClientWrapper(?string $branchId): ClientWrapper
@@ -58,7 +60,7 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
         return $stagingFactory;
     }
 
-    #[NeedsTestRedshiftTable]
+    #[NeedsTestTables]
     public function testReadSlicedFile(): void
     {
         $clientWrapper = $this->getClientWrapper(null);
@@ -70,7 +72,7 @@ class DownloadFilesRedshiftTest extends AbstractTestCase
         $csv->writeRow(['Id', 'Name']);
         $csv->writeRow(['test', 'test']);
         $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->redshiftBucketId,
+            $this->firstTableId,
             'test_file',
             $csv,
         );

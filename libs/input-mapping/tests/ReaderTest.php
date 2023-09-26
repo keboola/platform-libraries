@@ -162,25 +162,25 @@ class ReaderTest extends TestCase
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
 
         $clientWrapper = $this->getClientWrapper(null);
-        $branchBucketId = TestSatisfyer::getBucketIdByDisplayName(
+        $branchBucket = TestSatisfyer::getBucketByDisplayName(
             $clientWrapper,
             'my-branch-input-mapping-test',
             Client::STAGE_IN,
         );
-        if ($branchBucketId) {
+        if ($branchBucket) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                (string) $branchBucketId,
+                $branchBucket['id'],
                 ['force' => true, 'async' => true],
             );
         }
-        $inBucketId = TestSatisfyer::getBucketIdByDisplayName(
+        $inBucket = TestSatisfyer::getBucketByDisplayName(
             $clientWrapper,
             'input-mapping-test',
             Client::STAGE_IN,
         );
-        if ($inBucketId) {
+        if ($inBucket) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                (string) $inBucketId,
+                $inBucket['id'],
                 ['force' => true, 'async' => true],
             );
         }

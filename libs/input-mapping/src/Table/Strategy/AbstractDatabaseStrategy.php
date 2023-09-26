@@ -10,6 +10,10 @@ use Keboola\StorageApi\Workspaces;
 
 abstract class AbstractDatabaseStrategy extends AbstractStrategy
 {
+    private const LOAD_TYPE_CLONE = 'clone';
+    private const LOAD_TYPE_COPY = 'copy';
+    private const LOAD_TYPE_VIEW = 'view';
+
     abstract protected function getWorkspaceType(): string;
 
     public function downloadTable(RewrittenInputTableOptions $table): array
@@ -19,13 +23,20 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return [
                 'table' => $table,
-                'type' => 'clone',
+                'type' => self::LOAD_TYPE_CLONE,
+            ];
+        }
+        if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
+            $this->logger->info(sprintf('Table "%s" will created as view.', $table->getSource()));
+            return [
+                'table' => [$table, $loadOptions],
+                'type' => self::LOAD_TYPE_VIEW,
             ];
         }
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
         return [
             'table' => [$table, $loadOptions],
-            'type' => 'copy',
+            'type' => self::LOAD_TYPE_COPY,
         ];
     }
 
@@ -36,7 +47,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         $workspaceTables = [];
 
         foreach ($exports as $export) {
-            if ($export['type'] === 'clone') {
+            if ($export['type'] === self::LOAD_TYPE_CLONE) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
                 $cloneInput = [
@@ -54,7 +65,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 $cloneInputs[] = $cloneInput;
                 $workspaceTables[] = $table;
             }
-            if ($export['type'] === 'copy') {
+            if (in_array($export['type'], [self::LOAD_TYPE_COPY, self::LOAD_TYPE_VIEW], true)) {
                 [$table, $exportOptions] = $export['table'];
                 if ($table->getSourceBranchId() !== null) {
                     // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
@@ -69,7 +80,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                     $exportOptions,
                 );
 
-                if ($table->isUseView()) {
+                if ($table->isUseView() || $export['type'] === self::LOAD_TYPE_VIEW) {
                     $copyInput['useView'] = true;
                 }
 

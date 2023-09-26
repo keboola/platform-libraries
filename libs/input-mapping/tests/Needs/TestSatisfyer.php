@@ -29,17 +29,17 @@ class TestSatisfyer
         return null;
     }
 
-    public static function getBucketIdByDisplayName(
+    public static function getBucketByDisplayName(
         ClientWrapper $clientWrapper,
         string $bucketDisplayName,
         string $stage,
-    ): ?string {
+    ): ?array {
         // the client has method getBucketId, but it does not work with display name, and actually it is not
         // useful at all https://keboola.slack.com/archives/CFVRE56UA/p1680696020855349
         $buckets = $clientWrapper->getTableAndFileStorageClient()->listBuckets();
         foreach ($buckets as $bucket) {
             if ($bucket['displayName'] === $bucketDisplayName && $bucket['stage'] === $stage) {
-                return $bucket['id'];
+                return $bucket;
             }
         }
         return null;
@@ -49,16 +49,25 @@ class TestSatisfyer
         ClientWrapper $clientWrapper,
         string $bucketName,
         string $stage,
-        string $backend = 'snowflake',
+        string $backend,
     ): string {
-        $bucketId = self::getBucketIdByDisplayName($clientWrapper, $bucketName, $stage);
-        if ($bucketId !== null) {
-            $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
-            foreach ($tables as $table) {
-                $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
+        $bucket = self::getBucketByDisplayName($clientWrapper, $bucketName, $stage);
+        if ($bucket !== null) {
+            $bucketId = $bucket['id'];
+            if ($bucket['backend'] === $backend) {
+                $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
+                foreach ($tables as $table) {
+                    $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
+                }
+                return $bucketId;
             }
-            return $bucketId;
+
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                $bucketId,
+                ['force' => true, 'async' => true],
+            );
         }
+
         return $clientWrapper->getTableAndFileStorageClient()->createBucket(
             name: $bucketName,
             stage: $stage,
@@ -82,8 +91,6 @@ class TestSatisfyer
      * @return array{
      *      emptyOutputBucketId: ?string,
      *      emptyInputBucketId: ?string,
-     *      redshiftBucketId: ?string,
-     *      redshiftTableId: ?string,
      *      testBucketId: ?string,
      *      firstTableId: ?string,
      *      secondTableId: ?string,
@@ -96,26 +103,38 @@ class TestSatisfyer
         Temp $temp,
         string $methodName,
     ): array {
+        $storageBackend = self::getStorageBackendFromAttribute($reflection) ?: 'snowflake';
+
         $emptyOutputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyOutputBucket::class);
-        $redshiftTestTable = self::getAttribute(
-            $reflection,
-            $methodName,
-            NeedsTestRedshiftTable::class,
-        );
         $emptyInputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyInputBucket::class);
 
         $testTable = self::getAttribute($reflection, $methodName, NeedsTestTables::class);
 
         if ($emptyOutputBucket !== null) {
-            $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Empty', Client::STAGE_OUT);
+            $emptyOutputBucketId = self::ensureEmptyBucket(
+                $clientWrapper,
+                $methodName . 'Empty',
+                Client::STAGE_OUT,
+                $storageBackend,
+            );
         }
 
         if ($emptyInputBucket !== null) {
-            $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Empty', Client::STAGE_IN);
+            $emptyInputBucketId = self::ensureEmptyBucket(
+                $clientWrapper,
+                $methodName . 'Empty',
+                Client::STAGE_IN,
+                $storageBackend,
+            );
         }
 
         if ($testTable !== null) {
-            $testBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Test', Client::STAGE_IN);
+            $testBucketId = self::ensureEmptyBucket(
+                $clientWrapper,
+                $methodName . 'Test',
+                Client::STAGE_IN,
+                $storageBackend,
+            );
 
             $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
             $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
@@ -126,8 +145,7 @@ class TestSatisfyer
             $tableCount = self::getTableCount($testTable);
             $tableIds = [];
             // Create table
-            $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
-            for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+            for ($i = 0; $i < $tableCount; $i++) {
                 $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                     $testBucketId,
                     'test' . ($i + 1),
@@ -136,35 +154,24 @@ class TestSatisfyer
             }
         }
 
-        if ($redshiftTestTable) {
-            $testRedshiftBucketId = self::ensureEmptyBucket(
-                $clientWrapper,
-                $methodName . 'Redshift',
-                Client::STAGE_IN,
-                'redshift',
-            );
-
-            $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-            $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
-            $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
-            $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
-            $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-
-            $redshiftTableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                $testRedshiftBucketId,
-                'test',
-                $csv,
-            );
-        }
         return [
             'emptyOutputBucketId' => !empty($emptyOutputBucketId) ? (string) $emptyOutputBucketId : null,
             'emptyInputBucketId' => !empty($emptyInputBucketId) ? (string) $emptyInputBucketId : null,
-            'redshiftBucketId' => !empty($testRedshiftBucketId) ? (string) $testRedshiftBucketId : null,
-            'redshiftTableId' => !empty($redshiftTableId) ? (string) $redshiftTableId : null,
             'testBucketId' => !empty($testBucketId) ? (string) $testBucketId : null,
             'firstTableId' => !empty($tableIds[0]) ? (string) $tableIds[0] : null,
             'secondTableId' => !empty($tableIds[1]) ? (string) $tableIds[1] : null,
             'thirdTableId' => !empty($tableIds[2]) ? (string) $tableIds[2] : null,
         ];
+    }
+
+    private static function getStorageBackendFromAttribute(ReflectionObject $reflection): ?string
+    {
+        $attributes = $reflection->getAttributes(NeedsStorageBackend::class);
+        if (count($attributes) > 0) {
+            /** @var NeedsStorageBackend $needsStorageBackend */
+            $needsStorageBackend = $attributes[0]->newInstance();
+            return $needsStorageBackend->backend;
+        }
+        return null;
     }
 }

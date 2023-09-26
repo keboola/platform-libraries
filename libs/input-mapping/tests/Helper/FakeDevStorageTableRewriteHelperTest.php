@@ -55,30 +55,30 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     {
         $clientWrapper = $this->getClientWrapper(null);
 
-        $inBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_IN);
-        if ($inBucketId) {
+        $inBucket = TestSatisfyer::getBucketByDisplayName($clientWrapper, 'main', Client::STAGE_IN);
+        if ($inBucket) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                (string) $inBucketId,
+                $inBucket['id'],
                 ['force' => true, 'async' => true],
             );
         }
 
-        $outBucketId = TestSatisfyer::getBucketIdByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
-        if ($outBucketId) {
+        $outBucket = TestSatisfyer::getBucketByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
+        if ($outBucket) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                (string) $outBucketId,
+                $outBucket['id'],
                 ['force' => true, 'async' => true],
             );
         }
 
-        $outDevBucketId = TestSatisfyer::getBucketIdByDisplayName(
+        $outDevBucket = TestSatisfyer::getBucketByDisplayName(
             $clientWrapper,
             'dev-branch-main',
             Client::STAGE_OUT,
         );
-        if ($outDevBucketId) {
+        if ($outDevBucket) {
             $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                (string) $outDevBucketId,
+                $outDevBucket['id'],
                 ['force' => true, 'async' => true],
             );
         }

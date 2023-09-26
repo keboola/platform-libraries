@@ -20,4 +20,23 @@ class LoadTypeDecider
         }
         return true;
     }
+
+    public static function canUseView(array $tableInfo, string $workspaceType, array $exportOptions): bool
+    {
+        if ($tableInfo['isAlias']) {
+            return false;
+        }
+
+        if (($tableInfo['bucket']['backend'] !== $workspaceType) ||
+            ($workspaceType !== 'bigquery')
+        ) {
+            return false;
+        }
+
+        if ($exportOptions && array_keys($exportOptions) !== ['overwrite']) {
+            return false;
+        }
+
+        return true;
+    }
 }

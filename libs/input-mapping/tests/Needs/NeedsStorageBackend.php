@@ -6,9 +6,9 @@ namespace Keboola\InputMapping\Tests\Needs;
 
 use Attribute;
 
-#[Attribute] class NeedsTestRedshiftTable
+#[Attribute] class NeedsStorageBackend
 {
-    public function __construct()
+    public function __construct(public readonly string $backend)
     {
     }
 }

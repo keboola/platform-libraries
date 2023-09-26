@@ -139,3 +139,17 @@ jobs:
         STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
         STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
         SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: aws_tests_php8_bigquery
+      dependsOn: [cs]
+      displayName: Run BigQuery Testsuite
+      serviceName: dev-input-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite BigQuery'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ)
+        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ)

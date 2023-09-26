@@ -11,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 class LoadTypeDeciderTest extends TestCase
 {
     /**
-     * @dataProvider decideProvider
+     * @dataProvider decideCanCloneProvider
      */
-    public function testDecide(
+    public function testDecideCanClone(
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
@@ -22,7 +22,7 @@ class LoadTypeDeciderTest extends TestCase
         self::assertEquals($expected, LoadTypeDecider::canClone($tableInfo, $workspaceType, $exportOptions));
     }
 
-    public function decideProvider(): Generator
+    public function decideCanCloneProvider(): Generator
     {
         yield 'Different Backends' => [
             [
@@ -121,6 +121,153 @@ class LoadTypeDeciderTest extends TestCase
             'snowflake',
             ['overwrite' => false],
             false,
+        ];
+    }
+
+    /**
+     * @dataProvider decideCanUseViewProvider
+     */
+    public function testDecideCanUseView(
+        array $tableInfo,
+        string $workspaceType,
+        array $exportOptions,
+        bool $expected,
+    ): void {
+        self::assertEquals($expected, LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions));
+    }
+
+    public function decideCanUseViewProvider(): Generator
+    {
+        yield 'BigQuery Table Alias' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => true,
+        ];
+
+        yield 'BigQuery Table Overwrite' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => ['overwrite' => true],
+            'expected' => true,
+        ];
+
+        yield 'Table Overwrite Different Backend' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'snowflake',
+            'exportOptions' => ['overwrite' => true],
+            'expected' => false,
+        ];
+
+        yield 'Filtered BigQuery Table' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'seconds' => 5,
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with limit' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'rows' => 1,
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereOperator' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereOperator' => 'and',
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereColumn' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereColumn' => 'name',
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with whereValues' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'whereValues' => ['foo'],
+            ],
+            'expected' => false,
+        ];
+
+        yield 'BigQuery Table with columns' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'columns' => [],
+            ],
+            'expected' => false,
         ];
     }
 }

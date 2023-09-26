@@ -27,6 +27,9 @@
             <exclude>tests/Functional/DownloadTablesWorkspaceRedshiftTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesSynapseTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesBigQueryTest.php</exclude>
+            <exclude>tests/Functional/DownloadTablesWorkspaceBigQueryTest.php</exclude>
+            <exclude>tests/Table/Strategy/BigQueryTest.php</exclude>
         </testsuite>
         <testsuite name="CommonPart2">
             <file>tests/Functional/DownloadTablesDefaultTest.php</file>
@@ -51,6 +54,11 @@
             <file>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</file>
             <file>tests/Functional/DownloadTablesWorkspaceAbsTest.php</file>
             <file>tests/Functional/DownloadFilesAbsWorkspaceTest.php</file>
+        </testsuite>
+        <testsuite name="BigQuery">
+            <file>tests/Table/Strategy/BigQueryTest.php</file>
+            <file>tests/Functional/DownloadTablesBigQueryTest.php</file>
+            <file>tests/Functional/DownloadTablesWorkspaceBigQueryTest.php</file>
         </testsuite>
     </testsuites>
 

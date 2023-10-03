@@ -24,6 +24,7 @@ class Table extends Configuration
         $node
             ->children()
                 ->scalarNode('source')->cannotBeEmpty()->end()
+                ->scalarNode('source_branch_id')->end()
                 ->arrayNode('source_search')
                     ->children()
                         ->scalarNode('key')->isRequired()->cannotBeEmpty()->end()

@@ -329,6 +329,23 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => false,
                 ],
             ],
+            'SourceBranchId' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                    'source_branch_id' => null,
+                ],
+            ],
         ];
     }
 

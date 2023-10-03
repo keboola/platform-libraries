@@ -342,7 +342,8 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
-                    'keep_internal_timestamp_column' => false,
+                    'keep_internal_timestamp_column' => true,
+                    'source_branch_id' => null,
                 ],
             ],
         ];

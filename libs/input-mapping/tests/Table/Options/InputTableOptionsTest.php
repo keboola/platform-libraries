@@ -311,4 +311,47 @@ class InputTableOptionsTest extends TestCase
 
         self::assertFalse($definition->keepInternalTimestampColumn());
     }
+
+    public function getSourceBranchIdProvider(): Generator
+    {
+        yield 'no branch ID specified' => [
+            'configuration' => [
+                'source' => 'test',
+            ],
+            'expectedBranchId' => null,
+        ];
+
+        yield 'empty branch ID' => [
+            'configuration' => [
+                'source' => 'test',
+                'source_branch_id' => null,
+            ],
+            'expectedBranchId' => null,
+        ];
+
+        yield 'numeric branch ID' => [
+            'configuration' => [
+                'source' => 'test',
+                'source_branch_id' => 123,
+            ],
+            'expectedBranchId' => 123,
+        ];
+
+        yield 'numeric string branch ID' => [
+            'configuration' => [
+                'source' => 'test',
+                'source_branch_id' => '123',
+            ],
+            'expectedBranchId' => 123,
+        ];
+    }
+
+    /**
+     * @dataProvider getSourceBranchIdProvider
+     */
+    public function testGetSourceBranchId(array $configuration, ?int $expectedBranchId): void
+    {
+        $definition = new InputTableOptions($configuration);
+        self::assertSame($expectedBranchId, $definition->getSourceBranchId());
+    }
 }

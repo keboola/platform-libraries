@@ -159,7 +159,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -179,7 +179,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -245,7 +245,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -265,7 +265,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -332,7 +332,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $this->branchId,
+                'source_branch_id' => $this->branchId,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -353,7 +353,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $this->branchId,
+                'source_branch_id' => $this->branchId,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -461,7 +461,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => 123456,
+                'source_branch_id' => 123456,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -519,7 +519,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => (int) $sourceBranchId,
+                'source_branch_id' => (int) $sourceBranchId,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -532,7 +532,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
     public function provideBranchRewriteOptions(): Generator
     {
         yield 'exists with branch' => [
-            'sourceBranchId' => '123456',
+            'source_branch_id' => '123456',
             'checkCount' => 1,
             'branchTableExists' => true,
             'hasBranch' => true,
@@ -541,7 +541,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'expectedBasicCalls' => 0,
         ];
         yield 'does not exist with branch' => [
-            'sourceBranchId' => '654321',
+            'source_branch_id' => '654321',
             'checkCount' => 1,
             'branchTableExists' => false,
             'hasBranch' => true,
@@ -550,7 +550,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'expectedBasicCalls' => 1,
         ];
         yield 'exists without branch' => [
-            'sourceBranchId' => '654321',
+            'source_branch_id' => '654321',
             'checkCount' => 0,
             'branchTableExists' => true,
             'hasBranch' => false,
@@ -559,7 +559,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'expectedBasicCalls' => 1,
         ];
         yield 'does not exist without branch' => [
-            'sourceBranchId' => '654321',
+            'source_branch_id' => '654321',
             'checkCount' => 0,
             'branchTableExists' => false,
             'hasBranch' => false,

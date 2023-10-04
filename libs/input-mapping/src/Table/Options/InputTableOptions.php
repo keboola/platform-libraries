@@ -188,4 +188,9 @@ class InputTableOptions
     {
         return (bool) $this->definition['keep_internal_timestamp_column'];
     }
+
+    public function getSourceBranchId(): ?int
+    {
+        return isset($this->definition['source_branch_id']) ? (int) $this->definition['source_branch_id'] : null;
+    }
 }

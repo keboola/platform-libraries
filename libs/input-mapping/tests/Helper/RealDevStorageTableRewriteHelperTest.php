@@ -185,7 +185,6 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         );
     }
 
-
     public function testBranchRewriteNoTables(): void
     {
         $this->initBuckets();
@@ -567,5 +566,146 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'expectedBranchCalls' => 0,
             'expectedBasicCalls' => 1,
         ];
+    }
+
+    public function testUseBranchFromMappingDefinition(): void
+    {
+        $mainBranch = new Branch('123', 'main', true);
+        $devBranch1 =  new Branch('456', 'dev-1', false);
+        $devBranch2 =  new Branch('789', 'dev-2', false);
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->expects(self::exactly(2))
+            ->method('getBranchId')
+            ->willReturn($devBranch2->id)
+        ;
+
+        $clientWrapperMock->expects(self::exactly(2))
+            ->method('isDevelopmentBranch')
+            ->willReturn(true)
+        ;
+
+        $clientWrapperMock->expects(self::exactly(3))
+            ->method('getDefaultBranch')
+            ->willReturn($mainBranch)
+        ;
+
+        $defaultBranchClientMock = $this->createMock(BranchAwareClient::class);
+        $defaultBranchClientMock->expects(self::once())
+            ->method('getTable')
+            ->with('in.c-myBucket.my-table-3')
+            ->willReturn([
+                'id' => 'in.c-myBucket.my-table-3',
+                'name' => 'my-table-3',
+            ])
+        ;
+
+        $clientWrapperMock->expects(self::once())
+            ->method('getClientForDefaultBranch')
+            ->willReturn($defaultBranchClientMock)
+        ;
+
+        $branch1ClientMock = $this->createMock(BranchAwareClient::class);
+        $branch1ClientMock->expects(self::once())
+            ->method('getTable')
+            ->with('in.c-myBucket.my-table')
+            ->willReturn([
+                'id' => 'in.c-myBucket.my-table',
+                'name' => 'my-table',
+            ]);
+
+        $clientWrapperMock->expects(self::once())
+            ->method('getClientForBranch')
+            ->with('456')
+            ->willReturn($branch1ClientMock)
+        ;
+
+        $branch2ClientMock = $this->createMock(BranchAwareClient::class);
+        $tableExistsExpectedParams = [
+            'in.c-myBucket.my-table-2',
+            'in.c-myBucket.my-table-3',
+        ];
+
+        $tableExistsReturnValues = [
+            true,
+            false,
+        ];
+
+        $branch2ClientMock->expects(self::exactly(2))
+            ->method('tableExists')
+            ->willReturnCallback(
+                function (string $tableId) use (&$tableExistsExpectedParams, &$tableExistsReturnValues): bool {
+                    self::assertSame(array_shift($tableExistsExpectedParams), $tableId);
+                    return (bool) array_shift($tableExistsReturnValues);
+                },
+            )
+        ;
+
+        $branch2ClientMock->expects(self::once())
+            ->method('getTable')
+            ->with('in.c-myBucket.my-table-2')
+            ->willReturn([
+                'id' => 'in.c-myBucket.my-table-2',
+                'name' => 'my-table-2',
+            ])
+        ;
+
+        $clientWrapperMock->expects(self::exactly(3))
+            ->method('getBranchClient')
+            ->willReturn($branch2ClientMock)
+        ;
+
+        $testLogger = new TestLogger();
+        $inputTablesOptions = new InputTableOptionsList([
+            [
+                'source' => 'in.c-myBucket.my-table',
+                'source_branch_id' => $devBranch1->id,
+                'destination' => 'my-table.csv',
+            ],
+            [
+                'source' => 'in.c-myBucket.my-table-2', // from branch 2
+                'destination' => 'my-table-2.csv',
+            ],
+            [
+                'source' => 'in.c-myBucket.my-table-3', // from default branch
+                'destination' => 'my-table-3.csv',
+            ],
+        ]);
+        $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
+            $inputTablesOptions,
+            $clientWrapperMock,
+            $testLogger,
+        );
+
+        $inputOptions = $destinations->getTables();
+        self::assertCount(3, $inputOptions);
+        self::assertCount(3, $testLogger->records);
+
+        self::assertSame('in.c-myBucket.my-table', $inputOptions[0]->getSource());
+        self::assertSame(456, $inputOptions[0]->getSourceBranchId());
+        $record = array_shift($testLogger->records);
+        self::assertSame('info', $record['level']);
+        self::assertSame(
+            'Using input "in.c-myBucket.my-table" from dev branch "456".',
+            $record['message'],
+        );
+
+        self::assertSame('in.c-myBucket.my-table-2', $inputOptions[1]->getSource());
+        self::assertSame(789, $inputOptions[1]->getSourceBranchId());
+        $record = array_shift($testLogger->records);
+        self::assertSame('info', $record['level']);
+        self::assertSame(
+            'Using dev input "in.c-myBucket.my-table-2" from branch "789" instead of main branch "123".',
+            $record['message'],
+        );
+
+        self::assertSame('in.c-myBucket.my-table-3', $inputOptions[2]->getSource());
+        self::assertSame(123, $inputOptions[2]->getSourceBranchId());
+        $record = array_shift($testLogger->records);
+        self::assertSame('info', $record['level']);
+        self::assertSame(
+            'Using fallback to default branch "123" for input "in.c-myBucket.my-table-3".',
+            $record['message'],
+        );
     }
 }

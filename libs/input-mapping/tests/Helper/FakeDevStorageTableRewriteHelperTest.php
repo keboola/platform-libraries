@@ -159,7 +159,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -179,7 +179,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -267,7 +267,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -287,7 +287,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -348,7 +348,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -369,7 +369,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -473,7 +473,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => (int) $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => (int) $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -524,7 +524,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'sourceBranchId' => (int) $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => (int) $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );

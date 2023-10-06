@@ -589,7 +589,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         ));
         self::assertTrue($logger->hasInfoThatContains(
             sprintf(
-                'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                 $branchId,
                 $clientWrapper->getDefaultBranch()->id,
@@ -598,7 +598,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue(
             $logger->hasInfoThatContains(
                 sprintf(
-                    'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                    'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                     'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
                     $branchId,
                     $clientWrapper->getDefaultBranch()->id,

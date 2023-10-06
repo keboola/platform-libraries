@@ -15,13 +15,8 @@ class RewrittenInputTableOptions extends InputTableOptions
     {
         parent::__construct($definition);
         $this->definition['source'] = $source;
-        $this->definition['sourceBranchId'] = $sourceBranchId;
+        $this->definition['source_branch_id'] = $sourceBranchId;
         $this->tableInfo = $tableInfo;
-    }
-
-    public function getSourceBranchId(): int
-    {
-        return $this->definition['sourceBranchId'];
     }
 
     public function getTableInfo(): array

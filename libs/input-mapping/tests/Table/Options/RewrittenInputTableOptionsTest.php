@@ -15,7 +15,10 @@ class RewrittenInputTableOptionsTest extends TestCase
     public function testGetters(): void
     {
         $definition = new RewrittenInputTableOptions(
-            ['source' => 'test'],
+            [
+                'source' => 'test',
+                'source_branch_id' => 123,
+            ],
             'source',
             24,
             ['a' => 'b'],

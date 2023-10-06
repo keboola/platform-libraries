@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Helper;
 
 use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
@@ -21,7 +22,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
         $newTables = [];
         foreach ($tablesDefinition->getTables() as $tableOptions) {
             list($tableInfo, $sourceBranchId) = $this->rewriteSourceBranchId(
-                $tableOptions->getSource(),
+                $tableOptions,
                 $clientWrapper,
                 $logger,
             );
@@ -45,27 +46,49 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
     }
 
     private function rewriteSourceBranchId(
-        string $source,
+        InputTableOptions $tableOptions,
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
     ): array {
+        $source = $tableOptions->getSource();
+        $defaultBranchId = $clientWrapper->getDefaultBranch()->id;
+
+        if ($tableOptions->getSourceBranchId() !== null) {
+            // use source branch from mapping definition
+            $branchId = (string) $tableOptions->getSourceBranchId();
+            $logger->info(sprintf(
+                'Using input "%s" from %s branch "%s".',
+                $source,
+                $branchId === $defaultBranchId ? 'default' : 'dev',
+                $branchId,
+            ));
+
+            return [
+                $clientWrapper->getClientForBranch($branchId)
+                    ->getTable($tableOptions->getSource())
+                ,
+                $branchId,
+            ];
+        }
+
         if ($clientWrapper->isDevelopmentBranch() && $clientWrapper->getBranchClient()->tableExists($source)) {
             $logger->info(sprintf(
-                'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 $source,
                 $clientWrapper->getBranchId(),
-                $clientWrapper->getDefaultBranch()->id,
+                $defaultBranchId,
             ));
             $tableInfo = $clientWrapper->getBranchClient()->getTable($source);
             return [$tableInfo, $clientWrapper->getBranchId()];
         }
+
         $logger->info(sprintf(
             'Using fallback to default branch "%s" for input "%s".',
-            $clientWrapper->getDefaultBranch()->id,
+            $defaultBranchId,
             $source,
         ));
         // use production table
         $tableInfo = $clientWrapper->getClientForDefaultBranch()->getTable($source);
-        return [$tableInfo, $clientWrapper->getDefaultBranch()->id];
+        return [$tableInfo, $defaultBranchId];
     }
 }

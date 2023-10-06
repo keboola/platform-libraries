@@ -59,7 +59,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
             $logger->info(sprintf(
                 'Using input "%s" from %s branch "%s".',
                 $source,
-                $branchId === $defaultBranchId ? 'main' : 'dev',
+                $branchId === $defaultBranchId ? 'default' : 'dev',
                 $branchId,
             ));
 
@@ -73,7 +73,7 @@ class RealDevStorageTableRewriteHelper implements TableRewriteHelperInterface
 
         if ($clientWrapper->isDevelopmentBranch() && $clientWrapper->getBranchClient()->tableExists($source)) {
             $logger->info(sprintf(
-                'Using dev input "%s" from branch "%s" instead of main branch "%s".',
+                'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 $source,
                 $clientWrapper->getBranchId(),
                 $defaultBranchId,

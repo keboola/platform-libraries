@@ -358,7 +358,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         );
         self::assertTrue($testLogger->hasInfoThatContains(
             sprintf(
-                'Using dev input "out.c-main.my-table-2" from branch "%s" instead of main branch "%s".',
+                'Using dev input "out.c-main.my-table-2" from branch "%s" instead of default branch "%s".',
                 $this->branchId,
                 $clientWrapper->getDefaultBranch()->id,
             ),
@@ -695,7 +695,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         $record = array_shift($testLogger->records);
         self::assertSame('info', $record['level']);
         self::assertSame(
-            'Using dev input "in.c-myBucket.my-table-2" from branch "789" instead of main branch "123".',
+            'Using dev input "in.c-myBucket.my-table-2" from branch "789" instead of default branch "123".',
             $record['message'],
         );
 

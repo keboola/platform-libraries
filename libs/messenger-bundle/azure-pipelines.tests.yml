@@ -1,0 +1,6 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests
+      serviceName: dev82
+      testCommand: bash -c 'cd libs/messenger-bundle && composer install && composer ci'

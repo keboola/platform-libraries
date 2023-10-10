@@ -40,7 +40,6 @@ class ConfigurationVariablesResolver
                 $configuration,
                 [],
                 [],
-                [],
             );
         }
 

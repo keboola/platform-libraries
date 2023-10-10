@@ -22,7 +22,6 @@ class RegexRenderer
 
         $values = null;
         $missingVariables = [];
-        $replacedVariables = [];
         $replacedVariablesValues = [];
 
         $renderedString = preg_replace_callback(
@@ -35,7 +34,6 @@ class RegexRenderer
                 &$values,
                 $valuesLoader,
                 &$missingVariables,
-                &$replacedVariables,
                 &$replacedVariablesValues,
             ): string {
                 [$placeholder, $prefixedName, $localName] = $match;
@@ -49,7 +47,6 @@ class RegexRenderer
                     return $placeholder;
                 }
 
-                $replacedVariables[$prefixedName] = true;
                 $value = $values[$localName];
 
                 $replacedVariablesValues[$prefixedName] = $value;
@@ -68,7 +65,6 @@ class RegexRenderer
 
         return new RenderResults(
             $configuration,
-            self::mapVariablesList($replacedVariables),
             $replacedVariablesValues,
             self::mapVariablesList($missingVariables),
         );

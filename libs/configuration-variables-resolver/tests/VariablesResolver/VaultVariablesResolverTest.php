@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ConfigurationVariablesResolver\Tests\VariablesResolver;
 
 use Keboola\ConfigurationVariablesResolver\VariablesRenderer\RegexRenderer;
-use Keboola\ConfigurationVariablesResolver\VariablesRenderer\RenderResults;
 use Keboola\ConfigurationVariablesResolver\VariablesResolver\VaultVariablesResolver;
 use Keboola\VaultApiClient\Variables\Model\Variable;
 use Keboola\VaultApiClient\Variables\VariablesApiClient;

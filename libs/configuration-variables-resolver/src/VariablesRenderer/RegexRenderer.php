@@ -23,6 +23,7 @@ class RegexRenderer
         $values = null;
         $missingVariables = [];
         $replacedVariables = [];
+        $replacedVariablesValues = [];
 
         $renderedString = preg_replace_callback(
             // (?<!{) - do not match more than two opening braces
@@ -30,7 +31,13 @@ class RegexRenderer
             // %s[a-zA-Z0-9_-]+ - match variable name (with prefix if supplied)
             // \s*}} - match optional whitespaces and closing braces
             sprintf('/(?<!{){{\s*(%s([a-zA-Z0-9_-]+))\s*}}/', preg_quote($namePrefix, '/')),
-            function (array $match) use (&$values, $valuesLoader, &$missingVariables, &$replacedVariables): string {
+            function (array $match) use (
+                &$values,
+                $valuesLoader,
+                &$missingVariables,
+                &$replacedVariables,
+                &$replacedVariablesValues,
+            ): string {
                 [$placeholder, $prefixedName, $localName] = $match;
 
                 if ($values === null) {
@@ -45,6 +52,7 @@ class RegexRenderer
                 $replacedVariables[$prefixedName] = true;
                 $value = $values[$localName];
 
+                $replacedVariablesValues[$prefixedName] = $value;
                 return self::escapeValue($value);
             },
             json_encode($configuration, JSON_THROW_ON_ERROR),
@@ -61,6 +69,7 @@ class RegexRenderer
         return new RenderResults(
             $configuration,
             self::mapVariablesList($replacedVariables),
+            $replacedVariablesValues,
             self::mapVariablesList($missingVariables),
         );
     }

@@ -32,7 +32,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => 'value1'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -59,7 +59,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['prefix.key1'], $results->replacedVariables);
+        self::assertSame(['prefix.key1' => 'value1'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -86,7 +86,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => '\' { @ "'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -111,7 +111,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame([], $results->replacedVariables);
+        self::assertSame([], $results->replacedVariablesValues);
         self::assertSame(['prefix.key1'], $results->missingVariables);
     }
 
@@ -138,7 +138,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => 'value1'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -165,7 +165,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame([], $results->replacedVariables);
+        self::assertSame([], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -192,7 +192,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => 'value1'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -219,7 +219,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['123'], $results->replacedVariables);
+        self::assertSame(['123' => 'value1'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -246,7 +246,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame([], $results->replacedVariables);
+        self::assertSame([], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -280,7 +280,13 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1', 'key2'], $results->replacedVariables);
+        self::assertSame(
+            [
+                'key1' => 'value1',
+                'key2' => 'value2',
+            ],
+            $results->replacedVariablesValues,
+        );
         self::assertSame([], $results->missingVariables);
     }
 
@@ -311,7 +317,7 @@ class RegexRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame([], $results->replacedVariables);
+        self::assertSame([], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 }

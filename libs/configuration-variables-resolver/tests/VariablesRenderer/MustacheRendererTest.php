@@ -33,7 +33,13 @@ class MustacheRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo', 'goo'], $results->replacedVariables);
+        self::assertSame(
+            [
+                'foo' => 'bar',
+                'goo' => 'gar',
+            ],
+            $results->replacedVariablesValues,
+        );
         self::assertSame([], $results->missingVariables);
     }
 
@@ -59,7 +65,7 @@ class MustacheRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -85,7 +91,7 @@ class MustacheRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => 'val1'], $results->replacedVariablesValues);
         self::assertSame(['key2'], $results->missingVariables);
     }
 
@@ -111,7 +117,7 @@ class MustacheRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'special " \' { } characters'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 
@@ -137,7 +143,7 @@ class MustacheRendererTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['key1'], $results->replacedVariables);
+        self::assertSame(['key1' => '"'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 

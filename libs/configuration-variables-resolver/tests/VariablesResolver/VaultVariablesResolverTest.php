@@ -38,7 +38,7 @@ class VaultVariablesResolverTest extends TestCase
                 'foo' => 'bar',
             ],
         ], $results->configuration);
-        self::assertSame(['vault.foo'], $results->replacedVariables);
+        self::assertSame(['vault.foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
     }
 }

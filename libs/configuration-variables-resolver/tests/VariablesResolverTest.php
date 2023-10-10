@@ -60,6 +60,7 @@ class VariablesResolverTest extends TestCase
             ->willReturn(new RenderResults(
                 $configurationAfterResolveVault,
                 ['vault.foo'],
+                ['vault.foo' => 'vault'],
                 [],
             ))
         ;
@@ -71,6 +72,7 @@ class VariablesResolverTest extends TestCase
             ->willReturn(new RenderResults(
                 $configurationAfterResolveConfiguration,
                 ['foo'],
+                ['foo' => 'config'],
                 [],
             ))
         ;
@@ -120,6 +122,7 @@ class VariablesResolverTest extends TestCase
             ->willReturn(new RenderResults(
                 $configurationAfterResolveVault,
                 [],
+                [],
                 ['vault.foo'],
             ))
         ;
@@ -130,6 +133,7 @@ class VariablesResolverTest extends TestCase
             ->with($configurationAfterResolveVault, '123', ['456'])
             ->willReturn(new RenderResults(
                 $configurationAfterResolveConfiguration,
+                [],
                 [],
                 ['foo'],
             ))

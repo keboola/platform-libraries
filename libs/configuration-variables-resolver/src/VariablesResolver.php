@@ -69,7 +69,10 @@ class VariablesResolver
         );
 
         $missingVariables = array_merge($vaultResult->missingVariables, $configurationResult->missingVariables);
-        $replacedVariables = array_merge($vaultResult->replacedVariables, $configurationResult->replacedVariables);
+        $replacedVariables = array_merge(
+            array_keys($vaultResult->replacedVariablesValues),
+            array_keys($configurationResult->replacedVariablesValues),
+        );
 
         if (count($missingVariables) > 0) {
             throw new UserException(sprintf(

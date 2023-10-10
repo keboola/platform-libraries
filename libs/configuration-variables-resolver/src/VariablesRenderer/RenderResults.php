@@ -7,13 +7,20 @@ namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 class RenderResults
 {
     /**
-     * @param list<non-empty-string> $replacedVariables
+     * @var array
+     * @deprecated
+     */
+    public readonly array $replacedVariables;
+    /**
+     * @param array<string|int, string> $replacedVariablesValues
      * @param list<non-empty-string> $missingVariables
      */
     public function __construct(
         public readonly array $configuration,
-        public readonly array $replacedVariables,
+        array $replacedVariables,
+        public readonly array $replacedVariablesValues,
         public readonly array $missingVariables,
     ) {
+        $this->replacedVariables = $replacedVariables;
     }
 }

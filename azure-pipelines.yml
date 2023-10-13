@@ -34,6 +34,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/logging-bundle
+    - repository: messenger-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/messenger-bundle
     - repository: output-mapping
       type: github
       endpoint: keboola
@@ -75,6 +79,7 @@ stages:
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
                 loggingBundle:libs/logging-bundle \
+                messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
                 settle:libs/settle \
@@ -144,6 +149,14 @@ stages:
     jobs:
       - template: libs/logging-bundle/azure-pipelines.tests.yml
 
+  - stage: tests_messengerBundle
+    displayName: Tests - Messenger Bundle
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_messengerBundle'])
+    jobs:
+      - template: libs/messenger-bundle/azure-pipelines.tests.yml
+
   - stage: tests_outputMapping
     displayName: Tests - Output Mapping
     lockBehavior: sequential
@@ -194,6 +207,7 @@ stages:
       - tests_inputMapping
       - tests_k8sClient
       - tests_loggingBundle
+      - tests_messengerBundle
       - tests_outputMapping
       - tests_permissionChecker
       - tests_settle
@@ -207,6 +221,7 @@ stages:
         in(dependencies.tests_inputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
@@ -270,6 +285,14 @@ stages:
           targetRepo: logging-bundle
           libraryPath: libs/logging-bundle
           tagPrefix: logging-bundle/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_messengerBundle'])
+          sourceRepo: platform-libraries
+          targetRepo: messenger-bundle
+          libraryPath: libs/messenger-bundle
+          tagPrefix: messenger-bundle/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

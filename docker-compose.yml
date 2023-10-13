@@ -72,6 +72,12 @@ services:
     image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
 
+  dev-messenger-bundle:
+    <<: *dev82
+    working_dir: /code/libs/messenger-bundle
+    environment:
+      APP_ENV: dev
+
   dev-output-mapping:
     <<: *dev
     image: keboola/output-mapping

@@ -18,7 +18,7 @@
   <php>
     <ini name="error_reporting" value="-1"/>
     <server name="SHELL_VERBOSITY" value="-1"/>
-    <server name="KERNEL_CLASS" value="\Keboola\AuthorizationBundle\Tests\KeboolaAuthorizationBundleTestingKernel"/>
+    <server name="KERNEL_CLASS" value="\Keboola\MessengerBundle\Tests\KeboolaMessengerBundleTestingKernel"/>
     <env name="APP_ENV" value="test" force="true"/>
   </php>
   <testsuites>

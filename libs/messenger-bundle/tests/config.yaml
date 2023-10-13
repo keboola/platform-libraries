@@ -1,0 +1,6 @@
+framework:
+  test: true
+
+keboola_messenger:
+  platform: '%env(TEST_CLOUD_PLATFORM)%'
+  connection_events_queue_dsn: '%env(CONNECTION_EVENTS_QUEUE_DSN)%'

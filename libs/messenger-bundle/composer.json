@@ -20,9 +20,16 @@
             "Keboola\\MessengerBundle\\Tests\\": "tests/"
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:keboola/MessengerAzureBundle.git"
+        }
+    ],
 
     "require": {
         "php": ">=8.2",
+        "aymdev/messenger-azure-bundle": "dev-dsnParser",
         "symfony/dependency-injection": "^6.0",
         "symfony/messenger": "^6.0"
     },
@@ -45,17 +52,18 @@
         "lock": false
     },
     "scripts": {
-        "tests": "phpunit",
-        "phpstan": "phpstan analyse -c phpstan.neon",
+        "phpunit": "phpunit",
+        "phpstan": "phpstan analyse --no-progress -c phpstan-${APP_ENV}.neon",
         "phpcs": "phpcs --extensions=php src tests",
         "phpcbf": "phpcbf --extensions=php src tests",
         "build": [
             "@phpcs",
             "@phpstan",
-            "@tests"
+            "@phpunit"
         ],
         "ci": [
             "@composer validate --no-check-all --strict",
+            "php tests/bootstrap.php",
             "@build"
         ]
     }

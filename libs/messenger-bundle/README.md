@@ -1,9 +1,6 @@
 # Keboola Messenger Bundle
 Symfony Messenger bundle preconfigured for Keboola platform.
 
-Features:
-* Messenger serializers compatible with Connection events
-
 ## Installation
 Install the package with Composer:
 ```shell
@@ -11,13 +8,18 @@ composer require keboola/messenger-bundle
 ```
 
 ## Configuration
-The minimum configuration is to specify the platform, whether it is `aws` or `azure`.
+Bundle supportf following configuration options:
+* **platform** - required, `aws` or `azure`
+* **connection_events_queue_dsn** - required, DSN for connection events queue
+  * for AWS use the queue URL, ex. `https://sqs.eu-central-1.amazonaws.com/025303414634/queue-name`
+  * for Azure use format `azure://<sas-key-name>:<sas-kev-value>@<servicebus-namespace>?entity_name=<servicebus-queue-name>`,
+    see https://github.com/AymDev/MessengerAzureBundle for details
 
 Reference:
 ```yaml
 keboola_messenger:
-  platform: # needs to be configured
-  connection_events_queue_dsn: '%env(CONNECTION_EVENTS_QUEUE_DSN)%'
+  platform: "%env(PLATFORM)%"
+  connection_events_queue_dsn: "%env(CONNECTION_EVENTS_QUEUE_DSN)%"
 ```
 
 ## Development

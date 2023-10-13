@@ -11,7 +11,38 @@ composer require keboola/messenger-bundle
 ```
 
 ## Configuration
-Follow regular Symfony [Messenger documentation](https://symfony.com/doc/current/messenger.html).
+The minimum configuration is to specify the platform, whether it is `aws` or `azure`.
+
+Reference:
+```yaml
+keboola_messenger:
+  platform: # needs to be configured
+  connection_events_queue_dsn: '%env(CONNECTION_EVENTS_QUEUE_DSN)%'
+```
+
+## Development
+Prerequisites:
+* `aws` CLI with configured `Keboola-Dev-Platform-Services-AWSAdministratorAccess` profile
+* `az` CLI with configured for Keboola DEV Platform Services Team subscription
+    * run `az account set --subscription c5182964-8dca-42c8-a77a-fa2a3c6946ea`
+* installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
+* installed `docker` and `docker-compose` to run & develop the app
+
+TL;DR:
+```bash
+export NAME_PREFIX= # your name/nickname to make your resource unique & recognizable
+
+cat <<EOF > ./provisioning/local/terraform.tfvars
+name_prefix = "${NAME_PREFIX}"
+EOF
+
+terraform -chdir=./provisioning/local init -backend-config="key=messenger-bundle/${NAME_PREFIX}.tfstate"
+terraform -chdir=./provisioning/local apply
+./provisioning/local/update-env.sh aws # or azure
+
+docker-compose run --rm dev-messenger-bundle composer install
+docker-compose run --rm dev-messenger-bundle composer ci
+```
 
 ## License
 

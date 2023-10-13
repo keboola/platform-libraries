@@ -14,6 +14,7 @@ services:
 
   dev74:
     <<: *dev
+    image: keboola/php-dev74
     build:
       <<: *dev-build
       args:
@@ -21,6 +22,7 @@ services:
 
   dev81: &dev81
     <<: *dev
+    image: keboola/php-dev81
     build:
       <<: *dev-build
       args:
@@ -28,6 +30,7 @@ services:
 
   dev82: &dev82
     <<: *dev
+    image: keboola/php-dev82
     build:
       <<: *dev-build
       args:

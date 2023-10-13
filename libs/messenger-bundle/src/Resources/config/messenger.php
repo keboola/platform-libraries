@@ -5,13 +5,13 @@ declare(strict_types=1);
 use Keboola\MessengerBundle\ConnectionEvent\EventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AzureServiceBusSerializer;
+use Keboola\MessengerBundle\Transport\Azure\DsnParser;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 return static function (ContainerConfigurator $container): void {
     $container->parameters()
         ->set('env(CONNECTION_EVENTS_QUEUE_DSN)', '')
-        ->set('env(CONNECTION_EVENTS_QUEUE_NAME)', '')
     ;
 
     $container->services()

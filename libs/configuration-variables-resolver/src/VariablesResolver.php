@@ -55,7 +55,7 @@ class VariablesResolver
         string $branchId,
         ?string $variableValuesId,
         ?array $variableValuesData,
-    ): array {
+    ): ResolveResults {
 
         $vaultResult = $this->vaultVariablesResolver->resolveVariables(
             $configuration,
@@ -88,6 +88,12 @@ class VariablesResolver
             ));
         }
 
-        return $configurationResult->configuration;
+        return new ResolveResults(
+            $configurationResult->configuration,
+            array_merge(
+                $vaultResult->replacedVariablesValues,
+                $configurationResult->replacedVariablesValues,
+            ),
+        );
     }
 }

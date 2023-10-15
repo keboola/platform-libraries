@@ -141,20 +141,27 @@ class VariablesResolverFunctionalTest extends TestCase
             $this->logger,
         );
 
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             $this->mainBranchId,
             self::CONFIG_ROW_ID,
             [],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => self::CONFIG_ID,
                 'parameters' => [
                     'some_parameter' => 'foo is config foo and vault foo',
                 ],
-                'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'vault.foo' => 'vault foo',
+                'foo' => 'config foo',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
@@ -228,20 +235,27 @@ class VariablesResolverFunctionalTest extends TestCase
             $this->logger,
         );
 
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             (string) $devBranch['id'], // @phpstan-ignore-line non-empty-string
             self::CONFIG_ROW_ID,
             [],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => self::CONFIG_ID,
                 'parameters' => [
                     'some_parameter' => 'foo is dev config foo and dev vault foo',
                 ],
-                'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'vault.foo' => 'dev vault foo',
+                'foo' => 'dev config foo',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
@@ -302,20 +316,26 @@ class VariablesResolverFunctionalTest extends TestCase
             $this->logger,
         );
 
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             $this->mainBranchId,
             self::CONFIG_ROW_ID,
             [],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => self::CONFIG_ID,
                 'parameters' => [
                     'some_parameter' => 'foo is config foo',
                 ],
-                'variables_id' => self::CONFIG_ID,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'config foo',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));

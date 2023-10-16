@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Keboola\MessengerBundle\ConnectionEvent\EventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AzureServiceBusSerializer;
-use Keboola\MessengerBundle\Transport\Azure\DsnParser;
+use Keboola\MessengerBundle\ConnectionEvent\Serializer\GooglePubSubSerializer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -21,6 +21,9 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$eventFactory', service('keboola.messenger_bundle.connection_event_factory'))
 
         ->set('keboola.messenger_bundle.serializer.azure', AzureServiceBusSerializer::class)
+        ->arg('$eventFactory', service('keboola.messenger_bundle.connection_event_factory'))
+
+        ->set('keboola.messenger_bundle.serializer.gcp', GooglePubSubSerializer::class)
         ->arg('$eventFactory', service('keboola.messenger_bundle.connection_event_factory'))
     ;
 };

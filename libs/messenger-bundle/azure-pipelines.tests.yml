@@ -52,3 +52,30 @@ jobs:
       - script: docker-compose logs
         displayName: Show logs
         condition: failed()
+
+  - job:
+    displayName: Tests - GCP
+    steps:
+      - template: ../../azure-pipelines/steps/restore-docker-artifacts.yml
+
+      - script: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-install.sh
+        displayName: Install Terraform
+
+      - script: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-init.sh
+        displayName: Configure Terraform
+        env:
+          AWS_ACCESS_KEY_ID: $(MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: ./libs/messenger-bundle/provisioning/ci/update-env.sh -v -e .env -a gcp
+        displayName: Configure ENV
+        env:
+          AWS_ACCESS_KEY_ID: $(MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID)
+          AWS_SECRET_ACCESS_KEY: $(MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY)
+
+      - script: docker-compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
+        displayName: Run tests
+
+      - script: docker-compose logs
+        displayName: Show logs
+        condition: failed()

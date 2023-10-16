@@ -15,7 +15,7 @@ COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 
 RUN apt update -q \
  && apt install -y --no-install-recommends git zip unzip libzip4 libzip-dev zlib1g-dev \
- && docker-php-ext-install zip \
+ && docker-php-ext-install pcntl zip \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 

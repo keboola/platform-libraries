@@ -29,7 +29,9 @@
 
     "require": {
         "php": ">=8.2",
+        "ext-pcntl": "*",
         "aymdev/messenger-azure-bundle": "dev-dsnParser",
+        "petitpress/gps-messenger-bundle": "^1.6",
         "symfony/amazon-sqs-messenger": "^6.3",
         "symfony/dependency-injection": "^6.0",
         "symfony/messenger": "^6.0"

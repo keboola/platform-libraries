@@ -16,6 +16,7 @@ class KeboolaMessengerExtension extends AbstractExtension
 {
     private const PLATFORM_AWS = 'aws';
     private const PLATFORM_AZURE = 'azure';
+    private const PLATFORM_GCP = 'gcp';
 
     public function configure(DefinitionConfigurator $definition): void
     {
@@ -67,6 +68,13 @@ class KeboolaMessengerExtension extends AbstractExtension
                             'token_expiry' => 3600,
                             'receive_mode' => 'peek-lock',
                         ],
+                    ];
+                    break;
+
+                case self::PLATFORM_GCP:
+                    $transportConfig = [
+                        'dsn' => $connectionEventsQueueDsn,
+                        'serializer' => 'keboola.messenger_bundle.serializer.gcp',
                     ];
                     break;
 

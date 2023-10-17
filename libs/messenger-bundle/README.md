@@ -9,7 +9,8 @@ composer require keboola/messenger-bundle
 
 ## Configuration
 Bundle supports following configuration options:
-* **platform** - required, `aws` or `azure`
+* **platform** - optional, `aws`, `azure`, `gcp` or `null`
+  * when not set (or set to `null`) the bundle will not set up any transport 
 * **connection_events_queue_dsn** - optional, DSN for connection events queue
 * **connection_audit_log_queue_dsn** - optional, DSN for connection audit log queue
  

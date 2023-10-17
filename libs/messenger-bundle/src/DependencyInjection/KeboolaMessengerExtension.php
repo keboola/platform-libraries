@@ -21,8 +21,14 @@ class KeboolaMessengerExtension extends AbstractExtension
         $definition->rootNode() // @phpstan-ignore-line - root node is always ArrayNode
             ->children()
                 ->enumNode('platform')
-                    ->isRequired()
-                    ->values(array_map(fn(Platform $v) => $v->value, Platform::cases()))
+                    ->defaultNull()
+                    ->beforeNormalization()
+                        ->ifEmpty()->thenUnset()
+                    ->end()
+                    ->values([
+                        ...array_map(fn(Platform $v) => $v->value, Platform::cases()),
+                        null,
+                    ])
                 ->end()
 
                 ->scalarNode('connection_events_queue_dsn')
@@ -46,8 +52,14 @@ class KeboolaMessengerExtension extends AbstractExtension
         assert(is_array($configs));
         $config = $this->processConfiguration($configuration, $configs);
 
+        if (!isset($config['platform'])) {
+            return;
+        }
+        $platform = Platform::from($config['platform']);
+
         $this->createTransportConfig(
             $builder,
+            $platform,
             $config,
             'connection_events',
             'connection_events_queue_dsn',
@@ -56,6 +68,7 @@ class KeboolaMessengerExtension extends AbstractExtension
 
         $this->createTransportConfig(
             $builder,
+            $platform,
             $config,
             'connection_audit_log',
             'connection_audit_log_queue_dsn',
@@ -71,6 +84,7 @@ class KeboolaMessengerExtension extends AbstractExtension
 
     private function createTransportConfig(
         ContainerBuilder $builder,
+        Platform $platform,
         array $config,
         string $transportName,
         string $dsnProperty,
@@ -81,7 +95,6 @@ class KeboolaMessengerExtension extends AbstractExtension
             return;
         }
 
-        $platform = Platform::from($config['platform']);
         $serializerServiceName = sprintf('keboola.messenger_bundle.transport_serializer.%s', $transportName);
         $serializerServiceDefinition =
             (new ChildDefinition(sprintf('keboola.messenger_bundle.platform_serializer.%s', $platform->value)))

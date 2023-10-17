@@ -8,18 +8,25 @@ composer require keboola/messenger-bundle
 ```
 
 ## Configuration
-Bundle supportf following configuration options:
-* **platform** - required, `aws`, `azure` or `gcp`
-* **connection_events_queue_dsn** - required, DSN for connection events queue
-  * for AWS use the queue URL, ex. `https://sqs.eu-central-1.amazonaws.com/025303414634/queue-name`
+Bundle supports following configuration options:
+* **platform** - required, `aws` or `azure`
+* **connection_events_queue_dsn** - optional, DSN for connection events queue
+* **connection_audit_log_queue_dsn** - optional, DSN for connection audit log queue
+ 
+See documentation of each platform driver for details on DSN syntax
+  * for AWS use the queue URL, ex. `https://sqs.eu-central-1.amazonaws.com/025303414634/queue-name`,
+    see https://symfony.com/doc/current/messenger.html#amazon-sqs for details
   * for Azure use format `azure://<sas-key-name>:<sas-kev-value>@<servicebus-namespace>?entity_name=<servicebus-queue-name>`,
     see https://github.com/AymDev/MessengerAzureBundle for details
+  * for GCP use format `gps://default/<topic-name>`,
+    see https://github.com/petitpress/gps-messenger-bundle for details
 
 Reference:
 ```yaml
 keboola_messenger:
   platform: "%env(PLATFORM)%"
   connection_events_queue_dsn: "%env(CONNECTION_EVENTS_QUEUE_DSN)%"
+  connection_audit_log_queue_dsn: "%env(CONNECTION_AUDIT_LOG_QUEUE_DSN)%"
 ```
 
 ## Development

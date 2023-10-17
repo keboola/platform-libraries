@@ -29,7 +29,7 @@ class AwsSqsConsumptionTest extends AbstractQueueConsumptionTest
     protected function publishMessage(array $message): void
     {
         $this->sqsClient->sendMessage(new SendMessageRequest([
-            'QueueUrl' => self::getRequiredEnv('CONNECTION_EVENTS_QUEUE_DSN'),
+            'QueueUrl' => self::getRequiredEnv('CONNECTION_AUDIT_LOG_QUEUE_DSN'),
             'MessageBody' => json_encode($message, JSON_THROW_ON_ERROR),
         ]))->getMessageId();
     }

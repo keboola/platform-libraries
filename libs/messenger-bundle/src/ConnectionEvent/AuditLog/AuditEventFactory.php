@@ -2,17 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Keboola\MessengerBundle\ConnectionEvent;
+namespace Keboola\MessengerBundle\ConnectionEvent\AuditLog;
 
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\ProjectCreatedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureAddedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureRemovedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectUndeletedEvent;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
+use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Exception\EventFactoryException;
 use Throwable;
 
-class EventFactory
+class AuditEventFactory implements EventFactoryInterface
 {
     /** @var array<string, class-string<EventInterface>> */
     private const EVENTS = [
@@ -37,7 +40,7 @@ class EventFactory
 
         $eventClass = self::EVENTS[$eventName] ?? null;
         if ($eventClass === null) {
-            $eventClass = GenericEvent::class;
+            $eventClass = GenericAuditLogEvent::class;
         }
 
         try {

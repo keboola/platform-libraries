@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\ConnectionEvent\Serializer;
 
 use JsonException;
-use Keboola\MessengerBundle\ConnectionEvent\EventFactory;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Exception\EventFactoryException;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
@@ -14,11 +14,9 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class AwsSqsSerializer implements SerializerInterface
 {
-    private EventFactory $eventFactory;
-
-    public function __construct(EventFactory $eventFactory)
-    {
-        $this->eventFactory = $eventFactory;
+    public function __construct(
+        private readonly EventFactoryInterface $eventFactory,
+    ) {
     }
 
     public function decode(array $encodedEnvelope): Envelope

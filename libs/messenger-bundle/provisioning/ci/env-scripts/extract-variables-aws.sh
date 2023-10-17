@@ -7,6 +7,7 @@ source ./functions.sh
 # output variables
 output_var 'TEST_CLOUD_PLATFORM' 'aws'
 output_var 'CONNECTION_EVENTS_QUEUE_DSN' "$(terraform_output 'aws_sqs_queue_url')"
+output_var 'CONNECTION_AUDIT_LOG_QUEUE_DSN' "$(terraform_output 'aws_sqs_queue_url')"
 echo ''
 
 output_var 'AWS_DEFAULT_REGION' "$(terraform_output 'aws_region')"

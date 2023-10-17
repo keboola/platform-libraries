@@ -9,7 +9,6 @@ terraform_output () {
 }
 
 output_var () {
-  >&2 echo "VAR: ${1:-}, VAL: ${2:-}"
   echo "${1}=\"${2}\""
 }
 

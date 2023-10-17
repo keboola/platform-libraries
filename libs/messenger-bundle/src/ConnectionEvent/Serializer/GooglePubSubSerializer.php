@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\MessengerBundle\ConnectionEvent\Serializer;
 
-use JsonException;
-use Keboola\MessengerBundle\ConnectionEvent\EventFactory;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Exception\EventFactoryException;
-use Keboola\MessengerBundle\ConnectionEvent\GenericEvent;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
@@ -15,11 +13,9 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class GooglePubSubSerializer implements SerializerInterface
 {
-    private EventFactory $eventFactory;
-
-    public function __construct(EventFactory $eventFactory)
-    {
-        $this->eventFactory = $eventFactory;
+    public function __construct(
+        private readonly EventFactoryInterface $eventFactory,
+    ) {
     }
 
     public function decode(array $encodedEnvelope): Envelope

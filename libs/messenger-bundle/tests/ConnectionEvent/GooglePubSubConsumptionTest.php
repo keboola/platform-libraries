@@ -24,7 +24,7 @@ class GooglePubSubConsumptionTest extends AbstractQueueConsumptionTest
 
         parent::setUp();
 
-        $dsnPath = parse_url(self::getRequiredEnv('CONNECTION_EVENTS_QUEUE_DSN'), PHP_URL_PATH);
+        $dsnPath = parse_url(self::getRequiredEnv('CONNECTION_AUDIT_LOG_QUEUE_DSN'), PHP_URL_PATH);
         $topicName = ltrim((string) $dsnPath, '/');
         self::assertNotEmpty($topicName, 'Topic name is empty');
 

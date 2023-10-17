@@ -24,7 +24,11 @@ class AzureServiceBusConsumptionTest extends AbstractQueueConsumptionTest
         parent::setUp();
 
         $dsnParser = self::getContainer()->get('aymdev_azure_service_bus.dsn_parser');
-        $options = $dsnParser->parseDsn(self::getRequiredEnv('CONNECTION_EVENTS_QUEUE_DSN'), [], 'connection_events');
+        $options = $dsnParser->parseDsn(
+            self::getRequiredEnv('CONNECTION_AUDIT_LOG_QUEUE_DSN'),
+            [],
+            'connection_events',
+        );
 
         $httpConfigBuilder = self::getContainer()->get('aymdev_azure_service_bus.http_config_builder');
         $httpClientConfiguration = $httpConfigBuilder->buildSenderConfiguration($options);

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\MessengerBundle\Tests\ConnectionEvent\Serializer;
 
-use Keboola\MessengerBundle\ConnectionEvent\EventFactory;
-use Keboola\MessengerBundle\ConnectionEvent\GenericEvent;
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
@@ -17,7 +17,7 @@ class AwsSqsSerializerTest extends TestCase
      */
     public function testInvalidMessageDecode(array $encodedEnvelope, string $expectedError): void
     {
-        $serializer = new AwsSqsSerializer(new EventFactory());
+        $serializer = new AwsSqsSerializer(new AuditEventFactory());
 
         $this->expectException(MessageDecodingFailedException::class);
         $this->expectExceptionMessage($expectedError);
@@ -71,10 +71,10 @@ class AwsSqsSerializerTest extends TestCase
 
     public function testValidMessageDecode(): void
     {
-        $eventFactory = new class extends EventFactory {
-            public function createEventFromArray(array $data): GenericEvent
+        $eventFactory = new class extends AuditEventFactory {
+            public function createEventFromArray(array $data): GenericAuditLogEvent
             {
-                return new GenericEvent($data['data']);
+                return new GenericAuditLogEvent($data['data']);
             }
         };
 
@@ -97,7 +97,7 @@ class AwsSqsSerializerTest extends TestCase
         self::assertCount(0, $stamps);
 
         $event = $envelope->getMessage();
-        self::assertInstanceOf(GenericEvent::class, $event);
+        self::assertInstanceOf(GenericAuditLogEvent::class, $event);
         self::assertSame($eventData, $event->getData());
     }
 }

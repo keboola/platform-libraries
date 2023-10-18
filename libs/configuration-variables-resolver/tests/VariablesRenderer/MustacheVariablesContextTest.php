@@ -23,7 +23,13 @@ class MustacheVariablesContextTest extends TestCase
         self::assertSame('b', $context->a);
         self::assertSame('d', $context->c);
 
-        self::assertSame(['a', 'c'], $context->getReplacedVariables());
+        self::assertSame(
+            [
+                'a' => 'b',
+                'c' => 'd',
+            ],
+            $context->getReplacedVariablesValues(),
+        );
         self::assertSame(['e'], $context->getMissingVariables());
     }
 }

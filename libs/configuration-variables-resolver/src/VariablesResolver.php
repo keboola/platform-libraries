@@ -55,7 +55,7 @@ class VariablesResolver
         string $branchId,
         ?string $variableValuesId,
         ?array $variableValuesData,
-    ): array {
+    ): ResolveResults {
 
         $vaultResult = $this->vaultVariablesResolver->resolveVariables(
             $configuration,
@@ -69,7 +69,10 @@ class VariablesResolver
         );
 
         $missingVariables = array_merge($vaultResult->missingVariables, $configurationResult->missingVariables);
-        $replacedVariables = array_merge($vaultResult->replacedVariables, $configurationResult->replacedVariables);
+        $replacedVariables = array_merge(
+            array_keys($vaultResult->replacedVariablesValues),
+            array_keys($configurationResult->replacedVariablesValues),
+        );
 
         if (count($missingVariables) > 0) {
             throw new UserException(sprintf(
@@ -85,6 +88,12 @@ class VariablesResolver
             ));
         }
 
-        return $configurationResult->configuration;
+        return new ResolveResults(
+            $configurationResult->configuration,
+            array_merge(
+                $vaultResult->replacedVariablesValues,
+                $configurationResult->replacedVariablesValues,
+            ),
+        );
     }
 }

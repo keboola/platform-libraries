@@ -59,7 +59,7 @@ class VariablesResolverTest extends TestCase
             ->with($configuration, 'branch-id')
             ->willReturn(new RenderResults(
                 $configurationAfterResolveVault,
-                ['vault.foo'],
+                ['vault.foo' => 'vault'],
                 [],
             ))
         ;
@@ -70,7 +70,7 @@ class VariablesResolverTest extends TestCase
             ->with($configurationAfterResolveVault, '123', ['456'])
             ->willReturn(new RenderResults(
                 $configurationAfterResolveConfiguration,
-                ['foo'],
+                ['foo' => 'config'],
                 [],
             ))
         ;
@@ -81,8 +81,15 @@ class VariablesResolverTest extends TestCase
             $this->logger,
         );
 
-        $newConfiguration = $resolver->resolveVariables($configuration, 'branch-id', '123', ['456']);
-        self::assertSame($configurationAfterResolveConfiguration, $newConfiguration);
+        $result = $resolver->resolveVariables($configuration, 'branch-id', '123', ['456']);
+        self::assertSame($configurationAfterResolveConfiguration, $result->configuration);
+        self::assertSame(
+            [
+                'vault.foo' => 'vault',
+                'foo' => 'config',
+            ],
+            $result->replacedVariablesValues,
+        );
 
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: vault.foo, foo'));
     }

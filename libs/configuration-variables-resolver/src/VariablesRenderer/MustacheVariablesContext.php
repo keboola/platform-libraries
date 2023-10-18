@@ -7,10 +7,9 @@ namespace Keboola\ConfigurationVariablesResolver\VariablesRenderer;
 class MustacheVariablesContext
 {
     /** @var array<non-empty-string, true>  */
-    private array $replacedVariables = [];
-
-    /** @var array<non-empty-string, true>  */
     private array $missingVariables = [];
+
+    private array $replacedVariablesValues = [];
 
     /**
      * @param array<non-empty-string, string> $values
@@ -38,16 +37,8 @@ class MustacheVariablesContext
      */
     public function __get(string $name): string|self
     {
-        $this->replacedVariables[$name] = true;
+        $this->replacedVariablesValues[$name] = $this->values[$name];
         return $this->values[$name];
-    }
-
-    /**
-     * @return list<non-empty-string>
-     */
-    public function getReplacedVariables(): array
-    {
-        return array_map(strval(...), array_keys($this->replacedVariables)); // @phpstan-ignore-line
     }
 
     /**
@@ -56,5 +47,10 @@ class MustacheVariablesContext
     public function getMissingVariables(): array
     {
         return array_map(strval(...), array_keys($this->missingVariables)); // @phpstan-ignore-line
+    }
+
+    public function getReplacedVariablesValues(): array
+    {
+        return $this->replacedVariablesValues;
     }
 }

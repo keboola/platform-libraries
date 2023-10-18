@@ -104,16 +104,22 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, []);
+        $resolveResults = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, []);
 
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
                 'parameters' => [
                     'some_parameter' => 'foo is bar.',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -131,20 +137,26 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             null,
             ['values' => [['name' => 'foo', 'value' => 'bar']]],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
                 'parameters' => [
                     'some_parameter' => 'foo is bar',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -163,16 +175,22 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, null, null);
-        self::assertEquals(
+        $resolveResults = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, null, null);
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
+                'variables_values_id' => $vRowId,
                 'parameters' => [
                     'some_parameter' => 'foo is bar',
                 ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => $vRowId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using default values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -191,16 +209,22 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, null);
-        self::assertEquals(
+        $resolveResults = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, null);
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
+                'variables_values_id' => 'not-used',
                 'parameters' => [
                     'some_parameter' => 'foo is bar',
                 ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => 'not-used',
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -219,21 +243,27 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             null,
             ['values' => [['name' => 'foo', 'value' => 'bazooka']]],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
+                'variables_values_id' => $vRowId,
                 'parameters' => [
                     'some_parameter' => 'foo is bazooka',
                 ],
-                'variables_id' => $vConfigurationId,
-                'variables_values_id' => $vRowId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bazooka',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -252,8 +282,8 @@ class VariableResolverTest extends TestCase
         ];
         $variableResolver = $this->getVariablesResolver();
 
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'No variable values provided for variables configuration "' .
             $vConfigurationId . '".',
         );
@@ -273,8 +303,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, null, null);
@@ -292,8 +322,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Cannot read variable values "non-existent" of variables configuration "' . $vConfigurationId .'".',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
@@ -311,8 +341,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Only one of variableValuesId and variableValuesData can be entered.',
         );
         $variableResolver->resolveVariables(
@@ -335,20 +365,26 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             $vRowId,
             ['values' => []],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
                 'parameters' => [
                     'some_parameter' => 'foo is bar',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -361,8 +397,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Variable configuration cannot be read: Configuration non-existent not found',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
@@ -380,8 +416,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Variable configuration is invalid: Unrecognized option "invalid" under "variables". ' .
             'Available option is "variables".',
         );
@@ -394,15 +430,16 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, '123', []);
-        self::assertEquals(
+        $resolveResults = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, '123', []);
+        self::assertSame(
             [
                 'parameters' => [
                     'some_parameter' => 'foo is {{ foo }}',
                 ],
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
         );
+        self::assertSame([], $resolveResults->replacedVariablesValues);
         self::assertFalse($this->logsHandler->hasInfoThatContains('Replacing variables using default values with ID:'));
     }
 
@@ -418,8 +455,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }} and {{ notreplaced }}.'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage(
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage(
             'Variable values configuration is invalid: Unrecognized option "invalid" under "values". ' .
             'Available option is "values".',
         );
@@ -438,7 +475,7 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             null,
@@ -451,7 +488,13 @@ class VariableResolverTest extends TestCase
                 ],
                 'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'special " \' { } characters',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -469,8 +512,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage('No value provided for variable "goo".');
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('No value provided for variable "goo".');
         $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
@@ -491,8 +534,8 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }} and bar is {{ bar }} and baz is {{ baz }}.'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        self::expectException(UserException::class);
-        self::expectExceptionMessage('Missing values for placeholders: bar, baz');
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('Missing values for placeholders: bar, baz');
         $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
@@ -539,15 +582,21 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ foo }}.'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, []);
-        self::assertEquals(
+        $resolveResults = $variableResolver->resolveVariables($configuration, self::BRANCH_ID, $vRowId, []);
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
                 'parameters' => [
                     'some_parameter' => 'foo is dev-bar.',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                'foo' => 'dev-bar',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: foo'));
@@ -565,20 +614,26 @@ class VariableResolverTest extends TestCase
             'parameters' => ['some_parameter' => 'foo is {{ 4321 }}'],
         ];
         $variableResolver = $this->getVariablesResolver();
-        $newConfiguration = $variableResolver->resolveVariables(
+        $resolveResults = $variableResolver->resolveVariables(
             $configuration,
             self::BRANCH_ID,
             null,
             ['values' => [['name' => 4321, 'value' => 1234]]],
         );
-        self::assertEquals(
+        self::assertSame(
             [
+                'variables_id' => $vConfigurationId,
                 'parameters' => [
                     'some_parameter' => 'foo is 1234',
                 ],
-                'variables_id' => $vConfigurationId,
             ],
-            $newConfiguration,
+            $resolveResults->configuration,
+        );
+        self::assertSame(
+            [
+                0 => '1234',
+            ],
+            $resolveResults->replacedVariablesValues,
         );
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replaced values for variables: 4321'));

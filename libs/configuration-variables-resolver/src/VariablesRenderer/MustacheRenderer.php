@@ -46,7 +46,7 @@ class MustacheRenderer
 
         return new RenderResults(
             $configuration,
-            $context->getReplacedVariables(),
+            $context->getReplacedVariablesValues(),
             $context->getMissingVariables(),
         );
     }

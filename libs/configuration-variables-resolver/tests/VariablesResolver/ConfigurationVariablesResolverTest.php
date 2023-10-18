@@ -108,7 +108,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
     }
@@ -139,7 +139,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
     }
@@ -168,7 +168,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using default values with ID:'));
     }
@@ -197,7 +197,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
     }
@@ -230,7 +230,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bazooka'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
     }
@@ -344,7 +344,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
     }
@@ -445,7 +445,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'special " \' { } characters'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
     }
@@ -492,7 +492,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             'variables_id' => $vConfigurationId,
             'parameters' => ['some_parameter' => 'foo is bar and bar is  and baz is .'],
         ], $results->configuration);
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'bar'], $results->replacedVariablesValues);
         self::assertSame(['bar', 'baz'], $results->missingVariables);
     }
 
@@ -544,7 +544,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['foo'], $results->replacedVariables);
+        self::assertSame(['foo' => 'dev-bar'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using values with ID:'));
     }
@@ -575,7 +575,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             ],
             $results->configuration,
         );
-        self::assertSame(['4321'], $results->replacedVariables);
+        self::assertSame(['4321' => '1234'], $results->replacedVariablesValues);
         self::assertSame([], $results->missingVariables);
         self::assertTrue($this->logsHandler->hasInfoThatContains('Replacing variables using inline values.'));
     }

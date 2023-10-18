@@ -10,11 +10,11 @@ use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
 /**
  * Application event as defined at https://github.com/keboola/connection/blob/24517a7486e7a0990bad19d80246947d8dd438ef/legacy-app/application/modules/core/events/Application.php
  */
-class ApplicationEvent implements EventInterface
+class GenericApplicationEvent implements EventInterface
 {
     public function __construct(
         public readonly string $name,
-        public readonly int $idEvent,
+        public readonly int $id,
         public readonly string $type,
 
         // identification
@@ -40,7 +40,7 @@ class ApplicationEvent implements EventInterface
         // target object
         public readonly ?string $objectType = null, // account, bucket, table ...
         public readonly ?string $objectName = null, // name of object at log time
-        public readonly ?string $objectId = null, // reference to object - object id or uri
+        public readonly string|int|null $objectId = null, // reference to object - object id or uri
 
         // context data
         public readonly ?array $context = null,
@@ -53,7 +53,7 @@ class ApplicationEvent implements EventInterface
     ) {
     }
 
-    public static function fromArray(array $data): ApplicationEvent
+    public static function fromArray(array $data): GenericApplicationEvent
     {
         if (empty($data['name'])) {
             throw new InvalidArgumentException('Event is missing property "name"');
@@ -102,7 +102,7 @@ class ApplicationEvent implements EventInterface
     {
         return [
             'name' => $this->name,
-            'idEvent' => $this->idEvent,
+            'idEvent' => $this->id,
             'type' => $this->type,
 
             'idAdmin' => $this->idAdmin,
@@ -139,7 +139,7 @@ class ApplicationEvent implements EventInterface
 
     public function getId(): string
     {
-        return (string) $this->idEvent;
+        return (string) $this->id;
     }
 
     public function getEventName(): string

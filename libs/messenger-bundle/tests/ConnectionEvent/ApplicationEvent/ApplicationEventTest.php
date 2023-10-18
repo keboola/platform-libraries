@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\Tests\ConnectionEvent\ApplicationEvent;
 
 use InvalidArgumentException;
-use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\ApplicationEvent;
+use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\GenericApplicationEvent;
 use PHPUnit\Framework\TestCase;
 
 class ApplicationEventTest extends TestCase
 {
     public function testFromArrayWithMinimalData(): void
     {
-        $event = ApplicationEvent::fromArray([
+        $event = GenericApplicationEvent::fromArray([
             'name' => 'ext.keboola.keboola-buffer.',
             'idEvent' => 20219944,
             'type' => 'info',
         ]);
 
         self::assertSame('ext.keboola.keboola-buffer.', $event->name);
-        self::assertSame(20219944, $event->idEvent);
+        self::assertSame(20219944, $event->id);
         self::assertSame('info', $event->type);
         self::assertNull($event->idAdmin);
         self::assertNull($event->idProject);
@@ -49,7 +49,7 @@ class ApplicationEventTest extends TestCase
 
     public function testFromArrayWithAllData(): void
     {
-        $event = ApplicationEvent::fromArray([
+        $event = GenericApplicationEvent::fromArray([
             'name' => 'ext.keboola.keboola-buffer.',
             'objectId' => 'object-id',
             'idProject' => 18,
@@ -110,7 +110,7 @@ class ApplicationEventTest extends TestCase
         self::assertSame('object-name', $event->objectName);
         self::assertSame(['task' => 'file-import'], $event->params);
         self::assertSame(['foo' => 'bar'], $event->performance);
-        self::assertSame(20219944, $event->idEvent);
+        self::assertSame(20219944, $event->id);
         self::assertSame('info', $event->type);
         self::assertSame('event description', $event->description);
         self::assertSame([
@@ -169,14 +169,14 @@ class ApplicationEventTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedError);
 
-        ApplicationEvent::fromArray($data);
+        GenericApplicationEvent::fromArray($data);
     }
 
     public function testToArrayWithMinimalData(): void
     {
-        $event = new ApplicationEvent(
+        $event = new GenericApplicationEvent(
             name: 'ext.keboola.keboola-buffer.',
-            idEvent: 20219944,
+            id: 20219944,
             type: 'info',
         );
 
@@ -213,9 +213,9 @@ class ApplicationEventTest extends TestCase
 
     public function testToArrayWithAllData(): void
     {
-        $event = new ApplicationEvent(
+        $event = new GenericApplicationEvent(
             name: 'ext.keboola.keboola-buffer.',
-            idEvent: 20219944,
+            id: 20219944,
             type: 'info',
             idAdmin: 19,
             idProject: 18,
@@ -308,7 +308,7 @@ class ApplicationEventTest extends TestCase
 
     public function testGetters(): void
     {
-        $event = ApplicationEvent::fromArray([
+        $event = GenericApplicationEvent::fromArray([
             'name' => 'ext.keboola.keboola-buffer.',
             'idEvent' => 20219944,
             'type' => 'info',

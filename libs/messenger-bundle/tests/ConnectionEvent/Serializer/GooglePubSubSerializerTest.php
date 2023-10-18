@@ -6,8 +6,12 @@ namespace Keboola\MessengerBundle\Tests\ConnectionEvent\Serializer;
 
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\GooglePubSubSerializer;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
 
 class GooglePubSubSerializerTest extends TestCase
@@ -57,5 +61,19 @@ class GooglePubSubSerializerTest extends TestCase
         $event = $envelope->getMessage();
         self::assertInstanceOf(GenericAuditLogEvent::class, $event);
         self::assertSame($eventData, $event->getData());
+    }
+
+    public function testEncodingIsDisabled(): void
+    {
+        $eventFactory = $this->createMock(EventFactoryInterface::class);
+        $serializer = new GooglePubSubSerializer($eventFactory);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Keboola\MessengerBundle\ConnectionEvent\Serializer\GooglePubSubSerializer ' .
+            'does not support encoding messages',
+        );
+
+        $serializer->encode(new Envelope(new stdClass));
     }
 }

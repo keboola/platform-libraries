@@ -6,8 +6,12 @@ namespace Keboola\MessengerBundle\Tests\ConnectionEvent\Serializer;
 
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AzureServiceBusSerializer;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
 
 class AzureServiceBusSerializerTest extends TestCase
@@ -88,5 +92,19 @@ class AzureServiceBusSerializerTest extends TestCase
         $event = $envelope->getMessage();
         self::assertInstanceOf(GenericAuditLogEvent::class, $event);
         self::assertSame($eventData, $event->getData());
+    }
+
+    public function testEncodingIsDisabled(): void
+    {
+        $eventFactory = $this->createMock(EventFactoryInterface::class);
+        $serializer = new AzureServiceBusSerializer($eventFactory);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Keboola\MessengerBundle\ConnectionEvent\Serializer\AzureServiceBusSerializer ' .
+            'does not support encoding messages',
+        );
+
+        $serializer->encode(new Envelope(new stdClass));
     }
 }

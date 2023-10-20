@@ -9,7 +9,7 @@ use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
 class GenericAuditLogEvent implements EventInterface
 {
     public function __construct(
-        private array $data,
+        private readonly array $data,
     ) {
     }
 

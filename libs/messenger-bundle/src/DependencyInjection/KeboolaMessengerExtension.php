@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\AbstractExtension;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 class KeboolaMessengerExtension extends AbstractExtension
@@ -78,8 +78,8 @@ class KeboolaMessengerExtension extends AbstractExtension
 
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $loader = new PhpFileLoader($builder, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('messenger.php');
+        $loader = new YamlFileLoader($builder, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader->load('messenger.yaml');
     }
 
     private function createTransportConfig(

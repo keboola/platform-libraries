@@ -6,8 +6,12 @@ namespace Keboola\MessengerBundle\Tests\ConnectionEvent\Serializer;
 
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
+use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
 
 class AwsSqsSerializerTest extends TestCase
@@ -99,5 +103,18 @@ class AwsSqsSerializerTest extends TestCase
         $event = $envelope->getMessage();
         self::assertInstanceOf(GenericAuditLogEvent::class, $event);
         self::assertSame($eventData, $event->getData());
+    }
+
+    public function testEncodingIsDisabled(): void
+    {
+        $eventFactory = $this->createMock(EventFactoryInterface::class);
+        $serializer = new AwsSqsSerializer($eventFactory);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer does not support encoding messages',
+        );
+
+        $serializer->encode(new Envelope(new stdClass));
     }
 }

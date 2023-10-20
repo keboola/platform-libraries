@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\Tests\ConnectionEvent\AuditLog\Project;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureRemovedEvent;
 use PHPUnit\Framework\TestCase;
 
 class ProjectFeatureRemovedEventTest extends TestCase
 {
-    public function testCreateAndExport(): void
-    {
-        $event = ProjectFeatureRemovedEvent::fromArray([
+    private const EVENT_MESSAGE_DATA = [
+        'data' => [
             'id' => 1234,
             'operation' => 'auditLog.project.featureRemoved',
             'auditLogEventCreatedAt' => '2022-03-03T12:00:00Z',
@@ -36,7 +37,21 @@ class ProjectFeatureRemovedEventTest extends TestCase
             ],
 
             'garbage' => 'ignored',
-        ]);
+        ],
+    ];
+
+    public function testDecodeFromEvent(): void
+    {
+        $eventFactory = new AuditEventFactory();
+        $event = $eventFactory->createEventFromArray(self::EVENT_MESSAGE_DATA);
+
+        self::assertInstanceOf(ProjectFeatureRemovedEvent::class, $event);
+        self::assertSame('1234', $event->getId());
+    }
+
+    public function testCreateFromArray(): void
+    {
+        $event = ProjectFeatureRemovedEvent::fromArray(self::EVENT_MESSAGE_DATA['data']);
 
         self::assertSame('1234', $event->getId());
         self::assertEquals(new DateTimeImmutable('2022-03-03T12:00:00Z'), $event->getCreatedAt());
@@ -51,6 +66,24 @@ class ProjectFeatureRemovedEventTest extends TestCase
         self::assertSame('963', $event->getFeatureId());
         self::assertSame('feature-name', $event->getFeatureName());
         self::assertSame('type', $event->getFeatureType());
+    }
+
+    public function testCreateFromArrayWithInvalidOperation(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureRemovedEvent expects event ' .
+            'name "auditLog.project.featureRemoved" but operation in data is "foo"',
+        );
+
+        ProjectFeatureRemovedEvent::fromArray([
+            'operation' => 'foo',
+        ]);
+    }
+
+    public function testToArray(): void
+    {
+        $event = ProjectFeatureRemovedEvent::fromArray(self::EVENT_MESSAGE_DATA['data']);
 
         self::assertSame([
             'id' => '1234',

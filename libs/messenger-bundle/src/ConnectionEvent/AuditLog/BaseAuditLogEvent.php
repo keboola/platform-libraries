@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\ConnectionEvent\AuditLog;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
-use RuntimeException;
 
 abstract class BaseAuditLogEvent implements EventInterface
 {
@@ -26,7 +26,7 @@ abstract class BaseAuditLogEvent implements EventInterface
         $eventName = static::NAME; // @phpstan-ignore-line
 
         if ($data['operation'] !== $eventName) {
-            throw new RuntimeException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 '%s expects event name "%s" but operation in data is "%s"',
                 static::class,
                 $eventName,

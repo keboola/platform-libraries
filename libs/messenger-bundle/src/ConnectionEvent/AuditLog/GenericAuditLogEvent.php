@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Keboola\MessengerBundle\ConnectionEvent;
+namespace Keboola\MessengerBundle\ConnectionEvent\AuditLog;
 
-class GenericEvent implements EventInterface
+use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
+
+class GenericAuditLogEvent implements EventInterface
 {
     public function __construct(
         private array $data,
     ) {
     }
 
-    public static function getEventName(): string
+    public function getEventName(): string
     {
         return 'genericEvent';
     }

@@ -4,52 +4,45 @@ declare(strict_types=1);
 
 namespace Keboola\MessengerBundle\Tests\ConnectionEvent;
 
+use Google\Cloud\PubSub\PubSubClient;
+use Google\Cloud\PubSub\Topic;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectDeletedEvent;
 use Keboola\MessengerBundle\Tests\TestEnvVarsTrait;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class AzureServiceBusConsumptionTest extends AbstractQueueConsumptionTest
+class GooglePubSubConsumptionTest extends AbstractQueueConsumptionTest
 {
     use TestEnvVarsTrait;
 
-    private HttpClientInterface $serviceBusClient;
+    private readonly Topic $topicClient;
 
     protected function setUp(): void
     {
-        if (self::getRequiredEnv('TEST_CLOUD_PLATFORM') !== 'azure') {
-            $this->markTestSkipped('Only applicable on Azure');
+        if (self::getRequiredEnv('TEST_CLOUD_PLATFORM') !== 'gcp') {
+            $this->markTestSkipped('Only applicable on GCP');
         }
 
         parent::setUp();
 
-        $dsnParser = self::getContainer()->get('aymdev_azure_service_bus.dsn_parser');
-        $options = $dsnParser->parseDsn(
-            self::getRequiredEnv('CONNECTION_AUDIT_LOG_QUEUE_DSN'),
-            [],
-            'connection_events',
-        );
+        $dsnPath = parse_url(self::getRequiredEnv('CONNECTION_AUDIT_LOG_QUEUE_DSN'), PHP_URL_PATH);
+        $topicName = ltrim((string) $dsnPath, '/');
+        self::assertNotEmpty($topicName, 'Topic name is empty');
 
-        $httpConfigBuilder = self::getContainer()->get('aymdev_azure_service_bus.http_config_builder');
-        $httpClientConfiguration = $httpConfigBuilder->buildSenderConfiguration($options);
-
-        $httpClientFactory = self::getContainer()->get('aymdev_azure_service_bus.http_client_factory');
-        $this->serviceBusClient = $httpClientFactory->createClient($httpClientConfiguration);
+        $pubSubClient = new PubSubClient();
+        $this->topicClient = $pubSubClient->topic($topicName);
     }
 
     protected function publishMessage(array $message): void
     {
-        $this->serviceBusClient->request('POST', 'messages', [
-            'json' => $message,
-        ])->getStatusCode();
+        $this->topicClient->publish([
+            'data' => json_encode($message, JSON_THROW_ON_ERROR),
+        ]);
     }
 
     public function testMessageDelivery(): void
     {
-        // EventGrid wraps the data
-        $wrappedMessage = [
-            'data' => self::EVENT_DATA,
-        ];
+        // PubSub does not wrap the data
+        $wrappedMessage = self::EVENT_DATA;
 
         $this->publishMessage($wrappedMessage);
         $messages = $this->waitAndFetchAllAvailableMessages();

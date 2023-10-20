@@ -42,7 +42,10 @@ abstract class AbstractQueueConsumptionTest extends KernelTestCase
     {
         parent::setUp();
 
-        $this->messengerTransport = self::getContainer()->get('messenger.transport.connection_events');
+        $messengerTransport = self::getContainer()->get('messenger.transport.connection_audit_log');
+        self::assertInstanceOf(TransportInterface::class, $messengerTransport);
+
+        $this->messengerTransport = $messengerTransport;
     }
 
     abstract protected function publishMessage(array $message): void;

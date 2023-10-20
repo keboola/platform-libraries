@@ -6,7 +6,7 @@ INSERT_MODE=prepend
 VERBOSE=false
 
 help () {
-  echo "Syntax: update-env.sh [-v] [-a] [-e ${ENV_FILE}] <aws|azure>"
+  echo "Syntax: update-env.sh [-v] [-a] [-e ${ENV_FILE}] <aws|azure|gcp>"
   echo "Options:"
   echo "  -a|--append         Append mode (used only when creating new env file, by default values are prepended to the env file)"
   echo "  -e|--env-file file  Env file to write (default: ${ENV_FILE})"
@@ -54,8 +54,8 @@ done
 set -- "${POSITIONAL_ARGS[@]}"
 
 ENV_NAME=${1:-}
-if [[ $ENV_NAME != "aws" && $ENV_NAME != "azure" ]]; then
-    echo "Invalid environment name '${ENV_NAME}'. Possible values are: aws, azure"
+if [[ $ENV_NAME != "aws" && $ENV_NAME != "azure" && $ENV_NAME != "gcp" ]]; then
+    echo "Invalid environment name '${ENV_NAME}'. Possible values are: aws, azure, gpc"
     echo ""
     help
     exit 1

@@ -21,18 +21,15 @@ abstract class BaseAuditLogEvent implements EventInterface
     {
     }
 
-    public static function getEventName(): string
-    {
-        return static::NAME; // @phpstan-ignore-line
-    }
-
     public static function fromArray(array $data): static
     {
-        if ($data['operation'] !== static::getEventName()) {
+        $eventName = static::NAME; // @phpstan-ignore-line
+
+        if ($data['operation'] !== $eventName) {
             throw new RuntimeException(sprintf(
                 '%s expects event name "%s" but operation in data is "%s"',
                 static::class,
-                static::getEventName(),
+                $eventName,
                 $data['operation'],
             ));
         }
@@ -66,6 +63,11 @@ abstract class BaseAuditLogEvent implements EventInterface
     public function getId(): string
     {
         return $this->id;
+    }
+
+    public function getEventName(): string
+    {
+        return static::NAME; // @phpstan-ignore-line
     }
 
     public function getCreatedAt(): DateTimeImmutable

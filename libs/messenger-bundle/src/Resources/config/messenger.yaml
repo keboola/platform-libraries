@@ -1,0 +1,24 @@
+services:
+    keboola.messenger_bundle.event_factory.audit_log:
+        class: Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory
+
+    keboola.messenger_bundle.event_factory.application_events:
+        class: Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\ApplicationEventFactory
+
+    keboola.messenger_bundle.platform_serializer.aws:
+        class: Keboola\MessengerBundle\ConnectionEvent\Serializer\AwsSqsSerializer
+        abstract: true
+        arguments:
+            $eventFactory: !abstract configured in bundle extension
+
+    keboola.messenger_bundle.platform_serializer.azure:
+        class: Keboola\MessengerBundle\ConnectionEvent\Serializer\AzureServiceBusSerializer
+        abstract: true
+        arguments:
+            $eventFactory: !abstract configured in bundle extension
+
+    keboola.messenger_bundle.platform_serializer.gcp:
+        class: Keboola\MessengerBundle\ConnectionEvent\Serializer\GooglePubSubSerializer
+        abstract: true
+        arguments:
+            $eventFactory: !abstract configured in bundle extension

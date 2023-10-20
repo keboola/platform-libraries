@@ -17,7 +17,7 @@ Bundle supports following configuration options:
 See documentation of each platform driver for details on DSN syntax
   * for AWS use the queue URL, ex. `https://sqs.eu-central-1.amazonaws.com/025303414634/queue-name`,
     see https://symfony.com/doc/current/messenger.html#amazon-sqs for details
-  * for Azure use format `azure://<sas-key-name>:<sas-kev-value>@<servicebus-namespace>?entity_name=<servicebus-queue-name>`,
+  * for Azure use format `azure://<sas-key-name>:<sas-kev-value>@<servicebus-namespace>?entity_path=<servicebus-queue-name>`,
     see https://github.com/AymDev/MessengerAzureBundle for details
   * for GCP use format `gps://default/<topic-name>`,
     see https://github.com/petitpress/gps-messenger-bundle for details

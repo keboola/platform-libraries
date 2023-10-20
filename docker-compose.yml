@@ -14,6 +14,7 @@ services:
 
   dev74:
     <<: *dev
+    image: keboola/php-dev74
     build:
       <<: *dev-build
       args:
@@ -21,6 +22,7 @@ services:
 
   dev81: &dev81
     <<: *dev
+    image: keboola/php-dev81
     build:
       <<: *dev-build
       args:
@@ -28,6 +30,7 @@ services:
 
   dev82: &dev82
     <<: *dev
+    image: keboola/php-dev82
     build:
       <<: *dev-build
       args:
@@ -71,6 +74,12 @@ services:
     <<: *dev81
     image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
+
+  dev-messenger-bundle:
+    <<: *dev82
+    working_dir: /code/libs/messenger-bundle
+    environment:
+      APP_ENV: dev
 
   dev-output-mapping:
     <<: *dev

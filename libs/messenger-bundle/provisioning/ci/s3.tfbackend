@@ -1,0 +1,5 @@
+region = "eu-central-1"
+dynamodb_table = "ci-messenger-bundle-terraform-table"
+bucket = "ci-messenger-bundle-terraform-bucket"
+key = "terraform.tfstate"
+encrypt = true

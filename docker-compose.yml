@@ -36,6 +36,8 @@ services:
       args:
         PHP_VERSION: "8.2"
         XDEBUG_VERSION: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   dev-api-bundle:
     <<: *dev81

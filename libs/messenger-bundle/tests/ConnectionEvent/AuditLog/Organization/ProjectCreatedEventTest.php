@@ -6,7 +6,6 @@ namespace Keboola\MessengerBundle\Tests\ConnectionEvent\AuditLog\Organization;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\ApplicationEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\AuditEventFactory;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\ProjectCreatedEvent;
 use PHPUnit\Framework\TestCase;

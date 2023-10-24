@@ -5,3 +5,11 @@ keboola_messenger:
   platform: '%env(TEST_CLOUD_PLATFORM)%'
   connection_events_queue_dsn: '%env(CONNECTION_EVENTS_QUEUE_DSN)%'
   connection_audit_log_queue_dsn: '%env(CONNECTION_AUDIT_LOG_QUEUE_DSN)%'
+
+services:
+  Keboola\MessengerBundle\Tests\TestMessageHandler:
+    arguments:
+      $logger: '@logger'
+    tags:
+      - name: "messenger.message_handler"
+        handles: "Keboola\\MessengerBundle\\ConnectionEvent\\EventInterface"

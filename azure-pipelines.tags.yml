@@ -34,6 +34,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/logging-bundle
+    - repository: messenger-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/messenger-bundle
     - repository: output-mapping
       type: github
       endpoint: keboola
@@ -107,6 +111,14 @@ jobs:
       targetRepo: logging-bundle
       libraryPath: libs/logging-bundle
       tagPrefix: logging-bundle/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/messenger-bundle/')
+      sourceRepo: platform-libraries
+      targetRepo: messenger-bundle
+      libraryPath: libs/messenger-bundle
+      tagPrefix: messenger-bundle/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

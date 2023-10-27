@@ -22,7 +22,6 @@ class TableDefinitionTest extends AbstractTestCase
 
         $requiredFeatures = [
             'native-types',
-            'tables-definition',
         ];
 
         $tokenData = $this->clientWrapper->getBranchClient()->verifyToken();

@@ -22,6 +22,9 @@ class File extends Configuration
     {
         $node
             ->children()
+                ->arrayNode('file_ids')
+                    ->prototype('scalar')->end()
+                ->end()
                 ->arrayNode('tags')
                     ->prototype('scalar')->end()
                 ->end()
@@ -67,18 +70,26 @@ class File extends Configuration
                     if (empty($v['processed_tags'])) {
                         unset($v['processed_tags']);
                     }
+                    if (empty($v['file_ids'])) {
+                        unset($v['file_ids']);
+                    }
                     return $v;
                 })
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
-                if ((!isset($v['tags']) || count($v['tags']) === 0) && !isset($v['query']) &&
-                    (!isset($v['source']['tags']) || count($v['source']['tags']) === 0)) {
+                $hasTags = isset($v['tags']) && count($v['tags']) > 0;
+                $hasQuery = isset($v['query']);
+                $hasSourceTags = isset($v['source']['tags']) && count($v['source']['tags']) > 0;
+                $hasFileIds = isset($v['file_ids']) && count($v['file_ids']) > 0;
+                if (!($hasTags || $hasQuery || $hasSourceTags || $hasFileIds)) {
                     return true;
                 }
                 return false;
             })
-                ->thenInvalid('At least one of "tags", "source.tags" or "query" parameters must be defined.')
+                ->thenInvalid(
+                    'At least one of "tags", "source.tags", "query" or "file_ids" parameters must be defined.',
+                )
             ->end()
             ->validate()
             ->ifTrue(function ($v) {
@@ -108,6 +119,18 @@ class File extends Configuration
                 return false;
             })
                 ->thenInvalid('The value provided for changed_since could not be converted to a timestamp')
+            ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                unset($v['processed_tags']);
+                unset($v['overwrite']);
+                $items = array_keys($v);
+                if (in_array('file_ids', $items, true) && count($v) > 1) {
+                    return true;
+                }
+                return false;
+            })
+                ->thenInvalid('The file_ids filter can be combined only with overwrite flag and processed_tags')
             ->end()
         ;
     }

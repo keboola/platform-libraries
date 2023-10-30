@@ -77,6 +77,9 @@ class RewrittenInputFileOptions extends InputFileOptions
                 // intentionally blank, no state configuration
             }
         }
+        if (isset($this->definition['file_ids']) && count($this->definition['file_ids'])) {
+            $options->setQuery('id:(' . implode(' OR ', $this->definition['file_ids']) . ')');
+        }
         return $options;
     }
 }

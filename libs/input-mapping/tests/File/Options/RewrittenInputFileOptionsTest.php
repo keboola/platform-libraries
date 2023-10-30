@@ -178,5 +178,29 @@ class RewrittenInputFileOptionsTest extends TestCase
             'expectedOptions' => (new ListFilesOptions())->setTags(['1234-foo'])->setSinceId('1234567'),
             'originalFileOptions' => ['tags' => ['foo']],
         ];
+        yield 'single file in file_ids' => [
+            'rewrittenFileOptions' => ['file_ids' => [123]],
+            'isDevBranch' => false,
+            'runId' => '1234',
+            'filesStates' => new InputFileStateList([]),
+            'expectedOptions' => (new ListFilesOptions())->setQuery('id:(123)')->setLimit(100),
+            'originalFileOptions' => null,
+        ];
+        yield 'single file in file_ids + branch' => [
+            'rewrittenFileOptions' => ['file_ids' => [123]],
+            'isDevBranch' => false,
+            'runId' => '1234',
+            'filesStates' => new InputFileStateList([]),
+            'expectedOptions' => (new ListFilesOptions())->setQuery('id:(123)')->setLimit(100),
+            'originalFileOptions' => null,
+        ];
+        yield 'multiple files in file_ids' => [
+            'rewrittenFileOptions' => ['file_ids' => [123, '456']],
+            'isDevBranch' => false,
+            'runId' => '1234',
+            'filesStates' => new InputFileStateList([]),
+            'expectedOptions' => (new ListFilesOptions())->setQuery('id:(123 OR 456)')->setLimit(100),
+            'originalFileOptions' => null,
+        ];
     }
 }

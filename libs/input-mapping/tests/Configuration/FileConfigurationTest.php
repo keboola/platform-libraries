@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Configuration;
 
+use Generator;
 use Keboola\InputMapping\Configuration\File;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -22,7 +23,7 @@ class FileConfigurationTest extends TestCase
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testEmptyTagsRemoved(): void
@@ -40,7 +41,7 @@ class FileConfigurationTest extends TestCase
         $processedConfiguration = (new File())->parse([
             'config' => $config,
         ]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testEmptyProcessedTagsRemoved(): void
@@ -58,7 +59,7 @@ class FileConfigurationTest extends TestCase
         $processedConfiguration = (new File())->parse([
             'config' => $config,
         ]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testEmptyQueryRemoved(): void
@@ -76,7 +77,7 @@ class FileConfigurationTest extends TestCase
         $processedConfiguration = (new File())->parse([
             'config' => $config,
         ]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testConfigurationWithSourceTags(): void
@@ -102,7 +103,7 @@ class FileConfigurationTest extends TestCase
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testEmptyConfiguration(): void
@@ -110,7 +111,7 @@ class FileConfigurationTest extends TestCase
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage(
             'Invalid configuration for path "file": ' .
-            'At least one of "tags", "source.tags" or "query" parameters must be defined.',
+            'At least one of "tags", "source.tags", "query" or "file_ids" parameters must be defined.',
         );
         (new File())->parse(['config' => []]);
     }
@@ -145,7 +146,7 @@ class FileConfigurationTest extends TestCase
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testOverwriteDefault(): void
@@ -157,7 +158,7 @@ class FileConfigurationTest extends TestCase
         $expectedResponse = $config;
         $expectedResponse['overwrite'] = true;
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testValidAdaptiveInputConfigurationWithSourceTags(): void
@@ -176,7 +177,7 @@ class FileConfigurationTest extends TestCase
         ];
         $expectedResponse = $config;
         $processedConfiguration = (new File())->parse(['config' => $config]);
-        self::assertEquals($expectedResponse, $processedConfiguration);
+        self::assertSame($expectedResponse, $processedConfiguration);
     }
 
     public function testConfigurationWithQueryAndChangedSince(): void
@@ -197,5 +198,84 @@ class FileConfigurationTest extends TestCase
             'tags' => ['tag123'],
             'changed_since' => '-1 light year',
         ]]);
+    }
+
+    public function testEmptyFileIdsRemoved(): void
+    {
+        $config = [
+            'tags' => ['tag1'],
+            'query' => 'aaa',
+            'file_ids' => [],
+            'processed_tags' => ['tag3'],
+            'filter_by_run_id' => true,
+            'limit' => 1000,
+            'overwrite' => true,
+        ];
+        $expectedResponse = $config;
+        unset($expectedResponse['file_ids']);
+        $processedConfiguration = (new File())->parse([
+            'config' => $config,
+        ]);
+        self::assertSame($expectedResponse, $processedConfiguration);
+    }
+
+    public function testConfigurationWithFileIds(): void
+    {
+        $config = [
+            'file_ids' => ['123', 456],
+            'overwrite' => false,
+            'processed_tags' => ['downloaded'],
+        ];
+        $expectedResponse = $config;
+        $processedConfiguration = (new File())->parse(['config' => $config]);
+        self::assertSame($expectedResponse, $processedConfiguration);
+    }
+
+    public function fileIdsCannotBeCombinedWithOtherFiltersProvider(): Generator
+    {
+        yield [
+            ['tags' => ['tag1']],
+        ];
+
+        yield [
+            ['query' => 'abc'],
+        ];
+
+        yield [
+            ['limit' => 1],
+        ];
+
+        yield [
+            ['filter_by_run_id' => true],
+        ];
+
+        yield [
+            ['changed_since' => '-7 days'],
+            ];
+
+        yield [
+            [
+                'source' => [
+                    'tags' => [
+                        [
+                            'name' => 'tag1',
+                            'match' => 'include',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider fileIdsCannotBeCombinedWithOtherFiltersProvider
+     */
+    public function testFileIdsCannotBeCombinedWithOtherFilters(array $filters): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
+            'The file_ids filter can be combined only with overwrite flag and processed_tags',
+        );
+        (new File())->parse(['config' => array_merge(['file_ids' => [123]], $filters)]);
     }
 }

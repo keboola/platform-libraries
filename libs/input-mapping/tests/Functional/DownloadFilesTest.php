@@ -515,4 +515,53 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertArrayHasKey('is_public', $manifest);
         self::assertArrayHasKey('is_encrypted', $manifest);
     }
+
+    public function testReadFilesWithFileIdsFilter(): void
+    {
+        $testLogger = new TestLogger();
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload', 'test');
+        file_put_contents($root . '/upload_second', 'test');
+
+        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+        );
+        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+            $root . '/upload_second',
+            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+        );
+        sleep(5);
+
+        $reader = new Reader($this->getLocalStagingFactory(logger: $testLogger));
+        $configuration = [['file_ids' => [$id1, $id2], 'overwrite' => true]];
+        $reader->downloadFiles(
+            $configuration,
+            'download',
+            AbstractStrategyFactory::LOCAL,
+            new InputFileStateList([]),
+        );
+
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
+        self::assertEquals('test', file_get_contents($root . '/download/' . $id2 . '_upload_second'));
+
+        $adapter = new Adapter();
+        $manifest1 = $adapter->readFromFile($root . '/download/' . $id1 . '_upload.manifest');
+        $manifest2 = $adapter->readFromFile($root . '/download/' . $id2 . '_upload_second.manifest');
+
+        self::assertArrayHasKey('id', $manifest1);
+        self::assertArrayHasKey('name', $manifest1);
+        self::assertArrayHasKey('created', $manifest1);
+        self::assertArrayHasKey('is_public', $manifest1);
+        self::assertArrayHasKey('is_encrypted', $manifest1);
+        self::assertArrayHasKey('tags', $manifest1);
+        self::assertArrayHasKey('max_age_days', $manifest1);
+        self::assertArrayHasKey('size_bytes', $manifest1);
+        self::assertArrayHasKey('is_sliced', $manifest1);
+        self::assertFalse($manifest1['is_sliced']);
+        self::assertEquals($id1, $manifest1['id']);
+        self::assertEquals($id2, $manifest2['id']);
+        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
+        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+    }
 }

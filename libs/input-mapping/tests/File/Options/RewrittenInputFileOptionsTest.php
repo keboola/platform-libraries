@@ -188,7 +188,7 @@ class RewrittenInputFileOptionsTest extends TestCase
         ];
         yield 'single file in file_ids + branch' => [
             'rewrittenFileOptions' => ['file_ids' => [123]],
-            'isDevBranch' => false,
+            'isDevBranch' => true,
             'runId' => '1234',
             'filesStates' => new InputFileStateList([]),
             'expectedOptions' => (new ListFilesOptions())->setQuery('id:(123)')->setLimit(100),

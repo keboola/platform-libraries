@@ -27,7 +27,7 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
             ];
         }
         if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
-            $this->logger->info(sprintf('Table "%s" will created as view.', $table->getSource()));
+            $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return [
                 'table' => [$table, $loadOptions],
                 'type' => self::LOAD_TYPE_VIEW,

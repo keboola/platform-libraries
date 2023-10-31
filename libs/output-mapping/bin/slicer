@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PLATFORM=$(uname -m)
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+AMD64_BINARY="$SCRIPT_DIR/slicer_linux_arm64"
+ARM64_BINARY="$SCRIPT_DIR/slicer_linux_arm64"
+
+if [ "$PLATFORM" == "x86_64" ]; then
+  PLATFORM_BINARY="$AMD64_BINARY"
+elif [ "$PLATFORM" == "aarch64" ]; then
+  PLATFORM_BINARY="$ARM64_BINARY"
+else
+  echo "Unsupported platform: $PLATFORM"
+  exit 2
+fi
+
+if [ ! -f "$PLATFORM_BINARY" ]; then
+  echo "Error: The slicer binary '$PLATFORM_BINARY' does not exist."
+  exit 2
+fi
+
+"$PLATFORM_BINARY" "$@"

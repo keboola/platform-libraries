@@ -14,19 +14,19 @@ class CanModifyAuthorizationTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
-        yield 'regular token on regular project default branch' => [
+        yield 'regular user on regular project default branch' => [
             'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'regular token on regular project dev branch' => [
+        yield 'regular user on regular project dev branch' => [
             'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'regular token on regular project without branch' => [
+        yield 'regular user on regular project without branch' => [
             'branchType' => null,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
         yield 'productionManager on protected default branch' => [
@@ -63,6 +63,12 @@ class CanModifyAuthorizationTest extends TestCase
 
     public static function provideInvalidPermissionsCheckData(): iterable
     {
+        yield 'no role' => [
+            'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(role: null),
+            'error' => new PermissionDeniedException('Role "none" is not allowed to modify authorization'),
+        ];
+
         yield 'guest role' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(role: 'guest'),

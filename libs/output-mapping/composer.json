@@ -19,6 +19,11 @@
             "Keboola\\OutputMapping\\Tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/slicer",
+        "bin/slicer_linux_amd64",
+        "bin/slicer_linux_arm64"
+    ],
     "repositories": {
         "libs": {
             "type": "path",

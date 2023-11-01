@@ -45,6 +45,7 @@ class SliceHelper
         $filesystem->rename(
             $ouputDir->getPathname() . '.manifest',
             $sourceFile->getFile()->getPathname() . '.manifest',
+            true,
         );
     }
 }

@@ -58,7 +58,7 @@ class SliceHelperTest extends TestCase
 
         /** @var FinderSplFileInfo $manifest */
         $manifest = reset($manifestFiles);
-        self::assertSame('test.csvsliced.manifest', $manifest->getFilename());
+        self::assertSame('test.csv.manifest', $manifest->getFilename());
         self::assertSame(
             [
                 'columns' => ['id', 'name'],
@@ -70,12 +70,12 @@ class SliceHelperTest extends TestCase
         );
 
         $dataFiles = FilesHelper::getDataFiles($temp->getTmpFolder());
-        self::assertCount(2, $dataFiles);
+        self::assertCount(1, $dataFiles);
 
         /** @var FinderSplFileInfo $slicedDirectory */
         $slicedDirectory = array_shift($dataFiles);
         self::assertTrue($slicedDirectory->isDir());
-        self::assertSame($csvFile->getPathname() . 'sliced', $slicedDirectory->getPathname());
+        self::assertSame($csvFile->getPathname(), $slicedDirectory->getPathname());
 
         $slices = iterator_to_array((new Finder())->in($slicedDirectory->getPathname())->depth(0));
         self::assertCount(1, $slices);
@@ -84,12 +84,6 @@ class SliceHelperTest extends TestCase
         $slice = reset($slices);
         self::assertSame('part0001', $slice->getFilename());
         self::assertSame('"123","Test Name"', file_get_contents($slice->getPathname()));
-
-        /** @var FinderSplFileInfo $originalFile */
-        $originalFile = array_shift($dataFiles);
-        self::assertTrue($originalFile->isFile());
-        self::assertSame($csvFile->getPathname(), $originalFile->getPathname());
-        self::assertFileEquals($csvFile->getPathname(), $originalFile->getPathname());
     }
 
     public function testSliceWithManifest(): void

@@ -91,4 +91,9 @@ class SliceHelperTest extends TestCase
         self::assertSame($csvFile->getPathname(), $originalFile->getPathname());
         self::assertFileEquals($csvFile->getPathname(), $originalFile->getPathname());
     }
+
+    public function testSliceWithManifest(): void
+    {
+        self::markTestIncomplete('Not implemented');
+    }
 }

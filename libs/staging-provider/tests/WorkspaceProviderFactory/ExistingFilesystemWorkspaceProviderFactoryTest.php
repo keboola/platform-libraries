@@ -7,6 +7,7 @@ namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\AbsWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\Credentials\ABSWorkspaceCredentials;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingFilesystemWorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +32,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString,
+            ABSWorkspaceCredentials::fromPasswordResetArray(['connectionString' => $workspaceConnectionString]),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -62,7 +63,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString,
+            ABSWorkspaceCredentials::fromPasswordResetArray(['connectionString' => $workspaceConnectionString]),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -89,7 +90,7 @@ class ExistingFilesystemWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingFilesystemWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspaceConnectionString,
+            ABSWorkspaceCredentials::fromPasswordResetArray(['connectionString' => $workspaceConnectionString]),
         );
 
         $provider1 = $factory->getProvider($stagingClass);

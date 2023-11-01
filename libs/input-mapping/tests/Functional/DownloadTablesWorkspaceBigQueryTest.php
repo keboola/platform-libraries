@@ -69,7 +69,7 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
 
         self::assertTrue($logger->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
         self::assertTrue($logger->hasInfoThatContains(sprintf(
-            'Table "%s" will created as view.',
+            'Table "%s" will be created as view.',
             $this->firstTableId,
         )));
         self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));

@@ -6,6 +6,7 @@ namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\Workspace\SnowflakeWorkspaceStaging;
+use Keboola\StagingProvider\WorkspaceProviderFactory\Credentials\DatabaseWorkspaceCredentials;
 use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingDatabaseWorkspaceProviderFactory;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +36,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword,
+            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => $workspacePassword]),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -72,7 +73,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword,
+            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => $workspacePassword]),
         );
 
         $provider = $factory->getProvider($stagingClass);
@@ -99,7 +100,7 @@ class ExistingDatabaseWorkspaceProviderFactoryTest extends TestCase
         $factory = new ExistingDatabaseWorkspaceProviderFactory(
             $workspaceApi,
             $workspaceId,
-            $workspacePassword,
+            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => $workspacePassword]),
         );
 
         $provider1 = $factory->getProvider($stagingClass);

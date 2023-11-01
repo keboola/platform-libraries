@@ -3,7 +3,7 @@
 PLATFORM=$(uname -m)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-AMD64_BINARY="$SCRIPT_DIR/slicer_linux_arm64"
+AMD64_BINARY="$SCRIPT_DIR/slicer_linux_amd64"
 ARM64_BINARY="$SCRIPT_DIR/slicer_linux_arm64"
 
 if [ "$PLATFORM" == "x86_64" ]; then

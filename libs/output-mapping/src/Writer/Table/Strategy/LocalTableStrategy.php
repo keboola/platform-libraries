@@ -8,11 +8,13 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use SplFileInfo;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
@@ -29,6 +31,8 @@ class LocalTableStrategy extends AbstractTableStrategy
         /** @var array<string, MappingSource> $mappingSources */
         $mappingSources = [];
 
+        //@TODO tady to ma byt podle odina
+
         foreach ($dataFiles as $file) {
             $sourceName = $file->getBasename();
             $mappingSources[$sourceName] = new MappingSource(new LocalFileSource($file));
@@ -44,10 +48,27 @@ class LocalTableStrategy extends AbstractTableStrategy
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
+        //@TODO only for feature or BQ or large files
+        $this->sliceSources($mappingSources);
+
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
         );
+    }
+
+    /**
+     * @param MappingSource[] $mappingSources
+     */
+    private function sliceSources(array $mappingSources): array
+    {
+        foreach ($mappingSources as $source) {
+            if (!$source->getSource()->isSliced()) {
+                SliceHelper::sliceFile($source);
+            }
+        }
+
+        return $mappingSources;
     }
 
     public function prepareLoadTaskOptions(SourceInterface $source, array $config): array
@@ -59,6 +80,8 @@ class LocalTableStrategy extends AbstractTableStrategy
                 get_class($source),
             ));
         }
+
+        //@TODO slicer? myslim ze odin to mam popsany e nekde v dokumetu
 
         $loadOptions = [
             'delimiter' => $config['delimiter'],

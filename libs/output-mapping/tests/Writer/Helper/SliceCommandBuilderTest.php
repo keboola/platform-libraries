@@ -21,11 +21,14 @@ class SliceCommandBuilderTest extends TestCase
                 './bin/slicer',
                 sprintf('--table-input-path=%s/data.csv', $temp->getTmpFolder()),
                 '--table-name=LOG_PLACEHOLDER',
-                sprintf('--table-output-path=%s/data.csvsliced', $temp->getTmpFolder()),
-                sprintf('--table-output-manifest-path=%s/data.csvsliced.manifest', $temp->getTmpFolder()),
+                sprintf('--table-output-path=%s/slicer-output-dir', $temp->getTmpFolder()),
+                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $temp->getTmpFolder()),
                 '--gzip=false',
             ],
-            SliceCommandBuilder::create($temp->createFile('data.csv')),
+            SliceCommandBuilder::create(
+                $temp->createFile('data.csv'),
+                new SplFileInfo($temp->getTmpFolder() . '/slicer-output-dir'),
+            ),
         );
     }
 
@@ -38,13 +41,14 @@ class SliceCommandBuilderTest extends TestCase
                 './bin/slicer',
                 sprintf('--table-input-path=%s/data.csv', $temp->getTmpFolder()),
                 '--table-name=LOG_PLACEHOLDER',
-                sprintf('--table-output-path=%s/data.csvsliced', $temp->getTmpFolder()),
-                sprintf('--table-output-manifest-path=%s/data.csvsliced.manifest', $temp->getTmpFolder()),
+                sprintf('--table-output-path=%s/slicer-output-dir', $temp->getTmpFolder()),
+                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $temp->getTmpFolder()),
                 '--gzip=false',
                 sprintf('--table-input-manifest-path=%s/data.csv.manifest', $temp->getTmpFolder()),
             ],
             SliceCommandBuilder::create(
                 $temp->createFile('data.csv'),
+                new SplFileInfo($temp->getTmpFolder() . '/slicer-output-dir'),
                 $temp->createFile('data.csv.manifest'),
             ),
         );

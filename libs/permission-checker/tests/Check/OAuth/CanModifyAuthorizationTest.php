@@ -29,6 +29,11 @@ class CanModifyAuthorizationTest extends TestCase
             'token' => new StorageApiToken(role: 'admin'),
         ];
 
+        yield 'guest user' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(role: 'guest'),
+        ];
+
         yield 'productionManager on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
@@ -67,12 +72,6 @@ class CanModifyAuthorizationTest extends TestCase
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(role: null),
             'error' => new PermissionDeniedException('Role "none" is not allowed to modify authorization'),
-        ];
-
-        yield 'guest role' => [
-            'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(role: 'guest'),
-            'error' => new PermissionDeniedException('Role "guest" is not allowed to modify authorization'),
         ];
 
         yield 'readOnly role' => [

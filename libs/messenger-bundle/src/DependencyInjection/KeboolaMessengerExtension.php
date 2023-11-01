@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\DependencyInjection;
 
 use Keboola\MessengerBundle\Platform;
+use Symfony\Bridge\Doctrine\Messenger\DoctrinePingConnectionMiddleware;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -55,25 +56,9 @@ class KeboolaMessengerExtension extends AbstractExtension
         if (!isset($config['platform'])) {
             return;
         }
+
         $platform = Platform::from($config['platform']);
-
-        $this->createTransportConfig(
-            $builder,
-            $platform,
-            $config,
-            'connection_events',
-            'connection_events_queue_dsn',
-            'keboola.messenger_bundle.event_factory.application_events',
-        );
-
-        $this->createTransportConfig(
-            $builder,
-            $platform,
-            $config,
-            'connection_audit_log',
-            'connection_audit_log_queue_dsn',
-            'keboola.messenger_bundle.event_factory.audit_log',
-        );
+        $this->configureSymfonyMessenger($builder, $platform, $config);
     }
 
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
@@ -82,19 +67,55 @@ class KeboolaMessengerExtension extends AbstractExtension
         $loader->load('messenger.yaml');
     }
 
-    private function createTransportConfig(
-        ContainerBuilder $builder,
-        Platform $platform,
-        array $config,
-        string $transportName,
-        string $dsnProperty,
-        string $eventFactoryService,
-    ): void {
-        $transportDsn = $config[$dsnProperty] ?? '';
-        if ($transportDsn === '') {
+    private function configureSymfonyMessenger(ContainerBuilder $builder, Platform $platform, array $config): void
+    {
+        $transports = [];
+
+        if ($config['connection_audit_log_queue_dsn'] ?? null) {
+            $transports['connection_audit_log'] = $this->createTransportConfig(
+                $builder,
+                $platform,
+                'connection_audit_log',
+                $config['connection_audit_log_queue_dsn'],
+                'keboola.messenger_bundle.event_factory.audit_log',
+            );
+        }
+
+        if ($config['connection_events_queue_dsn'] ?? null) {
+            $transports['connection_events'] = $this->createTransportConfig(
+                $builder,
+                $platform,
+                'connection_events',
+                $config['connection_events_queue_dsn'],
+                'keboola.messenger_bundle.event_factory.application_events',
+            );
+        }
+
+        if (count($transports) === 0) {
             return;
         }
 
+        $messengerConfig = [
+            'transports' => $transports,
+        ];
+
+        // if DoctrineBundle is installed, add ping connection middleware
+        if (class_exists(DoctrinePingConnectionMiddleware::class)) {
+            $messengerConfig['buses']['messenger.bus.events']['middleware'][] = 'doctrine_ping_connection';
+        }
+
+        $builder->prependExtensionConfig('framework', [
+            'messenger' => $messengerConfig,
+        ]);
+    }
+
+    private function createTransportConfig(
+        ContainerBuilder $builder,
+        Platform $platform,
+        string $transportName,
+        string $transportDsn,
+        string $eventFactoryService,
+    ): array {
         $serializerServiceName = sprintf('keboola.messenger_bundle.transport_serializer.%s', $transportName);
         $serializerServiceDefinition =
             (new ChildDefinition(sprintf('keboola.messenger_bundle.platform_serializer.%s', $platform->value)))
@@ -102,17 +123,11 @@ class KeboolaMessengerExtension extends AbstractExtension
         ;
 
         $builder->setDefinition($serializerServiceName, $serializerServiceDefinition);
-        $builder->prependExtensionConfig('framework', [
-            'messenger' => [
-                'transports' => [
-                    $transportName => [
-                        'dsn' => $transportDsn,
-                        'serializer' => $serializerServiceName,
-                        'options' => $this->getTransportDefaultOptions($platform),
-                    ],
-                ],
-            ],
-        ]);
+        return [
+            'dsn' => $transportDsn,
+            'serializer' => $serializerServiceName,
+            'options' => $this->getTransportDefaultOptions($platform),
+        ];
     }
 
     private function getTransportDefaultOptions(Platform $platform): array

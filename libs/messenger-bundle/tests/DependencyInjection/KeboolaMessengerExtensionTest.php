@@ -185,6 +185,27 @@ class KeboolaMessengerExtensionTest extends KernelTestCase
         }
     }
 
+    public function testDoctrinePingIsConfiguredWhenDoctrineBundleIsInstalled(): void
+    {
+        require_once __DIR__ . '/../FakeDoctrineBundle.php';
+
+        $containerBuilder = $this->createContainerBuilder([
+            'platform' => 'aws',
+            'connection_events_queue_dsn' => 'http://example.com',
+        ]);
+
+        $extension = new KeboolaMessengerExtension();
+        $extension->prepend($containerBuilder);
+
+        $frameworkConfigs = $containerBuilder->getExtensionConfig('framework');
+        $frameworkConfig = array_merge_recursive(...$frameworkConfigs);
+
+        self::assertSame(
+            ['doctrine_ping_connection'],
+            $frameworkConfig['messenger']['buses']['messenger.bus.events']['middleware'] ?? [],
+        );
+    }
+
     private function createContainerBuilder(array $bundleConfig): ContainerBuilder
     {
         $containerBuilder = new ContainerBuilder(new ParameterBag([

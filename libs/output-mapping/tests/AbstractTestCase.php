@@ -45,11 +45,7 @@ abstract class AbstractTestCase extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->temp = new Temp('output-mapping');
-        $fs = new Filesystem();
-        $fs->mkdir($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload');
-        $fs->mkdir($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
-
+        $this->temp = $this->createTemp();
         $this->initClient();
         $method = $this->getName(false);
 
@@ -64,6 +60,15 @@ abstract class AbstractTestCase extends TestCase
                 $this->$name = $value;
             }
         }
+    }
+
+    protected function createTemp(string $prefix = 'output-mapping'): Temp
+    {
+        $temp = new Temp($prefix);
+        $fs = new Filesystem();
+        $fs->mkdir($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload');
+        $fs->mkdir($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
+        return $temp;
     }
 
     protected function clearFileUploads(array $tags): void
@@ -204,6 +209,7 @@ abstract class AbstractTestCase extends TestCase
         ?ClientWrapper $clientWrapper = null,
         string $format = 'json',
         ?LoggerInterface $logger = null,
+        ?string $stagingPath = null,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
             $clientWrapper ?: $this->clientWrapper,
@@ -214,8 +220,8 @@ abstract class AbstractTestCase extends TestCase
             ->setMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
+            function () use ($stagingPath) {
+                return $stagingPath ?: $this->temp->getTmpFolder();
             },
         );
         /** @var ProviderInterface $mockLocal */

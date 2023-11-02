@@ -919,7 +919,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
         $configuration = [
             'mapping' => [
                 [
@@ -947,11 +947,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         self::assertEquals(['Id', 'Name'], $tableInfo['columns']);
 
+        $root = $this->createTemp()->getTmpFolder();
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
         $configuration = [
             'mapping' => [
                 [

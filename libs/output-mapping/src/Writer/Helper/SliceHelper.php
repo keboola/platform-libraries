@@ -28,12 +28,11 @@ class SliceHelper
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
         $ouputDir = new SplFileInfo($outputDirPath);
-        $slicedManfest = new SplFileInfo($sourceFile->getFile()->getPathname() . 'sliced.manifest');
 
         $command = SliceCommandBuilder::create(
             $sourceFile->getFile(),
             $ouputDir,
-            $slicedManfest,
+            $source->getManifestFile()
         );
 
         $process = new Process($command);

@@ -31,8 +31,6 @@ class LocalTableStrategy extends AbstractTableStrategy
         /** @var array<string, MappingSource> $mappingSources */
         $mappingSources = [];
 
-        //@TODO tady to ma byt podle odina
-
         foreach ($dataFiles as $file) {
             $sourceName = $file->getBasename();
             $mappingSources[$sourceName] = new MappingSource(new LocalFileSource($file));

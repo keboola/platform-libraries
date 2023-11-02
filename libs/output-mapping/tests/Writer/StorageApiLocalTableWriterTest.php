@@ -884,7 +884,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger));
+        $root = $this->createTemp()->getTmpFolder();
+        file_put_contents($root . '/upload/table11.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger, $root));
         file_put_contents(
             $root . '/upload/table11.csv.manifest',
             '{"destination": "' . $this->emptyOutputBucketId . '.table11","primary_key": [""]}',

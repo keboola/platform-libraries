@@ -51,20 +51,22 @@ class SliceHelperTest extends TestCase
 
         $source = new LocalFileSource($csvFile);
 
-        SliceHelper::sliceFile(new MappingSource($source));
+        $mappingSource = SliceHelper::sliceFile(new MappingSource($source));
 
-        $manifestFiles = FilesHelper::getManifestFiles($temp->getTmpFolder());
-        self::assertCount(1, $manifestFiles);
+        $expectedManifestFilePathname = $source->getFile()->getPathname() . '.manifest';
 
-        /** @var FinderSplFileInfo $manifest */
-        $manifest = reset($manifestFiles);
-        self::assertSame('test.csv.manifest', $manifest->getFilename());
+        self::assertSame($source, $mappingSource->getSource());
+        self::assertNotNull($mappingSource->getManifestFile());
+
+        $manifestFilePathName = $mappingSource->getManifestFile()->getPathname();
+        self::assertSame($expectedManifestFilePathname, $manifestFilePathName);
+        self::assertFileExists($manifestFilePathName);
         self::assertSame(
             [
                 'columns' => ['id', 'name'],
             ],
             json_decode(
-                (string) file_get_contents($manifest->getPathname()),
+                (string) file_get_contents($manifestFilePathName),
                 true,
             ),
         );

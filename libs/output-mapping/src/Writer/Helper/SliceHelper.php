@@ -9,11 +9,12 @@ use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Process;
 
 class SliceHelper
 {
-    public static function sliceFile(MappingSource $source): void
+    public static function sliceFile(MappingSource $source): MappingSource
     {
         //@TODO log process
         $sourceFile = $source->getSource();
@@ -32,7 +33,7 @@ class SliceHelper
         $command = SliceCommandBuilder::create(
             $sourceFile->getFile(),
             $ouputDir,
-            $source->getManifestFile()
+            $source->getManifestFile(),
         );
 
         $process = new Process($command);
@@ -45,6 +46,12 @@ class SliceHelper
             $ouputDir->getPathname() . '.manifest',
             $sourceFile->getFile()->getPathname() . '.manifest',
             true,
+        );
+
+        return new MappingSource(
+            $source->getSource(),
+            FilesHelper::getFile($sourceFile->getFile()->getPathname() . '.manifest'),
+            $source->getMapping(),
         );
     }
 }

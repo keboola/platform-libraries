@@ -1,0 +1,8 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: slicer_tests
+      displayName: Slicer Tests
+      serviceName: dev-slicer
+      testCommand: bash -c 'composer install && composer ci'

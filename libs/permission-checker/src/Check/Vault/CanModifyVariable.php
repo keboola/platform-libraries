@@ -22,7 +22,7 @@ class CanModifyVariable implements PermissionCheckInterface
     {
         if ($token->hasFeature(Feature::PROTECTED_DEFAULT_BRANCH)) {
             $this->checkProtectedDefaultBranch($token->getRole());
-        } elseif ($token->isRole(Role::READ_ONLY)) {
+        } elseif ($token->isOneOfRoles([Role::NONE, Role::READ_ONLY])) {
             throw PermissionDeniedException::roleDenied($token->getRole(), 'modify variable');
         }
     }

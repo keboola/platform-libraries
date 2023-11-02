@@ -15,19 +15,19 @@ class CanModifyVariableTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
-        yield 'simple token without branch' => [
+        yield 'regular user without branch' => [
             'branchType' => null,
-            'token' => new StorageApiToken(),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'simple token on default branch' => [
+        yield 'regular user on default branch' => [
             'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'simple token on dev branch' => [
+        yield 'regular user on dev branch' => [
             'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
         yield 'developer role on protected dev branch' => [
@@ -76,11 +76,15 @@ class CanModifyVariableTest extends TestCase
 
     public static function provideInvalidPermissionsCheckData(): iterable
     {
+        yield 'no role' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(role: null),
+            'error' => PermissionDeniedException::roleDenied(Role::NONE, 'modify variable'),
+        ];
+
         yield 'readOnly role' => [
             'branchType' => null,
-            'token' => new StorageApiToken(
-                role: 'readOnly',
-            ),
+            'token' => new StorageApiToken(role: 'readOnly'),
             'error' => PermissionDeniedException::roleDenied(Role::READ_ONLY, 'modify variable'),
         ];
 

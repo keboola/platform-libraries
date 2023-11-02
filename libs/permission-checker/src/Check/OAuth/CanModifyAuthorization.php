@@ -28,7 +28,7 @@ class CanModifyAuthorization implements PermissionCheckInterface
             };
         } else {
             $isRoleAllowed = match ($token->getRole()) {
-                Role::GUEST, Role::READ_ONLY => false,
+                Role::NONE, Role::READ_ONLY => false,
                 default => true,
             };
         }

@@ -14,19 +14,24 @@ class CanModifySubscriptionsTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
-        yield 'regular token on regular project default branch' => [
+        yield 'regular user on regular project default branch' => [
             'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'regular token on regular project dev branch' => [
+        yield 'regular user on regular project dev branch' => [
             'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
         ];
 
-        yield 'regular token on regular project without branch' => [
+        yield 'regular user on regular project without branch' => [
             'branchType' => null,
-            'token' => new StorageApiToken(role: null),
+            'token' => new StorageApiToken(role: 'admin'),
+        ];
+
+        yield 'guest user' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(role: 'guest'),
         ];
 
         yield 'productionManager on protected default branch' => [
@@ -58,10 +63,10 @@ class CanModifySubscriptionsTest extends TestCase
 
     public static function provideInvalidPermissionsCheckData(): iterable
     {
-        yield 'guest role' => [
+        yield 'no role role' => [
             'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(role: 'guest'),
-            'error' => new PermissionDeniedException('Role "guest" is not allowed to modify subscriptions'),
+            'token' => new StorageApiToken(role: null),
+            'error' => new PermissionDeniedException('Role "none" is not allowed to modify subscriptions'),
         ];
 
         yield 'readOnly role' => [

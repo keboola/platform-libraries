@@ -57,8 +57,10 @@ class LocalTableStrategy extends AbstractTableStrategy
     private function sliceSources(array $mappingSources): array
     {
         foreach ($mappingSources as $sourceName => $source) {
-            if (!$source->getSource()->isSliced()) {
+            try {
                 $mappingSources[$sourceName] = SliceHelper::sliceFile($source);
+            } catch (InvalidArgumentException $e) {
+                // invalid inputs should not fail the OM process
             }
         }
 

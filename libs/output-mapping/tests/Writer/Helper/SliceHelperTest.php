@@ -50,9 +50,9 @@ class SliceHelperTest extends TestCase
         SliceHelper::sliceFile(
             new MappingSource(
                 new LocalFileSource(
-                    (new Temp())->createFile('test.csv')
-                )
-            )
+                    (new Temp())->createFile('test.csv'),
+                ),
+            ),
         );
     }
 

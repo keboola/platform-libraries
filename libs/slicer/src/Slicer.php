@@ -25,10 +25,10 @@ class Slicer
             $suffix = '';
         }
 
-        if (str_contains($uname, 'AMD64')) {
-            $platform = 'amd64';
-        } elseif (str_contains($uname, 'ARM64')) {
+        if (str_contains($uname, 'ARM64')) {
             $platform = 'arm64';
+        } elseif (str_contains($uname, '64')) {
+            $platform = 'amd64';
         } else {
             throw new RuntimeException(sprintf('Unsupported platform "%s".', $uname));
         }

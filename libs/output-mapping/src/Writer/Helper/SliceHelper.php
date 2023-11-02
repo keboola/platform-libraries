@@ -26,6 +26,10 @@ class SliceHelper
             throw new InvalidArgumentException(sprintf('Sliced files are not yet supported.'));
         }
 
+        if (!$sourceFile->getFile()->getSize()) {
+            throw new InvalidArgumentException(sprintf('Empty files cannot be sliced.'));
+        }
+
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
         $ouputDir = new SplFileInfo($outputDirPath);

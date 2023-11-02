@@ -42,6 +42,20 @@ class SliceHelperTest extends TestCase
         SliceHelper::sliceFile(new MappingSource($source));
     }
 
+    public function testSliceEmptyFileSourceIsNotSupported(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty files cannot be sliced.');
+
+        SliceHelper::sliceFile(
+            new MappingSource(
+                new LocalFileSource(
+                    (new Temp())->createFile('test.csv')
+                )
+            )
+        );
+    }
+
     public function testSlice(): void
     {
         $temp = new Temp();

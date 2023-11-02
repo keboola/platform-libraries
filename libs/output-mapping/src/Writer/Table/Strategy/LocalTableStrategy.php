@@ -14,7 +14,6 @@ use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use SplFileInfo;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
@@ -46,11 +45,8 @@ class LocalTableStrategy extends AbstractTableStrategy
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
-        //@TODO only for feature or BQ or large files
-        $this->sliceSources($mappingSources);
-
         return $this->combineSourcesWithMappingsFromConfiguration(
-            $mappingSources,
+            $this->sliceSources($mappingSources), //@TODO only for feature or BQ or large files
             $configuration['mapping'] ?? [],
         );
     }
@@ -60,9 +56,9 @@ class LocalTableStrategy extends AbstractTableStrategy
      */
     private function sliceSources(array $mappingSources): array
     {
-        foreach ($mappingSources as $source) {
+        foreach ($mappingSources as $sourceName => $source) {
             if (!$source->getSource()->isSliced()) {
-                SliceHelper::sliceFile($source);
+                $mappingSources[$sourceName] = SliceHelper::sliceFile($source);
             }
         }
 
@@ -78,8 +74,6 @@ class LocalTableStrategy extends AbstractTableStrategy
                 get_class($source),
             ));
         }
-
-        //@TODO slicer? myslim ze odin to mam popsany e nekde v dokumetu
 
         $loadOptions = [
             'delimiter' => $config['delimiter'],

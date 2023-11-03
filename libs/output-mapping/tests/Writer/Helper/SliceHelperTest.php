@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
+use Generator;
 use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
@@ -28,7 +29,7 @@ class SliceHelperTest extends TestCase
         );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only LocalFileSource is supported.');
+        $this->expectExceptionMessage('Only local files is supported for slicing.');
         SliceHelper::sliceFile(new MappingSource($source));
     }
 
@@ -54,6 +55,37 @@ class SliceHelperTest extends TestCase
                 ),
             ),
         );
+    }
+
+    public function sliceSourceWithMappingHavingCsvOptionsIsNotSupportedProvider(): Generator
+    {
+        yield [
+            ['delimiter' => ';'],
+        ];
+        yield [
+            ['enclosure' => '"'],
+        ];
+    }
+
+    /**
+     * @dataProvider sliceSourceWithMappingHavingCsvOptionsIsNotSupportedProvider
+     */
+    public function testSliceSourceWithMappingHavingCsvOptionsIsNotSupported(array $mapping): void
+    {
+        $file = (new Temp())->createFile('test.csv');
+        file_put_contents($file->getPathname(), '"id","name"');
+
+        $mappingSource = new MappingSource(
+            new LocalFileSource($file),
+        );
+        $mappingSource->setMapping($mapping);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
+        );
+
+        SliceHelper::sliceFile($mappingSource);
     }
 
     public function testSlice(): void

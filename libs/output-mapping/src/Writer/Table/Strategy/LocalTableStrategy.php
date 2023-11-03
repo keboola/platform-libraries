@@ -45,9 +45,11 @@ class LocalTableStrategy extends AbstractTableStrategy
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
-        return $this->combineSourcesWithMappingsFromConfiguration(
-            $this->sliceSources($mappingSources), //@TODO only for feature or BQ or large files
-            $configuration['mapping'] ?? [],
+        return $this->sliceSources(
+            $this->combineSourcesWithMappingsFromConfiguration(
+                $mappingSources,
+                $configuration['mapping'] ?? [],
+            ),
         );
     }
 
@@ -56,6 +58,7 @@ class LocalTableStrategy extends AbstractTableStrategy
      */
     private function sliceSources(array $mappingSources): array
     {
+        // @TODO slice only if feature or BQ backend presents
         foreach ($mappingSources as $sourceName => $source) {
             try {
                 $mappingSources[$sourceName] = SliceHelper::sliceFile($source);

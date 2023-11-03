@@ -58,10 +58,20 @@ class LocalTableStrategy extends AbstractTableStrategy
      */
     private function sliceSources(array $mappingSources): array
     {
+        $mappingSourceOccurrences = [];
+        foreach ($mappingSources as $source) {
+            $sourceName = $source->getSourceName();
+            $mappingSourceOccurrences[$sourceName] = ($mappingSourceOccurrences[$sourceName] ?? 0) + 1;
+        }
+
         // @TODO slice only if feature or BQ backend presents
-        foreach ($mappingSources as $sourceName => $source) {
+        foreach ($mappingSources as $i => $source) {
+            if ($mappingSourceOccurrences[$source->getSourceName()] > 1) {
+                continue; // @TODO log, alternatively implement
+            }
+
             try {
-                $mappingSources[$sourceName] = SliceHelper::sliceFile($source);
+                $mappingSources[$i] = SliceHelper::sliceFile($source);
             } catch (InvalidArgumentException $e) {
                 // invalid inputs should not fail the OM process
             }

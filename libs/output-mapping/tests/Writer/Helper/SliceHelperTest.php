@@ -57,21 +57,31 @@ class SliceHelperTest extends TestCase
         );
     }
 
-    public function sliceSourceWithMappingHavingCsvOptionsIsNotSupportedProvider(): Generator
+    public function sliceSourceWithSomeMappingOptionsIsNotSupportedProvider(): Generator
     {
-        yield [
-            ['delimiter' => ';'],
+        yield 'mapping with csv options - delimiter' => [
+            'mapping' => ['delimiter' => ';'],
+            'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
+                ' specified in mapping are not supported by slicer.',
         ];
-        yield [
-            ['enclosure' => '"'],
+        yield 'mapping with csv options - enclosure' => [
+            'mapping' => ['enclosure' => '"'],
+            'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
+                ' specified in mapping are not supported by slicer.',
+        ];
+        yield 'mapping with columns' => [
+            'mapping' => ['columns' => ['Id']],
+            'expectedErrorMessage' => 'Param "columns" specified in mapping is not supported by slicer.',
         ];
     }
 
     /**
-     * @dataProvider sliceSourceWithMappingHavingCsvOptionsIsNotSupportedProvider
+     * @dataProvider sliceSourceWithSomeMappingOptionsIsNotSupportedProvider
      */
-    public function testSliceSourceWithMappingHavingCsvOptionsIsNotSupported(array $mapping): void
-    {
+    public function testSliceSourceWithMappingHavingCsvOptionsIsNotSupported(
+        array $mapping,
+        string $expectedErrorMessage,
+    ): void {
         $file = (new Temp())->createFile('test.csv');
         file_put_contents($file->getPathname(), '"id","name"');
 
@@ -81,9 +91,7 @@ class SliceHelperTest extends TestCase
         $mappingSource->setMapping($mapping);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
-        );
+        $this->expectExceptionMessage($expectedErrorMessage);
 
         SliceHelper::sliceFile($mappingSource);
     }

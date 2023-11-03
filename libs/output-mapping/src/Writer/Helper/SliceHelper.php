@@ -36,6 +36,11 @@ class SliceHelper
                     'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
                 );
             }
+            if (isset($mapping['columns'])) {
+                throw new InvalidArgumentException(
+                    'Param "columns" specified in mapping is not supported by slicer.',
+                );
+            }
         }
 
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);

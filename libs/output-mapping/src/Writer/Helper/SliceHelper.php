@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Process;
 
 class SliceHelper
@@ -19,15 +18,24 @@ class SliceHelper
         //@TODO log process
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
-            throw new InvalidArgumentException('Only LocalFileSource is supported.');
+            throw new InvalidArgumentException('Only local files is supported for slicing.');
         }
 
         if ($sourceFile->isSliced()) {
-            throw new InvalidArgumentException(sprintf('Sliced files are not yet supported.'));
+            throw new InvalidArgumentException('Sliced files are not yet supported.');
         }
 
         if (!$sourceFile->getFile()->getSize()) {
             throw new InvalidArgumentException(sprintf('Empty files cannot be sliced.'));
+        }
+
+        if ($source->getMapping()) {
+            $mapping = $source->getMapping();
+            if (isset($mapping['delimiter']) || isset($mapping['enclosure'])) {
+                throw new InvalidArgumentException(
+                    'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
+                );
+            }
         }
 
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);

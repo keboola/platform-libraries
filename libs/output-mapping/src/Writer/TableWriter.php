@@ -83,8 +83,7 @@ class TableWriter extends AbstractWriter
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
-
-        $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);
+        $mappingSources = $strategy->getMappingResolver()->resolveMappingSources($sourcePathPrefix, $configuration, $isFailedJob);
 
         $defaultBucket = $configuration['bucket'] ?? null;
         $loadTableTasks = [];

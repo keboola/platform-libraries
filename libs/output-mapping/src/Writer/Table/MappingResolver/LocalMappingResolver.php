@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Writer\Table\MappingResolver;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
-use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 
@@ -41,10 +40,10 @@ class LocalMappingResolver extends AbstractMappingResolver
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
-        return SliceHelper::sliceSources($this->combineSourcesWithMappingsFromConfiguration(
+        return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
             $isFailedJob,
-        ));
+        );
     }
 }

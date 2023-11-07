@@ -13,6 +13,33 @@ use Symfony\Component\Process\Process;
 
 class SliceHelper
 {
+    /**
+     * @param MappingSource[] $mappingSources
+     */
+    public static function sliceSources(array $mappingSources): array
+    {
+        $mappingSourceOccurrences = [];
+        foreach ($mappingSources as $source) {
+            $sourceName = $source->getSourceName();
+            $mappingSourceOccurrences[$sourceName] = ($mappingSourceOccurrences[$sourceName] ?? 0) + 1;
+        }
+
+        // @TODO slice only if feature or BQ backend presents
+        foreach ($mappingSources as $i => $source) {
+            if ($mappingSourceOccurrences[$source->getSourceName()] > 1) {
+                continue; // @TODO log, alternatively implement
+            }
+
+            try {
+                $mappingSources[$i] = self::sliceFile($source);
+            } catch (InvalidArgumentException $e) {
+                // invalid inputs should not fail the OM process
+            }
+        }
+
+        return $mappingSources;
+    }
+
     public static function sliceFile(MappingSource $source): MappingSource
     {
         //@TODO log process

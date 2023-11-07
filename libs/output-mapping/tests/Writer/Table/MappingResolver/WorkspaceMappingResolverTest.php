@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Tests\Writer\Table\Source;
+namespace Keboola\OutputMapping\Tests\Writer\Table\MappingResolver;
 
 use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;

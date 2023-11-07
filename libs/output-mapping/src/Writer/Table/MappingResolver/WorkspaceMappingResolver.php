@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\MappingResolver;
 
-use Exception;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSourceFactoryInterface;
 
 class WorkspaceMappingResolver extends AbstractMappingResolver
 {
-    public function __construct(private readonly string $path) {}
+    public function __construct(
+        private readonly string $path,
+        private readonly WorkspaceItemSourceFactoryInterface $sourceFactory,
+    ) {
+    }
 
     public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array
     {
@@ -25,7 +29,7 @@ class WorkspaceMappingResolver extends AbstractMappingResolver
         // from workspace.
         foreach ($configuration['mapping'] ?? [] as $mapping) {
             $sourceName = $mapping['source'];
-            $source = $this->createSource($sourcePathPrefix, $sourceName);
+            $source = $this->sourceFactory->createSource($sourcePathPrefix, $sourceName);
             $mappingSources[$sourceName] = new MappingSource($source);
         }
 
@@ -33,7 +37,7 @@ class WorkspaceMappingResolver extends AbstractMappingResolver
             $sourceName = $file->getBasename('.manifest');
 
             if (!isset($mappingSources[$sourceName])) {
-                $source = $this->createSource($sourcePathPrefix, $sourceName);
+                $source = $this->sourceFactory->createSource($sourcePathPrefix, $sourceName);
                 $mappingSources[$sourceName] = new MappingSource($source);
             }
 
@@ -43,7 +47,7 @@ class WorkspaceMappingResolver extends AbstractMappingResolver
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
-            $isFailedJob
+            $isFailedJob,
         );
     }
 }

@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
-    abstract protected function createSource(string $sourcePathPrefix, string $sourceName): WorkspaceItemSource;
-
     /**
      * @return array {
      *      dataWorkspaceId: string,
@@ -34,10 +30,5 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
             'dataWorkspaceId' => (string) $source->getWorkspaceId(),
             'dataObject' => (string) $source->getDataObject(),
         ];
-    }
-
-    public function getMappingResolver(): MappingResolverInterface
-    {
-        return new WorkspaceMappingResolver($this->metadataStorage->getPath());
     }
 }

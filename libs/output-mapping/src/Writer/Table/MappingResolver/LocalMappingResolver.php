@@ -12,7 +12,9 @@ use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 
 class LocalMappingResolver extends AbstractMappingResolver
 {
-    public function __construct(private readonly string $path) {}
+    public function __construct(private readonly string $path)
+    {
+    }
 
     public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array
     {
@@ -42,7 +44,7 @@ class LocalMappingResolver extends AbstractMappingResolver
         return $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
-            $isFailedJob
+            $isFailedJob,
         );
     }
 }

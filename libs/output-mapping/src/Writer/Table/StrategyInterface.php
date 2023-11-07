@@ -17,5 +17,4 @@ interface StrategyInterface
     public function getMetadataStorage(): ProviderInterface;
 
     public function prepareLoadTaskOptions(SourceInterface $source, array $config): array;
-
 }

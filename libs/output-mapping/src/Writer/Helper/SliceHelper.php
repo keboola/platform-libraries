@@ -24,7 +24,6 @@ class SliceHelper
             $mappingSourceOccurrences[$sourceName] = ($mappingSourceOccurrences[$sourceName] ?? 0) + 1;
         }
 
-        // @TODO slice only if feature or BQ backend presents
         foreach ($mappingSources as $i => $source) {
             if ($mappingSourceOccurrences[$source->getSourceName()] > 1) {
                 continue; // @TODO log, alternatively implement

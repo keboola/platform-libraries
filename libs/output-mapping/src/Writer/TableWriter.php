@@ -94,7 +94,7 @@ class TableWriter extends AbstractWriter
                     $sourcePathPrefix,
                     $configuration,
                     $isFailedJob,
-                )
+                ),
             );
         } else {
             $mappingSources = $mappingResolver->resolveMappingSources(

@@ -12,14 +12,10 @@ interface StrategyInterface
 {
     public function getDataStorage(): ProviderInterface;
 
-    public function getMetadataStorage(): ProviderInterface;
+    public function getMappingResolver(): MappingResolverInterface;
 
-    /**
-     * @return MappingSource[]
-     */
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array;
+    public function getMetadataStorage(): ProviderInterface;
 
     public function prepareLoadTaskOptions(SourceInterface $source, array $config): array;
 
-    public function getMappingResolver(): MappingResolverInterface;
 }

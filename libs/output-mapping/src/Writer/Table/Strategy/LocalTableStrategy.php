@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\Helper\FilesHelper;
-use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
@@ -20,41 +17,6 @@ use Symfony\Component\Finder\Finder;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
-    /**
-     * @return MappingSource[]
-     */
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array
-    {
-        $sourcesPath = Path::join($this->metadataStorage->getPath(), $sourcePathPrefix);
-        $dataFiles = FilesHelper::getDataFiles($sourcesPath);
-        $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
-
-        /** @var array<string, MappingSource> $mappingSources */
-        $mappingSources = [];
-
-        foreach ($dataFiles as $file) {
-            $sourceName = $file->getBasename();
-            $mappingSources[$sourceName] = new MappingSource(new LocalFileSource($file));
-        }
-
-        foreach ($manifestFiles as $file) {
-            $sourceName = $file->getBasename('.manifest');
-
-            if (!isset($mappingSources[$sourceName])) {
-                throw new InvalidOutputException(sprintf('Found orphaned table manifest: "%s"', $file->getBasename()));
-            }
-
-            $mappingSources[$sourceName]->setManifestFile($file);
-        }
-
-        return $this->sliceSources(
-            $this->combineSourcesWithMappingsFromConfiguration(
-                $mappingSources,
-                $configuration['mapping'] ?? [],
-            ),
-        );
-    }
-
     /**
      * @param MappingSource[] $mappingSources
      */
@@ -145,6 +107,6 @@ class LocalTableStrategy extends AbstractTableStrategy
 
     public function getMappingResolver(): MappingResolverInterface
     {
-        return new LocalMappingResolver();
+        return new LocalMappingResolver($this->metadataStorage->getPath());
     }
 }

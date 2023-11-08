@@ -52,7 +52,7 @@ class VariablesResolverFunctionalTest extends TestCase
 
         $this->variablesApiClient = new VariablesApiClient(
             self::getRequiredEnv('VAULT_API_URL'),
-            self::getRequiredEnv('STORAGE_API_TOKEN'),
+            self::getRequiredEnv('STORAGE_API_TOKEN_MASTER'),
         );
 
         $branchesApiClient = new DevBranches($this->clientWrapper->getBasicClient());

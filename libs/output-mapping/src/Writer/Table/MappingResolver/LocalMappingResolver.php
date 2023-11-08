@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Writer\Table\MappingResolver;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 
@@ -15,8 +16,7 @@ class LocalMappingResolver extends AbstractMappingResolver
     public function __construct(private readonly string $path)
     {
     }
-
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array
+    public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob, $useSlicesFeature): array
     {
         $sourcesPath = Path::join($this->path, $sourcePathPrefix);
         $dataFiles = FilesHelper::getDataFiles($sourcesPath);
@@ -40,10 +40,16 @@ class LocalMappingResolver extends AbstractMappingResolver
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
-        return $this->combineSourcesWithMappingsFromConfiguration(
+        /* odin chtěl dát sliceSources semka, protože tady se to bude líp testovat, protože TableWriter::uploadTables
+        už končí tím, že uploaduje tabulku do storage */
+        // a babiš chce, aby to bylo v TableWriter::uploadTables, protože to tam je v PHP 7.4
+        $ms = $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
             $isFailedJob,
+        );
+        return SliceHelper::sliceSources(
+            $ms
         );
     }
 }

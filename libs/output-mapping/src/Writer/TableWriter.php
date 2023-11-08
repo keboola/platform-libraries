@@ -87,24 +87,58 @@ class TableWriter extends AbstractWriter
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
 
         $mappingResolver = $strategy->getMappingResolver();
-        if ($mappingResolver instanceof LocalMappingResolver) {
-            // @TODO slice only if feature or BQ backend presents
-            $mappingSources = SliceHelper::sliceSources(
-                $mappingResolver->resolveMappingSources(
-                    $sourcePathPrefix,
-                    $configuration,
-                    $isFailedJob,
-                ),
-            );
-        } else {
-            $mappingSources = $mappingResolver->resolveMappingSources(
-                $sourcePathPrefix,
-                $configuration,
-                $isFailedJob,
-            );
-        }
 
+        $mappingSources = $mappingResolver->resolveMappingSources(
+            $sourcePathPrefix,
+            $configuration,
+            $isFailedJob,
+        );
+        // teď víme všechny sources
+
+        SliceHelper::sliceSources(
+            $mappingSources
+        );
+
+        // teď jsou případně naslicované a změnily se možná manifesty, ale sources nepřibydou ani neubydou
+
+        // buď to tady znovu proskenujeme, anebo nový manifesty vrátí SliceHelper::sliceSources jak to vlastně teďka už dělá
+        $mappingSources = $mappingResolver->resolveMappingSources(
+            $sourcePathPrefix,
+            $configuration,
+            $isFailedJob,
+        );
+
+        // teď máme aktuální manifest files
+
+        /*
+         * Tohle je problém, protože před slicováním potřebujeme zavolate resolveTableConfiguration, abysme zjistili
+         * columns, delimiter a enclosure, který potřebuje ten slice vědět. Což by se dalo obejít možná tím, že
+         * neumožníme zadat columns, delimiter a enclosure v KONFIGURACI a donutíme všechny, aby pokud si chcou tohle
+         * přetížit, tak, aby si dali do konfigurace createManifest processor a tímpádem by se columns, delimiter a enclosure
+         * načítaly POUZE z manifestu.
+         *
+         */
         $defaultBucket = $configuration['bucket'] ?? null;
+        foreach ($mappingSources as $mappingSource) {
+            $config = [];
+            try {
+                $config = $this->tableConfigurationResolver->resolveTableConfiguration(
+                    $mappingSource,
+                    $defaultBucket,
+                    $systemMetadata,
+                );
+            } catch (Throwable $e) {
+                if (!$isFailedJob) {
+                    throw $e;
+                }
+            }
+        }
+        $mappingSources = $mappingResolver->resolveMappingSources(
+            $sourcePathPrefix,
+            $configuration,
+            $isFailedJob,
+        );
+
         $loadTableTasks = [];
         foreach ($mappingSources as $mappingSource) {
             $config = [];

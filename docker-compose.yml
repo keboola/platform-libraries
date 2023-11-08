@@ -120,3 +120,8 @@ services:
     <<: *dev82
     image: keboola/vault-api-client
     working_dir: /code/libs/vault-api-client
+
+  dev-slicer:
+    <<: *dev
+    image: keboola/slicer
+    working_dir: /code/libs/slicer

@@ -58,6 +58,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
+    - repository: slicer
+      type: github
+      endpoint: keboola
+      name: keboola/slicer
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -160,3 +164,11 @@ jobs:
       targetRepo: vault-api-php-client
       libraryPath: libs/vault-api-client
       tagPrefix: vault-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/slicer/')
+      sourceRepo: platform-libraries
+      targetRepo: slicer
+      libraryPath: libs/slicer
+      tagPrefix: slicer/

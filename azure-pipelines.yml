@@ -58,6 +58,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
+    - repository: slicer
+      type: github
+      endpoint: keboola
+      name: keboola/slicer
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -84,7 +88,8 @@ stages:
                 permissionChecker:libs/permission-checker \
                 settle:libs/settle \
                 stagingProvider:libs/staging-provider \
-                vaultApiClient:libs/vault-api-client
+                vaultApiClient:libs/vault-api-client \
+                slicer:libs/slicer
             displayName: 'Find changes'
             name: findChanges
 
@@ -197,6 +202,14 @@ stages:
     jobs:
       - template: libs/vault-api-client/azure-pipelines.tests.yml
 
+  - stage: tests_slicer
+    displayName: Tests - Slicer
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_slicer'])
+    jobs:
+      - template: libs/slicer/azure-pipelines.tests.yml
+
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -213,6 +226,7 @@ stages:
       - tests_settle
       - tests_stagingProvider
       - tests_vaultApiClient
+      - tests_slicer
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
@@ -226,7 +240,8 @@ stages:
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -333,3 +348,11 @@ stages:
           targetRepo: vault-api-php-client
           libraryPath: libs/vault-api-client
           tagPrefix: vault-api-client/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_slicer'])
+          sourceRepo: platform-libraries
+          targetRepo: slicer
+          libraryPath: libs/slicer
+          tagPrefix: slicer/

@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\MappingResolver;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
+use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +32,11 @@ class LocalMappingResolverTest extends TestCase
             false,
         );
 
-        self::assertCount(2, $mappingSources);
+        usort($mappingSources, function (MappingSource $a, MappingSource $b) {
+            return strcmp($a->getSourceName(), $b->getSourceName());
+        });
+
+         self::assertCount(2, $mappingSources);
 
         $slicedMappingSource = $mappingSources[0];
         self::assertSame('mySource', $slicedMappingSource->getSourceName());

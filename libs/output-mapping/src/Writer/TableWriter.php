@@ -82,6 +82,8 @@ class TableWriter extends AbstractWriter
             throw new OutputOperationException('Component Id must be set');
         }
 
+        var_dump($this->clientWrapper->getToken()->getFeatures());
+
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
 
         $mappingSources = $strategy->resolveMappingSources($sourcePathPrefix, $configuration);

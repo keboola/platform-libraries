@@ -7,8 +7,8 @@ namespace Keboola\PersmissionChecker\Tests;
 use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
-use Keboola\PermissionChecker\StorageApiTokenInterface;
 use Keboola\PermissionChecker\TokenPermission;
+use Keboola\StorageApiBranch\StorageApiToken as BaseStorageApiToken;
 use PHPUnit\Framework\TestCase;
 use ValueError;
 
@@ -76,7 +76,12 @@ class StorageApiTokenTest extends TestCase
 
     public function testFromTokenInterface(): void
     {
-        $token = StorageApiToken::fromTokenInterface(new class implements StorageApiTokenInterface {
+        $token = StorageApiToken::fromTokenInterface(new class extends BaseStorageApiToken {
+            public function __construct()
+            {
+                parent::__construct([], '');
+            }
+
             public function getFeatures(): array
             {
                 return ['queuev2', 'invalid-feature'];

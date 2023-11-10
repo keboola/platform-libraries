@@ -27,8 +27,8 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         }
 
         return [
-            'dataWorkspaceId' => (string) $source->getWorkspaceId(),
-            'dataObject' => (string) $source->getDataObject(),
+            'dataWorkspaceId' => $source->getWorkspaceId(),
+            'dataObject' => $source->getDataObject(),
         ];
     }
 }

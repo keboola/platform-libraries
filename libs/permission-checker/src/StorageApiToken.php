@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\PermissionChecker;
 
+use Keboola\StorageApiBranch\StorageApiToken as BaseStorageApiToken;
+
 class StorageApiToken
 {
     public function __construct(
@@ -14,7 +16,7 @@ class StorageApiToken
     ) {
     }
 
-    public static function fromTokenInterface(StorageApiTokenInterface $token): self
+    public static function fromTokenInterface(BaseStorageApiToken $token): self
     {
         return new self(
             $token->getFeatures(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Workspaces;
@@ -26,7 +27,12 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
                 'type' => self::LOAD_TYPE_CLONE,
             ];
         }
-        if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
+        if (LoadTypeDecider::canUseView(
+            $table->getTableInfo(),
+            $this->getWorkspaceType(),
+            $loadOptions,
+            $this->clientWrapper->getToken()->getProjectId(),
+        )) {
             $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return [
                 'table' => [$table, $loadOptions],

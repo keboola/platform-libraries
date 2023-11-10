@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Helper;
 
 use Generator;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use PHPUnit\Framework\TestCase;
 
@@ -133,29 +134,30 @@ class LoadTypeDeciderTest extends TestCase
         array $exportOptions,
         bool $expected,
     ): void {
-        self::assertEquals($expected, LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions));
+        self::assertEquals($expected, LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions, '123'));
     }
 
     public function decideCanUseViewProvider(): Generator
     {
-        yield 'BigQuery Table Alias' => [
-            'tableInfo' => [
-                'id' => 'foo.bar',
-                'name' => 'bar',
-                'bucket' => ['backend' => 'bigquery'],
-                'isAlias' => true,
-            ],
-            'workspaceType' => 'bigquery',
-            'exportOptions' => [],
-            'expected' => false,
-        ];
-
         yield 'BigQuery Table' => [
             'tableInfo' => [
                 'id' => 'foo.bar',
                 'name' => 'bar',
                 'bucket' => ['backend' => 'bigquery'],
                 'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => true,
+        ];
+
+        yield 'BigQuery Shared Table' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+                'sourceTable' => ['project' => ['id' => '321']],
             ],
             'workspaceType' => 'bigquery',
             'exportOptions' => [],
@@ -185,6 +187,36 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => ['overwrite' => true],
             'expected' => false,
         ];
+    }
+
+    /**
+     * @dataProvider decideCanUseViewExceptionProvider
+     */
+    public function testDecideCanUseViewException(
+        array $tableInfo,
+        string $workspaceType,
+        array $exportOptions,
+        string $expected,
+    ): void {
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage($expected);
+        LoadTypeDecider::canUseView($tableInfo, $workspaceType, $exportOptions, '123');
+    }
+
+    public function decideCanUseViewExceptionProvider(): Generator
+    {
+        yield 'BigQuery Table Alias' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+                'sourceTable' => ['project' => ['id' => '123']],
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'expected' => 'Table "foo.bar" is an alias, which is not supported when loading Bigquery tables.',
+        ];
 
         yield 'Filtered BigQuery Table' => [
             'tableInfo' => [
@@ -197,7 +229,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'seconds' => 5,
             ],
-            'expected' => false,
+            'expected' => 'Option "seconds" is not supported when loading Bigquery table "foo.bar".',
         ];
 
         yield 'BigQuery Table with limit' => [
@@ -211,7 +243,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'rows' => 1,
             ],
-            'expected' => false,
+            'expected' => 'Option "rows" is not supported when loading Bigquery table "foo.bar".',
         ];
 
         yield 'BigQuery Table with whereOperator' => [
@@ -225,7 +257,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereOperator' => 'and',
             ],
-            'expected' => false,
+            'expected' => 'Option "whereOperator" is not supported when loading Bigquery table "foo.bar".',
         ];
 
         yield 'BigQuery Table with whereColumn' => [
@@ -239,7 +271,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereColumn' => 'name',
             ],
-            'expected' => false,
+            'expected' => 'Option "whereColumn" is not supported when loading Bigquery table "foo.bar".',
         ];
 
         yield 'BigQuery Table with whereValues' => [
@@ -253,7 +285,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereValues' => ['foo'],
             ],
-            'expected' => false,
+            'expected' => 'Option "whereValues" is not supported when loading Bigquery table "foo.bar".',
         ];
 
         yield 'BigQuery Table with columns' => [
@@ -267,7 +299,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'columns' => [],
             ],
-            'expected' => false,
+            'expected' => 'Option "columns" is not supported when loading Bigquery table "foo.bar".',
         ];
     }
 }

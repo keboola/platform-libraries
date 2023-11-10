@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
@@ -77,7 +78,12 @@ class BigQueryTest extends AbstractTestCase
             'table-alias',
         );
 
-        $result = $strategy->downloadTable(new RewrittenInputTableOptions(
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Table "%s" is an alias, which is not supported when loading Bigquery tables.',
+            $aliasId,
+        ));
+        $strategy->downloadTable(new RewrittenInputTableOptions(
             [
                 'source' => $aliasId,
                 'destination' => 'my-table',
@@ -86,26 +92,5 @@ class BigQueryTest extends AbstractTestCase
             (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($aliasId),
         ));
-
-        self::assertEquals(
-            [
-                'table' => [
-                    new RewrittenInputTableOptions(
-                        [
-                            'source' => $aliasId,
-                            'destination' => 'my-table',
-                        ],
-                        $aliasId,
-                        (int) $this->clientWrapper->getDefaultBranch()->id,
-                        $this->clientWrapper->getBasicClient()->getTable($aliasId),
-                    ),
-                    [
-                        'overwrite' => false,
-                    ],
-                ],
-                'type' => 'copy',
-            ],
-            $result,
-        );
     }
 }

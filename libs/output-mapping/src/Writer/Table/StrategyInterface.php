@@ -14,11 +14,6 @@ interface StrategyInterface
 
     public function getMetadataStorage(): ProviderInterface;
 
-    /**
-     * @return MappingSource[]
-     */
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration): array;
-
     public function prepareLoadTaskOptions(SourceInterface $source, array $config): array;
 
     public function getMappingResolver(): MappingResolverInterface;

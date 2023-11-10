@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
+use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
@@ -109,5 +111,10 @@ class LocalTableStrategy extends AbstractTableStrategy
             $source->getPathname(),
             $fileUploadOptions,
         );
+    }
+
+    public function getMappingResolver(): MappingResolverInterface
+    {
+        return new LocalMappingResolver();
     }
 }

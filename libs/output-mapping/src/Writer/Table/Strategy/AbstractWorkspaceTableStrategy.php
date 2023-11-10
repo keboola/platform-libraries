@@ -7,6 +7,8 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 use InvalidArgumentException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
+use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
@@ -68,5 +70,10 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
             'dataWorkspaceId' => (string) $source->getWorkspaceId(),
             'dataObject' => (string) $source->getDataObject(),
         ];
+    }
+
+    public function getMappingResolver(): MappingResolverInterface
+    {
+        return new WorkspaceMappingResolver();
     }
 }

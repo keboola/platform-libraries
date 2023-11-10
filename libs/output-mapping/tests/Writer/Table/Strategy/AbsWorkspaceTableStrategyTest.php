@@ -7,16 +7,16 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 use InvalidArgumentException;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
+use Keboola\OutputMapping\Writer\Table\Source\AbsWorkspaceItemSourceFactory;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
-use Keboola\OutputMapping\Writer\Table\Source\SqlWorkspaceItemSourceFactory;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionProperty;
 
-class SqlWorkspaceTableStrategyTest extends TestCase
+class AbsWorkspaceTableStrategyTest extends TestCase
 {
     public function testPrepareLoadTaskOptions(): void
     {
@@ -30,7 +30,7 @@ class SqlWorkspaceTableStrategyTest extends TestCase
             ->willReturn('myTable')
         ;
 
-        $strategy = new SqlWorkspaceTableStrategy(
+        $strategy = new AbsWorkspaceTableStrategy(
             $this->createMock(ClientWrapper::class),
             new NullLogger(),
             $this->createMock(ProviderInterface::class),
@@ -50,7 +50,7 @@ class SqlWorkspaceTableStrategyTest extends TestCase
 
     public function testPrepareLoadTaskOptionsFaisOnNonWorkspaceItemSource(): void
     {
-        $strategy = new SqlWorkspaceTableStrategy(
+        $strategy = new AbsWorkspaceTableStrategy(
             $this->createMock(ClientWrapper::class),
             new NullLogger(),
             $this->createMock(ProviderInterface::class),
@@ -76,7 +76,7 @@ class SqlWorkspaceTableStrategyTest extends TestCase
             ->willReturn('test')
         ;
 
-        $strategy = new SqlWorkspaceTableStrategy(
+        $strategy = new AbsWorkspaceTableStrategy(
             $this->createMock(ClientWrapper::class),
             new NullLogger(),
             $dataStorageProvider,
@@ -97,7 +97,7 @@ class SqlWorkspaceTableStrategyTest extends TestCase
         $reflection = new ReflectionProperty($mappingResolver, 'sourceFactory');
         $sourceFactory = $reflection->getValue($mappingResolver);
         self::assertIsObject($sourceFactory);
-        self::assertInstanceOf(SqlWorkspaceItemSourceFactory::class, $sourceFactory);
+        self::assertInstanceOf(AbsWorkspaceItemSourceFactory::class, $sourceFactory);
 
         $reflection = new ReflectionProperty($sourceFactory, 'dataStorage');
         $dataStorage = $reflection->getValue($sourceFactory);

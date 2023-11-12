@@ -10,6 +10,7 @@ use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,15 @@ use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
 
 class SliceHelperTest extends TestCase
 {
+    private readonly Temp $temp;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->temp = new Temp();
+    }
+
     public function testSliceWorkspaceSourceIsNotSupported(): void
     {
         $source = new WorkspaceItemSource(
@@ -35,8 +45,7 @@ class SliceHelperTest extends TestCase
 
     public function testSliceSlicedSourceIsNotSupported(): void
     {
-        $temp = new Temp();
-        $source = new LocalFileSource(new SplFileInfo($temp->getTmpFolder()));
+        $source = new LocalFileSource(new SplFileInfo($this->temp->getTmpFolder()));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Sliced files are not yet supported.');
@@ -82,7 +91,7 @@ class SliceHelperTest extends TestCase
         array $mapping,
         string $expectedErrorMessage,
     ): void {
-        $file = (new Temp())->createFile('test.csv');
+        $file = $this->temp->createFile('test.csv');
         file_put_contents($file->getPathname(), '"id","name"');
 
         $mappingSource = new MappingSource(
@@ -96,54 +105,185 @@ class SliceHelperTest extends TestCase
         SliceHelper::sliceFile($mappingSource);
     }
 
-    public function testSlice(): void
+    public function sliceProvider(): Generator
     {
-        $temp = new Temp();
-
-        $csvFile = $temp->createFile('test.csv');
-        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
-
-        $source = new LocalFileSource($csvFile);
-
-        $mappingSource = SliceHelper::sliceFile(new MappingSource($source));
-
-        $expectedManifestFilePathname = $source->getFile()->getPathname() . '.manifest';
-
-        self::assertSame($source, $mappingSource->getSource());
-        self::assertNotNull($mappingSource->getManifestFile());
-
-        $manifestFilePathName = $mappingSource->getManifestFile()->getPathname();
-        self::assertSame($expectedManifestFilePathname, $manifestFilePathName);
-        self::assertFileExists($manifestFilePathName);
-        self::assertSame(
-            [
+        yield 'file without manifest' => [
+            'originalMappingSource' => $this->createTestMappingSource(new Temp()),
+            'expectedData' => '"123","Test Name"',
+            'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
-            json_decode(
-                (string) file_get_contents($manifestFilePathName),
-                true,
-            ),
-        );
+        ];
+        yield 'file with manifest' => [
+            'originalMappingSource' => $this->createTestMappingSourceHavingManifest(new Temp()),
+            'expectedData' => '"123";"Test Name"',
+            'expectedManifestData' => [
+                'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ],
+        ];
+    }
 
-        $dataFiles = FilesHelper::getDataFiles($temp->getTmpFolder());
+    /**
+     * @dataProvider sliceProvider
+     */
+    public function testSlice(
+        MappingSource $originalMappingSource,
+        string $expectedData,
+        array $expectedManifestData,
+    ): void {
+        /** @var LocalFileSource $originalSource */
+        $originalSource = $originalMappingSource->getSource();
+        $mappingSource = SliceHelper::sliceFile($originalMappingSource);
+
+        // manifest data
+        self::assertNotNull($mappingSource->getManifestFile());
+        $manifestFilePathName = $mappingSource->getManifestFile()->getPathname();
+        self::assertSame(
+            $originalSource->getFile()->getPathname() . '.manifest',
+            $manifestFilePathName,
+        );
+        self::assertManifestData($expectedManifestData, $manifestFilePathName);
+
+        // source
+        self::assertSource($originalSource, $mappingSource->getSource());
+
+        $dataFiles = FilesHelper::getDataFiles($originalSource->getFile()->getPath());
         self::assertCount(1, $dataFiles);
 
         /** @var FinderSplFileInfo $slicedDirectory */
         $slicedDirectory = array_shift($dataFiles);
-        self::assertTrue($slicedDirectory->isDir());
-        self::assertSame($csvFile->getPathname(), $slicedDirectory->getPathname());
 
-        $slices = iterator_to_array((new Finder())->in($slicedDirectory->getPathname())->depth(0));
+        self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectory->getPathname());
+        self::assertSlicedData($expectedData, $slicedDirectory->getPathname());
+    }
+
+    public function testSliceSources(): void
+    {
+        $originalMappingSource = $this->createTestMappingSource($this->temp);
+        /** @var LocalFileSource $originalSource */
+        $originalSource = $originalMappingSource->getSource();
+
+        $originalSlicedMappingSource = $this->createTestMappingSourceHavingManifest($this->temp);
+        /** @var LocalFileSource $originalSlicedSource */
+        $originalSlicedSource = $originalSlicedMappingSource->getSource();
+
+        $originalMappingSources = [
+            $originalMappingSource,
+            $originalSlicedMappingSource,
+        ];
+
+        $mappingSources = SliceHelper::sliceSources($originalMappingSources);
+        self::assertCount(2, $mappingSources);
+
+        // manifests data
+        self::assertNotNull($mappingSources[0]->getManifestFile());
+        $manifestFilePathName = $mappingSources[0]->getManifestFile()->getPathname();
+        self::assertSame(
+            $originalSource->getFile()->getPathname() . '.manifest',
+            $manifestFilePathName,
+        );
+        self::assertManifestData(
+            [
+                'columns' => ['id', 'name'],
+            ],
+            $manifestFilePathName,
+        );
+
+        self::assertNotNull($mappingSources[1]->getManifestFile());
+        $manifestFilePathName = $mappingSources[1]->getManifestFile()->getPathname();
+        self::assertSame(
+            $originalSlicedSource->getFile()->getPathname() . '.manifest',
+            $manifestFilePathName,
+        );
+        self::assertManifestData(
+            [
+                'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ],
+            $manifestFilePathName,
+        );
+
+        // sources
+        self::assertSource($originalSource, $mappingSources[0]->getSource());
+        self::assertSource($originalSlicedSource, $mappingSources[1]->getSource());
+
+        $slicedDirectories = FilesHelper::getDataFiles($this->temp->getTmpFolder());
+        self::assertCount(2, $slicedDirectories);
+
+        $slicedDirectories = array_map(function (SplFileInfo $file) {
+            return $file->getPathname();
+        }, $slicedDirectories);
+        sort($slicedDirectories);
+
+        self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectories[0]);
+        self::assertSlicedData('"123","Test Name"', $slicedDirectories[0]);
+
+        self::assertSame($originalSlicedSource->getFile()->getPathname(), $slicedDirectories[1]);
+        self::assertSlicedData('"123";"Test Name"', $slicedDirectories[1]);
+    }
+
+    private function createTestMappingSource(Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile('test1.csv');
+        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
+
+        return new MappingSource(new LocalFileSource($csvFile));
+    }
+
+    private function createTestMappingSourceHavingManifest(Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile('test2.csv');
+        file_put_contents($csvFile->getPathname(), '"123";"Test Name"');
+
+        $manifestFile = $temp->createFile('test2.csv.manifest');
+        file_put_contents(
+            $manifestFile->getPathname(),
+            json_encode([
+                'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ]),
+        );
+
+        return new MappingSource(
+            new LocalFileSource($csvFile),
+            FilesHelper::getFile($manifestFile->getPathname()),
+        );
+    }
+
+    private static function assertManifestData(array $expectedData, string $manifestPathName): void
+    {
+        self::assertFileExists($manifestPathName);
+        self::assertSame(
+            $expectedData,
+            json_decode(
+                (string) file_get_contents($manifestPathName),
+                true,
+            ),
+        );
+    }
+
+    private static function assertSlicedData(string $expectedData, string $directoryPathName): void
+    {
+        self::assertDirectoryExists($directoryPathName);
+
+        $slices = iterator_to_array((new Finder())->in($directoryPathName)->depth(0));
         self::assertCount(1, $slices);
 
         /** @var FinderSplFileInfo $slice */
         $slice = reset($slices);
         self::assertSame('part0001', $slice->getFilename());
-        self::assertSame('"123","Test Name"', file_get_contents($slice->getPathname()));
+        self::assertSame($expectedData, file_get_contents($slice->getPathname()));
     }
 
-    public function testSliceWithManifest(): void
+    private static function assertSource(LocalFileSource $originalSource, SourceInterface $source): void
     {
-        self::markTestIncomplete('Not implemented');
+        self::assertNotSame($originalSource, $source); // immutable source
+        self::assertInstanceOf(LocalFileSource::class, $source);
+        self::assertTrue($source->isSliced());
+        self::assertSame(
+            $originalSource->getFile()->getPathname(),
+            $source->getFile()->getPathname(),
+        );
     }
 }

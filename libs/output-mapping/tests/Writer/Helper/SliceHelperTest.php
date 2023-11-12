@@ -108,14 +108,14 @@ class SliceHelperTest extends TestCase
     public function sliceProvider(): Generator
     {
         yield 'file without manifest' => [
-            'originalMappingSource' => $this->createTestMappingSource(new Temp()),
+            'originalMappingSource' => $this->createTestMappingSource('test1.csv', new Temp()),
             'expectedData' => '"123","Test Name"',
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
         ];
         yield 'file with manifest' => [
-            'originalMappingSource' => $this->createTestMappingSourceHavingManifest(new Temp()),
+            'originalMappingSource' => $this->createTestMappingSourceHavingManifest('test2.csv', new Temp()),
             'expectedData' => '"123";"Test Name"',
             'expectedManifestData' => [
                 'delimiter' => ';',
@@ -160,11 +160,11 @@ class SliceHelperTest extends TestCase
 
     public function testSliceSources(): void
     {
-        $originalMappingSource = $this->createTestMappingSource($this->temp);
+        $originalMappingSource = $this->createTestMappingSource('test1.csv', $this->temp);
         /** @var LocalFileSource $originalSource */
         $originalSource = $originalMappingSource->getSource();
 
-        $originalSlicedMappingSource = $this->createTestMappingSourceHavingManifest($this->temp);
+        $originalSlicedMappingSource = $this->createTestMappingSourceHavingManifest('test2.csv', $this->temp);
         /** @var LocalFileSource $originalSlicedSource */
         $originalSlicedSource = $originalSlicedMappingSource->getSource();
 
@@ -223,20 +223,80 @@ class SliceHelperTest extends TestCase
         self::assertSlicedData('"123";"Test Name"', $slicedDirectories[1]);
     }
 
-    private function createTestMappingSource(Temp $temp): MappingSource
+    public function testSliceSourcesIgnoresInvalidArgumentExceptionsFromSlicer(): void
     {
-        $csvFile = $temp->createFile('test1.csv');
+        $originalMappingSource1 = $this->createTestMappingSourceHavingManifest('test1.csv', $this->temp);
+        $originalMappingSource1->setMapping(['delimiter' => ';']);
+
+        /** @var LocalFileSource $originalSource1 */
+        $originalSource1 = $originalMappingSource1->getSource();
+
+        $originalMappingSource2 = $this->createTestMappingSourceHavingManifest('test2.csv', $this->temp);
+        /** @var LocalFileSource $originalSource2 */
+        $originalSource2 = $originalMappingSource2->getSource();
+
+        $originalMappingSources = [
+            $originalMappingSource1,
+            $originalMappingSource2,
+        ];
+
+        $mappingSources = SliceHelper::sliceSources($originalMappingSources);
+        self::assertCount(2, $mappingSources);
+
+        // unmodified and immutable mapping source
+        self::assertNotSame($originalMappingSource1, $mappingSources[0]);
+        self::assertEquals($originalMappingSource1, $mappingSources[0]);
+        self::assertNotSame($originalMappingSource1->getSource(), $mappingSources[0]->getSource());
+        self::assertEquals($originalMappingSource1->getSource(), $mappingSources[0]->getSource());
+        self::assertNotSame($originalMappingSource1->getManifestFile(), $mappingSources[0]->getManifestFile());
+        self::assertEquals($originalMappingSource1->getManifestFile(), $mappingSources[0]->getManifestFile());
+
+        // manifests data
+        self::assertNotNull($mappingSources[1]->getManifestFile());
+        $manifestFilePathName = $mappingSources[1]->getManifestFile()->getPathname();
+        self::assertSame(
+            $originalSource2->getFile()->getPathname() . '.manifest',
+            $manifestFilePathName,
+        );
+        self::assertManifestData(
+            [
+                'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ],
+            $manifestFilePathName,
+        );
+
+        // sources
+        self::assertSource($originalSource2, $mappingSources[1]->getSource());
+
+        $dataFiles = FilesHelper::getDataFiles($this->temp->getTmpFolder());
+        self::assertCount(2, $dataFiles);
+
+        $dataFiles = array_map(function (SplFileInfo $file) {
+            return $file->getPathname();
+        }, $dataFiles);
+        sort($dataFiles);
+
+        self::assertFileEquals($originalSource1->getFile()->getPathname(), $dataFiles[0]);
+
+        self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
+        self::assertSlicedData('"123";"Test Name"', $dataFiles[1]);
+    }
+
+    private function createTestMappingSource(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName);
         file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
 
         return new MappingSource(new LocalFileSource($csvFile));
     }
 
-    private function createTestMappingSourceHavingManifest(Temp $temp): MappingSource
+    private function createTestMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource
     {
-        $csvFile = $temp->createFile('test2.csv');
+        $csvFile = $temp->createFile($fileName);
         file_put_contents($csvFile->getPathname(), '"123";"Test Name"');
 
-        $manifestFile = $temp->createFile('test2.csv.manifest');
+        $manifestFile = $temp->createFile($fileName . '.manifest');
         file_put_contents(
             $manifestFile->getPathname(),
             json_encode([

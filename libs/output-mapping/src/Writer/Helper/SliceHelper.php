@@ -33,6 +33,7 @@ class SliceHelper
                 $mappingSources[$i] = self::sliceFile($source);
             } catch (InvalidArgumentException $e) {
                 // invalid inputs should not fail the OM process
+                $mappingSources[$i] = clone $source;
             }
         }
 
@@ -92,7 +93,7 @@ class SliceHelper
         );
 
         return new MappingSource(
-            $source->getSource(),
+            clone $source->getSource(),
             FilesHelper::getFile($sourceFile->getFile()->getPathname() . '.manifest'),
             $source->getMapping(),
         );

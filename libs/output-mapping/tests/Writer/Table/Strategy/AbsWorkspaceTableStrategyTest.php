@@ -48,7 +48,7 @@ class AbsWorkspaceTableStrategyTest extends TestCase
         );
     }
 
-    public function testPrepareLoadTaskOptionsFaisOnNonWorkspaceItemSource(): void
+    public function testPrepareLoadTaskOptionsFailsOnNonWorkspaceItemSource(): void
     {
         $strategy = new AbsWorkspaceTableStrategy(
             $this->createMock(ClientWrapper::class),

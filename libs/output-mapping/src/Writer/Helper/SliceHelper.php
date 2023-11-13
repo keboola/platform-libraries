@@ -76,11 +76,11 @@ class SliceHelper
 
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
-        $ouputDir = new SplFileInfo($outputDirPath);
+        $outputDir = new SplFileInfo($outputDirPath);
 
         $command = SliceCommandBuilder::create(
             $sourceFile->getFile(),
-            $ouputDir,
+            $outputDir,
             $source->getManifestFile(),
         );
 
@@ -89,9 +89,9 @@ class SliceHelper
 
         $filesystem = new Filesystem();
         $filesystem->remove([$sourceFile->getFile()]);
-        $filesystem->rename($ouputDir->getPathname(), $sourceFile->getFile()->getPathname());
+        $filesystem->rename($outputDir->getPathname(), $sourceFile->getFile()->getPathname());
         $filesystem->rename(
-            $ouputDir->getPathname() . '.manifest',
+            $outputDir->getPathname() . '.manifest',
             $sourceFile->getFile()->getPathname() . '.manifest',
             true,
         );

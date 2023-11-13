@@ -9,6 +9,7 @@ use SplFileInfo;
 class SliceCommandBuilder
 {
     public static function create(
+        string $sourceName,
         SplFileInfo $inputFile,
         SplFileInfo $outputDir,
         ?SplFileInfo $inputManifestFile = null,
@@ -16,14 +17,14 @@ class SliceCommandBuilder
         $command = [
             './bin/slicer',
             '--table-input-path=' . $inputFile->getPathname(),
-            '--table-name=LOG_PLACEHOLDER', // @TODO optional? we do not know at this moment the table name
+            '--table-name=' . $sourceName,
             '--table-output-path=' . $outputDir->getPathname(),
             '--table-output-manifest-path=' . $outputDir->getPathname() . '.manifest',
-            '--gzip=false', // for tests purpose, gzip will be implemented in future
+            '--gzip=false', // @TODO https://keboola.atlassian.net/browse/GCP-457
         ];
 
         if ($inputManifestFile && $inputManifestFile->isFile()) {
-            // @TODO if manifest does not exists, the slicer does not fail
+            // @TODO remove after new slicer is released https://github.com/keboola/processor-split-table/pull/25
             $command[] = '--table-input-manifest-path=' . $inputManifestFile->getPathname();
         }
 

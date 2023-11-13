@@ -79,6 +79,7 @@ class SliceHelper
         $outputDir = new SplFileInfo($outputDirPath);
 
         $command = SliceCommandBuilder::create(
+            $source->getSourceName(),
             $sourceFile->getFile(),
             $outputDir,
             $source->getManifestFile(),

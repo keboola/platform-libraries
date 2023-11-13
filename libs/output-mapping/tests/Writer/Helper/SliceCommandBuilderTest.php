@@ -11,44 +11,52 @@ use SplFileInfo;
 
 class SliceCommandBuilderTest extends TestCase
 {
+    private Temp $temp;
+    private SplFileInfo $testFile;
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->temp = new Temp();
+        $this->testFile = $this->temp->createFile('data.csv');
+    }
+
     public function testCreate(): void
     {
-        $temp = new Temp();
-
         self::assertSame(
             [
                 './bin/slicer',
-                sprintf('--table-input-path=%s/data.csv', $temp->getTmpFolder()),
-                '--table-name=LOG_PLACEHOLDER',
-                sprintf('--table-output-path=%s/slicer-output-dir', $temp->getTmpFolder()),
-                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $temp->getTmpFolder()),
+                sprintf('--table-input-path=%s/data.csv', $this->temp->getTmpFolder()),
+                '--table-name=data.csv',
+                sprintf('--table-output-path=%s/slicer-output-dir', $this->temp->getTmpFolder()),
+                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $this->temp->getTmpFolder()),
                 '--gzip=false',
             ],
             SliceCommandBuilder::create(
-                $temp->createFile('data.csv'),
-                new SplFileInfo($temp->getTmpFolder() . '/slicer-output-dir'),
+                $this->testFile->getBasename(),
+                $this->testFile,
+                new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
             ),
         );
     }
 
     public function testCreateWithManifest(): void
     {
-        $temp = new Temp();
-
         self::assertSame(
             [
                 './bin/slicer',
-                sprintf('--table-input-path=%s/data.csv', $temp->getTmpFolder()),
-                '--table-name=LOG_PLACEHOLDER',
-                sprintf('--table-output-path=%s/slicer-output-dir', $temp->getTmpFolder()),
-                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $temp->getTmpFolder()),
+                sprintf('--table-input-path=%s/data.csv', $this->temp->getTmpFolder()),
+                '--table-name=data.csv',
+                sprintf('--table-output-path=%s/slicer-output-dir', $this->temp->getTmpFolder()),
+                sprintf('--table-output-manifest-path=%s/slicer-output-dir.manifest', $this->temp->getTmpFolder()),
                 '--gzip=false',
-                sprintf('--table-input-manifest-path=%s/data.csv.manifest', $temp->getTmpFolder()),
+                sprintf('--table-input-manifest-path=%s/data.csv.manifest', $this->temp->getTmpFolder()),
             ],
             SliceCommandBuilder::create(
-                $temp->createFile('data.csv'),
-                new SplFileInfo($temp->getTmpFolder() . '/slicer-output-dir'),
-                $temp->createFile('data.csv.manifest'),
+                $this->testFile->getBasename(),
+                $this->testFile,
+                new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
+                $this->temp->createFile('data.csv.manifest'),
             ),
         );
     }

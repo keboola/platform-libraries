@@ -20,6 +20,13 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
     public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
+        LoadTypeDecider::checkViableLoadMethod(
+            $table->getTableInfo(),
+            $this->getWorkspaceType(),
+            $loadOptions,
+            $this->clientWrapper->getToken()->getProjectId(),
+        );
+
         if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return [
@@ -30,8 +37,6 @@ abstract class AbstractDatabaseStrategy extends AbstractStrategy
         if (LoadTypeDecider::canUseView(
             $table->getTableInfo(),
             $this->getWorkspaceType(),
-            $loadOptions,
-            $this->clientWrapper->getToken()->getProjectId(),
         )) {
             $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return [

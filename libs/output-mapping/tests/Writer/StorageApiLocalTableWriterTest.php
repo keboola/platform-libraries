@@ -225,9 +225,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[1]);
 
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
-        $tableIds[] = $jobDetail['results']['id'];
+        $tableIds[] = $jobDetail['tableId'];
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
-        $tableIds[] = $jobDetail['results']['id'];
+        $tableIds[] = $jobDetail['tableId'];
 
         sort($tableIds);
         self::assertMatchesRegularExpression(
@@ -297,9 +297,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[1]);
 
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
-        $tableIds[] = $jobDetail['results']['id'];
+        $tableIds[] = $jobDetail['tableId'];
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
-        $tableIds[] = $jobDetail['results']['id'];
+        $tableIds[] = $jobDetail['tableId'];
 
         sort($tableIds);
         self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a', $tableIds[0]);
@@ -884,7 +884,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger));
+        $root = $this->createTemp()->getTmpFolder();
+        file_put_contents($root . '/upload/table11.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger, $root));
         file_put_contents(
             $root . '/upload/table11.csv.manifest',
             '{"destination": "' . $this->emptyOutputBucketId . '.table11","primary_key": [""]}',
@@ -919,7 +922,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
         $configuration = [
             'mapping' => [
                 [
@@ -947,11 +950,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         self::assertEquals(['Id', 'Name'], $tableInfo['columns']);
 
+        $root = $this->createTemp()->getTmpFolder();
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
         $configuration = [
             'mapping' => [
                 [
@@ -1110,7 +1114,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $jobDetail = $this->clientWrapper->getTableAndFileStorageClient()->getJob($jobIds[0]);
-        $tableId = $jobDetail['results']['id'];
+        $tableId = $jobDetail['tableId'];
         $tableParts = explode('.', $tableId);
         array_pop($tableParts);
         $branchBucketId = implode('.', $tableParts);
@@ -1186,7 +1190,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
-        $tableId = $jobDetail['results']['id'];
+        $tableId = $jobDetail['tableId'];
         $tableParts = explode('.', $tableId);
         array_pop($tableParts);
         $branchBucketId = implode('.', $tableParts);
@@ -1460,10 +1464,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
-
-        self::assertTrue($logger->hasWarningThatContains(
-            'This behaviour was DEPRECATED and will be removed in the future.',
-        ));
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);

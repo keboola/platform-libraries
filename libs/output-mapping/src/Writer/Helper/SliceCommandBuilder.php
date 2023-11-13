@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use SplFileInfo;
+use Symfony\Component\Process\Process;
 
 class SliceCommandBuilder
 {
-    public static function create(
+    public static function createProcess(
         string $sourceName,
         SplFileInfo $inputFile,
         SplFileInfo $outputDir,
         ?SplFileInfo $inputManifestFile = null,
-    ): array {
+    ): Process {
         $command = [
             './bin/slicer',
             '--table-input-path=' . $inputFile->getPathname(),
@@ -28,6 +29,9 @@ class SliceCommandBuilder
             $command[] = '--table-input-manifest-path=' . $inputManifestFile->getPathname();
         }
 
-        return $command;
+        return new Process(
+            command: $command,
+            timeout: 7200.0,
+        );
     }
 }

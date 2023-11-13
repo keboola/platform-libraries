@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Process\Process;
 
 class SliceHelper
 {
@@ -78,14 +77,12 @@ class SliceHelper
 
         $outputDir = new SplFileInfo($outputDirPath);
 
-        $command = SliceCommandBuilder::create(
+        $process = SliceCommandBuilder::createProcess(
             $source->getSourceName(),
             $sourceFile->getFile(),
             $outputDir,
             $source->getManifestFile(),
         );
-
-        $process = new Process($command);
         $process->mustRun();
 
         $filesystem = new Filesystem();

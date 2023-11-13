@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
-use InvalidArgumentException;
+use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use SplFileInfo;
@@ -30,7 +30,7 @@ class SliceHelper
 
             try {
                 $mappingSources[$i] = self::sliceFile($source);
-            } catch (InvalidArgumentException $e) {
+            } catch (SliceSkippedException $e) {
                 // invalid inputs should not fail the OM process
                 $mappingSources[$i] = new MappingSource(
                     clone $source->getSource(),
@@ -48,26 +48,27 @@ class SliceHelper
         //@TODO log process
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
-            throw new InvalidArgumentException('Only local files is supported for slicing.');
+            throw new SliceSkippedException('Only local files is supported for slicing.');
         }
 
         if ($sourceFile->isSliced()) {
-            throw new InvalidArgumentException('Sliced files are not yet supported.');
+            throw new SliceSkippedException('Sliced files are not yet supported.');
         }
 
         if (!$sourceFile->getFile()->getSize()) {
-            throw new InvalidArgumentException(sprintf('Empty files cannot be sliced.'));
+            throw new SliceSkippedException(sprintf('Empty files cannot be sliced.'));
         }
 
         if ($source->getMapping()) {
+            // @TODO remove after fix https://keboola.atlassian.net/browse/GCP-472
             $mapping = $source->getMapping();
             if (isset($mapping['delimiter']) || isset($mapping['enclosure'])) {
-                throw new InvalidArgumentException(
+                throw new SliceSkippedException(
                     'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
                 );
             }
             if (isset($mapping['columns'])) {
-                throw new InvalidArgumentException(
+                throw new SliceSkippedException(
                     'Param "columns" specified in mapping is not supported by slicer.',
                 );
             }

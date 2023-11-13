@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
-use InvalidArgumentException;
+use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
@@ -38,7 +38,7 @@ class SliceHelperTest extends TestCase
             false,
         );
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Only local files is supported for slicing.');
         SliceHelper::sliceFile(new MappingSource($source));
     }
@@ -47,14 +47,14 @@ class SliceHelperTest extends TestCase
     {
         $source = new LocalFileSource(new SplFileInfo($this->temp->getTmpFolder()));
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Sliced files are not yet supported.');
         SliceHelper::sliceFile(new MappingSource($source));
     }
 
     public function testSliceEmptyFileSourceIsNotSupported(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Empty files cannot be sliced.');
 
         SliceHelper::sliceFile(
@@ -99,7 +99,7 @@ class SliceHelperTest extends TestCase
         );
         $mappingSource->setMapping($mapping);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage($expectedErrorMessage);
 
         SliceHelper::sliceFile($mappingSource);
@@ -223,7 +223,7 @@ class SliceHelperTest extends TestCase
         self::assertSlicedData('"123";"Test Name"', $slicedDirectories[1]);
     }
 
-    public function testSliceSourcesIgnoresInvalidArgumentExceptionsFromSlicer(): void
+    public function testSliceSourcesIgnoresSliceSkippedExceptionsFromSlicer(): void
     {
         $originalMappingSource1 = $this->createTestMappingSourceHavingManifest('test1.csv', $this->temp);
         $originalMappingSource1->setMapping(['delimiter' => ';']);

@@ -296,6 +296,21 @@ class LoadTypeDeciderTest extends TestCase
             ],
             'expected' => 'Option "columns" is not supported when loading Bigquery table "foo.bar".',
         ];
+
+        yield 'Snowflake Table to bigquery workspace' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'snowflake'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [
+                'columns' => [],
+            ],
+            // phpcs:ignore Generic.Files.LineLength.MaxExceeded
+            'expected' => 'Workspace type "bigquery" does not match table backend type "snowflake" when loading Bigquery table "foo.bar".',
+        ];
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
@@ -12,10 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class SliceHelper
 {
-    /**
-     * @param MappingSource[] $mappingSources
-     */
-    public static function sliceSources(array $mappingSources): array
+    private static function validateMappingSourcesAreUnique(array $mappingSources): void
     {
         $mappingSourceOccurrences = [];
         foreach ($mappingSources as $source) {
@@ -23,11 +21,24 @@ class SliceHelper
             $mappingSourceOccurrences[$sourceName] = ($mappingSourceOccurrences[$sourceName] ?? 0) + 1;
         }
 
-        foreach ($mappingSources as $i => $source) {
+        foreach ($mappingSources as $source) {
             if ($mappingSourceOccurrences[$source->getSourceName()] > 1) {
-                continue; // @TODO log, alternatively implement
+                throw new InvalidOutputException(sprintf(
+                    'Source "%s" has multiple destinations set.',
+                    $source->getSourceName(),
+                ));
             }
+        }
+    }
 
+    /**
+     * @param MappingSource[] $mappingSources
+     */
+    public static function sliceSources(array $mappingSources): array
+    {
+        self::validateMappingSourcesAreUnique($mappingSources);
+
+        foreach ($mappingSources as $i => $source) {
             try {
                 $mappingSources[$i] = self::sliceFile($source);
             } catch (SliceSkippedException $e) {

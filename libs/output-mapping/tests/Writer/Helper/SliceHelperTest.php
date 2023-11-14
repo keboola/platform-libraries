@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
@@ -281,6 +282,20 @@ class SliceHelperTest extends TestCase
 
         self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
         self::assertSlicedData('"123";"Test Name"', $dataFiles[1]);
+    }
+
+    public function testSliceSourcesHavingSameSourceFileFailsWithInvalidOutputException(): void
+    {
+        $file = $this->temp->createFile('test.csv');
+        $mappingSources = [
+            new MappingSource(new LocalFileSource($file)),
+            new MappingSource(new LocalFileSource($file)),
+        ];
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Source "test.csv" has multiple destinations set.');
+
+        SliceHelper::sliceSources($mappingSources);
     }
 
     private function createTestMappingSource(string $fileName, Temp $temp): MappingSource

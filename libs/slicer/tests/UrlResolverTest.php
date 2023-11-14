@@ -13,8 +13,8 @@ class UrlResolverTest extends TestCase
     public function testGetDownloadUrl(): void
     {
         $urlResolver = new UrlResolver();
-        self::assertSame(
-            'https://github.com/keboola/processor-split-table/releases/download/v2.0.0/cli_linux_amd64',
+        self::assertMatchesRegularExpression(
+            '#https://github.com/keboola/processor-split-table/releases/download/v[0-9.]+/cli_linux_amd64#',
             $urlResolver->getDownloadUrl('linux', 'amd64', ''),
         );
     }

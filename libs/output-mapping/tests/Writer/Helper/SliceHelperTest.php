@@ -16,6 +16,7 @@ use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use SplFileInfo;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
 
@@ -322,7 +323,7 @@ class SliceHelperTest extends TestCase
 
         return new MappingSource(
             new LocalFileSource($csvFile),
-            FilesHelper::getFile($manifestFile->getPathname()),
+            SliceHelper::getFile($manifestFile->getPathname()),
         );
     }
 
@@ -360,5 +361,37 @@ class SliceHelperTest extends TestCase
             $originalSource->getFile()->getPathname(),
             $source->getFile()->getPathname(),
         );
+    }
+
+    public function testGetFile(): void
+    {
+        $temp = new Temp();
+
+        $filePathName = $temp->getTmpFolder() . '/my.csv';
+        touch($filePathName);
+        self::assertSame($filePathName, SliceHelper::getFile($filePathName)->getPathname());
+
+        $directoryPathname = $temp->getTmpFolder() . '/sub-dir';
+        mkdir($directoryPathname);
+        try {
+            SliceHelper::getFile($directoryPathname);
+            self::fail('getFile for directory path should fail');
+        } catch (FileNotFoundException $e) {
+            self::assertSame(
+                sprintf('File "%s" could not be found.', $directoryPathname),
+                $e->getMessage(),
+            );
+        }
+
+        $filePathName = $temp->getTmpFolder() . '/dummy.csv';
+        try {
+            SliceHelper::getFile($filePathName);
+            self::fail('getFile for non-existing file should fail');
+        } catch (FileNotFoundException $e) {
+            self::assertSame(
+                sprintf('File "%s" could not be found.', $filePathName),
+                $e->getMessage(),
+            );
+        }
     }
 }

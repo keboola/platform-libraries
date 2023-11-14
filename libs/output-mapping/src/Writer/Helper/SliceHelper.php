@@ -8,8 +8,11 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
-use SplFileInfo;
+use SplFileInfo as NativeSplFileInfo;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 class SliceHelper
 {
@@ -87,7 +90,7 @@ class SliceHelper
 
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
-        $outputDir = new SplFileInfo($outputDirPath);
+        $outputDir = new NativeSplFileInfo($outputDirPath);
 
         $process = SliceCommandBuilder::createProcess(
             $source->getSourceName(),
@@ -108,8 +111,28 @@ class SliceHelper
 
         return new MappingSource(
             clone $source->getSource(),
-            FilesHelper::getFile($sourceFile->getFile()->getPathname() . '.manifest'),
+            self::getFile($sourceFile->getFile()->getPathname() . '.manifest'),
             $source->getMapping(),
         );
+    }
+
+    public static function getFile(string $path): SplFileInfo
+    {
+        $fileInfo = new NativeSplFileInfo($path);
+        $files = (new Finder())->files()
+            ->name($fileInfo->getFilename())
+            ->in($fileInfo->getPath())
+            ->depth(0);
+
+        if (!$files->count()) {
+            throw new FileNotFoundException(
+                path: $path,
+            );
+        }
+
+        $iterator = $files->getIterator();
+        $iterator->rewind();
+
+        return $iterator->current();
     }
 }

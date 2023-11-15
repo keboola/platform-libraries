@@ -8,15 +8,22 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
+use Psr\Log\LoggerInterface;
 use SplFileInfo as NativeSplFileInfo;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Process\Process;
 
 class SliceHelper
 {
-    private static function validateMappingSourcesAreUnique(array $mappingSources): void
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {
+    }
+
+    private function validateMappingSourcesAreUnique(array $mappingSources): void
     {
         $mappingSourceOccurrences = [];
         foreach ($mappingSources as $source) {
@@ -34,7 +41,7 @@ class SliceHelper
         }
     }
 
-    private static function validateMappingSource(MappingSource $source): void
+    private function validateMappingSource(MappingSource $source): void
     {
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
@@ -68,14 +75,19 @@ class SliceHelper
     /**
      * @param MappingSource[] $mappingSources
      */
-    public static function sliceSources(array $mappingSources): array
+    public function sliceSources(array $mappingSources): array
     {
-        self::validateMappingSourcesAreUnique($mappingSources);
+        $this->validateMappingSourcesAreUnique($mappingSources);
 
         foreach ($mappingSources as $i => $source) {
             try {
-                $mappingSources[$i] = self::sliceFile($source);
+                $mappingSources[$i] = $this->sliceFile($source);
             } catch (SliceSkippedException $e) {
+                $this->logger->warning(sprintf(
+                    'Source "%s" slicing skipped: %s',
+                    $source->getSourceName(),
+                    $e->getMessage(),
+                ));
                 // invalid inputs should not fail the OM process
                 $mappingSources[$i] = new MappingSource(
                     clone $source->getSource(),
@@ -88,12 +100,11 @@ class SliceHelper
         return $mappingSources;
     }
 
-    public static function sliceFile(MappingSource $source): MappingSource
+    public function sliceFile(MappingSource $source): MappingSource
     {
-        //@TODO log process
-        self::validateMappingSource($source);
+        $this->validateMappingSource($source);
 
-        /** @var LocalFileSource @$sourceFile */
+        /** @var LocalFileSource $sourceFile */
         $sourceFile = $source->getSource();
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
@@ -105,7 +116,11 @@ class SliceHelper
             $outputDir,
             $source->getManifestFile(),
         );
-        $process->mustRun();
+        $process->mustRun(function ($type, $buffer) {
+            if ($type === Process::OUT) {
+                $this->logger->info(trim($buffer));
+            }
+        });
 
         $filesystem = new Filesystem();
         $filesystem->remove([$sourceFile->getFile()]);
@@ -118,12 +133,12 @@ class SliceHelper
 
         return new MappingSource(
             clone $source->getSource(),
-            self::getFile($sourceFile->getFile()->getPathname() . '.manifest'),
+            $this->getFile($sourceFile->getFile()->getPathname() . '.manifest'),
             $source->getMapping(),
         );
     }
 
-    public static function getFile(string $path): SplFileInfo
+    public function getFile(string $path): SplFileInfo
     {
         $fileInfo = new NativeSplFileInfo($path);
         $files = (new Finder())->files()

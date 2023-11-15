@@ -18,10 +18,8 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
-use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -86,23 +84,11 @@ class TableWriter extends AbstractWriter
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
 
-        $mappingResolver = $strategy->getMappingResolver();
-        if ($mappingResolver instanceof LocalMappingResolver) {
-            // @TODO slice only if feature or BQ backend presents
-            $mappingSources = SliceHelper::sliceSources(
-                $mappingResolver->resolveMappingSources(
-                    $sourcePathPrefix,
-                    $configuration,
-                    $isFailedJob,
-                ),
-            );
-        } else {
-            $mappingSources = $mappingResolver->resolveMappingSources(
-                $sourcePathPrefix,
-                $configuration,
-                $isFailedJob,
-            );
-        }
+        $mappingSources = $strategy->getMappingResolver()->resolveMappingSources(
+            $sourcePathPrefix,
+            $configuration,
+            $isFailedJob,
+        );
 
         $defaultBucket = $configuration['bucket'] ?? null;
         $loadTableTasks = [];

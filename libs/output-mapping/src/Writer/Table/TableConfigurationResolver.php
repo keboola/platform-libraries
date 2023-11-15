@@ -87,9 +87,7 @@ class TableConfigurationResolver
         }
 
         $config = $this->normalizeConfig($config, $mappingSource);
-
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        if (in_array(TableWriter::TAG_STAGING_FILES_FEATURE, $tokenInfo['owner']['features'], true)) {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::TAG_STAGING_FILES_FEATURE)) {
             $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
         }
 

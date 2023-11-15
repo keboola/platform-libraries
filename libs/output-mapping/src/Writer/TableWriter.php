@@ -47,6 +47,7 @@ class TableWriter extends AbstractWriter
     public const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
     public const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
     public const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
+    public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
 
     private Metadata $metadataClient;
 
@@ -87,9 +88,10 @@ class TableWriter extends AbstractWriter
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
 
         $mappingResolver = $strategy->getMappingResolver();
-        if ($mappingResolver instanceof LocalMappingResolver) {
-            // @TODO slice only if feature or BQ backend presents
-            $mappingSources = SliceHelper::sliceSources(
+        if ($mappingResolver instanceof LocalMappingResolver
+            && $this->clientWrapper->getToken()->hasFeature(self::OUTPUT_MAPPING_SLICE_FEATURE)
+        ) {
+            $mappingSources = (new SliceHelper($this->logger))->sliceSources(
                 $mappingResolver->resolveMappingSources(
                     $sourcePathPrefix,
                     $configuration,

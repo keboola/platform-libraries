@@ -34,32 +34,8 @@ class SliceHelper
         }
     }
 
-    /**
-     * @param MappingSource[] $mappingSources
-     */
-    public static function sliceSources(array $mappingSources): array
+    private static function validateMappingSource(MappingSource $source): void
     {
-        self::validateMappingSourcesAreUnique($mappingSources);
-
-        foreach ($mappingSources as $i => $source) {
-            try {
-                $mappingSources[$i] = self::sliceFile($source);
-            } catch (SliceSkippedException $e) {
-                // invalid inputs should not fail the OM process
-                $mappingSources[$i] = new MappingSource(
-                    clone $source->getSource(),
-                    $source->getManifestFile() ? clone $source->getManifestFile() : null,
-                    $source->getMapping(),
-                );
-            }
-        }
-
-        return $mappingSources;
-    }
-
-    public static function sliceFile(MappingSource $source): MappingSource
-    {
-        //@TODO log process
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
             throw new SliceSkippedException('Only local files is supported for slicing.');
@@ -87,7 +63,38 @@ class SliceHelper
                 );
             }
         }
+    }
 
+    /**
+     * @param MappingSource[] $mappingSources
+     */
+    public static function sliceSources(array $mappingSources): array
+    {
+        self::validateMappingSourcesAreUnique($mappingSources);
+
+        foreach ($mappingSources as $i => $source) {
+            try {
+                $mappingSources[$i] = self::sliceFile($source);
+            } catch (SliceSkippedException $e) {
+                // invalid inputs should not fail the OM process
+                $mappingSources[$i] = new MappingSource(
+                    clone $source->getSource(),
+                    $source->getManifestFile() ? clone $source->getManifestFile() : null,
+                    $source->getMapping(),
+                );
+            }
+        }
+
+        return $mappingSources;
+    }
+
+    public static function sliceFile(MappingSource $source): MappingSource
+    {
+        //@TODO log process
+        self::validateMappingSource($source);
+
+        /** @var LocalFileSource @$sourceFile */
+        $sourceFile = $source->getSource();
         $outputDirPath = uniqid($sourceFile->getFile()->getPathname() . '-', true);
 
         $outputDir = new NativeSplFileInfo($outputDirPath);

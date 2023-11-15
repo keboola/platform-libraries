@@ -7,17 +7,25 @@ namespace Keboola\OutputMapping\Writer\Table\MappingResolver;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
+use Psr\Log\LoggerInterface;
 
 class LocalMappingResolver extends AbstractMappingResolver
 {
-    public function __construct(private readonly string $path)
-    {
+    public function __construct(
+        private readonly string $path,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array
-    {
+    public function resolveMappingSources(
+        string $sourcePathPrefix,
+        array $configuration,
+        bool $isFailedJob,
+        bool $useSliceFeature,
+    ): array {
         $sourcesPath = Path::join($this->path, $sourcePathPrefix);
         $dataFiles = FilesHelper::getDataFiles($sourcesPath);
         $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
@@ -40,10 +48,16 @@ class LocalMappingResolver extends AbstractMappingResolver
             $mappingSources[$sourceName]->setManifestFile($file);
         }
 
-        return $this->combineSourcesWithMappingsFromConfiguration(
+        $mappingSources = $this->combineSourcesWithMappingsFromConfiguration(
             $mappingSources,
             $configuration['mapping'] ?? [],
             $isFailedJob,
         );
+
+        if ($useSliceFeature) {
+            return (new SliceHelper($this->logger))->sliceSources($mappingSources);
+        }
+
+        return $mappingSources;
     }
 }

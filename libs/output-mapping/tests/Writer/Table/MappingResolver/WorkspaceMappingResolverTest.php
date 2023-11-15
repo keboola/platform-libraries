@@ -45,6 +45,7 @@ class WorkspaceMappingResolverTest extends TestCase
                 ],
             ],
             false,
+            false,
         );
 
         self::assertCount(2, $mappingSources);

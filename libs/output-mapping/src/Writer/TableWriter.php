@@ -18,17 +18,14 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
-use Keboola\OutputMapping\Writer\Helper\SliceHelper;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -87,24 +84,12 @@ class TableWriter extends AbstractWriter
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($stagingStorageOutput, $isFailedJob);
 
-        $mappingResolver = $strategy->getMappingResolver();
-        if ($mappingResolver instanceof LocalMappingResolver
-            && $this->clientWrapper->getToken()->hasFeature(self::OUTPUT_MAPPING_SLICE_FEATURE)
-        ) {
-            $mappingSources = (new SliceHelper($this->logger))->sliceSources(
-                $mappingResolver->resolveMappingSources(
-                    $sourcePathPrefix,
-                    $configuration,
-                    $isFailedJob,
-                ),
-            );
-        } else {
-            $mappingSources = $mappingResolver->resolveMappingSources(
-                $sourcePathPrefix,
-                $configuration,
-                $isFailedJob,
-            );
-        }
+        $mappingSources = $strategy->getMappingResolver()->resolveMappingSources(
+            $sourcePathPrefix,
+            $configuration,
+            $isFailedJob,
+            $this->clientWrapper->getToken()->hasFeature(self::OUTPUT_MAPPING_SLICE_FEATURE),
+        );
 
         $defaultBucket = $configuration['bucket'] ?? null;
         $loadTableTasks = [];

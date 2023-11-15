@@ -17,8 +17,12 @@ class WorkspaceMappingResolver extends AbstractMappingResolver
     ) {
     }
 
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array
-    {
+    public function resolveMappingSources(
+        string $sourcePathPrefix,
+        array $configuration,
+        bool $isFailedJob,
+        bool $useSliceFeature,
+    ): array {
         $sourcesPath = Path::join($this->path, $sourcePathPrefix);
         $manifestFiles = FilesHelper::getManifestFiles($sourcesPath);
 

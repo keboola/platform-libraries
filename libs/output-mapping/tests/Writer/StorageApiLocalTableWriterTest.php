@@ -143,8 +143,12 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getToken')->willReturn($token);
-        $clientWrapper->method('getBranchClient')->willReturn($this->clientWrapper->getBranchClient());
-        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($this->clientWrapper->getBranchClient());
+        $clientWrapper->method('getBranchClient')->willReturn(
+            $this->clientWrapper->getBranchClient(),
+        );
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn(
+            $this->clientWrapper->getBranchClient(),
+        );
         $writer = new TableWriter($this->getLocalStagingFactory($clientWrapper));
 
         $tableQueue =  $writer->uploadTables(

@@ -34,25 +34,4 @@ class FilesHelper
         $files = (new Finder())->notName('*.manifest')->in($dir)->depth(0);
         return iterator_to_array($files);
     }
-
-    public static function getFile(string $path): SplFileInfo
-    {
-        $fileInfo = new NativeSplFileInfo($path);
-        $files = (new Finder())->files()
-            ->name($fileInfo->getFilename())
-            ->in($fileInfo->getPath())
-            ->depth(0)
-        ;
-
-        if (!$files->count()) {
-            throw new FileNotFoundException(
-                path: $path,
-            );
-        }
-
-        $iterator = $files->getIterator();
-        $iterator->rewind();
-
-        return $iterator->current();
-    }
 }

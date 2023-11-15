@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\OutputMapping\Writer\Helper\SliceHelper;
@@ -14,19 +15,25 @@ use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Psr\Log\Test\TestLogger;
 use SplFileInfo;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SliceHelperTest extends TestCase
 {
     private readonly Temp $temp;
+    private readonly TestLogger $logger;
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->temp = new Temp();
+        $this->logger = new TestLogger();
     }
 
     public function testSliceWorkspaceSourceIsNotSupported(): void
@@ -40,7 +47,7 @@ class SliceHelperTest extends TestCase
 
         $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Only local files is supported for slicing.');
-        SliceHelper::sliceFile(new MappingSource($source));
+        (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
     public function testSliceSlicedSourceIsNotSupported(): void
@@ -49,7 +56,7 @@ class SliceHelperTest extends TestCase
 
         $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Sliced files are not yet supported.');
-        SliceHelper::sliceFile(new MappingSource($source));
+        (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
     public function testSliceEmptyFileSourceIsNotSupported(): void
@@ -57,7 +64,7 @@ class SliceHelperTest extends TestCase
         $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage('Empty files cannot be sliced.');
 
-        SliceHelper::sliceFile(
+        (new SliceHelper(new NullLogger()))->sliceFile(
             new MappingSource(
                 new LocalFileSource(
                     (new Temp())->createFile('test.csv'),
@@ -102,7 +109,7 @@ class SliceHelperTest extends TestCase
         $this->expectException(SliceSkippedException::class);
         $this->expectExceptionMessage($expectedErrorMessage);
 
-        SliceHelper::sliceFile($mappingSource);
+        (new SliceHelper(new NullLogger()))->sliceFile($mappingSource);
     }
 
     public function sliceProvider(): Generator
@@ -134,7 +141,7 @@ class SliceHelperTest extends TestCase
     ): void {
         /** @var LocalFileSource $originalSource */
         $originalSource = $originalMappingSource->getSource();
-        $mappingSource = SliceHelper::sliceFile($originalMappingSource);
+        $mappingSource = (new SliceHelper($this->logger))->sliceFile($originalMappingSource);
 
         // manifest data
         self::assertNotNull($mappingSource->getManifestFile());
@@ -156,6 +163,16 @@ class SliceHelperTest extends TestCase
 
         self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectory->getPathname());
         self::assertSlicedData($expectedData, $slicedDirectory->getPathname());
+
+        self::assertCount(2, $this->logger->records);
+        self::assertTrue($this->logger->hasInfoThatContains(sprintf(
+            'Slicing table "%s".',
+            $originalMappingSource->getSourceName(),
+        )));
+        self::assertTrue($this->logger->hasInfoThatContains(sprintf(
+            'Table "%s" sliced',
+            $originalMappingSource->getSourceName(),
+        )));
     }
 
     public function testSliceSources(): void
@@ -173,7 +190,7 @@ class SliceHelperTest extends TestCase
             $originalSlicedMappingSource,
         ];
 
-        $mappingSources = SliceHelper::sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // manifests data
@@ -221,6 +238,12 @@ class SliceHelperTest extends TestCase
 
         self::assertSame($originalSlicedSource->getFile()->getPathname(), $slicedDirectories[1]);
         self::assertSlicedData('"123";"Test Name"', $slicedDirectories[1]);
+
+        self::assertCount(4, $this->logger->records);
+        self::assertTrue($this->logger->hasInfo('Slicing table "test1.csv".'));
+        self::assertTrue($this->logger->hasInfoThatContains('Table "test1.csv" sliced'));
+        self::assertTrue($this->logger->hasInfo('Slicing table "test2.csv".'));
+        self::assertTrue($this->logger->hasInfoThatContains('Table "test2.csv" sliced'));
     }
 
     public function testSliceSourcesIgnoresSliceSkippedExceptionsFromSlicer(): void
@@ -240,7 +263,7 @@ class SliceHelperTest extends TestCase
             $originalMappingSource2,
         ];
 
-        $mappingSources = SliceHelper::sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // unmodified and immutable mapping source
@@ -281,6 +304,27 @@ class SliceHelperTest extends TestCase
 
         self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
         self::assertSlicedData('"123";"Test Name"', $dataFiles[1]);
+
+        self::assertCount(3, $this->logger->records);
+        self::assertTrue($this->logger->hasWarning('Source "test1.csv" slicing skipped: Params "delimiter" '
+            . 'or "enclosure" specified in mapping are not supported by slicer.'));
+        self::assertTrue($this->logger->hasInfo('Slicing table "test2.csv".'));
+        self::assertTrue($this->logger->hasInfoThatContains('Table "test2.csv" sliced'));
+    }
+
+    public function testSliceSourcesHavingSameSourceFileFailsWithInvalidOutputException(): void
+    {
+        $file = $this->temp->createFile('test.csv');
+        $mappingSources = [
+            new MappingSource(new LocalFileSource($file)),
+            new MappingSource(new LocalFileSource($file)),
+        ];
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Source "test.csv" has multiple destinations set.');
+
+        (new SliceHelper($this->logger))->sliceSources($mappingSources);
+        self::assertCount(0, $this->logger->records);
     }
 
     private function createTestMappingSource(string $fileName, Temp $temp): MappingSource
@@ -307,7 +351,7 @@ class SliceHelperTest extends TestCase
 
         return new MappingSource(
             new LocalFileSource($csvFile),
-            FilesHelper::getFile($manifestFile->getPathname()),
+            (new SliceHelper(new NullLogger()))->getFile($manifestFile->getPathname()),
         );
     }
 
@@ -345,5 +389,37 @@ class SliceHelperTest extends TestCase
             $originalSource->getFile()->getPathname(),
             $source->getFile()->getPathname(),
         );
+    }
+
+    public function testGetFile(): void
+    {
+        $temp = new Temp();
+
+        $filePathName = $temp->getTmpFolder() . '/my.csv';
+        touch($filePathName);
+        self::assertSame($filePathName, (new SliceHelper(new NullLogger()))->getFile($filePathName)->getPathname());
+
+        $directoryPathname = $temp->getTmpFolder() . '/sub-dir';
+        mkdir($directoryPathname);
+        try {
+            (new SliceHelper(new NullLogger()))->getFile($directoryPathname);
+            self::fail('getFile for directory path should fail');
+        } catch (FileNotFoundException $e) {
+            self::assertSame(
+                sprintf('File "%s" could not be found.', $directoryPathname),
+                $e->getMessage(),
+            );
+        }
+
+        $filePathName = $temp->getTmpFolder() . '/dummy.csv';
+        try {
+            (new SliceHelper(new NullLogger()))->getFile($filePathName);
+            self::fail('getFile for non-existing file should fail');
+        } catch (FileNotFoundException $e) {
+            self::assertSame(
+                sprintf('File "%s" could not be found.', $filePathName),
+                $e->getMessage(),
+            );
+        }
     }
 }

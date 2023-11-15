@@ -24,8 +24,7 @@ class SliceCommandBuilder
             '--gzip=false', // @TODO https://keboola.atlassian.net/browse/GCP-457
         ];
 
-        if ($inputManifestFile && $inputManifestFile->isFile()) {
-            // @TODO remove after new slicer is released https://github.com/keboola/processor-split-table/pull/25
+        if ($inputManifestFile) {
             $command[] = '--table-input-manifest-path=' . $inputManifestFile->getPathname();
         }
 

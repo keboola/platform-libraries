@@ -8,7 +8,6 @@ use Keboola\OutputMapping\Writer\Helper\FilesHelper;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use SplFileInfo;
-use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 class FilesHelperTest extends TestCase
 {
@@ -60,37 +59,5 @@ class FilesHelperTest extends TestCase
             ],
             $result,
         );
-    }
-
-    public function testGetFile(): void
-    {
-        $temp = new Temp();
-
-        $filePathName = $temp->getTmpFolder() . '/my.csv';
-        touch($filePathName);
-        self::assertSame($filePathName, FilesHelper::getFile($filePathName)->getPathname());
-
-        $directoryPathname = $temp->getTmpFolder() . '/sub-dir';
-        mkdir($directoryPathname);
-        try {
-            FilesHelper::getFile($directoryPathname);
-            self::fail('getFile for directory path should fail');
-        } catch (FileNotFoundException $e) {
-            self::assertSame(
-                sprintf('File "%s" could not be found.', $directoryPathname),
-                $e->getMessage(),
-            );
-        }
-
-        $filePathName = $temp->getTmpFolder() . '/dummy.csv';
-        try {
-            FilesHelper::getFile($filePathName);
-            self::fail('getFile for non-existing file should fail');
-        } catch (FileNotFoundException $e) {
-            self::assertSame(
-                sprintf('File "%s" could not be found.', $filePathName),
-                $e->getMessage(),
-            );
-        }
     }
 }

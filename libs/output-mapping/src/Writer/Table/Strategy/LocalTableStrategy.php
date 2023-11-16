@@ -78,6 +78,9 @@ class LocalTableStrategy extends AbstractTableStrategy
 
     public function getMappingResolver(): MappingResolverInterface
     {
-        return new LocalMappingResolver($this->metadataStorage->getPath());
+        return new LocalMappingResolver(
+            $this->metadataStorage->getPath(),
+            $this->logger,
+        );
     }
 }

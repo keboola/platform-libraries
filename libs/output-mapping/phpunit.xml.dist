@@ -47,6 +47,9 @@
         <testsuite name="native-types">
             <file>tests/Writer/TableDefinitionTest.php</file>
         </testsuite>
+        <testsuite name="slice">
+            <directory>tests/Writer/Table</directory>
+        </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">
         <include>

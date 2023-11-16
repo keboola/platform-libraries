@@ -14,6 +14,7 @@ use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\StorageApiToken;
 
 class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
 {
@@ -94,22 +95,30 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ],
         ];
 
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $client = $this->getMockBuilder(BranchAwareClient::class)
-            ->setConstructorArgs([
-                ClientWrapper::BRANCH_DEFAULT,
-                [
-                    'url' => (string) getenv('STORAGE_API_URL'),
-                    'token' => (string) getenv('STORAGE_API_TOKEN'),
-                ],
-            ])
-            ->onlyMethods(['verifyToken'])
-            ->getMock();
-        $tokenInfo['owner']['features'][] = 'tag-staging-files';
-        $client->method('verifyToken')->willReturn($tokenInfo);
+        $tokenHasOutputMappingSliceFeature = $this->clientWrapper->getToken()
+            ->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)
+        ;
+
+        $token = $this->createMock(StorageApiToken::class);
+        $token
+            ->method('hasFeature')
+            ->willReturnCallback(function (string $feature) use ($tokenHasOutputMappingSliceFeature): bool {
+                if ($feature === TableWriter::OUTPUT_MAPPING_SLICE_FEATURE) {
+                    return $tokenHasOutputMappingSliceFeature;
+                }
+
+                return $feature === 'tag-staging-files';
+            })
+        ;
+
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->method('getBranchClient')->willReturn($client);
-        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($client);
+        $clientWrapper->method('getToken')->willReturn($token);
+        $clientWrapper->method('getBranchClient')->willReturn(
+            $this->clientWrapper->getBranchClient(),
+        );
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn(
+            $this->clientWrapper->getBranchClient(),
+        );
         $writer = new TableWriter($this->getLocalStagingFactory($clientWrapper));
 
         $tableQueue = $writer->uploadTables(

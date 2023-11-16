@@ -10,6 +10,8 @@ use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Psr\Log\Test\TestLogger;
 
 class LocalMappingResolverTest extends TestCase
 {
@@ -25,7 +27,7 @@ class LocalMappingResolverTest extends TestCase
         $temp->createFile(sprintf('%s/mySource/%s', $prefix, 'part2'));
         $manifestFileInfo = $temp->createFile(sprintf('%s/mySource.manifest', $prefix));
 
-        $resolver = new LocalMappingResolver($temp->getTmpFolder());
+        $resolver = new LocalMappingResolver($temp->getTmpFolder(), new NullLogger());
         $mappingSources = $resolver->resolveMappingSources(
             $prefix,
             [
@@ -35,6 +37,7 @@ class LocalMappingResolverTest extends TestCase
                     ],
                 ],
             ],
+            false,
             false,
         );
 
@@ -95,9 +98,9 @@ class LocalMappingResolverTest extends TestCase
             ],
         ];
 
-        $resolver = new LocalMappingResolver($temp->getTmpFolder());
+        $resolver = new LocalMappingResolver($temp->getTmpFolder(), new NullLogger());
 
-        $mappingSources = $resolver->resolveMappingSources($prefix, $mapping, true);
+        $mappingSources = $resolver->resolveMappingSources($prefix, $mapping, true, false);
         self::assertCount(1, $mappingSources);
 
         $mappingSource = $mappingSources[0];
@@ -121,7 +124,7 @@ class LocalMappingResolverTest extends TestCase
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table sources not found: "mySource"');
-        $resolver->resolveMappingSources($prefix, $mapping, false);
+        $resolver->resolveMappingSources($prefix, $mapping, false, false);
     }
     public function testResolveMappingSourcesFailsIfOrphanedManifestPresents(): void
     {
@@ -130,7 +133,7 @@ class LocalMappingResolverTest extends TestCase
 
         $temp->createFile(sprintf('%s/mySource.manifest', $prefix));
 
-        $resolver = new LocalMappingResolver($temp->getTmpFolder());
+        $resolver = new LocalMappingResolver($temp->getTmpFolder(), new NullLogger());
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Found orphaned table manifest: "mySource.manifest"');
@@ -139,6 +142,37 @@ class LocalMappingResolverTest extends TestCase
             $prefix,
             [],
             false,
+            false,
         );
+    }
+
+    public function testResolveMappingSourcesUsesSliceHelper(): void
+    {
+        $prefix = 'data/in/tables';
+        $temp = new Temp();
+
+        $csvFile = $temp->createFile(sprintf('%s/mySource.csv', $prefix));
+        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
+
+        $logger = new TestLogger();
+
+        $resolver = new LocalMappingResolver($temp->getTmpFolder(), $logger);
+
+        $mappingSources = $resolver->resolveMappingSources(
+            $prefix,
+            [],
+            false,
+            true,
+        );
+
+        self::assertCount(1, $mappingSources);
+
+        $mappingSource = $mappingSources[0];
+        self::assertNotNull($mappingSource->getManifestFile());
+        self::assertFileExists($mappingSource->getManifestFile()->getPathname());
+
+        self::assertCount(2, $logger->records);
+        self::assertTrue($logger->hasInfo('Slicing table "mySource.csv".'));
+        self::assertTrue($logger->hasInfoThatContains('Table "mySource.csv" sliced'));
     }
 }

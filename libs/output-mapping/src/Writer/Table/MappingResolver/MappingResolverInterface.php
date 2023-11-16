@@ -11,5 +11,10 @@ interface MappingResolverInterface
     /**
      * @return MappingSource[]
      */
-    public function resolveMappingSources(string $sourcePathPrefix, array $configuration, bool $isFailedJob): array;
+    public function resolveMappingSources(
+        string $sourcePathPrefix,
+        array $configuration,
+        bool $isFailedJob,
+        bool $useSliceFeature,
+    ): array;
 }

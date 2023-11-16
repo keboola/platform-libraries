@@ -75,13 +75,13 @@ class SliceHelperTest extends TestCase
 
     public function sliceSourceWithSomeMappingOptionsIsNotSupportedProvider(): Generator
     {
-        yield 'mapping with csv options - delimiter' => [
+        yield 'mapping with csv options - non-default delimiter' => [
             'mapping' => ['delimiter' => ';'],
             'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
                 ' specified in mapping are not supported by slicer.',
         ];
-        yield 'mapping with csv options - enclosure' => [
-            'mapping' => ['enclosure' => '"'],
+        yield 'mapping with csv options - non-default enclosure' => [
+            'mapping' => ['enclosure' => '\''],
             'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
                 ' specified in mapping are not supported by slicer.',
         ];
@@ -126,6 +126,39 @@ class SliceHelperTest extends TestCase
             'expectedData' => '"123";"Test Name"',
             'expectedManifestData' => [
                 'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ],
+        ];
+        yield 'file without manifest - with default enclosure in mapping' => [
+            'originalMappingSource' => $this->createTestMappingSourceHavingMapping(
+                'test1.csv',
+                new Temp(),
+                ['enclosure' => '"'], // not in expectedManifestData - config merge is done after slice in TableWriter
+            ),
+            'expectedData' => '"123","Test Name"',
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
+        yield 'file without manifest - with default delimiter in mapping' => [
+            'originalMappingSource' => $this->createTestMappingSourceHavingMapping(
+                'test1.csv',
+                new Temp(),
+                ['delimiter' => ','], // not in expectedManifestData - config merge is done after slice in TableWriter
+            ),
+            'expectedData' => '"123","Test Name"',
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
+        yield 'file without manifest - with empty columns' => [
+            'originalMappingSource' => $this->createTestMappingSourceHavingMapping(
+                'test1.csv',
+                new Temp(),
+                [], // not in expectedManifestData - config merge is done after slice in TableWriter
+            ),
+            'expectedData' => '"123","Test Name"',
+            'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
         ];
@@ -333,6 +366,13 @@ class SliceHelperTest extends TestCase
         file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
 
         return new MappingSource(new LocalFileSource($csvFile));
+    }
+
+    private function createTestMappingSourceHavingMapping(string $fileName, Temp $temp, array $mapping): MappingSource
+    {
+        $mappingSource = $this->createTestMappingSource($fileName, $temp);
+        $mappingSource->setMapping($mapping);
+        return $mappingSource;
     }
 
     private function createTestMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource

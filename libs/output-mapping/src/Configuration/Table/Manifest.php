@@ -10,6 +10,9 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 class Manifest extends Configuration
 {
+    public const DEFAULT_DELIMITER = ',';
+    public const DEFAULT_ENCLOSURE = '"';
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('table');
@@ -52,8 +55,8 @@ class Manifest extends Configuration
                         ->thenInvalid('Invalid operator in delete_where_operator %s.')
                     ->end()
                 ->end()
-                ->scalarNode('delimiter')->defaultValue(',')->end()
-                ->scalarNode('enclosure')->defaultValue('"')->end()
+                ->scalarNode('delimiter')->defaultValue(self::DEFAULT_DELIMITER)->end()
+                ->scalarNode('enclosure')->defaultValue(self::DEFAULT_ENCLOSURE)->end()
                 ->arrayNode('metadata')
                     ->prototype('array')
                         ->children()

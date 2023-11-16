@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Configuration\Table\Manifest;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
@@ -59,12 +60,16 @@ class SliceHelper
         if ($source->getMapping()) {
             // @TODO remove after fix https://keboola.atlassian.net/browse/GCP-472
             $mapping = $source->getMapping();
-            if (isset($mapping['delimiter']) || isset($mapping['enclosure'])) {
+            $hasNonDefaultDelimiter = isset($mapping['delimiter'])
+                && $mapping['delimiter'] !== Manifest::DEFAULT_DELIMITER;
+            $hasNonDefaultEnclosure = isset($mapping['enclosure'])
+                && $mapping['enclosure'] !== Manifest::DEFAULT_ENCLOSURE;
+            if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure) {
                 throw new SliceSkippedException(
                     'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
                 );
             }
-            if (isset($mapping['columns'])) {
+            if (isset($mapping['columns']) && $mapping['columns'] !== []) {
                 throw new SliceSkippedException(
                     'Param "columns" specified in mapping is not supported by slicer.',
                 );

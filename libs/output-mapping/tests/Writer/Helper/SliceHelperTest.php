@@ -21,7 +21,6 @@ use SplFileInfo;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SliceHelperTest extends TestCase
 {
@@ -116,14 +115,14 @@ class SliceHelperTest extends TestCase
     {
         yield 'file without manifest' => [
             'originalMappingSource' => $this->createTestMappingSource('test1.csv', new Temp()),
-            'expectedData' => '"123","Test Name"',
+            'expectedData' => '"123","Test Name"' . PHP_EOL,
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
         ];
         yield 'file with manifest' => [
             'originalMappingSource' => $this->createTestMappingSourceHavingManifest('test2.csv', new Temp()),
-            'expectedData' => '"123";"Test Name"',
+            'expectedData' => '"123";"Test Name"' . PHP_EOL,
             'expectedManifestData' => [
                 'delimiter' => ';',
                 'columns' => ['id', 'name'],
@@ -135,7 +134,7 @@ class SliceHelperTest extends TestCase
                 new Temp(),
                 ['enclosure' => '"'], // not in expectedManifestData - config merge is done after slice in TableWriter
             ),
-            'expectedData' => '"123","Test Name"',
+            'expectedData' => '"123","Test Name"' . PHP_EOL,
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
@@ -146,7 +145,7 @@ class SliceHelperTest extends TestCase
                 new Temp(),
                 ['delimiter' => ','], // not in expectedManifestData - config merge is done after slice in TableWriter
             ),
-            'expectedData' => '"123","Test Name"',
+            'expectedData' => '"123","Test Name"' . PHP_EOL,
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
@@ -157,7 +156,7 @@ class SliceHelperTest extends TestCase
                 new Temp(),
                 [], // not in expectedManifestData - config merge is done after slice in TableWriter
             ),
-            'expectedData' => '"123","Test Name"',
+            'expectedData' => '"123","Test Name"' . PHP_EOL,
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
@@ -267,10 +266,10 @@ class SliceHelperTest extends TestCase
         sort($slicedDirectories);
 
         self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectories[0]);
-        self::assertSlicedData('"123","Test Name"', $slicedDirectories[0]);
+        self::assertSlicedData('"123","Test Name"' . PHP_EOL, $slicedDirectories[0]);
 
         self::assertSame($originalSlicedSource->getFile()->getPathname(), $slicedDirectories[1]);
-        self::assertSlicedData('"123";"Test Name"', $slicedDirectories[1]);
+        self::assertSlicedData('"123";"Test Name"' . PHP_EOL, $slicedDirectories[1]);
 
         self::assertCount(4, $this->logger->records);
         self::assertTrue($this->logger->hasInfo('Slicing table "test1.csv".'));
@@ -336,7 +335,7 @@ class SliceHelperTest extends TestCase
         self::assertFileEquals($originalSource1->getFile()->getPathname(), $dataFiles[0]);
 
         self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
-        self::assertSlicedData('"123";"Test Name"', $dataFiles[1]);
+        self::assertSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[1]);
 
         self::assertCount(3, $this->logger->records);
         self::assertTrue($this->logger->hasWarning('Source "test1.csv" slicing skipped: Params "delimiter" '
@@ -363,7 +362,7 @@ class SliceHelperTest extends TestCase
     private function createTestMappingSource(string $fileName, Temp $temp): MappingSource
     {
         $csvFile = $temp->createFile($fileName);
-        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
+        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"' . PHP_EOL);
 
         return new MappingSource(new LocalFileSource($csvFile));
     }
@@ -378,7 +377,7 @@ class SliceHelperTest extends TestCase
     private function createTestMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource
     {
         $csvFile = $temp->createFile($fileName);
-        file_put_contents($csvFile->getPathname(), '"123";"Test Name"');
+        file_put_contents($csvFile->getPathname(), '"123";"Test Name"' . PHP_EOL);
 
         $manifestFile = $temp->createFile($fileName . '.manifest');
         file_put_contents(

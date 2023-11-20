@@ -120,7 +120,11 @@ class KeboolaMessengerExtensionTest extends KernelTestCase
                 'connection_audit_log' => [
                     'dsn' => 'http://example.com',
                     'serializer' => 'keboola.messenger_bundle.transport_serializer.connection_audit_log',
-                    'options' => [],
+                    'options' => [
+                        'client_config' => [
+                            'requestTimeout' => 60,
+                        ],
+                    ],
                 ],
             ],
             'serializers' => [

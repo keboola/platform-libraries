@@ -142,7 +142,11 @@ class KeboolaMessengerExtension extends AbstractExtension
                 'receive_mode' => 'peek-lock',
             ],
 
-            Platform::GCP => [],
+            Platform::GCP => [
+                'client_config' => [
+                    'requestTimeout' => 60,
+                ],
+            ],
         };
     }
 }

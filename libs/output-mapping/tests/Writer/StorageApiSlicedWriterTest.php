@@ -93,10 +93,17 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ],
         ];
 
+        $tokenHasOutputMappingSliceFeature = $this->clientWrapper->getToken()
+            ->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)
+        ;
+
         $token = $this->createMock(StorageApiToken::class);
         $token
             ->method('hasFeature')
-            ->willReturnCallback(function (string $feature): bool {
+            ->willReturnCallback(function (string $feature) use ($tokenHasOutputMappingSliceFeature): bool {
+                if ($feature === TableWriter::OUTPUT_MAPPING_SLICE_FEATURE) {
+                    return $tokenHasOutputMappingSliceFeature;
+                }
                 return $feature === 'tag-staging-files';
             })
         ;

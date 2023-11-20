@@ -123,7 +123,7 @@ class KeboolaMessengerExtensionTest extends KernelTestCase
                     'options' => [
                         'client_config' => [
                             'requestTimeout' => 60,
-                        ]
+                        ],
                     ],
                 ],
             ],

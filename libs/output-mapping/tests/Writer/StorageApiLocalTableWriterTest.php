@@ -1297,6 +1297,33 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    public function testWriteAlwaysFlag(): void
+    {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            self::markTestSkipped('Write always flag is not implemented for slice feature.');
+        }
+
+        $this->testAllowedDestinationConfigurations(
+            null,
+            null,
+            [
+                [
+                    'source' => 'table.csv',
+                    'destination' => '%s.table1',
+                    'write_always' => false,
+                ],
+                [
+                    'source' => 'table.csv',
+                    'destination' => '%s.table2',
+                    'write_always' => true,
+                ],
+            ],
+            ['%s.table2'],
+            true,
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
     public function testAllowedMultipleMappingsOfSameSource(): void
     {
         if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
@@ -1375,25 +1402,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                     ['source' => 'table.csv', 'destination' => '%s.table1'],
                 ],
                 'expectedTables' => ['%s.table1'],
-            ],
-
-            'failed job with write-alwways flag' => [
-                'manifest' => null,
-                'defaultBucket' => null,
-                'mapping' => [
-                    [
-                        'source' => 'table.csv',
-                        'destination' => '%s.table1',
-                        'write_always' => false,
-                    ],
-                    [
-                        'source' => 'table.csv',
-                        'destination' => '%s.table2',
-                        'write_always' => true,
-                    ],
-                ],
-                'expectedTables' => ['%s.table2'],
-                true,
             ],
         ];
     }

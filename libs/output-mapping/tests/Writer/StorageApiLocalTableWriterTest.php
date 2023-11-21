@@ -1299,19 +1299,20 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteAlwaysFlag(): void
     {
-        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
-            self::markTestSkipped('Write always flag is not implemented for slice feature.');
-        }
+        $root = $this->temp->getTmpFolder() . '/upload/';
+        file_put_contents($root . 'table0.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $this->testAllowedDestinationConfigurations(
             null,
             null,
             [
+
                 [
-                    'source' => 'table.csv',
+                    'source' => 'table0.csv',
                     'destination' => '%s.table1',
                     'write_always' => false,
                 ],
+
                 [
                     'source' => 'table.csv',
                     'destination' => '%s.table2',

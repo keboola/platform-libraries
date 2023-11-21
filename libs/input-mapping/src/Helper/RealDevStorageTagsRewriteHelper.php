@@ -108,13 +108,15 @@ class RealDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 (int) $clientWrapper->getDefaultBranch()->id,
             );
         }
-        /* at this point, nothing has changed - no tags are specified in the configuration */
+
+        /* at this point, nothing has changed - no re-writeable options are specified in the configuration */
+        $logger->info('File input mapping kept unchanged.');
         return new RewrittenInputFileOptions(
-            $fileConfiguration,
+            $fileConfigurationOriginal->getDefinition(),
             $fileConfigurationOriginal->isDevBranch(),
             $fileConfigurationOriginal->getRunId(),
             $fileConfigurationOriginal->getDefinition(),
-            (int) $clientWrapper->getDefaultBranch()->id,
+            (int) $clientWrapper->getBranchId(),
         );
     }
 

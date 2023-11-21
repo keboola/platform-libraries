@@ -31,7 +31,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
         }
         $fileConfiguration = $fileConfigurationOriginal->getDefinition();
 
-        $prefix = (string) $clientWrapper->getBranchId();
+        $prefix = $clientWrapper->getBranchId();
 
         if (!empty($fileConfiguration['tags'])) {
             $oldTagsList = $fileConfiguration['tags'];
@@ -118,6 +118,7 @@ class FakeDevStorageTagsRewriteHelper implements TagsRewriteHelperInterface
                 (int) $clientWrapper->getDefaultBranch()->id,
             );
         }
+
         /* at this point, nothing has changed - neither the actual input tags nor the processed ("output") tags */
         return new RewrittenInputFileOptions(
             $fileConfiguration,

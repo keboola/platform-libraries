@@ -347,4 +347,43 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $testLogger,
         );
     }
+
+    public function testBranchRewriteFileIds(): void
+    {
+        $root = $this->tmpDir;
+        file_put_contents($root . '/upload', 'test');
+        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $fileId = $clientWrapper->getBranchClient()->uploadFile(
+            $root . '/upload',
+            (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG]),
+        );
+        sleep(2);
+
+        $configuration = ['file_ids' => [$fileId]];
+
+        $configuration = new InputFileOptions(
+            $configuration,
+            $clientWrapper->isDevelopmentBranch(),
+            (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
+        );
+
+        $testLogger = new TestLogger();
+        $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
+            $configuration,
+            $clientWrapper,
+            $testLogger,
+        );
+
+        self::assertEquals(
+            new RewrittenInputFileOptions(
+                ['file_ids' => [$fileId]],
+                true,
+                '',
+                ['overwrite' => true, 'file_ids' => [$fileId]],
+                (int) self::$branchId,
+            ),
+            $processedConfiguration,
+        );
+        self::assertTrue($testLogger->hasInfoThatContains('File input mapping kept unchanged.'));
+    }
 }

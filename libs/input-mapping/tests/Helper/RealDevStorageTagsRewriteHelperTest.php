@@ -384,5 +384,6 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ),
             $processedConfiguration,
         );
+        self::assertTrue($testLogger->hasInfoThatContains('File input mapping kept unchanged.'));
     }
 }

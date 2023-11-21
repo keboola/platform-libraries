@@ -12,8 +12,6 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\BranchAwareClient;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
@@ -1298,6 +1296,72 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertSame($expectedTables, $tablesIds);
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteAlwaysFlag(): void
+    {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            self::markTestSkipped('Write always flag is not implemented for slice feature.');
+        }
+
+        $this->testAllowedDestinationConfigurations(
+            null,
+            null,
+            [
+                [
+                    'source' => 'table.csv',
+                    'destination' => '%s.table1',
+                    'write_always' => false,
+                ],
+                [
+                    'source' => 'table.csv',
+                    'destination' => '%s.table2',
+                    'write_always' => true,
+                ],
+            ],
+            ['%s.table2'],
+            true,
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testAllowedMultipleMappingsOfSameSource(): void
+    {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            self::markTestSkipped('This test is not relevant for slice feature.');
+        }
+
+        $this->testAllowedDestinationConfigurations(
+            null,
+            null,
+            [
+                ['source' => 'table.csv', 'destination' => '%s.table1'],
+                ['source' => 'table.csv', 'destination' => '%s.table2'],
+            ],
+            ['%s.table1', '%s.table2'],
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testForbiddenMultipleMappingsOfSameSource(): void
+    {
+        if (!$this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            self::markTestSkipped('This test is relevant only for slice feature.');
+        }
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Source "table.csv" has multiple destinations set.');
+
+        $this->testAllowedDestinationConfigurations(
+            null,
+            null,
+            [
+                ['source' => 'table.csv', 'destination' => '%s.table1'],
+                ['source' => 'table.csv', 'destination' => '%s.table2'],
+            ],
+            ['%s.table1', '%s.table2'],
+        );
+    }
+
     public function provideAllowedDestinationConfigurations(): array
     {
         return [
@@ -1338,35 +1402,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                     ['source' => 'table.csv', 'destination' => '%s.table1'],
                 ],
                 'expectedTables' => ['%s.table1'],
-            ],
-
-            'multiple mappings of the same source' => [
-                'manifest' => null,
-                'defaultBucket' => null,
-                'mapping' => [
-                    ['source' => 'table.csv', 'destination' => '%s.table1'],
-                    ['source' => 'table.csv', 'destination' => '%s.table2'],
-                ],
-                'expectedTables' => ['%s.table1', '%s.table2'],
-            ],
-
-            'failed job with write-alwways flag' => [
-                'manifest' => null,
-                'defaultBucket' => null,
-                'mapping' => [
-                    [
-                        'source' => 'table.csv',
-                        'destination' => '%s.table1',
-                        'write_always' => false,
-                    ],
-                    [
-                        'source' => 'table.csv',
-                        'destination' => '%s.table2',
-                        'write_always' => true,
-                    ],
-                ],
-                'expectedTables' => ['%s.table2'],
-                true,
             ],
         ];
     }

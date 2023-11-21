@@ -49,6 +49,8 @@
         </testsuite>
         <testsuite name="slice">
             <directory>tests/Writer/Table</directory>
+            <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
+            <file>tests/Writer/StorageApiSlicedWriterTest.php</file>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">

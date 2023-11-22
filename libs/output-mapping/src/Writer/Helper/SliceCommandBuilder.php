@@ -21,7 +21,7 @@ class SliceCommandBuilder
             '--table-name=' . $sourceName,
             '--table-output-path=' . $outputDir->getPathname(),
             '--table-output-manifest-path=' . $outputDir->getPathname() . '.manifest',
-            '--gzip=false', // @TODO https://keboola.atlassian.net/browse/GCP-457
+            '--gzip=true',
         ];
 
         if ($inputManifestFile) {

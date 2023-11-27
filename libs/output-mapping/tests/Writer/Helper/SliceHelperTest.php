@@ -169,6 +169,21 @@ class SliceHelperTest extends TestCase
                 'columns' => ['id', 'name'],
             ],
         ];
+        yield 'compressed file without manifest' => [
+            'originalMappingSource' => $this->createTestGzippedMappingSource('test1.csv', new Temp()),
+            'expectedData' => '"123","Test Name"' . PHP_EOL,
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
+        yield 'compressed sliced file with manifest' => [
+            'originalMappingSource' => $this->createTestGzippedSlicedMappingSourceHavingManifest('test3', new Temp()),
+            // small chunks slicer joins into one slice
+            'expectedData' => '"123","Test Name"' . PHP_EOL . '"456","Test Name 2"' . PHP_EOL,
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
     }
 
     /**
@@ -202,7 +217,7 @@ class SliceHelperTest extends TestCase
         $slicedDirectory = array_shift($dataFiles);
 
         self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectory->getPathname());
-        self::assertSlicedData($expectedData, $slicedDirectory->getPathname());
+        self::assertCompressedSlicedData($expectedData, $slicedDirectory->getPathname());
 
         self::assertCount(2, $this->logger->records);
         self::assertTrue($this->logger->hasInfoThatContains(sprintf(
@@ -274,10 +289,10 @@ class SliceHelperTest extends TestCase
         sort($slicedDirectories);
 
         self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectories[0]);
-        self::assertSlicedData('"123","Test Name"' . PHP_EOL, $slicedDirectories[0]);
+        self::assertCompressedSlicedData('"123","Test Name"' . PHP_EOL, $slicedDirectories[0]);
 
         self::assertSame($originalSlicedSource->getFile()->getPathname(), $slicedDirectories[1]);
-        self::assertSlicedData('"123";"Test Name"' . PHP_EOL, $slicedDirectories[1]);
+        self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $slicedDirectories[1]);
 
         self::assertCount(4, $this->logger->records);
         self::assertTrue($this->logger->hasInfo('Slicing table "test1.csv".'));
@@ -343,7 +358,7 @@ class SliceHelperTest extends TestCase
         self::assertFileEquals($originalSource1->getFile()->getPathname(), $dataFiles[0]);
 
         self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
-        self::assertSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[1]);
+        self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[1]);
 
         self::assertCount(3, $this->logger->records);
         self::assertTrue($this->logger->hasWarning('Source "test1.csv" slicing skipped: Params "delimiter" '
@@ -414,7 +429,7 @@ class SliceHelperTest extends TestCase
         );
     }
 
-    private static function assertSlicedData(string $expectedData, string $directoryPathName): void
+    private static function assertCompressedSlicedData(string $expectedData, string $directoryPathName): void
     {
         self::assertDirectoryExists($directoryPathName);
 
@@ -423,8 +438,8 @@ class SliceHelperTest extends TestCase
 
         /** @var FinderSplFileInfo $slice */
         $slice = reset($slices);
-        self::assertSame('part0001', $slice->getFilename());
-        self::assertSame($expectedData, file_get_contents($slice->getPathname()));
+        self::assertSame('part0001.gz', $slice->getFilename());
+        self::assertSame($expectedData, gzdecode((string) file_get_contents($slice->getPathname())));
     }
 
     private static function assertSource(LocalFileSource $originalSource, SourceInterface $source): void
@@ -476,6 +491,40 @@ class SliceHelperTest extends TestCase
         file_put_contents($csvFile->getPathname(), '"123","Test Name"' . PHP_EOL);
         $csvFile = $temp->createFile($fileName . '/part0002');
         file_put_contents($csvFile->getPathname(), '"456","Test Name 2"' . PHP_EOL);
+
+        $manifestFile = $temp->createFile($fileName . '.manifest');
+        file_put_contents(
+            $manifestFile->getPathname(),
+            json_encode([
+                'columns' => ['id', 'name'],
+            ]),
+        );
+
+        return new MappingSource(
+            new LocalFileSource(new SplFileInfo($csvFile->getPath())),
+            (new SliceHelper(new NullLogger()))->getFile($manifestFile->getPathname()),
+        );
+    }
+
+    private function createTestGzippedMappingSource(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName . '.gz');
+        file_put_contents(
+            $csvFile->getPathname(),
+            (string) gzencode(
+                '"id","name"' . PHP_EOL . '"123","Test Name"' . PHP_EOL,
+            ),
+        );
+
+        return new MappingSource(new LocalFileSource($csvFile));
+    }
+
+    private function createTestGzippedSlicedMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName . '/part0001.gz');
+        file_put_contents($csvFile->getPathname(), (string) gzencode('"123","Test Name"' . PHP_EOL));
+        $csvFile = $temp->createFile($fileName . '/part0002.gz');
+        file_put_contents($csvFile->getPathname(), (string) gzencode('"456","Test Name 2"' . PHP_EOL));
 
         $manifestFile = $temp->createFile($fileName . '.manifest');
         file_put_contents(

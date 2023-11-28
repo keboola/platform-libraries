@@ -144,7 +144,10 @@ class KeboolaMessengerExtension extends AbstractExtension
 
             Platform::GCP => [
                 'client_config' => [
-                    'requestTimeout' => 60,
+                    'restOptions' => [
+                        'timeout' => 120,
+                        'connect_timeout' => 10,
+                    ],
                 ],
             ],
         };

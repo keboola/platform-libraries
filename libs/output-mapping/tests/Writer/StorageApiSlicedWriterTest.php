@@ -540,20 +540,28 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
     {
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
+        file_put_contents($root . '/upload/table.csv.manifest', json_encode([
+            'columns' => ['Id','Name'],
+            'primary_key' => ['Id','Name'],
+        ]));
         file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
         file_put_contents($root . '/upload/table.csv/part2', "\"aabb\",\"ccdd\"\n");
+        file_put_contents($root . '/upload/table2.csv.manifest', json_encode([
+            'columns' => ['Id','Name'],
+            'primary_key' => ['Id','Name'],
+        ]));
         file_put_contents($root . '/upload/table2.csv', "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n");
 
         $configs = [
             [
                 'source' => 'table.csv',
                 'destination' => $this->emptyOutputBucketId . '.table',
-                'columns' => ['Id','Name'],
+                'primary_key' => ['Id'],
             ],
             [
                 'source' => 'table2.csv',
                 'destination' => $this->emptyOutputBucketId . '.table2',
-                'columns' => ['Id','Name'],
+                'primary_key' => ['Id'],
             ],
         ];
 
@@ -573,8 +581,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertCount(2, $tables);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table');
         self::assertEquals(['Id', 'Name'], $table['columns']);
+        self::assertEquals(['Id'], $table['primaryKey']);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->emptyOutputBucketId . '.table2');
         self::assertEquals(['Id', 'Name'], $table['columns']);
+        self::assertEquals(['Id'], $table['primaryKey']);
 
         $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';

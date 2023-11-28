@@ -46,7 +46,7 @@ class SliceHelper
     {
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
-            throw new SliceSkippedException('Only local files is supported for slicing.');
+            throw new SliceSkippedException('Only local files are supported for slicing.');
         }
 
         if ($sourceFile->isSliced() && !$source->getManifestFile()) {
@@ -64,14 +64,11 @@ class SliceHelper
                 && $mapping['delimiter'] !== Manifest::DEFAULT_DELIMITER;
             $hasNonDefaultEnclosure = isset($mapping['enclosure'])
                 && $mapping['enclosure'] !== Manifest::DEFAULT_ENCLOSURE;
-            if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure) {
-                throw new SliceSkippedException(
-                    'Params "delimiter" or "enclosure" specified in mapping are not supported by slicer.',
-                );
-            }
-            if (isset($mapping['columns']) && $mapping['columns'] !== []) {
-                throw new SliceSkippedException(
-                    'Param "columns" specified in mapping is not supported by slicer.',
+            $hasColumns = isset($mapping['columns']) && $mapping['columns'] !== [];
+
+            if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
+                throw new InvalidOutputException(
+                    'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.',
                 );
             }
         }

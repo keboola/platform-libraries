@@ -924,6 +924,14 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteTableColumnsOverwrite(): void
     {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            $this->expectException(InvalidOutputException::class);
+            $this->expectExceptionMessage(
+                'Params "delimiter", "enclosure" or "columns" '
+                . 'specified in mapping are not longer supported.',
+            );
+        }
+
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
@@ -1035,18 +1043,29 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         self::assertEquals(['foo', 'bar'], $tableInfo['columns']);
 
+        file_put_contents(
+            $root . '/upload/' . $this->emptyOutputBucketId . '.table10a.csv.manifest',
+            json_encode([
+                'columns' => ['Boing', 'Tschak'],
+            ]),
+        );
+        file_put_contents(
+            $root . '/upload/' . $this->emptyOutputBucketId . '.table10b.csv.manifest',
+            json_encode([
+                'columns' => ['bum', 'tschak'],
+            ]),
+        );
+
         $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
             'mapping' => [
                 [
                     'source' => $this->emptyOutputBucketId . '.table10a.csv',
                     'destination' => $this->emptyOutputBucketId . '.table10a',
-                    'columns' => ['Boing', 'Tschak'],
                 ],
                 [
                     'source' => $this->emptyOutputBucketId . '.table10b.csv',
                     'destination' => $this->emptyOutputBucketId . '.table10b',
-                    'columns' => ['bum', 'tschak'],
                 ],
             ],
         ];
@@ -1927,6 +1946,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     {
         $root = $this->temp->getTmpFolder();
         file_put_contents(
+            $root . '/upload/table1a.csv.manifest',
+            json_encode([
+                'columns' => [
+                    'Id',
+                    'Name',
+                    '_timestamp',
+                ],
+            ]),
+        );
+        file_put_contents(
             $root . '/upload/table1a.csv',
             "\"Id\",\"Name\",\"_timestamp\"\n\"test\",\"test\",\"test\"\n\"aabb\",\"ccdd\",\"eeff\"\n",
         );
@@ -1934,7 +1963,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $table1Mapping = [
             'source' => 'table1a.csv',
             'destination' => $this->emptyOutputBucketId . '.table1a',
-            'columns' => ['Id', 'Name', '_timestamp'],
         ];
 
         $writer = new TableWriter($this->getLocalStagingFactory());

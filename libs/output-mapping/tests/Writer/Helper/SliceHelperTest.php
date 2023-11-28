@@ -45,7 +45,7 @@ class SliceHelperTest extends TestCase
         );
 
         $this->expectException(SliceSkippedException::class);
-        $this->expectExceptionMessage('Only local files is supported for slicing.');
+        $this->expectExceptionMessage('Only local files are supported for slicing.');
         (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
@@ -76,17 +76,12 @@ class SliceHelperTest extends TestCase
     {
         yield 'mapping with csv options - non-default delimiter' => [
             'mapping' => ['delimiter' => ';'],
-            'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
-                ' specified in mapping are not supported by slicer.',
         ];
         yield 'mapping with csv options - non-default enclosure' => [
             'mapping' => ['enclosure' => '\''],
-            'expectedErrorMessage' => 'Params "delimiter" or "enclosure"' .
-                ' specified in mapping are not supported by slicer.',
         ];
         yield 'mapping with columns' => [
             'mapping' => ['columns' => ['Id']],
-            'expectedErrorMessage' => 'Param "columns" specified in mapping is not supported by slicer.',
         ];
     }
 
@@ -95,7 +90,6 @@ class SliceHelperTest extends TestCase
      */
     public function testSliceSourceWithMappingHavingCsvOptionsIsNotSupported(
         array $mapping,
-        string $expectedErrorMessage,
     ): void {
         $file = $this->temp->createFile('test.csv');
         file_put_contents($file->getPathname(), '"id","name"');
@@ -105,8 +99,11 @@ class SliceHelperTest extends TestCase
         );
         $mappingSource->setMapping($mapping);
 
-        $this->expectException(SliceSkippedException::class);
-        $this->expectExceptionMessage($expectedErrorMessage);
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
+            'Params "delimiter", "enclosure" or "columns" '
+            . 'specified in mapping are not longer supported.',
+        );
 
         (new SliceHelper(new NullLogger()))->sliceFile($mappingSource);
     }
@@ -303,11 +300,13 @@ class SliceHelperTest extends TestCase
 
     public function testSliceSourcesIgnoresSliceSkippedExceptionsFromSlicer(): void
     {
-        $originalMappingSource1 = $this->createTestMappingSourceHavingManifest('test1.csv', $this->temp);
+        $originalMappingSource1 = new MappingSource(new WorkspaceItemSource(
+            'table',
+            '123',
+            'test',
+            false,
+        ));
         $originalMappingSource1->setMapping(['delimiter' => ';']);
-
-        /** @var LocalFileSource $originalSource1 */
-        $originalSource1 = $originalMappingSource1->getSource();
 
         $originalMappingSource2 = $this->createTestMappingSourceHavingManifest('test2.csv', $this->temp);
         /** @var LocalFileSource $originalSource2 */
@@ -326,7 +325,7 @@ class SliceHelperTest extends TestCase
         self::assertEquals($originalMappingSource1, $mappingSources[0]);
         self::assertNotSame($originalMappingSource1->getSource(), $mappingSources[0]->getSource());
         self::assertEquals($originalMappingSource1->getSource(), $mappingSources[0]->getSource());
-        self::assertNotSame($originalMappingSource1->getManifestFile(), $mappingSources[0]->getManifestFile());
+        self::assertNull($mappingSources[0]->getManifestFile());
         self::assertEquals($originalMappingSource1->getManifestFile(), $mappingSources[0]->getManifestFile());
 
         // manifests data
@@ -348,21 +347,18 @@ class SliceHelperTest extends TestCase
         self::assertSource($originalSource2, $mappingSources[1]->getSource());
 
         $dataFiles = FilesHelper::getDataFiles($this->temp->getTmpFolder());
-        self::assertCount(2, $dataFiles);
+        self::assertCount(1, $dataFiles);
 
         $dataFiles = array_map(function (SplFileInfo $file) {
             return $file->getPathname();
         }, $dataFiles);
         sort($dataFiles);
 
-        self::assertFileEquals($originalSource1->getFile()->getPathname(), $dataFiles[0]);
-
-        self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[1]);
-        self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[1]);
-
+        self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[0]);
+        self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[0]);
         self::assertCount(3, $this->logger->records);
-        self::assertTrue($this->logger->hasWarning('Source "test1.csv" slicing skipped: Params "delimiter" '
-            . 'or "enclosure" specified in mapping are not supported by slicer.'));
+        self::assertTrue($this->logger->hasWarning('Source "table" slicing skipped: Only local files '
+            . 'are supported for slicing.'));
         self::assertTrue($this->logger->hasInfo('Slicing table "test2.csv".'));
         self::assertTrue($this->logger->hasInfoThatContains('Table "test2.csv" sliced'));
     }

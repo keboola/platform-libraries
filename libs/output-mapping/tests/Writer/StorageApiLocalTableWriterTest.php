@@ -928,7 +928,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $this->expectException(InvalidOutputException::class);
             $this->expectExceptionMessage(
                 'Params "delimiter", "enclosure" or "columns" '
-                . 'specified in mapping are not longer supported.',
+                . 'specified in mapping are no longer supported.',
             );
         }
 

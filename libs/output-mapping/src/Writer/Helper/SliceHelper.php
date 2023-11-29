@@ -68,7 +68,7 @@ class SliceHelper
 
             if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
                 throw new InvalidOutputException(
-                    'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.',
+                    'Params "delimiter", "enclosure" or "columns" specified in mapping are no longer supported.',
                 );
             }
         }

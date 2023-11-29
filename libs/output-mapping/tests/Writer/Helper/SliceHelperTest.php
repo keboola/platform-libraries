@@ -102,7 +102,7 @@ class SliceHelperTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(
             'Params "delimiter", "enclosure" or "columns" '
-            . 'specified in mapping are not longer supported.',
+            . 'specified in mapping are no longer supported.',
         );
 
         (new SliceHelper(new NullLogger()))->sliceFile($mappingSource);

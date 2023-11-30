@@ -49,12 +49,12 @@ class SliceHelperTest extends TestCase
         (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
-    public function testSliceSlicedSourceWithoutManifestIsNotSupported(): void
+    public function testSliceSlicedSourceIsNotSupported(): void
     {
         $source = new LocalFileSource(new SplFileInfo($this->temp->getTmpFolder()));
 
         $this->expectException(SliceSkippedException::class);
-        $this->expectExceptionMessage('Sliced files without manifest are not supported.');
+        $this->expectExceptionMessage('Sliced files are not yet supported.');
         (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 

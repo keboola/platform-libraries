@@ -49,8 +49,8 @@ class SliceHelper
             throw new SliceSkippedException('Only local files are supported for slicing.');
         }
 
-        if ($sourceFile->isSliced() && !$source->getManifestFile()) {
-            throw new SliceSkippedException('Sliced files without manifest are not supported.');
+        if ($sourceFile->isSliced()) {
+            throw new SliceSkippedException('Sliced files are not yet supported.');
         }
 
         if (!$sourceFile->getFile()->getSize()) {

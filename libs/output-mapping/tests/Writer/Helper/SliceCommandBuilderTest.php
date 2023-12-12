@@ -78,4 +78,35 @@ class SliceCommandBuilderTest extends TestCase
             $process->getCommandLine(),
         );
     }
+
+    public function testCreateProcessWithInputThreshold(): void
+    {
+        $process = SliceCommandBuilder::createProcess(
+            $this->testFile->getBasename(),
+            $this->testFile,
+            new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
+            null,
+            '3GB',
+        );
+
+        self::assertSame(7200.0, $process->getTimeout());
+        self::assertSame(
+            implode(
+                ' ',
+                [
+                    "'./bin/slicer'",
+                    sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
+                    "'--table-name=data.csv'",
+                    sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
+                    sprintf(
+                        "'--table-output-manifest-path=%s/slicer-output-dir.manifest'",
+                        $this->temp->getTmpFolder(),
+                    ),
+                    "'--gzip=true'",
+                    "'--input-size-threshold=3GB'",
+                ],
+            ),
+            $process->getCommandLine(),
+        );
+    }
 }

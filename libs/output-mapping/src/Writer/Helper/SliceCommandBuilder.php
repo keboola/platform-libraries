@@ -14,6 +14,7 @@ class SliceCommandBuilder
         SplFileInfo $inputFile,
         SplFileInfo $outputDir,
         ?SplFileInfo $inputManifestFile = null,
+        ?string $inputSizeThreshold = null,
     ): Process {
         $command = [
             './bin/slicer',
@@ -26,6 +27,10 @@ class SliceCommandBuilder
 
         if ($inputManifestFile) {
             $command[] = '--table-input-manifest-path=' . $inputManifestFile->getPathname();
+        }
+
+        if ($inputSizeThreshold) {
+            $command[] = '--input-size-threshold=' . $inputSizeThreshold;
         }
 
         return new Process(

@@ -21,6 +21,7 @@ class SliceHelper
 {
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly ?string $inputSizeThreshold = null,
     ) {
     }
 
@@ -117,7 +118,9 @@ class SliceHelper
             $sourceFile->getFile(),
             $outputDir,
             $source->getManifestFile(),
+            $this->inputSizeThreshold,
         );
+
         $process->mustRun(function ($type, $buffer) {
             if ($type === Process::OUT) {
                 $this->logger->info(trim($buffer));

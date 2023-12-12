@@ -177,7 +177,7 @@ class SliceHelperTest extends TestCase
     ): void {
         /** @var LocalFileSource $originalSource */
         $originalSource = $originalMappingSource->getSource();
-        $mappingSource = (new SliceHelper($this->logger))->sliceFile($originalMappingSource);
+        $mappingSource = (new SliceHelper($this->logger, '3b'))->sliceFile($originalMappingSource);
 
         // manifest data
         self::assertNotNull($mappingSource->getManifestFile());
@@ -226,7 +226,7 @@ class SliceHelperTest extends TestCase
             $originalSlicedMappingSource,
         ];
 
-        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger, '3b'))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // manifests data
@@ -301,7 +301,7 @@ class SliceHelperTest extends TestCase
             $originalMappingSource2,
         ];
 
-        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger, '3b'))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // unmodified and immutable mapping source
@@ -358,7 +358,7 @@ class SliceHelperTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Source "test.csv" has multiple destinations set.');
 
-        (new SliceHelper($this->logger))->sliceSources($mappingSources);
+        (new SliceHelper($this->logger, '3b'))->sliceSources($mappingSources);
         self::assertCount(0, $this->logger->records);
     }
 

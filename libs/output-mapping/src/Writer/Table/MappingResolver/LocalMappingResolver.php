@@ -14,22 +14,10 @@ use Psr\Log\LoggerInterface;
 
 class LocalMappingResolver extends AbstractMappingResolver
 {
-    private ?string $slicerInputSizeThreshold = null;
-
     public function __construct(
         private readonly string $path,
         private readonly LoggerInterface $logger,
     ) {
-    }
-
-    public function setSlicerInputSizeThreshold(?string $inputSizeThreshold): void
-    {
-        $this->slicerInputSizeThreshold = $inputSizeThreshold;
-    }
-
-    public function getSlicerInputSizeThreshold(): ?string
-    {
-        return $this->slicerInputSizeThreshold;
     }
 
     public function resolveMappingSources(
@@ -67,7 +55,7 @@ class LocalMappingResolver extends AbstractMappingResolver
         );
 
         if ($useSliceFeature) {
-            return (new SliceHelper($this->logger, $this->slicerInputSizeThreshold))->sliceSources($mappingSources);
+            return (new SliceHelper($this->logger))->sliceSources($mappingSources);
         }
 
         return $mappingSources;

@@ -21,6 +21,7 @@ use SplFileInfo;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SliceHelperTest extends TestCase
 {
@@ -463,6 +464,26 @@ class SliceHelperTest extends TestCase
                 $e->getMessage(),
             );
         }
+    }
+
+    public function testSliceSkippedDueThreshold(): void
+    {
+        $this->expectException(SliceSkippedException::class);
+        $this->expectExceptionMessage('No need to slice, the source data is not large enough.');
+
+        (new SliceHelper(new NullLogger()))->sliceFile(
+            $this->createTestMappingSource('test1.csv', $this->temp),
+        );
+    }
+
+    public function testSlicerFailureProduceProcessFailedException(): void
+    {
+        $this->expectException(ProcessFailedException::class);
+        $this->expectExceptionMessage('cannot unmarshal flags');
+
+        (new SliceHelper(new NullLogger(), 'aaa'))->sliceFile(
+            $this->createTestMappingSource('test1.csv', $this->temp),
+        );
     }
 
     private function createTestGzippedMappingSource(string $fileName, Temp $temp): MappingSource

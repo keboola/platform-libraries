@@ -15,6 +15,16 @@ use Psr\Log\Test\TestLogger;
 
 class LocalMappingResolverTest extends TestCase
 {
+    public function testAccessors(): void
+    {
+        $resolver = new LocalMappingResolver('path', new NullLogger());
+
+        self::assertNull($resolver->getSlicerInputSizeThreshold());
+
+        $resolver->setSlicerInputSizeThreshold('1MB');
+        self::assertSame('1MB', $resolver->getSlicerInputSizeThreshold());
+    }
+
     public function testResolveMappingSources(): void
     {
         $prefix = 'data/in/tables';
@@ -157,6 +167,7 @@ class LocalMappingResolverTest extends TestCase
         $logger = new TestLogger();
 
         $resolver = new LocalMappingResolver($temp->getTmpFolder(), $logger);
+        $resolver->setSlicerInputSizeThreshold('10b');
 
         $mappingSources = $resolver->resolveMappingSources(
             $prefix,

@@ -9,6 +9,8 @@ use Symfony\Component\Process\Process;
 
 class SliceCommandBuilder
 {
+    public const SLICER_SKIPPED_EXIT_CODE = 200;
+
     public static function createProcess(
         string $sourceName,
         SplFileInfo $inputFile,
@@ -23,6 +25,7 @@ class SliceCommandBuilder
             '--table-output-path=' . $outputDir->getPathname(),
             '--table-output-manifest-path=' . $outputDir->getPathname() . '.manifest',
             '--gzip=true',
+            '--input-size-low-exit-code=' . self::SLICER_SKIPPED_EXIT_CODE,
         ];
 
         if ($inputManifestFile) {

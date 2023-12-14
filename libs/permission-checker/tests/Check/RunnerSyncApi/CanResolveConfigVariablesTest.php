@@ -20,7 +20,7 @@ class CanResolveConfigVariablesTest extends TestCase
             allowedComponents: [
                 'keboola.shared-code',
                 'keboola.variables',
-            ]
+            ],
         );
 
         $checker = new CanResolveConfigVariables();

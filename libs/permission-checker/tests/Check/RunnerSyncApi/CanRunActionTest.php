@@ -28,7 +28,7 @@ class CanRunActionTest extends TestCase
     public function testPermissionCheckForTokensWithoutPermissionToComponent(BranchType $branchType): void
     {
         $token = new StorageApiToken(
-            allowedComponents: []
+            allowedComponents: [],
         );
 
         $this->expectException(PermissionDeniedException::class);
@@ -45,7 +45,7 @@ class CanRunActionTest extends TestCase
     {
         $token = new StorageApiToken(
             role: Role::READ_ONLY->value,
-            allowedComponents: ['dummy-component']
+            allowedComponents: ['dummy-component'],
         );
 
         $this->expectException(PermissionDeniedException::class);
@@ -68,7 +68,7 @@ class CanRunActionTest extends TestCase
                     'expectedErrorMessage' => sprintf(
                         'Role "%s" is not allowed to run actions on %s branch',
                         $role->value,
-                        $branchType->value
+                        $branchType->value,
                     ),
                 ];
             }
@@ -84,7 +84,7 @@ class CanRunActionTest extends TestCase
 
         $token = new StorageApiToken(
             role: $role !== Role::NONE ? $role->value : null,
-            allowedComponents: ['dummy-component']
+            allowedComponents: ['dummy-component'],
         );
 
         $checker = new CanRunAction($branchType, 'dummy-component');
@@ -111,7 +111,7 @@ class CanRunActionTest extends TestCase
                     'expectedErrorMessage' => sprintf(
                         'Role "%s" is not allowed to run actions on %s branch',
                         $role->value,
-                        $branchType->value
+                        $branchType->value,
                     ),
                 ];
             }
@@ -124,12 +124,12 @@ class CanRunActionTest extends TestCase
     public function testPermissionCheckFailOnSoxProjects(
         Role $role,
         BranchType $branchType,
-        string $expectedErrorMessage
+        string $expectedErrorMessage,
     ): void {
         $token = new StorageApiToken(
             features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
             role: $role !== Role::NONE ? $role->value : null,
-            allowedComponents: ['dummy-component']
+            allowedComponents: ['dummy-component'],
         );
 
         $this->expectException(PermissionDeniedException::class);
@@ -165,7 +165,7 @@ class CanRunActionTest extends TestCase
         $token = new StorageApiToken(
             features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
             role: $role !== Role::NONE ? $role->value : null,
-            allowedComponents: ['dummy-component']
+            allowedComponents: ['dummy-component'],
         );
 
         $checker = new CanRunAction($branchType, 'dummy-component');

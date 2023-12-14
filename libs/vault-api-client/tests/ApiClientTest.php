@@ -62,7 +62,7 @@ class ApiClientTest extends TestCase
         string $baseUrl,
         string $token,
         ?int $backoffMaxTries,
-        string $expectedError
+        string $expectedError,
     ): void {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedError);
@@ -71,8 +71,8 @@ class ApiClientTest extends TestCase
             $baseUrl,
             $token,
             new ApiClientConfiguration(
-                backoffMaxTries: $backoffMaxTries // @phpstan-ignore-line
-            )
+                backoffMaxTries: $backoffMaxTries, // @phpstan-ignore-line
+            ),
         );
     }
 
@@ -127,8 +127,8 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
         $apiClient->sendRequest(new Request('DELETE', 'foo/bar'));
 
@@ -159,8 +159,8 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
         $result = $apiClient->sendRequestAndMapResponse(
             new Request('GET', 'foo/bar'),
@@ -197,8 +197,8 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -223,13 +223,13 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Client error: `DELETE https://vault.keboola.com/foo/bar` resulted in a `400 Bad Request` response'
+            'Client error: `DELETE https://vault.keboola.com/foo/bar` resulted in a `400 Bad Request` response',
         );
 
         $apiClient->sendRequest(new Request('DELETE', 'foo/bar'));
@@ -252,8 +252,8 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $apiClient->sendRequest(new Request('DELETE', 'foo/bar'));
@@ -300,8 +300,8 @@ class ApiClientTest extends TestCase
             self::API_TOKEN,
             new ApiClientConfiguration(
                 backoffMaxTries: 2,
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -330,8 +330,8 @@ class ApiClientTest extends TestCase
             self::API_TOKEN,
             new ApiClientConfiguration(
                 backoffMaxTries: 0,
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -351,7 +351,7 @@ class ApiClientTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                '{"foo":'
+                '{"foo":',
             ),
         ]);
 
@@ -359,8 +359,8 @@ class ApiClientTest extends TestCase
             self::BASE_URL,
             self::API_TOKEN,
             new ApiClientConfiguration(
-                requestHandler: $requestHandler(...)
-            )
+                requestHandler: $requestHandler(...),
+            ),
         );
 
         $this->expectException(ClientException::class);

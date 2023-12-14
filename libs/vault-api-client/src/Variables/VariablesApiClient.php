@@ -49,7 +49,7 @@ class VariablesApiClient
                     'value' => $value,
                     'flags' => $flags,
                     'attributes' => $attributes,
-                ])
+                ]),
             ),
             Variable::class,
         );

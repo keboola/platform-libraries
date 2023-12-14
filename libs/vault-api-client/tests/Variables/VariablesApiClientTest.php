@@ -36,7 +36,7 @@ class VariablesApiClientTest extends TestCase
                     'attributes' => [
                         'branchId' => '123',
                     ],
-                ])
+                ]),
             ),
         ]);
 
@@ -127,7 +127,7 @@ class VariablesApiClientTest extends TestCase
                 Json::encodeArray([
                     ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'flags' => [], 'attributes' => []],
                     ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'flags' => [], 'attributes' => []],
-                ])
+                ]),
             ),
         ]);
 
@@ -186,7 +186,7 @@ class VariablesApiClientTest extends TestCase
                 Json::encodeArray([
                     ['hash' => 'hash1', 'key' => 'key1', 'value' => 'val1', 'flags' => [], 'attributes' => []],
                     ['hash' => 'hash2', 'key' => 'key2', 'value' => 'val2', 'flags' => [], 'attributes' => []],
-                ])
+                ]),
             ),
         ]);
 

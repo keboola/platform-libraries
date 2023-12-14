@@ -12,6 +12,7 @@ use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Psr\Log\Test\TestLogger;
+use Symfony\Component\Process\Process;
 
 class LocalMappingResolverTest extends TestCase
 {
@@ -151,8 +152,28 @@ class LocalMappingResolverTest extends TestCase
         $prefix = 'data/in/tables';
         $temp = new Temp();
 
+        // create large CSV file
         $csvFile = $temp->createFile(sprintf('%s/mySource.csv', $prefix));
-        file_put_contents($csvFile->getPathname(), '"id","name"' . PHP_EOL . '"123","Test Name"');
+
+        $numberOfColumns = 10;
+        $headersLine = implode(
+            ',',
+            array_map(
+                function (int $i): string {
+                    return sprintf('"col%s"', $i);
+                },
+                range(0, $numberOfColumns - 1),
+            ),
+        );
+
+        file_put_contents($csvFile->getPathname(), $headersLine . PHP_EOL);
+        $process = Process::fromShellCommandline(sprintf(
+            'yes %s | head -n 3000000 >> %s',
+            implode(',', range(0, $numberOfColumns - 1)),
+            $csvFile->getPathname(),
+        ));
+
+        $process->mustRun();
 
         $logger = new TestLogger();
 

@@ -15,12 +15,14 @@ use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class SliceHelper
 {
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly ?string $inputSizeThreshold = null,
     ) {
     }
 
@@ -49,8 +51,8 @@ class SliceHelper
             throw new SliceSkippedException('Only local files are supported for slicing.');
         }
 
-        if ($sourceFile->isSliced()) {
-            throw new SliceSkippedException('Sliced files are not yet supported.');
+        if ($sourceFile->isSliced() && !$source->getManifestFile()) {
+            throw new SliceSkippedException('Sliced files without manifest are not supported.');
         }
 
         if (!$sourceFile->getFile()->getSize()) {
@@ -117,12 +119,22 @@ class SliceHelper
             $sourceFile->getFile(),
             $outputDir,
             $source->getManifestFile(),
+            $this->inputSizeThreshold,
         );
-        $process->mustRun(function ($type, $buffer) {
+
+        $result = $process->run(function ($type, $buffer) {
             if ($type === Process::OUT) {
                 $this->logger->info(trim($buffer));
             }
         });
+
+        if ($result === SliceCommandBuilder::SLICER_SKIPPED_EXIT_CODE) {
+            throw new SliceSkippedException('No need to slice, the source data is not large enough.');
+        }
+
+        if ($result !== 0) {
+            throw new ProcessFailedException($process);
+        }
 
         $filesystem = new Filesystem();
         $filesystem->remove([$sourceFile->getFile()]);

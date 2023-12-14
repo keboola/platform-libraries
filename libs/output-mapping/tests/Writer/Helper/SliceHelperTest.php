@@ -21,6 +21,7 @@ use SplFileInfo;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo as FinderSplFileInfo;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SliceHelperTest extends TestCase
 {
@@ -49,12 +50,12 @@ class SliceHelperTest extends TestCase
         (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
-    public function testSliceSlicedSourceIsNotSupported(): void
+    public function testSliceSlicedSourceWithoutManifestIsNotSupported(): void
     {
         $source = new LocalFileSource(new SplFileInfo($this->temp->getTmpFolder()));
 
         $this->expectException(SliceSkippedException::class);
-        $this->expectExceptionMessage('Sliced files are not yet supported.');
+        $this->expectExceptionMessage('Sliced files without manifest are not supported.');
         (new SliceHelper(new NullLogger()))->sliceFile(new MappingSource($source));
     }
 
@@ -158,9 +159,25 @@ class SliceHelperTest extends TestCase
                 'columns' => ['id', 'name'],
             ],
         ];
+        yield 'sliced file with manifest' => [
+            'originalMappingSource' => $this->createTestSlicedMappingSourceHavingManifest('test3', new Temp()),
+            // small chunks slicer joins into one slice
+            'expectedData' => '"123","Test Name"' . PHP_EOL . '"456","Test Name 2"' . PHP_EOL,
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
         yield 'compressed file without manifest' => [
             'originalMappingSource' => $this->createTestGzippedMappingSource('test1.csv', new Temp()),
             'expectedData' => '"123","Test Name"' . PHP_EOL,
+            'expectedManifestData' => [
+                'columns' => ['id', 'name'],
+            ],
+        ];
+        yield 'compressed sliced file with manifest' => [
+            'originalMappingSource' => $this->createTestGzippedSlicedMappingSourceHavingManifest('test3', new Temp()),
+            // small chunks slicer joins into one slice
+            'expectedData' => '"123","Test Name"' . PHP_EOL . '"456","Test Name 2"' . PHP_EOL,
             'expectedManifestData' => [
                 'columns' => ['id', 'name'],
             ],
@@ -177,7 +194,7 @@ class SliceHelperTest extends TestCase
     ): void {
         /** @var LocalFileSource $originalSource */
         $originalSource = $originalMappingSource->getSource();
-        $mappingSource = (new SliceHelper($this->logger))->sliceFile($originalMappingSource);
+        $mappingSource = (new SliceHelper($this->logger, '3b'))->sliceFile($originalMappingSource);
 
         // manifest data
         self::assertNotNull($mappingSource->getManifestFile());
@@ -226,7 +243,7 @@ class SliceHelperTest extends TestCase
             $originalSlicedMappingSource,
         ];
 
-        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger, '3b'))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // manifests data
@@ -301,7 +318,7 @@ class SliceHelperTest extends TestCase
             $originalMappingSource2,
         ];
 
-        $mappingSources = (new SliceHelper($this->logger))->sliceSources($originalMappingSources);
+        $mappingSources = (new SliceHelper($this->logger, '3b'))->sliceSources($originalMappingSources);
         self::assertCount(2, $mappingSources);
 
         // unmodified and immutable mapping source
@@ -358,7 +375,7 @@ class SliceHelperTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Source "test.csv" has multiple destinations set.');
 
-        (new SliceHelper($this->logger))->sliceSources($mappingSources);
+        (new SliceHelper($this->logger, '3b'))->sliceSources($mappingSources);
         self::assertCount(0, $this->logger->records);
     }
 
@@ -465,6 +482,47 @@ class SliceHelperTest extends TestCase
         }
     }
 
+    public function testSliceSkippedDueThreshold(): void
+    {
+        $this->expectException(SliceSkippedException::class);
+        $this->expectExceptionMessage('No need to slice, the source data is not large enough.');
+
+        (new SliceHelper(new NullLogger()))->sliceFile(
+            $this->createTestMappingSource('test1.csv', $this->temp),
+        );
+    }
+
+    public function testSlicerFailureProduceProcessFailedException(): void
+    {
+        $this->expectException(ProcessFailedException::class);
+        $this->expectExceptionMessage('cannot unmarshal flags');
+
+        (new SliceHelper(new NullLogger(), 'aaa'))->sliceFile(
+            $this->createTestMappingSource('test1.csv', $this->temp),
+        );
+    }
+
+    private function createTestSlicedMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName . '/part0001');
+        file_put_contents($csvFile->getPathname(), '"123","Test Name"' . PHP_EOL);
+        $csvFile = $temp->createFile($fileName . '/part0002');
+        file_put_contents($csvFile->getPathname(), '"456","Test Name 2"' . PHP_EOL);
+
+        $manifestFile = $temp->createFile($fileName . '.manifest');
+        file_put_contents(
+            $manifestFile->getPathname(),
+            json_encode([
+                'columns' => ['id', 'name'],
+            ]),
+        );
+
+        return new MappingSource(
+            new LocalFileSource(new SplFileInfo($csvFile->getPath())),
+            (new SliceHelper(new NullLogger()))->getFile($manifestFile->getPathname()),
+        );
+    }
+
     private function createTestGzippedMappingSource(string $fileName, Temp $temp): MappingSource
     {
         $csvFile = $temp->createFile($fileName . '.gz');
@@ -476,5 +534,26 @@ class SliceHelperTest extends TestCase
         );
 
         return new MappingSource(new LocalFileSource($csvFile));
+    }
+
+    private function createTestGzippedSlicedMappingSourceHavingManifest(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName . '/part0001.gz');
+        file_put_contents($csvFile->getPathname(), (string) gzencode('"123","Test Name"' . PHP_EOL));
+        $csvFile = $temp->createFile($fileName . '/part0002.gz');
+        file_put_contents($csvFile->getPathname(), (string) gzencode('"456","Test Name 2"' . PHP_EOL));
+
+        $manifestFile = $temp->createFile($fileName . '.manifest');
+        file_put_contents(
+            $manifestFile->getPathname(),
+            json_encode([
+                'columns' => ['id', 'name'],
+            ]),
+        );
+
+        return new MappingSource(
+            new LocalFileSource(new SplFileInfo($csvFile->getPath())),
+            (new SliceHelper(new NullLogger()))->getFile($manifestFile->getPathname()),
+        );
     }
 }

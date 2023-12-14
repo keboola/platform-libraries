@@ -33,7 +33,7 @@ class SystemAuthenticatorResolver implements BearerTokenResolver
         $clientSecret = (string) getenv('AZURE_CLIENT_SECRET');
         if ($tenantId !== '' && $clientId !== '' && $clientSecret !== '') {
             $this->configuration->logger->debug(
-                'Found Azure client credentials in ENV, using ClientCredentialsAuthenticator'
+                'Found Azure client credentials in ENV, using ClientCredentialsAuthenticator',
             );
 
             return new ClientCredentialsAuth(
@@ -45,7 +45,7 @@ class SystemAuthenticatorResolver implements BearerTokenResolver
         }
 
         $this->configuration->logger->debug(
-            'Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator'
+            'Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator',
         );
         return new ManagedCredentialsAuth($this->configuration);
     }

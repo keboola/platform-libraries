@@ -44,7 +44,7 @@ class ClientCredentialsAuthTest extends TestCase
             'client-secret',
             new ApiClientConfiguration(
                 logger: $this->logger,
-            )
+            ),
         );
         self::assertCount(0, $this->logsHandler->getRecords());
 
@@ -56,13 +56,13 @@ class ClientCredentialsAuthTest extends TestCase
             'client-secret',
             new ApiClientConfiguration(
                 logger: $this->logger,
-            )
+            ),
         );
         self::assertTrue($this->logsHandler->hasDebug(
-            'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.'
+            'AZURE_AD_RESOURCE environment variable is not specified, falling back to default.',
         ));
         self::assertTrue($this->logsHandler->hasDebug(
-            'AZURE_ENVIRONMENT environment variable is not specified, falling back to default.'
+            'AZURE_ENVIRONMENT environment variable is not specified, falling back to default.',
         ));
     }
 
@@ -74,7 +74,7 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($metadata)
+                Json::encodeArray($metadata),
             ),
             new Response(
                 200,
@@ -84,7 +84,7 @@ class ClientCredentialsAuthTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -95,7 +95,7 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -106,7 +106,7 @@ class ClientCredentialsAuthTest extends TestCase
         $request = $requestsHistory[0]['request'];
         self::assertSame(
             'https://management.azure.com/metadata/endpoints?api-version=2020-01-01',
-            $request->getUri()->__toString()
+            $request->getUri()->__toString(),
         );
         self::assertSame('GET', $request->getMethod());
 
@@ -116,7 +116,7 @@ class ClientCredentialsAuthTest extends TestCase
         self::assertSame('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
         self::assertSame(
             'grant_type=client_credentials&client_id=client-id&client_secret=client-secret&resource=resource-id',
-            $request->getBody()->getContents()
+            $request->getBody()->getContents(),
         );
     }
 
@@ -133,7 +133,7 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($metadata)
+                Json::encodeArray($metadata),
             ),
             new Response(
                 200,
@@ -143,7 +143,7 @@ class ClientCredentialsAuthTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -154,7 +154,7 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
 
         $token = $auth->getAuthenticationToken('resource-id');
@@ -165,7 +165,7 @@ class ClientCredentialsAuthTest extends TestCase
         $request = $requestsHistory[0]['request'];
         self::assertSame(
             'https://example.com',
-            $request->getUri()->__toString()
+            $request->getUri()->__toString(),
         );
         self::assertSame('GET', $request->getMethod());
 
@@ -175,7 +175,7 @@ class ClientCredentialsAuthTest extends TestCase
         self::assertSame('application/x-www-form-urlencoded', $request->getHeader('Content-type')[0]);
         self::assertSame(
             'grant_type=client_credentials&client_id=client-id&client_secret=client-secret&resource=resource-id',
-            $request->getBody()->getContents()
+            $request->getBody()->getContents(),
         );
     }
 
@@ -187,7 +187,7 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata()),
             ),
         ]);
 
@@ -198,7 +198,7 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -213,12 +213,12 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 500,
                 ['Content-Type' => 'application/json'],
-                'boo'
+                'boo',
             ),
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata()),
             ),
             new Response(
                 200,
@@ -228,7 +228,7 @@ class ClientCredentialsAuthTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -239,7 +239,7 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
         $token = $auth->getAuthenticationToken('resource-id');
         self::assertEquals('ey....ey', $token->value);
@@ -252,7 +252,7 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                'boo'
+                'boo',
             ),
         ]);
 
@@ -263,7 +263,7 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -277,12 +277,12 @@ class ClientCredentialsAuthTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($this->getSampleArmMetadata())
+                Json::encodeArray($this->getSampleArmMetadata()),
             ),
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                '{"boo":"bar"}'
+                '{"boo":"bar"}',
             ),
         ]);
 
@@ -293,12 +293,12 @@ class ClientCredentialsAuthTest extends TestCase
             new ApiClientConfiguration(
                 requestHandler: $requestHandler(...),
                 logger: $this->logger,
-            )
+            ),
         );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Failed to map response data: Missing or invalid "access_token" in response: {"boo":"bar"}'
+            'Failed to map response data: Missing or invalid "access_token" in response: {"boo":"bar"}',
         );
         $auth->getAuthenticationToken('resource-id');
     }

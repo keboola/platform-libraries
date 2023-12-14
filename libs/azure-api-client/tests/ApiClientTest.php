@@ -51,7 +51,7 @@ class ApiClientTest extends TestCase
     public function testInvalidOptions(
         ?string $baseUrl,
         ?int $backoffMaxTries,
-        string $expectedError
+        string $expectedError,
     ): void {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedError);
@@ -59,8 +59,8 @@ class ApiClientTest extends TestCase
         new ApiClient(
             $baseUrl, // @phpstan-ignore-line intentionally passing invalid values
             new ApiClientConfiguration(
-                backoffMaxTries: $backoffMaxTries // @phpstan-ignore-line
-            )
+                backoffMaxTries: $backoffMaxTries, // @phpstan-ignore-line
+            ),
         );
     }
 

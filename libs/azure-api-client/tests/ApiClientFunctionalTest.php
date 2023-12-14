@@ -184,7 +184,7 @@ class ApiClientFunctionalTest extends TestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            "GET http://mockserver:1080/foo/bar` resulted in a `400 Bad Request` response:\nGateway timeout"
+            "GET http://mockserver:1080/foo/bar` resulted in a `400 Bad Request` response:\nGateway timeout",
         );
 
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
@@ -211,7 +211,7 @@ class ApiClientFunctionalTest extends TestCase
         $this->expectExceptionMessage(
             'Failed to map response data: Keboola\AzureApiClient\Tests\DummyTestResponse::__construct(): ' .
             'Argument #1 ($foo) must be of type string, null given, called in ' .
-            '/code/libs/azure-api-client/tests/DummyTestResponse.php on line'
+            '/code/libs/azure-api-client/tests/DummyTestResponse.php on line',
         );
 
         $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);
@@ -278,7 +278,7 @@ class ApiClientFunctionalTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
             'Server error: `GET http://mockserver:1080/foo/bar` resulted in a `500 Internal Server Error` response:
-error occurred'
+error occurred',
         );
 
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));

@@ -61,7 +61,7 @@ class MarketplaceApiClient
                 'POST',
                 sprintf(
                     '/api/saas/subscriptions/%s/activate?api-version=2018-08-31',
-                    urlencode($parameters->subscriptionId)
+                    urlencode($parameters->subscriptionId),
                 ),
                 [
                     'Content-Type' => 'application/json',

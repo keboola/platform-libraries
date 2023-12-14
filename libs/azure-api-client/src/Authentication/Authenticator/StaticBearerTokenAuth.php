@@ -10,7 +10,7 @@ use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenReso
 class StaticBearerTokenAuth implements BearerTokenResolver
 {
     public function __construct(
-        private readonly string $token
+        private readonly string $token,
     ) {
     }
 

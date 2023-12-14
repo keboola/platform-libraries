@@ -10,7 +10,7 @@ class ManageApiClientFactory
 {
     public function __construct(
         private readonly string $appName,
-        private readonly string $storageApiUrl
+        private readonly string $storageApiUrl,
     ) {
     }
 

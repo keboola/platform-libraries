@@ -51,7 +51,7 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
         if (count($missingScopes) > 0) {
             throw new AccessDeniedException(sprintf(
                 'Authentication token is valid but missing following scopes: %s',
-                implode(', ', $missingScopes)
+                implode(', ', $missingScopes),
             ));
         }
     }

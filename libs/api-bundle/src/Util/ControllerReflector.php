@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ControllerReflector
 {
     public function __construct(
-        private readonly ContainerInterface $container
+        private readonly ContainerInterface $container,
     ) {
     }
 

@@ -12,7 +12,7 @@
     },
     "require-dev": {
         "keboola/api-error-control": "^4.1",
-        "keboola/coding-standard": "^14.0",
+        "keboola/coding-standard": "^15.0",
         "keboola/kbc-manage-api-php-client": "^7.0",
         "keboola/storage-api-php-client-branch-wrapper": "^5.1",
         "phpstan/phpstan": "^1.8",

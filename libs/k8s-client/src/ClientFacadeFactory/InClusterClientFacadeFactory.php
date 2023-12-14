@@ -17,7 +17,7 @@ class InClusterClientFacadeFactory
 
     public function __construct(
         GenericClientFacadeFactory $genericFactory,
-        string $credentialsPath = self::IN_CLUSTER_AUTH_PATH
+        string $credentialsPath = self::IN_CLUSTER_AUTH_PATH,
     ) {
         $this->genericFactory = $genericFactory;
         $this->credentialsPath = $credentialsPath;

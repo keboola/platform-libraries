@@ -43,7 +43,7 @@ class PodsApiClient extends BaseNamespaceApiClient
         if (!is_string($result)) {
             throw new KubernetesResponseException(
                 sprintf('Unexpected response type: %s', get_debug_type($result)),
-                null
+                null,
             );
         }
 

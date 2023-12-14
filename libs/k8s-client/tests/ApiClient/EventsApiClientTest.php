@@ -17,7 +17,7 @@ class EventsApiClientTest extends TestCase
     {
         Client::configure(
             'dummy',
-            []
+            [],
         );
 
         $k8sClientMock = $this->createMock(KubernetesApiClient::class);
@@ -27,7 +27,7 @@ class EventsApiClientTest extends TestCase
                 $this->isInstanceOf(EventsApi::class),
                 'listForAllNamespaces',
                 EventList::class,
-                ['fieldSelector' => 'involvedObject.kind=ConfigMap']
+                ['fieldSelector' => 'involvedObject.kind=ConfigMap'],
             )
             ->willReturn(new EventList())
         ;

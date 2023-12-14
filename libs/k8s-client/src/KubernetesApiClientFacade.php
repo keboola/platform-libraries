@@ -121,7 +121,7 @@ class KubernetesApiClientFacade
             fn($resource) => $this->getApiForResource($resource::class)->delete(
                 $resource->metadata->name,
                 $deleteOptions,
-                $queries
+                $queries,
             ),
             $resources,
         );
@@ -248,7 +248,7 @@ class KubernetesApiClientFacade
 
             default => throw new RuntimeException(sprintf(
                 'Unknown K8S resource type "%s"',
-                get_debug_type($resourceType)
+                get_debug_type($resourceType),
             )),
         };
     }

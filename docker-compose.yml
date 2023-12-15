@@ -125,3 +125,7 @@ services:
     <<: *dev
     image: keboola/slicer
     working_dir: /code/libs/slicer
+
+  dev-logging-bundle:
+    <<: *dev
+    working_dir: /code/libs/logging-bundle

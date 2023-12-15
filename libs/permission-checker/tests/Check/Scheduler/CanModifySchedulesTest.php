@@ -47,7 +47,7 @@ class CanModifySchedulesTest extends TestCase
     /** @dataProvider provideValidPermissionsCheckData */
     public function testValidPermissionsCheck(
         StorageApiToken $token,
-        ?BranchType $branchType
+        ?BranchType $branchType,
     ): void {
         $this->expectNotToPerformAssertions();
 

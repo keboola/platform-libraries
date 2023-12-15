@@ -43,7 +43,7 @@ class MarketplaceApiClientTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($subscriptionData)
+                Json::encodeArray($subscriptionData),
             ),
         ]);
 
@@ -55,7 +55,7 @@ class MarketplaceApiClientTest extends TestCase
 
         self::assertEquals(
             ResolveSubscriptionResult::fromResponseData($subscriptionData),
-            $result
+            $result,
         );
 
         self::assertCount(1, $requestsHistory);
@@ -87,7 +87,7 @@ class MarketplaceApiClientTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($subscriptionData)
+                Json::encodeArray($subscriptionData),
             ),
         ]);
 
@@ -99,7 +99,7 @@ class MarketplaceApiClientTest extends TestCase
 
         self::assertEquals(
             Subscription::fromResponseData($subscriptionData),
-            $result
+            $result,
         );
 
         self::assertCount(1, $requestsHistory);

@@ -21,7 +21,7 @@ class CanResolveConfigVariables implements PermissionCheckInterface
             if (!$token->hasAllowedComponent($componentId)) {
                 throw new PermissionDeniedException(sprintf(
                     'You do not have permission to read configurations of "%s" component',
-                    $componentId
+                    $componentId,
                 ));
             }
         }

@@ -26,7 +26,7 @@
         "kubernetes/php-client": "^1.20"
     },
     "require-dev": {
-        "keboola/coding-standard": "^14.0",
+        "keboola/coding-standard": "^15.0",
         "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-phpunit": "^1.1",
         "phpunit/phpunit": "^9.5",
@@ -49,6 +49,7 @@
             "@tests"
         ],
         "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
+        "phpcbf": "phpcbf --extensions=php src tests",
         "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
         "tests": "phpunit"
     }

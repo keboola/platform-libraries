@@ -55,7 +55,7 @@ class MeteringServiceApiClientTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                Json::encodeArray($apiResponse)
+                Json::encodeArray($apiResponse),
             ),
         ]);
 

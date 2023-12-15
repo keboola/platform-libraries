@@ -64,11 +64,11 @@ class StorageApiToken
                 function (string $value) {
                     return TokenPermission::tryFrom($value);
                 },
-                $this->permissions
+                $this->permissions,
             ),
             function (?TokenPermission $permission) {
                 return $permission !== null;
-            }
+            },
         );
     }
 

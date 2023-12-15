@@ -29,7 +29,7 @@ class CanRunJobTest extends TestCase
             'componentId' => 'keboola.component',
             'token' => new StorageApiToken(
                 features: ['queuev2'],
-                allowedComponents: ['keboola.component']
+                allowedComponents: ['keboola.component'],
             ),
         ];
 
@@ -161,7 +161,7 @@ class CanRunJobTest extends TestCase
                 features: ['queuev2', 'protected-default-branch'],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on default branch'
+                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on default branch',
             ),
         ];
 
@@ -172,7 +172,7 @@ class CanRunJobTest extends TestCase
                 features: ['queuev2', 'protected-default-branch'],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on dev branch'
+                'Role "none" without "canCreateJobs" permission is not allowed to run jobs on dev branch',
             ),
         ];
 

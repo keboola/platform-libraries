@@ -39,7 +39,7 @@ class ClientCredentialsAuth implements BearerTokenResolver
         if (!$armUrl) {
             $armUrl = self::DEFAULT_ARM_URL;
             $configuration->logger->debug(
-                self::ENV_AZURE_AD_RESOURCE . ' environment variable is not specified, falling back to default.'
+                self::ENV_AZURE_AD_RESOURCE . ' environment variable is not specified, falling back to default.',
             );
         }
 
@@ -47,7 +47,7 @@ class ClientCredentialsAuth implements BearerTokenResolver
         if (!$this->cloudName) {
             $this->cloudName = self::DEFAULT_PUBLIC_CLOUD_NAME;
             $configuration->logger->debug(
-                self::ENV_AZURE_ENVIRONMENT . ' environment variable is not specified, falling back to default.'
+                self::ENV_AZURE_ENVIRONMENT . ' environment variable is not specified, falling back to default.',
             );
         }
 
@@ -69,7 +69,7 @@ class ClientCredentialsAuth implements BearerTokenResolver
         $token = $this->apiClient->sendRequestAndMapResponse(
             $request,
             TokenResponse::class,
-            ['form_params' => $formData]
+            ['form_params' => $formData],
         );
 
         return new AuthenticationToken(
@@ -85,7 +85,7 @@ class ClientCredentialsAuth implements BearerTokenResolver
                 new Request('GET', ''),
                 MetadataResponse::class,
                 [],
-                true
+                true,
             );
         } catch (ClientException $e) {
             throw new ClientException('Failed to get instance metadata: ' . $e->getMessage(), $e->getCode(), $e);

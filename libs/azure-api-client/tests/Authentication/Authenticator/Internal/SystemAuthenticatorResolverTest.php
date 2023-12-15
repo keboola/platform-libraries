@@ -48,7 +48,7 @@ class SystemAuthenticatorResolverTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -66,7 +66,7 @@ class SystemAuthenticatorResolverTest extends TestCase
         self::assertSame('ey....ey', $token->value);
         self::assertEqualsWithDelta(time() + 3599, $token->expiresAt?->getTimestamp(), 1);
         self::assertTrue($this->logsHandler->hasDebug(
-            'Found Azure client credentials in ENV, using ClientCredentialsAuthenticator'
+            'Found Azure client credentials in ENV, using ClientCredentialsAuthenticator',
         ));
     }
 
@@ -81,7 +81,7 @@ class SystemAuthenticatorResolverTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -95,7 +95,7 @@ class SystemAuthenticatorResolverTest extends TestCase
         self::assertSame('ey....ey', $token->value);
         self::assertEqualsWithDelta(time() + 3599, $token->expiresAt?->getTimestamp(), 1);
         self::assertTrue($this->logsHandler->hasDebug(
-            'Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator'
+            'Azure client credentials not found in ENV, using ManagedCredentialsAuthenticator',
         ));
     }
 

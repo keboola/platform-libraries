@@ -35,7 +35,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
 
         $this->apiClient = (new GenericClientFacadeFactory(
             (new RetryProxyFactory($logger))->createRetryProxy(),
-            $logger
+            $logger,
         ))->createClusterClient(
             (string) getenv('K8S_HOST'),
             (string) getenv('K8S_TOKEN'),
@@ -64,10 +64,10 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
                         [
                             'kube-root-ca.crt', // secret automatically created by K8S
                             'k8s-client', // service account used by the client
-                        ]
-                    )
+                        ],
+                    ),
                 ),
-            ]
+            ],
         );
     }
 

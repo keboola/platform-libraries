@@ -70,7 +70,7 @@ class KubernetesApiClient
             if ($result instanceof Status && $result->code >= 500) {
                 throw new KubernetesResponseException(
                     sprintf('K8S request has failed: %s', $result->message),
-                    $result
+                    $result,
                 );
             }
 
@@ -110,7 +110,7 @@ class KubernetesApiClient
                 $method,
                 get_debug_type($result),
             ),
-            null
+            null,
         );
     }
 }

@@ -41,7 +41,7 @@ class ManagedCredentialsAuthTest extends TestCase
                     "expires_in": 3599,
                     "resource": "https://vault.azure.net",
                     "access_token": "ey....ey"
-                }'
+                }',
             ),
         ]);
 
@@ -59,7 +59,7 @@ class ManagedCredentialsAuthTest extends TestCase
         self::assertSame(
             // phpcs:ignore Generic.Files.LineLength
             'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-11-01&format=text&resource=resource-id',
-            $request->getUri()->__toString()
+            $request->getUri()->__toString(),
         );
         self::assertSame('GET', $request->getMethod());
         self::assertSame('true', $request->getHeader('Metadata')[0]);
@@ -73,7 +73,7 @@ class ManagedCredentialsAuthTest extends TestCase
                 ['Content-Type' => 'application/json'],
                 '{
                     "foo": "bar"
-                }'
+                }',
             ),
         ]);
 
@@ -84,7 +84,7 @@ class ManagedCredentialsAuthTest extends TestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Failed to map response data: Missing or invalid "access_token" in response: {"foo":"bar"}'
+            'Failed to map response data: Missing or invalid "access_token" in response: {"foo":"bar"}',
         );
         $auth->getAuthenticationToken('resource-id');
     }

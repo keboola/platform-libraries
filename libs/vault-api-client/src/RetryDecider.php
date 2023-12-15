@@ -22,7 +22,7 @@ class RetryDecider
         int $retries,
         RequestInterface $request,
         ?ResponseInterface $response = null,
-        mixed $error = null
+        mixed $error = null,
     ): bool {
         if ($retries >= $this->maxRetries) {
             return false;
@@ -50,8 +50,8 @@ class RetryDecider
                         default => 'No error',
                     },
                     $retries,
-                    $this->maxRetries
-                )
+                    $this->maxRetries,
+                ),
             );
             return true;
         }

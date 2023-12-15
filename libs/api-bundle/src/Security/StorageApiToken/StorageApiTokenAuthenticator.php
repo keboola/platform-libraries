@@ -57,7 +57,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         if (count($missingFeatures) > 0) {
             throw new AccessDeniedException(sprintf(
                 'Authentication token is valid but missing following features: %s',
-                implode(', ', $missingFeatures)
+                implode(', ', $missingFeatures),
             ));
         }
     }

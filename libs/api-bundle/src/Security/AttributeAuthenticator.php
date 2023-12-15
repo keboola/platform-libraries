@@ -67,7 +67,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
                     $e->getMessage(),
                     [],
                     Response::HTTP_FORBIDDEN,
-                    $e
+                    $e,
                 );
             }
 
@@ -99,7 +99,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
         return ErrorResponse::fromException(new HttpException(
             $exception->getCode() > 0 ? $exception->getCode() : Response::HTTP_UNAUTHORIZED,
             $errorMessage,
-            $exception
+            $exception,
         ));
     }
 

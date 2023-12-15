@@ -72,7 +72,7 @@ trait BaseNamespaceApiClientTestCase
                 'gracePeriodSeconds' => 0,
                 'propagationPolicy' => 'Foreground',
             ]),
-            $queries
+            $queries,
         );
 
         while ($startTime + $timeout > microtime(true)) {
@@ -140,9 +140,9 @@ trait BaseNamespaceApiClientTestCase
         $this->assertResultItems(
             array_merge(
                 $originalItemNames,
-                ['test-resource-1', 'test-resource-2']
+                ['test-resource-1', 'test-resource-2'],
             ),
-            $result->items
+            $result->items,
         );
 
         // list using labelSelector
@@ -152,13 +152,13 @@ trait BaseNamespaceApiClientTestCase
                 [
                     'app=test-1',
                     sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
-                ]
+                ],
             ),
         ]);
         self::assertCount(1, $result->items);
         self::assertSame(
             ['test-resource-1'],
-            array_map(fn($resource) => $resource->metadata->name, $result->items)
+            array_map(fn($resource) => $resource->metadata->name, $result->items),
         );
     }
 
@@ -295,7 +295,7 @@ trait BaseNamespaceApiClientTestCase
                 [
                     'app=test-1',
                     sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
-                ]
+                ],
             ),
         ]);
 

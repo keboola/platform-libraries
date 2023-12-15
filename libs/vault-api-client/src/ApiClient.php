@@ -44,13 +44,13 @@ class ApiClient
         if ($configuration->backoffMaxTries > 0) {
             $this->requestHandlerStack->push(Middleware::retry(new RetryDecider(
                 $configuration->backoffMaxTries,
-                $configuration->logger
+                $configuration->logger,
             )));
         }
 
         $this->requestHandlerStack->push(Middleware::log($configuration->logger, new MessageFormatter(
             '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
-            ' {code} {res_header_Content-Length}'
+            ' {code} {res_header_Content-Length}',
         )));
 
         $userAgent = self::USER_AGENT;
@@ -136,7 +136,7 @@ class ApiClient
         return new ClientException(
             trim($data['code'] . ': ' . $data['error']),
             $response->getStatusCode(),
-            $e
+            $e,
         );
     }
 }

@@ -28,7 +28,7 @@ abstract class BaseClusterApiClient implements ApiClientInterface
         protected readonly KubernetesApiClient $apiClient,
         protected readonly AbstractAPI $baseApi,
         protected readonly string $listClass,
-        protected readonly string $itemClass
+        protected readonly string $itemClass,
     ) {
     }
 

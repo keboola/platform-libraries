@@ -32,12 +32,12 @@ class GenericClientFacadeFactory
         string $apiUrl,
         string $token,
         string $caCertFile,
-        string $namespace
+        string $namespace,
     ): KubernetesApiClientFacade {
         if (!is_file($caCertFile) || !is_readable($caCertFile)) {
             throw new ConfigurationException(sprintf(
                 'Invalid K8S CA cert path "%s". File does not exist or can\'t be read.',
-                $caCertFile
+                $caCertFile,
             ));
         }
 
@@ -50,7 +50,7 @@ class GenericClientFacadeFactory
             [
                 'connect_timeout' => '30',
                 'timeout' => '60',
-            ]
+            ],
         );
 
         $apiClient = new KubernetesApiClient($this->retryProxy, $namespace);

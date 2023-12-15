@@ -24,7 +24,7 @@ class KubernetesApiClientTest extends TestCase
     {
         $client = new KubernetesApiClient(
             $this->createMock(RetryProxy::class),
-            self::TEST_NAMESPACE
+            self::TEST_NAMESPACE,
         );
 
         self::assertSame(self::TEST_NAMESPACE, $client->getK8sNamespace());
@@ -34,7 +34,7 @@ class KubernetesApiClientTest extends TestCase
     {
         $client = new KubernetesApiClient(
             $this->createRetryProxyMock(),
-            self::TEST_NAMESPACE
+            self::TEST_NAMESPACE,
         );
 
         $event = new Event(['name' => 'test-event']);
@@ -51,7 +51,7 @@ class KubernetesApiClientTest extends TestCase
             'read',
             Event::class,
             self::TEST_NAMESPACE,
-            'event-name'
+            'event-name',
         );
 
         self::assertSame($event, $result);
@@ -131,11 +131,11 @@ class KubernetesApiClientTest extends TestCase
         array $methodArguments,
         Status $status,
         string $expectedErrorMessage,
-        string $expectetErrorClassName
+        string $expectetErrorClassName,
     ): void {
         $client = new KubernetesApiClient(
             $this->createRetryProxyMock(),
-            self::TEST_NAMESPACE
+            self::TEST_NAMESPACE,
         );
 
         $eventsApiMock = $this->createMock(EventsApi::class);
@@ -150,7 +150,7 @@ class KubernetesApiClientTest extends TestCase
                 $eventsApiMock,
                 $method,
                 EventList::class,
-                ...$methodArguments
+                ...$methodArguments,
             );
 
             $this->fail('Cluster request should throw KubernetesResponseException');
@@ -165,7 +165,7 @@ class KubernetesApiClientTest extends TestCase
     {
         $client = new KubernetesApiClient(
             $this->createRetryProxyMock(),
-            self::TEST_NAMESPACE
+            self::TEST_NAMESPACE,
         );
 
         $resultMock = $this->createMock(EventList::class);
@@ -183,7 +183,7 @@ class KubernetesApiClientTest extends TestCase
                 'read',
                 Event::class,
                 self::TEST_NAMESPACE,
-                'event-name'
+                'event-name',
             );
 
             $this->fail('Cluster request should throw KubernetesResponseException');
@@ -194,9 +194,9 @@ class KubernetesApiClientTest extends TestCase
                     'Expected response class %s for request %s::read, found %s',
                     Event::class,
                     get_class($eventsApiMock),
-                    get_debug_type($resultMock)
+                    get_debug_type($resultMock),
                 ),
-                $e->getMessage()
+                $e->getMessage(),
             );
         }
     }
@@ -234,7 +234,7 @@ class KubernetesApiClientTest extends TestCase
                 Event::class,
                 self::TEST_NAMESPACE,
                 'dummy-name',
-                ['test']
+                ['test'],
             )
         ;
 
@@ -243,7 +243,7 @@ class KubernetesApiClientTest extends TestCase
             'read',
             Event::class,
             'dummy-name',
-            ['test']
+            ['test'],
         );
     }
 }

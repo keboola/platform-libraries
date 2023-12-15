@@ -32,9 +32,9 @@ class RetryProxyFactory
             new ExponentialBackOffPolicy(
                 self::KUBERNETES_INITIAL_DELAY_MS,
                 self::RETRY_MULTIPLIER,
-                self::KUBERNETES_MAX_DELAY_MS
+                self::KUBERNETES_MAX_DELAY_MS,
             ),
-            $this->logger
+            $this->logger,
         );
     }
 }

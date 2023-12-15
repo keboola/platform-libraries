@@ -55,7 +55,7 @@ class ServiceClient
     {
         if (($this->hostnameSuffix !== 'north-europe.azure.keboola.com') && ($serviceName === self::BILLING_SERVICE)) {
             throw new ServiceNotFoundException(
-                sprintf('Billing service is not available on stack "%s".', $this->hostnameSuffix)
+                sprintf('Billing service is not available on stack "%s".', $this->hostnameSuffix),
             );
         }
         if (in_array($serviceName, self::KNOWN_SERVICES, true)) {

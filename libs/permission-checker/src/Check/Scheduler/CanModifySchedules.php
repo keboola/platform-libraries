@@ -32,7 +32,7 @@ class CanModifySchedules implements PermissionCheckInterface
             if (!$isAllowed) {
                 throw new PermissionDeniedException(sprintf(
                     'Role "%s" is insufficient for this operation.',
-                    $role->value
+                    $role->value,
                 ));
             }
         }
@@ -48,7 +48,7 @@ class CanModifySchedules implements PermissionCheckInterface
         if (!$isAllowed) {
             throw new PermissionDeniedException(sprintf(
                 'Role "%s" is insufficient for this operation.',
-                $role->value
+                $role->value,
             ));
         }
     }

@@ -38,13 +38,13 @@ class ManagedCredentialsAuth implements BearerTokenResolver
                         'api-version' => self::API_VERSION,
                         'format' => 'text',
                         'resource' => $resource,
-                    ])
+                    ]),
                 ),
                 [
                     'Metadata' => 'true',
                 ],
             ),
-            TokenResponse::class
+            TokenResponse::class,
         );
 
         return new AuthenticationToken(

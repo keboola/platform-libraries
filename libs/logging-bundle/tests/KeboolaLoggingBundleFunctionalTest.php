@@ -19,7 +19,7 @@ class KeboolaLoggingBundleFunctionalTest extends KernelTestCase
 
         $datadogProcessors = array_filter(
             $logger->getProcessors(),
-            fn (callable $processor) => $processor instanceof DataDogContextProcessor
+            fn (callable $processor) => $processor instanceof DataDogContextProcessor,
         );
         self::assertCount(1, $datadogProcessors);
     }

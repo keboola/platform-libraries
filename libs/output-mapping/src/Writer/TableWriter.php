@@ -6,6 +6,10 @@ namespace Keboola\OutputMapping\Writer;
 
 use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
+use Keboola\Datatype\Definition\BaseType;
+use Keboola\Datatype\Definition\Common;
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
@@ -45,6 +49,14 @@ class TableWriter extends AbstractWriter
     public const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
     public const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
     public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
+
+    private const BACKENDS_WITH_TABLE_DEFINITION = [
+        Snowflake::METADATA_BACKEND,
+        Synapse::METADATA_BACKEND,
+        'exasol',
+        'teradata',
+        'bigquery',
+    ];
 
     private Metadata $metadataClient;
 
@@ -251,7 +263,15 @@ class TableWriter extends AbstractWriter
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && $hasColumnsMetadata)) {
+        $createTable = $destinationTableInfo === null && $hasColumns;
+        $createNativeTable = $createTable && $createTypedTables && $hasColumnsMetadata;
+        $createNativeTableWithBaseTypes = $createTable && in_array(
+            $destinationBucket['backend'],
+            self::BACKENDS_WITH_TABLE_DEFINITION,
+            true,
+        );
+
+        if ($createNativeTable) {
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
                 $destinationBucket['backend'],
@@ -264,7 +284,20 @@ class TableWriter extends AbstractWriter
             $this->createTableDefinition($destination, $tableDefinition);
             $tableCreated = true;
             $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
-        } elseif ($destinationTableInfo === null && $hasColumns) {
+        } elseif ($createNativeTableWithBaseTypes) {
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                $config['metadata'] ?? [],
+                $destinationBucket['backend'],
+            );
+            $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+                $destination->getTableName(),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
+                $this->createColumnsMetadataWithDefaultBaseType($config['columns']),
+            );
+            $this->createTableDefinition($destination, $tableDefinition);
+            $tableCreated = true;
+            $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
+        } elseif ($createTable) {
             $this->createTable($destination, $config['columns'], $loadOptions);
             $tableCreated = true;
             $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
@@ -482,6 +515,20 @@ class TableWriter extends AbstractWriter
             $metadata[] = [
                 'key' => TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID,
                 'value' => $systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
+            ];
+        }
+        return $metadata;
+    }
+
+    private function createColumnsMetadataWithDefaultBaseType(array $columns): array
+    {
+        $metadata = [];
+        foreach ($columns as $column) {
+            $metadata[$column] = [
+                [
+                    'key' => Common::KBC_METADATA_KEY_BASETYPE,
+                    'value' => BaseType::STRING,
+                ],
             ];
         }
         return $metadata;

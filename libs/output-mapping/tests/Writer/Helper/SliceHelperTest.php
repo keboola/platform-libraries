@@ -126,6 +126,17 @@ class SliceHelperTest extends TestCase
                 'columns' => ['id', 'name'],
             ],
         ];
+        yield 'file with manifest without columns' => [
+            'originalMappingSource' => $this->createTestMappingSourceHavingManifestWithoutColumns(
+                'test2.csv',
+                new Temp(),
+            ),
+            'expectedData' => '"123";"Test Name"' . PHP_EOL,
+            'expectedManifestData' => [
+                'delimiter' => ';',
+                'columns' => ['id', 'name'],
+            ],
+        ];
         yield 'file without manifest - with default enclosure in mapping' => [
             'originalMappingSource' => $this->createTestMappingSourceHavingMapping(
                 'test1.csv',
@@ -405,6 +416,26 @@ class SliceHelperTest extends TestCase
             json_encode([
                 'delimiter' => ';',
                 'columns' => ['id', 'name'],
+            ]),
+        );
+
+        return new MappingSource(
+            new LocalFileSource($csvFile),
+            (new SliceHelper(new NullLogger()))->getFile($manifestFile->getPathname()),
+        );
+    }
+
+    private function createTestMappingSourceHavingManifestWithoutColumns(string $fileName, Temp $temp): MappingSource
+    {
+        $csvFile = $temp->createFile($fileName);
+        file_put_contents($csvFile->getPathname(), '"id";"name"' . PHP_EOL . '"123";"Test Name"' . PHP_EOL);
+
+        $manifestFile = $temp->createFile($fileName . '.manifest');
+        file_put_contents(
+            $manifestFile->getPathname(),
+            json_encode([
+                'delimiter' => ';',
+                'columns' => [],
             ]),
         );
 

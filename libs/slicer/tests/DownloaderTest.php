@@ -12,17 +12,20 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DownloaderTest extends TestCase
 {
+    public const BIN_DIRECTORY_PATH = __DIR__ . '/../vendor/bin';
+
     public function testDownload(): void
     {
         chdir(sys_get_temp_dir());
         $fs = new Filesystem();
-        $fs->remove('bin/slicer');
+        $fs->remove(self::BIN_DIRECTORY_PATH . '/slicer');
         $downloader = new Downloader(
             new UrlResolver(),
             new MachineTypeResolver(
                 php_uname('m'),
                 PHP_OS,
             ),
+            self::BIN_DIRECTORY_PATH
         );
 
         $result = $downloader->download();
@@ -35,13 +38,15 @@ class DownloaderTest extends TestCase
     {
         chdir(sys_get_temp_dir());
         $fs = new Filesystem();
-        $fs->remove('bin/slicer');
+        $fs->remove(self::BIN_DIRECTORY_PATH . '/slicer');
+
         $downloader = new Downloader(
             new UrlResolver(),
             new MachineTypeResolver(
                 '64',
                 'Owen',
             ),
+            self::BIN_DIRECTORY_PATH
         );
 
         $result = $downloader->download();

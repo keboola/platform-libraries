@@ -25,7 +25,7 @@ class DownloaderTest extends TestCase
                 php_uname('m'),
                 PHP_OS,
             ),
-            self::BIN_DIRECTORY_PATH
+            self::BIN_DIRECTORY_PATH,
         );
 
         $result = $downloader->download();
@@ -46,7 +46,7 @@ class DownloaderTest extends TestCase
                 '64',
                 'Owen',
             ),
-            self::BIN_DIRECTORY_PATH
+            self::BIN_DIRECTORY_PATH,
         );
 
         $result = $downloader->download();

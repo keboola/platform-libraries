@@ -14,6 +14,7 @@ class Downloader
     public function __construct(
         private readonly UrlResolver $urlResolver,
         private readonly MachineTypeResolver $machineTypeResolver,
+        private readonly string $targetDir,
     ) {
         $this->fs = new Filesystem();
     }
@@ -25,19 +26,7 @@ class Downloader
             $this->machineTypeResolver->getPlatformName(),
             $this->machineTypeResolver->getSuffix(),
         );
-        return $this->doDownload($url, $this->prepareTargetDir() . '/slicer');
-    }
-
-    private function prepareTargetDir(): string
-    {
-        $cwd = getcwd();
-        if ($cwd === false) {
-            throw new RuntimeException('Cannot get current working directory.');
-        }
-        $cwd .= '/bin';
-
-        $this->fs->mkdir($cwd);
-        return $cwd;
+        return $this->doDownload($url, $this->targetDir . '/slicer');
     }
 
     private function doDownload(string $url, string $targetFile): string

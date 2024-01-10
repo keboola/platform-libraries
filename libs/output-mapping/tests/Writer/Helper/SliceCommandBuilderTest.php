@@ -34,7 +34,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    "'./bin/slicer'",
+                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
@@ -64,7 +64,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    "'./bin/slicer'",
+                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
@@ -96,7 +96,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    "'./bin/slicer'",
+                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),

@@ -19,7 +19,7 @@ class SliceCommandBuilder
         ?string $inputSizeThreshold = null,
     ): Process {
         $command = [
-            './bin/slicer',
+            $GLOBALS['_composer_bin_dir'] . '/slicer',
             '--table-input-path=' . $inputFile->getPathname(),
             '--table-name=' . $sourceName,
             '--table-output-path=' . $outputDir->getPathname(),

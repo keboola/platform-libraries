@@ -36,6 +36,8 @@ class Downloader
             throw new RuntimeException(sprintf('Cannot open curl "%s".', $url));
         }
 
+        $this->fs->mkdir(dirname($this->targetFile));
+
         $fp = fopen($this->targetFile, 'w+');
         if ($fp === false) {
             throw new RuntimeException(sprintf('Cannot open file "%s".', $this->targetFile));

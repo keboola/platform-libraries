@@ -61,7 +61,7 @@ class KubernetesApiClient
         // network errors (connection failure, timeout etc.), server-side errors (5xx status) should be covered by retry
         // client errors (4xx status) should not be retried
 
-        // inside the $api Guzzle is configured to not throw exception for 4xx/5xx status, is has to be handled manually
+        // inside the $api Guzzle is configured to not throw exception for 4xx/5xx status, it has to be handled manually
         // https://github.com/allansun/kubernetes-php-runtime/blob/f4d9466c1c8edc62c1f756f2812ceeb77f62b196/src/Client.php#L58
 
         $result = $this->retryProxy->call(function () use ($api, $method, $args) {

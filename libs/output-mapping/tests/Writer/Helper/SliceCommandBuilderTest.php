@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
+use Keboola\Slicer\Slicer;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 use SplFileInfo;
@@ -34,7 +35,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
+                    sprintf("'%s'", Slicer::getBinaryPath()),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
@@ -64,7 +65,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
+                    sprintf("'%s'", Slicer::getBinaryPath()),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
@@ -96,7 +97,7 @@ class SliceCommandBuilderTest extends TestCase
             implode(
                 ' ',
                 [
-                    sprintf("'%s/slicer'", $GLOBALS['_composer_bin_dir']),
+                    sprintf("'%s'", Slicer::getBinaryPath()),
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),

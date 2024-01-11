@@ -6,26 +6,25 @@ namespace Keboola\Slicer\Tests;
 
 use Keboola\Slicer\Downloader;
 use Keboola\Slicer\MachineTypeResolver;
+use Keboola\Slicer\Slicer;
 use Keboola\Slicer\UrlResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 class DownloaderTest extends TestCase
 {
-    public const BIN_DIRECTORY_PATH = __DIR__ . '/../vendor/bin';
-
     public function testDownload(): void
     {
         chdir(sys_get_temp_dir());
         $fs = new Filesystem();
-        $fs->remove(self::BIN_DIRECTORY_PATH . '/slicer');
+        $fs->remove(Slicer::getBinaryPath());
         $downloader = new Downloader(
             new UrlResolver(),
             new MachineTypeResolver(
                 php_uname('m'),
                 PHP_OS,
             ),
-            self::BIN_DIRECTORY_PATH,
+            Slicer::getBinaryPath(),
         );
 
         $result = $downloader->download();
@@ -38,7 +37,7 @@ class DownloaderTest extends TestCase
     {
         chdir(sys_get_temp_dir());
         $fs = new Filesystem();
-        $fs->remove(self::BIN_DIRECTORY_PATH . '/slicer');
+        $fs->remove(Slicer::getBinaryPath());
 
         $downloader = new Downloader(
             new UrlResolver(),
@@ -46,7 +45,7 @@ class DownloaderTest extends TestCase
                 '64',
                 'Owen',
             ),
-            self::BIN_DIRECTORY_PATH,
+            Slicer::getBinaryPath(),
         );
 
         $result = $downloader->download();

@@ -14,7 +14,7 @@ class Downloader
     public function __construct(
         private readonly UrlResolver $urlResolver,
         private readonly MachineTypeResolver $machineTypeResolver,
-        private readonly string $targetDir,
+        private readonly string $targetFile,
     ) {
         $this->fs = new Filesystem();
     }
@@ -26,19 +26,19 @@ class Downloader
             $this->machineTypeResolver->getPlatformName(),
             $this->machineTypeResolver->getSuffix(),
         );
-        return $this->doDownload($url, $this->targetDir . '/slicer');
+        return $this->doDownload($url);
     }
 
-    private function doDownload(string $url, string $targetFile): string
+    private function doDownload(string $url): string
     {
         $curl = curl_init($url);
         if ($curl === false) {
             throw new RuntimeException(sprintf('Cannot open curl "%s".', $url));
         }
 
-        $fp = fopen($targetFile, 'w+');
+        $fp = fopen($this->targetFile, 'w+');
         if ($fp === false) {
-            throw new RuntimeException(sprintf('Cannot open file "%s".', $targetFile));
+            throw new RuntimeException(sprintf('Cannot open file "%s".', $this->targetFile));
         }
 
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -57,7 +57,7 @@ class Downloader
             );
         }
         curl_close($curl);
-        $this->fs->chmod($targetFile, 0777);
-        return $targetFile;
+        $this->fs->chmod($this->targetFile, 0777);
+        return $this->targetFile;
     }
 }

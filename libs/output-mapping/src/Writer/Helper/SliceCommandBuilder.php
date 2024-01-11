@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\Slicer\Slicer;
 use SplFileInfo;
 use Symfony\Component\Process\Process;
 
@@ -19,7 +20,7 @@ class SliceCommandBuilder
         ?string $inputSizeThreshold = null,
     ): Process {
         $command = [
-            $GLOBALS['_composer_bin_dir'] . '/slicer',
+            Slicer::getBinaryPath(),
             '--table-input-path=' . $inputFile->getPathname(),
             '--table-name=' . $sourceName,
             '--table-output-path=' . $outputDir->getPathname(),

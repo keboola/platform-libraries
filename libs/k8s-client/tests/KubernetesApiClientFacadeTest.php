@@ -629,7 +629,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertSame($facade->events(), $facade->getApiForResource(Event::class));
         self::assertSame(
             $facade->persistentVolumeClaims(),
-            $facade->getApiForResource(PersistentVolumeClaim::class)
+            $facade->getApiForResource(PersistentVolumeClaim::class),
         );
         self::assertSame($facade->pods(), $facade->getApiForResource(Pod::class));
         self::assertSame($facade->secrets(), $facade->getApiForResource(Secret::class));

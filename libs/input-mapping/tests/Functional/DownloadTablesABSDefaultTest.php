@@ -13,14 +13,16 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 class DownloadTablesABSDefaultTest extends AbstractTestCase
 {
     #[NeedsTestTables(2)]
     public function testReadTablesABSDefaultBackend(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getLocalStagingFactory(logger: $logger));
         $configuration = new InputTableOptionsList([
             [
@@ -51,7 +53,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
         self::assertEquals($this->secondTableId, $manifest['id']);
         $this->assertABSinfo($manifest);
 
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 ABS table exports.'));
+        self::assertTrue($testHandler->hasInfoThatContains('Processing 2 ABS table exports.'));
     }
 
     #[NeedsTestTables]

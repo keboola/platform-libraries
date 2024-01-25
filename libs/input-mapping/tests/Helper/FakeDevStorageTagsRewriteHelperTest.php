@@ -12,8 +12,9 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class FakeDevStorageTagsRewriteHelperTest extends TestCase
 {
@@ -70,7 +71,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
         $clientWrapper = self::getClientWrapper(null);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -105,14 +107,15 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             $configuration,
             $clientWrapper,
             $testLogger,
         )->getDefinition();
 
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
         ));
 
@@ -141,7 +144,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ],
         ];
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -152,7 +156,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             $testLogger,
         )->getDefinition();
         self::assertTrue(
-            $testLogger->hasInfoThatContains(
+            $testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev source tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".',
                     self::$branchTag,
@@ -172,7 +176,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
     public function testBranchRewriteNoFiles(): void
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         sleep(2); // wait for storage files cleanup to take effect
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
@@ -185,7 +190,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             $testLogger,
         )->getDefinition();
 
-        self::assertFalse($testLogger->hasInfoThatContains(
+        self::assertFalse($testHandler->hasInfoThatContains(
             sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
         ));
         $expectedConfiguration = $configuration;
@@ -207,7 +212,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ],
         ];
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
@@ -220,7 +226,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         )->getDefinition();
 
         self::assertFalse(
-            $testLogger->hasInfoThatContains(
+            $testHandler->hasInfoThatContains(
                 sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
             ),
         );
@@ -257,7 +263,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ],
             'processed_tags' => ['processed'],
         ];
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -304,7 +311,8 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ],
             'processed_tags' => ['processed'],
         ];
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $expectedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,

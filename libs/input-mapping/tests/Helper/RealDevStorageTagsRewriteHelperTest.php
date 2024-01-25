@@ -14,8 +14,9 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class RealDevStorageTagsRewriteHelperTest extends TestCase
 {
@@ -76,7 +77,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
     {
         $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
         $clientWrapper = self::getClientWrapper(null);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -118,7 +120,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             $configuration,
             $clientWrapper,
@@ -135,7 +138,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ),
             $processedConfiguration,
         );
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf('Using files from development branch "%s" for tags "im-files-test".', self::$branchId),
         ));
     }
@@ -162,7 +165,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ],
         ];
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -203,7 +207,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $processedConfiguration,
         );
         self::assertTrue(
-            $testLogger->hasInfoThatContains(
+            $testHandler->hasInfoThatContains(
                 sprintf(
                     'Using files from development branch "%s" for tags "im-files-test".',
                     self::$branchId,
@@ -214,7 +218,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
 
     public function testBranchRewriteNoFiles(): void
     {
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         sleep(2); // wait for storage files cleanup to take effect
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
@@ -243,7 +248,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $processedConfiguration,
         );
         self::assertTrue(
-            $testLogger->hasInfoThatContains(
+            $testHandler->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
                     $clientWrapper->getDefaultBranch()->id,
@@ -265,7 +270,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ],
         ];
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $clientWrapper = self::getClientWrapper(self::$branchId);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
@@ -307,7 +313,7 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             $processedConfiguration,
         );
         self::assertTrue(
-            $testLogger->hasInfoThatContains(
+            $testHandler->hasInfoThatContains(
                 sprintf(
                     'Using files from default branch "%s" for tags "im-files-test".',
                     $clientWrapper->getDefaultBranch()->id,
@@ -334,7 +340,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ],
             'processed_tags' => ['processed'],
         ];
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('The "processed_tags" property is not supported for development storage.');
         (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
@@ -367,7 +374,8 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             (string) $clientWrapper->getClientOptionsReadOnly()->getRunId(),
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new RealDevStorageTagsRewriteHelper())->rewriteFileTags(
             $configuration,
             $clientWrapper,
@@ -384,6 +392,6 @@ class RealDevStorageTagsRewriteHelperTest extends TestCase
             ),
             $processedConfiguration,
         );
-        self::assertTrue($testLogger->hasInfoThatContains('File input mapping kept unchanged.'));
+        self::assertTrue($testHandler->hasInfoThatContains('File input mapping kept unchanged.'));
     }
 }

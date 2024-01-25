@@ -18,8 +18,9 @@ use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class FakeDevStorageTableRewriteHelperTest extends TestCase
 {
@@ -123,7 +124,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
             $csv,
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -188,7 +190,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
     public function testInvalidName(): void
     {
         $clientWrapper = $this->getClientWrapper($this->branchId);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => 'out.c-main',
@@ -231,7 +234,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         );
 
         $clientWrapper = $this->getClientWrapper($this->branchId);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -311,7 +315,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
             'my-table-2',
             $csvFile,
         );
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -373,7 +378,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf('Using dev input "%s" instead of "%s.my-table-2".', $expectedTableId, $this->outBucketId),
         ));
     }
@@ -395,7 +400,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
             'my-table-2',
             $csvFile,
         );
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesStates = new InputTableStateList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -424,7 +430,7 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
             ],
             $destinations->jsonSerialize(),
         );
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "%s.my-table-2" instead of "%s.my-table-2".',
                 $this->outBranchBucketId,
@@ -456,7 +462,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'destination' => 'my-table.csv',
             ],
         ]);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
@@ -507,7 +514,8 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'destination' => 'my-table.csv',
             ],
         ]);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,

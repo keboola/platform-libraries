@@ -22,14 +22,16 @@ use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 class DownloadTablesDefaultTest extends AbstractTestCase
 {
     #[NeedsTestTables(2)]
     public function testReadTablesDefaultBackend(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getLocalStagingFactory(logger: $logger));
         $configuration = new InputTableOptionsList([
             [
@@ -68,7 +70,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         );
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.csv.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 local table exports.'));
+        self::assertTrue($testHandler->hasInfoThatContains('Processing 2 local table exports.'));
     }
 
     #[NeedsTestTables]
@@ -456,7 +458,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesDevBucket(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getLocalStagingFactory(logger: $logger));
         $configuration = new InputTableOptionsList([
             [
@@ -515,7 +518,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             token: (string) getenv('STORAGE_API_TOKEN'),
             useBranchStorage: true,
         ));
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getLocalStagingFactory(clientWrapper: $clientWrapper, logger: $logger));
         $configuration = new InputTableOptionsList([
             [

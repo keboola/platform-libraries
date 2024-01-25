@@ -17,8 +17,10 @@ use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class RealDevStorageTableRewriteHelperTest extends TestCase
 {
@@ -123,7 +125,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             $csv,
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -208,7 +211,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             $csv,
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -268,7 +272,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "out.c-main.my-table-2".',
                 $clientWrapper->getDefaultBranch()->id,
@@ -294,7 +298,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'my-table-2',
             $csvFile,
         );
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -356,7 +361,7 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "out.c-main.my-table-2" from branch "%s" instead of default branch "%s".',
                 $this->branchId,
@@ -390,7 +395,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             'my-table',
             $csvFile,
         );
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesStates = new InputTableStateList([
             [
                 'source' => $this->outBucketId . '.my-table',
@@ -443,7 +449,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'destination' => 'my-table.csv',
             ],
         ]);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
@@ -501,7 +508,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
                 'destination' => 'my-table.csv',
             ],
         ]);
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $destinations = (new RealDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
             $clientWrapper,
@@ -655,7 +663,8 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
             ->willReturn($branch2ClientMock)
         ;
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
                 'source' => 'in.c-myBucket.my-table',
@@ -678,34 +687,38 @@ class RealDevStorageTableRewriteHelperTest extends TestCase
         );
 
         $inputOptions = $destinations->getTables();
+        $records = $testHandler->getRecords();
         self::assertCount(3, $inputOptions);
-        self::assertCount(3, $testLogger->records);
+        self::assertCount(3, $records);
 
         self::assertSame('in.c-myBucket.my-table', $inputOptions[0]->getSource());
         self::assertSame(456, $inputOptions[0]->getSourceBranchId());
-        $record = array_shift($testLogger->records);
-        self::assertSame('info', $record['level']);
+        /** @var LogRecord $record */
+        $record = array_shift($records);
+        self::assertSame('INFO', $record->level->getName());
         self::assertSame(
             'Using input "in.c-myBucket.my-table" from dev branch "456".',
-            $record['message'],
+            $record->message,
         );
 
         self::assertSame('in.c-myBucket.my-table-2', $inputOptions[1]->getSource());
         self::assertSame(789, $inputOptions[1]->getSourceBranchId());
-        $record = array_shift($testLogger->records);
-        self::assertSame('info', $record['level']);
+        /** @var LogRecord $record */
+        $record = array_shift($records);
+        self::assertSame('INFO', $record->level->getName());
         self::assertSame(
             'Using dev input "in.c-myBucket.my-table-2" from branch "789" instead of default branch "123".',
-            $record['message'],
+            $record->message,
         );
 
         self::assertSame('in.c-myBucket.my-table-3', $inputOptions[2]->getSource());
         self::assertSame(123, $inputOptions[2]->getSourceBranchId());
-        $record = array_shift($testLogger->records);
-        self::assertSame('info', $record['level']);
+        /** @var LogRecord $record */
+        $record = array_shift($records);
+        self::assertSame('INFO', $record->level->getName());
         self::assertSame(
             'Using fallback to default branch "123" for input "in.c-myBucket.my-table-3".',
-            $record['message'],
+            $record->message,
         );
     }
 }

@@ -12,7 +12,8 @@ use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 {
@@ -64,7 +65,8 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
 
         $configuration = [
@@ -93,7 +95,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file1Id, $manifest1['id']);
         self::assertEquals([$branchTag], $manifest1['tags']);
 
-        self::assertTrue($testLogger->hasInfoThatContains(
+        self::assertTrue($testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
                 $branchId,

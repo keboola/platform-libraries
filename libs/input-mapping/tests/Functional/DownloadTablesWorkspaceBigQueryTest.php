@@ -15,7 +15,8 @@ use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 #[NeedsStorageBackend('bigquery')]
 class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
@@ -23,7 +24,8 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesBigQueryBackend(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
@@ -67,13 +69,13 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
             self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
-        self::assertTrue($logger->hasInfoThatContains(sprintf(
+        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
+        self::assertTrue($testHandler->hasInfoThatContains(sprintf(
             'Table "%s" will be created as view.',
             $this->firstTableId,
         )));
-        self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);

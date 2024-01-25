@@ -12,7 +12,8 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -21,7 +22,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles(): void
     {
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
@@ -64,8 +66,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
+        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
     }
 
     public function testReadFilesOverwrite(): void
@@ -518,7 +520,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesWithFileIdsFilter(): void
     {
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
@@ -561,7 +564,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
+        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
     }
 }

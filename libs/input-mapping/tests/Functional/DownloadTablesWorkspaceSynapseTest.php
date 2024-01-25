@@ -145,7 +145,9 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         }
 
         self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)));
+        self::assertTrue(
+            $testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+        );
         self::assertTrue($testHandler->hasInfoThatContains('Processing 1 workspace exports.'));
 
         // test loading with preserve = false to clean the workspace

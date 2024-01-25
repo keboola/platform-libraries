@@ -102,7 +102,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         ));
         self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)));
+        self::assertTrue(
+            $testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+        );
         self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->thirdTableId)));
         self::assertTrue($testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
         self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));

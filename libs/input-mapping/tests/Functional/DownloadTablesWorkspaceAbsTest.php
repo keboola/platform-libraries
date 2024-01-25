@@ -124,9 +124,15 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         $this->assertBlobs('download/test3');
 
         self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-abs" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test1" will be copied.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test2" will be copied.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test3" will be copied.'));
+        self::assertTrue(
+            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test1" will be copied.'),
+        );
+        self::assertTrue(
+            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test2" will be copied.'),
+        );
+        self::assertTrue(
+            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test3" will be copied.'),
+        );
         self::assertTrue($testHandler->hasInfoThatContains('Copying 3 tables to workspace.'));
         self::assertTrue($testHandler->hasInfoThatContains('Processing workspace export.'));
     }

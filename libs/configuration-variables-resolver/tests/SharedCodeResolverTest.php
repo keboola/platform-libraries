@@ -14,15 +14,17 @@ use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 
 class SharedCodeResolverTest extends TestCase
 {
     private ClientWrapper $clientWrapper;
 
-    private TestLogger $testLogger;
+    private Logger $testLogger;
+
+    private TestHandler $testHandler;
 
     public function setUp(): void
     {
@@ -42,7 +44,8 @@ class SharedCodeResolverTest extends TestCase
             $components->deleteConfiguration('keboola.shared-code', $configuration['id']);
         }
 
-        $this->testLogger = new TestLogger();
+        $this->testHandler = new TestHandler();
+        $this->testLogger = new Logger('testLogger', [$this->testHandler]);
     }
 
     private function createSharedCodeConfiguration(Client $client, array $rowsData): array
@@ -158,7 +161,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
+            $this->testHandler->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -190,7 +193,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertFalse(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
+            $this->testHandler->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -222,7 +225,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertFalse(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
+            $this->testHandler->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -360,7 +363,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
+            $this->testHandler->hasInfoThatContains('Loaded shared code snippets with ids: "first_code, secondCode".'),
         );
     }
 
@@ -399,7 +402,7 @@ class SharedCodeResolverTest extends TestCase
             $newConfiguration,
         );
         self::assertTrue(
-            $this->testLogger->hasInfoThatContains('Loaded shared code snippets with ids: "123456, 1234567".'),
+            $this->testHandler->hasInfoThatContains('Loaded shared code snippets with ids: "123456, 1234567".'),
         );
     }
 }

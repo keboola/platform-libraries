@@ -18,7 +18,8 @@ use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
-use Psr\Log\Test\TestLogger;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 class StorageApiLocalTableWriterTest extends AbstractTestCase
 {
@@ -813,7 +814,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table12.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger));
         $tableQueue = $writer->uploadTables(
             'upload',
@@ -857,7 +859,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
-        self::assertFalse($testLogger->hasWarningThatContains('Output mapping does not match destination table'));
+        self::assertFalse($testHandler->hasWarningThatContains('Output mapping does not match destination table'));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
             $this->emptyOutputBucketId . '.table12',
         );
@@ -870,7 +872,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table11.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $testLogger));
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -910,7 +913,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         self::assertFalse(
-            $testLogger->hasWarningThatContains(
+            $testHandler->hasWarningThatContains(
                 "Output mapping does not match destination table: primary key '' does not match '' in '" .
                 $this->emptyOutputBucketId . ".table9'.",
             ),
@@ -1515,7 +1518,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $logger));
 
         $tableQueue =  $writer->uploadTables(
@@ -1571,7 +1575,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $logger));
 
         $this->expectException(InvalidOutputException::class);
@@ -1855,7 +1860,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             }
         }
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(logger: $testLogger));
 
         $tableQueue =  $writer->uploadTables(
@@ -1878,7 +1884,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         }
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
         self::assertTrue(
-            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
+            $testHandler->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
         );
     }
 
@@ -1914,7 +1920,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $csv,
         );
 
-        $testLogger = new TestLogger();
+        $testHandler = new TestHandler();
+        $testLogger = new Logger('testLogger', [$testHandler]);
         $writer = new TableWriter($this->getLocalStagingFactory(logger: $testLogger));
 
         $tableQueue =  $writer->uploadTables(
@@ -1937,7 +1944,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         }
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
         self::assertFalse(
-            $testLogger->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
+            $testHandler->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
         );
     }
 

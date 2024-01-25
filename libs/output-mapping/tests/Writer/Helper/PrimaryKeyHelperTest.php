@@ -8,8 +8,9 @@ use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 
 class PrimaryKeyHelperTest extends AbstractTestCase
 {
@@ -134,7 +135,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChange(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -146,7 +148,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             ['id', 'name'],
             ['id', 'foo'],
         );
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
@@ -156,7 +158,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChangeFromEmpty(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $tableId = $this->createTable(['id', 'name', 'foo'], '');
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals([], $tableInfo['primaryKey']);
@@ -168,7 +171,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             [ ],
             ['id', 'foo'],
         );
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "" to "id, foo".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
@@ -178,7 +181,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyChangeToEmpty(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,foo');
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'foo'], $tableInfo['primaryKey']);
@@ -190,7 +194,7 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             $tableInfo['primaryKey'],
             [],
         );
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, foo" to "".', $tableId),
         ));
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
@@ -200,7 +204,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyErrorRemove(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -213,10 +218,10 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             ['id', 'name'],
             ['id', 'foo'],
         );
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, name" to "id, foo".', $invalidTableId),
         ));
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf(
                 'Error deleting primary key of table %s: The table "test-table-non-existent" ' .
                 'was not found in the bucket "%s" in the project',
@@ -231,7 +236,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testModifyPrimaryKeyErrorCreate(): void
     {
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
         $tableId = $this->createTable(['id', 'name', 'foo'], 'id,name');
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id', 'name'], $tableInfo['primaryKey']);
@@ -243,10 +249,10 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             ['id', 'name'],
             ['id', 'bar'],
         );
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf('Modifying primary key of table "%s" from "id, name" to "id, bar".', $tableId),
         ));
-        self::assertTrue($logger->hasWarningThatContains(
+        self::assertTrue($testHandler->hasWarningThatContains(
             sprintf(
                 'Error changing primary key of table %s: Primary key columns "bar" not found in "id, name, foo"',
                 $tableId,

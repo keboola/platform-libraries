@@ -11,8 +11,8 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class FailedLoadTableDeciderTest extends TestCase
 {
@@ -63,7 +63,6 @@ class FailedLoadTableDeciderTest extends TestCase
     /** @dataProvider decideProvider */
     public function testDecide(array $tableInfo, bool $freshlyCreated, bool $expectedResult): void
     {
-        $logger = new TestLogger();
         $client = self::createMock(Client::class);
         $client->expects(self::once())->method('getTable')
             ->with('in.c-test.table')
@@ -72,13 +71,12 @@ class FailedLoadTableDeciderTest extends TestCase
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($client);
         $task = new LoadTableTask(new MappingDestination('in.c-test.table'), [], $freshlyCreated);
-        $result = FailedLoadTableDecider::decideTableDelete($logger, $clientWrapperMock, $task);
+        $result = FailedLoadTableDecider::decideTableDelete(new Logger('testLogger'), $clientWrapperMock, $task);
         self::assertSame($expectedResult, $result);
     }
 
     public function testDecideNonExistent(): void
     {
-        $logger = new TestLogger();
         $client = self::createMock(Client::class);
         $client->expects(self::once())->method('getTable')
             ->with('in.c-test.table')
@@ -87,7 +85,7 @@ class FailedLoadTableDeciderTest extends TestCase
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($client);
         $task = new LoadTableTask(new MappingDestination('in.c-test.table'), [], true);
-        $result = FailedLoadTableDecider::decideTableDelete($logger, $clientWrapperMock, $task);
+        $result = FailedLoadTableDecider::decideTableDelete(new Logger('testLogger'), $clientWrapperMock, $task);
         self::assertSame(false, $result);
     }
 }

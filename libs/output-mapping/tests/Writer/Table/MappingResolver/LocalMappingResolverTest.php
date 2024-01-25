@@ -9,9 +9,10 @@ use Keboola\OutputMapping\Writer\Table\MappingResolver\LocalMappingResolver;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 use Symfony\Component\Process\Process;
 
 class LocalMappingResolverTest extends TestCase
@@ -175,7 +176,8 @@ class LocalMappingResolverTest extends TestCase
 
         $process->mustRun();
 
-        $logger = new TestLogger();
+        $testHandler = new TestHandler();
+        $logger = new Logger('testLogger', [$testHandler]);
 
         $resolver = new LocalMappingResolver($temp->getTmpFolder(), $logger);
 
@@ -192,8 +194,8 @@ class LocalMappingResolverTest extends TestCase
         self::assertNotNull($mappingSource->getManifestFile());
         self::assertFileExists($mappingSource->getManifestFile()->getPathname());
 
-        self::assertCount(2, $logger->records);
-        self::assertTrue($logger->hasInfo('Slicing table "mySource.csv".'));
-        self::assertTrue($logger->hasInfoThatContains('Table "mySource.csv" sliced'));
+        self::assertCount(2, $testHandler->getRecords());
+        self::assertTrue($testHandler->hasInfo('Slicing table "mySource.csv".'));
+        self::assertTrue($testHandler->hasInfoThatContains('Table "mySource.csv" sliced'));
     }
 }

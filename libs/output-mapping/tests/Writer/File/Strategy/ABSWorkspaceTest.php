@@ -13,7 +13,7 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\StorageApi\Workspaces;
-use Psr\Log\Test\TestLogger;
+use Monolog\Logger;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
@@ -71,7 +71,7 @@ class ABSWorkspaceTest extends AbstractTestCase
         self::expectExceptionMessage('Invalid credentials received: foo, bar');
         new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
             $this->getProvider(['connection' => ['foo' => 'bar', 'bar' => 'Kochba']]),
             'json',
@@ -82,7 +82,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -95,7 +95,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -111,7 +111,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -152,7 +152,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -172,7 +172,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -188,7 +188,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -232,7 +232,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -270,7 +270,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -317,7 +317,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -334,7 +334,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -348,7 +348,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -387,7 +387,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'yaml',
@@ -426,7 +426,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -462,7 +462,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -478,7 +478,7 @@ class ABSWorkspaceTest extends AbstractTestCase
     {
         $strategy = new ABSWorkspace(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',

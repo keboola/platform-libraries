@@ -18,8 +18,6 @@ use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 class StorageApiLocalTableWriterTest extends AbstractTestCase
 {

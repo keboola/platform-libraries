@@ -13,8 +13,6 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 class DownloadTablesS3DefaultTest extends AbstractTestCase
 {

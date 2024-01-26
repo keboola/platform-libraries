@@ -18,8 +18,6 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 #[NeedsStorageBackend('synapse')]
 class DownloadTablesWorkspaceAbsTest extends AbstractTestCase

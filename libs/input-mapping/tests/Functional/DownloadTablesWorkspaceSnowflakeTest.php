@@ -19,8 +19,6 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 {

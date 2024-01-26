@@ -22,8 +22,6 @@ use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 class DownloadTablesDefaultTest extends AbstractTestCase
 {

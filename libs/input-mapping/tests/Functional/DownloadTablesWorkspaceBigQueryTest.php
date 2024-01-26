@@ -15,8 +15,6 @@ use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 #[NeedsStorageBackend('bigquery')]
 class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase

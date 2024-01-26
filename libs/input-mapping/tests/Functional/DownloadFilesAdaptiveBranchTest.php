@@ -12,8 +12,6 @@ use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 
 class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 {

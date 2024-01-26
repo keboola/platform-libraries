@@ -17,8 +17,6 @@ use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 use Throwable;
 
 #[NeedsStorageBackend('synapse')]

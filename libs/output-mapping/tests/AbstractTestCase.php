@@ -17,6 +17,8 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
@@ -42,9 +44,16 @@ abstract class AbstractTestCase extends TestCase
     protected string $secondTableId;
     protected string $thirdTableId;
 
+    protected TestHandler $testHandler;
+    protected Logger $testLogger;
+
     public function setUp(): void
     {
         parent::setUp();
+
+        $this->testHandler = new TestHandler();
+        $this->testLogger = new Logger('testLogger', [$this->testHandler]);
+
         $this->temp = $this->createTemp();
 
         $this->initClient();

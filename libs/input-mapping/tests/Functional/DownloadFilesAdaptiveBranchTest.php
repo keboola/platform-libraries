@@ -65,9 +65,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $testHandler = new TestHandler();
-        $testLogger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [
             [
@@ -95,7 +93,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file1Id, $manifest1['id']);
         self::assertEquals([$branchTag], $manifest1['tags']);
 
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
                 $branchId,

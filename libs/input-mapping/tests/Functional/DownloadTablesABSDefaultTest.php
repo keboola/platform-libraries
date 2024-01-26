@@ -21,9 +21,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesABSDefaultBackend(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory(logger: $logger));
+        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -53,7 +51,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
         self::assertEquals($this->secondTableId, $manifest['id']);
         $this->assertABSinfo($manifest);
 
-        self::assertTrue($testHandler->hasInfoThatContains('Processing 2 ABS table exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processing 2 ABS table exports.'));
     }
 
     #[NeedsTestTables]

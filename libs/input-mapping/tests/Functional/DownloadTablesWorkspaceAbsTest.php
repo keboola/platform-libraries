@@ -70,13 +70,11 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
                 'json',
-                $logger,
+                $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
             ),
         );
@@ -123,18 +121,18 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
 
         $this->assertBlobs('download/test3');
 
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-abs" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-abs" table input staging.'));
         self::assertTrue(
-            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test1" will be copied.'),
+            $this->testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test1" will be copied.'),
         );
         self::assertTrue(
-            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test2" will be copied.'),
+            $this->testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test2" will be copied.'),
         );
         self::assertTrue(
-            $testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test3" will be copied.'),
+            $this->testHandler->hasInfoThatContains('Table "in.c-testTablesAbsWorkspaceTest.test3" will be copied.'),
         );
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 3 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processing workspace export.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 3 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processing workspace export.'));
     }
 
     #[NeedsTestTables]
@@ -143,12 +141,10 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getWorkspaceStagingFactory(
             null,
             'json',
-            $logger,
+            $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         ));
         $configuration = new InputTableOptionsList([
@@ -171,8 +167,8 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         self::assertEquals('in.c-testTablesAbsWorkspaceSlashTest.test1', $manifest['id']);
 
         $this->assertBlobs('download/test/test1');
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-abs" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-abs" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             'Table "in.c-testTablesAbsWorkspaceSlashTest.test1" will be copied.',
         ));
     }
@@ -184,12 +180,10 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
         }
 
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader($this->getWorkspaceStagingFactory(
             null,
             'json',
-            $logger,
+            $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
         ));
         $configuration = new InputTableOptionsList([

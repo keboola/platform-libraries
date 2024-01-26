@@ -27,9 +27,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(3), NeedsEmptyOutputBucket]
     public function testTablesSnowflakeBackend(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -100,15 +98,19 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
             $this->emptyOutputBucketId . '.test3',
         ));
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue(
-            $testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)),
         );
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->thirdTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+        );
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->thirdTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);
@@ -155,9 +157,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesSnowflakeDataTypes(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -197,10 +197,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
 
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables]
@@ -239,9 +241,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesSnowflakeOverwrite(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -287,10 +287,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
 
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
 
         // check that we can overwrite while using clone
         $configuration = new InputTableOptionsList([
@@ -326,10 +328,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         } catch (ClientException $e) {
             self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)));
-        self::assertTrue($testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables]
@@ -339,9 +343,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
         }
 
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -370,9 +372,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     {
         // first we create the workspace and load there some data.
         // then we will do a new load with preserve=false to make sure that the old data was removed
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -511,9 +511,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             'out',
         );
 
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getWorkspaceStagingFactory($clientWrapper, logger: $logger));
+        $reader = new Reader($this->getWorkspaceStagingFactory($clientWrapper, logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [ // cloned table from production
                 'source' => $this->firstTableId,
@@ -580,22 +578,22 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 $this->emptyOutputBucketId . '.test' . $table_name,
             ));
         }
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
                 $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
             ),
         ));
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
                 $clientWrapper->getDefaultBranch()->id,
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
             ),
         ));
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
@@ -604,7 +602,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ),
         ));
         self::assertTrue(
-            $testHandler->hasInfoThatContains(
+            $this->testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                     'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
@@ -614,8 +612,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ),
         );
 
-        self::assertTrue($testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
     }
 }

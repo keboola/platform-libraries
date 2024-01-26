@@ -24,12 +24,9 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesRedshiftBackend(): void
     {
-        var_dump($this->firstTableId);
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                logger: $logger,
+                logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),
         );
@@ -84,23 +81,21 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         );
         self::assertEquals($this->emptyOutputBucketId . '.test2', $tableId);
 
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf('Table "%s" will be copied.', $this->firstTableId),
         ));
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf('Table "%s" will be copied.', $this->secondTableId),
         ));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables]
     public function testUseViewFails(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                logger: $logger,
+                logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),
         );

@@ -60,13 +60,11 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
                 'json',
-                $logger,
+                $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse'],
             ),
         );
@@ -144,11 +142,13 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             self::assertStringStartsWith('Invalid columns: _timestamp', $e->getMessage());
         }
 
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)));
         self::assertTrue(
-            $testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
         );
-        self::assertTrue($testHandler->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processing 1 workspace exports.'));
 
         // test loading with preserve = false to clean the workspace
         $configuration = new InputTableOptionsList([

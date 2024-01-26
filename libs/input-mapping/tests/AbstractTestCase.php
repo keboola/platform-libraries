@@ -14,6 +14,8 @@ use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
@@ -25,6 +27,8 @@ abstract class AbstractTestCase extends TestCase
 {
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
+    protected TestHandler $testHandler;
+    protected Logger $testLogger;
     protected ?string $workspaceId = null;
     protected array $workspaceCredentials;
 
@@ -38,6 +42,10 @@ abstract class AbstractTestCase extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+
+        $this->testHandler = new TestHandler();
+        $this->testLogger = new Logger('testLogger', [$this->testHandler]);
+
         $this->temp = new Temp('input-mapping');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');

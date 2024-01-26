@@ -78,9 +78,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $testHandler = new TestHandler();
-        $testLogger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -92,7 +90,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertFalse(file_exists($root . '/download/' . $id3 . '_upload'));
 
         self::assertTrue(
-            $testHandler->hasInfoThatContains(
+            $this->testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev source tags "%s" instead of "tag-1, tag-2".',
                     implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]),
@@ -169,9 +167,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $testHandler = new TestHandler();
-        $testLogger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [[
             'tags' => [self::TEST_FILE_TAG_FOR_BRANCH],
@@ -194,7 +190,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file1Id, $manifest1['id']);
         self::assertEquals([$branchTag], $manifest1['tags']);
 
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH),
         ));
     }
@@ -235,9 +231,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $testHandler = new TestHandler();
-        $testLogger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [
             [
@@ -274,14 +268,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file3Id, $manifest3['id']);
         self::assertEquals([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'], $manifest3['tags']);
 
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using files from default branch "%s" for tags "tag-1".',
                 $clientWrapper->getDefaultBranch()->id,
             ),
         ));
 
-        self::assertTrue($testHandler->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using files from development branch "%s" for tags "tag-2".',
                 $clientWrapper->getClientOptionsReadOnly()->getBranchId(),
@@ -332,9 +326,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $testHandler = new TestHandler();
-        $testLogger = new Logger('testLogger', [$testHandler]);
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [
             [

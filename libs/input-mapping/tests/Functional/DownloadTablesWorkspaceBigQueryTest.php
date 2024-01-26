@@ -24,13 +24,11 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesBigQueryBackend(): void
     {
-        $testHandler = new TestHandler();
-        $logger = new Logger('testLogger', [$testHandler]);
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
                 'json',
-                $logger,
+                $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_BIGQUERY, 'bigquery'],
             ),
         );
@@ -69,13 +67,13 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
             self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
 
-        self::assertTrue($testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
-        self::assertTrue($testHandler->hasInfoThatContains(sprintf(
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
             'Table "%s" will be created as view.',
             $this->firstTableId,
         )));
-        self::assertTrue($testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);

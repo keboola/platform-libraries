@@ -63,7 +63,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeClient
+            $persistentVolumeClient,
         );
 
         self::assertSame($configMapsApiClient, $facade->configMaps());
@@ -117,7 +117,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->get(Pod::class, 'pod-name', ['labelSelector' => 'app=pod-name']);
@@ -166,7 +166,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->get(Secret::class, 'secret-name', ['labelSelector' => 'app=secret-name']);
@@ -215,7 +215,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->get(Event::class, 'event-name', ['labelSelector' => 'app=event-name']);
@@ -299,7 +299,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->createModels([
@@ -366,7 +366,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $this->expectException(RuntimeException::class);
@@ -453,7 +453,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->deleteModels([
@@ -522,7 +522,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $this->expectException(RuntimeException::class);
@@ -577,7 +577,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $facade->waitWhileExists([
@@ -618,7 +618,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $startTime = microtime(true);
@@ -685,7 +685,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my']);
@@ -742,7 +742,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my', 'limit' => 5]);
@@ -787,7 +787,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $facade->deleteAllMatching($deleteOptions, $deleteQuery);
@@ -833,7 +833,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $secretsApiClient,
             $servicesApiClient,
             $ingressesApiClient,
-            $persistentVolumeApiClient
+            $persistentVolumeApiClient,
         );
 
         $this->expectException(RuntimeException::class);
@@ -860,7 +860,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertSame($facade->events(), $facade->getApiForResource(Event::class));
         self::assertSame(
             $facade->persistentVolumeClaims(),
-            $facade->getApiForResource(PersistentVolumeClaim::class)
+            $facade->getApiForResource(PersistentVolumeClaim::class),
         );
         self::assertSame($facade->pods(), $facade->getApiForResource(Pod::class));
         self::assertSame($facade->secrets(), $facade->getApiForResource(Secret::class));
@@ -868,7 +868,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertSame($facade->ingresses(), $facade->getApiForResource(Ingress::class));
         self::assertSame(
             $facade->persistentVolumes(),
-            $facade->getApiForResource(PersistentVolume::class)
+            $facade->getApiForResource(PersistentVolume::class),
         );
 
         // get api for unsuported resource

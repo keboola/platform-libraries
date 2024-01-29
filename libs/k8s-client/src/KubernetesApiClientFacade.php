@@ -42,7 +42,7 @@ class KubernetesApiClientFacade
         private readonly SecretsApiClient $secretsApiClient,
         private readonly ServicesApiClient $servicesApiClient,
         private readonly IngressesApiClient $ingressesApiClient,
-        private readonly PersistentVolumeApiClient $persistentVolumeApiClient
+        private readonly PersistentVolumeApiClient $persistentVolumeApiClient,
     ) {
     }
 

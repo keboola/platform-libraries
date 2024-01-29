@@ -69,7 +69,7 @@ trait BaseClusterApiClientTestCase
                 'gracePeriodSeconds' => 0,
                 'propagationPolicy' => 'Foreground',
             ]),
-            $queries
+            $queries,
         );
 
         while ($startTime + $timeout > microtime(true)) {
@@ -130,9 +130,9 @@ trait BaseClusterApiClientTestCase
         $this->assertResultItems(
             array_merge(
                 $originalItemNames,
-                [self::getTestResourceNameWithNamespacePrefix('test-resource-1')]
+                [self::getTestResourceNameWithNamespacePrefix('test-resource-1')],
             ),
-            $result->items
+            $result->items,
         );
 
         // list using labelSelector
@@ -142,7 +142,7 @@ trait BaseClusterApiClientTestCase
         self::assertCount(1, $result->items);
         self::assertSame(
             [self::getTestResourceNameWithNamespacePrefix('test-resource-1')],
-            array_map(fn($resource) => $resource->metadata->name, $result->items)
+            array_map(fn($resource) => $resource->metadata->name, $result->items),
         );
     }
 
@@ -277,7 +277,7 @@ trait BaseClusterApiClientTestCase
                 self::getTestResourceNameWithNamespacePrefix('test-resource-12'),
                 self::getTestResourceNameWithNamespacePrefix('test-resource-21'),
             ],
-            $listResult->items
+            $listResult->items,
         );
 
         $this->apiClient->deleteCollection(new DeleteOptions(), [
@@ -286,7 +286,7 @@ trait BaseClusterApiClientTestCase
                 [
                     'app=test-1',
                     sprintf('%s=%s', self::getTestResourcesLabelName(), (string) getenv('K8S_NAMESPACE')),
-                ]
+                ],
             ),
         ]);
 
@@ -299,7 +299,7 @@ trait BaseClusterApiClientTestCase
         assert(is_object($listResult) && property_exists($listResult, 'items'));
         $this->assertResultItems(
             [self::getTestResourceNameWithNamespacePrefix('test-resource-21')],
-            $listResult->items
+            $listResult->items,
         );
     }
 

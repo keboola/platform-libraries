@@ -17,7 +17,6 @@ use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Psr\Log\Test\TestLogger;
 use Throwable;
 
 #[NeedsStorageBackend('synapse')]
@@ -59,12 +58,11 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
                 'json',
-                $logger,
+                $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse'],
             ),
         );
@@ -142,9 +140,13 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             self::assertStringStartsWith('Invalid columns: _timestamp', $e->getMessage());
         }
 
-        self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)));
-        self::assertTrue($logger->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)));
-        self::assertTrue($logger->hasInfoThatContains('Processing 1 workspace exports.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
+        );
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processing 1 workspace exports.'));
 
         // test loading with preserve = false to clean the workspace
         $configuration = new InputTableOptionsList([

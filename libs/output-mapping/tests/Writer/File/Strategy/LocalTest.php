@@ -11,7 +11,7 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\StorageApi\ClientException;
-use Psr\Log\Test\TestLogger;
+use Monolog\Logger;
 use stdClass;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
@@ -38,7 +38,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -51,7 +51,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -65,7 +65,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -112,7 +112,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -126,7 +126,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -173,7 +173,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -208,7 +208,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -252,7 +252,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -268,7 +268,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -301,7 +301,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'yaml',
@@ -334,7 +334,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -364,7 +364,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',
@@ -382,7 +382,7 @@ class LocalTest extends AbstractTestCase
     {
         $strategy = new Local(
             $this->clientWrapper,
-            new TestLogger(),
+            new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
             'json',

@@ -15,7 +15,6 @@ use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Psr\Log\Test\TestLogger;
 
 #[NeedsStorageBackend('bigquery')]
 class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
@@ -23,12 +22,11 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesBigQueryBackend(): void
     {
-        $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
                 'json',
-                $logger,
+                $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_BIGQUERY, 'bigquery'],
             ),
         );
@@ -67,13 +65,13 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
             self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
         }
 
-        self::assertTrue($logger->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
-        self::assertTrue($logger->hasInfoThatContains(sprintf(
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
             'Table "%s" will be created as view.',
             $this->firstTableId,
         )));
-        self::assertTrue($logger->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
         $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);

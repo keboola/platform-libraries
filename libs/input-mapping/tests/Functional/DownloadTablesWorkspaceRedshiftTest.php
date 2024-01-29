@@ -15,7 +15,6 @@ use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Psr\Log\Test\TestLogger;
 
 #[NeedsStorageBackend('redshift')]
 class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
@@ -23,11 +22,9 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesRedshiftBackend(): void
     {
-        var_dump($this->firstTableId);
-        $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                logger: $logger,
+                logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),
         );
@@ -82,22 +79,21 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         );
         self::assertEquals($this->emptyOutputBucketId . '.test2', $tableId);
 
-        self::assertTrue($logger->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf('Table "%s" will be copied.', $this->firstTableId),
         ));
-        self::assertTrue($logger->hasInfoThatContains(
+        self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf('Table "%s" will be copied.', $this->secondTableId),
         ));
-        self::assertTrue($logger->hasInfoThatContains('Processed 1 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables]
     public function testUseViewFails(): void
     {
-        $logger = new TestLogger();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                logger: $logger,
+                logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),
         );

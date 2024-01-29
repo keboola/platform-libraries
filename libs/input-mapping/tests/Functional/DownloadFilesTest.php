@@ -12,7 +12,6 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Psr\Log\Test\TestLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -21,7 +20,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles(): void
     {
-        $testLogger = new TestLogger();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
@@ -36,7 +34,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory(logger: $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
         $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -64,8 +62,8 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
     }
 
     public function testReadFilesOverwrite(): void
@@ -518,7 +516,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesWithFileIdsFilter(): void
     {
-        $testLogger = new TestLogger();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
@@ -533,7 +530,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory(logger: $testLogger));
+        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
         $configuration = [['file_ids' => [$id1, $id2], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
@@ -561,7 +558,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($testLogger->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
     }
 }

@@ -13,15 +13,13 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
-use Psr\Log\Test\TestLogger;
 
 class DownloadTablesS3DefaultTest extends AbstractTestCase
 {
     #[NeedsTestTables(2)]
     public function testReadTablesS3DefaultBackend(): void
     {
-        $logger = new TestLogger();
-        $reader = new Reader($this->getLocalStagingFactory(logger:  $logger));
+        $reader = new Reader($this->getLocalStagingFactory(logger:  $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -50,7 +48,7 @@ class DownloadTablesS3DefaultTest extends AbstractTestCase
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.csv.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
         $this->assertS3info($manifest);
-        self::assertTrue($logger->hasInfoThatContains('Processing 2 S3 table exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processing 2 S3 table exports.'));
     }
 
     #[NeedsTestTables(2)]

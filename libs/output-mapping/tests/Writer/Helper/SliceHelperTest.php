@@ -14,9 +14,10 @@ use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Psr\Log\Test\TestLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Finder\Finder;
@@ -26,14 +27,17 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 class SliceHelperTest extends TestCase
 {
     private readonly Temp $temp;
-    private readonly TestLogger $logger;
+
+    private readonly TestHandler $logHandler;
+    private readonly Logger $logger;
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->temp = new Temp();
-        $this->logger = new TestLogger();
+        $this->logHandler = new TestHandler();
+        $this->logger = new Logger('testLogger', [$this->logHandler]);
     }
 
     public function testSliceWorkspaceSourceIsNotSupported(): void
@@ -228,12 +232,12 @@ class SliceHelperTest extends TestCase
         self::assertSame($originalSource->getFile()->getPathname(), $slicedDirectory->getPathname());
         self::assertCompressedSlicedData($expectedData, $slicedDirectory->getPathname());
 
-        self::assertCount(2, $this->logger->records);
-        self::assertTrue($this->logger->hasInfoThatContains(sprintf(
+        self::assertCount(2, $this->logHandler->getRecords());
+        self::assertTrue($this->logHandler->hasInfoThatContains(sprintf(
             'Slicing table "%s".',
             $originalMappingSource->getSourceName(),
         )));
-        self::assertTrue($this->logger->hasInfoThatContains(sprintf(
+        self::assertTrue($this->logHandler->hasInfoThatContains(sprintf(
             'Table "%s" sliced',
             $originalMappingSource->getSourceName(),
         )));
@@ -303,11 +307,11 @@ class SliceHelperTest extends TestCase
         self::assertSame($originalSlicedSource->getFile()->getPathname(), $slicedDirectories[1]);
         self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $slicedDirectories[1]);
 
-        self::assertCount(4, $this->logger->records);
-        self::assertTrue($this->logger->hasInfo('Slicing table "test1.csv".'));
-        self::assertTrue($this->logger->hasInfoThatContains('Table "test1.csv" sliced'));
-        self::assertTrue($this->logger->hasInfo('Slicing table "test2.csv".'));
-        self::assertTrue($this->logger->hasInfoThatContains('Table "test2.csv" sliced'));
+        self::assertCount(4, $this->logHandler->getRecords());
+        self::assertTrue($this->logHandler->hasInfo('Slicing table "test1.csv".'));
+        self::assertTrue($this->logHandler->hasInfoThatContains('Table "test1.csv" sliced'));
+        self::assertTrue($this->logHandler->hasInfo('Slicing table "test2.csv".'));
+        self::assertTrue($this->logHandler->hasInfoThatContains('Table "test2.csv" sliced'));
     }
 
     public function testSliceSourcesIgnoresSliceSkippedExceptionsFromSlicer(): void
@@ -368,11 +372,11 @@ class SliceHelperTest extends TestCase
 
         self::assertSame($originalSource2->getFile()->getPathname(), $dataFiles[0]);
         self::assertCompressedSlicedData('"123";"Test Name"' . PHP_EOL, $dataFiles[0]);
-        self::assertCount(3, $this->logger->records);
-        self::assertTrue($this->logger->hasWarning('Source "table" slicing skipped: Only local files '
+        self::assertCount(3, $this->logHandler->getRecords());
+        self::assertTrue($this->logHandler->hasWarning('Source "table" slicing skipped: Only local files '
             . 'are supported for slicing.'));
-        self::assertTrue($this->logger->hasInfo('Slicing table "test2.csv".'));
-        self::assertTrue($this->logger->hasInfoThatContains('Table "test2.csv" sliced'));
+        self::assertTrue($this->logHandler->hasInfo('Slicing table "test2.csv".'));
+        self::assertTrue($this->logHandler->hasInfoThatContains('Table "test2.csv" sliced'));
     }
 
     public function testSliceSourcesHavingSameSourceFileFailsWithInvalidOutputException(): void
@@ -387,7 +391,7 @@ class SliceHelperTest extends TestCase
         $this->expectExceptionMessage('Source "test.csv" has multiple destinations set.');
 
         (new SliceHelper($this->logger, '3b'))->sliceSources($mappingSources);
-        self::assertCount(0, $this->logger->records);
+        self::assertCount(0, $this->logHandler->getRecords());
     }
 
     private function createTestMappingSource(string $fileName, Temp $temp): MappingSource

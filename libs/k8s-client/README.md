@@ -72,10 +72,10 @@ $client->deleteModels([
 Prerequisites:
 * configured `az` and `aws` CLI tools (run `az login` and `aws configure --profile keboola-dev-platform-services`)
 * installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
-* intalled `docker` with `docker compose` to run & develop the library
+* installed `docker` with `docker compose` to run & develop the library
 
 TL;DR:
-```
+```bash
 export NAME_PREFIX= # your name/nickname to make your resource unique & recognizable
 
 cat <<EOF > ./provisioning/local/terraform.tfvars

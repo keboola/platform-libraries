@@ -16,6 +16,7 @@ class BigQueryWorkspaceStagingTest extends TestCase
                 'backend' => 'bigquery',
                 'host' => '',
                 'database' => '',
+                'region' => 'US',
                 'schema' => 'schema',
                 'warehouse' => '',
                 'credentials' => '{"foo":"value"}}',
@@ -25,6 +26,7 @@ class BigQueryWorkspaceStagingTest extends TestCase
         self::assertSame(
             [
                 'schema' => 'schema',
+                'region' => 'US',
                 'credentials' => '{"foo":"value"}}',
             ],
             $staging->getCredentials(),

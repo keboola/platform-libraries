@@ -17,6 +17,7 @@ class BigQueryWorkspaceStaging extends WorkspaceStaging
 
         return [
             'schema' => $connection['schema'],
+            'region' => $connection['region'],
             'credentials' => $connection['credentials'],
         ];
     }

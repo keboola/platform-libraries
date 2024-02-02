@@ -28,6 +28,7 @@ class OutputMappingStagingDefinition extends AbstractStagingDefinition
         ?ProviderInterface $fileMetadataProvider = null,
         ?ProviderInterface $tableDataProvider = null,
         ?ProviderInterface $tableMetadataProvider = null,
+
     ) {
         parent::__construct(
             $name,

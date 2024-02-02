@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Table\Strategy;
+namespace Keboola\OutputMapping\Writer\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -11,13 +11,21 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractTableStrategy implements StrategyInterface
 {
+    /**
+     * @param ClientWrapper $clientWrapper
+     * @param LoggerInterface $logger
+     * @param ProviderInterface $dataStorage
+     * @param ProviderInterface $metadataStorage
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     * @param bool $isFailedJob
+     */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
         protected readonly ProviderInterface $dataStorage,
         protected readonly ProviderInterface $metadataStorage,
         protected readonly string $format,
-        protected readonly bool $isFailedJob = false,
+        protected readonly bool $isFailedJob = false, // TODO Remove
     ) {
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\File;
 
+use Keboola\OutputMapping\Writer\FileItem;
+
 interface StrategyInterface
 {
     /**

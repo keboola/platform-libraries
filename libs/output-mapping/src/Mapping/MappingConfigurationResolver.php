@@ -2,26 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Table;
+namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
-use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
+use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Finder\SplFileInfo;
 
-class TableConfigurationResolver
+class MappingConfigurationResolver
 {
     /**
      * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
@@ -29,16 +28,8 @@ class TableConfigurationResolver
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
-        private string $format = Adapter::FORMAT_JSON,
+        private readonly string $format = Adapter::FORMAT_JSON,
     ) {
-    }
-
-    /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     */
-    public function setFormat(string $format): void
-    {
-        $this->format = $format;
     }
 
     public function resolveTableConfiguration(
@@ -165,4 +156,5 @@ class TableConfigurationResolver
         }
         return $config;
     }
+
 }

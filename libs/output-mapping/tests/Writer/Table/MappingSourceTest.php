@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Keboola\OutputMapping\Writer\Table\MappingSource;
-use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\WorkspaceItemSource;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Finder\SplFileInfo;
 

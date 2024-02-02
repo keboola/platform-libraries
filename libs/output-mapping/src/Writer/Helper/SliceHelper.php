@@ -28,6 +28,7 @@ class SliceHelper
 
     private function validateMappingSourcesAreUnique(array $mappingSources): void
     {
+        // TODO: this needs to be removed before slicing is enabled for all OM, or must be a non-fattal error
         $mappingSourceOccurrences = [];
         foreach ($mappingSources as $source) {
             $sourceName = $source->getSourceName();

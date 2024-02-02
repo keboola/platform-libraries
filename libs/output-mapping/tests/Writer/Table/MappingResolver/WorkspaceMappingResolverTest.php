@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table\MappingResolver;
 
 use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
-use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSourceFactoryInterface;
+use Keboola\OutputMapping\Writer\Table\WorkspaceItemSource;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\File;
+namespace Keboola\OutputMapping\Writer;
 
-class FileItem
+class FileItem implements SourceInterface
 {
     /**
      * @param string $name Generalized name (for ABS this can include slashes)
@@ -14,6 +14,7 @@ class FileItem
         private readonly string $pathName,
         private readonly string $path,
         private readonly string $name,
+        private readonly bool $isSliced,
     ) {
     }
 
@@ -30,5 +31,10 @@ class FileItem
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function isSliced(): bool
+    {
+        return $this->isSliced;
     }
 }

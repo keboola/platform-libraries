@@ -269,7 +269,7 @@ class KubernetesApiClientFacade
      *         never))))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    public function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumeApiClient
+    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumeApiClient
     {
         return match ($resourceType) {
             ConfigMap::class => $this->configMapApiClient,

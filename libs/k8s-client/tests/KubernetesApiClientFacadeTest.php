@@ -15,11 +15,8 @@ use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
-use Kubernetes\Model\Io\K8s\Api\Apps\V1\ReplicaSet;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeClaim;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
@@ -840,41 +837,5 @@ class KubernetesApiClientFacadeTest extends TestCase
         $this->expectExceptionMessage('Pod delete failed');
 
         $facade->deleteAllMatching($deleteOptions, $deleteQuery);
-    }
-
-    public function testGetApiForResource(): void
-    {
-        $facade = new KubernetesApiClientFacade(
-            $this->logger,
-            $this->createMock(ConfigMapsApiClient::class),
-            $this->createMock(EventsApiClient::class),
-            $this->createMock(PersistentVolumeClaimApiClient::class),
-            $this->createMock(PodsApiClient::class),
-            $this->createMock(SecretsApiClient::class),
-            $this->createMock(ServicesApiClient::class),
-            $this->createMock(IngressesApiClient::class),
-            $this->createMock(PersistentVolumeApiClient::class),
-        );
-
-        self::assertSame($facade->configMaps(), $facade->getApiForResource(ConfigMap::class));
-        self::assertSame($facade->events(), $facade->getApiForResource(Event::class));
-        self::assertSame(
-            $facade->persistentVolumeClaims(),
-            $facade->getApiForResource(PersistentVolumeClaim::class),
-        );
-        self::assertSame($facade->pods(), $facade->getApiForResource(Pod::class));
-        self::assertSame($facade->secrets(), $facade->getApiForResource(Secret::class));
-        self::assertSame($facade->services(), $facade->getApiForResource(Service::class));
-        self::assertSame($facade->ingresses(), $facade->getApiForResource(Ingress::class));
-        self::assertSame(
-            $facade->persistentVolumes(),
-            $facade->getApiForResource(PersistentVolume::class),
-        );
-
-        // get api for unsuported resource
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unknown K8S resource type "Kubernetes\Model\Io\K8s\Api\Apps\V1\ReplicaSet"');
-
-        $facade->getApiForResource(ReplicaSet::class);
     }
 }

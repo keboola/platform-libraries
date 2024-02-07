@@ -223,27 +223,38 @@ class KubernetesApiClientFacade
      * Resources are delete sequentially by API type. If some delete request fails, the error is logged and other APIs
      * are still called. Finally, the last exception is re-thrown.
      *
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @param array{
+     *     resourceTypes?: class-string<T>[]
+     * } $queries
+     *     - resourceTypes: (optional) array of resource types to delete, default is [ConfigMap::class,
+     *         PersistentVolumeClaim::class, Pod::class, Secret::class]
+     *     Other keys represent additional query parameters for the Kubernetes API's deleteCollection endpoint.
+     *
      * Example:
      *     $apiFacade->delete(
      *         new DeleteOptions(),
      *         [
+     *             'resourceTypes' => [ConfigMap::class],
      *             'labelSelector' => 'app=job-1234',
      *         ]
      *     )
      */
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
-        $deleteFromApis = [
+        $resourceTypes = !empty($queries['resourceTypes']) ? $queries['resourceTypes'] : [
             // do not delete events
-            $this->configMapApiClient,
-            $this->persistentVolumeClaimApiClient,
-            $this->podsApiClient,
-            $this->secretsApiClient,
+            ConfigMap::class,
+            PersistentVolumeClaim::class,
+            Pod::class,
+            Secret::class,
         ];
 
-        foreach ($deleteFromApis as $api) {
+        unset($queries['resourceTypes']);
+
+        foreach ($resourceTypes as $resourceType) {
             try {
-                $api->deleteCollection($deleteOptions, $queries);
+                $this->getApiForResource($resourceType)->deleteCollection($deleteOptions, $queries);
             } catch (Throwable $exception) {
                 $this->logger->error('DeleteCollection request has failed', [
                     'exception' => $exception,

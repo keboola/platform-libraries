@@ -24,20 +24,19 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
 use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
-use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use RuntimeException;
 
 class KubernetesApiClientFacadeTest extends TestCase
 {
-    private readonly LoggerInterface $logger;
+    private readonly TestLogger $logger;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->logger = new Logger('test');
+        $this->logger = new TestLogger();
     }
 
     public function testApisAccessors(): void
@@ -802,6 +801,53 @@ class KubernetesApiClientFacadeTest extends TestCase
         $facade->deleteAllMatching($deleteOptions, $deleteQuery);
     }
 
+    public function testDeleteAllMatchingWithResourceTypesFilter(): void
+    {
+        $deleteOptions = new DeleteOptions();
+        $deleteQuery = ['labelSelector' => 'app=my-app'];
+
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::never())->method(self::anything());
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient->expects(self::never())->method(self::anything());
+
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::never())->method(self::anything());
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $eventsApiClient = $this->createMock(EventsApiClient::class);
+        $eventsApiClient->expects(self::never())->method(self::anything());
+
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumeApiClient = $this->createMock(PersistentVolumeApiClient::class);
+        $persistentVolumeApiClient->expects(self::never())->method(self::anything());
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $configMapsApiClient,
+            $eventsApiClient,
+            $pvClaimApiClient,
+            $podsApiClient,
+            $secretsApiClient,
+            $servicesApiClient,
+            $ingressesApiClient,
+            $persistentVolumeApiClient,
+        );
+
+        $facade->deleteAllMatching($deleteOptions, ['resourceTypes' => [Secret::class], ...$deleteQuery]);
+    }
+
     public function testDeleteAllMatchingErrorHandling(): void
     {
         $deleteOptions = new DeleteOptions();
@@ -810,7 +856,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
         $configMapsApiClient->expects(self::once())
             ->method('deleteCollection')
-            ->with($deleteOptions, $deleteQuery)
+            ->willThrowException(new RuntimeException('Config map delete failed'))
         ;
 
         $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
@@ -857,9 +903,27 @@ class KubernetesApiClientFacadeTest extends TestCase
             $persistentVolumeApiClient,
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Pod delete failed');
+        try {
+            $facade->deleteAllMatching($deleteOptions, $deleteQuery);
+            $this->fail('RuntimeException should be thrown on deleteAllMatching call.');
+        } catch (RuntimeException $e) {
+            self::assertEquals('Pod delete failed', $e->getMessage());
+        }
 
-        $facade->deleteAllMatching($deleteOptions, $deleteQuery);
+        self::assertCount(2, $this->logger->records);
+
+        $record = $this->logger->records[0];
+        self::assertEquals('error', $record['level']);
+        self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertArrayHasKey('exception', $record['context']);
+        self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
+        self::assertSame('Config map delete failed', $record['context']['exception']->getMessage());
+
+        $record = $this->logger->records[1];
+        self::assertEquals('error', $record['level']);
+        self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertArrayHasKey('exception', $record['context']);
+        self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
+        self::assertSame('Pod delete failed', $record['context']['exception']->getMessage());
     }
 }

@@ -12,7 +12,7 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeList;
 /**
  * @template-extends BaseClusterApiClient<PersistentVolumeApi, PersistentVolumeList, PersistentVolume>
  */
-class PersistentVolumeApiClient extends BaseClusterApiClient
+class PersistentVolumesApiClient extends BaseClusterApiClient
 {
     public function __construct(KubernetesApiClient $apiClient)
     {

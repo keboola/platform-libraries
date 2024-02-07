@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests\ApiClient;
 
-use Keboola\K8sClient\ApiClient\PersistentVolumeApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Kubernetes\API\PersistentVolume as PersistentVolumeApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 class PersistentVolumeApiClientFunctionalTest extends TestCase
 {
     /**
-     * @template-use BaseClusterApiClientTestCase<PersistentVolumeApi, PersistentVolumeApiClient>
+     * @template-use BaseClusterApiClientTestCase<PersistentVolumeApi, PersistentVolumesApiClient>
      */
     use BaseClusterApiClientTestCase;
 
@@ -21,7 +21,7 @@ class PersistentVolumeApiClientFunctionalTest extends TestCase
         parent::setUp();
         $this->setUpBaseClusterApiClientTest(
             PersistentVolumeApi::class,
-            PersistentVolumeApiClient::class,
+            PersistentVolumesApiClient::class,
         );
     }
 

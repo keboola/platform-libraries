@@ -7,8 +7,8 @@ namespace Keboola\K8sClient\ClientFacadeFactory;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
@@ -68,7 +68,7 @@ class GenericClientFacadeFactory
             new SecretsApiClient($apiClient),
             new ServicesApiClient($apiClient),
             new IngressesApiClient($apiClient),
-            new PersistentVolumeApiClient($apiClient),
+            new PersistentVolumesApiClient($apiClient),
         );
     }
 }

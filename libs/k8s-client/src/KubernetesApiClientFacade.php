@@ -242,7 +242,7 @@ class KubernetesApiClientFacade
      */
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
-        $resourceTypes = !empty($queries['resourceTypes']) ? $queries['resourceTypes'] : [
+        $resourceTypes = $queries['resourceTypes'] ?? [
             // do not delete events
             ConfigMap::class,
             PersistentVolumeClaim::class,

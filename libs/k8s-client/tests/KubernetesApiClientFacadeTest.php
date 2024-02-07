@@ -7,7 +7,7 @@ namespace Keboola\K8sClient\Tests;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
@@ -43,7 +43,7 @@ class KubernetesApiClientFacadeTest extends TestCase
     {
         $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
         $eventsApiClient = $this->createMock(EventsApiClient::class);
-        $persistentVolumeClaimClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $persistentVolumeClaimClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $secretsApiClient = $this->createMock(SecretsApiClient::class);
         $servicesApiClient = $this->createMock(ServicesApiClient::class);
@@ -108,7 +108,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -157,7 +157,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -206,7 +206,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -290,7 +290,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -357,7 +357,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -444,7 +444,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -513,7 +513,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -568,7 +568,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -609,7 +609,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -676,7 +676,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -733,7 +733,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -756,7 +756,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->with($deleteOptions, $deleteQuery)
         ;
 
-        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
         $pvClaimApiClient->expects(self::once())
             ->method('deleteCollection')
             ->with($deleteOptions, $deleteQuery)
@@ -809,7 +809,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
         $configMapsApiClient->expects(self::never())->method(self::anything());
 
-        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
         $pvClaimApiClient->expects(self::never())->method(self::anything());
 
         $podsApiClient = $this->createMock(PodsApiClient::class);
@@ -859,7 +859,7 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->willThrowException(new RuntimeException('Config map delete failed'))
         ;
 
-        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
         $pvClaimApiClient->expects(self::once())
             ->method('deleteCollection')
             ->with($deleteOptions, $deleteQuery)

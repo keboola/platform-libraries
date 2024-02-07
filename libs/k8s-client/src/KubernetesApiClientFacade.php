@@ -7,7 +7,7 @@ namespace Keboola\K8sClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
@@ -37,7 +37,7 @@ class KubernetesApiClientFacade
         private readonly LoggerInterface $logger,
         private readonly ConfigMapsApiClient $configMapApiClient,
         private readonly EventsApiClient $eventsApiClient,
-        private readonly PersistentVolumeClaimApiClient $persistentVolumeClaimApiClient,
+        private readonly PersistentVolumeClaimsApiClient $persistentVolumeClaimsApiClient,
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
         private readonly ServicesApiClient $servicesApiClient,
@@ -66,9 +66,9 @@ class KubernetesApiClientFacade
         return $this->eventsApiClient;
     }
 
-    public function persistentVolumeClaims(): PersistentVolumeClaimApiClient
+    public function persistentVolumeClaims(): PersistentVolumeClaimsApiClient
     {
-        return $this->persistentVolumeClaimApiClient;
+        return $this->persistentVolumeClaimsApiClient;
     }
 
     public function pods(): PodsApiClient
@@ -271,7 +271,7 @@ class KubernetesApiClientFacade
      * @param class-string<AbstractModel> $resourceType
      * @return ($resourceType is class-string<ConfigMap> ? ConfigMapsApiClient :
      *         ($resourceType is class-string<Event> ? EventsApiClient :
-     *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimApiClient :
+     *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimsApiClient :
      *         ($resourceType is class-string<Pod> ? PodsApiClient :
      *         ($resourceType is class-string<Secret> ? SecretsApiClient :
      *         ($resourceType is class-string<Service> ? ServicesApiClient :
@@ -280,12 +280,12 @@ class KubernetesApiClientFacade
      *         never))))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
+    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
     {
         return match ($resourceType) {
             ConfigMap::class => $this->configMapApiClient,
             Event::class => $this->eventsApiClient,
-            PersistentVolumeClaim::class => $this->persistentVolumeClaimApiClient,
+            PersistentVolumeClaim::class => $this->persistentVolumeClaimsApiClient,
             Pod::class => $this->podsApiClient,
             Secret::class => $this->secretsApiClient,
             Service::class => $this->servicesApiClient,

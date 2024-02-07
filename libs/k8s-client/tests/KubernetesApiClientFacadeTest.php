@@ -751,6 +751,18 @@ class KubernetesApiClientFacadeTest extends TestCase
         $deleteOptions = new DeleteOptions();
         $deleteQuery = ['labelSelector' => 'app=my-app'];
 
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $podsApiClient->expects(self::once())
             ->method('deleteCollection')
@@ -777,9 +789,9 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
-            $this->createMock(ConfigMapsApiClient::class),
+            $configMapsApiClient,
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $pvClaimApiClient,
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,
@@ -794,6 +806,18 @@ class KubernetesApiClientFacadeTest extends TestCase
     {
         $deleteOptions = new DeleteOptions();
         $deleteQuery = ['labelSelector' => 'app=my-app'];
+
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $pvClaimApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
 
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $podsApiClient->expects(self::once())
@@ -823,9 +847,9 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
-            $this->createMock(ConfigMapsApiClient::class),
+            $configMapsApiClient,
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $pvClaimApiClient,
             $podsApiClient,
             $secretsApiClient,
             $servicesApiClient,

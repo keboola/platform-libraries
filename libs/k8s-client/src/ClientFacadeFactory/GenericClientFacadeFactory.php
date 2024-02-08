@@ -63,12 +63,12 @@ class GenericClientFacadeFactory
             $this->logger,
             new ConfigMapsApiClient($apiClient),
             new EventsApiClient($apiClient),
+            new IngressesApiClient($apiClient),
             new PersistentVolumeClaimsApiClient($apiClient),
+            new PersistentVolumesApiClient($apiClient),
             new PodsApiClient($apiClient, new Pod()),
             new SecretsApiClient($apiClient),
             new ServicesApiClient($apiClient),
-            new IngressesApiClient($apiClient),
-            new PersistentVolumesApiClient($apiClient),
         );
     }
 }

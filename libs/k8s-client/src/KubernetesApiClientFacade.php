@@ -37,12 +37,12 @@ class KubernetesApiClientFacade
         private readonly LoggerInterface $logger,
         private readonly ConfigMapsApiClient $configMapApiClient,
         private readonly EventsApiClient $eventsApiClient,
+        private readonly IngressesApiClient $ingressesApiClient,
         private readonly PersistentVolumeClaimsApiClient $persistentVolumeClaimsApiClient,
+        private readonly PersistentVolumesApiClient $persistentVolumesApiClient,
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
         private readonly ServicesApiClient $servicesApiClient,
-        private readonly IngressesApiClient $ingressesApiClient,
-        private readonly PersistentVolumesApiClient $persistentVolumesApiClient,
     ) {
     }
 

@@ -24,19 +24,24 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
 use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 class KubernetesApiClientFacadeTest extends TestCase
 {
-    private readonly TestLogger $logger;
+    private readonly LoggerInterface $logger;
+    private readonly TestHandler $loggerTestHandler;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->logger = new TestLogger();
+        $this->logger = new Logger('test');
+        $this->loggerTestHandler = new TestHandler();
+        $this->logger->pushHandler($this->loggerTestHandler);
     }
 
     public function testApisAccessors(): void
@@ -910,17 +915,18 @@ class KubernetesApiClientFacadeTest extends TestCase
             self::assertEquals('Pod delete failed', $e->getMessage());
         }
 
-        self::assertCount(2, $this->logger->records);
+        $records = $this->loggerTestHandler->getRecords();
+        self::assertCount(2, $records);
 
-        $record = $this->logger->records[0];
-        self::assertEquals('error', $record['level']);
+        $record = $records[0];
+        self::assertEquals(400, $record['level']);
         self::assertEquals('DeleteCollection request has failed', $record['message']);
         self::assertArrayHasKey('exception', $record['context']);
         self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
         self::assertSame('Config map delete failed', $record['context']['exception']->getMessage());
 
-        $record = $this->logger->records[1];
-        self::assertEquals('error', $record['level']);
+        $record = $records[1];
+        self::assertEquals(400, $record['level']);
         self::assertEquals('DeleteCollection request has failed', $record['message']);
         self::assertArrayHasKey('exception', $record['context']);
         self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);

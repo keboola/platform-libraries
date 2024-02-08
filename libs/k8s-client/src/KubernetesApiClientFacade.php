@@ -268,6 +268,21 @@ class KubernetesApiClientFacade
     }
 
     /**
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @param class-string<T> $resourceType
+     */
+    public function checkResourceExists(string $resourceType, string $resourceName): bool
+    {
+        try {
+            $this->getApiForResource($resourceType)->get($resourceName);
+            return true;
+        } catch (ResourceNotFoundException $e) {
+        }
+
+        return false;
+    }
+
+    /**
      * @param class-string<AbstractModel> $resourceType
      * @return ($resourceType is class-string<ConfigMap> ? ConfigMapsApiClient :
      *         ($resourceType is class-string<Event> ? EventsApiClient :

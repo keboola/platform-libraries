@@ -926,4 +926,36 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
         self::assertSame('Pod delete failed', $record['context']['exception']->getMessage());
     }
+
+    public function testCheckResourceExists(): void
+    {
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::once())
+            ->method('get')
+            ->with('pod-name')
+            ->willReturn($this->createMock(Pod::class))
+        ;
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::once())
+            ->method('get')
+            ->with('secret-name')
+            ->willThrowException(new ResourceNotFoundException('Secret not found', null))
+        ;
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $podsApiClient,
+            $secretsApiClient,
+            $this->createMock(ServicesApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
+        );
+
+        self::assertFalse($facade->checkResourceExists(Secret::class, 'secret-name'));
+        self::assertTrue($facade->checkResourceExists(Pod::class, 'pod-name'));
+    }
 }

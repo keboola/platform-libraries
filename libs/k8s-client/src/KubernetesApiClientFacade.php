@@ -6,16 +6,22 @@ namespace Keboola\K8sClient;
 
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\IngressesApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
+use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolumeClaim;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
+use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractModel;
@@ -27,14 +33,39 @@ class KubernetesApiClientFacade
 {
     private const LIST_INTERNAL_PAGE_SIZE = 100;
 
+    private readonly array $resourceTypeClientMap;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ConfigMapsApiClient $configMapApiClient,
         private readonly EventsApiClient $eventsApiClient,
-        private readonly PersistentVolumeClaimApiClient $persistentVolumeClaimApiClient,
+        private readonly IngressesApiClient $ingressesApiClient,
+        private readonly PersistentVolumeClaimsApiClient $persistentVolumeClaimsApiClient,
+        private readonly PersistentVolumesApiClient $persistentVolumesApiClient,
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
+        private readonly ServicesApiClient $servicesApiClient,
     ) {
+        $this->resourceTypeClientMap = [
+            ConfigMap::class => $this->configMapApiClient,
+            Event::class => $this->eventsApiClient,
+            PersistentVolumeClaim::class => $this->persistentVolumeClaimsApiClient,
+            Pod::class => $this->podsApiClient,
+            Secret::class => $this->secretsApiClient,
+            Service::class => $this->servicesApiClient,
+            Ingress::class => $this->ingressesApiClient,
+            PersistentVolume::class => $this->persistentVolumesApiClient,
+        ];
+    }
+
+    public function ingresses(): IngressesApiClient
+    {
+        return $this->ingressesApiClient;
+    }
+
+    public function services(): ServicesApiClient
+    {
+        return $this->servicesApiClient;
     }
 
     public function configMaps(): ConfigMapsApiClient
@@ -47,9 +78,9 @@ class KubernetesApiClientFacade
         return $this->eventsApiClient;
     }
 
-    public function persistentVolumeClaims(): PersistentVolumeClaimApiClient
+    public function persistentVolumeClaims(): PersistentVolumeClaimsApiClient
     {
-        return $this->persistentVolumeClaimApiClient;
+        return $this->persistentVolumeClaimsApiClient;
     }
 
     public function pods(): PodsApiClient
@@ -62,8 +93,13 @@ class KubernetesApiClientFacade
         return $this->secretsApiClient;
     }
 
+    public function persistentVolumes(): PersistentVolumesApiClient
+    {
+        return $this->persistentVolumesApiClient;
+    }
+
     /**
-     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret
+     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
      * @phpstan-param class-string<T> $resourceType
      * @phpstan-return T
      */
@@ -85,10 +121,12 @@ class KubernetesApiClientFacade
      *       new ConfigMap(...),
      *       new Secret(...),
      *       new Pod(...),
+     *       new Service(...),
+     *       new Ingress(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
-     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret)[]
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
+     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume)[]
      */
     public function createModels(array $resources, array $queries = []): array
     {
@@ -110,9 +148,12 @@ class KubernetesApiClientFacade
      *       new ConfigMap(...),
      *       new Secret(...),
      *       new Pod(...),
+     *       new Service(...),
+     *       new Ingress(...),
+     *       new PersistentVolume(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
      * @return Status[]
      */
     public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
@@ -128,7 +169,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret> $resources
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
      */
     public function waitWhileExists(array $resources, float $timeout = INF): void
     {
@@ -168,7 +209,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
      * @param class-string<T> $resourceType
      * @return iterable<T>
      */
@@ -194,27 +235,32 @@ class KubernetesApiClientFacade
      * Resources are delete sequentially by API type. If some delete request fails, the error is logged and other APIs
      * are still called. Finally, the last exception is re-thrown.
      *
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @param array{
+     *     resourceTypes?: class-string<T>[]
+     * } $queries
+     *     - resourceTypes: (optional) array of resource types to delete, by default is [ConfigMap::class,
+     *         Ingress::class, PersistentVolumeClaim::class, PersistentVolume::class, Pod::class, Secret::class,
+     *         Service::class]
+     *     Other keys represent additional query parameters for the Kubernetes API's deleteCollection endpoint.
+     *
      * Example:
      *     $apiFacade->delete(
      *         new DeleteOptions(),
      *         [
+     *             'resourceTypes' => [ConfigMap::class],
      *             'labelSelector' => 'app=job-1234',
      *         ]
      *     )
      */
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
-        $deleteFromApis = [
-            // do not delete events
-            $this->configMapApiClient,
-            $this->persistentVolumeClaimApiClient,
-            $this->podsApiClient,
-            $this->secretsApiClient,
-        ];
+        $resourceTypes = $queries['resourceTypes'] ?? $this->getDefaultResourceTypesForDeleteAll();
+        unset($queries['resourceTypes']);
 
-        foreach ($deleteFromApis as $api) {
+        foreach ($resourceTypes as $resourceType) {
             try {
-                $api->deleteCollection($deleteOptions, $queries);
+                $this->getApiForResource($resourceType)->deleteCollection($deleteOptions, $queries);
             } catch (Throwable $exception) {
                 $this->logger->error('DeleteCollection request has failed', [
                     'exception' => $exception,
@@ -228,28 +274,49 @@ class KubernetesApiClientFacade
     }
 
     /**
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @param class-string<T> $resourceType
+     */
+    public function checkResourceExists(string $resourceType, string $resourceName): bool
+    {
+        try {
+            $this->getApiForResource($resourceType)->get($resourceName);
+            return true;
+        } catch (ResourceNotFoundException $e) {
+        }
+
+        return false;
+    }
+
+    /**
      * @param class-string<AbstractModel> $resourceType
      * @return ($resourceType is class-string<ConfigMap> ? ConfigMapsApiClient :
      *         ($resourceType is class-string<Event> ? EventsApiClient :
-     *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimApiClient :
+     *         ($resourceType is class-string<PersistentVolumeClaim> ? PersistentVolumeClaimsApiClient :
      *         ($resourceType is class-string<Pod> ? PodsApiClient :
      *         ($resourceType is class-string<Secret> ? SecretsApiClient :
-     *         never))))))
+     *         ($resourceType is class-string<Service> ? ServicesApiClient :
+     *         ($resourceType is class-string<Ingress> ? IngressesApiClient :
+     *         ($resourceType is class-string<PersistentVolume> ? PersistentVolumesApiClient :
+     *         never))))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimApiClient|PodsApiClient|SecretsApiClient
+    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
     {
-        return match ($resourceType) {
-            ConfigMap::class => $this->configMapApiClient,
-            Event::class => $this->eventsApiClient,
-            PersistentVolumeClaim::class => $this->persistentVolumeClaimApiClient,
-            Pod::class => $this->podsApiClient,
-            Secret::class => $this->secretsApiClient,
-
-            default => throw new RuntimeException(sprintf(
+        if (!array_key_exists($resourceType, $this->resourceTypeClientMap)) {
+            throw new RuntimeException(sprintf(
                 'Unknown K8S resource type "%s"',
-                get_debug_type($resourceType),
-            )),
-        };
+                $resourceType,
+            ));
+        }
+
+        return $this->resourceTypeClientMap[$resourceType];
+    }
+
+    private function getDefaultResourceTypesForDeleteAll(): array
+    {
+        $resourceTypeClientMap = $this->resourceTypeClientMap;
+        unset($resourceTypeClientMap[Event::class]);
+        return array_keys($resourceTypeClientMap);
     }
 }

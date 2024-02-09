@@ -6,18 +6,25 @@ namespace Keboola\K8sClient\Tests;
 
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\IngressesApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
+use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
+use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
+use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
+use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -26,29 +33,38 @@ use RuntimeException;
 class KubernetesApiClientFacadeTest extends TestCase
 {
     private readonly LoggerInterface $logger;
+    private readonly TestHandler $loggerTestHandler;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->logger = new Logger('test');
+        $this->loggerTestHandler = new TestHandler();
+        $this->logger->pushHandler($this->loggerTestHandler);
     }
 
     public function testApisAccessors(): void
     {
         $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
         $eventsApiClient = $this->createMock(EventsApiClient::class);
-        $persistentVolumeClaimClient = $this->createMock(PersistentVolumeClaimApiClient::class);
+        $persistentVolumeClaimClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $persistentVolumeClient = $this->createMock(PersistentVolumesApiClient::class);
 
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $configMapsApiClient,
             $eventsApiClient,
+            $ingressesApiClient,
             $persistentVolumeClaimClient,
+            $persistentVolumeClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         self::assertSame($configMapsApiClient, $facade->configMaps());
@@ -56,6 +72,8 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertSame($persistentVolumeClaimClient, $facade->persistentVolumeClaims());
         self::assertSame($podsApiClient, $facade->pods());
         self::assertSame($secretsApiClient, $facade->secrets());
+        self::assertSame($ingressesApiClient, $facade->ingresses());
+        self::assertSame($persistentVolumeClient, $facade->persistentVolumes());
     }
 
     public function testGetPod(): void
@@ -82,13 +100,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->get(Pod::class, 'pod-name', ['labelSelector' => 'app=pod-name']);
@@ -119,13 +149,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->get(Secret::class, 'secret-name', ['labelSelector' => 'app=secret-name']);
@@ -156,13 +198,25 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->willReturn($returnedEvent)
         ;
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->get(Event::class, 'event-name', ['labelSelector' => 'app=event-name']);
@@ -176,11 +230,17 @@ class KubernetesApiClientFacadeTest extends TestCase
         $podRequest2 = new Pod(['metadata' => ['name' => 'pod2']]);
         $secretRequest3 = new Secret(['metadata' => ['name' => 'secret3']]);
         $eventRequest4 = new Event(['metadata' => ['name' => 'event4']]);
+        $serviceRequest5 = new Service(['metadata' => ['name' => 'service5']]);
+        $ingressRequest6 = new Ingress(['metadata' => ['name' => 'ingress6']]);
+        $persistentVolumeRequest7 = new PersistentVolume(['metadata' => ['name' => 'persistentVolume7']]);
 
         $podResult1 = new Pod(['metadata' => ['name' => 'pod1']]);
         $podResult2 = new Pod(['metadata' => ['name' => 'pod2']]);
         $secretResult3 = new Secret(['metadata' => ['name' => 'secret3']]);
         $eventResult4 = new Event(['metadata' => ['name' => 'event4']]);
+        $serviceResult5 = new Service(['metadata' => ['name' => 'service5']]);
+        $ingressResult6 = new Ingress(['metadata' => ['name' => 'ingress6']]);
+        $persistentVolumeResult7 = new PersistentVolume(['metadata' => ['name' => 'persistentVolume7']]);
 
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $podsApiClient->expects(self::exactly(2))
@@ -210,13 +270,37 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->willReturn($eventResult4)
         ;
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::once())
+            ->method('create')
+            ->with($serviceRequest5, [])
+            ->willReturn($serviceResult5)
+        ;
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::once())
+            ->method('create')
+            ->with($ingressRequest6, [])
+            ->willReturn($ingressResult6)
+        ;
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::once())
+            ->method('create')
+            ->with($persistentVolumeRequest7, [])
+            ->willReturn($persistentVolumeResult7)
+        ;
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->createModels([
@@ -224,9 +308,20 @@ class KubernetesApiClientFacadeTest extends TestCase
             $podRequest2,
             $secretRequest3,
             $eventRequest4,
+            $serviceRequest5,
+            $ingressRequest6,
+            $persistentVolumeRequest7,
         ]);
 
-        self::assertSame([$podResult1, $podResult2, $secretResult3, $eventResult4], $result);
+        self::assertSame([
+            $podResult1,
+            $podResult2,
+            $secretResult3,
+            $eventResult4,
+            $serviceResult5,
+            $ingressResult6,
+            $persistentVolumeResult7,
+        ], $result);
     }
 
     public function testCreateModelsErrorHandling(): void
@@ -254,13 +349,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $this->expectException(RuntimeException::class);
@@ -276,11 +383,17 @@ class KubernetesApiClientFacadeTest extends TestCase
         $podRequest2 = new Pod(['metadata' => ['name' => 'pod2']]);
         $secretRequest3 = new Secret(['metadata' => ['name' => 'secret3']]);
         $eventRequest4 = new Event(['metadata' => ['name' => 'event4']]);
+        $serviceRequest5 = new Service(['metadata' => ['name' => 'service5']]);
+        $ingressRequest6 = new Ingress(['metadata' => ['name' => 'ingress6']]);
+        $persistentVolumeRequest7 = new PersistentVolume(['metadata' => ['name' => 'persistentVolume7']]);
 
         $podResult1 = new Status(['metadata' => ['name' => 'pod1']]);
         $podResult2 = new Status(['metadata' => ['name' => 'pod2']]);
         $secretResult3 = new Status(['metadata' => ['name' => 'secret3']]);
         $eventResult4 = new Status(['metadata' => ['name' => 'event4']]);
+        $serviceResult5 = new Status(['metadata' => ['name' => 'service5']]);
+        $ingressResult6 = new Status(['metadata' => ['name' => 'ingress6']]);
+        $persistentVolumeResult7 = new Status(['metadata' => ['name' => 'persistentVolume7']]);
 
         $deleteOptions = new DeleteOptions();
 
@@ -311,13 +424,37 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->willReturn($eventResult4)
         ;
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::once())
+            ->method('delete')
+            ->with('service5', $deleteOptions, [])
+            ->willReturn($serviceResult5)
+        ;
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::once())
+            ->method('delete')
+            ->with('ingress6', $deleteOptions, [])
+            ->willReturn($ingressResult6)
+        ;
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::once())
+            ->method('delete')
+            ->with('persistentVolume7', $deleteOptions, [])
+            ->willReturn($persistentVolumeResult7)
+        ;
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->deleteModels([
@@ -325,9 +462,20 @@ class KubernetesApiClientFacadeTest extends TestCase
             $podRequest2,
             $secretRequest3,
             $eventRequest4,
+            $serviceRequest5,
+            $ingressRequest6,
+            $persistentVolumeRequest7,
         ], $deleteOptions);
 
-        self::assertSame([$podResult1, $podResult2, $secretResult3, $eventResult4], $result);
+        self::assertSame([
+            $podResult1,
+            $podResult2,
+            $secretResult3,
+            $eventResult4,
+            $serviceResult5,
+            $ingressResult6,
+            $persistentVolumeResult7,
+        ], $result);
     }
 
     public function testDeleteModelsErrorHandling(): void
@@ -357,13 +505,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $this->expectException(RuntimeException::class);
@@ -400,13 +560,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $facade->waitWhileExists([
@@ -429,13 +601,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $startTime = microtime(true);
@@ -484,13 +668,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my']);
@@ -529,13 +725,25 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $result = $facade->listMatching(Pod::class, ['labelSelector' => 'app=my', 'limit' => 5]);
@@ -547,6 +755,18 @@ class KubernetesApiClientFacadeTest extends TestCase
         $deleteOptions = new DeleteOptions();
         $deleteQuery = ['labelSelector' => 'app=my-app'];
 
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
+        $pvClaimApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $podsApiClient->expects(self::once())
             ->method('deleteCollection')
@@ -562,22 +782,102 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
-            $this->createMock(ConfigMapsApiClient::class),
+            $configMapsApiClient,
             $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $ingressesApiClient,
+            $pvClaimApiClient,
+            $persistentVolumesApiClient,
             $podsApiClient,
             $secretsApiClient,
+            $servicesApiClient,
         );
 
         $facade->deleteAllMatching($deleteOptions, $deleteQuery);
+    }
+
+    public function testDeleteAllMatchingWithResourceTypesFilter(): void
+    {
+        $deleteOptions = new DeleteOptions();
+        $deleteQuery = ['labelSelector' => 'app=my-app'];
+
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::never())->method(self::anything());
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
+        $pvClaimApiClient->expects(self::never())->method(self::anything());
+
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::never())->method(self::anything());
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $eventsApiClient = $this->createMock(EventsApiClient::class);
+        $eventsApiClient->expects(self::never())->method(self::anything());
+
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::never())->method(self::anything());
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::never())->method(self::anything());
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::never())->method(self::anything());
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $configMapsApiClient,
+            $eventsApiClient,
+            $ingressesApiClient,
+            $pvClaimApiClient,
+            $persistentVolumesApiClient,
+            $podsApiClient,
+            $secretsApiClient,
+            $servicesApiClient,
+        );
+
+        $facade->deleteAllMatching($deleteOptions, ['resourceTypes' => [Secret::class], ...$deleteQuery]);
     }
 
     public function testDeleteAllMatchingErrorHandling(): void
     {
         $deleteOptions = new DeleteOptions();
         $deleteQuery = ['labelSelector' => 'app=my-app'];
+
+        $configMapsApiClient = $this->createMock(ConfigMapsApiClient::class);
+        $configMapsApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->willThrowException(new RuntimeException('Config map delete failed'))
+        ;
+
+        $pvClaimApiClient = $this->createMock(PersistentVolumeClaimsApiClient::class);
+        $pvClaimApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
 
         $podsApiClient = $this->createMock(PodsApiClient::class);
         $podsApiClient->expects(self::once())
@@ -586,7 +886,6 @@ class KubernetesApiClientFacadeTest extends TestCase
             ->willThrowException(new RuntimeException('Pod delete failed'))
         ;
 
-        // secrets API is called even if pods has failed
         $secretsApiClient = $this->createMock(SecretsApiClient::class);
         $secretsApiClient->expects(self::once())
             ->method('deleteCollection')
@@ -596,18 +895,90 @@ class KubernetesApiClientFacadeTest extends TestCase
         $eventsApiClient = $this->createMock(EventsApiClient::class);
         $eventsApiClient->expects(self::never())->method(self::anything());
 
+        $servicesApiClient = $this->createMock(ServicesApiClient::class);
+        $servicesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $ingressesApiClient = $this->createMock(IngressesApiClient::class);
+        $ingressesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $persistentVolumesApiClient = $this->createMock(PersistentVolumesApiClient::class);
+        $persistentVolumesApiClient->expects(self::once())
+            ->method('deleteCollection')
+            ->with($deleteOptions, $deleteQuery)
+        ;
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $configMapsApiClient,
+            $eventsApiClient,
+            $ingressesApiClient,
+            $pvClaimApiClient,
+            $persistentVolumesApiClient,
+            $podsApiClient,
+            $secretsApiClient,
+            $servicesApiClient,
+        );
+
+        try {
+            $facade->deleteAllMatching($deleteOptions, $deleteQuery);
+            $this->fail('RuntimeException should be thrown on deleteAllMatching call.');
+        } catch (RuntimeException $e) {
+            self::assertEquals('Pod delete failed', $e->getMessage());
+        }
+
+        $records = $this->loggerTestHandler->getRecords();
+        self::assertCount(2, $records);
+
+        $record = $records[0];
+        self::assertEquals(400, $record['level']);
+        self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertArrayHasKey('exception', $record['context']);
+        self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
+        self::assertSame('Config map delete failed', $record['context']['exception']->getMessage());
+
+        $record = $records[1];
+        self::assertEquals(400, $record['level']);
+        self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertArrayHasKey('exception', $record['context']);
+        self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
+        self::assertSame('Pod delete failed', $record['context']['exception']->getMessage());
+    }
+
+    public function testCheckResourceExists(): void
+    {
+        $podsApiClient = $this->createMock(PodsApiClient::class);
+        $podsApiClient->expects(self::once())
+            ->method('get')
+            ->with('pod-name')
+            ->willReturn($this->createMock(Pod::class))
+        ;
+
+        $secretsApiClient = $this->createMock(SecretsApiClient::class);
+        $secretsApiClient->expects(self::once())
+            ->method('get')
+            ->with('secret-name')
+            ->willThrowException(new ResourceNotFoundException('Secret not found', null))
+        ;
+
         $facade = new KubernetesApiClientFacade(
             $this->logger,
             $this->createMock(ConfigMapsApiClient::class),
-            $eventsApiClient,
-            $this->createMock(PersistentVolumeClaimApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
             $podsApiClient,
             $secretsApiClient,
+            $this->createMock(ServicesApiClient::class),
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Pod delete failed');
-
-        $facade->deleteAllMatching($deleteOptions, $deleteQuery);
+        self::assertFalse($facade->checkResourceExists(Secret::class, 'secret-name'));
+        self::assertTrue($facade->checkResourceExists(Pod::class, 'pod-name'));
     }
 }

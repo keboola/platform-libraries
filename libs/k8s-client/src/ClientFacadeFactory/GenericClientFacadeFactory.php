@@ -6,9 +6,12 @@ namespace Keboola\K8sClient\ClientFacadeFactory;
 
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ApiClient\PersistentVolumeClaimApiClient;
+use Keboola\K8sClient\ApiClient\IngressesApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
+use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
+use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
@@ -60,9 +63,12 @@ class GenericClientFacadeFactory
             $this->logger,
             new ConfigMapsApiClient($apiClient),
             new EventsApiClient($apiClient),
-            new PersistentVolumeClaimApiClient($apiClient),
+            new IngressesApiClient($apiClient),
+            new PersistentVolumeClaimsApiClient($apiClient),
+            new PersistentVolumesApiClient($apiClient),
             new PodsApiClient($apiClient, new Pod()),
             new SecretsApiClient($apiClient),
+            new ServicesApiClient($apiClient),
         );
     }
 }

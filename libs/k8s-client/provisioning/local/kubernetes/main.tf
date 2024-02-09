@@ -46,6 +46,7 @@ resource "kubernetes_role" "k8s_client" {
       "persistentvolumeclaims",
       "pods",
       "secrets",
+      "services",
     ]
     verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
@@ -79,6 +80,22 @@ resource "kubernetes_cluster_role" "k8s_client" {
     api_groups = [""]
     resources  = ["events"]
     verbs      = ["get", "list"]
+  }
+
+  rule {
+    api_groups = ["networking.k8s.io"]
+    resources  = [
+      "ingresses",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = [
+      "persistentvolumes",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
 }
 

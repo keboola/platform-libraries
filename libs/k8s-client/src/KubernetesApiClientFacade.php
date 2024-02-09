@@ -227,8 +227,9 @@ class KubernetesApiClientFacade
      * @param array{
      *     resourceTypes?: class-string<T>[]
      * } $queries
-     *     - resourceTypes: (optional) array of resource types to delete, default is [ConfigMap::class,
-     *         PersistentVolumeClaim::class, Pod::class, Secret::class]
+     *     - resourceTypes: (optional) array of resource types to delete, by default is [ConfigMap::class,
+     *         Ingress::class, PersistentVolumeClaim::class, PersistentVolume::class, Pod::class, Secret::class,
+     *         Service::class]
      *     Other keys represent additional query parameters for the Kubernetes API's deleteCollection endpoint.
      *
      * Example:
@@ -242,14 +243,7 @@ class KubernetesApiClientFacade
      */
     public function deleteAllMatching(?DeleteOptions $deleteOptions = null, array $queries = []): void
     {
-        $resourceTypes = $queries['resourceTypes'] ?? [
-            // do not delete events
-            ConfigMap::class,
-            PersistentVolumeClaim::class,
-            Pod::class,
-            Secret::class,
-        ];
-
+        $resourceTypes = $queries['resourceTypes'] ?? $this->getDefaultResourceTypesForDeleteAll();
         unset($queries['resourceTypes']);
 
         foreach ($resourceTypes as $resourceType) {
@@ -297,7 +291,23 @@ class KubernetesApiClientFacade
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
     private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
     {
-        return match ($resourceType) {
+        $resourceMap = $this->getResrouceTypeClientMap();
+        if (!array_key_exists($resourceType, $resourceMap)) {
+            throw new RuntimeException(sprintf(
+                'Unknown K8S resource type "%s"',
+                $resourceType,
+            ));
+        }
+
+        return $resourceMap[$resourceType];
+    }
+
+    /**
+     * @return array<class-string<AbstractModel>, ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient>
+     */
+    private function getResrouceTypeClientMap(): array
+    {
+        return [
             ConfigMap::class => $this->configMapApiClient,
             Event::class => $this->eventsApiClient,
             PersistentVolumeClaim::class => $this->persistentVolumeClaimsApiClient,
@@ -306,11 +316,13 @@ class KubernetesApiClientFacade
             Service::class => $this->servicesApiClient,
             Ingress::class => $this->ingressesApiClient,
             PersistentVolume::class => $this->persistentVolumesApiClient,
+        ];
+    }
 
-            default => throw new RuntimeException(sprintf(
-                'Unknown K8S resource type "%s"',
-                $resourceType,
-            )),
-        };
+    private function getDefaultResourceTypesForDeleteAll(): array
+    {
+        $resourceTypeClientMap = $this->getResrouceTypeClientMap();
+        unset($resourceTypeClientMap[Event::class]);
+        return array_keys($resourceTypeClientMap);
     }
 }

@@ -18,10 +18,6 @@ class Configuration implements ConfigurationInterface
                 ->scalarNode('app_name')
                     ->defaultValue('%app_name%')
                 ->end()
-                ->scalarNode('storage_api_url')
-                    ->cannotBeEmpty()
-                    ->defaultValue('%env(STORAGE_API_URL)%')
-                ->end()
             ->end()
         ;
 

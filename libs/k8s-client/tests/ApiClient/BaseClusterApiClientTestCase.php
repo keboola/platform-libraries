@@ -121,7 +121,7 @@ trait BaseClusterApiClientTestCase
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-1'),
             'labels' => [
                 'app' => 'test-1',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 
@@ -197,7 +197,7 @@ trait BaseClusterApiClientTestCase
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-1'),
             'labels' => [
                 'app' => 'test-1',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]);
 
@@ -215,14 +215,14 @@ trait BaseClusterApiClientTestCase
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-1'),
             'labels' => [
                 'app' => 'test-1',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create($this->createResource([
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-2'),
             'labels' => [
                 'app' => 'test-2',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 
@@ -250,20 +250,20 @@ trait BaseClusterApiClientTestCase
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-11'),
             'labels' => [
                 'app' => 'test-1',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create($this->createResource([
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-12'),
             'labels' => [
                 'app' => 'test-1',
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
         $this->baseApiClient->create($this->createResource([
             'name' => self::getTestResourceNameWithNamespacePrefix('test-resource-21'),
             'labels' => [
-                'k8s-client-tests-namespace' => (string) getenv('K8S_NAMESPACE'),
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]));
 

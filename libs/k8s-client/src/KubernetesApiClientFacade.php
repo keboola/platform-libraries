@@ -33,6 +33,8 @@ class KubernetesApiClientFacade
 {
     private const LIST_INTERNAL_PAGE_SIZE = 100;
 
+    private readonly array $resourceTypeClientMap;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ConfigMapsApiClient $configMapApiClient,
@@ -44,6 +46,16 @@ class KubernetesApiClientFacade
         private readonly SecretsApiClient $secretsApiClient,
         private readonly ServicesApiClient $servicesApiClient,
     ) {
+        $this->resourceTypeClientMap = [
+            ConfigMap::class => $this->configMapApiClient,
+            Event::class => $this->eventsApiClient,
+            PersistentVolumeClaim::class => $this->persistentVolumeClaimsApiClient,
+            Pod::class => $this->podsApiClient,
+            Secret::class => $this->secretsApiClient,
+            Service::class => $this->servicesApiClient,
+            Ingress::class => $this->ingressesApiClient,
+            PersistentVolume::class => $this->persistentVolumesApiClient,
+        ];
     }
 
     public function ingresses(): IngressesApiClient
@@ -291,37 +303,19 @@ class KubernetesApiClientFacade
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
     private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
     {
-        $resourceMap = $this->getResrouceTypeClientMap();
-        if (!array_key_exists($resourceType, $resourceMap)) {
+        if (!array_key_exists($resourceType, $this->resourceTypeClientMap)) {
             throw new RuntimeException(sprintf(
                 'Unknown K8S resource type "%s"',
                 $resourceType,
             ));
         }
 
-        return $resourceMap[$resourceType];
-    }
-
-    /**
-     * @return array<class-string<AbstractModel>, ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient>
-     */
-    private function getResrouceTypeClientMap(): array
-    {
-        return [
-            ConfigMap::class => $this->configMapApiClient,
-            Event::class => $this->eventsApiClient,
-            PersistentVolumeClaim::class => $this->persistentVolumeClaimsApiClient,
-            Pod::class => $this->podsApiClient,
-            Secret::class => $this->secretsApiClient,
-            Service::class => $this->servicesApiClient,
-            Ingress::class => $this->ingressesApiClient,
-            PersistentVolume::class => $this->persistentVolumesApiClient,
-        ];
+        return $this->resourceTypeClientMap[$resourceType];
     }
 
     private function getDefaultResourceTypesForDeleteAll(): array
     {
-        $resourceTypeClientMap = $this->getResrouceTypeClientMap();
+        $resourceTypeClientMap = $this->resourceTypeClientMap;
         unset($resourceTypeClientMap[Event::class]);
         return array_keys($resourceTypeClientMap);
     }

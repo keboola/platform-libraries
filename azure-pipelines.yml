@@ -46,6 +46,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: sandboxes-service-api-client
+      type: github
+      endpoint: keboola
+      name: keboola/sandboxes-service-api-client
     - repository: settle
       type: github
       endpoint: keboola
@@ -86,6 +90,7 @@ stages:
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
+                sandboxesServiceApiClient: libs/sandboxes-service-api-client \
                 settle:libs/settle \
                 stagingProvider:libs/staging-provider \
                 vaultApiClient:libs/vault-api-client \
@@ -178,6 +183,14 @@ stages:
     jobs:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
+  - stage: tests_sandboxesServiceApiClient
+    displayName: Tests - Sandboxes Service API Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_permissionChecker'])
+    jobs:
+      - template: libs/sandboxes-service-api-client/azure-pipelines.tests.yml
+
   - stage: tests_settle
     displayName: Tests - Settle
     lockBehavior: sequential
@@ -223,6 +236,7 @@ stages:
       - tests_messengerBundle
       - tests_outputMapping
       - tests_permissionChecker
+      - tests_sandboxesServiceApiClient
       - tests_settle
       - tests_stagingProvider
       - tests_vaultApiClient
@@ -238,6 +252,7 @@ stages:
         in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
@@ -324,6 +339,14 @@ stages:
           targetRepo: permission-checker
           libraryPath: libs/permission-checker
           tagPrefix: permission-checker/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_sandboxesServiceApiClient'])
+          sourceRepo: platform-libraries
+          targetRepo: permission-checker
+          libraryPath: libs/sandboxes-service-api-client
+          tagPrefix: sandboxes-service-api-client/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

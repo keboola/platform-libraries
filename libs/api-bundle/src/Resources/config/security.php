@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
+use Keboola\ApiBundle\ServiceClient;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\PermissionChecker\PermissionChecker;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 return static function (ContainerConfigurator $container): void {
@@ -27,5 +29,11 @@ return static function (ContainerConfigurator $container): void {
 
         ->set(PermissionChecker::class)
         ->alias('keboola.api_bundle.security.permission_checker', PermissionChecker::class)
+
+        ->set(ServiceClient::class)
+        ->args([
+            env('HOSTNAME_SUFFIX'),
+        ])
+        ->alias('keboola.api_bundle.service_client', ServiceClient::class)
     ;
 };

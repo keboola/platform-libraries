@@ -8,8 +8,8 @@ use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
-use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
+use Keboola\ApiBundle\ServiceClient;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
@@ -29,7 +29,6 @@ class KeboolaApiExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $config['app_name'] = $container->resolveEnvPlaceholders($config['app_name'], true);
-        $config['storage_api_url'] = $container->resolveEnvPlaceholders($config['storage_api_url'], true);
 
         $authenticators = [];
         $this->setupStorageApiAuthenticator($container, $authenticators);
@@ -67,7 +66,7 @@ class KeboolaApiExtension extends Extension
 
         $container->register(ManageApiClientFactory::class)
             ->setArgument('$appName', $config['app_name'])
-            ->setArgument('$storageApiUrl', $config['storage_api_url'])
+            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
         ;
 
         $container->register(ManageApiTokenAuthenticator::class)

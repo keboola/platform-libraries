@@ -13,6 +13,15 @@ use PHPUnit\Framework\TestCase;
 
 class ApiClientFunctionalTest extends TestCase
 {
+    private function getApiClient(string $url): ApiClient
+    {
+        return new ApiClient(new ApiClientConfiguration(
+            $url,
+            'token',
+            'Keboola Sandboxes Service API PHP Client',
+        ));
+    }
+
     public function testSendRequest(): void
     {
         $mockserver = new Mockserver();
@@ -27,7 +36,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
         $recordedRequests = $mockserver->fetchRecordedRequests([
@@ -44,7 +53,7 @@ class ApiClientFunctionalTest extends TestCase
         self::assertArrayNotHasKey('content-type', $request['headers']);
     }
 
-    public function testSendRequestWithMappedResponse(): void
+    public function testSendRequestWithDecodedResponse(): void
     {
         $mockserver = new Mockserver();
         $mockserver->reset();
@@ -63,20 +72,19 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
 
-        $response = $apiClient->sendRequestAndMapResponse(
+        $response = $apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'POST',
                 'foo/bar',
                 ['Content-Type' => 'application/json'],
                 '{"foo":"baz"}',
             ),
-            DummyTestResponse::class,
         );
 
         self::assertEquals(
-            new DummyTestResponse('bar'),
+            ['foo' => 'bar'],
             $response,
         );
 
@@ -95,7 +103,7 @@ class ApiClientFunctionalTest extends TestCase
         self::assertSame('{"foo":"baz"}', base64_decode($request['body']['rawBytes'] ?? ''));
     }
 
-    public function testSendRequestWithMappedArrayResponse(): void
+    public function testSendRequestWithArrayResponse(): void
     {
         $mockserver = new Mockserver();
         $mockserver->reset();
@@ -117,22 +125,22 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
 
-        $response = $apiClient->sendRequestAndMapResponse(
+        $response = $apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'POST',
                 'foo/bar',
                 ['Content-Type' => 'application/json'],
                 '{"foo":"baz"}',
             ),
-            DummyTestResponse::class,
-            [],
-            true,
         );
 
         self::assertEquals(
-            [new DummyTestResponse('bar'), new DummyTestResponse('me')],
+            [
+                ['foo' => 'bar'],
+                ['foo' => 'me'],
+            ],
             $response,
         );
     }
@@ -157,7 +165,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('BadRequest: This is not good');
@@ -180,7 +188,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -188,33 +196,6 @@ class ApiClientFunctionalTest extends TestCase
         );
 
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
-    }
-
-    public function testSendRequestFailingOnResponseMapping(): void
-    {
-        $mockserver = new Mockserver();
-        $mockserver->reset();
-        $mockserver->expect([
-            'httpRequest' => [
-                'method' => 'GET',
-                'path' => '/foo/bar',
-            ],
-            'httpResponse' => [
-                'statusCode' => 200,
-                'body' => '{"foo": null}',
-            ],
-        ]);
-
-        $apiClient = new ApiClient($mockserver->getServerUrl());
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(
-            'Failed to map response data: Keboola\SandboxesServiceApiClient\Tests\DummyTestResponse::__construct(): ' .
-            'Argument #1 ($foo) must be of type string, null given, called in ' .
-            '/code/libs/sandboxes-service-api-client/tests/DummyTestResponse.php on line',
-        );
-
-        $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);
     }
 
     public function testRetrySuccess(): void
@@ -243,7 +224,7 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient($mockserver->getServerUrl());
+        $apiClient = $this->getApiClient($mockserver->getServerUrl());
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
 
         $recordedRequests = $mockserver->fetchRecordedRequests([
@@ -268,12 +249,12 @@ class ApiClientFunctionalTest extends TestCase
             ],
         ]);
 
-        $apiClient = new ApiClient(
+        $apiClient = new ApiClient(new ApiClientConfiguration(
             $mockserver->getServerUrl(),
-            new ApiClientConfiguration(
-                backoffMaxTries: 2,
-            ),
-        );
+            storageToken: 'token',
+            userAgent: 'Keboola Sandboxes Service API PHP Client',
+            backoffMaxTries: 2,
+        ));
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
@@ -312,18 +293,17 @@ error occurred',
             ],
         ]);
 
-        $apiClient = new ApiClient(
+        $apiClient = new ApiClient(new ApiClientConfiguration(
             $mockserver->getServerUrl(),
-            new ApiClientConfiguration(
-                backoffMaxTries: 2,
-            ),
-        );
+            storageToken: 'token',
+            userAgent: 'Keboola Sandboxes Service API PHP Client',
+            backoffMaxTries: 2,
+        ));
 
-        $response = $apiClient->sendRequestAndMapResponse(
+        $response = $apiClient->sendRequestAndDecodeResponse(
             new Request('GET', 'foo/bar'),
-            DummyTestResponse::class,
         );
 
-        self::assertEquals(DummyTestResponse::fromResponseData(['foo' => 'bar']), $response);
+        self::assertEquals(['foo' => 'bar'], $response);
     }
 }

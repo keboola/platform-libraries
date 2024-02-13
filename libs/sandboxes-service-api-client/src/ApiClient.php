@@ -11,32 +11,24 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use JsonException;
+use Keboola\SandboxesServiceApiClient\Authentication\StorageTokenAuthenticator;
 use Keboola\SandboxesServiceApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Throwable;
-use Webmozart\Assert\Assert;
 
 class ApiClient
 {
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
 
-    /**
-     * @param non-empty-string|null $baseUrl
-     */
-    public function __construct(
-        ?string $baseUrl = null,
-        ?ApiClientConfiguration $configuration = null,
-    ) {
-        Assert::nullOrMinLength($baseUrl, 1);
-        $configuration ??= new ApiClientConfiguration();
-
+    public function __construct(ApiClientConfiguration $configuration)
+    {
         $this->requestHandlerStack = HandlerStack::create($configuration->requestHandler);
         $this->requestHandlerStack->remove('auth');
-        if ($configuration->authenticator !== null) {
-            $this->requestHandlerStack->push(Middleware::mapRequest($configuration->authenticator), 'auth');
-        }
+        $this->requestHandlerStack->push(
+            Middleware::mapRequest(new StorageTokenAuthenticator($configuration->storageToken)),
+            'auth',
+        );
 
         if ($configuration->backoffMaxTries > 0) {
             $this->requestHandlerStack->push(Middleware::retry(new RetryDecider(
@@ -51,7 +43,7 @@ class ApiClient
         )));
 
         $this->httpClient = new GuzzleClient([
-            'base_uri' => $baseUrl,
+            'base_uri' => $configuration->baseUrl,
             'handler' => $this->requestHandlerStack,
             'headers' => [
                 'User-Agent' => $configuration->userAgent,
@@ -61,33 +53,16 @@ class ApiClient
         ]);
     }
 
-    /**
-     * @template TResponseClass of ResponseModelInterface
-     * @param class-string<TResponseClass> $responseClass
-     * @return ($isList is true ? list<TResponseClass> : TResponseClass)
-     */
-    public function sendRequestAndMapResponse(
+    public function sendRequestAndDecodeResponse(
         RequestInterface $request,
-        string $responseClass,
         array $options = [],
-        bool $isList = false,
-    ) {
+    ): array {
         $response = $this->doSendRequest($request, $options);
 
         try {
-            $responseData = Json::decodeArray($response->getBody()->getContents());
+            return Json::decodeArray($response->getBody()->getContents());
         } catch (JsonException $e) {
             throw new ClientException('Response is not a valid JSON: ' . $e->getMessage(), $e->getCode(), $e);
-        }
-
-        try {
-            if ($isList) {
-                return array_map($responseClass::fromResponseData(...), $responseData);
-            } else {
-                return $responseClass::fromResponseData($responseData);
-            }
-        } catch (Throwable $e) {
-            throw new ClientException('Failed to map response data: ' . $e->getMessage(), 0, $e);
         }
     }
 

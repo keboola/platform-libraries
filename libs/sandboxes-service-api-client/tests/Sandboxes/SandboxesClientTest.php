@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 class SandboxesClientTest extends TestCase
 {
-    public function testCreateSandboxesClient(): void
+    public function testCreateSandbox(): void
     {
         $responseBody = [
             'id' => 'sandbox-id',
@@ -40,22 +40,21 @@ class SandboxesClientTest extends TestCase
         ]);
 
         $client = new SandboxesClient(
-            configuration: new ApiClientConfiguration(
-                authenticator: new StorageTokenAuthenticator('my-token'),
+            new ApiClientConfiguration(
+                baseUrl: '/sandboxes',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
                 requestHandler: $requestHandler(...),
             ),
         );
-        $result = $client->createSandbox(new CreateSandboxPayload(
-            'component-id',
-            '123',
-            '4',
-            'sandbox-type',
-        ));
+        $result = $client->createSandbox([
+            'componentId' => 'component-id',
+            'configurationId' => '123',
+            'configurationVersion' => '4',
+            'type' => 'sandbox-type',
+        ]);
 
-        self::assertEquals(
-            CreateSandboxResult::fromResponseData($responseBody),
-            $result,
-        );
+        self::assertEquals($responseBody, $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -72,9 +71,6 @@ class SandboxesClientTest extends TestCase
             ]),
             $requestsHistory[0]['request'],
         );
-
-        $client = new SandboxesClient();
-        $this->assertInstanceOf(SandboxesClient::class, $client);
     }
 
     /**

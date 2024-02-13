@@ -8,38 +8,27 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\SandboxesServiceApiClient\ApiClient;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
-use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxPayload;
-use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxResult;
 
 class SandboxesClient
 {
     private ApiClient $apiClient;
 
-    /**
-     * @param non-empty-string|null $baseUrl
-     */
-    public function __construct(
-        ?string $baseUrl = null,
-        ?ApiClientConfiguration $configuration = null,
-    ) {
-        $this->apiClient = new ApiClient(
-            $baseUrl,
-            $configuration,
-        );
+    public function __construct(ApiClientConfiguration $configuration)
+    {
+        $this->apiClient = new ApiClient($configuration);
     }
 
-    public function createSandbox(CreateSandboxPayload $payload): CreateSandboxResult
+    public function createSandbox(array $payload): array
     {
-        return $this->apiClient->sendRequestAndMapResponse(
+        return $this->apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'POST',
                 '/sandboxes',
                 [
                     'Content-Type' => 'application/json',
                 ],
-                Json::encodeArray((array) $payload),
+                Json::encodeArray($payload),
             ),
-            CreateSandboxResult::class,
         );
     }
 }

@@ -31,16 +31,25 @@ class ApiClientTest extends TestCase
         $this->logger = new Logger('tests', [$this->logsHandler]);
     }
 
+    private function getApiClient(string $url): ApiClient
+    {
+        return new ApiClient(new ApiClientConfiguration(
+            $url,
+            'token',
+            'Keboola Sandboxes Service API PHP Client',
+        ));
+    }
+
     public function testCreateClientWithDefaults(): void
     {
-        $client = new ApiClient();
+        $client = $this->getApiClient('http://example.com');
 
         $httpClient = self::getPrivatePropertyValue($client, 'httpClient');
         self::assertInstanceOf(GuzzleClient::class, $httpClient);
         $httpClientConfig = self::getPrivatePropertyValue($httpClient, 'config');
         self::assertIsArray($httpClientConfig);
 
-        self::assertNull($httpClientConfig['base_uri']);
+        self::assertEquals('http://example.com', (string) $httpClientConfig['base_uri']);
         self::assertSame(['User-Agent' => 'Keboola Sandboxes Service API PHP Client'], $httpClientConfig['headers']);
         self::assertSame(120, $httpClientConfig['timeout']);
         self::assertSame(10, $httpClientConfig['connect_timeout']);
@@ -55,12 +64,12 @@ class ApiClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedError);
 
-        new ApiClient(
+        new ApiClient(new ApiClientConfiguration(
             $baseUrl, // @phpstan-ignore-line intentionally passing invalid values
-            new ApiClientConfiguration(
-                backoffMaxTries: $backoffMaxTries, // @phpstan-ignore-line
-            ),
-        );
+            'token',
+            'Keboola Sandboxes Service API PHP Client',
+            $backoffMaxTries, // @phpstan-ignore-line
+        ));
     }
 
     public function provideInvalidOptions(): iterable
@@ -72,7 +81,7 @@ class ApiClientTest extends TestCase
         ];
 
         yield 'negative backoffMaxTries' => [
-            'baseUrl' => null,
+            'baseUrl' => 'http://example.com',
             'backoffMaxTries' => -1,
             'error' => 'Expected a value greater than or equal to 0. Got: -1',
         ];
@@ -80,13 +89,14 @@ class ApiClientTest extends TestCase
 
     public function testLogger(): void
     {
+        $client = new ApiClient(new ApiClientConfiguration(
+            'http://example.com',
+            'token',
+            'Keboola Sandboxes Service API PHP Client',
+            requestHandler: fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
+            logger: $this->logger,
+        ));
 
-        $client = new ApiClient(
-            configuration: new ApiClientConfiguration(
-                requestHandler: fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
-                logger: $this->logger,
-            ),
-        );
         $client->sendRequest(new Request('GET', '/'));
         self::assertTrue($this->logsHandler->hasInfoThatMatches(
             '#^[\w\d]+ Keboola Sandboxes Service API PHP Client ' .

@@ -90,7 +90,7 @@ stages:
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
-                sandboxesServiceApiClient: libs/sandboxes-service-api-client \
+                sandboxesServiceApiClient:libs/sandboxes-service-api-client \
                 settle:libs/settle \
                 stagingProvider:libs/staging-provider \
                 vaultApiClient:libs/vault-api-client \

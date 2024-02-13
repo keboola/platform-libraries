@@ -10,7 +10,7 @@ Install the package with Composer:
 composer require keboola/api-bundle
 ```
 
-To use authentication using attributes, add the following to your `config/packages/security.yaml`:
+To use authentication using attributes, configure firewall to use the `keboola.api_bundle.security.attribute_authenticator`:
 ```yaml 
 security:
   firewalls:

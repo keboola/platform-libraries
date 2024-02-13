@@ -7,7 +7,7 @@ namespace Keboola\SandboxesServiceApiClient\Tests;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\AzureApiClient\RetryDecider;
+use Keboola\SandboxesServiceApiClient\RetryDecider;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;

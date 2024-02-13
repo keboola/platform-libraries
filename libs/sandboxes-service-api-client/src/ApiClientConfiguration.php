@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Keboola\SandboxesServiceApiClient;
 
 use Closure;
-use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
-use Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorFactoryInterface;
-use Keboola\SandboxesServiceApiClient\Authentication\Authenticator\StorageTokenAuthenticator;
+use Keboola\SandboxesServiceApiClient\Authentication\StorageTokenAuthenticator;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Webmozart\Assert\Assert;
@@ -16,7 +14,7 @@ class ApiClientConfiguration
 {
     private const DEFAULT_BACKOFF_RETRIES = 10;
 
-    private const DEFAULT_USER_AGENT = 'Sandboxes Client';
+    private const DEFAULT_USER_AGENT = 'Keboola Sandboxes Service API PHP Client';
 
     /**
      * @param int<0, max> $backoffMaxTries

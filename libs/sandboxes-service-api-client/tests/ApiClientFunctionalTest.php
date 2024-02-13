@@ -40,7 +40,7 @@ class ApiClientFunctionalTest extends TestCase
         self::assertSame('GET', $request['method']);
         self::assertSame('/foo/bar', $request['path']);
         self::assertTrue($request['keepAlive']);
-        self::assertSame('Keboola Azure PHP Client', $request['headers']['user-agent'] ?? null);
+        self::assertSame('Keboola Sandboxes Service API PHP Client', $request['headers']['user-agent'] ?? null);
         self::assertArrayNotHasKey('content-type', $request['headers']);
     }
 
@@ -90,7 +90,7 @@ class ApiClientFunctionalTest extends TestCase
         self::assertSame('POST', $request['method']);
         self::assertSame('/foo/bar', $request['path']);
         self::assertTrue($request['keepAlive']);
-        self::assertSame('Keboola Azure PHP Client', $request['headers']['user-agent'] ?? null);
+        self::assertSame('Keboola Sandboxes Service API PHP Client', $request['headers']['user-agent'] ?? null);
         self::assertSame('application/json', $request['headers']['content-type'] ?? null);
         self::assertSame('{"foo":"baz"}', base64_decode($request['body']['rawBytes'] ?? ''));
     }
@@ -209,9 +209,9 @@ class ApiClientFunctionalTest extends TestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Failed to map response data: Keboola\AzureApiClient\Tests\DummyTestResponse::__construct(): ' .
+            'Failed to map response data: Keboola\SandboxesServiceApiClient\Tests\DummyTestResponse::__construct(): ' .
             'Argument #1 ($foo) must be of type string, null given, called in ' .
-            '/code/libs/azure-api-client/tests/DummyTestResponse.php on line',
+            '/code/libs/sandboxes-service-api-client/tests/DummyTestResponse.php on line',
         );
 
         $apiClient->sendRequestAndMapResponse(new Request('GET', 'foo/bar'), DummyTestResponse::class);

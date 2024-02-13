@@ -41,7 +41,7 @@ class ApiClientTest extends TestCase
         self::assertIsArray($httpClientConfig);
 
         self::assertNull($httpClientConfig['base_uri']);
-        self::assertSame(['User-Agent' => 'Keboola Azure PHP Client'], $httpClientConfig['headers']);
+        self::assertSame(['User-Agent' => 'Keboola Sandboxes Service API PHP Client'], $httpClientConfig['headers']);
         self::assertSame(120, $httpClientConfig['timeout']);
         self::assertSame(10, $httpClientConfig['connect_timeout']);
     }
@@ -89,7 +89,8 @@ class ApiClientTest extends TestCase
         );
         $client->sendRequest(new Request('GET', '/'));
         self::assertTrue($this->logsHandler->hasInfoThatMatches(
-            '#^[\w\d]+ Keboola Azure PHP Client - \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00\] "GET  /1.1" 201 $#',
+            '#^[\w\d]+ Keboola Sandboxes Service API PHP Client ' .
+            '- \[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00\] "GET  /1.1" 201 $#',
         ));
     }
 }

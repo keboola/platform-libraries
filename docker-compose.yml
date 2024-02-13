@@ -100,6 +100,13 @@ services:
     image: keboola/permission-checker
     working_dir: /code/libs/permission-checker
 
+  dev-sandboxes-service-api-client:
+    <<: *dev81
+    image: keboola/sandboxes-service-api-client
+    working_dir: /code/libs/sandboxes-service-api-client
+    depends_on:
+      - mockserver
+
   dev-settle:
     <<: *dev
     image: keboola/settle

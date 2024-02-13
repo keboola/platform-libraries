@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Model;
 
-use Keboola\AzureApiClient\Marketplace\Model\Subscription;
 use Keboola\SandboxesServiceApiClient\ResponseModelInterface;
 
-class CreateSandboxResult implements ResponseModelInterface
+final class CreateSandboxResult implements ResponseModelInterface
 {
     public function __construct(
         public readonly string $id,
         public readonly string $projectId,
         public readonly string $tokenId,
         public readonly string $configurationId,
+        public readonly string $configurationVersion,
         public readonly string $type,
-        public readonly string $size,
-        public readonly string $sizeParameters,
-        public readonly string $user,
-        public readonly string $password,
-        public readonly string $host,
-        public readonly string $url,
-        public readonly string $imageVersion,
+        public readonly ?string $size = null,
+        public readonly ?string $sizeParameters = null,
+        public readonly ?string $user = null,
+        public readonly ?string $password = null,
+        public readonly ?string $host = null,
+        public readonly ?string $url = null,
+        public readonly ?string $imageVersion = null,
     ) {
     }
 
@@ -32,14 +32,15 @@ class CreateSandboxResult implements ResponseModelInterface
             $data['projectId'],
             $data['tokenId'],
             $data['configurationId'],
+            $data['configurationVersion'],
             $data['type'],
-            $data['size'],
-            $data['sizeParameters'],
-            $data['user'],
-            $data['password'],
-            $data['host'],
-            $data['url'],
-            $data['imageVersion'],
+            $data['size'] ?? null,
+            $data['sizeParameters'] ?? null,
+            $data['user'] ?? null,
+            $data['password'] ?? null,
+            $data['host'] ?? null,
+            $data['url'] ?? null,
+            $data['imageVersion'] ?? null,
         );
     }
 }

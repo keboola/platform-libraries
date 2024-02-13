@@ -11,11 +11,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use JsonException;
-use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenAuthenticatorFactory;
-use Keboola\AzureApiClient\Authentication\Authenticator\Internal\BearerTokenResolver;
-use Keboola\AzureApiClient\Authentication\Authenticator\Internal\SystemAuthenticatorResolver;
-use Keboola\AzureApiClient\Authentication\Authenticator\RequestAuthenticatorFactoryInterface;
-use Keboola\AzureApiClient\Exception\ClientException;
+use Keboola\SandboxesServiceApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
@@ -25,7 +21,6 @@ class ApiClient
 {
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
-    private readonly RequestAuthenticatorFactoryInterface $authenticatorFactory;
 
     /**
      * @param non-empty-string|null $baseUrl
@@ -39,7 +34,9 @@ class ApiClient
 
         $this->requestHandlerStack = HandlerStack::create($configuration->requestHandler);
         $this->requestHandlerStack->remove('auth');
-        $this->requestHandlerStack->push(Middleware::mapRequest($configuration->authenticator), 'auth');
+        if ($configuration->authenticator !== null) {
+            $this->requestHandlerStack->push(Middleware::mapRequest($configuration->authenticator), 'auth');
+        }
 
         if ($configuration->backoffMaxTries > 0) {
             $this->requestHandlerStack->push(Middleware::retry(new RetryDecider(

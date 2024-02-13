@@ -8,12 +8,16 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\SandboxesServiceApiClient\ApiClient;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxPayload;
 use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxResult;
 
 class SandboxesClient
 {
     private ApiClient $apiClient;
 
+    /**
+     * @param non-empty-string|null $baseUrl
+     */
     public function __construct(
         ?string $baseUrl = null,
         ?ApiClientConfiguration $configuration = null,
@@ -24,7 +28,7 @@ class SandboxesClient
         );
     }
 
-    public function createSandbox(CreateSandboxPayload $payload): ResolveSubscriptionResult
+    public function createSandbox(CreateSandboxPayload $payload): CreateSandboxResult
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
@@ -38,5 +42,4 @@ class SandboxesClient
             CreateSandboxResult::class,
         );
     }
-
 }

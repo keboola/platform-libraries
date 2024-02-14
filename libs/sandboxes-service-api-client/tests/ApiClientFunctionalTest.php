@@ -157,10 +157,8 @@ class ApiClientFunctionalTest extends TestCase
             'httpResponse' => [
                 'statusCode' => 400,
                 'body' => Json::encodeArray([
-                    'error' => [
-                        'code' => 'BadRequest',
-                        'message' => 'This is not good',
-                    ],
+                    'error' => 'BadRequest',
+                    'message' => 'This is not good',
                 ]),
             ],
         ]);

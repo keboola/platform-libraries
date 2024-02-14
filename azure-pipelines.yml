@@ -187,7 +187,7 @@ stages:
     displayName: Tests - Sandboxes Service API Client
     lockBehavior: sequential
     dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_permissionChecker'])
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_sandboxesServiceApiClient'])
     jobs:
       - template: libs/sandboxes-service-api-client/azure-pipelines.tests.yml
 

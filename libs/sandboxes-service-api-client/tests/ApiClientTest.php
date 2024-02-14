@@ -31,6 +31,9 @@ class ApiClientTest extends TestCase
         $this->logger = new Logger('tests', [$this->logsHandler]);
     }
 
+    /**
+     * @param non-empty-string $url
+     */
     private function getApiClient(string $url): ApiClient
     {
         return new ApiClient(new ApiClientConfiguration(
@@ -49,7 +52,7 @@ class ApiClientTest extends TestCase
         $httpClientConfig = self::getPrivatePropertyValue($httpClient, 'config');
         self::assertIsArray($httpClientConfig);
 
-        self::assertEquals('http://example.com', (string) $httpClientConfig['base_uri']);
+        self::assertSame('http://example.com', (string) $httpClientConfig['base_uri']);
         self::assertSame(['User-Agent' => 'Keboola Sandboxes Service API PHP Client'], $httpClientConfig['headers']);
         self::assertSame(120, $httpClientConfig['timeout']);
         self::assertSame(10, $httpClientConfig['connect_timeout']);
@@ -57,7 +60,9 @@ class ApiClientTest extends TestCase
 
     /** @dataProvider provideInvalidOptions */
     public function testInvalidOptions(
-        ?string $baseUrl,
+        string $baseUrl,
+        string $storageToken,
+        string $userAgent,
         ?int $backoffMaxTries,
         string $expectedError,
     ): void {
@@ -66,8 +71,8 @@ class ApiClientTest extends TestCase
 
         new ApiClient(new ApiClientConfiguration(
             $baseUrl, // @phpstan-ignore-line intentionally passing invalid values
-            'token',
-            'Keboola Sandboxes Service API PHP Client',
+            $storageToken, // @phpstan-ignore-line
+            $userAgent, // @phpstan-ignore-line
             $backoffMaxTries, // @phpstan-ignore-line
         ));
     }
@@ -76,12 +81,32 @@ class ApiClientTest extends TestCase
     {
         yield 'empty baseUrl' => [
             'baseUrl' => '',
+            'storageToken' => 'token',
+            'userAgent' => 'Test App',
             'backoffMaxTries' => 0,
-            'error' => 'Expected a value to contain at least 1 characters. Got: ""',
+            'error' => 'Expected a different value than "".',
+        ];
+
+        yield 'empty storageToken' => [
+            'baseUrl' => 'https://example.com',
+            'storageToken' => '',
+            'userAgent' => 'Test App',
+            'backoffMaxTries' => 0,
+            'error' => 'Expected a different value than "".',
+        ];
+
+        yield 'empty userAgent' => [
+            'baseUrl' => 'https://example.com',
+            'storageToken' => 'token',
+            'userAgent' => '',
+            'backoffMaxTries' => 0,
+            'error' => 'Expected a different value than "".',
         ];
 
         yield 'negative backoffMaxTries' => [
             'baseUrl' => 'http://example.com',
+            'storageToken' => 'token',
+            'userAgent' => 'Test App',
             'backoffMaxTries' => -1,
             'error' => 'Expected a value greater than or equal to 0. Got: -1',
         ];

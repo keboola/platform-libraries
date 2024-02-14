@@ -13,6 +13,9 @@ use PHPUnit\Framework\TestCase;
 
 class ApiClientFunctionalTest extends TestCase
 {
+    /**
+     * @param non-empty-string $url
+     */
     private function getApiClient(string $url): ApiClient
     {
         return new ApiClient(new ApiClientConfiguration(

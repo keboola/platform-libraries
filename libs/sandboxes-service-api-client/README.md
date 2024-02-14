@@ -12,9 +12,9 @@ use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 
 new SandboxesApiClient(new ApiClientConfiguration(
-    baseUrl: 'https://sandboxes-service.keboola.com',
+    baseUrl: 'https://data-science.keboola.com',
     storageToken: '{storage-api-token}',
-    userAgent: 'Keboola Sandboxes Service API PHP Client',
+    userAgent: 'My App',
 ));
 
 $result = $client->createSandbox([

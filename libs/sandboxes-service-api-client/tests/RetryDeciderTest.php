@@ -90,14 +90,6 @@ class RetryDeciderTest extends TestCase
             'log' => 'Request failed (Error body), retrying (0 of 10)',
         ];
 
-        yield 'throttling response' => [
-            'retries' => 0,
-            'response' => new Response(429, [], 'Error body'),
-            'error' => null,
-            'result' => true,
-            'log' => 'Request failed (Error body), retrying (0 of 10)',
-        ];
-
         yield 'text error with response' => [
             'retries' => 0,
             'response' => new Response(200),

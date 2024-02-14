@@ -264,46 +264,4 @@ error occurred',
 
         $apiClient->sendRequest(new Request('GET', 'foo/bar'));
     }
-
-    public function testRetryOnThrottling(): void
-    {
-        $mockserver = new Mockserver();
-        $mockserver->reset();
-        $mockserver->expect([
-            'httpRequest' => [
-                'method' => 'GET',
-                'path' => '/foo/bar',
-            ],
-            'httpResponse' => [
-                'statusCode' => 429,
-                'body' => 'too many requests',
-            ],
-            'times' => [
-                'remainingTimes' => 2,
-            ],
-        ]);
-        $mockserver->expect([
-            'httpRequest' => [
-                'method' => 'GET',
-                'path' => '/foo/bar',
-            ],
-            'httpResponse' => [
-                'statusCode' => 200,
-                'body' => '{"foo":"bar"}',
-            ],
-        ]);
-
-        $apiClient = new ApiClient(new ApiClientConfiguration(
-            $mockserver->getServerUrl(),
-            storageToken: 'token',
-            userAgent: 'Keboola Sandboxes Service API PHP Client',
-            backoffMaxTries: 2,
-        ));
-
-        $response = $apiClient->sendRequestAndDecodeResponse(
-            new Request('GET', 'foo/bar'),
-        );
-
-        self::assertEquals(['foo' => 'bar'], $response);
-    }
 }

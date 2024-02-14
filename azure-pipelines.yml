@@ -344,7 +344,7 @@ stages:
         parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_sandboxesServiceApiClient'])
           sourceRepo: platform-libraries
-          targetRepo: permission-checker
+          targetRepo: sandboxes-service-api-client
           libraryPath: libs/sandboxes-service-api-client
           tagPrefix: sandboxes-service-api-client/
 

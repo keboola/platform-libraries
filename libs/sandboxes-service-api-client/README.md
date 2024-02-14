@@ -6,10 +6,24 @@ composer require keboola/sandboxes-service-api-client
 ```
 
 ## Usage
-The simplest way to use API client is just by creating its instance. 
 
 ```php
-//todo
+use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
+use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
+
+new SandboxesApiClient(new ApiClientConfiguration(
+    baseUrl: 'https://sandboxes-service.keboola.com',
+    storageToken: '{storage-api-token}',
+    userAgent: 'Keboola Sandboxes Service API PHP Client',
+));
+
+$result = $client->createSandbox([
+    'componentId' => 'keboola.data-apps',
+    'configurationId' => '123',
+    'configurationVersion' => '4',
+    'type' => 'streamlit',
+]);
+
 ```
 
 ## License

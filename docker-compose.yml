@@ -101,7 +101,7 @@ services:
     working_dir: /code/libs/permission-checker
 
   dev-sandboxes-service-api-client:
-    <<: *dev81
+    <<: *dev82
     image: keboola/sandboxes-service-api-client
     working_dir: /code/libs/sandboxes-service-api-client
     depends_on:

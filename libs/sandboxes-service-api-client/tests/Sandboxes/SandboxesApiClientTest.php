@@ -10,14 +10,11 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
-use Keboola\SandboxesServiceApiClient\Authentication\StorageTokenAuthenticator;
 use Keboola\SandboxesServiceApiClient\Json;
-use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxPayload;
-use Keboola\SandboxesServiceApiClient\Sandboxes\Model\CreateSandboxResult;
-use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesClient;
+use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
 use PHPUnit\Framework\TestCase;
 
-class SandboxesClientTest extends TestCase
+class SandboxesApiClientTest extends TestCase
 {
     public function testCreateSandbox(): void
     {
@@ -39,7 +36,7 @@ class SandboxesClientTest extends TestCase
             ),
         ]);
 
-        $client = new SandboxesClient(
+        $client = new SandboxesApiClient(
             new ApiClientConfiguration(
                 baseUrl: '/sandboxes',
                 storageToken: 'my-token',

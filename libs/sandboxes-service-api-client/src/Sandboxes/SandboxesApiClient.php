@@ -9,7 +9,7 @@ use Keboola\SandboxesServiceApiClient\ApiClient;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
 
-class SandboxesClient
+class SandboxesApiClient
 {
     private ApiClient $apiClient;
 

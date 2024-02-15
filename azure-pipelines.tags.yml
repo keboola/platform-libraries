@@ -46,10 +46,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
-    - repository: sandboxes-service-api-client
+    - repository: sandboxes-service-api-php-client
       type: github
       endpoint: keboola
-      name: keboola/sandboxes-service-api-client
+      name: keboola/sandboxes-service-api-php-client
     - repository: settle
       type: github
       endpoint: keboola
@@ -143,6 +143,14 @@ jobs:
       targetRepo: permission-checker
       libraryPath: libs/permission-checker
       tagPrefix: permission-checker/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/sandboxes-service-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: sandboxes-service-api-php-client
+      libraryPath: libs/sandboxes-service-api-client
+      tagPrefix: sandboxes-service-api-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

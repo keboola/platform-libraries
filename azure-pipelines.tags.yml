@@ -146,6 +146,14 @@ jobs:
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/sandboxes-service-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: sandboxes-service-api-client
+      libraryPath: libs/sandboxes-service-api-client
+      tagPrefix: sandboxes-service-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/settle/')
       sourceRepo: platform-libraries
       targetRepo: settle

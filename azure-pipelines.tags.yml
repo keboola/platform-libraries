@@ -46,6 +46,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: sandboxes-service-api-client
+      type: github
+      endpoint: keboola
+      name: keboola/sandboxes-service-api-client
     - repository: settle
       type: github
       endpoint: keboola

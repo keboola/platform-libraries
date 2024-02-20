@@ -23,6 +23,7 @@ class Manifest extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
+        // TODO Meli by bejt dva validacni classy jedna na manifest a druha na konfiguraci
         $node
             ->children()
                 ->scalarNode('destination')->end()

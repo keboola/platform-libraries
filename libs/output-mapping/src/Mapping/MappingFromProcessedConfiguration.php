@@ -52,6 +52,7 @@ class MappingFromProcessedConfiguration
 
     /**
      * @deprecated
+     * @TODO mapping je interni datova struktura, nesmi bejt public, protoze tohle je value object
      */
     public function getMapping(): array
     {

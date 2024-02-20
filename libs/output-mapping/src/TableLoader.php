@@ -67,14 +67,31 @@ class TableLoader
             $physicalManifests,
         );
 
-        if ($configuration->hasSlicingFeature()) {
+        if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
             // TODO split slicerHelper to slicerValidator/skipper and to slicer
              // TODO $slicedSources = (new SliceHelper($this->logger))->sliceSources($combinedSources);
-            // $physicalManifests = $lister->listManifestFiles($configuration->getSourcePathPrefix());
-            // $combinedSources = $mappingCombiner->combineSourcesWithManifests(
-            //    $slicedSources,
-            //    $physicalManifests,
-            //);
+
+            // nevyhazuje validacni vyjimky,nic nevraci
+             $strategy->sliceFiles(); //
+
+            // TODO tohle by m2lo byt stejny jako nahore a tudiz by to melo jit dat do private metoday
+            $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
+            $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
+
+            $sourcesValidator = $stagingFactory->getSourcesValidator();
+            $sourcesValidator->validate($physicalDataFiles, $physicalManifests);
+
+            $mappingCombiner = new Mapping\MappingCombiner();
+            $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
+                $physicalDataFiles,
+                $configuration->getMapping(),
+            );
+
+            $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
+             $combinedSources = $mappingCombiner->combineSourcesWithManifests(
+                 $combinedSources,
+                $physicalManifests,
+            );
         }
 
         // TODO move the above to a separate class - sourcesPreparer
@@ -83,11 +100,15 @@ class TableLoader
         foreach ($combinedSources as $source) {
             $this->logger->info(sprintf('Loading table "%s"', $source->getSourceName()));
             $tableConfigurationResolver = new TableConfigurationResolver($this->clientWrapper, $this->logger);
-            $processedSource = $tableConfigurationResolver->resolveTableConfiguration(
+
+
+            $processedSource = $tableConfigurationResolver->resolveTableConfiguration( // TODO mozna volat jen pokud existuje manifest, coz tady vime
                 $source,
                 $configuration->getDefaultBucket(),
                 $systemMetadata,
             );
+            $processedSource = ValidateConfiguration($processedSource);
+            $processedSource = (new BranchResolver())->RewriteBranchSource($processedSource); // TODO dostane config, vrati confiug
 
             $tableConfigurationValidator =
 

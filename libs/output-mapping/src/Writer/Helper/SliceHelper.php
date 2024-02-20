@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Writer\Helper;
 use Keboola\OutputMapping\Configuration\Table\Manifest;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
+use Keboola\OutputMapping\Writer\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\MappingSource;
 use Keboola\OutputMapping\Writer\Table\Source\LocalFileSource;
 use Psr\Log\LoggerInterface;
@@ -18,7 +19,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-class SliceHelper
+class SliceHelper // TODO  tahle classa byse mela zlikvidovat
 {
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -37,6 +38,7 @@ class SliceHelper
 
         foreach ($mappingSources as $source) {
             if ($mappingSourceOccurrences[$source->getSourceName()] > 1) {
+                // TODO proste se preskoci slicovani, neni to validace (mozna zalogovat warning)
                 throw new InvalidOutputException(sprintf(
                     'Source "%s" has multiple destinations set.',
                     $source->getSourceName(),
@@ -47,19 +49,23 @@ class SliceHelper
 
     private function validateMappingSource(MappingSource $source): void
     {
+        //@TODO toto neni validace - to jen resi jestli slicovat
         $sourceFile = $source->getSource();
         if (!$sourceFile instanceof LocalFileSource) {
             throw new SliceSkippedException('Only local files are supported for slicing.');
         }
 
         if ($sourceFile->isSliced() && !$source->getManifestFile()) {
+            // @TODO nekde by se melo kontrolovat, ze slicovanej soubor ma manifest, ale rozhodne ne tady
             throw new SliceSkippedException('Sliced files without manifest are not supported.');
         }
 
         if (!$sourceFile->getFile()->getSize()) {
+            // @TODO proste se slicovani preskoci,neni to validace
             throw new SliceSkippedException(sprintf('Empty files cannot be sliced.'));
         }
 
+        // @TODO toto by melo jit nekam uplne jiname
         if ($source->getMapping()) {
             // @TODO remove after fix https://keboola.atlassian.net/browse/GCP-472
             $mapping = $source->getMapping();
@@ -155,6 +161,7 @@ class SliceHelper
 
     public function getFile(string $path): SplFileInfo
     {
+        // TODO tohle patri do LocalTableStrategy, pokud to tam jeste neni
         $fileInfo = new NativeSplFileInfo($path);
         $files = (new Finder())->files()
             ->name($fileInfo->getFilename())

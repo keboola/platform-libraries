@@ -30,4 +30,8 @@ interface StrategyInterface
      */
     public function listManifests(string $dir): array;
 
+    public function hasSlicer();
+
+    public function sliceFiles();
+
 }

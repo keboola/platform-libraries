@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Writer\Helper;
 class ConfigurationMerger
 {
     public static function mergeConfigurations(array $configFromManifest, array $configFromMapping): array
-    {
+    { // configFromMapping je konfigurace z konfigurace a TEN PREPISUJE to co je v $configFromManifest
         $defaults = ['incremental' => false, 'delete_where_operator' => 'eq', 'delimiter' => ',', 'enclosure' => '"'];
         $config = $configFromManifest;
         foreach ($configFromMapping as $key => $value) {

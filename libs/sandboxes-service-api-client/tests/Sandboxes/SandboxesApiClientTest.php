@@ -70,6 +70,34 @@ class SandboxesApiClientTest extends TestCase
         );
     }
 
+    public function testDeleteSandbox(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(204),
+        ]);
+
+        $client = new SandboxesApiClient(
+            new ApiClientConfiguration(
+                baseUrl: '/sandboxes',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $client->deleteSandbox('sandbox-id');
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'DELETE',
+            '/sandboxes/sandbox-id',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            null,
+            $requestsHistory[0]['request'],
+        );
+    }
+
     /**
      * @param list<array{request: Request, response: Response}> $requestsHistory
      * @param list<Response>                                    $responses

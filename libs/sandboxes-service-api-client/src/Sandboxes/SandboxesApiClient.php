@@ -31,4 +31,14 @@ class SandboxesApiClient
             ),
         );
     }
+
+    public function deleteSandbox(string $sandboxId): void
+    {
+        $this->apiClient->sendRequest(
+            new Request(
+                'DELETE',
+                sprintf('/sandboxes/%s', $sandboxId),
+            ),
+        );
+    }
 }

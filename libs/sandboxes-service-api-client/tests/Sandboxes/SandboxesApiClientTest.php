@@ -30,7 +30,7 @@ class SandboxesApiClientTest extends TestCase
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
             new Response(
-                200,
+                201,
                 ['Content-Type' => 'application/json'],
                 Json::encodeArray($responseBody),
             ),
@@ -65,6 +65,57 @@ class SandboxesApiClientTest extends TestCase
                 'configurationId' => '123',
                 'configurationVersion' => '4',
                 'type' => 'sandbox-type',
+            ]),
+            $requestsHistory[0]['request'],
+        );
+    }
+
+    public function testUpdateSandbox(): void
+    {
+        $responseBody = [
+            'id' => 'sandbox-id',
+            'projectId' => 'project-id',
+            'tokenId' => 'token-id',
+            'componentId' => 'component-id-2',
+            'configurationId' => '124',
+            'configurationVersion' => '5',
+            'type' => 'sandbox-type',
+            'active' => false,
+        ];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new SandboxesApiClient(
+            new ApiClientConfiguration(
+                baseUrl: '/sandboxes',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->updateSandbox('sandbox-id', [
+            'configurationVersion' => '5',
+            'active' => false,
+        ]);
+
+        self::assertEquals($responseBody, $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'PATCH',
+            '/sandboxes/sandbox-id',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            Json::encodeArray([
+                'configurationVersion' => '5',
+                'active' => false,
             ]),
             $requestsHistory[0]['request'],
         );

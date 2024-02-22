@@ -41,4 +41,18 @@ class SandboxesApiClient
             ),
         );
     }
+
+    public function updateSandbox(string $sandboxId, array $array): array
+    {
+        return $this->apiClient->sendRequestAndDecodeResponse(
+            new Request(
+                'PATCH',
+                sprintf('/sandboxes/%s', $sandboxId),
+                [
+                    'Content-Type' => 'application/json',
+                ],
+                Json::encodeArray($array),
+            ),
+        );
+    }
 }

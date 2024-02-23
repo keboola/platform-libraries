@@ -93,7 +93,7 @@ class SandboxesApiClientTest extends TestCase
 
         $client = new SandboxesApiClient(
             new ApiClientConfiguration(
-                baseUrl: '/sandboxes',
+                baseUrl: 'https://data-science.keboola.com',
                 storageToken: 'my-token',
                 userAgent: 'Keboola Sandboxes Service API PHP Client',
                 requestHandler: $requestHandler(...),
@@ -109,7 +109,7 @@ class SandboxesApiClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
             'PATCH',
-            '/sandboxes/sandbox-id',
+            'https://data-science.keboola.com/sandboxes/sandbox-id',
             [
                 'X-StorageApi-Token' => 'my-token',
             ],

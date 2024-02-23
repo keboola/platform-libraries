@@ -27,6 +27,12 @@ class ServiceClient
     public const TEMPLATES_SERVICE = 'templates';
     public const VAULT_SERVICE = 'vault';
 
+    private const NAMESPACE_DEFAULT = 'default';
+    private const NAMESPACE_BUFFER = 'buffer';
+    private const NAMESPACE_CONNECTION = 'connection';
+    private const NAMESPACE_SANDBOXES = 'sandboxes';
+    private const NAMESPACE_TEMPLATES = 'templates-api';
+
     private const KNOWN_SERVICES = [
         self::AI_SERVICE,
         self::BILLING_SERVICE,
@@ -47,105 +53,199 @@ class ServiceClient
         self::VAULT_SERVICE,
     ];
 
-    public function __construct(private readonly string $hostnameSuffix)
-    {
+    private const SERVICES_NAMESPACES = [
+        self::AI_SERVICE => self::NAMESPACE_DEFAULT,
+        self::BILLING_SERVICE => self::NAMESPACE_DEFAULT,
+        self::BUFFER_SERVICE => self::NAMESPACE_BUFFER,
+        self::CONNECTION_SERVICE => self::NAMESPACE_CONNECTION,
+        self::DATA_SCIENCE_SERVICE => self::NAMESPACE_DEFAULT,
+        self::ENCRYPTION_SERVICE => self::NAMESPACE_DEFAULT,
+        self::IMPORT_SERVICE => self::NAMESPACE_DEFAULT,
+        self::OAUTH_SERVICE => self::NAMESPACE_DEFAULT,
+        self::MLFLOW_SERVICE => self::NAMESPACE_DEFAULT, // ??
+        self::NOTIFICATION_SERVICE => self::NAMESPACE_DEFAULT,
+        self::SANDBOXES_SERVICE => self::NAMESPACE_SANDBOXES,
+        self::SCHEDULER_SERVICE => self::NAMESPACE_DEFAULT,
+        self::SPARK_SERVICE => self::NAMESPACE_DEFAULT, // ??
+        self::SYNC_ACTIONS_SERVICE => self::NAMESPACE_DEFAULT,
+        self::QUEUE_SERVICE => self::NAMESPACE_DEFAULT,
+        self::TEMPLATES_SERVICE => self::NAMESPACE_TEMPLATES,
+        self::VAULT_SERVICE => self::NAMESPACE_DEFAULT,
+    ];
+
+    /**
+     * @param non-empty-string $hostnameSuffix
+     */
+    public function __construct(
+        private readonly string $hostnameSuffix,
+        private readonly ServiceDnsType $dnsType = ServiceDnsType::PUBLIC,
+    ) {
     }
 
-    public function getServiceUrl(string $serviceName): string
+    /**
+     * @param value-of<self::KNOWN_SERVICES> $serviceName
+     * @return non-empty-string
+     */
+    public function getServiceUrl(string $serviceName, ?ServiceDnsType $dnsType = null): string
     {
         if (($this->hostnameSuffix !== 'north-europe.azure.keboola.com') && ($serviceName === self::BILLING_SERVICE)) {
             throw new ServiceNotFoundException(
                 sprintf('Billing service is not available on stack "%s".', $this->hostnameSuffix),
             );
         }
-        if (in_array($serviceName, self::KNOWN_SERVICES, true)) {
-            return sprintf('https://%s.%s', $serviceName, $this->hostnameSuffix);
+
+        if (!in_array($serviceName, self::KNOWN_SERVICES, true)) {
+            throw new ServiceInvalidException(sprintf('Service "%s" is not known.', $serviceName));
         }
-        throw new ServiceInvalidException(sprintf('Service "%s" is not known.', $serviceName));
+
+        return match ($dnsType ?? $this->dnsType) {
+            ServiceDnsType::INTERNAL => sprintf(
+                'http://%s.%s.svc.cluster.local',
+                ($serviceName === self::DATA_SCIENCE_SERVICE ? 'sandboxes-service' : $serviceName),
+                self::SERVICES_NAMESPACES[$serviceName],
+            ),
+
+            ServiceDnsType::PUBLIC => sprintf(
+                'https://%s.%s',
+                $serviceName,
+                $this->hostnameSuffix,
+            ),
+        };
     }
 
-    public function getAiServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getAiServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::AI_SERVICE);
+        return $this->getServiceUrl(self::AI_SERVICE, $dnsType);
     }
 
-    public function getBillingServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getBillingServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::BILLING_SERVICE);
+        return $this->getServiceUrl(self::BILLING_SERVICE, $dnsType);
     }
 
-    public function getBufferServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getBufferServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::BUFFER_SERVICE);
+        return $this->getServiceUrl(self::BUFFER_SERVICE, $dnsType);
     }
 
-    public function getConnectionServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getConnectionServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::CONNECTION_SERVICE);
+        return $this->getServiceUrl(self::CONNECTION_SERVICE, $dnsType);
     }
 
-    public function getDataScienceServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getDataScienceServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::DATA_SCIENCE_SERVICE);
+        return $this->getServiceUrl(self::DATA_SCIENCE_SERVICE, $dnsType);
     }
 
-    public function getEncryptionServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getEncryptionServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::ENCRYPTION_SERVICE);
+        return $this->getServiceUrl(self::ENCRYPTION_SERVICE, $dnsType);
     }
 
-    public function getImportServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getImportServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::IMPORT_SERVICE);
+        return $this->getServiceUrl(self::IMPORT_SERVICE, $dnsType);
     }
 
-    public function getOauthUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getOauthUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::OAUTH_SERVICE);
+        return $this->getServiceUrl(self::OAUTH_SERVICE, $dnsType);
     }
 
-    public function getMlFlowServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getMlFlowServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::MLFLOW_SERVICE);
+        return $this->getServiceUrl(self::MLFLOW_SERVICE, $dnsType);
     }
 
-    public function getNotificationServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getNotificationServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::NOTIFICATION_SERVICE);
+        return $this->getServiceUrl(self::NOTIFICATION_SERVICE, $dnsType);
     }
 
-    public function getSandboxesServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getSandboxesServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::SANDBOXES_SERVICE);
+        return $this->getServiceUrl(self::SANDBOXES_SERVICE, $dnsType);
     }
 
-    public function getSchedulerServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getSchedulerServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::SCHEDULER_SERVICE);
+        return $this->getServiceUrl(self::SCHEDULER_SERVICE, $dnsType);
     }
 
-    public function getSparkServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getSparkServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::SPARK_SERVICE);
+        return $this->getServiceUrl(self::SPARK_SERVICE, $dnsType);
     }
 
-    public function getSyncActionsServiceUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getSyncActionsServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::SYNC_ACTIONS_SERVICE);
+        return $this->getServiceUrl(self::SYNC_ACTIONS_SERVICE, $dnsType);
     }
 
-    public function getQueueUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getQueueUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::QUEUE_SERVICE);
+        return $this->getServiceUrl(self::QUEUE_SERVICE, $dnsType);
     }
 
-    public function getTemplatesUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getTemplatesUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::TEMPLATES_SERVICE);
+        return $this->getServiceUrl(self::TEMPLATES_SERVICE, $dnsType);
     }
 
-    public function getVaultUrl(): string
+    /**
+     * @return non-empty-string
+     */
+    public function getVaultUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(self::VAULT_SERVICE);
+        return $this->getServiceUrl(self::VAULT_SERVICE, $dnsType);
     }
 }

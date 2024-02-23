@@ -7,30 +7,141 @@ namespace Keboola\ApiBundle\Tests;
 use Keboola\ApiBundle\Exception\ServiceInvalidException;
 use Keboola\ApiBundle\Exception\ServiceNotFoundException;
 use Keboola\ApiBundle\ServiceClient;
+use Keboola\ApiBundle\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
 
 class ServiceClientTest extends TestCase
 {
-    public function testGetUrlMethods(): void
+    private const PUBLIC_AI_SERVICE = 'https://ai.north-europe.azure.keboola.com';
+    private const PUBLIC_BILLING_SERVICE = 'https://billing.north-europe.azure.keboola.com';
+    private const PUBLIC_BUFFER_SERVICE = 'https://buffer.north-europe.azure.keboola.com';
+    private const PUBLIC_CONNECTION_SERVICE = 'https://connection.north-europe.azure.keboola.com';
+    private const PUBLIC_DATA_SCIENCE_SERVICE = 'https://data-science.north-europe.azure.keboola.com';
+    private const PUBLIC_ENCRYPTION_SERVICE = 'https://encryption.north-europe.azure.keboola.com';
+    private const PUBLIC_IMPORT_SERVICE = 'https://import.north-europe.azure.keboola.com';
+    private const PUBLIC_MLFLOW_SERVICE = 'https://mlflow.north-europe.azure.keboola.com';
+    private const PUBLIC_NOTIFICATION_SERVICE = 'https://notification.north-europe.azure.keboola.com';
+    private const PUBLIC_OAUTH = 'https://oauth.north-europe.azure.keboola.com';
+    private const PUBLIC_QUEUE = 'https://queue.north-europe.azure.keboola.com';
+    private const PUBLIC_SANDBOXES_SERVICE = 'https://sandboxes.north-europe.azure.keboola.com';
+    private const PUBLIC_SCHEDULER_SERVICE = 'https://scheduler.north-europe.azure.keboola.com';
+    private const PUBLIC_SPARK_SERVICE = 'https://spark.north-europe.azure.keboola.com';
+    private const PUBLIC_SYNC_ACTIONS_SERVICE = 'https://sync-actions.north-europe.azure.keboola.com';
+    private const PUBLIC_TEMPLATES = 'https://templates.north-europe.azure.keboola.com';
+    private const PUBLIC_VAULT = 'https://vault.north-europe.azure.keboola.com';
+
+    private const INTERNAL_AI_SERVICE = 'http://ai.default.svc.cluster.local';
+    private const INTERNAL_BILLING_SERVICE = 'http://billing.default.svc.cluster.local';
+    private const INTERNAL_BUFFER_SERVICE = 'http://buffer.buffer.svc.cluster.local';
+    private const INTERNAL_CONNECTION_SERVICE = 'http://connection.connection.svc.cluster.local';
+    private const INTERNAL_DATA_SCIENCE_SERVICE = 'http://sandboxes-service.default.svc.cluster.local';
+    private const INTERNAL_ENCRYPTION_SERVICE = 'http://encryption.default.svc.cluster.local';
+    private const INTERNAL_IMPORT_SERVICE = 'http://import.default.svc.cluster.local';
+    private const INTERNAL_MLFLOW_SERVICE = 'http://mlflow.default.svc.cluster.local';
+    private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification.default.svc.cluster.local';
+    private const INTERNAL_OAUTH = 'http://oauth.default.svc.cluster.local';
+    private const INTERNAL_QUEUE = 'http://queue.default.svc.cluster.local';
+    private const INTERNAL_SANDBOXES_SERVICE = 'http://sandboxes.sandboxes.svc.cluster.local';
+    private const INTERNAL_SCHEDULER_SERVICE = 'http://scheduler.default.svc.cluster.local';
+    private const INTERNAL_SPARK_SERVICE = 'http://spark.default.svc.cluster.local';
+    private const INTERNAL_SYNC_ACTIONS_SERVICE = 'http://sync-actions.default.svc.cluster.local';
+    private const INTERNAL_TEMPLATES = 'http://templates.templates-api.svc.cluster.local';
+    private const INTERNAL_VAULT = 'http://vault.default.svc.cluster.local';
+
+    public function testGetExplicitPublicUrlMethods(): void
     {
-        $client = new ServiceClient('north-europe.azure.keboola.com');
-        self::assertSame('https://ai.north-europe.azure.keboola.com', $client->getAiServiceUrl());
-        self::assertSame('https://billing.north-europe.azure.keboola.com', $client->getBillingServiceUrl());
-        self::assertSame('https://buffer.north-europe.azure.keboola.com', $client->getBufferServiceUrl());
-        self::assertSame('https://connection.north-europe.azure.keboola.com', $client->getConnectionServiceUrl());
-        self::assertSame('https://data-science.north-europe.azure.keboola.com', $client->getDataScienceServiceUrl());
-        self::assertSame('https://encryption.north-europe.azure.keboola.com', $client->getEncryptionServiceUrl());
-        self::assertSame('https://import.north-europe.azure.keboola.com', $client->getImportServiceUrl());
-        self::assertSame('https://mlflow.north-europe.azure.keboola.com', $client->getMlFlowServiceUrl());
-        self::assertSame('https://notification.north-europe.azure.keboola.com', $client->getNotificationServiceUrl());
-        self::assertSame('https://oauth.north-europe.azure.keboola.com', $client->getOauthUrl());
-        self::assertSame('https://queue.north-europe.azure.keboola.com', $client->getQueueUrl());
-        self::assertSame('https://sandboxes.north-europe.azure.keboola.com', $client->getSandboxesServiceUrl());
-        self::assertSame('https://scheduler.north-europe.azure.keboola.com', $client->getSchedulerServiceUrl());
-        self::assertSame('https://spark.north-europe.azure.keboola.com', $client->getSparkServiceUrl());
-        self::assertSame('https://sync-actions.north-europe.azure.keboola.com', $client->getSyncActionsServiceUrl());
-        self::assertSame('https://templates.north-europe.azure.keboola.com', $client->getTemplatesUrl());
-        self::assertSame('https://vault.north-europe.azure.keboola.com', $client->getVaultUrl());
+        // configure for default INTERNAL dns and test that PUBLIC is properly passed from the method
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
+
+        self::assertSame(self::PUBLIC_AI_SERVICE, $client->getAiServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_BILLING_SERVICE, $client->getBillingServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_DATA_SCIENCE_SERVICE, $client->getDataScienceServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_IMPORT_SERVICE, $client->getImportServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_MLFLOW_SERVICE, $client->getMlFlowServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_OAUTH, $client->getOauthUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_QUEUE, $client->getQueueUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_SANDBOXES_SERVICE, $client->getSandboxesServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_SPARK_SERVICE, $client->getSparkServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl(ServiceDnsType::PUBLIC));
+    }
+
+    public function testGetDefaultPublicUrlMethods(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
+
+        self::assertSame(self::PUBLIC_AI_SERVICE, $client->getAiServiceUrl());
+        self::assertSame(self::PUBLIC_BILLING_SERVICE, $client->getBillingServiceUrl());
+        self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl());
+        self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl());
+        self::assertSame(self::PUBLIC_DATA_SCIENCE_SERVICE, $client->getDataScienceServiceUrl());
+        self::assertSame(self::PUBLIC_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl());
+        self::assertSame(self::PUBLIC_IMPORT_SERVICE, $client->getImportServiceUrl());
+        self::assertSame(self::PUBLIC_MLFLOW_SERVICE, $client->getMlFlowServiceUrl());
+        self::assertSame(self::PUBLIC_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());
+        self::assertSame(self::PUBLIC_OAUTH, $client->getOauthUrl());
+        self::assertSame(self::PUBLIC_QUEUE, $client->getQueueUrl());
+        self::assertSame(self::PUBLIC_SANDBOXES_SERVICE, $client->getSandboxesServiceUrl());
+        self::assertSame(self::PUBLIC_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl());
+        self::assertSame(self::PUBLIC_SPARK_SERVICE, $client->getSparkServiceUrl());
+        self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
+        self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl());
+        self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl());
+    }
+
+    public function testGetExplicitInternalUrlMethods(): void
+    {
+        // configure for default PUBLIC dns and test that INTERNAL is properly passed from the method
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
+
+        // phpcs:disable Generic.Files.LineLength
+        self::assertSame(self::INTERNAL_AI_SERVICE, $client->getAiServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_BILLING_SERVICE, $client->getBillingServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_BUFFER_SERVICE, $client->getBufferServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_CONNECTION_SERVICE, $client->getConnectionServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getDataScienceServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_MLFLOW_SERVICE, $client->getMlFlowServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_SPARK_SERVICE, $client->getSparkServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl(ServiceDnsType::INTERNAL));
+        // phpcs:enable Generic.Files.LineLength
+    }
+
+    public function testGetDefaultInternalUrlMethods(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
+
+        self::assertSame(self::INTERNAL_AI_SERVICE, $client->getAiServiceUrl());
+        self::assertSame(self::INTERNAL_BILLING_SERVICE, $client->getBillingServiceUrl());
+        self::assertSame(self::INTERNAL_BUFFER_SERVICE, $client->getBufferServiceUrl());
+        self::assertSame(self::INTERNAL_CONNECTION_SERVICE, $client->getConnectionServiceUrl());
+        self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getDataScienceServiceUrl());
+        self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl());
+        self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl());
+        self::assertSame(self::INTERNAL_MLFLOW_SERVICE, $client->getMlFlowServiceUrl());
+        self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());
+        self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl());
+        self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl());
+        self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesServiceUrl());
+        self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl());
+        self::assertSame(self::INTERNAL_SPARK_SERVICE, $client->getSparkServiceUrl());
+        self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
+        self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
+        self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
     }
 
     public function testInvalidService(): void
@@ -38,7 +149,7 @@ class ServiceClientTest extends TestCase
         $this->expectException(ServiceInvalidException::class);
         $this->expectExceptionMessage('Service "non-existent" is not known.');
         $client = new ServiceClient('keboola.com');
-        $client->getServiceUrl('non-existent');
+        $client->getServiceUrl('non-existent'); // @phpstan-ignore-line intentionally invalid value
     }
 
     public function testNonExistentService(): void

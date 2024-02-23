@@ -9,7 +9,7 @@ use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
-use Keboola\ApiBundle\ServiceClient;
+use Keboola\ApiBundle\ServiceClient\ServiceClient;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;

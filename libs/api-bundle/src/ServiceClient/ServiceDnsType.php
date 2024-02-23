@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle;
+namespace Keboola\ApiBundle\ServiceClient;
 
 enum ServiceDnsType: string
 {

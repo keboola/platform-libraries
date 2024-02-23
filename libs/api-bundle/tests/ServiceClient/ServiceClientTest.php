@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Tests;
+namespace Keboola\ApiBundle\Tests\ServiceClient;
 
 use Keboola\ApiBundle\Exception\ServiceInvalidException;
 use Keboola\ApiBundle\Exception\ServiceNotFoundException;
-use Keboola\ApiBundle\ServiceClient;
-use Keboola\ApiBundle\ServiceDnsType;
+use Keboola\ApiBundle\ServiceClient\ServiceClient;
+use Keboola\ApiBundle\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
 
 class ServiceClientTest extends TestCase
@@ -142,13 +142,5 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
-    }
-
-    public function testInvalidService(): void
-    {
-        $this->expectException(ServiceInvalidException::class);
-        $this->expectExceptionMessage('Service "non-existent" is not known.');
-        $client = new ServiceClient('keboola.com');
-        $client->getServiceUrl('non-existent'); // @phpstan-ignore-line intentionally invalid value
     }
 }

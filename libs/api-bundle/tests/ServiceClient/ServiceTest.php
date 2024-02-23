@@ -18,13 +18,11 @@ class ServiceTest extends TestCase
         yield 'data-science' => [Service::DATA_SCIENCE, 'data-science'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption'];
         yield 'import' => [Service::IMPORT, 'import'];
-        yield 'mlflow' => [Service::MLFLOW, 'mlflow'];
         yield 'notification' => [Service::NOTIFICATION, 'notification'];
         yield 'oauth' => [Service::OAUTH, 'oauth'];
         yield 'queue' => [Service::QUEUE, 'queue'];
         yield 'sandboxes' => [Service::SANDBOXES, 'sandboxes'];
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler'];
-        yield 'spark' => [Service::SPARK, 'spark'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'sync-actions'];
     }
 
@@ -43,13 +41,11 @@ class ServiceTest extends TestCase
         yield 'data-science' => [Service::DATA_SCIENCE, 'sandboxes-service-api.default'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption-api.default'];
         yield 'import' => [Service::IMPORT, 'sapi-importer.default'];
-        yield 'mlflow' => [Service::MLFLOW, 'mlflow.default'];
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];
         yield 'oauth' => [Service::OAUTH, 'oauth-api.default'];
         yield 'queue' => [Service::QUEUE, 'job-queue-api.default'];
         yield 'sandboxes' => [Service::SANDBOXES, 'sandboxes-api.sandboxes']; // <-- custom namespace
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];
-        yield 'spark' => [Service::SPARK, 'spark.default'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];
     }
 

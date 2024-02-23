@@ -102,14 +102,6 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
-    public function getMlFlowServiceUrl(?ServiceDnsType $dnsType = null): string
-    {
-        return $this->getServiceUrl(Service::MLFLOW, $dnsType);
-    }
-
-    /**
-     * @return non-empty-string
-     */
     public function getNotificationServiceUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::NOTIFICATION, $dnsType);
@@ -129,14 +121,6 @@ class ServiceClient
     public function getSchedulerServiceUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::SCHEDULER, $dnsType);
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    public function getSparkServiceUrl(?ServiceDnsType $dnsType = null): string
-    {
-        return $this->getServiceUrl(Service::SPARK, $dnsType);
     }
 
     /**

@@ -4,47 +4,69 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\ServiceClient;
 
-enum Service: string
+enum Service
 {
-    case AI = 'ai';
-    case BILLING = 'billing';
-    case BUFFER = 'buffer';
-    case CONNECTION = 'connection';
-    case DATA_SCIENCE = 'data-science';
-    case ENCRYPTION = 'encryption';
-    case IMPORT = 'import';
-    case OAUTH = 'oauth';
-    case MLFLOW = 'mlflow';
-    case NOTIFICATION = 'notification';
-    case SANDBOXES = 'sandboxes';
-    case SCHEDULER = 'scheduler';
-    case SPARK = 'spark';
-    case SYNC_ACTIONS = 'sync-actions';
-    case QUEUE = 'queue';
-    case TEMPLATES = 'templates';
-    case VAULT = 'vault';
+    case AI;
+    case BILLING;
+    case BUFFER;
+    case CONNECTION;
+    case DATA_SCIENCE;
+    case ENCRYPTION;
+    case IMPORT;
+    case MLFLOW;
+    case NOTIFICATION;
+    case OAUTH;
+    case QUEUE;
+    case SANDBOXES;
+    case SCHEDULER;
+    case SPARK;
+    case SYNC_ACTIONS;
+    case TEMPLATES;
+    case VAULT;
 
     public function getPublicSubdomain(): string
     {
-        return $this->value;
+        return match ($this) {
+            self::AI => 'ai',
+            self::BILLING => 'billing',
+            self::BUFFER => 'buffer',
+            self::CONNECTION => 'connection',
+            self::DATA_SCIENCE => 'data-science',
+            self::ENCRYPTION => 'encryption',
+            self::IMPORT => 'import',
+            self::MLFLOW => 'mlflow', // ?
+            self::NOTIFICATION => 'notification',
+            self::OAUTH => 'oauth',
+            self::QUEUE => 'queue',
+            self::SANDBOXES => 'sandboxes',
+            self::SCHEDULER => 'scheduler',
+            self::SPARK => 'spark', // ?
+            self::SYNC_ACTIONS => 'sync-actions',
+            self::TEMPLATES => 'templates',
+            self::VAULT => 'vault',
+        };
     }
 
     public function getInternalServiceName(): string
     {
         return match ($this) {
-            self::DATA_SCIENCE => 'sandboxes-service',
-            default => $this->value,
-        };
-    }
-
-    public function getInternalServiceNamespace(): string
-    {
-        return match ($this) {
-            self::BUFFER => 'buffer',
-            self::CONNECTION => 'connection',
-            self::SANDBOXES => 'sandboxes',
-            self::TEMPLATES => 'templates-api',
-            default => 'default',
+            self::AI => 'ai-service-api.default',
+            self::BILLING => 'billing-api.buffer',
+            self::BUFFER => 'buffer-api.default',
+            self::CONNECTION => 'connection-api.connection',
+            self::DATA_SCIENCE => 'sandboxes-service-api.default',
+            self::ENCRYPTION => 'encryption-api.default',
+            self::IMPORT => 'sapi-importer.default',
+            self::MLFLOW => 'mlflow.default', // ??
+            self::NOTIFICATION => 'notification-api.default',
+            self::OAUTH => 'oauth-api.default',
+            self::QUEUE => 'job-queue-api.default',
+            self::SANDBOXES => 'sandboxes-api.sandboxes',
+            self::SCHEDULER => 'scheduler-api.default',
+            self::SPARK => 'spark.default', // ??
+            self::SYNC_ACTIONS => 'runner-sync-api.default',
+            self::TEMPLATES => 'templates-api.templates-api',
+            self::VAULT => 'vault-api.default',
         };
     }
 }

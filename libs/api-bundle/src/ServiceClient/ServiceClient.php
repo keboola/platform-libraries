@@ -6,6 +6,8 @@ namespace Keboola\ApiBundle\ServiceClient;
 
 class ServiceClient
 {
+    private const K8S_SUFFIX = 'svc.cluster.local';
+
     private readonly ServiceDnsType $dnsType;
 
     /**
@@ -28,17 +30,8 @@ class ServiceClient
     public function getServiceUrl(Service $service, ?ServiceDnsType $dnsType = null): string
     {
         return match ($dnsType ?? $this->dnsType) {
-            ServiceDnsType::INTERNAL => sprintf(
-                'http://%s.%s.svc.cluster.local',
-                $service->getInternalServiceName(),
-                $service->getInternalServiceNamespace(),
-            ),
-
-            ServiceDnsType::PUBLIC => sprintf(
-                'https://%s.%s',
-                $service->getPublicSubdomain(),
-                $this->hostnameSuffix,
-            ),
+            ServiceDnsType::INTERNAL => sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX),
+            ServiceDnsType::PUBLIC => sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix),
         };
     }
 

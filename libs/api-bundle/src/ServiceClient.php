@@ -88,12 +88,6 @@ class ServiceClient
      */
     public function getServiceUrl(string $serviceName, ?ServiceDnsType $dnsType = null): string
     {
-        if (($this->hostnameSuffix !== 'north-europe.azure.keboola.com') && ($serviceName === self::BILLING_SERVICE)) {
-            throw new ServiceNotFoundException(
-                sprintf('Billing service is not available on stack "%s".', $this->hostnameSuffix),
-            );
-        }
-
         if (!in_array($serviceName, self::KNOWN_SERVICES, true)) {
             throw new ServiceInvalidException(sprintf('Service "%s" is not known.', $serviceName));
         }

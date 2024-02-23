@@ -151,12 +151,4 @@ class ServiceClientTest extends TestCase
         $client = new ServiceClient('keboola.com');
         $client->getServiceUrl('non-existent'); // @phpstan-ignore-line intentionally invalid value
     }
-
-    public function testNonExistentService(): void
-    {
-        $this->expectException(ServiceNotFoundException::class);
-        $this->expectExceptionMessage('Billing service is not available on stack "keboola.com".');
-        $client = new ServiceClient('keboola.com');
-        $client->getServiceUrl(ServiceClient::BILLING_SERVICE);
-    }
 }

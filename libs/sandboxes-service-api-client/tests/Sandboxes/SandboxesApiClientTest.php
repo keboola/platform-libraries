@@ -38,7 +38,7 @@ class SandboxesApiClientTest extends TestCase
 
         $client = new SandboxesApiClient(
             new ApiClientConfiguration(
-                baseUrl: '/sandboxes',
+                baseUrl: 'https://data-science.keboola.com',
                 storageToken: 'my-token',
                 userAgent: 'Keboola Sandboxes Service API PHP Client',
                 requestHandler: $requestHandler(...),
@@ -56,7 +56,7 @@ class SandboxesApiClientTest extends TestCase
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
             'POST',
-            '/sandboxes',
+            'https://data-science.keboola.com/sandboxes',
             [
                 'X-StorageApi-Token' => 'my-token',
             ],
@@ -66,6 +66,34 @@ class SandboxesApiClientTest extends TestCase
                 'configurationVersion' => '4',
                 'type' => 'sandbox-type',
             ]),
+            $requestsHistory[0]['request'],
+        );
+    }
+
+    public function testDeleteSandbox(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(204),
+        ]);
+
+        $client = new SandboxesApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-science.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $client->deleteSandbox('sandbox-id');
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'DELETE',
+            'https://data-science.keboola.com/sandboxes/sandbox-id',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            null,
             $requestsHistory[0]['request'],
         );
     }

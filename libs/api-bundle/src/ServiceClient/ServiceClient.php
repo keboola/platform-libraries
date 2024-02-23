@@ -8,20 +8,20 @@ class ServiceClient
 {
     private const K8S_SUFFIX = 'svc.cluster.local';
 
-    private readonly ServiceDnsType $dnsType;
+    private readonly ServiceDnsType $defaultDnsType;
 
     /**
      * @param non-empty-string $hostnameSuffix
      */
     public function __construct(
         private readonly string $hostnameSuffix,
-        ServiceDnsType|string $dnsType = ServiceDnsType::PUBLIC,
+        ServiceDnsType|string $defaultDnsType = ServiceDnsType::PUBLIC,
     ) {
-        if (is_string($dnsType)) {
-            $dnsType = ServiceDnsType::from($dnsType);
+        if (is_string($defaultDnsType)) {
+            $defaultDnsType = ServiceDnsType::from($defaultDnsType);
         }
 
-        $this->dnsType = $dnsType;
+        $this->defaultDnsType = $defaultDnsType;
     }
 
     /**
@@ -29,7 +29,7 @@ class ServiceClient
      */
     public function getServiceUrl(Service $service, ?ServiceDnsType $dnsType = null): string
     {
-        return match ($dnsType ?? $this->dnsType) {
+        return match ($dnsType ?? $this->defaultDnsType) {
             ServiceDnsType::INTERNAL => sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX),
             ServiceDnsType::PUBLIC => sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix),
         };

@@ -22,7 +22,13 @@ security:
 ```
 
 ## Configuration
-No configuration is required.
+The default configuration is:
+
+```yaml
+keboola_api:
+  app_name: '%app_name%'             # application name to use in user agent
+  default_service_dns_type: 'public' # default service DNS type to use in ServiceClient, can be 'public' or 'private'
+```
 
 Authentication attributes are configured automatically based on API clients installed:
 * to use `StorageApiTokenAuth`, install `keboola/storage-api-client`

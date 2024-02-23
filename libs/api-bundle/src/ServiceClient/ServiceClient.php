@@ -6,13 +6,20 @@ namespace Keboola\ApiBundle\ServiceClient;
 
 class ServiceClient
 {
+    private readonly ServiceDnsType $dnsType;
+
     /**
      * @param non-empty-string $hostnameSuffix
      */
     public function __construct(
         private readonly string $hostnameSuffix,
-        private readonly ServiceDnsType $dnsType = ServiceDnsType::PUBLIC,
+        ServiceDnsType|string $dnsType = ServiceDnsType::PUBLIC,
     ) {
+        if (is_string($dnsType)) {
+            $dnsType = ServiceDnsType::from($dnsType);
+        }
+
+        $this->dnsType = $dnsType;
     }
 
     /**

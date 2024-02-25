@@ -22,7 +22,7 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->enumNode('default_service_dns_type')
                     ->cannotBeEmpty()
-                    ->values(ServiceDnsType::cases())
+                    ->values(array_map(fn(ServiceDnsType $v) => $v->value, ServiceDnsType::cases()))
                     ->defaultValue(ServiceDnsType::PUBLIC->value)
                 ->end()
             ->end()

@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
@@ -30,8 +31,11 @@ interface StrategyInterface
      */
     public function listManifests(string $dir): array;
 
-    public function hasSlicer();
+    public function hasSlicer(): bool;
 
-    public function sliceFiles();
+    /**
+     * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedMapping
+     */
+    public function sliceFiles(array $combinedMapping): void;
 
 }

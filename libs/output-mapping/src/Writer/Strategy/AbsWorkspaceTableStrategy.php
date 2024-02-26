@@ -86,4 +86,14 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
             );
         }
     }
+
+    public function hasSlicer(): bool
+    {
+        return false;
+    }
+
+    public function sliceFiles(): void
+    {
+        throw new \Exception('Not implemented');
+    }
 }

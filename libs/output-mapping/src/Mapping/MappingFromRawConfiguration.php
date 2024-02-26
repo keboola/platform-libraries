@@ -2,9 +2,12 @@
 
 namespace Keboola\OutputMapping\Mapping;
 
+use Keboola\OutputMapping\Configuration\Table\Manifest;
+
 class MappingFromRawConfiguration
 {
     private string $delimiter;
+    private string $enclosure;
     private array $columns;
     private string $destination;
     private string $source;
@@ -17,7 +20,8 @@ class MappingFromRawConfiguration
         $this->source = $mappingItem['source'];
         $this->destination = $mappingItem['destination'];
         $this->columns = $mappingItem['columns'] ?? [];
-        $this->delimiter = $mappingItem['delimiter'] ?? ',';
+        $this->delimiter = $mappingItem['delimiter'] ?? Manifest::DEFAULT_DELIMITER;
+        $this->enclosure = $mappingItem['enclosure'] ?? Manifest::DEFAULT_ENCLOSURE;
     }
 
     public function getSourceName(): string
@@ -28,5 +32,20 @@ class MappingFromRawConfiguration
     public function asArray(): array
     {
         return $this->mappingItem;
+    }
+
+    public function getDelimiter(): string
+    {
+        return $this->delimiter;
+    }
+
+    public function getEnclosure(): string
+    {
+        return $this->enclosure;
+    }
+
+    public function getColumns(): array
+    {
+        return $this->columns;
     }
 }

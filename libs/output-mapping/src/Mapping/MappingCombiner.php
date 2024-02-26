@@ -47,8 +47,8 @@ class MappingCombiner
     public function combineSourcesWithManifests(array $sources, array $manifests): array {
         $combinedSources = [];
         foreach ($sources as $source) {
-            $manifestsFiltered = array_filter($manifests, function (PhysicalItem $manifest) use ($source) {
-                return $manifest->getSourceName() === $source->getSourceName();
+            $manifestsFiltered = array_filter($manifests, function (FileItem $manifest) use ($source) {
+                return $manifest->getName() === $source->getSourceName() . '.manifest';
             });
 
             if (count($manifestsFiltered) === 0) {

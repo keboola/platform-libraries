@@ -54,4 +54,14 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         }
         return $files;
     }
+
+    public function hasSlicer(): bool
+    {
+        return false;
+    }
+
+    public function sliceFiles(): void
+    {
+        throw new \Exception('Not implemented');
+    }
 }

@@ -21,8 +21,10 @@ use Keboola\OutputMapping\Storage\TableDataModifier;
 use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\Storage\TableStructureModifier;
 use Keboola\OutputMapping\Writer\AbstractWriter;
+use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
+use Keboola\OutputMapping\Writer\Table\SlicerResolver;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
@@ -32,6 +34,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Finder\SplFileInfo;
 
 class TableLoader
 {
@@ -49,68 +52,48 @@ class TableLoader
         bool $isFailedJob,
     ): LoadTableQueue {
         $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $isFailedJob);
-        $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
-
-        $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
-        $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
-
-        $sourcesValidator = $stagingFactory->getSourcesValidator();
-        $sourcesValidator->validate($physicalDataFiles, $physicalManifests);
-
-        $mappingCombiner = new Mapping\MappingCombiner();
-        $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
-            $physicalDataFiles,
-            $configuration->getMapping(),
-        );
-        $combinedSources = $mappingCombiner->combineSourcesWithManifests(
-            $combinedSources,
-            $physicalManifests,
-        );
+        $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
-            // TODO split slicerHelper to slicerValidator/skipper and to slicer
-             // TODO $slicedSources = (new SliceHelper($this->logger))->sliceSources($combinedSources);
+            $sourcesForSlicing = (new SlicerResolver($this->logger))->resolveSliceFiles($combinedSources);
 
-            // nevyhazuje validacni vyjimky,nic nevraci
-             $strategy->sliceFiles(); //
+            $strategy->sliceFiles($sourcesForSlicing);
 
-            // TODO tohle by m2lo byt stejny jako nahore a tudiz by to melo jit dat do private metoday
-            $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
-            $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
-
-            $sourcesValidator = $stagingFactory->getSourcesValidator();
-            $sourcesValidator->validate($physicalDataFiles, $physicalManifests);
-
-            $mappingCombiner = new Mapping\MappingCombiner();
-            $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
-                $physicalDataFiles,
-                $configuration->getMapping(),
-            );
-
-            $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
-             $combinedSources = $mappingCombiner->combineSourcesWithManifests(
-                 $combinedSources,
-                $physicalManifests,
-            );
+            $combinedSources = $this->getCombinedSources($strategy, $configuration);
         }
 
-        // TODO move the above to a separate class - sourcesPreparer
 
-        /** @var MappingFromRawConfigurationAndPhysicalDataWithManifest $combinedSources */
-        foreach ($combinedSources as $source) {
-            $this->logger->info(sprintf('Loading table "%s"', $source->getSourceName()));
-            $tableConfigurationResolver = new TableConfigurationResolver($this->clientWrapper, $this->logger);
+        $tableConfigurationResolver = new TableConfigurationResolver($this->clientWrapper, $this->logger);
+        foreach ($combinedSources as $combinedSource) {
+            $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
+            $configFromManifest = [];
+            $configFromMapping = [];
 
+            $hasManifest = $combinedSource->getManifest() instanceof FileItem;
+            if ($hasManifest) {
+                $manifestPath = $combinedSource->getManifest()->getPath();
+                $configFromManifest = $tableConfigurationResolver->loadTableManifest(
+                    new SplFileInfo($manifestPath, '', basename($manifestPath))
+                );
+            }
 
-            $processedSource = $tableConfigurationResolver->resolveTableConfiguration( // TODO mozna volat jen pokud existuje manifest, coz tady vime
-                $source,
+            if ($combinedSource->getConfiguration() !== null) {
+                $configFromMapping = $combinedSource->getConfiguration()->asArray();
+                unset($configFromMapping['source']);
+            }
+
+            $processedSource = $tableConfigurationResolver->resolveTableConfiguration(
                 $configuration->getDefaultBucket(),
+                $combinedSource,
+                $hasManifest ? $configFromManifest : null,
+                $configFromMapping,
                 $systemMetadata,
             );
-            $processedSource = ValidateConfiguration($processedSource);
-            $processedSource = (new BranchResolver())->RewriteBranchSource($processedSource); // TODO dostane config, vrati confiug
 
-            $tableConfigurationValidator =
+//            $processedSource = ValidateConfiguration($processedSource);
+//            $processedSource = (new BranchResolver())->RewriteBranchSource($processedSource); // TODO dostane config, vrati confiug
+
+//            $tableConfigurationValidator =
 
             // TODO include WS check in validator
             // RestrictedColumnsHelper::validateRestrictedColumnsInConfig($processedSource)
@@ -134,9 +117,6 @@ class TableLoader
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
         return $tableQueue;
-
-
-        throw new \Exception('Not implemented');
     }
 
     private function createLoadTableTask(
@@ -317,6 +297,32 @@ class TableLoader
                 $e,
             );
         }
+    }
+
+    /**
+     * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
+     */
+    private function getCombinedSources(StrategyInterface $strategy, RawConfiguration $configuration): array
+    {
+        $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
+
+        $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
+        $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
+
+        $sourcesValidator = $stagingFactory->getSourcesValidator();
+        $sourcesValidator->validate($physicalDataFiles, $physicalManifests);
+
+        $mappingCombiner = new Mapping\MappingCombiner();
+        $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
+            $physicalDataFiles,
+            $configuration->getMapping(),
+        );
+
+        $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
+        return $mappingCombiner->combineSourcesWithManifests(
+            $combinedSources,
+            $physicalManifests,
+        );
     }
 
 }

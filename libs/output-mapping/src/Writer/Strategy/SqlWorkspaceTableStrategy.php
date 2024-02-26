@@ -74,12 +74,12 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
         }
     }
 
-    public function hasSlicer()
+    public function hasSlicer(): bool
     {
-        // do nothing
+        return false;
     }
 
-    public function sliceFiles()
+    public function sliceFiles(): void
     {
         throw new \Exception('Not implemented');
     }

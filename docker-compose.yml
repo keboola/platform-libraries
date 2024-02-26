@@ -94,6 +94,7 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+      - PHP_IDE_CONFIG=serverName=OM
 
   dev-permission-checker:
     <<: *dev81

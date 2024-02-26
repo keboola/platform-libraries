@@ -8,13 +8,19 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Exception\SliceSkippedException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
+use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
+use SplFileInfo as NativeSplFileInfo;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class LocalTableStrategy extends AbstractTableStrategy
@@ -140,9 +146,53 @@ class LocalTableStrategy extends AbstractTableStrategy
         foreach ($foundFiles as $file) {
             $path = $fs->makePathRelative($file->getPath(), $this->metadataStorage->getPath());
             $pathName = $path . $file->getFilename();
-            $files[$pathName] = new FileItem($pathName, $path, $file->getBasename(), false);
+            $files[$pathName] = new FileItem($file->getPathname(), $path, $file->getBasename(), false);
         }
         return $files;
     }
 
+    public function hasSlicer(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedMapping
+     */
+    public function sliceFiles(array $combinedMapping): void
+    {
+        foreach ($combinedMapping as $combinedMappingItem) {
+            $outputDirPath = uniqid($combinedMappingItem->getPathName() . '-', true);
+
+            $process = SliceCommandBuilder::createProcess(
+                $combinedMappingItem->getSourceName(),
+                $combinedMappingItem->getPathName(),
+                $outputDirPath,
+            );
+
+            $result = $process->run(function ($type, $buffer) {
+                if ($type === Process::OUT) {
+                    $this->logger->info(trim($buffer));
+                }
+            });
+
+            if ($result === SliceCommandBuilder::SLICER_SKIPPED_EXIT_CODE) {
+                continue;
+            }
+
+            if ($result !== 0) {
+                $this->logger->warning('Slicer failed', ['process' => $process]);
+                continue;
+            }
+
+            $filesystem = new Filesystem();
+            $filesystem->remove([$combinedMappingItem->getPathName()]);
+            $filesystem->rename($outputDirPath, $combinedMappingItem->getPathName());
+            $filesystem->rename(
+                $outputDirPath . '.manifest',
+                $combinedMappingItem->getPathName() . '.manifest',
+                true,
+            );
+        }
+    }
 }

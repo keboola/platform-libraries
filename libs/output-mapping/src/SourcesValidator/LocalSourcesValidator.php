@@ -5,13 +5,14 @@ namespace Keboola\OutputMapping\SourcesValidator;
 use Exception;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Lister\PhysicalItem;
+use Keboola\OutputMapping\Writer\FileItem;
 
 class LocalSourcesValidator implements SourcesValidatorInterface
 {
 
     /**
-     * @param PhysicalItem[] $dataItems
-     * @param PhysicalItem[] $manifests
+     * @param FileItem[] $dataItems
+     * @param FileItem[] $manifests
      * @return void
      */
     public function validate(array $dataItems, array $manifests): void
@@ -19,13 +20,13 @@ class LocalSourcesValidator implements SourcesValidatorInterface
         foreach ($manifests as $manifest) {
             $dataFilePresent = false;
             foreach ($dataItems as $dataItem) {
-                if ($manifest->getSourceName() === $dataItem->getSourceName()) {
+                if ($manifest->getName() === $dataItem->getName() . '.manifest') {
                     $dataFilePresent = true;
                     break;
                 }
             }
             if (!$dataFilePresent) {
-                $orphanedManifestSourceNames[] = $manifest->getSourceName();
+                $orphanedManifestSourceNames[] = $manifest->getName();
             }
         }
         if (!empty($orphanedManifestSourceNames)) {

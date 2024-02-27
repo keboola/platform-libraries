@@ -10,6 +10,7 @@ use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\ServiceClient\ServiceClient;
+use Keboola\ApiBundle\ServiceClient\ServiceDnsType;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
@@ -81,7 +82,7 @@ class KeboolaApiExtension extends Extension
     private function setupServiceClient(ContainerBuilder $container, array $config): void
     {
         $container->getDefinition(ServiceClient::class)
-            ->setArgument('$defaultDnsType', $config['default_service_dns_type'])
+            ->setArgument('$defaultDnsType', ServiceDnsType::from($config['default_service_dns_type']))
         ;
     }
 }

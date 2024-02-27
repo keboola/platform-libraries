@@ -8,6 +8,7 @@ use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\PermissionChecker\PermissionChecker;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\abstract_arg;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -31,9 +32,8 @@ return static function (ContainerConfigurator $container): void {
         ->alias('keboola.api_bundle.security.permission_checker', PermissionChecker::class)
 
         ->set(ServiceClient::class)
-        ->args([
-            env('HOSTNAME_SUFFIX'),
-        ])
+            ->arg('$hostnameSuffix', env('HOSTNAME_SUFFIX'))
+            ->arg('$defaultDnsType', abstract_arg('should be configured by extension'))
         ->alias('keboola.api_bundle.service_client', ServiceClient::class)
     ;
 };

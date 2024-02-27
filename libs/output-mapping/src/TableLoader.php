@@ -71,7 +71,7 @@ class TableLoader
 
             $hasManifest = $combinedSource->getManifest() instanceof FileItem;
             if ($hasManifest) {
-                $manifestPath = $combinedSource->getManifest()->getPath();
+                $manifestPath = $combinedSource->getManifest()->getPathName();
                 $configFromManifest = $tableConfigurationResolver->loadTableManifest(
                     new SplFileInfo($manifestPath, '', basename($manifestPath))
                 );

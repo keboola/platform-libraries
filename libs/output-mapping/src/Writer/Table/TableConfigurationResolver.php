@@ -115,18 +115,18 @@ class TableConfigurationResolver
         ?string $defaultBucket,
         string $sourceName,
         bool $hasManifest,
-        ?array $destinationFromManifest = null,
+        ?string $destinationFromManifest = null,
         ?string $destinationFromMapping = null,
     ): string {
 
-        if ($hasManifest) {
+        if ($destinationFromMapping) {
+            return $destinationFromMapping;
+        } elseif ($hasManifest) {
             return $this->normalizeManifestDestination(
                 $destinationFromManifest,
                 $sourceName,
                 $defaultBucket,
             );
-        } elseif ($destinationFromMapping) {
-            return $destinationFromMapping;
         } else {
             $this->logger->warning(sprintf(
                 'Source table "%s" has neither manifest file nor mapping set, ' .

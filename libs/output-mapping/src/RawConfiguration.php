@@ -8,7 +8,7 @@ class RawConfiguration
 {
     private ?string $bucket;
     /** @var MappingFromRawConfiguration[] */
-    private array $mapping;
+    private array $mapping = [];
     private string $sourcePathPrefix;
 
     public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
@@ -21,7 +21,7 @@ class RawConfiguration
     {
         // TODO: validate
         $this->bucket = $configuration['bucket'] ?? null;
-        foreach ($configuration['mapping'] as $mappingItem) {
+        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
             $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
         }
         $this->sourcePathPrefix = $sourcePathPrefix;

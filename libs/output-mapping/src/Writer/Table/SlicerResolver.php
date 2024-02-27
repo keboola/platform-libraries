@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Configuration\Table\Manifest;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Psr\Log\LoggerInterface;
 use SplFileInfo;
+use function Aws\map;
 
 class SlicerResolver
 {
@@ -59,6 +60,9 @@ class SlicerResolver
         }
 
         $mapping = $combinedSource->getConfiguration();
+        if (!$mapping) {
+            return true;
+        }
         $hasNonDefaultDelimiter = $mapping->getDelimiter() !== Manifest::DEFAULT_DELIMITER;
         $hasNonDefaultEnclosure = $mapping->getEnclosure() !== Manifest::DEFAULT_ENCLOSURE;
         $hasColumns = $mapping->getColumns() !== [];

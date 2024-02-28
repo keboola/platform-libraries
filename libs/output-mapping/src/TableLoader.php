@@ -23,6 +23,7 @@ use Keboola\OutputMapping\Storage\TableStructureModifier;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
+use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\SlicerResolver;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -82,7 +83,7 @@ class TableLoader
                 unset($configFromMapping['source']);
             }
 
-            $processedSource = $tableConfigurationResolver->resolveTableConfiguration(
+            $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
                 $configuration->getDefaultBucket(),
                 $combinedSource,
                 $hasManifest ? $configFromManifest : null,
@@ -90,8 +91,11 @@ class TableLoader
                 $systemMetadata,
             );
 
+            $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
+
+            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
+
 //            $processedSource = ValidateConfiguration($processedSource);
-//            $processedSource = (new BranchResolver())->RewriteBranchSource($processedSource); // TODO dostane config, vrati confiug
 
 //            $tableConfigurationValidator =
 

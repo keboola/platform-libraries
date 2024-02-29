@@ -1,0 +1,58 @@
+{
+    "name": "keboola/service-client",
+    "license": "MIT",
+    "type": "library",
+    "description": "Service Client provides easy way to get Keboola services URLs",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\ServiceClient\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "infection/infection": "^0.27.10",
+        "keboola/coding-standard": "^15.0.1",
+        "monolog/monolog": "^3.5.0",
+        "phpstan/phpstan": "^1.10.59",
+        "phpunit/phpunit": "^9.6.17",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/dotenv": "^6.4.4"
+    },
+    "scripts": {
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
+        ],
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "infection": "infection --threads=4 --min-covered-msi=95 --coverage=/tmp/build-logs --only-covered",
+        "build": [
+            "@phpcs",
+            "@phpstan",
+            "@tests",
+            "@infection"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "lock": false,
+        "process-timeout": 3600,
+        "allow-plugins": {
+            "infection/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

@@ -50,6 +50,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/sandboxes-service-api-php-client
+    - repository: service-client
+      type: github
+      endpoint: keboola
+      name: keboola/service-client
     - repository: settle
       type: github
       endpoint: keboola
@@ -151,6 +155,14 @@ jobs:
       targetRepo: sandboxes-service-api-php-client
       libraryPath: libs/sandboxes-service-api-client
       tagPrefix: sandboxes-service-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/service-client/')
+      sourceRepo: platform-libraries
+      targetRepo: service-client
+      libraryPath: libs/service-client
+      tagPrefix: service-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

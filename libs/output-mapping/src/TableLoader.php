@@ -53,59 +53,57 @@ class TableLoader
         bool $isFailedJob,
     ): LoadTableQueue {
         $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $isFailedJob);
-        $combinedSources = $this->getCombinedSources($strategy, $configuration);
+        $combinedSources = $this->getCombinedSources($strategy, $configuration); // TODO: vykopnout do vlastní metody
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
-            $sourcesForSlicing = (new SlicerResolver($this->logger))->resolveSliceFiles($combinedSources);
+            $sourcesForSlicing = (new SlicerResolver($this->logger))->resolveSliceFiles($combinedSources); // TODO možná SlicerResolver -> SlicerDecider
 
             $strategy->sliceFiles($sourcesForSlicing);
 
             $combinedSources = $this->getCombinedSources($strategy, $configuration);
         }
 
-
+        $loadTableTasks = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->clientWrapper, $this->logger);
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
-            $configFromManifest = [];
-            $configFromMapping = [];
+            $configFromManifest = $strategy->readFileManifest(sprintf(
+                '%s/%s.manifest',
+                $configuration->getSourcePathPrefix(),
+                $combinedSource->getSourceName(),
+            ));
 
-            $hasManifest = $combinedSource->getManifest() instanceof FileItem;
-            if ($hasManifest) {
-                $manifestPath = $combinedSource->getManifest()->getPathName();
-                $configFromManifest = $tableConfigurationResolver->loadTableManifest(
-                    new SplFileInfo($manifestPath, '', basename($manifestPath))
-                );
-            }
-
-            if ($combinedSource->getConfiguration() !== null) {
-                $configFromMapping = $combinedSource->getConfiguration()->asArray();
-                unset($configFromMapping['source']);
-            }
+            $configFromMapping = $combinedSource->getConfiguration() ?
+                $combinedSource->getConfiguration()->asArray() :
+                [];
+            unset($configFromMapping['source']); // TODO - zjistit proč se to unsetuje
 
             $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
                 $configuration->getDefaultBucket(),
                 $combinedSource,
-                $hasManifest ? $configFromManifest : null,
+                $configFromManifest,
                 $configFromMapping,
                 $systemMetadata,
             );
 
-            $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-
-            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
-
-//            $processedSource = ValidateConfiguration($processedSource);
-
-//            $tableConfigurationValidator =
 
             // TODO include WS check in validator
-            // RestrictedColumnsHelper::validateRestrictedColumnsInConfig($processedSource)
+//            $processedSource = ValidateConfiguration($processedSource);
+//            RestrictedColumnsHelper::validateRestrictedColumnsInConfig($processedSource) -> validateTableCOnfiguration
+
+            $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
+            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             // If it is a failed job, we only want to upload if the table has write_always = true
-            // if ($isFailedJob && empty($config['write_always']) && !$isDebugJob) {
-            //    continue;
-            //}
+             if ($isFailedJob && empty($processedSource->hasWriteAlways())) {
+                continue;
+            }
+
+            /*
+            if ($isDebugJob) { // TODO v původním kódu jsem to nenašel ??
+                continue;
+            }
+            */
 
             // validateRestrictedColumnsInConfig
             $loadTableTasks[] = $this->createLoadTableTask(
@@ -136,15 +134,15 @@ class TableLoader
         $config = $source->getMapping();
         $hasColumns = !empty($config['columns']);
         $hasColumnsMetadata = !empty($config['column_metadata']);
-        if (!$hasColumns && $source->isSliced()) {
+        if (!$hasColumns && $source->isSliced()) { // TODO vyhodit do validace
             throw new InvalidOutputException(
                 sprintf('Sliced file "%s" columns specification missing.', $source->getSourceName()),
             );
         }
         $destination = $source->getDestination();
 
-        /*
-        try {
+
+        try { // TODO vyhodit do validace
             $destination = new MappingDestination($config['destination']);
         } catch (InvalidArgumentException $e) {
             throw new InvalidOutputException(sprintf(
@@ -152,8 +150,8 @@ class TableLoader
                 $config['destination'],
             ), 0, $e);
         }
-        */
 
+        // TODO - to co připravuje Storage tak vyhodit pryč - nesouvisí to s createLoadTableTask
         $bucketCreator = new BucketCreator($this->clientWrapper);
         $destinationBucket = $bucketCreator->ensureDestinationBucket($source->getDestination(), $systemMetadata);
         $destinationTableInfo = $this->getDestinationTableInfoIfExists($destination->getTableId());
@@ -176,14 +174,14 @@ class TableLoader
 
         $loadOptions = [
             'columns' => !empty($config['columns']) ? $config['columns'] : [],
-            'primaryKey' => implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])),
+            'primaryKey' => implode(',', PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key'])), // TODO není potřeba -> děla se v resolveru
             'incremental' => $config['incremental'],
         ];
 
         if ($destinationTableInfo === null && isset($config['distribution_key'])) {
             $loadOptions['distributionKey'] = implode(
                 ',',
-                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']), // TODO udělat v resolveru jako PKs
             );
         }
 
@@ -195,31 +193,38 @@ class TableLoader
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
+        // $destinationTableInfo !== null - tabulka existuje
+
         if ($createTypedTables && $destinationTableInfo === null && ($hasColumns && $hasColumnsMetadata)) {
+            // typovaná tabulka
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $config['metadata'] ?? [],
                 $destinationBucket['backend'],
             );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $destination->getTableName(),
-                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']),
+                PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']), // TODO už to je dávno hotový
                 $config['column_metadata'],
             );
             $this->createTableDefinition($destination, $tableDefinition);
             $tableCreated = true;
             $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } elseif ($destinationTableInfo === null && $hasColumns) {
+            // tabulka neexistuje a známe sloupce z manifestu
             $this->createTable($destination, $config['columns'], $loadOptions);
             $tableCreated = true;
             $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } elseif ($destinationTableInfo !== null) {
+            // tabulka existuje takže nahráváme data
             $tableCreated = false;
             $loadTask = new LoadTableTask($destination, $loadOptions, $tableCreated);
         } else {
+            // tabulka nemá manifest a tím nemá známé columns
             $tableCreated = true;
             $loadTask = new CreateAndLoadTableTask($destination, $loadOptions, $tableCreated);
         }
 
+        // TODO add metadata vyhodit do svojí metody
         if ($tableCreated) {
             $loadTask->addMetadata(new TableMetadata(
                 $destination->getTableId(),

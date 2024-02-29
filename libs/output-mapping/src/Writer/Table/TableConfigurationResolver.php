@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\OutputMapping\Configuration\Adapter;
-use Keboola\OutputMapping\Configuration\Table\Manifest as TableManifest;
+use Keboola\OutputMapping\Configuration\Table\Configuration as TableConfiguration;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
@@ -42,26 +42,28 @@ class TableConfigurationResolver
     public function resolveTableConfiguration(
         ?string $defaultBucket,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
-        ?array $configFromManifest,
-        array $configFromMapping,
+        array $mappingFromManifest,
+        array $mappingFromConfiguration,
         SystemMetadata $systemMetadata,
     ): array {
-        $config = ConfigurationMerger::mergeConfigurations($configFromManifest ?? [], $configFromMapping);
+        $config = ConfigurationMerger::mergeConfigurations($mappingFromManifest, $mappingFromConfiguration);
+
         $config['destination'] = $this->ensureConfigurationDestination(
             $defaultBucket,
             $source->getSourceName(),
-            $configFromManifest === null,
-            $configFromManifest['destination'] ?? null,
-            $configFromMapping['destination'] ?? null,
+            $mappingFromManifest['destination'] ?? null,
+            $mappingFromConfiguration['destination'] ?? null,
         );
-        $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
+        if (isset($config['primary_key'])) {
+            $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
+        }
 
-        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::TAG_STAGING_FILES_FEATURE)) {
+        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::TAG_STAGING_FILES_FEATURE)) { // TODO vzít z classy RawConfiguratioin
             $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
         }
 
         try {
-            return (new TableManifest())->parse([$config]); // TODO tady se nevaliduje manifest, ale uz hotova konfigurace
+            return (new TableConfiguration())->parse([$config]);
         } catch (InvalidConfigurationException $e) {
             throw new InvalidOutputException(
                 sprintf(
@@ -75,29 +77,9 @@ class TableConfigurationResolver
         }
     }
 
-    public function loadTableManifest(SplFileInfo $manifestFile): array
-    {
-        $adapter = new TableAdapter($this->format);
-
-        try {
-            return $adapter->deserialize($manifestFile->getContents());
-        } catch (InvalidConfigurationException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Failed to read table manifest from file %s %s',
-                    $manifestFile->getBasename(),
-                    $e->getMessage(),
-                ),
-                0,
-                $e,
-            );
-        }
-    }
-
     private function ensureConfigurationDestination(
         ?string $defaultBucket,
         string $sourceName,
-        bool $hasManifest,
         ?string $destinationFromManifest = null,
         ?string $destinationFromMapping = null,
     ): string {
@@ -106,23 +88,8 @@ class TableConfigurationResolver
             return $destinationFromMapping;
         }
 
-        if ($hasManifest) {
-            return $this->resolveDestinationName(
-                $destinationFromManifest,
-                $sourceName,
-                $defaultBucket,
-            );
-        }
-
-        $this->logger->warning(sprintf(
-            'Source table "%s" has neither manifest file nor mapping set, ' .
-            'falling back to the source name as a destination.' .
-            'This behaviour was DEPRECATED and will be removed in the future.',
-            $sourceName,
-        ));
-
         return $this->resolveDestinationName(
-            null,
+            $destinationFromManifest,
             $sourceName,
             $defaultBucket,
         );
@@ -133,11 +100,20 @@ class TableConfigurationResolver
         string $sourceName,
         ?string $defaultBucket,
     ): string {
+        $originalDestination = $destination;
         if ($destination === null || $destination === '') {
             $destination = basename($sourceName, '.csv');
         }
 
         if (MappingDestination::isTableId($destination)) {
+            if ($originalDestination === null || $originalDestination === '') { // TODO
+                $this->logger->warning(sprintf(
+                    'Source table "%s" has neither manifest file nor mapping set, ' .
+                    'falling back to the source name as a destination.' .
+                    'This behaviour was DEPRECATED and will be removed in the future.',
+                    $sourceName,
+                ));
+            }
             return (string) $destination;
         }
 

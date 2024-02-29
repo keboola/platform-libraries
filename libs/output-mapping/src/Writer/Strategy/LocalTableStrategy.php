@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Strategy;
 
 use InvalidArgumentException;
-use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
+use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Exception\SliceSkippedException;
@@ -92,10 +92,10 @@ class LocalTableStrategy extends AbstractTableStrategy
     public function readFileManifest(string $manifestFile): array
     {
         $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
-        $adapter = new FileAdapter($this->format);
+        $adapter = new TableAdapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {
-            throw new InvalidOutputException("File '$manifestFile' not found.");
+            return [];
         }
         try {
             $fileHandler = new SplFileInfo($manifestFile, '', basename($manifestFile));

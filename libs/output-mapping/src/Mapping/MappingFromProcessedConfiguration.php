@@ -64,6 +64,11 @@ class MappingFromProcessedConfiguration
         return $this->mapping['primary_key'];
     }
 
+    public function hasWriteAlways(): bool
+    {
+        return $this->mapping['write_always'] ?? false;
+    }
+
     public function getPathName(): string
     {
         return $this->source->getPathname();

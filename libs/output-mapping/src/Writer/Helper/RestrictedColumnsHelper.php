@@ -36,11 +36,11 @@ class RestrictedColumnsHelper
         return $config;
     }
 
-    public static function validateRestrictedColumnsInConfig(array $config): void
+    public static function validateRestrictedColumnsInConfig(array $columns, array $columnMetadata): void
     {
         $errors = [];
-        if (!empty($config['columns'])) {
-            $restrictedColumns = array_filter($config['columns'], function ($column): bool {
+        if (!empty($columns)) {
+            $restrictedColumns = array_filter($columns, function ($column): bool {
                 return !self::isRestrictedColumn((string) $column);
             });
             if ($restrictedColumns) {
@@ -51,8 +51,8 @@ class RestrictedColumnsHelper
             }
         }
 
-        if (!empty($config['column_metadata'])) {
-            $columnNames = array_keys($config['column_metadata']);
+        if (!empty($columnMetadata)) {
+            $columnNames = array_keys($columnMetadata);
             $restrictedColumns = array_filter($columnNames, function ($column): bool {
                 return !self::isRestrictedColumn((string) $column);
             });

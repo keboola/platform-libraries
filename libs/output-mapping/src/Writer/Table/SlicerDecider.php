@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\OutputMapping\Configuration\Table\Manifest;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Psr\Log\LoggerInterface;
 use SplFileInfo;
 use function Aws\map;
 
-class SlicerResolver
+class SlicerDecider
 {
 
     public function __construct(readonly private LoggerInterface $logger)
@@ -20,7 +21,7 @@ class SlicerResolver
     /**
      * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedSources
      */
-    public function resolveSliceFiles(array $combinedSources): array
+    public function decideSliceFiles(array $combinedSources): array
     {
         $filesForSlicing = [];
         $sourceOccurrences = [];
@@ -31,14 +32,14 @@ class SlicerResolver
 
         foreach ($combinedSources as $combinedSource) {
             if ($sourceOccurrences[$combinedSource->getSourceName()] > 1) {
-                $this->logger->warning(sprintf(
+                throw new InvalidOutputException(sprintf( // TODO měl by být warning?? změna chování
                     'Source "%s" has multiple destinations set.',
                     $combinedSource->getSourceName(),
                 ));
                 continue;
             }
 
-            if ($this->resolveSliceFile($combinedSource)) {
+            if ($this->decideSliceFile($combinedSource)) {
                 $filesForSlicing[] = $combinedSource;
             }
             
@@ -46,7 +47,7 @@ class SlicerResolver
         return $filesForSlicing;
     }
 
-    private function resolveSliceFile(MappingFromRawConfigurationAndPhysicalDataWithManifest $combinedSource): bool
+    private function decideSliceFile(MappingFromRawConfigurationAndPhysicalDataWithManifest $combinedSource): bool
     {
         if ($combinedSource->isSliced() && !$combinedSource->getManifest()) {
             $this->logger->warning('Sliced files without manifest are not supported.');
@@ -65,11 +66,10 @@ class SlicerResolver
         }
         $hasNonDefaultDelimiter = $mapping->getDelimiter() !== Manifest::DEFAULT_DELIMITER;
         $hasNonDefaultEnclosure = $mapping->getEnclosure() !== Manifest::DEFAULT_ENCLOSURE;
-        $hasColumns = $mapping->getColumns() !== [];
+        $hasColumns = $mapping->getColumns();
 
-        if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
-            $this->logger->warning('Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.');
-            return false;
+        if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) { // TODO měl by být warning?? změna chování
+            throw new InvalidOutputException('Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.');
         }
 
         return true;

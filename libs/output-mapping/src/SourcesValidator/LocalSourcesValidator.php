@@ -30,8 +30,10 @@ class LocalSourcesValidator implements SourcesValidatorInterface
             }
         }
         if (!empty($orphanedManifestSourceNames)) {
-            // TODO: use proper exception
-            throw new Exception('Orphaned manifest files found: ' . implode(', ', $orphanedManifestSourceNames));
+            throw new InvalidOutputException(sprintf(
+        'Found orphaned table manifest: %s',
+                implode(', ', array_map(fn($v) => sprintf('"%s"', $v), $orphanedManifestSourceNames))
+            ));
         }
 
         // TODO validated that there is not a $configurationSource that is not in $dataItems

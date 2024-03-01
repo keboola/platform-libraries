@@ -31,8 +31,7 @@ class MappingFromProcessedConfiguration
         // TODO validate mapping ?
         $this->mapping = $mapping;
         $this->source = $source;
-        // TODO move validation somewhere else
-        $this->destination = new MappingDestination($this->mapping['destination']);
+        $this->destination = $this->mapping['destination'];
     }
 
     public function isSliced(): bool
@@ -69,8 +68,57 @@ class MappingFromProcessedConfiguration
         return $this->mapping['write_always'] ?? false;
     }
 
+    public function hasColumns(): bool
+    {
+        return !empty($this->mapping['columns']);
+    }
+
+    public function hasColumnMetadata(): bool
+    {
+        return !empty($this->mapping['column_metadata']);
+    }
+
+    public function isIncremental()
+    {
+        return $this->mapping['incremental'];
+    }
+
+    public function getColumns(): array
+    {
+        return $this->mapping['columns'];
+    }
+
+    public function getColumnMetadata(): array
+    {
+        return $this->mapping['column_metadata'];
+    }
+
     public function getPathName(): string
     {
         return $this->source->getPathname();
     }
+
+    public function hasDistributionKey(): bool
+    {
+        return !empty($this->mapping['distribution_key']);
+    }
+
+    public function getDistributionKey(): array
+    {
+        if (!$this->hasDistributionKey()) {
+            throw new InvalidConfigurationException('Distribution key is not set.');
+        }
+        return $this->mapping['distribution_key'];
+    }
+
+    public function hasMetadata(): bool
+    {
+        return !empty($this->mapping['metadata']);
+    }
+
+    public function getMetadata(): array
+    {
+        return $this->mapping['metadata'];
+    }
+
 }

@@ -57,6 +57,9 @@ class TableConfigurationResolver
         if (isset($config['primary_key'])) {
             $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
         }
+        if (isset($config['distribution_key'])) {
+            $config['distribution_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']);
+        }
 
         if ($this->clientWrapper->getToken()->hasFeature(TableWriter::TAG_STAGING_FILES_FEATURE)) { // TODO vzít z classy RawConfiguratioin
             $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
@@ -85,6 +88,12 @@ class TableConfigurationResolver
     ): string {
 
         if ($destinationFromMapping) {
+            if (!MappingDestination::isTableId($destinationFromMapping)) {
+                throw new InvalidOutputException(sprintf(
+                    'Failed to resolve destination for output table "%s".',
+                    $sourceName,
+                ));
+            }
             return $destinationFromMapping;
         }
 
@@ -106,7 +115,7 @@ class TableConfigurationResolver
         }
 
         if (MappingDestination::isTableId($destination)) {
-            if ($originalDestination === null || $originalDestination === '') { // TODO
+            if ($originalDestination === null || $originalDestination === '') {
                 $this->logger->warning(sprintf(
                     'Source table "%s" has neither manifest file nor mapping set, ' .
                     'falling back to the source name as a destination.' .

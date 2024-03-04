@@ -23,8 +23,6 @@ class Manifest extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
-        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
-        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
         $node
             ->children()
                 ->scalarNode('destination')->end()
@@ -79,6 +77,7 @@ class Manifest extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
+                ->arrayNode('tags')->prototype('scalar')->cannotBeEmpty()->end()->end()
             ->end()
             ->validate()
                 ->ifTrue(fn($values) =>

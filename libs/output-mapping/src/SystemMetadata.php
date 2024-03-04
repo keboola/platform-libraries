@@ -1,0 +1,78 @@
+<?php
+
+namespace Keboola\OutputMapping;
+
+use Keboola\OutputMapping\Writer\AbstractWriter;
+use Keboola\OutputMapping\Writer\TableWriter;
+
+class SystemMetadata
+{
+    private array $systemMetadata;
+
+    /**
+     * @param array $systemMetadata
+     */
+    public function __construct(array $systemMetadata)
+    {
+        $this->systemMetadata = $systemMetadata;
+    }
+
+    public function asArray(): array
+    {
+        return $this->systemMetadata;
+    }
+
+    public function getCreatedMetadata(): array
+    {
+        $metadata[] = [
+            'key' => TableWriter::KBC_CREATED_BY_COMPONENT_ID,
+            'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
+        ];
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
+            ];
+        }
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
+            ];
+        }
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_CREATED_BY_BRANCH_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
+            ];
+        }
+        return $metadata;
+    }
+
+    public function getUpdatedMetadata(): array
+    {
+        $metadata[] = [
+            'key' => TableWriter::KBC_LAST_UPDATED_BY_COMPONENT_ID,
+            'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
+        ];
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
+            ];
+        }
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
+            ];
+        }
+        if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
+            $metadata[] = [
+                'key' => TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID,
+                'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
+            ];
+        }
+        return $metadata;
+    }
+}

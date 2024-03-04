@@ -5,6 +5,7 @@ namespace Keboola\OutputMapping\SourcesValidator;
 use Exception;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Lister\PhysicalItem;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Writer\FileItem;
 
 class LocalSourcesValidator implements SourcesValidatorInterface
@@ -15,7 +16,7 @@ class LocalSourcesValidator implements SourcesValidatorInterface
      * @param FileItem[] $manifests
      * @return void
      */
-    public function validate(array $dataItems, array $manifests): void
+    public function validatePhysicalFilesWithManifest(array $dataItems, array $manifests): void
     {
         foreach ($manifests as $manifest) {
             $dataFilePresent = false;
@@ -35,13 +36,31 @@ class LocalSourcesValidator implements SourcesValidatorInterface
                 implode(', ', array_map(fn($v) => sprintf('"%s"', $v), $orphanedManifestSourceNames))
             ));
         }
+    }
 
-        // TODO validated that there is not a $configurationSource that is not in $dataItems
-        /*
-         *         if (count($mappingsBySource) > 0) {
-            $invalidSources = array_keys($mappingsBySource);
-            $invalidSources = array_map(function ($source) {
-                return sprintf('"%s"', $source);
+    /**
+     * @param FileItem[] $dataItems
+     * @param MappingFromRawConfiguration[] $configurationSource
+     */
+    public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource, bool $isFailedJob): void
+    {
+        $invalidSources = [];
+        foreach ($configurationSource as $source) {
+            $sourceFound = false;
+            foreach ($dataItems as $dataItem) {
+                if ($source->getSourceName() === $dataItem->getName()) {
+                    $sourceFound = true;
+                    break;
+                }
+            }
+            if (!$sourceFound) {
+                $invalidSources[] = $source;
+            }
+        }
+
+        if (count($invalidSources) > 0) {
+            $invalidSources = array_map(function (MappingFromRawConfiguration $source) {
+                return sprintf('"%s"', $source->getSourceName());
             }, $invalidSources);
 
             // we don't care about missing sources if the job is failed
@@ -53,7 +72,5 @@ class LocalSourcesValidator implements SourcesValidatorInterface
                 );
             }
         }
-
-         */
     }
 }

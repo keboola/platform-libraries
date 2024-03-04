@@ -7,30 +7,26 @@ namespace Keboola\OutputMapping;
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
-use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
-use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StagingFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\OutputMapping\Storage\BucketCreator;
-use Keboola\OutputMapping\Storage\TableDataModifier;
-use Keboola\OutputMapping\Storage\TableInfo;
-use Keboola\OutputMapping\Storage\TableStructureModifier;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
+use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
+use Keboola\OutputMapping\Writer\Table\StoragePreparer;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
@@ -56,18 +52,18 @@ class TableLoader
         }
 
         $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $isFailedJob);
-        $combinedSources = $this->getCombinedSources($strategy, $configuration);
+        $combinedSources = $this->getCombinedSources($strategy, $configuration, $isFailedJob);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
             $sourcesForSlicing = (new SlicerDecider($this->logger))->decideSliceFiles($combinedSources);
 
             $strategy->sliceFiles($sourcesForSlicing);
 
-            $combinedSources = $this->getCombinedSources($strategy, $configuration);
+            $combinedSources = $this->getCombinedSources($strategy, $configuration, $isFailedJob);
         }
 
         $loadTableTasks = [];
-        $tableConfigurationResolver = new TableConfigurationResolver($this->clientWrapper, $this->logger);
+        $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator();
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
@@ -83,7 +79,7 @@ class TableLoader
             unset($configFromMapping['source']); // TODO - zjistit proč se to unsetuje
 
             $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
-                $configuration->getDefaultBucket(),
+                $configuration,
                 $combinedSource,
                 $configFromManifest,
                 $configFromMapping,
@@ -100,20 +96,20 @@ class TableLoader
                 continue;
             }
 
-            /*
-            if ($isDebugJob) { // TODO v původním kódu jsem to nenašel ??
-                continue;
-            }
-            */
+            $storagePreparer = new StoragePreparer($this->clientWrapper, $this->logger);
+            $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);
 
-            // validateRestrictedColumnsInConfig
-            $loadTableTasks[] = $this->createLoadTableTask(
+            $loadTableTask = $this->createLoadTableTask(
                 $strategy,
                 $processedSource,
-                $systemMetadata,
-                false, // #TODO read from RawConfiguration $createTypedTables,
+                $storageSources,
+                $configuration->isCreateTypedTables(),
             );
 
+            $metadataSetter = new MetadataSetter();
+            $metadataSetter->setTableMetadata($loadTableTask, $processedSource, $storageSources, $systemMetadata);
+
+            $loadTableTasks[] = $loadTableTask;
         }
 
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
@@ -124,37 +120,16 @@ class TableLoader
     private function createLoadTableTask(
         StrategyInterface $strategy,
         MappingFromProcessedConfiguration $source,
-        SystemMetadata $systemMetadata,
+        MappingStorageSources $storageSources,
         bool $createTypedTables,
     ): LoadTableTaskInterface {
-        // TODO - to co připravuje Storage tak vyhodit pryč - nesouvisí to s createLoadTableTask
-        $bucketCreator = new BucketCreator($this->clientWrapper);
-        $destinationBucket = $bucketCreator->ensureDestinationBucket($source->getDestination(), $systemMetadata);
-        $destinationTableInfo = $this->getDestinationTableInfoIfExists($source->getDestination()->getTableId());
-
-        if ($destinationTableInfo !== null) {
-            $tableStructureModifier = new TableStructureModifier($this->clientWrapper, $this->logger);
-            $tableStructureModifier->updateTableStructure(
-                $destinationBucket,
-                $destinationTableInfo,
-                $source,
-                $source->getDestination(),
-            );
-
-            $tableDataModifier = new TableDataModifier($this->clientWrapper);
-            $tableDataModifier->updateTableData(
-                $source,
-                $source->getDestination(),
-            );
-        }
-
         $loadOptions = [
             'columns' => $source->getColumns(),
             'primaryKey' => implode(',', $source->getPrimaryKey()),
             'incremental' => $source->isIncremental(),
         ];
 
-        if ($destinationTableInfo === null && $source->hasDistributionKey()) {
+        if (!$storageSources->hasTable() && $source->hasDistributionKey()) {
             $loadOptions['distributionKey'] = implode(',', $source->getDistributionKey());
         }
 
@@ -166,13 +141,11 @@ class TableLoader
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        // $destinationTableInfo !== null - tabulka existuje
-
-        if ($createTypedTables && $destinationTableInfo === null && ($source->hasColumns() && $source->hasColumnMetadata())) {
+        if ($createTypedTables && !$storageSources->hasTable() && ($source->hasColumns() && $source->hasColumnMetadata())) {
             // typovaná tabulka
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
-                $destinationBucket['backend'],
+                $storageSources->getBucket()->backend,
             );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $source->getDestination()->getTableName(),
@@ -182,12 +155,12 @@ class TableLoader
             $this->createTableDefinition($source->getDestination(), $tableDefinition);
             $tableCreated = true;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
-        } elseif ($destinationTableInfo === null && $source->hasColumns()) {
+        } elseif (!$storageSources->hasTable() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
             $this->createTable($source->getDestination(), $source->getColumns(), $loadOptions);
             $tableCreated = true;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
-        } elseif ($destinationTableInfo !== null) {
+        } elseif ($storageSources->hasTable()) {
             // tabulka existuje takže nahráváme data
             $tableCreated = false;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
@@ -196,52 +169,7 @@ class TableLoader
             $tableCreated = true;
             $loadTask = new CreateAndLoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
         }
-
-        // TODO add metadata vyhodit do svojí metody
-        if ($tableCreated) {
-            $loadTask->addMetadata(new TableMetadata(
-                $source->getDestination()->getTableId(),
-                TableWriter::SYSTEM_METADATA_PROVIDER,
-                $systemMetadata->getCreatedMetadata(),
-            ));
-        }
-
-        $loadTask->addMetadata(new TableMetadata(
-            $source->getDestination()->getTableId(),
-            TableWriter::SYSTEM_METADATA_PROVIDER,
-            $systemMetadata->getUpdatedMetadata(),
-        ));
-
-        if ($source->hasMetadata()) {
-            $loadTask->addMetadata(new TableMetadata(
-                $source->getDestination()->getTableId(),
-                $systemMetadata->asArray()[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
-                $source->getMetadata(),
-            ));
-        }
-
-        if ($source->hasColumnMetadata()) {
-            $loadTask->addMetadata(new ColumnMetadata(
-                $source->getDestination()->getTableId(),
-                $systemMetadata->asArray()[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
-                $source->getColumnMetadata(),
-            ));
-        }
-
         return $loadTask;
-    }
-
-    private function getDestinationTableInfoIfExists(string $tableId): ?TableInfo
-    {
-        try {
-            return new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId));
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
-
-        return null;
     }
 
     private function createTable(MappingDestination $destination, array $columns, array $loadOptions): void
@@ -284,21 +212,23 @@ class TableLoader
     /**
      * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
      */
-    private function getCombinedSources(StrategyInterface $strategy, RawConfiguration $configuration): array
+    private function getCombinedSources(StrategyInterface $strategy, RawConfiguration $configuration, bool $isFailedJob): array
     {
         $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
+        $sourcesValidator = $stagingFactory->getSourcesValidator();
 
         $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
-        $sourcesValidator = $stagingFactory->getSourcesValidator();
-        $sourcesValidator->validate($physicalDataFiles, $physicalManifests);
+        $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
+        $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping(), $isFailedJob);
 
         $mappingCombiner = new Mapping\MappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
             $physicalDataFiles,
             $configuration->getMapping(),
         );
+
 
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
         return $mappingCombiner->combineSourcesWithManifests(

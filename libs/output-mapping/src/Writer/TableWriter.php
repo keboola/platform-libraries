@@ -56,7 +56,6 @@ class TableWriter extends AbstractWriter
 
         $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
-            $strategyFactory->getClientWrapper(),
             $strategyFactory->getLogger(),
         );
         $this->logger = $strategyFactory->getLogger();

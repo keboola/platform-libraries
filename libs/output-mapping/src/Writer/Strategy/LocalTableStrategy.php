@@ -27,17 +27,6 @@ class LocalTableStrategy extends AbstractTableStrategy
 {
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source, array $config): array
     {
-        // TODO FIX THIS
-        /*
-        if (!$source instanceof LocalFileSource) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument $source is expected to be instance of %s, %s given',
-                LocalFileSource::class,
-                get_class($source),
-            ));
-        }
-        */
-
         $loadOptions = [
             'delimiter' => $config['delimiter'],
             'enclosure' => $config['enclosure'],

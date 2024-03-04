@@ -30,7 +30,6 @@ class TableLoaderWrapper
 
         $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
-            $strategyFactory->getClientWrapper(),
             $strategyFactory->getLogger(),
         );
         $this->logger = $strategyFactory->getLogger();
@@ -49,7 +48,8 @@ class TableLoaderWrapper
         $configuration = new RawConfiguration(
             $configuration,
             $sourcePathPrefix,
-            $this->clientWrapper->getToken()->getFeatures(),
+            $this->clientWrapper->getToken(),
+            $createTypedTables
         );
         $tableLoader = new TableLoader($this->logger, $this->clientWrapper, $this->strategyFactory);
         return $tableLoader->uploadTables(

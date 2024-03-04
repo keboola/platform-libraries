@@ -4,43 +4,25 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
-use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Configuration as TableConfiguration;
-use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\RawConfiguration;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
-use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Finder\SplFileInfo;
 
 class TableConfigurationResolver
 {
-    /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     */
-    public function __construct(
-        private readonly ClientWrapper $clientWrapper,
-        private readonly LoggerInterface $logger,
-        private string $format = Adapter::FORMAT_JSON,
-    ) {
-    }
-
-    /**
-     * @param string $format
-     */
-    public function setFormat(string $format): void
+    public function __construct(private readonly LoggerInterface $logger)
     {
-        $this->format = $format;
     }
 
     public function resolveTableConfiguration(
-        ?string $defaultBucket,
+        RawConfiguration $configuration,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
         array $mappingFromManifest,
         array $mappingFromConfiguration,
@@ -49,7 +31,7 @@ class TableConfigurationResolver
         $config = ConfigurationMerger::mergeConfigurations($mappingFromManifest, $mappingFromConfiguration);
 
         $config['destination'] = $this->ensureConfigurationDestination(
-            $defaultBucket,
+            $configuration->getDefaultBucket(),
             $source->getSourceName(),
             $mappingFromManifest['destination'] ?? null,
             $mappingFromConfiguration['destination'] ?? null,
@@ -61,7 +43,7 @@ class TableConfigurationResolver
             $config['distribution_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']);
         }
 
-        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::TAG_STAGING_FILES_FEATURE)) { // TODO vzít z classy RawConfiguratioin
+        if ($configuration->hasTagStagingFilesFeature()) {
             $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
         }
 

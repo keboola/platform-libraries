@@ -31,6 +31,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class TableLoader
 {
@@ -78,23 +79,29 @@ class TableLoader
                 [];
             unset($configFromMapping['source']); // TODO - zjistit proč se to unsetuje
 
-            $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
-                $configuration,
-                $combinedSource,
-                $configFromManifest,
-                $configFromMapping,
-                $systemMetadata,
-            );
+            try {
+                $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
+                    $configuration,
+                    $combinedSource,
+                    $configFromManifest,
+                    $configFromMapping,
+                    $systemMetadata,
+                );
 
-            $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-            $processedConfig = $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
-
-            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
+                $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
+                $processedConfig = $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
+            } catch (Throwable $e) {
+                if (!$isFailedJob) {
+                    throw $e;
+                }
+            }
 
             // If it is a failed job, we only want to upload if the table has write_always = true
-             if ($isFailedJob && empty($processedSource->hasWriteAlways())) {
+             if ($isFailedJob && empty($processedConfig['write_always'])) {
                 continue;
             }
+
+            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             $storagePreparer = new StoragePreparer($this->clientWrapper, $this->logger);
             $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);

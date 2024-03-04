@@ -10,8 +10,8 @@ use Keboola\OutputMapping\Configuration\Adapter as ConfigurationAdapter;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Writer\File\FileItem;
 use Keboola\OutputMapping\Writer\File\StrategyInterface;
+use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
@@ -87,6 +87,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                     $blob->getName(),
                     dirname($blob->getName()),
                     basename($blob->getName()),
+                    false, // TODO really ?
                 );
             }
         }
@@ -102,6 +103,7 @@ class ABSWorkspace extends AbstractFileStrategy implements StrategyInterface
                     $blob->getName(),
                     dirname($blob->getName()),
                     basename($blob->getName()),
+                    false,
                 );
             }
         }

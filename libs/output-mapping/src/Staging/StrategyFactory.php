@@ -12,9 +12,9 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
-use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\OutputMapping\Writer\Strategy\AbsWorkspaceTableStrategy;
+use Keboola\OutputMapping\Writer\Strategy\LocalTableStrategy;
+use Keboola\OutputMapping\Writer\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
 class StrategyFactory extends AbstractStrategyFactory

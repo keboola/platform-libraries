@@ -70,9 +70,9 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
-    public function getDataScienceServiceUrl(?ServiceDnsType $dnsType = null): string
+    public function getSandboxesServiceUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(Service::DATA_SCIENCE, $dnsType);
+        return $this->getServiceUrl(Service::SANDBOXES_SERVICE, $dnsType);
     }
 
     /**
@@ -110,9 +110,9 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
-    public function getSandboxesServiceUrl(?ServiceDnsType $dnsType = null): string
+    public function getSandboxesApiUrl(?ServiceDnsType $dnsType = null): string
     {
-        return $this->getServiceUrl(Service::SANDBOXES, $dnsType);
+        return $this->getServiceUrl(Service::SANDBOXES_API, $dnsType);
     }
 
     /**

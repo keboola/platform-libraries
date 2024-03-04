@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Table\Source;
+namespace Keboola\OutputMapping\Writer;
 
 interface SourceInterface
 {

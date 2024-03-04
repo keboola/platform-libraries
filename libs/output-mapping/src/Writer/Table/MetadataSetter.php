@@ -21,7 +21,7 @@ class MetadataSetter
         MappingStorageSources $storageSources,
         SystemMetadata $systemMetadata
     ): void {
-        if ($storageSources->hasTable()) {
+        if (!$storageSources->hasTable()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
                 TableWriter::SYSTEM_METADATA_PROVIDER,

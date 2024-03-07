@@ -30,7 +30,7 @@ class SliceCommandBuilderTest extends TestCase
             new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
         );
 
-        self::assertSame(7200.0, $process->getTimeout());
+        self::assertSame(201600.0, $process->getTimeout());
         self::assertSame(
             implode(
                 ' ',
@@ -60,7 +60,7 @@ class SliceCommandBuilderTest extends TestCase
             $this->temp->createFile('data.csv.manifest'),
         );
 
-        self::assertSame(7200.0, $process->getTimeout());
+        self::assertSame(201600.0, $process->getTimeout());
         self::assertSame(
             implode(
                 ' ',
@@ -92,7 +92,7 @@ class SliceCommandBuilderTest extends TestCase
             '3GB',
         );
 
-        self::assertSame(7200.0, $process->getTimeout());
+        self::assertSame(201600.0, $process->getTimeout());
         self::assertSame(
             implode(
                 ' ',

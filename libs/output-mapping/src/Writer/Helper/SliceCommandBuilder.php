@@ -39,7 +39,7 @@ class SliceCommandBuilder
 
         return new Process(
             command: $command,
-            timeout: 7200.0,
+            timeout: 201600.0,
         );
     }
 }

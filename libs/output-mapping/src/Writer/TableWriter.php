@@ -118,7 +118,7 @@ class TableWriter extends AbstractWriter
             }
 
             // If it is a failed job, we only want to upload if the table has write_always = true
-            if ($isFailedJob && empty($config['write_always']) && !$isDebugJob) {
+            if ($isFailedJob && empty($config['write_always'])) {
                 continue;
             }
 

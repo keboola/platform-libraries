@@ -13,7 +13,7 @@ class MappingCombiner
     /**
      * @param array<SourceInterface> $dataItems
      * @param array<MappingFromRawConfiguration> $configurations
-     * @return MappingFromRawConfigurationAndPhysicalData[]
+     * @return array<MappingFromRawConfigurationAndPhysicalData>
      */
     public function combineDataItemsWithConfigurations(array $dataItems, array $configurations): array {
         $combinedSources = [];
@@ -37,7 +37,6 @@ class MappingCombiner
 
         return $combinedSources;
     }
-
 
     /**
      * @param MappingFromRawConfigurationAndPhysicalData[] $sources

@@ -23,21 +23,10 @@ class TagsHelper
         return $storageConfig;
     }
 
-    public static function addSystemTags(array $storageConfig, SystemMetadata $systemMetadata, LoggerInterface $logger): array
+    public static function addSystemTags(array $storageConfig, SystemMetadata $systemMetadata): array
     {
-        // TODO should be moved to SystemMetadata class as "getSystemTags()"
-        foreach ($systemMetadata->asArray() as $systemKey => $systemValue) {
-            if (in_array($systemKey, [
-                AbstractWriter::SYSTEM_KEY_COMPONENT_ID,
-                AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID,
-                AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
-                AbstractWriter::SYSTEM_KEY_BRANCH_ID,
-                AbstractWriter::SYSTEM_KEY_RUN_ID,
-            ])) {
-                $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
-            } else {
-                $logger->info(sprintf('Not generating tag for key: %s', $systemKey));
-            }
+        foreach ($systemMetadata->getSystemTags() as $systemKey => $systemValue) {
+            $storageConfig['tags'][] = $systemKey . ': ' . $systemValue;
         }
         return $storageConfig;
     }

@@ -27,17 +27,17 @@ class TableStructureModifier
     ): void {
         TableColumnsHelper::addMissingColumns(
             $this->clientWrapper->getTableAndFileStorageClient(),
-            $destinationTableInfo->asArray(),
+            $destinationTableInfo,
             $source,
             $destinationBucket->backend,
         );
 
-        if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo->asArray(), $source->getPrimaryKey())) {
+        if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo->getPrimaryKey(), $source->getPrimaryKey())) {
             PrimaryKeyHelper::modifyPrimaryKey(
                 $this->logger,
                 $this->clientWrapper->getTableAndFileStorageClient(),
                 $destination->getTableId(),
-                $destinationTableInfo->primaryKey,
+                $destinationTableInfo->getPrimaryKey(),
                 $source->getPrimaryKey(),
             );
         }

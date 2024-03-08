@@ -6,15 +6,27 @@ namespace Keboola\OutputMapping\Storage;
 
 class TableInfo
 {
-    public array $primaryKey;
-
-    public function __construct(private readonly array $tableInfo) {
-        $this->primaryKey = $this->tableInfo['primaryKey'];
+    public function __construct(private readonly array $tableInfo)
+    {
     }
 
-    /** @deprecated  */
-    public function asArray()
+    public function getColumns(): array
     {
-        return $this->tableInfo;
+        return $this->tableInfo['columns'] ?? [];
+    }
+
+    public function getId(): string
+    {
+        return $this->tableInfo['id'];
+    }
+
+    public function isTyped(): bool
+    {
+        return $this->tableInfo['isTyped'];
+    }
+
+    public function getPrimaryKey()
+    {
+        return $this->tableInfo['primaryKey'];
     }
 }

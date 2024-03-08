@@ -17,13 +17,12 @@ class TableDataModifier
 
     public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination)
     {
-        $config = $source->getMapping();
-        if (!empty($config['delete_where_column'])) {
+        if (!is_null($source->getDeleteWhereColumn())) {
             // Delete rows
             $deleteOptions = [
-                'whereColumn' => $config['delete_where_column'],
-                'whereOperator' => $config['delete_where_operator'],
-                'whereValues' => $config['delete_where_values'],
+                'whereColumn' => $source->getDeleteWhereColumn(),
+                'whereOperator' => $source->getDeleteWhereOperator(),
+                'whereValues' => $source->getDeleteWhereValues(),
             ];
             $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
                 $destination->getTableId(),

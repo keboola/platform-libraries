@@ -142,7 +142,7 @@ class TableLoader
 
         $loadOptions = array_merge(
             $loadOptions,
-            $strategy->prepareLoadTaskOptions($source, $source->getMapping()), // TODO - fixme getMapping tam není potřeba
+            $strategy->prepareLoadTaskOptions($source),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here

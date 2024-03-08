@@ -17,7 +17,7 @@ interface StrategyInterface
 
     public function getMetadataStorage(): ProviderInterface;
 
-    public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source, array $config): array;
+    public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array;
 
     public function readFileManifest(string $manifestFile): array;
 

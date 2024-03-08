@@ -36,9 +36,9 @@ class PrimaryKeyHelper
     public static function modifyPrimaryKeyDecider(
         LoggerInterface $logger,
         array $currentTableInfo,
-        array $newTableConfiguration,
+        array $newTableConfigurationPrimaryKey,
     ): bool {
-        $configPK = self::normalizeKeyArray($logger, $newTableConfiguration['primary_key']);
+        $configPK = self::normalizeKeyArray($logger, $newTableConfigurationPrimaryKey);
         if (count($currentTableInfo['primaryKey']) !== count($configPK)) {
             return true;
         }

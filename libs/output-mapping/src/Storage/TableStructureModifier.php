@@ -28,11 +28,11 @@ class TableStructureModifier
         TableColumnsHelper::addMissingColumns(
             $this->clientWrapper->getTableAndFileStorageClient(),
             $destinationTableInfo->asArray(),
-            $source->getMapping(),
+            $source,
             $destinationBucket->backend,
         );
 
-        if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo->asArray(), $source->getMapping())) {
+        if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo->asArray(), $source->getPrimaryKey())) {
             PrimaryKeyHelper::modifyPrimaryKey(
                 $this->logger,
                 $this->clientWrapper->getTableAndFileStorageClient(),

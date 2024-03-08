@@ -216,7 +216,7 @@ class TableWriter extends AbstractWriter
                 $destinationBucket['backend'],
             );
 
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config['primary_key'])) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getTableAndFileStorageClient(),
@@ -255,7 +255,7 @@ class TableWriter extends AbstractWriter
 
         $loadOptions = array_merge(
             $loadOptions,
-            $strategy->prepareLoadTaskOptions($source, $config),
+            $strategy->prepareLoadTaskOptions($source),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here

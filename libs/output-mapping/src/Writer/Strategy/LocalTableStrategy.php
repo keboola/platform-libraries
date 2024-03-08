@@ -22,19 +22,17 @@ use Throwable;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
-    public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source, array $config): array
+    public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
         $loadOptions = [
-            'delimiter' => $config['delimiter'],
-            'enclosure' => $config['enclosure'],
+            'delimiter' => $source->getDelimiter(),
+            'enclosure' => $source->getEnclosure(),
         ];
 
-        $tags = !empty($config['tags']) ? $config['tags'] : [];
-
         if ($source->isSliced()) {
-            $loadOptions['dataFileId'] = $this->uploadSlicedFile($source->getPathName(), $source->getSourceName(), $tags);
+            $loadOptions['dataFileId'] = $this->uploadSlicedFile($source->getPathName(), $source->getSourceName(), $source->getTags());
         } else {
-            $loadOptions['dataFileId'] = $this->uploadRegularFile($source->getPathName(), $tags);
+            $loadOptions['dataFileId'] = $this->uploadRegularFile($source->getPathName(), $source->getTags());
         }
 
         return $loadOptions;

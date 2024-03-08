@@ -41,13 +41,29 @@ class MappingFromProcessedConfiguration
         return $this->destination;
     }
 
-    /**
-     * @deprecated
-     * @TODO mapping je interni datova struktura, nesmi bejt public, protoze tohle je value object
-     */
-    public function getMapping(): array
+    public function getDelimiter(): string
     {
-        return $this->mapping;
+        return $this->mapping['delimiter'];
+    }
+
+    public function getEnclosure(): string
+    {
+        return $this->mapping['enclosure'];
+    }
+
+    public function getDeleteWhereColumn(): ?string
+    {
+        return $this->mapping['delete_where_column'] ?? null;
+    }
+
+    public function getDeleteWhereValues(): array
+    {
+        return $this->mapping['delete_where_values'];
+    }
+
+    public function getDeleteWhereOperator(): string
+    {
+        return $this->mapping['delete_where_operator'];
     }
 
     public function getPrimaryKey(): array
@@ -82,12 +98,17 @@ class MappingFromProcessedConfiguration
 
     public function getColumnMetadata(): array
     {
-        return $this->mapping['column_metadata'];
+        return $this->mapping['column_metadata'] ?? [];
     }
 
     public function getPathName(): string
     {
         return $this->source->getPathname();
+    }
+
+    public function getTags(): array
+    {
+        return $this->mapping['tags'] ?? [];
     }
 
     public function hasDistributionKey(): bool
@@ -110,7 +131,7 @@ class MappingFromProcessedConfiguration
 
     public function getMetadata(): array
     {
-        return $this->mapping['metadata'];
+        return $this->mapping['metadata'] ?? [];
     }
 
 }

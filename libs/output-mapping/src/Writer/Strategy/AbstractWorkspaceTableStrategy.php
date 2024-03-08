@@ -21,7 +21,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
      *      dataObject: string
      * }
      */
-    public function prepareLoadTaskOptions(SourceInterface $source, array $config): array
+    public function prepareLoadTaskOptions(SourceInterface $source): array
     {
         if (!$source instanceof WorkspaceItemSource) {
             throw new InvalidArgumentException(sprintf(

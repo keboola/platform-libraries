@@ -44,7 +44,7 @@ class TableConfigurationResolver
         }
 
         if ($configuration->hasTagStagingFilesFeature()) {
-            $config = TagsHelper::addSystemTags($config, $systemMetadata, $this->logger);
+            $config = TagsHelper::addSystemTags($config, $systemMetadata);
         }
 
         try {

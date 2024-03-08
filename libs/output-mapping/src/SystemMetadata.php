@@ -22,6 +22,26 @@ class SystemMetadata
         return $this->systemMetadata;
     }
 
+    public function getSystemTags(): array
+    {
+        $systemTags = [
+            AbstractWriter::SYSTEM_KEY_COMPONENT_ID,
+            AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID,
+            AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID,
+            AbstractWriter::SYSTEM_KEY_BRANCH_ID,
+            AbstractWriter::SYSTEM_KEY_RUN_ID,
+        ];
+
+        return array_filter($this->systemMetadata, function ($key) use ($systemTags) {
+            return in_array($key, $systemTags);
+        }, ARRAY_FILTER_USE_KEY);
+    }
+
+    public function getSystemMetadata(string $nameOfMetadata): ?string
+    {
+        return $this->systemMetadata[$nameOfMetadata] ?? null;
+    }
+
     public function getCreatedMetadata(): array
     {
         $metadata[] = [

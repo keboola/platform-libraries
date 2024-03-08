@@ -48,7 +48,7 @@ class TableLoader
         SystemMetadata $systemMetadata,
         bool $isFailedJob,
     ): LoadTableQueue {
-        if (empty($systemMetadata->asArray()[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
+        if (is_null($systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID))) {
             throw new OutputOperationException('Component Id must be set');
         }
 

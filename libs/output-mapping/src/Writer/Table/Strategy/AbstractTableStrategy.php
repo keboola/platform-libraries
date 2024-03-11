@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Strategy;
+namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Strategy;
+namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
@@ -10,6 +10,9 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\SourcesValidator\LocalSourcesValidator;
+use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
+use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
@@ -133,6 +136,11 @@ class LocalTableStrategy extends AbstractTableStrategy
             $files[$pathName] = new FileItem($file->getPathname(), $path, $file->getBasename(), false);
         }
         return $files;
+    }
+
+    public function getSourcesValidator(): SourcesValidatorInterface
+    {
+        return new LocalSourcesValidator();
     }
 
     public function hasSlicer(): bool

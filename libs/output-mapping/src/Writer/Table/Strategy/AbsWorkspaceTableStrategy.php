@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Strategy;
+namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
+use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\AbsWorkspaceItemSourceFactory;
 use Keboola\OutputMapping\Writer\Table\WorkspaceItemSource;
@@ -61,7 +63,7 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 
     public function readFileManifest(string $manifestFile): array
     {
-        $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
+        $manifestFile = $this->metadataStorage->getPath() . 'AbsWorkspaceTableStrategy.php/' . $manifestFile;
         $adapter = new FileAdapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {
@@ -84,6 +86,12 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
             );
         }
     }
+
+    public function getSourcesValidator(): SourcesValidatorInterface
+    {
+        return new WorkspaceSourcesValidator();
+    }
+
 
     public function hasSlicer(): bool
     {

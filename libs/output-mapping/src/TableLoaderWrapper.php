@@ -13,8 +13,6 @@ use Psr\Log\LoggerInterface;
 
 class TableLoaderWrapper
 {
-    public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
-
     protected ClientWrapper $clientWrapper;
     protected LoggerInterface $logger;
 

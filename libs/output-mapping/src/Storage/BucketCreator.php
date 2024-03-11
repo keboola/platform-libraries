@@ -57,7 +57,7 @@ class BucketCreator
             foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
                 if (($metadatum['key'] === TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID) ||
                     ($metadatum['key'] === TableWriter::KBC_CREATED_BY_BRANCH_ID)) {
-                    if ((string) $metadatum['value'] === (string) $this->clientWrapper->getBranchId()) {
+                    if ((string) $metadatum['value'] === $this->clientWrapper->getBranchId()) {
                         return;
                     }
 

@@ -7,7 +7,7 @@ use Keboola\OutputMapping\Lister\LocalLister;
 use Keboola\OutputMapping\SourcesValidator\LocalSourcesValidator;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 
-class StagingFactory
+class StagingFactory // TODO tohle pryc
 {
     public function __construct(private readonly string $path)
     {
@@ -21,6 +21,8 @@ class StagingFactory
 
     public function getSourcesValidator(): SourcesValidatorInterface
     {
+        // TODO přesunout pood strategy
+
         return new LocalSourcesValidator();
         // TODO throw new \Exception('Not implemented');
     }

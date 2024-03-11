@@ -136,7 +136,7 @@ class TableLoader
             'incremental' => $source->isIncremental(),
         ];
 
-        if (!$storageSources->hasTable() && $source->hasDistributionKey()) {
+        if (!$storageSources->didTableExistBefore() && $source->hasDistributionKey()) {
             $loadOptions['distributionKey'] = implode(',', $source->getDistributionKey());
         }
 
@@ -148,7 +148,7 @@ class TableLoader
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && !$storageSources->hasTable() && ($source->hasColumns() && $source->hasColumnMetadata())) {
+        if ($createTypedTables && !$storageSources->didTableExistBefore() && ($source->hasColumns() && $source->hasColumnMetadata())) {
             // typovaná tabulka
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
@@ -162,12 +162,12 @@ class TableLoader
             $this->createTableDefinition($source->getDestination(), $tableDefinition);
             $tableCreated = true;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
-        } elseif (!$storageSources->hasTable() && $source->hasColumns()) {
+        } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
             $this->createTable($source->getDestination(), $source->getColumns(), $loadOptions);
             $tableCreated = true;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
-        } elseif ($storageSources->hasTable()) {
+        } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
             $tableCreated = false;
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, $tableCreated);
@@ -229,6 +229,7 @@ class TableLoader
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
         $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping(), $isFailedJob);
+        // TODO volani validaManifestFilesWithConfiguration
 
         $mappingCombiner = new Mapping\MappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(

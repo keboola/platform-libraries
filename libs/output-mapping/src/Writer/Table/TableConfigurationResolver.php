@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Writer\Table;
 use Keboola\OutputMapping\Configuration\Table\Configuration as TableConfiguration;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
-use Keboola\OutputMapping\RawConfiguration;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
@@ -22,7 +22,7 @@ class TableConfigurationResolver
     }
 
     public function resolveTableConfiguration(
-        RawConfiguration $configuration,
+        OutputMappingSettings $configuration,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
         array $mappingFromManifest,
         array $mappingFromConfiguration,

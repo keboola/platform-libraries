@@ -77,7 +77,6 @@ class TableLoader
             $configFromMapping = $combinedSource->getConfiguration() ?
                 $combinedSource->getConfiguration()->asArray() :
                 [];
-            unset($configFromMapping['source']); // TODO - zjistit proč se to unsetuje
 
             try {
                 $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(

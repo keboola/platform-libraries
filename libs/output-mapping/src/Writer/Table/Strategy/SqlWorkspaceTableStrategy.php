@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\Strategy;
+namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\SourcesValidator\LocalSourcesValidator;
+use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
+use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
@@ -50,7 +53,7 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 
     public function readFileManifest(string $manifestFile): array
     {
-        $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
+        $manifestFile = $this->metadataStorage->getPath() . 'SqlWorkspaceTableStrategy.php/' . $manifestFile;
         $adapter = new Adapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {
@@ -72,6 +75,11 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
                 $e,
             );
         }
+    }
+
+    public function getSourcesValidator(): SourcesValidatorInterface
+    {
+        return new WorkspaceSourcesValidator();
     }
 
     public function hasSlicer(): bool

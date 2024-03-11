@@ -73,7 +73,7 @@ services:
       - SYNAPSE_STORAGE_API_URL
 
   dev-k8s-client:
-    <<: *dev81
+    <<: *dev82
     image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
 

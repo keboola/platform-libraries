@@ -10,7 +10,6 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\SourceInterface;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
 
 interface StrategyInterface
 {
@@ -31,6 +30,8 @@ interface StrategyInterface
      * @return FileItem[] Indexed by file path.
      */
     public function listManifests(string $dir): array;
+
+    public function getSourcesValidator(): SourcesValidatorInterface;
 
     public function hasSlicer(): bool;
 

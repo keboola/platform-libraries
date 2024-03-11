@@ -48,10 +48,6 @@ class TableLoader
         SystemMetadata $systemMetadata,
         bool $isFailedJob,
     ): LoadTableQueue {
-        if (is_null($systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID))) {
-            throw new OutputOperationException('Component Id must be set');
-        }
-
         $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $isFailedJob);
         $combinedSources = $this->getCombinedSources($strategy, $configuration, $isFailedJob);
 

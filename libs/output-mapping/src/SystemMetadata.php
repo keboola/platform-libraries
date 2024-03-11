@@ -2,6 +2,7 @@
 
 namespace Keboola\OutputMapping;
 
+use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\TableWriter;
 
@@ -15,6 +16,9 @@ class SystemMetadata
     public function __construct(array $systemMetadata)
     {
         $this->systemMetadata = $systemMetadata;
+        if (is_null($this->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID))) {
+            throw new OutputOperationException('Component Id must be set');
+        }
     }
 
     public function asArray(): array

@@ -36,4 +36,9 @@ class MappingFromRawConfigurationAndPhysicalData
         return $this->dataItem->getPathName();
     }
 
+    public function getPath(): string
+    {
+        return $this->dataItem->getPath();
+    }
+
 }

@@ -17,6 +17,11 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifest
         return $this->source->getSourceName();
     }
 
+    public function getPathNameManifest(): string
+    {
+        return $this->getPath() . $this->getSourceName() . '.manifest';
+    }
+
     public function getManifest(): ?FileItem
     {
         return $this->manifest;
@@ -35,5 +40,10 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifest
     public function getPathName(): string
     {
         return $this->source->getPathName();
+    }
+
+    public function getPath(): string
+    {
+        return $this->source->getPath();
     }
 }

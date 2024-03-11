@@ -5,7 +5,7 @@ namespace Keboola\OutputMapping;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\StorageApiBranch\StorageApiToken;
 
-class RawConfiguration
+class OutputMappingSettings
 {
     private ?string $bucket;
     /** @var MappingFromRawConfiguration[] */

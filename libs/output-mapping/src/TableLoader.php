@@ -44,7 +44,7 @@ class TableLoader
 
     public function uploadTables(
         string $outputStaging,
-        RawConfiguration $configuration,
+        OutputMappingSettings $configuration,
         SystemMetadata $systemMetadata,
         bool $isFailedJob,
     ): LoadTableQueue {
@@ -218,7 +218,7 @@ class TableLoader
     /**
      * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
      */
-    private function getCombinedSources(StrategyInterface $strategy, RawConfiguration $configuration, bool $isFailedJob): array
+    private function getCombinedSources(StrategyInterface $strategy, OutputMappingSettings $configuration, bool $isFailedJob): array
     {
         $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
         $sourcesValidator = $stagingFactory->getSourcesValidator();

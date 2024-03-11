@@ -45,7 +45,7 @@ class TableLoaderWrapper
     ): LoadTableQueue {
         // TODO: this will be moved to caller
         $systemMetadata = new SystemMetadata($systemMetadata);
-        $configuration = new RawConfiguration(
+        $configuration = new OutputMappingSettings(
             $configuration,
             $sourcePathPrefix,
             $this->clientWrapper->getToken(),

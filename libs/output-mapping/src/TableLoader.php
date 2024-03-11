@@ -10,13 +10,11 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StagingFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
@@ -64,11 +62,6 @@ class TableLoader
         $tableConfigurationValidator = new TableConfigurationValidator();
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
-            $configFromManifest = $strategy->readFileManifest(sprintf(
-                '%s/%s.manifest',
-                $configuration->getSourcePathPrefix(),
-                $combinedSource->getSourceName(),
-            ));
 
             $configFromMapping = $combinedSource->getConfiguration() ?
                 $combinedSource->getConfiguration()->asArray() :
@@ -78,7 +71,7 @@ class TableLoader
                 $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
                     $configuration,
                     $combinedSource,
-                    $configFromManifest,
+                    $strategy->readFileManifest($combinedSource->getPathNameManifest()),
                     $configFromMapping,
                     $systemMetadata,
                 );

@@ -20,6 +20,8 @@ class OutputMappingSettings
 
     private bool $createTypedTables;
 
+    private bool $isFailedJob;
+
     /**
      * @param array $configuration
      */
@@ -28,6 +30,7 @@ class OutputMappingSettings
         string $sourcePathPrefix,
         StorageApiToken $storageApiToken,
         bool $createTypedTables,
+        bool $isFailedJob,
     ) {
         // TODO: validate
         $this->bucket = $configuration['bucket'] ?? null;
@@ -37,6 +40,7 @@ class OutputMappingSettings
         $this->sourcePathPrefix = $sourcePathPrefix;
         $this->storageApiToken = $storageApiToken;
         $this->createTypedTables = $createTypedTables;
+        $this->isFailedJob = $isFailedJob;
     }
 
     public function hasSlicingFeature(): bool
@@ -71,5 +75,10 @@ class OutputMappingSettings
     public function isCreateTypedTables(): bool
     {
         return $this->createTypedTables;
+    }
+
+    public function isFailedJob(): bool
+    {
+        return $this->isFailedJob;
     }
 }

@@ -44,17 +44,16 @@ class TableLoader
         string $outputStaging,
         OutputMappingSettings $configuration,
         SystemMetadata $systemMetadata,
-        bool $isFailedJob,
     ): LoadTableQueue {
-        $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $isFailedJob);
-        $combinedSources = $this->getCombinedSources($strategy, $configuration, $isFailedJob);
+        $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $configuration->isFailedJob());
+        $combinedSources = $this->getCombinedSources($strategy, $configuration, $configuration->isFailedJob());
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
             $sourcesForSlicing = (new SlicerDecider($this->logger))->decideSliceFiles($combinedSources);
 
             $strategy->sliceFiles($sourcesForSlicing);
 
-            $combinedSources = $this->getCombinedSources($strategy, $configuration, $isFailedJob);
+            $combinedSources = $this->getCombinedSources($strategy, $configuration, $configuration->isFailedJob());
         }
 
         $loadTableTasks = [];
@@ -79,13 +78,13 @@ class TableLoader
                 $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
                 $processedConfig = $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
             } catch (Throwable $e) {
-                if (!$isFailedJob) {
+                if (!$configuration->isFailedJob()) {
                     throw $e;
                 }
             }
 
             // If it is a failed job, we only want to upload if the table has write_always = true
-             if ($isFailedJob && empty($processedConfig['write_always'])) {
+             if ($configuration->isFailedJob() && empty($processedConfig['write_always'])) {
                 continue;
             }
 

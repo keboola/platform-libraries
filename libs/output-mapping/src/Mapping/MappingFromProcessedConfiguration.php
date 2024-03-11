@@ -4,7 +4,6 @@ namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class MappingFromProcessedConfiguration
 {
@@ -118,10 +117,7 @@ class MappingFromProcessedConfiguration
 
     public function getDistributionKey(): array
     {
-        if (!$this->hasDistributionKey()) {
-            throw new InvalidConfigurationException('Distribution key is not set.');
-        }
-        return $this->mapping['distribution_key'];
+        return $this->mapping['distribution_key'] ?? [];
     }
 
     public function hasMetadata(): bool

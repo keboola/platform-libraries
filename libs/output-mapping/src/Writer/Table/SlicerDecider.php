@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Psr\Log\LoggerInterface;
 use SplFileInfo;
-use function Aws\map;
 
 class SlicerDecider
 {
@@ -32,11 +31,10 @@ class SlicerDecider
 
         foreach ($combinedSources as $combinedSource) {
             if ($sourceOccurrences[$combinedSource->getSourceName()] > 1) {
-                throw new InvalidOutputException(sprintf( // TODO měl by být warning?? změna chování
+                throw new InvalidOutputException(sprintf(
                     'Source "%s" has multiple destinations set.',
                     $combinedSource->getSourceName(),
                 ));
-                continue;
             }
 
             if ($this->decideSliceFile($combinedSource)) {
@@ -68,7 +66,7 @@ class SlicerDecider
         $hasNonDefaultEnclosure = $mapping->getEnclosure() !== Manifest::DEFAULT_ENCLOSURE;
         $hasColumns = $mapping->getColumns();
 
-        if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) { // TODO měl by být warning?? změna chování
+        if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
             throw new InvalidOutputException('Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.');
         }
 

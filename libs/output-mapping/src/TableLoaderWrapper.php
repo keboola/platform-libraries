@@ -47,14 +47,14 @@ class TableLoaderWrapper
             $configuration,
             $sourcePathPrefix,
             $this->clientWrapper->getToken(),
-            $createTypedTables
+            $createTypedTables,
+            $isFailedJob,
         );
         $tableLoader = new TableLoader($this->logger, $this->clientWrapper, $this->strategyFactory);
         return $tableLoader->uploadTables(
             $stagingStorageOutput,
             $configuration,
             $systemMetadata,
-            $isFailedJob, // TODO: fix this, how about about isDebugJob ?
         );
     }
 }

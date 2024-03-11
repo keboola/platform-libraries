@@ -220,21 +220,20 @@ class TableLoader
      */
     private function getCombinedSources(StrategyInterface $strategy, RawConfiguration $configuration, bool $isFailedJob): array
     {
-        $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
-        $sourcesValidator = $stagingFactory->getSourcesValidator();
+        $sourcesValidator = $strategy->getSourcesValidator();
 
         $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
         $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping(), $isFailedJob);
+        $sourcesValidator->validateManifestWithConfiguration($physicalManifests, $configuration->getMapping());
 
         $mappingCombiner = new Mapping\MappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
             $physicalDataFiles,
             $configuration->getMapping(),
         );
-
 
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
         return $mappingCombiner->combineSourcesWithManifests(

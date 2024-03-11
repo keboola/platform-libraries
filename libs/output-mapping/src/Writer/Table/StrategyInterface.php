@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Writer\Table;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;

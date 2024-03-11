@@ -72,4 +72,12 @@ class LocalSourcesValidator implements SourcesValidatorInterface
             }
         }
     }
+
+    /**
+     * @param FileItem[] $manifests
+     * @param MappingFromRawConfiguration[] $configurationSource
+     */
+    public function validateManifestWithConfiguration(array $manifests, array $configurationSource): void
+    {
+    }
 }

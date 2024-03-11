@@ -18,7 +18,7 @@ class MappingStorageSources
         return $this->bucket;
     }
 
-    public function hasTable(): bool
+    public function didTableExistBefore(): bool
     {
         return $this->table !== null;
     }

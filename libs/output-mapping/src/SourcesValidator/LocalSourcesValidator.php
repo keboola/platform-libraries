@@ -3,7 +3,6 @@
 namespace Keboola\OutputMapping\SourcesValidator;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Lister\PhysicalItem;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Writer\FileItem;
 

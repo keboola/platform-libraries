@@ -19,7 +19,7 @@ class MetadataSetter
         LoadTableTaskInterface $loadTask,
         MappingFromProcessedConfiguration $processedSource,
         MappingStorageSources $storageSources,
-        SystemMetadata $systemMetadata
+        SystemMetadata $systemMetadata,
     ): void {
         if (!$storageSources->didTableExistBefore()) {
             $loadTask->addMetadata(new TableMetadata(

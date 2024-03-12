@@ -15,12 +15,14 @@ class MappingCombiner
      * @param array<MappingFromRawConfiguration> $configurations
      * @return array<MappingFromRawConfigurationAndPhysicalData>
      */
-    public function combineDataItemsWithConfigurations(array $dataItems, array $configurations): array {
+    public function combineDataItemsWithConfigurations(array $dataItems, array $configurations): array
+    {
         $combinedSources = [];
         foreach ($dataItems as $dataItem) {
-            $configurationMappings = array_filter($configurations, function (MappingFromRawConfiguration $mapping) use ($dataItem) {
-                return $mapping->getSourceName() === $dataItem->getName();
-            });
+            $configurationMappings = array_filter(
+                $configurations,
+                fn(MappingFromRawConfiguration $mapping) => $mapping->getSourceName() === $dataItem->getName(),
+            );
 
             /** @var MappingFromRawConfiguration|null $configurationMapping */
             foreach ($configurationMappings ?: [null] as $configurationMapping) {
@@ -39,7 +41,8 @@ class MappingCombiner
      * @param FileItem[] $manifests
      * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
      */
-    public function combineSourcesWithManifests(array $sources, array $manifests): array {
+    public function combineSourcesWithManifests(array $sources, array $manifests): array
+    {
         $combinedSources = [];
         foreach ($sources as $source) {
             $sourceKey = array_search($source->getManifestName(), array_map(fn($v) => $v->getName(), $manifests));

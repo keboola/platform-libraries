@@ -216,7 +216,11 @@ class TableWriter extends AbstractWriter
                 $destinationBucket['backend'],
             );
 
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config['primary_key'])) {
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
+                $this->logger,
+                $destinationTableInfo,
+                $config['primary_key'],
+            )) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getTableAndFileStorageClient(),

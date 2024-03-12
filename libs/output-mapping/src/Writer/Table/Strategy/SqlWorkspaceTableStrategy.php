@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
+use Exception;
 use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -87,8 +88,8 @@ class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
         return false;
     }
 
-    public function sliceFiles(): void
+    public function sliceFiles(array $combinedMapping): void
     {
-        throw new \Exception('Not implemented');
+        throw new Exception('Not implemented');
     }
 }

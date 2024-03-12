@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
+use Exception;
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -31,7 +32,12 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
                 $sourcePath = Path::ensureTrailingSlash($sourcePath);
             }
 
-            $sources[$source] = new WorkspaceItemSource($source, $this->dataStorage->getWorkspaceId(), $sourcePath, false);
+            $sources[$source] = new WorkspaceItemSource(
+                $source,
+                $this->dataStorage->getWorkspaceId(),
+                $sourcePath,
+                false,
+            );
         }
         return $sources;
     }
@@ -98,8 +104,8 @@ class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
         return false;
     }
 
-    public function sliceFiles(): void
+    public function sliceFiles(array $combinedMapping): void
     {
-        throw new \Exception('Not implemented');
+        throw new Exception('Not implemented');
     }
 }

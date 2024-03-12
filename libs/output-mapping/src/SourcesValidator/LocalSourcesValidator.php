@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\SourcesValidator;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -30,8 +32,8 @@ class LocalSourcesValidator implements SourcesValidatorInterface
         }
         if (!empty($orphanedManifestSourceNames)) {
             throw new InvalidOutputException(sprintf(
-        'Found orphaned table manifest: %s',
-                implode(', ', array_map(fn($v) => sprintf('"%s"', $v), $orphanedManifestSourceNames))
+                'Found orphaned table manifest: %s',
+                implode(', ', array_map(fn($v) => sprintf('"%s"', $v), $orphanedManifestSourceNames)),
             ));
         }
     }
@@ -40,8 +42,11 @@ class LocalSourcesValidator implements SourcesValidatorInterface
      * @param FileItem[] $dataItems
      * @param MappingFromRawConfiguration[] $configurationSource
      */
-    public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource, bool $isFailedJob): void
-    {
+    public function validatePhysicalFilesWithConfiguration(
+        array $dataItems,
+        array $configurationSource,
+        bool $isFailedJob,
+    ): void {
         $invalidSources = [];
         foreach ($configurationSource as $source) {
             $sourceFound = false;

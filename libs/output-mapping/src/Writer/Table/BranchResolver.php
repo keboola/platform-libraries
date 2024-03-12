@@ -9,15 +9,15 @@ use Keboola\StorageApiBranch\ClientWrapper;
 
 class BranchResolver
 {
-    public function __construct(private readonly ClientWrapper $clientWrapper,)
+    public function __construct(private readonly ClientWrapper $clientWrapper)
     {
-        
     }
-    
+
     public function rewriteBranchSource(array $config): array
     {
-        if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage() && $this->clientWrapper->isDevelopmentBranch()) {
-
+        if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage() &&
+            $this->clientWrapper->isDevelopmentBranch()
+        ) {
             $tableIdParts = explode('.', $config['destination']);
             if (count($tableIdParts) !== 3) {
                 throw new InvalidOutputException(sprintf('Invalid destination: "%s"', $config['destination']));

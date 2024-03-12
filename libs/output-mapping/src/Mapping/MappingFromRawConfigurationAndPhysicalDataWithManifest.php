@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Writer\FileItem;
@@ -9,7 +11,7 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifest
     public function __construct(
         private readonly MappingFromRawConfigurationAndPhysicalData $source,
         private readonly ?FileItem $manifest,
-    )  {
+    ) {
     }
 
     public function getSourceName(): string

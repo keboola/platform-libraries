@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Lister\PhysicalItem;
@@ -45,5 +47,4 @@ class MappingFromRawConfigurationAndPhysicalData
     {
         return $this->dataItem->getPath();
     }
-
 }

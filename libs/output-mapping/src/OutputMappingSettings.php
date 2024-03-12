@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping;
 
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;

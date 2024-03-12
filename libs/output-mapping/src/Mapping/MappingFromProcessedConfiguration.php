@@ -2,15 +2,11 @@
 
 namespace Keboola\OutputMapping\Mapping;
 
-use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
+use Keboola\OutputMapping\Configuration\Table\Configuration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 
 class MappingFromProcessedConfiguration
 {
-    private string $delimiter;
-    private array $columns;
-
-    /** @var MappingDestination  */
     private MappingDestination $destination;
     private MappingFromRawConfigurationAndPhysicalDataWithManifest $source;
     private array $mapping;
@@ -19,10 +15,11 @@ class MappingFromProcessedConfiguration
         array $mapping,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
     ) {
-        // TODO validate mapping ?
-        $this->mapping = $mapping;
+        $this->destination = $mapping['destination'];
+        unset($mapping['destination']);
+
+        $this->mapping = (new Configuration())->parse([$mapping]);
         $this->source = $source;
-        $this->destination = $this->mapping['destination'];
     }
 
     public function isSliced(): bool

@@ -222,11 +222,7 @@ class TableLoader
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
-        $sourcesValidator->validatePhysicalFilesWithConfiguration(
-            $physicalDataFiles,
-            $configuration->getMapping(),
-            $isFailedJob,
-        );
+        $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping());
         $sourcesValidator->validateManifestWithConfiguration($physicalManifests, $configuration->getMapping());
 
         $mappingCombiner = new Mapping\MappingCombiner();

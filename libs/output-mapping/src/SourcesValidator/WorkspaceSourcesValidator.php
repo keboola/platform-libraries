@@ -25,11 +25,8 @@ class WorkspaceSourcesValidator implements SourcesValidatorInterface
      * @param FileItem[] $dataItems
      * @param MappingFromRawConfiguration[] $configurationSource
      */
-    public function validatePhysicalFilesWithConfiguration(
-        array $dataItems,
-        array $configurationSource,
-        bool $isFailedJob,
-    ): void {
+    public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource): void
+    {
     }
 
     /**

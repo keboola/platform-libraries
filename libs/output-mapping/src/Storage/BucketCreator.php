@@ -90,10 +90,22 @@ class BucketCreator
 
     private function createDestinationBucket(MappingDestination $destination, SystemMetadata $systemMetadata): void
     {
-        $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
-            $destination->getBucketName(),
-            $destination->getBucketStage(),
-        );
+        try {
+            $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
+                $destination->getBucketName(),
+                $destination->getBucketStage(),
+            );
+        } catch (ClientException $e) {
+            throw new InvalidOutputException(
+                sprintf(
+                    'Cannot create bucket "%s" in Storage API: %s',
+                    $destination->getBucketName(),
+                    json_encode((array) $e->getContextParams()),
+                ),
+                $e->getCode(),
+                $e,
+            );
+        }
 
         $metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadataClient->postBucketMetadata(

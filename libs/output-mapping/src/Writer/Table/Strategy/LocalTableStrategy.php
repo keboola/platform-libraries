@@ -144,7 +144,7 @@ class LocalTableStrategy extends AbstractTableStrategy
 
     public function getSourcesValidator(): SourcesValidatorInterface
     {
-        return new LocalSourcesValidator();
+        return new LocalSourcesValidator($this->isFailedJob);
     }
 
     public function hasSlicer(): bool

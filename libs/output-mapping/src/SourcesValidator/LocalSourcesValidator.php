@@ -10,6 +10,9 @@ use Keboola\OutputMapping\Writer\FileItem;
 
 class LocalSourcesValidator implements SourcesValidatorInterface
 {
+    public function __construct(private readonly bool $isFailedJob)
+    {
+    }
 
     /**
      * @param FileItem[] $dataItems
@@ -42,11 +45,8 @@ class LocalSourcesValidator implements SourcesValidatorInterface
      * @param FileItem[] $dataItems
      * @param MappingFromRawConfiguration[] $configurationSource
      */
-    public function validatePhysicalFilesWithConfiguration(
-        array $dataItems,
-        array $configurationSource,
-        bool $isFailedJob,
-    ): void {
+    public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource): void
+    {
         $invalidSources = [];
         foreach ($configurationSource as $source) {
             $sourceFound = false;
@@ -68,7 +68,7 @@ class LocalSourcesValidator implements SourcesValidatorInterface
 
             // we don't care about missing sources if the job is failed
             // well, we probably should care about missing write-always sources :-/
-            if (!$isFailedJob) {
+            if (!$this->isFailedJob) {
                 throw new InvalidOutputException(
                     sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
                     404,

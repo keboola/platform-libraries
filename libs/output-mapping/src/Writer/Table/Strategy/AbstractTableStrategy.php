@@ -25,7 +25,7 @@ abstract class AbstractTableStrategy implements StrategyInterface
         protected readonly ProviderInterface $dataStorage,
         protected readonly ProviderInterface $metadataStorage,
         protected readonly string $format,
-        protected readonly bool $isFailedJob = false, // TODO Remove
+        protected readonly bool $isFailedJob = false,
     ) {
     }
 

@@ -21,6 +21,11 @@ class MappingFromRawConfigurationAndPhysicalData
         return $this->dataItem->getName();
     }
 
+    public function getManifestName(): string
+    {
+        return $this->dataItem->getName() . '.manifest';
+    }
+
     public function getConfiguration(): ?MappingFromRawConfiguration
     {
         return $this->mappingItem;

@@ -17,11 +17,6 @@ use Psr\Log\LoggerInterface;
 
 class StoragePreparer
 {
-
-    /**
-     * @param ClientWrapper $clientWrapper
-     * @param LoggerInterface $logger
-     */
     public function __construct(readonly private ClientWrapper $clientWrapper, readonly private LoggerInterface $logger)
     {
     }
@@ -31,9 +26,14 @@ class StoragePreparer
         SystemMetadata $systemMetadata,
     ): MappingStorageSources {
         $bucketCreator = new BucketCreator($this->clientWrapper);
-        $destinationBucket = $bucketCreator->ensureDestinationBucket($processedSource->getDestination(), $systemMetadata);
+        $destinationBucket = $bucketCreator->ensureDestinationBucket(
+            $processedSource->getDestination(),
+            $systemMetadata,
+        );
 
-        $destinationTableInfo = $this->getDestinationTableInfoIfExists($processedSource->getDestination()->getTableId());
+        $destinationTableInfo = $this->getDestinationTableInfoIfExists(
+            $processedSource->getDestination()->getTableId(),
+        );
         if ($destinationTableInfo !== null) {
             $tableStructureModifier = new TableStructureModifier($this->clientWrapper, $this->logger);
             $tableStructureModifier->updateTableStructure(

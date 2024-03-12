@@ -21,8 +21,14 @@ class TableColumnsHelper
     ): void {
         $missingColumns = array_unique(
             array_merge(
-                self::getMissingColumnsFromColumnMetadata($currentTableInfo->getColumns(), $newTableConfiguration->getColumnMetadata()),
-                self::getMissingColumnsFromColumns($currentTableInfo->getColumns(), $newTableConfiguration->getColumns()),
+                self::getMissingColumnsFromColumnMetadata(
+                    $currentTableInfo->getColumns(),
+                    $newTableConfiguration->getColumnMetadata(),
+                ),
+                self::getMissingColumnsFromColumns(
+                    $currentTableInfo->getColumns(),
+                    $newTableConfiguration->getColumns(),
+                ),
             ),
         );
 
@@ -85,8 +91,10 @@ class TableColumnsHelper
         return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
     }
 
-    private static function getMissingColumnsFromColumns(array $currentTableColumns, array $newTableConfigurationColumns): array
-    {
+    private static function getMissingColumnsFromColumns(
+        array $currentTableColumns,
+        array $newTableConfigurationColumns,
+    ): array {
         $configColumns = array_map(function ($columnName): string {
             return ColumnNameSanitizer::sanitize($columnName);
         }, $newTableConfigurationColumns);

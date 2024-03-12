@@ -33,7 +33,11 @@ class LocalTableStrategy extends AbstractTableStrategy
         ];
 
         if ($source->isSliced()) {
-            $loadOptions['dataFileId'] = $this->uploadSlicedFile($source->getPathName(), $source->getSourceName(), $source->getTags());
+            $loadOptions['dataFileId'] = $this->uploadSlicedFile(
+                $source->getPathName(),
+                $source->getSourceName(),
+                $source->getTags(),
+            );
         } else {
             $loadOptions['dataFileId'] = $this->uploadRegularFile($source->getPathName(), $source->getTags());
         }

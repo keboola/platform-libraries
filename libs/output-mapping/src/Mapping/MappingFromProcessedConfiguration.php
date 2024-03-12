@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
@@ -126,5 +128,4 @@ class MappingFromProcessedConfiguration
     {
         return $this->mapping['metadata'] ?? [];
     }
-
 }

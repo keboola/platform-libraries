@@ -35,7 +35,11 @@ class TableStructureModifier
             $destinationBucket->backend,
         );
 
-        if ($this->modifyPrimaryKeyDecider($this->logger, $destinationTableInfo->getPrimaryKey(), $source->getPrimaryKey())) {
+        if ($this->modifyPrimaryKeyDecider(
+            $this->logger,
+            $destinationTableInfo->getPrimaryKey(),
+            $source->getPrimaryKey(),
+        )) {
             $this->modifyPrimaryKey(
                 $this->logger,
                 $this->clientWrapper->getTableAndFileStorageClient(),
@@ -54,8 +58,14 @@ class TableStructureModifier
     ): void {
         $missingColumns = array_unique(
             array_merge(
-                $this->getMissingColumnsFromColumnMetadata($currentTableInfo->getColumns(), $newTableConfiguration->getColumnMetadata()),
-                $this->getMissingColumnsFromColumns($currentTableInfo->getColumns(), $newTableConfiguration->getColumns()),
+                $this->getMissingColumnsFromColumnMetadata(
+                    $currentTableInfo->getColumns(),
+                    $newTableConfiguration->getColumnMetadata(),
+                ),
+                $this->getMissingColumnsFromColumns(
+                    $currentTableInfo->getColumns(),
+                    $newTableConfiguration->getColumns(),
+                ),
             ),
         );
 
@@ -118,8 +128,10 @@ class TableStructureModifier
         return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
     }
 
-    private function getMissingColumnsFromColumns(array $currentTableColumns, array $newTableConfigurationColumns): array
-    {
+    private function getMissingColumnsFromColumns(
+        array $currentTableColumns,
+        array $newTableConfigurationColumns,
+    ): array {
         $configColumns = array_map(function ($columnName): string {
             return ColumnNameSanitizer::sanitize($columnName);
         }, $newTableConfigurationColumns);
@@ -197,8 +209,12 @@ class TableStructureModifier
         }
     }
 
-    private function removePrimaryKey(LoggerInterface $logger, Client $client, string $tableId, array $tablePrimaryKey,): bool
-    {
+    private function removePrimaryKey(
+        LoggerInterface $logger,
+        Client $client,
+        string $tableId,
+        array $tablePrimaryKey,
+    ): bool {
         if (count($tablePrimaryKey) > 0) {
             try {
                 $client->removeTablePrimaryKey($tableId);

@@ -40,7 +40,6 @@ class SlicerDecider
             if ($this->decideSliceFile($combinedSource)) {
                 $filesForSlicing[] = $combinedSource;
             }
-            
         }
         return $filesForSlicing;
     }
@@ -67,7 +66,9 @@ class SlicerDecider
         $hasColumns = $mapping->getColumns();
 
         if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
-            throw new InvalidOutputException('Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.');
+            throw new InvalidOutputException(
+                'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.',
+            );
         }
 
         return true;

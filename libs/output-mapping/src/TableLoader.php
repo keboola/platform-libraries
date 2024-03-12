@@ -13,13 +13,12 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
-use Keboola\OutputMapping\Staging\StagingFactory;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
-use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
@@ -84,7 +83,7 @@ class TableLoader
             }
 
             // If it is a failed job, we only want to upload if the table has write_always = true
-             if ($configuration->isFailedJob() && empty($processedConfig['write_always'])) {
+            if ($configuration->isFailedJob() && empty($processedConfig['write_always'])) {
                 continue;
             }
 
@@ -135,7 +134,10 @@ class TableLoader
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables && !$storageSources->didTableExistBefore() && ($source->hasColumns() && $source->hasColumnMetadata())) {
+        if ($createTypedTables &&
+            !$storageSources->didTableExistBefore() &&
+            $source->hasColumns() && $source->hasColumnMetadata()
+        ) {
             // typovaná tabulka
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
@@ -206,16 +208,25 @@ class TableLoader
     /**
      * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
      */
-    private function getCombinedSources(StrategyInterface $strategy, OutputMappingSettings $configuration, bool $isFailedJob): array
-    {
-        $stagingFactory = new StagingFactory($strategy->getDataStorage()->getPath());
-        $sourcesValidator = $stagingFactory->getSourcesValidator();
+    private function getCombinedSources(
+        StrategyInterface $strategy,
+        OutputMappingSettings $configuration,
+        bool $isFailedJob,
+    ): array {
+        $sourcesValidator = $strategy->getSourcesValidator();
 
-        $physicalDataFiles = $strategy->listSources($configuration->getSourcePathPrefix(), $configuration->getMapping());
+        $physicalDataFiles = $strategy->listSources(
+            $configuration->getSourcePathPrefix(),
+            $configuration->getMapping(),
+        );
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
-        $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping(), $isFailedJob);
+        $sourcesValidator->validatePhysicalFilesWithConfiguration(
+            $physicalDataFiles,
+            $configuration->getMapping(),
+            $isFailedJob,
+        );
         $sourcesValidator->validateManifestWithConfiguration($physicalManifests, $configuration->getMapping());
 
         $mappingCombiner = new Mapping\MappingCombiner();
@@ -230,5 +241,4 @@ class TableLoader
             $physicalManifests,
         );
     }
-
 }

@@ -40,7 +40,10 @@ class TableConfigurationResolver
             $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
         }
         if (isset($config['distribution_key'])) {
-            $config['distribution_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['distribution_key']);
+            $config['distribution_key'] = PrimaryKeyHelper::normalizeKeyArray(
+                $this->logger,
+                $config['distribution_key'],
+            );
         }
 
         if ($configuration->hasTagStagingFilesFeature()) {

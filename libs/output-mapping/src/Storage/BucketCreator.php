@@ -114,7 +114,4 @@ class BucketCreator
             $systemMetadata->getCreatedMetadata(),
         );
     }
-
-
-
 }

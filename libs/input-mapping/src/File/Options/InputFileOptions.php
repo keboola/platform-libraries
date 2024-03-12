@@ -32,9 +32,6 @@ class InputFileOptions
         }
     }
 
-    /**
-     * @return array
-     */
     public function getDefinition(): array
     {
         return $this->definition;

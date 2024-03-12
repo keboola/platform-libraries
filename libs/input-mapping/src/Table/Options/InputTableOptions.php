@@ -63,9 +63,6 @@ class InputTableOptions
         }
     }
 
-    /**
-     * @return array
-     */
     public function getDefinition(): array
     {
         return $this->definition;

@@ -22,12 +22,8 @@ class MappingCombiner
                 return $mapping->getSourceName() === $dataItem->getName();
             });
 
-            if (count($configurationMappings) === 0) {
-                $configurationMappings[] = null;
-            }
-
             /** @var MappingFromRawConfiguration|null $configurationMapping */
-            foreach ($configurationMappings as $configurationMapping) {
+            foreach ($configurationMappings ?: [null] as $configurationMapping) {
                 $combinedSources[] = new MappingFromRawConfigurationAndPhysicalData(
                     $dataItem,
                     $configurationMapping,
@@ -46,22 +42,11 @@ class MappingCombiner
     public function combineSourcesWithManifests(array $sources, array $manifests): array {
         $combinedSources = [];
         foreach ($sources as $source) {
-            $manifestsFiltered = array_filter($manifests, function (FileItem $manifest) use ($source) {
-                return $manifest->getName() === $source->getSourceName() . '.manifest';
-            });
+            $sourceKey = array_search($source->getManifestName(), array_map(fn($v) => $v->getName(), $manifests));
 
-            if (count($manifestsFiltered) === 0) {
-                $manifestsFiltered[] = null;
-            }
-            if (count($manifestsFiltered) > 1) {
-                // TODO: proper exception (LOGIC ? ), should not happen
-                throw new \Exception('Multiple manifests found for source ' . $source->getSourceName());
-            }
-
-            /** @var array<FileItem|null> $ma$manifestsFiltered */
             $combinedSources[] = new MappingFromRawConfigurationAndPhysicalDataWithManifest(
                 $source,
-                reset($manifestsFiltered),
+                $sourceKey ? $manifests[$sourceKey] : null,
             );
         }
         return $combinedSources;

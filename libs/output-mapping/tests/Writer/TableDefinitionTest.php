@@ -175,7 +175,7 @@ class TableDefinitionTest extends AbstractTestCase
             [
                 'Id' => [
                     'type' => Snowflake::TYPE_NUMBER,
-                    'length' => '38,0', // default integer length
+                    'length' => '38,9', // default integer length
                     'nullable' => false,
                 ],
                 'Name' => [
@@ -185,7 +185,7 @@ class TableDefinitionTest extends AbstractTestCase
                 ],
                 'birthweight' => [
                     'type' => Snowflake::TYPE_NUMBER,
-                    'length' => '38,0',
+                    'length' => '38,9',
                     'nullable' => true,
                 ],
                 'created' => [
@@ -225,7 +225,7 @@ class TableDefinitionTest extends AbstractTestCase
                 // INTEGER is an alias of NUMBER in snflk and describe returns the root type
                 'Id' => [
                     'type' => Snowflake::TYPE_NUMBER,
-                    'length' => '38,0', // default integer length
+                    'length' => '38,9', // default integer length
                     'nullable' => false,
                 ],
                 // likewise TEXT is an alias of VARCHAR
@@ -356,7 +356,7 @@ class TableDefinitionTest extends AbstractTestCase
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
             'type' => Snowflake::TYPE_NUMBER,
-            'length' => '38,0', // default integer length
+            'length' => '38,9', // default integer length
             'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [
@@ -366,7 +366,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
             'type' => Snowflake::TYPE_NUMBER,
-            'length' => '38,0',
+            'length' => '38,9',
             'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
@@ -487,7 +487,7 @@ class TableDefinitionTest extends AbstractTestCase
 
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Id'], [
             'type' => Snowflake::TYPE_NUMBER,
-            'length' => '38,0', // default integer length
+            'length' => '38,9', // default integer length
             'nullable' => false,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], [

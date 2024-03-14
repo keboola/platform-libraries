@@ -68,9 +68,6 @@ class PrimaryKeyHelperTest extends AbstractTestCase
         ));
     }
 
-    /**
-     * @return array
-     */
     public function modifyPrimaryKeyDeciderOptionsProvider(): array
     {
         return [

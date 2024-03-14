@@ -11,9 +11,6 @@ class MetadataItem
     private string $provider;
     private string $timestamp;
 
-    /**
-     * @param array $metadataItem
-     */
     public function __construct(array $metadataItem)
     {
         $this->key = (string) $metadataItem['key'];

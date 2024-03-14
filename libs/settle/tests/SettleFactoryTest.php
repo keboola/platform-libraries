@@ -36,12 +36,12 @@ class SettleFactoryTest extends TestCase
 
         $checks = array_filter(
             $logsHandler->getRecords(),
-            fn(array $log) => $log['message'] === 'Checking current value'
+            fn(array $log) => $log['message'] === 'Checking current value',
         );
 
         $fails = array_filter(
             $logsHandler->getRecords(),
-            fn(array $log) => $log['message'] === 'Current value does not match expectation'
+            fn(array $log) => $log['message'] === 'Current value does not match expectation',
         );
 
         // check logs contains 2 value checks and 2 compare failures

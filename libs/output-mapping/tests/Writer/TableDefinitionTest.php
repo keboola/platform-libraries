@@ -185,7 +185,7 @@ class TableDefinitionTest extends AbstractTestCase
                 ],
                 'birthweight' => [
                     'type' => Snowflake::TYPE_NUMBER,
-                    'length' => '38,0',
+                    'length' => '38,9',
                     'nullable' => true,
                 ],
                 'created' => [
@@ -366,7 +366,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
             'type' => Snowflake::TYPE_NUMBER,
-            'length' => '38,0',
+            'length' => '38,9',
             'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [

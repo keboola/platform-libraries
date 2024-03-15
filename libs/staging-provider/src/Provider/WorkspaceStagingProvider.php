@@ -41,6 +41,11 @@ class WorkspaceStagingProvider extends AbstractStagingProvider
         throw new StagingProviderException('Workspace staging provider does not support path.');
     }
 
+    /**
+     * @deprecated
+     * This method is unusuable, because calling getWorkspaceId() will create a new workspace.
+     * https://keboola.atlassian.net/browse/PST-323
+     */
     public function cleanup(): void
     {
         $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);

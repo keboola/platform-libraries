@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\File;
 
-use Keboola\OutputMapping\Writer\File\FileItem;
+use Keboola\OutputMapping\Writer\FileItem;
 use PHPUnit\Framework\TestCase;
 
 class FileItemTest extends TestCase

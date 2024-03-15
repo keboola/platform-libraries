@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -22,9 +23,10 @@ class TagsHelper
         return $storageConfig;
     }
 
-    public static function addSystemTags(array $storageConfig, array $systemMetadata, LoggerInterface $logger): array
+    public static function addSystemTags(array $storageConfig, SystemMetadata $systemMetadata, LoggerInterface $logger): array
     {
-        foreach ($systemMetadata as $systemKey => $systemValue) {
+        // TODO should be moved to SystemMetadata class as "getSystemTags()"
+        foreach ($systemMetadata->asArray() as $systemKey => $systemValue) {
             if (in_array($systemKey, [
                 AbstractWriter::SYSTEM_KEY_COMPONENT_ID,
                 AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID,

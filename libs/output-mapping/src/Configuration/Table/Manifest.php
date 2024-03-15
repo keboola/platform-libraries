@@ -23,6 +23,7 @@ class Manifest extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
+        // TODO Meli by bejt dva validacni classy jedna na manifest a druha na konfiguraci
         $node
             ->children()
                 ->scalarNode('destination')->end()
@@ -77,6 +78,7 @@ class Manifest extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
+                ->arrayNode('tags')->prototype('scalar')->cannotBeEmpty()->end()->end()
             ;
     }
 }

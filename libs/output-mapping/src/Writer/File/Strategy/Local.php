@@ -8,8 +8,9 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
-use Keboola\OutputMapping\Writer\File\FileItem;
 use Keboola\OutputMapping\Writer\File\StrategyInterface;
+use Keboola\OutputMapping\Writer\FileItem;
+use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -24,7 +25,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
             $finder = new Finder();
             $manifests = $finder
                 ->files()->name('*.manifest')
-                ->in($this->dataStorage->getPath() . '/' . $dir)
+                ->in(Path::join($this->metadataStorage->getPath(), $dir))
                 ->depth(0);
         } catch (InvalidArgumentException $e) {
             throw new OutputOperationException(sprintf('Failed to list files: "%s".', $e->getMessage()), $e);
@@ -35,7 +36,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
         foreach ($manifests as $manifest) {
             $path = $fs->makePathRelative($manifest->getPath(), $this->metadataStorage->getPath());
             $pathName = $path . $manifest->getFilename();
-            $manifestFileNames[$pathName] = new FileItem($pathName, $path, $manifest->getFilename());
+            $manifestFileNames[$pathName] = new FileItem($pathName, $path, $manifest->getFilename(), false);
         }
         return $manifestFileNames;
     }
@@ -48,7 +49,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
             $foundFiles = $finder
                 ->files()
                 ->notName('*.manifest')
-                ->in($this->metadataStorage->getPath() . '/' . $dir)
+                ->in(Path::join($this->dataStorage->getPath(), $dir))
                 ->depth(0);
         } catch (InvalidArgumentException $e) {
             throw new OutputOperationException(sprintf('Failed to list files: "%s".', $e->getMessage()), $e);
@@ -58,7 +59,7 @@ class Local extends AbstractFileStrategy implements StrategyInterface
         foreach ($foundFiles as $file) {
             $path = $fs->makePathRelative($file->getPath(), $this->metadataStorage->getPath());
             $pathName = $path . $file->getFilename();
-            $files[$pathName] = new FileItem($pathName, $path, $file->getFilename());
+            $files[$pathName] = new FileItem($pathName, $path, $file->getFilename(), $file->isDir());
         }
         return $files;
     }

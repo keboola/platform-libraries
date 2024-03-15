@@ -11,6 +11,14 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractTableStrategy implements StrategyInterface
 {
+    /**
+     * @param ClientWrapper $clientWrapper
+     * @param LoggerInterface $logger
+     * @param ProviderInterface $dataStorage
+     * @param ProviderInterface $metadataStorage
+     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     * @param bool $isFailedJob
+     */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,

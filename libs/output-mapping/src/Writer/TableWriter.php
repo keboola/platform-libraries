@@ -16,12 +16,12 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\TableLoaderWrapper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
+use Keboola\OutputMapping\Writer\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
@@ -56,7 +56,6 @@ class TableWriter extends AbstractWriter
 
         $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $this->tableConfigurationResolver = new TableConfigurationResolver(
-            $strategyFactory->getClientWrapper(),
             $strategyFactory->getLogger(),
         );
         $this->logger = $strategyFactory->getLogger();
@@ -78,6 +77,17 @@ class TableWriter extends AbstractWriter
         bool $createTypedTables,
         bool $isFailedJob,
     ): LoadTableQueue {
+        $tlw = new TableLoaderWrapper($this->strategyFactory);
+        $ret = $tlw->uploadTables(
+            $sourcePathPrefix,
+            $configuration,
+            $systemMetadata,
+            $stagingStorageOutput,
+            $createTypedTables,
+            $isFailedJob,
+        );
+        return $ret;
+
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
@@ -206,7 +216,11 @@ class TableWriter extends AbstractWriter
                 $destinationBucket['backend'],
             );
 
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
+                $this->logger,
+                $destinationTableInfo,
+                $config['primary_key'],
+            )) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getTableAndFileStorageClient(),
@@ -245,7 +259,7 @@ class TableWriter extends AbstractWriter
 
         $loadOptions = array_merge(
             $loadOptions,
-            $strategy->prepareLoadTaskOptions($source, $config),
+            $strategy->prepareLoadTaskOptions($source),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here

@@ -375,7 +375,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Variable configuration is invalid: Unrecognized option "invalid" under "variables". ' .
+            'Variable configuration is invalid: Unrecognized option "invalid" under "configuration". ' .
             'Available option is "variables".',
         );
         $variableResolver->resolveVariables($configuration, 'non-existent', null);
@@ -413,7 +413,7 @@ class ConfigurationVariablesResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Variable values configuration is invalid: Unrecognized option "invalid" under "values". ' .
+            'Variable values configuration is invalid: Unrecognized option "invalid" under "configuration". ' .
             'Available option is "values".',
         );
         $variableResolver->resolveVariables($configuration, $vRowId, []);

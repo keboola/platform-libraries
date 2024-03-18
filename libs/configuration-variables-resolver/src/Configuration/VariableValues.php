@@ -10,7 +10,7 @@ class VariableValues extends AbstractConfiguration
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('values');
+        $treeBuilder = new TreeBuilder('configuration');
         $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->children()

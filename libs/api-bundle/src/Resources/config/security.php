@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
-use Keboola\ApiBundle\ServiceClient\ServiceClient;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\PermissionChecker\PermissionChecker;
+use Keboola\ServiceClient\ServiceClient;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\abstract_arg;

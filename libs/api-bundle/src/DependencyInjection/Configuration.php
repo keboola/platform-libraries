@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\DependencyInjection;
 
-use Keboola\ApiBundle\ServiceClient\ServiceDnsType;
+use Keboola\ServiceClient\ServiceDnsType;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 

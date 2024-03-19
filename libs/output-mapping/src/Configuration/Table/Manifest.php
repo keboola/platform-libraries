@@ -77,6 +77,13 @@ class Manifest extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
+            ->end()
+            ->validate()
+                ->ifTrue(fn($values) =>
+                    isset($values['delete_where_column']) && $values['delete_where_column'] !== '' &&
+                    isset($values['delete_where_values']) && count($values['delete_where_values']) === 0)
+                ->thenInvalid('When "delete_where_column" option is set, then the "delete_where_values" is required.')
+            ->end()
             ;
     }
 }

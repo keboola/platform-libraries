@@ -156,4 +156,32 @@ class ManifestTest extends TestCase
 
         self::assertEquals($expectedArray, $parsedConfig);
     }
+
+    /** @dataProvider provideDeleteWhereColumnData */
+    public function testWhereColumnSetButWhereValuesInvalid(array $config): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
+            'Invalid configuration for path "table": When "delete_where_column" option is set, ' .
+            'then the "delete_where_values" is required.',
+        );
+        (new Table\Manifest())->parse(['config' => $config]);
+    }
+
+    public function provideDeleteWhereColumnData(): array
+    {
+        return [
+            'Empty delete_where_values' => [
+                'config' => [
+                    'delete_where_column' => 'col',
+                    'delete_where_values' => [],
+                ],
+            ],
+            'Empty delete_where_values items' => [
+                'config' => [
+                    'delete_where_column' => 'col',
+                ],
+            ],
+        ];
+    }
 }

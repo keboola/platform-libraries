@@ -9,9 +9,9 @@ use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
-use Keboola\ApiBundle\ServiceClient\ServiceClient;
-use Keboola\ApiBundle\ServiceClient\ServiceDnsType;
 use Keboola\ManageApi\Client as ManageApiClient;
+use Keboola\ServiceClient\ServiceClient;
+use Keboola\ServiceClient\ServiceDnsType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -24,7 +24,7 @@ class KeboolaApiExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('security.php');
+        $loader->load('api_bundle.php');
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\ManageApiToken;
 
-use Keboola\ApiBundle\ServiceClient\ServiceClient;
 use Keboola\ManageApi\Client as ManageApiClient;
+use Keboola\ServiceClient\ServiceClient;
 
 class ManageApiClientFactory
 {

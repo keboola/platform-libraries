@@ -24,7 +24,7 @@ class KeboolaApiExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('security.php');
+        $loader->load('api_bundle.php');
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);

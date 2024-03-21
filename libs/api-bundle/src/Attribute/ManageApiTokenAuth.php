@@ -10,7 +10,8 @@ use Attribute;
 class ManageApiTokenAuth implements AuthAttributeInterface
 {
     public function __construct(
-        readonly array $scopes = [],
+        public readonly array $scopes = [],
+        public readonly ?bool $isSuperAdmin = null,
     ) {
     }
 }

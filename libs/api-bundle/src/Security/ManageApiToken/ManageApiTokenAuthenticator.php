@@ -47,6 +47,14 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
         assert($authAttribute instanceof ManageApiTokenAuth);
         assert($token instanceof ManageApiToken);
 
+        if ($authAttribute->isSuperAdmin === false && $token->isSuperAdmin() === true) {
+            throw new AccessDeniedException('Authentication token must not be super admin');
+        }
+
+        if ($authAttribute->isSuperAdmin === true && $token->isSuperAdmin() === false) {
+            throw new AccessDeniedException('Authentication token is not super admin');
+        }
+
         $missingScopes = array_diff($authAttribute->scopes, $token->getScopes());
         if (count($missingScopes) > 0) {
             throw new AccessDeniedException(sprintf(

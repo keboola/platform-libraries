@@ -12,6 +12,7 @@ class ManageApiToken implements TokenInterface
         private readonly int $id,
         private readonly string $description,
         /** @var list<string> */ private readonly array $scopes,
+        private readonly bool $isSuperAdmin,
     ) {
     }
 
@@ -21,6 +22,7 @@ class ManageApiToken implements TokenInterface
             $data['id'],
             $data['description'],
             $data['scopes'],
+            $data['user']['isSuperAdmin'] ?? false,
         );
     }
 
@@ -64,5 +66,10 @@ class ManageApiToken implements TokenInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->id;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->isSuperAdmin;
     }
 }

@@ -1,0 +1,112 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Keboola\ApiBundle\Tests\Security\StorageApiToken;
+
+use Exception;
+use Generator;
+use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
+use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\MaintenanceException;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+
+class StorageApiTokenAuthenticatorTest extends TestCase
+{
+    public function testAuthenticateTokenSuccess(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::once())
+            ->method('verifyToken')
+            ->willReturn([]);
+        $clientMock
+            ->method('getTokenString')
+            ->willReturn('');
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock
+            ->method('getBasicClient')
+            ->willReturn($clientMock);
+
+        $clientRequestFactoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $clientRequestFactoryMock
+            ->method('createClientWrapper')
+            ->willReturn($clientWrapperMock);
+
+        $requestStack = new RequestStack();
+        $request = Request::create('https://keboola.com');
+        $request->headers->add([StorageClientRequestFactory::TOKEN_HEADER => 'token']);
+        $requestStack->push($request);
+
+        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock, $requestStack);
+        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token');
+    }
+
+    /**
+     * @dataProvider provideExceptionData
+     * @param class-string<Exception> $expectedExceptionClass
+     */
+    public function testAuthenticateTokenFailure(
+        ClientException $clientException,
+        string $expectedExceptionClass,
+        string $expectedExceptionMessage,
+        int $expectedExceptionCode,
+    ): void {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->method('verifyToken')
+            ->willThrowException($clientException);
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock
+            ->method('getBasicClient')
+            ->willReturn($clientMock);
+
+        $clientRequestFactoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $clientRequestFactoryMock
+            ->method('createClientWrapper')
+            ->willReturn($clientWrapperMock);
+
+        $requestStack = new RequestStack();
+        $request = Request::create('https://keboola.com');
+        $request->headers->add([StorageClientRequestFactory::TOKEN_HEADER => 'token']);
+        $requestStack->push($request);
+
+        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock, $requestStack);
+
+        self::expectException($expectedExceptionClass);
+        self::expectExceptionMessage($expectedExceptionMessage);
+        self::expectExceptionCode($expectedExceptionCode);
+        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token');
+    }
+
+    public function provideExceptionData(): Generator
+    {
+        yield 'user exception' => [
+            'clientException' => new ClientException('Invalid access token', 401),
+            'expectedExceptionClass' => CustomUserMessageAuthenticationException::class,
+            'expectedExceptionMessage' => 'Invalid access token',
+            'expectedExceptionCode' => 401,
+        ];
+        yield 'maintenance exception' => [
+            'clientException' => new MaintenanceException('Maintenance', null, 'token'),
+            'expectedExceptionClass' => MaintenanceException::class,
+            'expectedExceptionMessage' => 'Maintenance',
+            'expectedExceptionCode' => 503,
+        ];
+        yield 'server exception' => [
+            'clientException' => new ClientException('Invalid access token', 500),
+            'expectedExceptionClass' => ClientException::class,
+            'expectedExceptionMessage' => 'Invalid access token',
+            'expectedExceptionCode' => 500,
+        ];
+    }
+}

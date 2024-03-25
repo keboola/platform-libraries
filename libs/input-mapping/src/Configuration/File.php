@@ -20,6 +20,8 @@ class File extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
         $node
             ->children()
                 ->arrayNode('file_ids')
@@ -133,5 +135,7 @@ class File extends Configuration
                 ->thenInvalid('The file_ids filter can be combined only with overwrite flag and processed_tags')
             ->end()
         ;
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
     }
 }

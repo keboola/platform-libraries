@@ -23,6 +23,8 @@ class Manifest extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
         $node
             ->children()
                 ->scalarNode('destination')->end()
@@ -85,5 +87,7 @@ class Manifest extends Configuration
                 ->thenInvalid('When "delete_where_column" option is set, then the "delete_where_values" is required.')
             ->end()
             ;
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
     }
 }

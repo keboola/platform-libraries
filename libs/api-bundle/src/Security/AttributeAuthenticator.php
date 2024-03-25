@@ -34,7 +34,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
         return count($this->getControllerAuthAttributes($request)) > 0;
     }
 
-    public function authenticate(Request $request): Passport
+    public function authenticate(Request $request): SelfValidatingPassport
     {
         $authAttributes = $this->getControllerAuthAttributes($request);
 
@@ -46,10 +46,11 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $token = $request->headers->get($tokenHeader);
 
             if ($token === null) {
-                throw new CustomUserMessageAuthenticationException(sprintf(
+                $error = new CustomUserMessageAuthenticationException(sprintf(
                     'Authentication header "%s" is missing',
                     $tokenHeader,
                 ));
+                continue;
             }
 
             $authAttributeInstance = $authAttribute->newInstance();
@@ -63,12 +64,13 @@ class AttributeAuthenticator extends AbstractAuthenticator
             try {
                 $authenticator->authorizeToken($authAttributeInstance, $authorizedToken);
             } catch (AccessDeniedException $e) {
-                throw new CustomUserMessageAuthenticationException(
+                $error = new CustomUserMessageAuthenticationException(
                     $e->getMessage(),
                     [],
                     Response::HTTP_FORBIDDEN,
                     $e,
                 );
+                continue;
             }
 
             $userBadge = new UserBadge(

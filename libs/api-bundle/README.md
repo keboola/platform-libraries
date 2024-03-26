@@ -27,6 +27,19 @@ keboola_api:
   default_service_dns_type: internal
 ```
 
+#### Using ENV variables
+
+If you need to use ENV variable to configure the `default_service_dns_type`, make sure you provide some default value,
+otherwise the validation will fail with error `The value "" is not allowed for path "keboola_api.default_service_dns_type".`
+
+```yaml
+parameters:
+  env(API_DNS_TYPE): internal
+
+keboola_api:
+  default_service_dns_type: '%env(API_DNS_TYPE)%'
+```
+
 ### Controller authentication using attributes
 To use authentication using attributes, configure firewall to use the `keboola.api_bundle.security.attribute_authenticator`:
 ```yaml 

@@ -20,6 +20,8 @@ class Manifest extends Configuration
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
         $node
             ->children()
                 ->integerNode('id')->isRequired()->end()
@@ -32,5 +34,7 @@ class Manifest extends Configuration
                 ->integerNode('max_age_days')->treatNullLike(0)->end()
                 ->integerNode('size_bytes')->end()
             ;
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
     }
 }

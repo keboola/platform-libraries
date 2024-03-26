@@ -20,6 +20,8 @@ class Table extends Configuration
 
     public static function configureNode(NodeDefinition $node): void
     {
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
         /** @var ArrayNodeDefinition $node */
         $node
             ->children()
@@ -79,5 +81,7 @@ class Table extends Configuration
                 return empty($v['source']) && empty($v['source_search']);
             })
             ->thenInvalid('Either "source" or "source_search" must be configured.');
+        // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
+        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
     }
 }

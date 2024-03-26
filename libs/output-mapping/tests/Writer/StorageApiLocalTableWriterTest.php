@@ -1844,13 +1844,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 'destination' => $tableId,
             ],
         ];
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->dropTable($tableId);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
 
         $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
 
@@ -1894,13 +1887,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 'destination' => $tableId,
             ],
         ];
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->dropTable($tableId);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-        }
 
         $csv = new CsvFile($root . '/table_header.csv');
         $csv->writeRow(['Id', 'Name']);

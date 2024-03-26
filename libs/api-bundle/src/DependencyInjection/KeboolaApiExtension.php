@@ -31,6 +31,10 @@ class KeboolaApiExtension extends Extension
 
         $config['app_name'] = $container->resolveEnvPlaceholders($config['app_name'], true);
 
+        $defaultServiceDnsType = $container->resolveEnvPlaceholders($config['default_service_dns_type'], true);
+        assert(is_string($defaultServiceDnsType) || $defaultServiceDnsType instanceof ServiceDnsType);
+        $container->setParameter('keboola_api_bundle.default_service_dns_type', $defaultServiceDnsType);
+
         $authenticators = [];
         $this->setupStorageApiAuthenticator($container, $authenticators);
         $this->setupManageApiAuthenticator($container, $config, $authenticators);
@@ -40,8 +44,6 @@ class KeboolaApiExtension extends Extension
                 $authenticators,
             ])
         ;
-
-        $this->setupServiceClient($container, $config);
     }
 
     private function setupStorageApiAuthenticator(ContainerBuilder $container, array &$authenticators): void
@@ -77,12 +79,5 @@ class KeboolaApiExtension extends Extension
         ;
 
         $authenticators[ManageApiTokenAuth::class] = new Reference(ManageApiTokenAuthenticator::class);
-    }
-
-    private function setupServiceClient(ContainerBuilder $container, array $config): void
-    {
-        $container->getDefinition(ServiceClient::class)
-            ->setArgument('$defaultDnsType', ServiceDnsType::from($config['default_service_dns_type']))
-        ;
     }
 }

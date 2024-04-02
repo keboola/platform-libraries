@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\RequestMapper;
 
+use CuyZ\Valinor\Mapper\Source\Exception\InvalidSource;
+use CuyZ\Valinor\Mapper\Source\JsonSource;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestMapperAttributeInterface;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestPayloadObject;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestQueryObject;
-use CuyZ\Valinor\Mapper\Source\Exception\InvalidSource;
-use CuyZ\Valinor\Mapper\Source\JsonSource;
 use Keboola\ApiBundle\RequestMapper\Exception\RequestMapperException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,7 +36,7 @@ class ArgumentResolver implements ValueResolverInterface
 
         if (count($mapperAttributes) > 1) {
             throw new RequestMapperException(sprintf(
-                'Can\'t map argument %s, argument can have only one mapper attribute',
+                'Can\'t map argument "%s", argument can have only one mapper attribute',
                 $argument->getName(),
             ));
         }
@@ -45,14 +45,14 @@ class ArgumentResolver implements ValueResolverInterface
         $argumentType = $argument->getType();
         if ($argumentType === null || $argumentType === '') {
             throw new RequestMapperException(sprintf(
-                'Can\'t map argument %s, argument type not set',
+                'Can\'t map argument "%s", argument type not set',
                 $argument->getName(),
             ));
         }
 
         if (!class_exists($argumentType)) {
             throw new RequestMapperException(sprintf(
-                'Can\'t map argument %s, class %s does not exist',
+                'Can\'t map argument "%s", class "%s" does not exist',
                 $argument->getName(),
                 $argumentType,
             ));
@@ -64,7 +64,7 @@ class ArgumentResolver implements ValueResolverInterface
             yield $this->resolveRequestQueryObject($request, $argumentType, $attribute);
         } else {
             throw new RequestMapperException(sprintf(
-                'Can\'t map argument %s, unsupported mapper attribute %s',
+                'Can\'t map argument "%s", unsupported mapper attribute "%s"',
                 $argument->getName(),
                 get_class($attribute),
             ));

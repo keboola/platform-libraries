@@ -6,10 +6,11 @@ namespace Keboola\ApiBundle\RequestMapper\Exception;
 
 use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\CommonExceptions\UserExceptionInterface;
-use RuntimeException;
 use Throwable;
 
-class InvalidPayloadException extends RequestMapperException implements UserExceptionInterface, ExceptionWithContextInterface
+class InvalidPayloadException extends RequestMapperException implements
+    UserExceptionInterface,
+    ExceptionWithContextInterface
 {
     public function __construct(
         string $message,

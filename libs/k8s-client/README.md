@@ -86,8 +86,8 @@ terraform -chdir=./provisioning/local init -backend-config="key=k8s-client/${NAM
 terraform -chdir=./provisioning/local apply
 ./provisioning/local/update-env.sh azure # or aws
 
-docker-compose run --rm dev composer install
-docker-compose run --rm dev composer ci
+docker compose run --rm dev composer install
+docker compose run --rm dev composer ci
 ```
 
 

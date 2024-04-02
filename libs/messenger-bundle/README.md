@@ -36,7 +36,7 @@ Prerequisites:
 * `az` CLI with configured for Keboola DEV Platform Services Team subscription
     * run `az account set --subscription c5182964-8dca-42c8-a77a-fa2a3c6946ea`
 * installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
-* installed `docker` and `docker-compose` to run & develop the app
+* installed `docker` and `docker compose` to run & develop the app
 
 TL;DR:
 ```bash
@@ -50,8 +50,8 @@ terraform -chdir=./provisioning/local init -backend-config="key=messenger-bundle
 terraform -chdir=./provisioning/local apply
 ./provisioning/local/update-env.sh aws # or azure
 
-docker-compose run --rm dev-messenger-bundle composer install
-docker-compose run --rm dev-messenger-bundle composer ci
+docker compose run --rm dev-messenger-bundle composer install
+docker compose run --rm dev-messenger-bundle composer ci
 ```
 
 ## Reverse-engineering events

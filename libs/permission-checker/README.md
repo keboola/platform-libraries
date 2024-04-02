@@ -26,8 +26,8 @@ Prerequisites:
 
 TL;DR:
 ```
-docker-compose run --rm dev-permission-checker composer install
-docker-compose run --rm dev-permission-checker composer ci
+docker compose run --rm dev-permission-checker composer install
+docker compose run --rm dev-permission-checker composer ci
 ```
 
 ## Implementing new checker

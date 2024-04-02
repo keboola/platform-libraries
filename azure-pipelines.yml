@@ -106,7 +106,7 @@ stages:
       - job: build
         displayName: Build Docker Images
         steps:
-          - script: docker-compose --profile ci build
+          - script: docker compose --profile ci build
             displayName: Build Docker images
 
           - script: docker image save $(docker image ls --filter 'reference=keboola/*' --format '{{.Repository}}:latest') -o $(Build.ArtifactStagingDirectory)/docker-images.tar

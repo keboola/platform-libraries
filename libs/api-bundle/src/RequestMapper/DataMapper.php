@@ -16,7 +16,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class DataMapper
 {
     public function __construct(
-        #[Autowire(service: 'valinor.mapper_builder')]
         private readonly MapperBuilder $mapperBuilder,
         private readonly ValidatorInterface $validator,
     ) {

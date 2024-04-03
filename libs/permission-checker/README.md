@@ -22,12 +22,12 @@ $checker->checkPermissions($storageToken, new CanRunJob(BranchType::DEFAULT, 'ke
 
 ## Development
 Prerequisites:
-* installed `docker` with `docker compose` to run & develop the library
+* installed `docker` to run & develop the library
 
 TL;DR:
 ```
-docker-compose run --rm dev-permission-checker composer install
-docker-compose run --rm dev-permission-checker composer ci
+docker compose run --rm dev-permission-checker composer install
+docker compose run --rm dev-permission-checker composer ci
 ```
 
 ## Implementing new checker

@@ -19,10 +19,10 @@ jobs:
           AWS_ACCESS_KEY_ID: $(MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID)
           AWS_SECRET_ACCESS_KEY: $(MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY)
 
-      - script: docker-compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
+      - script: docker compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
         displayName: Run tests
 
-      - script: docker-compose logs
+      - script: docker compose logs
         displayName: Show logs
         condition: failed()
 
@@ -46,10 +46,10 @@ jobs:
           AWS_ACCESS_KEY_ID: $(MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID)
           AWS_SECRET_ACCESS_KEY: $(MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY)
 
-      - script: docker-compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
+      - script: docker compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
         displayName: Run tests
 
-      - script: docker-compose logs
+      - script: docker compose logs
         displayName: Show logs
         condition: failed()
 
@@ -73,9 +73,9 @@ jobs:
           AWS_ACCESS_KEY_ID: $(MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID)
           AWS_SECRET_ACCESS_KEY: $(MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY)
 
-      - script: docker-compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
+      - script: docker compose run --rm dev-messenger-bundle bash -c "composer install && composer ci"
         displayName: Run tests
 
-      - script: docker-compose logs
+      - script: docker compose logs
         displayName: Show logs
         condition: failed()

@@ -6,11 +6,11 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use InvalidArgumentException;
 use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\OutputMapping\Writer\SourceInterface;
-use Keboola\OutputMapping\Writer\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\SqlWorkspaceItemSourceFactory;
-use Keboola\OutputMapping\Writer\Table\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -61,7 +61,7 @@ class SqlWorkspaceTableStrategyTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Argument $source is expected to be instance of '
-            . 'Keboola\OutputMapping\Writer\Table\WorkspaceItemSource');
+            . 'Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource');
 
         $strategy->prepareLoadTaskOptions($this->createMock(SourceInterface::class), []);
     }

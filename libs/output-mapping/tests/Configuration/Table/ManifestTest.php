@@ -29,6 +29,7 @@ class ManifestTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'tags' => [],
         ];
 
         $processedConfiguration = (new Table\Manifest())->parse(['config' => $config]);
@@ -51,6 +52,7 @@ class ManifestTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'tags' => [],
         ];
 
         $expectedArray = $config;
@@ -101,6 +103,7 @@ class ManifestTest extends TestCase
             'enclosure' => '"',
             'column_metadata' => [],
             'write_always' => false,
+            'tags' => [],
         ];
         $expectedArray['metadata'] = $config['metadata'];
 
@@ -148,6 +151,7 @@ class ManifestTest extends TestCase
             'enclosure' => '"',
             'metadata' => [],
             'write_always' => false,
+            'tags' => [],
         ];
 
         $expectedArray['column_metadata'] = $config['column_metadata'];

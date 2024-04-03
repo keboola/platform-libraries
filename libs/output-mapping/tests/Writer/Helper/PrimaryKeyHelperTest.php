@@ -8,7 +8,6 @@ use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
-use Monolog\Logger;
 use Psr\Log\NullLogger;
 
 class PrimaryKeyHelperTest extends AbstractTestCase
@@ -63,8 +62,8 @@ class PrimaryKeyHelperTest extends AbstractTestCase
     ): void {
         self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(
             new NullLogger(),
-            $currentTableInfo,
-            $newTableConfiguration,
+            $currentTableInfo['primaryKey'],
+            $newTableConfiguration['primary_key'],
         ));
     }
 

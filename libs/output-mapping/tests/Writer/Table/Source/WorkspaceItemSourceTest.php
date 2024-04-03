@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Source;
 
-use Keboola\OutputMapping\Writer\Table\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use PHPUnit\Framework\TestCase;
 
 class WorkspaceItemSourceTest extends TestCase

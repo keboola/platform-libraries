@@ -22,7 +22,7 @@ $checker->checkPermissions($storageToken, new CanRunJob(BranchType::DEFAULT, 'ke
 
 ## Development
 Prerequisites:
-* installed `docker` with `docker compose` to run & develop the library
+* installed `docker` to run & develop the library
 
 TL;DR:
 ```

@@ -36,7 +36,7 @@ Prerequisites:
 * `az` CLI with configured for Keboola DEV Platform Services Team subscription
     * run `az account set --subscription c5182964-8dca-42c8-a77a-fa2a3c6946ea`
 * installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
-* installed `docker` and `docker compose` to run & develop the app
+* installed `docker` to run & develop the app
 
 TL;DR:
 ```bash

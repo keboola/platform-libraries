@@ -12,9 +12,6 @@ class SystemMetadata
 {
     private array $systemMetadata;
 
-    /**
-     * @param array $systemMetadata
-     */
     public function __construct(array $systemMetadata)
     {
         $this->systemMetadata = $systemMetadata;

@@ -24,9 +24,6 @@ class OutputMappingSettings
 
     private bool $isFailedJob;
 
-    /**
-     * @param array $configuration
-     */
     public function __construct(
         array $configuration,
         string $sourcePathPrefix,

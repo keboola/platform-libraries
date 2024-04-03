@@ -16,6 +16,51 @@ use PHPUnit\Framework\TestCase;
 
 class SandboxesApiClientTest extends TestCase
 {
+    public function testGetSandbox(): void
+    {
+        $responseBody = [
+            'id' => 'sandbox-id',
+            'projectId' => 'project-id',
+            'tokenId' => 'token-id',
+            'componentId' => 'component-id-2',
+            'configurationId' => '124',
+            'configurationVersion' => '5',
+            'type' => 'sandbox-type',
+            'active' => false,
+        ];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new SandboxesApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-science.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->getSandbox('sandbox-id');
+
+        self::assertEquals($responseBody, $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-science.keboola.com/sandboxes/sandbox-id',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
+
     public function testCreateSandbox(): void
     {
         $responseBody = [

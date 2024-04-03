@@ -18,6 +18,16 @@ class SandboxesApiClient
         $this->apiClient = new ApiClient($configuration);
     }
 
+    public function getSandbox(string $sandboxId): array
+    {
+        return $this->apiClient->sendRequestAndDecodeResponse(
+            new Request(
+                'GET',
+                sprintf('/sandboxes/%s', $sandboxId),
+            ),
+        );
+    }
+
     public function createSandbox(array $payload): array
     {
         return $this->apiClient->sendRequestAndDecodeResponse(

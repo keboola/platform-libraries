@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
 class MappingFromProcessedConfiguration
 {
@@ -32,6 +33,16 @@ class MappingFromProcessedConfiguration
     public function getSourceName(): string
     {
         return $this->source->getSourceName();
+    }
+
+    public function getWorkspaceId(): string
+    {
+        return $this->source->getWorkspaceId();
+    }
+
+    public function getDataObject(): string
+    {
+        return $this->source->getDataObject();
     }
 
     public function getDestination(): MappingDestination
@@ -84,7 +95,7 @@ class MappingFromProcessedConfiguration
         return !empty($this->mapping['column_metadata']);
     }
 
-    public function isIncremental()
+    public function isIncremental(): bool
     {
         return $this->mapping['incremental'];
     }
@@ -127,5 +138,13 @@ class MappingFromProcessedConfiguration
     public function getMetadata(): array
     {
         return $this->mapping['metadata'] ?? [];
+    }
+
+    /**
+     * @return class-string<SourceInterface>
+     */
+    public function getItemSourceClass(): string
+    {
+        return $this->source->getItemSourceClass();
     }
 }

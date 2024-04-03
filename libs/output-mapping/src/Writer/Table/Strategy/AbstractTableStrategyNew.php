@@ -6,10 +6,11 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
+use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-abstract class AbstractTableStrategy implements StrategyInterface
+abstract class AbstractTableStrategyNew implements StrategyInterfaceNew
 {
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,

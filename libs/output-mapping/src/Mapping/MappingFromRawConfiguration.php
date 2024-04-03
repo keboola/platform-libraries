@@ -11,7 +11,6 @@ class MappingFromRawConfiguration
     private string $delimiter;
     private string $enclosure;
     private array $columns;
-    private string $destination;
     private string $source;
     private array $mappingItem;
 
@@ -19,7 +18,6 @@ class MappingFromRawConfiguration
     {
         $this->mappingItem = $mappingItem;
         $this->source = $mappingItem['source'];
-        $this->destination = $mappingItem['destination'];
         $this->columns = $mappingItem['columns'] ?? [];
         $this->delimiter = $mappingItem['delimiter'] ?? Manifest::DEFAULT_DELIMITER;
         $this->enclosure = $mappingItem['enclosure'] ?? Manifest::DEFAULT_ENCLOSURE;

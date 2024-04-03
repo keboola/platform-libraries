@@ -6,7 +6,7 @@ namespace Keboola\OutputMapping;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\Staging\StrategyFactory;
-use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
+use Keboola\OutputMapping\Writer\Table\TableConfigurationResolverNew;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -17,19 +17,12 @@ class TableLoaderWrapper
     protected LoggerInterface $logger;
 
     protected StrategyFactory $strategyFactory;
-    private Metadata $metadataClient;
-    private TableConfigurationResolver $tableConfigurationResolver;
 
     public function __construct(StrategyFactory $strategyFactory)
     {
         $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->logger = $strategyFactory->getLogger();
         $this->strategyFactory = $strategyFactory;
-
-        $this->metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
-        $this->tableConfigurationResolver = new TableConfigurationResolver(
-            $strategyFactory->getLogger(),
-        );
         $this->logger = $strategyFactory->getLogger();
     }
 

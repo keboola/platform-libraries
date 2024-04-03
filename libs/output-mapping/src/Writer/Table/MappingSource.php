@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
-use Keboola\OutputMapping\Writer\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Symfony\Component\Finder\SplFileInfo;
 
 class MappingSource

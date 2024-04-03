@@ -25,7 +25,7 @@ class TableInfo
         return $this->tableInfo['isTyped'];
     }
 
-    public function getPrimaryKey()
+    public function getPrimaryKey(): array
     {
         return $this->tableInfo['primaryKey'];
     }

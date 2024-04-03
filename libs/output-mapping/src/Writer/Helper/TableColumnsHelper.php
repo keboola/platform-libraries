@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\Datatype\Definition\BaseType;
-use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
-use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
@@ -15,20 +13,14 @@ class TableColumnsHelper
 {
     public static function addMissingColumns(
         Client $client,
-        TableInfo $currentTableInfo,
-        MappingFromProcessedConfiguration $newTableConfiguration,
+        array $currentTableInfo,
+        array $newTableConfiguration,
         string $backendType,
     ): void {
         $missingColumns = array_unique(
             array_merge(
-                self::getMissingColumnsFromColumnMetadata(
-                    $currentTableInfo->getColumns(),
-                    $newTableConfiguration->getColumnMetadata(),
-                ),
-                self::getMissingColumnsFromColumns(
-                    $currentTableInfo->getColumns(),
-                    $newTableConfiguration->getColumns(),
-                ),
+                self::getMissingColumnsFromColumnMetadata($currentTableInfo, $newTableConfiguration),
+                self::getMissingColumnsFromColumns($currentTableInfo, $newTableConfiguration),
             ),
         );
 
@@ -36,17 +28,17 @@ class TableColumnsHelper
             return;
         }
 
-        $defaultBaseTypeValue = $currentTableInfo->isTyped() === true ? BaseType::STRING : null;
+        $defaultBaseTypeValue = $currentTableInfo['isTyped'] === true ? BaseType::STRING : null;
         $missingColumnsData = [];
-        if ($currentTableInfo->isTyped() === true) {
-            foreach ($newTableConfiguration->getColumnMetadata() as $columnName => $columnMetadata) {
+        if (!empty($newTableConfiguration['column_metadata']) && $currentTableInfo['isTyped'] === true) {
+            foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
                 $columnName = ColumnNameSanitizer::sanitize($columnName);
 
                 if (!in_array($columnName, $missingColumns, true)) {
                     continue;
                 }
 
-                $tableMetadata = $newTableConfiguration->getMetadata();
+                $tableMetadata = $newTableConfiguration['metadata'] ?? [];
                 $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
                     ->createTableDefinitionColumn($columnName, $columnMetadata);
 
@@ -72,7 +64,7 @@ class TableColumnsHelper
         foreach ($missingColumnsData as $missingColumnData) {
             [$columnName, $columnDefinition, $columnBasetype] = $missingColumnData;
             $client->addTableColumn(
-                $currentTableInfo->getId(),
+                $currentTableInfo['id'],
                 $columnName,
                 $columnDefinition,
                 $columnBasetype,
@@ -81,24 +73,32 @@ class TableColumnsHelper
     }
 
     private static function getMissingColumnsFromColumnMetadata(
-        array $currentTableColumns,
-        array $newTableConfigurationColumnMetadata,
+        array $currentTableInfo,
+        array $newTableConfiguration,
     ): array {
-        $configColumns = array_map(function ($columnName): string {
-            return ColumnNameSanitizer::sanitize($columnName);
-        }, array_keys($newTableConfigurationColumnMetadata));
+        $tableColumns = $currentTableInfo['columns'];
+        $configColumns = [];
 
-        return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
+        if (!empty($newTableConfiguration['column_metadata'])) {
+            $configColumns = array_map(function ($columnName): string {
+                return ColumnNameSanitizer::sanitize($columnName);
+            }, array_keys($newTableConfiguration['column_metadata']));
+        }
+
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 
-    private static function getMissingColumnsFromColumns(
-        array $currentTableColumns,
-        array $newTableConfigurationColumns,
-    ): array {
-        $configColumns = array_map(function ($columnName): string {
-            return ColumnNameSanitizer::sanitize($columnName);
-        }, $newTableConfigurationColumns);
+    private static function getMissingColumnsFromColumns(array $currentTableInfo, array $newTableConfiguration): array
+    {
+        $tableColumns = $currentTableInfo['columns'];
+        $configColumns = [];
 
-        return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
+        if (!empty($newTableConfiguration['columns'])) {
+            $configColumns = array_map(function ($columnName): string {
+                return ColumnNameSanitizer::sanitize($columnName);
+            }, $newTableConfiguration['columns']);
+        }
+
+        return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }
 }

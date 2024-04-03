@@ -3,7 +3,6 @@ parameters:
     checkMissingIterableValueType: false
     paths:
         - src
-        - tests
     ignoreErrors:
 
 includes:

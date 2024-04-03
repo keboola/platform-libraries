@@ -19,4 +19,6 @@ interface LoadTableTaskInterface
     public function getStorageJobId(): string;
 
     public function isUsingFreshlyCreatedTable(): bool;
+
+    public function addMetadata(MetadataInterface $metadataDefinition): void;
 }

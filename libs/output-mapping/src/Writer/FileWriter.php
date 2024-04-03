@@ -113,7 +113,7 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata);
+                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata, $this->logger);
                 if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()) {
                     $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
                 }

@@ -55,7 +55,7 @@ class OutputMappingSettings
         return $this->storageApiToken->hasFeature(self::TAG_STAGING_FILES_FEATURE);
     }
 
-    public function getSourcePathPrefix()
+    public function getSourcePathPrefix(): string
     {
         return $this->sourcePathPrefix;
     }

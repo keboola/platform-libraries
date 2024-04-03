@@ -13,7 +13,7 @@ use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 class TableConfigurationValidator
 {
     public function validate(
-        StrategyInterface $strategy,
+        StrategyInterfaceNew $strategy,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
         array $config,
     ): array {

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Mapping;
 
-use Keboola\OutputMapping\Lister\PhysicalItem;
 use Keboola\OutputMapping\Writer\FileItem;
-use Keboola\OutputMapping\Writer\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
 class MappingCombiner
 {
@@ -18,6 +17,7 @@ class MappingCombiner
     public function combineDataItemsWithConfigurations(array $dataItems, array $configurations): array
     {
         $combinedSources = [];
+        /** @var FileItem $dataItem */
         foreach ($dataItems as $dataItem) {
             $configurationMappings = array_filter(
                 $configurations,

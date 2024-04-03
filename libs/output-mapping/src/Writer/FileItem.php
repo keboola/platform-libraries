@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+
 class FileItem implements SourceInterface
 {
     /**
@@ -36,5 +39,15 @@ class FileItem implements SourceInterface
     public function isSliced(): bool
     {
         return $this->isSliced;
+    }
+
+    public function getWorkspaceId(): string
+    {
+        throw new InvalidOutputException('Not implemented');
+    }
+
+    public function getDataObject(): string
+    {
+        throw new InvalidOutputException('Not implemented');
     }
 }

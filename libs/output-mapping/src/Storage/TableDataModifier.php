@@ -15,7 +15,7 @@ class TableDataModifier
     ) {
     }
 
-    public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination)
+    public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination): void
     {
         if (!is_null($source->getDeleteWhereColumn())) {
             // Delete rows

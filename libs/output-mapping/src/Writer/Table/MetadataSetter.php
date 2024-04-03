@@ -38,7 +38,7 @@ class MetadataSetter
         if ($processedSource->hasMetadata()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
-                $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getMetadata(),
             ));
         }
@@ -46,7 +46,7 @@ class MetadataSetter
         if ($processedSource->hasColumnMetadata()) {
             $loadTask->addMetadata(new ColumnMetadata(
                 $processedSource->getDestination()->getTableId(),
-                $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getColumnMetadata(),
             ));
         }

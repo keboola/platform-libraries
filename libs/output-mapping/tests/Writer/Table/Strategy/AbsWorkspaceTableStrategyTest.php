@@ -61,7 +61,7 @@ class AbsWorkspaceTableStrategyTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Argument $source is expected to be instance of '
-            . 'Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource');
+            . 'Keboola\OutputMapping\Writer\Table\WorkspaceItemSource');
 
         $strategy->prepareLoadTaskOptions($this->createMock(SourceInterface::class), []);
     }

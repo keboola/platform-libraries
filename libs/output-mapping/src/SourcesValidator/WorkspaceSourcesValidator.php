@@ -39,7 +39,7 @@ class WorkspaceSourcesValidator implements SourcesValidatorInterface
         foreach ($configurationSource as $source) {
             $manifestFound = false;
             foreach ($manifests as $manifest) {
-                if ($source->getSourceName() === $manifest->getName()) {
+                if ($manifest->getName() === $source->getSourceName() . '.manifest') {
                     $manifestFound = true;
                     break;
                 }

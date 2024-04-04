@@ -80,7 +80,7 @@ class TableWriter extends AbstractWriter
         bool $isFailedJob,
     ): LoadTableQueue {
         $features = $this->clientWrapper->getBranchClient()->verifyToken()['owner']['features'];
-        if (in_array('newoutputmapping', $features, true)) {
+        if (in_array('new-output-mapping', $features, true)) {
             $tlw = new TableLoaderWrapper($this->strategyFactory);
             $ret = $tlw->uploadTables(
                 $sourcePathPrefix,

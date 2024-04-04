@@ -118,3 +118,109 @@ jobs:
         STORAGE_API_TOKEN: $(OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_AWS)
         STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_MASTER_AWS)
         SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_unitTests_newOM
+      dependsOn: [ cs ]
+      displayName: General Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite general-tests'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_mainWriter1_newOM
+      dependsOn: [ cs ]
+      displayName: First Main Writer Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite main-writer-tests-1'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_mainWriter2_newOM
+      dependsOn: [ cs ]
+      displayName: Second Main Writer Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite main-writer-tests-2'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_workspaceWriter_newOM
+      dependsOn: [ cs ]
+      displayName: Workspace Writer Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite workspace-writer-tests'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 1
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_redshiftWriter_newOM
+      dependsOn: [ cs ]
+      displayName: Redshift Writer Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite redshift-writer-tests'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_tableWriter_nativeTypes_newOM
+      dependsOn: [ cs ]
+      displayName: Native types tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite native-types'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING_NATIVE_TYPES__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_tableWriter_slice_newOM
+      dependsOn: [ cs ]
+      displayName: Slice feature tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite slice'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(NEW_OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(NEW_OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)

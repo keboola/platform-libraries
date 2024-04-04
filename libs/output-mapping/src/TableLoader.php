@@ -66,8 +66,7 @@ class TableLoader
                 [];
 
             $configFromManifest = $combinedSource->getManifest() ?
-                $strategy->readFileManifest($combinedSource->getManifest()->getPathName()) :
-                [];
+                $strategy->readFileManifest($combinedSource->getManifest()) : [];
 
             try {
                 $processedConfig = [];

@@ -19,7 +19,7 @@ interface StrategyInterfaceNew
 
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array;
 
-    public function readFileManifest(string $manifestFile): array;
+    public function readFileManifest(FileItem $manifest): array;
 
     /**
      * @return SourceInterface[]

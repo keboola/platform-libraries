@@ -81,9 +81,14 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
         );
     }
 
-    public function readFileManifest(string $manifestFile): array
+    public function readFileManifest(FileItem $manifest): array
     {
-        $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
+        $manifestFile = sprintf(
+            '%s/%s/%s',
+            $this->metadataStorage->getPath(),
+            $manifest->getPath(),
+            $manifest->getName(),
+        );
         $adapter = new TableAdapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {

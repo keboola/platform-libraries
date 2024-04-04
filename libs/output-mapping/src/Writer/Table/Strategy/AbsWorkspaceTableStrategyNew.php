@@ -11,6 +11,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
+use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
@@ -70,9 +71,14 @@ class AbsWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
         return false;
     }
 
-    public function readFileManifest(string $manifestFile): array
+    public function readFileManifest(FileItem $manifest): array
     {
-        $manifestFile = $this->metadataStorage->getPath() . '/' . $manifestFile;
+        $manifestFile = sprintf(
+            '%s/%s/%s',
+            $this->metadataStorage->getPath(),
+            $manifest->getPath(),
+            $manifest->getName(),
+        );
         $adapter = new TableAdapter($this->format);
         $fs = new Filesystem();
         if (!$fs->exists($manifestFile)) {

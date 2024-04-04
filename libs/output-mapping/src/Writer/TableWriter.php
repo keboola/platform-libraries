@@ -79,6 +79,20 @@ class TableWriter extends AbstractWriter
         bool $createTypedTables,
         bool $isFailedJob,
     ): LoadTableQueue {
+        $features = $this->clientWrapper->getBranchClient()->verifyToken()['owner']['features'];
+        if (in_array('newoutputmapping', $features, true)) {
+            $tlw = new TableLoaderWrapper($this->strategyFactory);
+            $ret = $tlw->uploadTables(
+                $sourcePathPrefix,
+                $configuration,
+                $systemMetadata,
+                $stagingStorageOutput,
+                $createTypedTables,
+                $isFailedJob,
+            );
+            return $ret;
+        }
+
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }

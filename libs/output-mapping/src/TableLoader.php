@@ -104,7 +104,12 @@ class TableLoader
             );
 
             $metadataSetter = new MetadataSetter();
-            $metadataSetter->setTableMetadata($loadTableTask, $processedSource, $storageSources, $systemMetadata);
+            $loadTableTask = $metadataSetter->setTableMetadata(
+                $loadTableTask,
+                $processedSource,
+                $storageSources,
+                $systemMetadata,
+            );
 
             $loadTableTasks[] = $loadTableTask;
         }

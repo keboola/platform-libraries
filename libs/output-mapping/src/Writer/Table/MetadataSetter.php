@@ -20,7 +20,7 @@ class MetadataSetter
         MappingFromProcessedConfiguration $processedSource,
         MappingStorageSources $storageSources,
         SystemMetadata $systemMetadata,
-    ): void {
+    ): LoadTableTaskInterface {
         if (!$storageSources->didTableExistBefore()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
@@ -50,5 +50,7 @@ class MetadataSetter
                 $processedSource->getColumnMetadata(),
             ));
         }
+
+        return $loadTask;
     }
 }

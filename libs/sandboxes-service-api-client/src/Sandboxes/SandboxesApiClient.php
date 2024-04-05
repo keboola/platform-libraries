@@ -65,4 +65,14 @@ class SandboxesApiClient
             ),
         );
     }
+
+    public function getCurrentProject(): array
+    {
+        return $this->apiClient->sendRequestAndDecodeResponse(
+            new Request(
+                'GET',
+                '/sandboxes/project',
+            ),
+        );
+    }
 }

@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategyNew;
 
 class TableConfigurationValidator
 {
@@ -17,7 +17,7 @@ class TableConfigurationValidator
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
         array $config,
     ): array {
-        if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+        if (!$strategy instanceof SqlWorkspaceTableStrategyNew) {
             try {
                 RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
                     $config['columns'],

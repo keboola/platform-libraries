@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
+use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
@@ -87,12 +88,12 @@ class MappingFromProcessedConfiguration
 
     public function hasColumns(): bool
     {
-        return !empty($this->mapping['columns']);
+        return !empty($this->getColumns());
     }
 
     public function hasColumnMetadata(): bool
     {
-        return !empty($this->mapping['column_metadata']);
+        return !empty($this->getColumnMetadata());
     }
 
     public function isIncremental(): bool
@@ -102,12 +103,16 @@ class MappingFromProcessedConfiguration
 
     public function getColumns(): array
     {
-        return $this->mapping['columns'];
+        return $this->mapping['columns'] ?
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumns($this->mapping['columns']) :
+            [];
     }
 
     public function getColumnMetadata(): array
     {
-        return $this->mapping['column_metadata'] ?? [];
+        return $this->mapping['column_metadata'] ?
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumnMetadata($this->mapping['column_metadata']) :
+            [];
     }
 
     public function getPathName(): string

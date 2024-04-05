@@ -194,6 +194,46 @@ class SandboxesApiClientTest extends TestCase
         );
     }
 
+    public function testGetCurrentProject(): void
+    {
+        $responseBody = [
+            'id' => '123',
+            'mlflowServerVersionLatest' => '',
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
+        ];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new SandboxesApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-science.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->getCurrentProject();
+
+        self::assertEquals($responseBody, $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-science.keboola.com/sandboxes/project',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
+
     /**
      * @param list<array{request: Request, response: Response}> $requestsHistory
      * @param list<Response>                                    $responses

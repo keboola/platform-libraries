@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
@@ -39,11 +40,14 @@ class SqlWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
         return $files;
     }
 
+    /**
+     * @param MappingFromRawConfiguration[] $configurations
+     */
     public function listSources(string $dir, array $configurations): array
     {
         $sources = [];
-        foreach ($configurations['mapping'] ?? [] as $mapping) {
-            $source = $mapping['source'];
+        foreach ($configurations as $mapping) {
+            $source = $mapping->getSourceName();
             $sources[$source] = new WorkspaceItemSource($source, $this->dataStorage->getWorkspaceId(), $source, false);
         }
         return $sources;

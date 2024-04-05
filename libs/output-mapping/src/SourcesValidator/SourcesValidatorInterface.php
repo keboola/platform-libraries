@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\SourcesValidator;
 interface SourcesValidatorInterface
 {
     // TODO nahintovany jako SourceItem
-    public function validatePhysicalFilesWithManifest(array $manifests, array $dataItems): void;
+    public function validatePhysicalFilesWithManifest(array $dataItems, array $manifests): void;
 
     public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource): void;
 

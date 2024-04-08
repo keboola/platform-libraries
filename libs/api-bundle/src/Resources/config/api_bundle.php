@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Keboola\ApiBundle\RequestMapper\ArgumentResolver;
+use Keboola\ApiBundle\RequestMapper\DataMapper;
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\PermissionChecker\PermissionChecker;
@@ -35,5 +37,15 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$hostnameSuffix', env('HOSTNAME_SUFFIX'))
             ->arg('$defaultDnsType', param('keboola_api_bundle.default_service_dns_type'))
         ->alias('keboola.api_bundle.service_client', ServiceClient::class)
+
+        ->set(DataMapper::class)
+            ->arg('$mapperBuilder', service('valinor.mapper_builder'))
+            ->arg('$validator', service('validator'))
+        ->alias('keboola.api_bundle.request_mapper.data_mapper', DataMapper::class)
+
+        ->set(ArgumentResolver::class)
+            ->arg('$dataMapper', service(DataMapper::class))
+            ->tag('controller.argument_value_resolver')
+        ->alias('keboola.api_bundle.request_mapper.argument_resolver', ArgumentResolver::class)
     ;
 };

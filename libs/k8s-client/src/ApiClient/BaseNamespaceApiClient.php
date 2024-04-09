@@ -65,6 +65,15 @@ abstract class BaseNamespaceApiClient implements ApiClientInterface
         return $this->apiClient->request($this->baseApi, 'patch', $this->itemClass, $name, $model, $queries);
     }
 
+    /**
+     * @param TItem $model
+     * @return TItem
+     */
+    public function replace(string $name, AbstractModel $model, array $queries = []): AbstractModel
+    {
+        return $this->apiClient->request($this->baseApi, 'replace', $this->itemClass, $name, $model, $queries);
+    }
+
     public function delete(string $name, ?DeleteOptions $options = null, array $queries = []): Status
     {
         $options ??= new DeleteOptions();

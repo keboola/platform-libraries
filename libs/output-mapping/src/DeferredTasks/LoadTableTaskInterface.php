@@ -14,6 +14,8 @@ interface LoadTableTaskInterface
 
     public function applyMetadata(Metadata $metadataApiClient): void;
 
+    public function getMetadata(): array;
+
     public function getDestinationTableName(): string;
 
     public function getStorageJobId(): string;

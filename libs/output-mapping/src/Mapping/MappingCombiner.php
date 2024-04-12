@@ -49,7 +49,7 @@ class MappingCombiner
 
             $combinedSources[] = new MappingFromRawConfigurationAndPhysicalDataWithManifest(
                 $source,
-                $sourceKey ? $manifests[$sourceKey] : null,
+                $sourceKey !== false ? $manifests[$sourceKey] : null,
             );
         }
         return $combinedSources;

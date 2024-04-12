@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Lister\PhysicalItem;
-use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
@@ -76,7 +74,7 @@ class MappingFromRawConfigurationAndPhysicalData
     public function getDataObject(): string
     {
         if ($this->getItemSourceClass() !== WorkspaceItemSource::class) {
-            throw new InvalidOutputException('WorkspaceId is available only for WorkspaceItemSource');
+            throw new InvalidOutputException('DataObject is available only for WorkspaceItemSource');
         }
         return $this->dataItem->getDataObject();
     }

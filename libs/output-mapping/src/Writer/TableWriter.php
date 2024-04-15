@@ -81,8 +81,7 @@ class TableWriter extends AbstractWriter
     ): LoadTableQueue {
         $features = $this->clientWrapper->getBranchClient()->verifyToken()['owner']['features'];
         if (in_array('new-output-mapping', $features, true)) {
-            $tlw = new TableLoaderWrapper($this->strategyFactory);
-            $ret = $tlw->uploadTables(
+            return (new TableLoaderWrapper($this->strategyFactory))->uploadTables(
                 $sourcePathPrefix,
                 $configuration,
                 $systemMetadata,
@@ -90,7 +89,6 @@ class TableWriter extends AbstractWriter
                 $createTypedTables,
                 $isFailedJob,
             );
-            return $ret;
         }
 
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {

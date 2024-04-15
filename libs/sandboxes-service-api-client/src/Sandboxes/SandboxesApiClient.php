@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\SandboxesServiceApiClient\ApiClient;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Sandbox;
 
 class SandboxesApiClient
 {
@@ -18,19 +19,21 @@ class SandboxesApiClient
         $this->apiClient = new ApiClient($configuration);
     }
 
-    public function getSandbox(string $sandboxId): array
+    public function getSandbox(string $sandboxId): Sandbox
     {
-        return $this->apiClient->sendRequestAndDecodeResponse(
+        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'GET',
                 sprintf('/sandboxes/%s', $sandboxId),
             ),
         );
+
+        return Sandbox::fromArray($responseData);
     }
 
-    public function createSandbox(array $payload): array
+    public function createSandbox(array $payload): Sandbox
     {
-        return $this->apiClient->sendRequestAndDecodeResponse(
+        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'POST',
                 '/sandboxes',
@@ -40,6 +43,8 @@ class SandboxesApiClient
                 Json::encodeArray($payload),
             ),
         );
+
+        return Sandbox::fromArray($responseData);
     }
 
     public function deleteSandbox(string $sandboxId): void
@@ -52,9 +57,9 @@ class SandboxesApiClient
         );
     }
 
-    public function updateSandbox(string $sandboxId, array $array): array
+    public function updateSandbox(string $sandboxId, array $array): Sandbox
     {
-        return $this->apiClient->sendRequestAndDecodeResponse(
+        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
             new Request(
                 'PATCH',
                 sprintf('/sandboxes/%s', $sandboxId),
@@ -64,6 +69,8 @@ class SandboxesApiClient
                 Json::encodeArray($array),
             ),
         );
+
+        return Sandbox::fromArray($responseData);
     }
 
     public function getCurrentProject(): array

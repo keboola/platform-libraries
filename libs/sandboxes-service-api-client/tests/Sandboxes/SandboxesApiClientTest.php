@@ -26,7 +26,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '124',
             'configurationVersion' => '5',
             'type' => 'sandbox-type',
+            'branchId' => null,
             'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -47,7 +54,10 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getSandbox('sandbox-id');
 
-        self::assertEquals($responseBody, $result);
+        // phpcs:ignore Generic.Files.LineLength
+        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
+
+        self::assertEquals($responseBody, $result->toArray());
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -71,6 +81,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '123',
             'configurationVersion' => '4',
             'type' => 'sandbox-type',
+            'branchId' => null,
+            'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -96,7 +114,10 @@ class SandboxesApiClientTest extends TestCase
             'type' => 'sandbox-type',
         ]);
 
-        self::assertEquals($responseBody, $result);
+        // phpcs:ignore Generic.Files.LineLength
+        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
+
+        self::assertEquals($responseBody, $result->toArray());
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -125,7 +146,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '124',
             'configurationVersion' => '5',
             'type' => 'sandbox-type',
+            'branchId' => null,
             'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -149,7 +177,10 @@ class SandboxesApiClientTest extends TestCase
             'active' => false,
         ]);
 
-        self::assertEquals($responseBody, $result);
+        // phpcs:ignore Generic.Files.LineLength
+        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
+
+        self::assertEquals($responseBody, $result->toArray());
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(

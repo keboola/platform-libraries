@@ -120,10 +120,10 @@ class TableLoader
     }
 
     private function createLoadTableTask(
-        StrategyInterface                 $strategy,
+        StrategyInterface $strategy,
         MappingFromProcessedConfiguration $source,
-        MappingStorageSources             $storageSources,
-        bool                              $createTypedTables,
+        MappingStorageSources $storageSources,
+        bool $createTypedTables,
     ): LoadTableTaskInterface {
         $loadOptions = [
             'columns' => $source->getColumns(),

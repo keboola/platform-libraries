@@ -13,9 +13,9 @@ use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 class TableConfigurationValidator
 {
     public function validate(
-        StrategyInterface                                      $strategy,
+        StrategyInterface $strategy,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
-        array                                                  $config,
+        array $config,
     ): void {
         if (!$strategy instanceof SqlWorkspaceTableStrategy) {
             try {

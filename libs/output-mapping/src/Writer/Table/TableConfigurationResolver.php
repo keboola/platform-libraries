@@ -12,11 +12,10 @@ use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
-use Keboola\OutputMapping\Writer\Helper\TagsHelperNew;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class TableConfigurationResolverNew
+class TableConfigurationResolver
 {
     public function __construct(private readonly LoggerInterface $logger)
     {
@@ -48,7 +47,7 @@ class TableConfigurationResolverNew
         }
 
         if ($configuration->hasTagStagingFilesFeature()) {
-            $config = TagsHelperNew::addSystemTags($config, $systemMetadata);
+            $config = TagsHelper::addSystemTags($config, $systemMetadata);
         }
 
         try {

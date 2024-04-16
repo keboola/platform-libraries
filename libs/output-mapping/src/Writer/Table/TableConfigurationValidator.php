@@ -8,28 +8,31 @@ use InvalidArgumentException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategyNew;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 
 class TableConfigurationValidator
 {
     public function validate(
-        StrategyInterfaceNew $strategy,
+        StrategyInterface                                      $strategy,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
-        array $config,
+        array                                                  $config,
     ): void {
-        if (!$strategy instanceof SqlWorkspaceTableStrategyNew) {
+        if (!$strategy instanceof SqlWorkspaceTableStrategy) {
             try {
                 RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
                     $config['columns'],
                     $config['column_metadata'],
                 );
             } catch (InvalidOutputException $e) {
-                $message = sprintf(
-                    'Failed to process mapping for table %s: %s',
-                    $source->getSourceName(),
-                    $e->getMessage(),
+                throw new InvalidOutputException(
+                    sprintf(
+                        'Failed to process mapping for table %s: %s',
+                        $source->getSourceName(),
+                        $e->getMessage(),
+                    ),
+                    0,
+                    $e,
                 );
-                throw new $e($message, 0, $e);
             }
         }
 

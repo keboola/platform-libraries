@@ -22,7 +22,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
 
-abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNew
+abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
     /**
      * @return array {

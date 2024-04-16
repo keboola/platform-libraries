@@ -19,8 +19,8 @@ use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
-use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
-use Keboola\OutputMapping\Writer\Table\TableConfigurationResolverNew;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface;
+use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
@@ -44,7 +44,7 @@ class TableLoader
         OutputMappingSettings $configuration,
         SystemMetadata $systemMetadata,
     ): LoadTableQueue {
-        $strategy = $this->strategyFactory->getTableOutputStrategyNew($outputStaging, $configuration->isFailedJob());
+        $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $configuration->isFailedJob());
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
@@ -56,7 +56,7 @@ class TableLoader
         }
 
         $loadTableTasks = [];
-        $tableConfigurationResolver = new TableConfigurationResolverNew($this->logger);
+        $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator();
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
@@ -120,10 +120,10 @@ class TableLoader
     }
 
     private function createLoadTableTask(
-        StrategyInterfaceNew $strategy,
+        StrategyInterface                 $strategy,
         MappingFromProcessedConfiguration $source,
-        MappingStorageSources $storageSources,
-        bool $createTypedTables,
+        MappingStorageSources             $storageSources,
+        bool                              $createTypedTables,
     ): LoadTableTaskInterface {
         $loadOptions = [
             'columns' => $source->getColumns(),
@@ -213,7 +213,7 @@ class TableLoader
     /**
      * @return MappingFromRawConfigurationAndPhysicalDataWithManifest[]
      */
-    private function getCombinedSources(StrategyInterfaceNew $strategy, OutputMappingSettings $configuration): array
+    private function getCombinedSources(StrategyInterface $strategy, OutputMappingSettings $configuration): array
     {
         $sourcesValidator = $strategy->getSourcesValidator();
 

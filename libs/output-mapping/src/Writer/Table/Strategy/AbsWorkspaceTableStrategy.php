@@ -12,7 +12,7 @@ use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Throwable;
 
-class AbsWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
+class AbsWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
     /**
      * @param MappingFromRawConfiguration[] $configurations

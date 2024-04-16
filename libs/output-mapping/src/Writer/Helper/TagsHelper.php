@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\OutputMapping\SystemMetadata;
-use Keboola\OutputMapping\Writer\AbstractWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
 
-class TagsHelperNew
+class TagsHelper
 {
     public static function rewriteTags(array $storageConfig, ClientWrapper $clientWrapper): array
     {

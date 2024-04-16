@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\Slicer\Slicer;
-use SplFileInfo;
 use Symfony\Component\Process\Process;
 
-class SliceCommandBuilderNew
+class SliceCommandBuilder
 {
     public const SLICER_SKIPPED_EXIT_CODE = 200;
 

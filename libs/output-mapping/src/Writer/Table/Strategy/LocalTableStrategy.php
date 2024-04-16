@@ -17,7 +17,6 @@ use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
-use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilderNew;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -25,7 +24,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class LocalTableStrategyNew extends AbstractTableStrategyNew
+class LocalTableStrategy extends AbstractTableStrategy
 {
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
@@ -172,7 +171,7 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
         foreach ($combinedMapping as $combinedMappingItem) {
             $outputDirPath = uniqid($combinedMappingItem->getPathName() . '-', true);
 
-            $process = SliceCommandBuilderNew::createProcess(
+            $process = SliceCommandBuilder::createProcess(
                 $combinedMappingItem->getSourceName(),
                 $combinedMappingItem->getPathName(),
                 $outputDirPath,

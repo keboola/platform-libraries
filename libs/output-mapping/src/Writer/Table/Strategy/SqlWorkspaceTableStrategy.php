@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
-class SqlWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
+class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
     /**
      * @param MappingFromRawConfiguration[] $configurations

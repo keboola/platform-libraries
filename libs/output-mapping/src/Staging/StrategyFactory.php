@@ -16,7 +16,6 @@ use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
 
 class StrategyFactory extends AbstractStrategyFactory
 {
@@ -126,30 +125,6 @@ class StrategyFactory extends AbstractStrategyFactory
         }
         $this->getLogger()->info(sprintf('Using "%s" table output staging.', $stagingDefinition->getName()));
         $className = $stagingDefinition->getTableStagingClass();
-        return new $className(
-            $this->clientWrapper,
-            $this->logger,
-            $stagingDefinition->getTableDataProvider(),
-            $stagingDefinition->getTableMetadataProvider(),
-            $this->format,
-            $isFailedJob,
-        );
-    }
-
-    public function getTableOutputStrategyNew(string $stagingType, bool $isFailedJob = false): StrategyInterfaceNew
-    {
-        $stagingDefinition = $this->getStagingDefinition($stagingType);
-        try {
-            $stagingDefinition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
-        } catch (StagingException $e) {
-            throw new InvalidOutputException(
-                sprintf('The project does not support "%s" table output backend.', $stagingDefinition->getName()),
-                0,
-                $e,
-            );
-        }
-        $this->getLogger()->info(sprintf('Using "%s" table output staging.', $stagingDefinition->getName()));
-        $className = $stagingDefinition->getTableStagingNewClass();
         return new $className(
             $this->clientWrapper,
             $this->logger,

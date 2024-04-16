@@ -8,7 +8,7 @@ use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew as TableStrategyNewInterface;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyNewInterface;
 
 class OutputMappingStagingDefinition extends AbstractStagingDefinition
 {
@@ -57,15 +57,5 @@ class OutputMappingStagingDefinition extends AbstractStagingDefinition
     public function getTableStagingClass(): string
     {
         return $this->tableStagingClass;
-    }
-
-    /**
-     * @return class-string<TableStrategyNewInterface>
-     */
-    public function getTableStagingNewClass(): string
-    {
-        /** @var class-string<TableStrategyNewInterface> $newClass */
-        $newClass = $this->tableStagingClass . 'New';
-        return $newClass;
     }
 }

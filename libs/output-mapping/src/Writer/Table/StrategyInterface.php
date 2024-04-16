@@ -12,7 +12,7 @@ use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
-interface StrategyInterfaceNew
+interface StrategyInterface
 {
     public function getDataStorage(): ProviderInterface;
 

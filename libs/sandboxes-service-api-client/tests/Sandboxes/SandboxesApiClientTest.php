@@ -251,7 +251,7 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getCurrentProject();
 
-        self::assertEquals($responseBody, $result);
+        self::assertEquals($responseBody, $result->toArray());
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(

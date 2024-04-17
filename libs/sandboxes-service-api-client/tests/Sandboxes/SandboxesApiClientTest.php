@@ -11,6 +11,8 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Project;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Sandbox;
 use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
 use PHPUnit\Framework\TestCase;
 
@@ -54,10 +56,7 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getSandbox('sandbox-id');
 
-        // phpcs:ignore Generic.Files.LineLength
-        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
-
-        self::assertEquals($responseBody, $result->toArray());
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -114,10 +113,7 @@ class SandboxesApiClientTest extends TestCase
             'type' => 'sandbox-type',
         ]);
 
-        // phpcs:ignore Generic.Files.LineLength
-        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
-
-        self::assertEquals($responseBody, $result->toArray());
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -177,10 +173,7 @@ class SandboxesApiClientTest extends TestCase
             'active' => false,
         ]);
 
-        // phpcs:ignore Generic.Files.LineLength
-        unset($responseBody['projectId'], $responseBody['tokenId'], $responseBody['componentId'], $responseBody['configurationVersion']);
-
-        self::assertEquals($responseBody, $result->toArray());
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -251,7 +244,7 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getCurrentProject();
 
-        self::assertEquals($responseBody, $result->toArray());
+        self::assertEquals(Project::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(

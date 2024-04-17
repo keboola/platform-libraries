@@ -11,6 +11,8 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Project;
+use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Sandbox;
 use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +28,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '124',
             'configurationVersion' => '5',
             'type' => 'sandbox-type',
+            'branchId' => null,
             'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -47,7 +56,7 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getSandbox('sandbox-id');
 
-        self::assertEquals($responseBody, $result);
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -71,6 +80,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '123',
             'configurationVersion' => '4',
             'type' => 'sandbox-type',
+            'branchId' => null,
+            'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -96,7 +113,7 @@ class SandboxesApiClientTest extends TestCase
             'type' => 'sandbox-type',
         ]);
 
-        self::assertEquals($responseBody, $result);
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -125,7 +142,14 @@ class SandboxesApiClientTest extends TestCase
             'configurationId' => '124',
             'configurationVersion' => '5',
             'type' => 'sandbox-type',
+            'branchId' => null,
             'active' => false,
+            'shared' => false,
+            'persistentStorage' => [
+                'pvcName' => null,
+                'k8sManifest' => null,
+            ],
+            'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 
         $requestHandler = self::createRequestHandler($requestsHistory, [
@@ -149,7 +173,7 @@ class SandboxesApiClientTest extends TestCase
             'active' => false,
         ]);
 
-        self::assertEquals($responseBody, $result);
+        self::assertEquals(Sandbox::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(
@@ -220,7 +244,7 @@ class SandboxesApiClientTest extends TestCase
         );
         $result = $client->getCurrentProject();
 
-        self::assertEquals($responseBody, $result);
+        self::assertEquals(Project::fromArray($responseBody), $result);
 
         self::assertCount(1, $requestsHistory);
         self::assertRequestEquals(

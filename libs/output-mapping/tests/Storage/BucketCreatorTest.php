@@ -83,7 +83,6 @@ class BucketCreatorTest extends AbstractTestCase
         $branchName = self::class;
         $branchId = $this->createBranch($clientWrapper, $branchName);
 
-        sleep(1);
         // set it to use a branch
         $this->initClient($branchId);
 

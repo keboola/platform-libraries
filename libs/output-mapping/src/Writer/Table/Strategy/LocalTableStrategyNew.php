@@ -142,7 +142,7 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
         foreach ($foundFiles as $file) {
             $path = $fs->makePathRelative($file->getPath(), $this->metadataStorage->getPath());
             $pathName = $path . $file->getFilename();
-            $files[$pathName] = new FileItem($file->getPathname(), $path, $file->getBasename(), false);
+            $files[$pathName] = new FileItem($pathName, $path, $file->getBasename(), false);
         }
         return $files;
     }
@@ -191,7 +191,7 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
             $filesystem->rename($outputDirPath, $combinedMappingItem->getPathName());
             $filesystem->rename(
                 $outputDirPath . '.manifest',
-                $combinedMappingItem->getPathName() . '.manifest',
+                $combinedMappingItem->getPathNameManifest(),
                 true,
             );
         }

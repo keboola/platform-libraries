@@ -38,7 +38,7 @@ class OutputMappingSettingsTest extends TestCase
         $this->assertTrue($outputMappingSettings->hasSlicingFeature());
         $this->assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
 
-        $this->assertTrue($outputMappingSettings->isCreateTypedTables());
+        $this->assertTrue($outputMappingSettings->hasCreateTypedTables());
         $this->assertFalse($outputMappingSettings->isFailedJob());
 
         $this->assertEquals($sourcePathPrefix, $outputMappingSettings->getSourcePathPrefix());

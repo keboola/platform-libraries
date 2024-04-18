@@ -71,7 +71,7 @@ class OutputMappingSettings
         return $this->bucket;
     }
 
-    public function isCreateTypedTables(): bool
+    public function hasCreateTypedTables(): bool
     {
         return $this->createTypedTables;
     }

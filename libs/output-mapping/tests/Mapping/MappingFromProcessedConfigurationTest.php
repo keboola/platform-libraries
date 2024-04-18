@@ -14,9 +14,7 @@ use PHPUnit\Framework\TestCase;
 
 class MappingFromProcessedConfigurationTest extends TestCase
 {
-    private MappingFromProcessedConfiguration $mapping;
-
-    protected function setUp(): void
+    public function testBasic(): void
     {
         $mapping = [
             'destination' => $this->createMock(MappingDestination::class),
@@ -41,34 +39,31 @@ class MappingFromProcessedConfigurationTest extends TestCase
             $sourceMock,
             $fileItemMock,
         );
-        $this->mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
-    }
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
 
-    public function testBasic(): void
-    {
-        $this->assertEquals('sourceName', $this->mapping->getSourceName());
-        $this->assertEquals('workspaceId', $this->mapping->getWorkspaceId());
-        $this->assertEquals('dataObject', $this->mapping->getDataObject());
-        $this->assertEquals('sourcePathName', $this->mapping->getPathName());
-        $this->assertEquals('eq', $this->mapping->getDeleteWhereOperator());
-        $this->assertEquals(',', $this->mapping->getDelimiter());
-        $this->assertEquals('"', $this->mapping->getEnclosure());
-        $this->assertEquals([], $this->mapping->getDeleteWhereValues());
-        $this->assertEquals([], $this->mapping->getColumnMetadata());
-        $this->assertEquals([], $this->mapping->getColumns());
-        $this->assertEquals([], $this->mapping->getDistributionKey());
-        $this->assertEquals([], $this->mapping->getMetadata());
-        $this->assertEquals([], $this->mapping->getPrimaryKey());
-        $this->assertEquals([], $this->mapping->getTags());
-        $this->assertNull($this->mapping->getDeleteWhereColumn());
-        $this->assertFalse($this->mapping->isSliced());
-        $this->assertFalse($this->mapping->hasColumnMetadata());
-        $this->assertFalse($this->mapping->hasColumns());
-        $this->assertFalse($this->mapping->hasDistributionKey());
-        $this->assertFalse($this->mapping->hasMetadata());
-        $this->assertFalse($this->mapping->hasWriteAlways());
-        $this->assertFalse($this->mapping->isIncremental());
-        $this->assertEquals(WorkspaceItemSource::class, $this->mapping->getItemSourceClass());
-        $this->assertInstanceOf(MappingDestination::class, $this->mapping->getDestination());
+        self::assertEquals('sourceName', $mapping->getSourceName());
+        self::assertEquals('workspaceId', $mapping->getWorkspaceId());
+        self::assertEquals('dataObject', $mapping->getDataObject());
+        self::assertEquals('sourcePathName', $mapping->getPathName());
+        self::assertEquals('eq', $mapping->getDeleteWhereOperator());
+        self::assertEquals(',', $mapping->getDelimiter());
+        self::assertEquals('"', $mapping->getEnclosure());
+        self::assertEquals([], $mapping->getDeleteWhereValues());
+        self::assertEquals([], $mapping->getColumnMetadata());
+        self::assertEquals([], $mapping->getColumns());
+        self::assertEquals([], $mapping->getDistributionKey());
+        self::assertEquals([], $mapping->getMetadata());
+        self::assertEquals([], $mapping->getPrimaryKey());
+        self::assertEquals([], $mapping->getTags());
+        self::assertNull($mapping->getDeleteWhereColumn());
+        self::assertFalse($mapping->isSliced());
+        self::assertFalse($mapping->hasColumnMetadata());
+        self::assertFalse($mapping->hasColumns());
+        self::assertFalse($mapping->hasDistributionKey());
+        self::assertFalse($mapping->hasMetadata());
+        self::assertFalse($mapping->hasWriteAlways());
+        self::assertFalse($mapping->isIncremental());
+        self::assertEquals(WorkspaceItemSource::class, $mapping->getItemSourceClass());
+        self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
     }
 }

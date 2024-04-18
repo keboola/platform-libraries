@@ -100,7 +100,7 @@ class TableLoader
                 $strategy,
                 $processedSource,
                 $storageSources,
-                $configuration->isCreateTypedTables(),
+                $configuration->hasCreateTypedTables(),
             );
 
             $metadataSetter = new MetadataSetter();

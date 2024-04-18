@@ -50,7 +50,6 @@ class SlicerDecider
             $this->logger->warning(sprintf(
                 'Sliced files without manifest are not supported. Skipping file "%s"',
                 $combinedSource->getSourceName(),
-
             ));
             return false;
         }

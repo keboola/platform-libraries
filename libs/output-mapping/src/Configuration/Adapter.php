@@ -16,9 +16,14 @@ class Adapter
     protected ?array $config = null;
     /** @var class-string<Configuration> */
     protected string $configClass;
-
+    /**
+     * @var self::FORMAT_YAML | self::FORMAT_JSON
+     */
     protected string $format;
 
+    /**
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
+     */
     public function __construct(string $format = 'json')
     {
         $this->setFormat($format);
@@ -29,6 +34,9 @@ class Adapter
         return $this->config;
     }
 
+    /**
+     * @return self::FORMAT_YAML | self::FORMAT_JSON
+     */
     public function getFormat(): string
     {
         return $this->format;
@@ -46,6 +54,9 @@ class Adapter
         }
     }
 
+    /**
+     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
+     */
     public function setFormat(string $format): static
     {
         $this->format = $format;

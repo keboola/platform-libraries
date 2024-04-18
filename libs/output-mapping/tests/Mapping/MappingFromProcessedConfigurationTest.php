@@ -17,7 +17,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
     public function testBasic(): void
     {
         $mapping = [
-            'destination' => $this->createMock(MappingDestination::class),
+            'destination' => 'in.c-main.table',
             'delimiter' => ',',
             'enclosure' => '"',
         ];
@@ -65,5 +65,58 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertFalse($mapping->isIncremental());
         self::assertEquals(WorkspaceItemSource::class, $mapping->getItemSourceClass());
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
+    }
+
+    public function testRemoveRestrictedColumnAndMetadata(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'columns' => [
+                'col1',
+                '_timestamp',
+            ],
+            'column_metadata' => [
+                'col1' => [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'INT',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.basetype',
+                        'value' => 'INTEGER',
+                    ],
+                ],
+                '_timestamp' => [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'INT',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.basetype',
+                        'value' => 'TIMESTAMP',
+                    ],
+                ],
+            ],
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertEquals(['col1'], $mapping->getColumns());
+        self::assertEquals([
+            'col1' => [
+                [
+                    'key' => 'KBC.datatype.type',
+                    'value' => 'INT',
+                ],
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'INTEGER',
+                ],
+            ]
+        ], $mapping->getColumnMetadata());
     }
 }

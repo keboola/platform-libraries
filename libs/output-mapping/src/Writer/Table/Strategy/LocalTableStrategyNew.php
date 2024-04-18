@@ -12,7 +12,6 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\SourcesValidator\LocalSourcesValidator;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
-use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;

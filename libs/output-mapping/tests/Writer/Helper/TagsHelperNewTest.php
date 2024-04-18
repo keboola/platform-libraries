@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
-use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelperNew;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;

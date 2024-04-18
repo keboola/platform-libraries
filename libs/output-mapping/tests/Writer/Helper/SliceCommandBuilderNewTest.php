@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
-use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilderNew;
 use Keboola\Slicer\Slicer;
 use Keboola\Temp\Temp;

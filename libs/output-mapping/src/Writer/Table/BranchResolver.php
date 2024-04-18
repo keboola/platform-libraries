@@ -32,8 +32,6 @@ class BranchResolver
 
             $bucketId = $this->clientWrapper->getBranchId() . '-' . $bucketId;
 
-            // this assumes that bucket id starts with c-
-            // https://github.com/keboola/output-mapping/blob/f6451d2faa825913db2ce986952a9ad6db082e50/src/Writer/TableWriter.php#L498
             $tableIdParts[1] =  $prefix . $bucketId;
             $config['destination'] = implode('.', $tableIdParts);
         }

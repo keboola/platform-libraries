@@ -15,11 +15,11 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
 use PHPUnit\Framework\Assert;
 use Throwable;
 
-abstract class WorkspaceTableStrategyNewTestCase extends AbstractTestCase
+abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCase
 {
     protected StrategyInterfaceNew $strategy;
 
-    public function testListManifest(): void
+    public function testListManifests(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $manifestFile = $this->temp->getTmpFolder() . '/file_' . $i . '.csv.manifest';

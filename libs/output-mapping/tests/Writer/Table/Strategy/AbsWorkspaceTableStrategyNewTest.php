@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 
-class AbsWorkspaceTableStrategyNewTest extends WorkspaceTableStrategyNewTestCase
+class AbsWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNewTestCase
 {
     use InitSynapseStorageClientTrait;
 

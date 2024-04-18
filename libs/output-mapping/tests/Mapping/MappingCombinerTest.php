@@ -76,7 +76,7 @@ class MappingCombinerTest extends TestCase
         $this->assertEquals('manifestPath', $mapping->getManifest()->getPath());
     }
 
-    public function testCombineSourcesWithManifestsEmptyManifest(): void
+    public function testCombineSourcesWithManifestsNoManifests(): void
     {
         $dataItem = new FileItem('pathName', 'path', 'name', false);
         $mappingItem = new MappingFromRawConfiguration(['source' => 'source']);

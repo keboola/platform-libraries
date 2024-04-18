@@ -6,7 +6,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 
-class SqlWorkspaceTableStrategyNewTest extends WorkspaceTableStrategyNewTestCase
+class SqlWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNewTestCase
 {
     public function setUp(): void
     {

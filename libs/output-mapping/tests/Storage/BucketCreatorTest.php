@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Storage\BucketCreator;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsRemoveBucket;
 use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -17,15 +18,7 @@ class BucketCreatorTest extends AbstractTestCase
 {
     use CreateBranchTrait;
 
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        if ($this->clientWrapper->getTableAndFileStorageClient()->bucketExists('in.c-unexistsBucket')) {
-            $this->clientWrapper->getTableAndFileStorageClient()->dropBucket('in.c-unexistsBucket', ['force' => true]);
-        }
-    }
-
+    #[NeedsRemoveBucket('in.c-unexistsBucket')]
     public function testEnsureDestinationBucket(): void
     {
         $bucketCreator = new BucketCreator($this->clientWrapper);
@@ -39,8 +32,13 @@ class BucketCreatorTest extends AbstractTestCase
 
         $bucketInfo = $bucketCreator->ensureDestinationBucket($destination, $systemMetadata);
         $this->assertEquals('in.c-unexistsBucket', $bucketInfo->id);
+        $this->assertEquals('KBC.createdBy.component.id', $bucketInfo->metadata[0]['key']);
+        $this->assertEquals('test', $bucketInfo->metadata[0]['value']);
+        $this->assertEquals('KBC.createdBy.configuration.id', $bucketInfo->metadata[1]['key']);
+        $this->assertEquals('456', $bucketInfo->metadata[1]['value']);
     }
 
+    #[NeedsRemoveBucket('in.c-main')]
     public function testEnsureDestinationBucketExists(): void
     {
         $bucketCreator = new BucketCreator($this->clientWrapper);
@@ -59,6 +57,7 @@ class BucketCreatorTest extends AbstractTestCase
         $this->assertEquals('in.c-main', $bucketInfo->id);
     }
 
+    #[NeedsRemoveBucket('in.c-unexistsBucket')]
     public function testEnsureDestinationBucketDevBranch(): void
     {
         $bucketCreator = new BucketCreator($this->clientWrapper);

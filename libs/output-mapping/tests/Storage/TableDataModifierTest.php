@@ -12,8 +12,7 @@ use Keboola\OutputMapping\Writer\Table\MappingDestination;
 
 class TableDataModifierTest extends AbstractTestCase
 {
-
-    #[NeedsTestTables]
+    #[NeedsTestTables(1)]
     public function testDeleteTableRows(): void
     {
         $tableDataModifier = new TableDataModifier($this->clientWrapper);
@@ -30,5 +29,24 @@ class TableDataModifierTest extends AbstractTestCase
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
 
         $this->assertEquals(1, $newTable['rowsCount']);
+    }
+
+    #[NeedsTestTables(1)]
+    public function testWhereColumnNotSet()
+    {
+        $tableDataModifier = new TableDataModifier($this->clientWrapper);
+
+        $destination = new MappingDestination($this->firstTableId);
+
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getDeleteWhereColumn')->willReturn(null);
+        $source->method('getDeleteWhereOperator')->willReturn('eq');
+        $source->method('getDeleteWhereValues')->willReturn(['id1', 'id2']);
+
+        $tableDataModifier->updateTableData($source, $destination);
+
+        $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+
+        $this->assertEquals(3, $newTable['rowsCount']);
     }
 }

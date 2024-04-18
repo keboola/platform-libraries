@@ -9,10 +9,10 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class TableStructureModifier
 {
@@ -197,7 +197,7 @@ class TableStructureModifier
                 if (count($configPrimaryKey)) {
                     $client->createTablePrimaryKey($tableId, $configPrimaryKey);
                 }
-            } catch (Throwable $e) {
+            } catch (ClientException $e) {
                 // warn and try to rollback to original state
                 $logger->warning(
                     "Error changing primary key of table {$tableId}: " . $e->getMessage(),
@@ -218,7 +218,7 @@ class TableStructureModifier
         if (count($tablePrimaryKey) > 0) {
             try {
                 $client->removeTablePrimaryKey($tableId);
-            } catch (Throwable $e) {
+            } catch (ClientException $e) {
                 // warn and go on
                 $logger->warning(
                     "Error deleting primary key of table {$tableId}: " . $e->getMessage(),

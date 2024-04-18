@@ -4,19 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Exception;
 use Keboola\FileStorage\Abs\ClientFactory;
-use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
-use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
-use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
-use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
 
 class AbsWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
@@ -69,52 +62,5 @@ class AbsWorkspaceTableStrategyNew extends AbstractWorkspaceTableStrategyNew
         }
 
         return false;
-    }
-
-    public function readFileManifest(FileItem $manifest): array
-    {
-        $manifestFile = sprintf(
-            '%s/%s/%s',
-            $this->metadataStorage->getPath(),
-            $manifest->getPath(),
-            $manifest->getName(),
-        );
-        $adapter = new TableAdapter($this->format);
-        $fs = new Filesystem();
-        if (!$fs->exists($manifestFile)) {
-            throw new InvalidOutputException("File '$manifestFile' not found.");
-        }
-        try {
-            $fileHandler = new SplFileInfo($manifestFile, '', basename($manifestFile));
-            $serialized = $fileHandler->getContents();
-            return $adapter->deserialize($serialized);
-        } catch (Throwable $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Failed to parse manifest file "%s" as "%s": %s',
-                    $manifestFile,
-                    $this->format,
-                    $e->getMessage(),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
-    }
-
-    public function getSourcesValidator(): SourcesValidatorInterface
-    {
-        return new WorkspaceSourcesValidator();
-    }
-
-
-    public function hasSlicer(): bool
-    {
-        return false;
-    }
-
-    public function sliceFiles(array $combinedMapping): void
-    {
-        throw new Exception('Not implemented');
     }
 }

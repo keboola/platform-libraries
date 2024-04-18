@@ -6,13 +6,19 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
 use InvalidArgumentException;
+use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
+use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
+use Throwable;
 
 abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNew
 {
@@ -37,6 +43,37 @@ abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNe
             'dataWorkspaceId' => $source->getWorkspaceId(),
             'dataObject' => $source->getDataObject(),
         ];
+    }
+
+    public function readFileManifest(FileItem $manifest): array
+    {
+        $manifestFile = sprintf(
+            '%s/%s/%s',
+            $this->metadataStorage->getPath(),
+            $manifest->getPath(),
+            $manifest->getName(),
+        );
+        $adapter = new TableAdapter($this->format);
+        $fs = new Filesystem();
+        if (!$fs->exists($manifestFile)) {
+            throw new InvalidOutputException("File '$manifestFile' not found.");
+        }
+        try {
+            $fileHandler = new SplFileInfo($manifestFile, '', basename($manifestFile));
+            $serialized = $fileHandler->getContents();
+            return $adapter->deserialize($serialized);
+        } catch (Throwable $e) {
+            throw new InvalidOutputException(
+                sprintf(
+                    'Failed to parse manifest file "%s" as "%s": %s',
+                    $manifestFile,
+                    $this->format,
+                    $e->getMessage(),
+                ),
+                $e->getCode(),
+                $e,
+            );
+        }
     }
 
     public function listManifests(string $dir): array
@@ -65,5 +102,10 @@ abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNe
     public function sliceFiles(array $combinedMapping): void
     {
         throw new Exception('Not implemented');
+    }
+
+    public function getSourcesValidator(): SourcesValidatorInterface
+    {
+        return new WorkspaceSourcesValidator();
     }
 }

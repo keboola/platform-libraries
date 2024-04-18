@@ -182,7 +182,7 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
             }
 
             if ($result !== 0) {
-                $this->logger->warning('Slicer failed', ['process' => $process]);
+                $this->logger->error('Slicer failed', ['process' => $process]);
                 continue;
             }
 

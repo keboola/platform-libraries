@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\SourcesValidator;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
-use Keboola\OutputMapping\Writer\FileItem;
 
 class LocalSourcesValidator implements SourcesValidatorInterface
 {
@@ -14,11 +13,6 @@ class LocalSourcesValidator implements SourcesValidatorInterface
     {
     }
 
-    /**
-     * @param FileItem[] $dataItems
-     * @param FileItem[] $manifests
-     * @return void
-     */
     public function validatePhysicalFilesWithManifest(array $dataItems, array $manifests): void
     {
         foreach ($manifests as $manifest) {
@@ -41,10 +35,6 @@ class LocalSourcesValidator implements SourcesValidatorInterface
         }
     }
 
-    /**
-     * @param FileItem[] $dataItems
-     * @param MappingFromRawConfiguration[] $configurationSource
-     */
     public function validatePhysicalFilesWithConfiguration(array $dataItems, array $configurationSource): void
     {
         $invalidSources = [];
@@ -77,10 +67,6 @@ class LocalSourcesValidator implements SourcesValidatorInterface
         }
     }
 
-    /**
-     * @param FileItem[] $manifests
-     * @param MappingFromRawConfiguration[] $configurationSource
-     */
     public function validateManifestWithConfiguration(array $manifests, array $configurationSource): void
     {
     }

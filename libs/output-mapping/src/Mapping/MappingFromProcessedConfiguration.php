@@ -19,7 +19,7 @@ class MappingFromProcessedConfiguration
         array $mapping,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
     ) {
-        $this->destination = $mapping['destination'];
+        $this->destination = new MappingDestination($mapping['destination']);
         unset($mapping['destination']);
 
         $this->mapping = (new Configuration())->parse([$mapping]);

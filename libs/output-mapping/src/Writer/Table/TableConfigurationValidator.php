@@ -16,7 +16,7 @@ class TableConfigurationValidator
         StrategyInterfaceNew $strategy,
         MappingFromRawConfigurationAndPhysicalDataWithManifest $source,
         array $config,
-    ): array {
+    ): void {
         if (!$strategy instanceof SqlWorkspaceTableStrategyNew) {
             try {
                 RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
@@ -24,34 +24,28 @@ class TableConfigurationValidator
                     $config['column_metadata'],
                 );
             } catch (InvalidOutputException $e) {
-                throw new InvalidOutputException(
-                    sprintf(
-                        'Failed to process mapping for table %s: %s',
-                        $source->getSourceName(),
-                        $e->getMessage(),
-                    ),
-                    0,
-                    $e,
+                $message = sprintf(
+                    'Failed to process mapping for table %s: %s',
+                    $source->getSourceName(),
+                    $e->getMessage(),
                 );
+                throw new $e($message, 0, $e);
             }
         }
 
-        $hasColumns = $config['columns'];
-        if (!$hasColumns && $source->isSliced()) {
+        if (!$config['columns'] && $source->isSliced()) {
             throw new InvalidOutputException(
                 sprintf('Sliced file "%s" columns specification missing.', $source->getSourceName()),
             );
         }
 
         try {
-            $config['destination'] = new MappingDestination($config['destination']);
+            new MappingDestination($config['destination']);
         } catch (InvalidArgumentException $e) {
             throw new InvalidOutputException(sprintf(
                 'Failed to resolve valid destination. "%s" is not a valid table ID.',
                 $config['destination'],
             ), 0, $e);
         }
-
-        return $config;
     }
 }

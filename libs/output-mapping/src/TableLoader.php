@@ -79,7 +79,7 @@ class TableLoader
                 );
 
                 $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-                $processedConfig = $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
+                $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
             } catch (Throwable $e) {
                 if (!$configuration->isFailedJob()) {
                     throw $e;

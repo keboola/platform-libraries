@@ -15,7 +15,6 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategyNew;
 use Keboola\StorageApiBranch\ClientWrapper;
-use PHPUnit\Framework\Assert;
 use Psr\Log\NullLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
@@ -209,8 +208,8 @@ class LocalTableStrategyNewTest extends AbstractTestCase
             new FileItem('file.csv.manifest', '', 'file.csv.manifest', false),
         );
 
-        Assert::assertIsArray($result);
-        Assert::assertCount(2, $result['columns']);
+        self::assertIsArray($result);
+        self::assertCount(2, $result['columns']);
     }
 
     public function testReadInvalidFileManifest(): void

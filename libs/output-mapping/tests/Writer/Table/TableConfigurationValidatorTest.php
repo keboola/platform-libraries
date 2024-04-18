@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategyNew;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategyNew;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
 class TableConfigurationValidatorTest extends TestCase
@@ -26,7 +25,7 @@ class TableConfigurationValidatorTest extends TestCase
             'destination' => 'in.c-main.table',
         ]);
 
-        Assert::assertTrue(true);
+        self::assertTrue(true);
     }
 
     public function testInvalidDestination(): void
@@ -91,6 +90,6 @@ class TableConfigurationValidatorTest extends TestCase
             'destination' => 'in.c-main.table',
         ]);
 
-        Assert::assertTrue(true);
+        self::assertTrue(true);
     }
 }

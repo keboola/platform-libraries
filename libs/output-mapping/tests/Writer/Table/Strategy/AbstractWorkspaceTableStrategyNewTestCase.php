@@ -13,7 +13,6 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
-use PHPUnit\Framework\Assert;
 use Throwable;
 
 abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCase
@@ -27,7 +26,7 @@ abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCas
         $source->method('getWorkspaceId')->willReturn('123455');
         $source->method('getDataObject')->willReturn('987655');
 
-        Assert::assertEquals(
+        self::assertEquals(
             [
                 'dataWorkspaceId' => '123455',
                 'dataObject' => '987655',
@@ -46,7 +45,7 @@ abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCas
         $result = $this->strategy->listManifests('/');
 
         $this->assertIsArray($result);
-        Assert::assertCount(3, $result);
+        self::assertCount(3, $result);
     }
 
     public function testInvalidListManifest(): void
@@ -72,10 +71,10 @@ abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCas
 
         $result = $this->strategy->listSources('/', $configurations);
 
-        Assert::assertIsArray($result);
-        Assert::assertCount(3, $result);
+        self::assertIsArray($result);
+        self::assertCount(3, $result);
         foreach ($result as $source) {
-            Assert::assertInstanceOf(WorkspaceItemSource::class, $source);
+            self::assertInstanceOf(WorkspaceItemSource::class, $source);
         }
     }
 
@@ -93,8 +92,8 @@ abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCas
             new FileItem('file.csv.manifest', '', 'file.csv.manifest', false),
         );
 
-        Assert::assertIsArray($result);
-        Assert::assertCount(2, $result['columns']);
+        self::assertIsArray($result);
+        self::assertCount(2, $result['columns']);
     }
 
     public function testReadInvalidFileManifest(): void

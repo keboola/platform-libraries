@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategyNew;
-use PHPUnit\Framework\Assert;
 
 class AbsWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNewTestCase
 {
@@ -28,6 +27,6 @@ class AbsWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNew
             )
             ->getTableOutputStrategyNew(AbstractStrategyFactory::WORKSPACE_ABS);
 
-        Assert::assertInstanceOf(AbsWorkspaceTableStrategyNew::class, $this->strategy);
+        self::assertInstanceOf(AbsWorkspaceTableStrategyNew::class, $this->strategy);
     }
 }

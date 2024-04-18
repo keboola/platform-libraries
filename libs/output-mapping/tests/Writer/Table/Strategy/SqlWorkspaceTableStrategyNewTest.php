@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategyNew;
-use PHPUnit\Framework\Assert;
 
 class SqlWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNewTestCase
 {
@@ -17,6 +16,6 @@ class SqlWorkspaceTableStrategyNewTest extends AbstractWorkspaceTableStrategyNew
             ->getWorkspaceStagingFactory($this->clientWrapper)
             ->getTableOutputStrategyNew(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE);
 
-        Assert::assertInstanceOf(SqlWorkspaceTableStrategyNew::class, $this->strategy);
+        self::assertInstanceOf(SqlWorkspaceTableStrategyNew::class, $this->strategy);
     }
 }

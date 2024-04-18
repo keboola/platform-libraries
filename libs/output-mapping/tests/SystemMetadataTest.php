@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests;
 
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\SystemMetadata;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
 class SystemMetadataTest extends TestCase
@@ -37,7 +36,7 @@ class SystemMetadataTest extends TestCase
 
     public function testAsArray(): void
     {
-        Assert::assertEquals([
+        self::assertEquals([
             'componentId' => 'keboola.output-mapping',
             'configurationId' => '123',
             'configurationRowId' => '456',
@@ -50,7 +49,7 @@ class SystemMetadataTest extends TestCase
 
     public function testGetSystemTags(): void
     {
-        Assert::assertEquals([
+        self::assertEquals([
             'componentId' => 'keboola.output-mapping',
             'configurationId' => '123',
             'configurationRowId' => '456',
@@ -61,13 +60,13 @@ class SystemMetadataTest extends TestCase
 
     public function testGetSystemMetadata(): void
     {
-        Assert::assertEquals('keboola.output-mapping', $this->systemMetadata->getSystemMetadata('componentId'));
-        Assert::assertNull($this->systemMetadata->getSystemMetadata('unexist'));
+        self::assertEquals('keboola.output-mapping', $this->systemMetadata->getSystemMetadata('componentId'));
+        self::assertNull($this->systemMetadata->getSystemMetadata('unexist'));
     }
 
     public function testGetCreatedMetadata(): void
     {
-        Assert::assertEquals([
+        self::assertEquals([
             [
                 'key' => 'KBC.createdBy.component.id',
                 'value' => 'keboola.output-mapping',
@@ -89,7 +88,7 @@ class SystemMetadataTest extends TestCase
 
     public function testGetUpdatedMetadata(): void
     {
-        Assert::assertEquals([
+        self::assertEquals([
             [
                 'key' => 'KBC.lastUpdatedBy.component.id',
                 'value' => 'keboola.output-mapping',

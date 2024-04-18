@@ -12,26 +12,23 @@ use PHPUnit\Framework\TestCase;
 
 class WorkspaceSourcesValidatorTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->validator = new WorkspaceSourcesValidator();
-    }
-
     public function testValidateManifestWithConfiguration(): void
     {
+        $validator = new WorkspaceSourcesValidator();
         $manifests = [$this->createConfiguredMock(FileItem::class, ['getName' => 'valid.manifest'])];
         $configurationSource = [$this->createConfiguredMock(
             MappingFromRawConfiguration::class,
             ['getSourceName' => 'valid'],
         )];
 
-        $this->validator->validateManifestWithConfiguration($manifests, $configurationSource);
+        $validator->validateManifestWithConfiguration($manifests, $configurationSource);
 
         $this->assertTrue(true);
     }
 
     public function testValidateManifestWithConfigurationWithInvalidManifest(): void
     {
+        $validator = new WorkspaceSourcesValidator();
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table with manifests not found: "invalid"');
 
@@ -41,6 +38,6 @@ class WorkspaceSourcesValidatorTest extends TestCase
             ['getSourceName' => 'invalid'],
         )];
 
-        $this->validator->validateManifestWithConfiguration($manifests, $configurationSource);
+        $validator->validateManifestWithConfiguration($manifests, $configurationSource);
     }
 }

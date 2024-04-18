@@ -11,16 +11,16 @@ class TableInfoTest extends TestCase
 {
     public function testBasic(): void
     {
-        $this->tableInfo = new TableInfo([
+        $tableInfo = new TableInfo([
             'id' => 'tableId',
             'columns' => ['column1', 'column2'],
             'isTyped' => true,
             'primaryKey' => ['column1'],
         ]);
 
-        $this->assertEquals(['column1', 'column2'], $this->tableInfo->getColumns());
-        $this->assertEquals('tableId', $this->tableInfo->getId());
-        $this->assertTrue($this->tableInfo->isTyped());
-        $this->assertEquals(['column1'], $this->tableInfo->getPrimaryKey());
+        $this->assertEquals(['column1', 'column2'], $tableInfo->getColumns());
+        $this->assertEquals('tableId', $tableInfo->getId());
+        $this->assertTrue($tableInfo->isTyped());
+        $this->assertEquals(['column1'], $tableInfo->getPrimaryKey());
     }
 }

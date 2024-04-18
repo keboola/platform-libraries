@@ -14,7 +14,7 @@ class TableDataModifierTest extends AbstractTestCase
 {
 
     #[NeedsTestTables]
-    public function testDeleteTableRows()
+    public function testDeleteTableRows(): void
     {
         $tableDataModifier = new TableDataModifier($this->clientWrapper);
 

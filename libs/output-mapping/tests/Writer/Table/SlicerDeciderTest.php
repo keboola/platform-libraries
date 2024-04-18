@@ -71,7 +71,7 @@ class SlicerDeciderTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    public function testDecideSliceTwoSameFiles()
+    public function testDecideSliceTwoSameFiles(): void
     {
         $mock1 = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $mock1->method('getSourceName')->willReturn('file1');

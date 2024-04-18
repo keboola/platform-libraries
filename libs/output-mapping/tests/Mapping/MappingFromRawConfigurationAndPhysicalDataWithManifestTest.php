@@ -24,14 +24,14 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifestTest extends TestCas
         $source = new MappingFromRawConfigurationAndPhysicalData($dataItem, $mappingItem);
         $manifest = new FileItem('manifestPathName', 'manifestPath', 'manifestName', false);
 
-        $this->mapping = new MappingFromRawConfigurationAndPhysicalDataWithManifest($source, $manifest);
+        $mapping = new MappingFromRawConfigurationAndPhysicalDataWithManifest($source, $manifest);
 
-        $this->assertEquals('name', $this->mapping->getSourceName());
-        $this->assertEquals('pathname.manifest', $this->mapping->getPathNameManifest());
-        $this->assertInstanceOf(FileItem::class, $this->mapping->getManifest());
-        $this->assertFalse($this->mapping->isSliced());
-        $this->assertEquals('pathName', $this->mapping->getPathName());
-        $this->assertEquals('path', $this->mapping->getPath());
-        $this->assertEquals(FileItem::class, $this->mapping->getItemSourceClass());
+        $this->assertEquals('name', $mapping->getSourceName());
+        $this->assertEquals('pathname.manifest', $mapping->getPathNameManifest());
+        $this->assertInstanceOf(FileItem::class, $mapping->getManifest());
+        $this->assertFalse($mapping->isSliced());
+        $this->assertEquals('pathName', $mapping->getPathName());
+        $this->assertEquals('path', $mapping->getPath());
+        $this->assertEquals(FileItem::class, $mapping->getItemSourceClass());
     }
 }

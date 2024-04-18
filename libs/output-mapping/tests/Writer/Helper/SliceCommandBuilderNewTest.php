@@ -51,6 +51,39 @@ class SliceCommandBuilderNewTest extends TestCase
         );
     }
 
+
+    public function testCreateProcessWithManifest(): void
+    {
+        $this->temp->createFile('data.csv.manifest');
+
+        $process = SliceCommandBuilderNew::createProcess(
+            $this->testFile->getBasename(),
+            $this->testFile->getPathname(),
+            $this->temp->getTmpFolder() . '/slicer-output-dir',
+        );
+
+        self::assertSame(7200.0, $process->getTimeout());
+        self::assertSame(
+            implode(
+                ' ',
+                [
+                    sprintf("'%s'", Slicer::getBinaryPath()),
+                    sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
+                    "'--table-name=data.csv'",
+                    sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
+                    sprintf(
+                        "'--table-output-manifest-path=%s/slicer-output-dir.manifest'",
+                        $this->temp->getTmpFolder(),
+                    ),
+                    "'--gzip=true'",
+                    "'--input-size-low-exit-code=200'",
+                    sprintf("'--table-input-manifest-path=%s/data.csv.manifest'", $this->temp->getTmpFolder()),
+                ],
+            ),
+            $process->getCommandLine(),
+        );
+    }
+
     public function testCreateProcessWithInputThreshold(): void
     {
         $process = SliceCommandBuilderNew::createProcess(

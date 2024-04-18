@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -18,6 +19,22 @@ use Throwable;
 abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCase
 {
     protected StrategyInterfaceNew $strategy;
+
+    public function testPrepareLoadTaskOptions(): void
+    {
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getItemSourceClass')->willReturn(WorkspaceItemSource::class);
+        $source->method('getWorkspaceId')->willReturn('123455');
+        $source->method('getDataObject')->willReturn('987655');
+
+        Assert::assertEquals(
+            [
+                'dataWorkspaceId' => '123455',
+                'dataObject' => '987655',
+            ],
+            $this->strategy->prepareLoadTaskOptions($source),
+        );
+    }
 
     public function testListManifests(): void
     {

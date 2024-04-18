@@ -47,13 +47,20 @@ class SlicerDecider
     private function decideSliceFile(MappingFromRawConfigurationAndPhysicalDataWithManifest $combinedSource): bool
     {
         if ($combinedSource->isSliced() && !$combinedSource->getManifest()) {
-            $this->logger->warning('Sliced files without manifest are not supported.');
+            $this->logger->warning(sprintf(
+                'Sliced files without manifest are not supported. Skipping file "%s"',
+                $combinedSource->getSourceName(),
+
+            ));
             return false;
         }
 
         $sourceFile = new SplFileInfo($combinedSource->getPathName());
         if (!$sourceFile->getSize()) {
-            $this->logger->warning('Empty files cannot be sliced.');
+            $this->logger->warning(sprintf(
+                'Empty files cannot be sliced. Skipping file "%s".',
+                $combinedSource->getSourceName(),
+            ));
             return false;
         }
 
@@ -66,9 +73,12 @@ class SlicerDecider
         $hasColumns = $mapping->getColumns();
 
         if ($hasNonDefaultDelimiter || $hasNonDefaultEnclosure || $hasColumns) {
-            throw new InvalidOutputException(
-                'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.',
-            );
+            // TODO - https://keboola.atlassian.net/browse/PST-1193
+            throw new InvalidOutputException(sprintf(
+                'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.' .
+                ' Skipping file "%s".',
+                $combinedSource->getSourceName(),
+            ));
         }
 
         return true;

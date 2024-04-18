@@ -111,7 +111,9 @@ class SlicerDeciderTest extends TestCase
         $result = $slicerDecider->decideSliceFiles($combinedSources);
 
         self::assertCount(0, $result);
-        self::assertTrue($testLogger->hasWarningThatContains('Sliced files without manifest are not supported.'));
+        self::assertTrue($testLogger->hasWarningThatContains(
+            'Sliced files without manifest are not supported. Skipping file "file1"',
+        ));
     }
 
     public function testDecideFileWithUnsuportedConfigurationMapping(): void
@@ -133,7 +135,8 @@ class SlicerDeciderTest extends TestCase
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(
-            'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.',
+            'Params "delimiter", "enclosure" or "columns" specified in mapping are not longer supported.' .
+            ' Skipping file "file1".',
         );
         $slicerDecider->decideSliceFiles($combinedSources);
     }

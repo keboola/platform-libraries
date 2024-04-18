@@ -32,7 +32,7 @@ class TableDataModifierTest extends AbstractTestCase
     }
 
     #[NeedsTestTables(1)]
-    public function testWhereColumnNotSet()
+    public function testWhereColumnNotSet(): void
     {
         $tableDataModifier = new TableDataModifier($this->clientWrapper);
 

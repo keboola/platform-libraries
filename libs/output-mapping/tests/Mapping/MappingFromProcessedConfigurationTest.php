@@ -116,7 +116,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
                     'key' => 'KBC.datatype.basetype',
                     'value' => 'INTEGER',
                 ],
-            ]
+            ],
         ], $mapping->getColumnMetadata());
     }
 }

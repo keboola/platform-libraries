@@ -142,6 +142,14 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
+    public function getQueueInternalApiUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::QUEUE_INTERNAL_API, $dnsType);
+    }
+
+    /**
+     * @return non-empty-string
+     */
     public function getTemplatesUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::TEMPLATES, $dnsType);

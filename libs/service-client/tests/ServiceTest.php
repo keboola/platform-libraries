@@ -6,6 +6,7 @@ namespace Keboola\ServiceClient\Tests;
 
 use Keboola\ServiceClient\Service;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class ServiceTest extends TestCase
 {
@@ -32,6 +33,22 @@ class ServiceTest extends TestCase
         self::assertSame($expectedValue, $service->getPublicSubdomain());
     }
 
+    public function provideServicesWithoutPublicDns(): iterable
+    {
+        yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'Job queue internal API does not have public DNS'];
+    }
+
+    /** @dataProvider provideServicesWithoutPublicDns */
+    public function testGetPublicSubdomainThrowsExceptionForServiceWithoutPublicDns(
+        Service $service,
+        string $expectedError,
+    ): void {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($expectedError);
+
+        $service->getPublicSubdomain();
+    }
+
     public function provideInternalServiceNames(): iterable
     {
         yield 'ai' => [Service::AI, 'ai-service-api.default'];
@@ -44,6 +61,7 @@ class ServiceTest extends TestCase
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];
         yield 'oauth' => [Service::OAUTH, 'oauth-api.default'];
         yield 'queue' => [Service::QUEUE, 'job-queue-api.default'];
+        yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'job-queue-internal-api.default'];
         yield 'sandboxes' => [Service::SANDBOXES_API, 'sandboxes-api.sandboxes']; // <-- custom namespace
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ServiceClient;
 
+use RuntimeException;
+
 enum Service
 {
     case AI;
@@ -15,6 +17,7 @@ enum Service
     case NOTIFICATION;
     case OAUTH;
     case QUEUE;
+    case QUEUE_INTERNAL_API;
     case SANDBOXES_API;
     case SANDBOXES_SERVICE;
     case SCHEDULER;
@@ -34,6 +37,7 @@ enum Service
             self::NOTIFICATION => 'notification',
             self::OAUTH => 'oauth',
             self::QUEUE => 'queue',
+            self::QUEUE_INTERNAL_API => throw new RuntimeException('Job queue internal API does not have public DNS'),
             self::SANDBOXES_API => 'sandboxes',
             self::SANDBOXES_SERVICE => 'data-science',
             self::SCHEDULER => 'scheduler',
@@ -55,6 +59,7 @@ enum Service
             self::NOTIFICATION => 'notification-api.default',
             self::OAUTH => 'oauth-api.default',
             self::QUEUE => 'job-queue-api.default',
+            self::QUEUE_INTERNAL_API => 'job-queue-internal-api.default',
             self::SANDBOXES_API => 'sandboxes-api.sandboxes',
             self::SANDBOXES_SERVICE => 'sandboxes-service-api.default',
             self::SCHEDULER => 'scheduler-api.default',

@@ -694,7 +694,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
-    public function testSnowflakeWriteALwaysIsFailedJob(): void
+    public function testSnowflakeWriteAlwaysIsFailedJob(): void
     {
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock
@@ -703,10 +703,6 @@ class WriterWorkspaceTest extends AbstractTestCase
         )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
-
-        $root = $this->temp->getTmpFolder();
-        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
-        // target bucket with the same backend)
 
         $configs = [
             [
@@ -725,12 +721,12 @@ class WriterWorkspaceTest extends AbstractTestCase
         $writer = new TableWriter($factory);
 
         $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            true,
+            sourcePathPrefix: '/',
+            configuration: ['mapping' => $configs],
+            systemMetadata: ['componentId' => 'foo'],
+            stagingStorageOutput: 'workspace-snowflake',
+            createTypedTables: false,
+            isFailedJob: true,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

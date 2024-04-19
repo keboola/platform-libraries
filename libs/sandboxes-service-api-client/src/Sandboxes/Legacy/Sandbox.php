@@ -178,7 +178,11 @@ class Sandbox
 
         $sandbox->setBranchId(isset($in['branchId']) ? (string) $in['branchId'] : null);
         $sandbox->setConfigurationId(isset($in['configurationId']) ? (string) $in['configurationId'] : '');
-        $sandbox->setConfigurationVersion(isset($in['configurationVersion']) ? (string) $in['configurationVersion'] : null);
+        $sandbox->setConfigurationVersion(
+            isset($in['configurationVersion']) ?
+                (string) $in['configurationVersion'] :
+                null,
+        );
         $sandbox->setPhysicalId($in['physicalId'] ?? '');
         $sandbox->setSize($in['size'] ?? '');
         $sandbox->setSizeParameters(

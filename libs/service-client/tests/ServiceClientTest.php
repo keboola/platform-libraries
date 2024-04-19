@@ -7,6 +7,7 @@ namespace Keboola\ServiceClient\Tests;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class ServiceClientTest extends TestCase
 {
@@ -36,6 +37,7 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification-api.default.svc.cluster.local';
     private const INTERNAL_OAUTH = 'http://oauth-api.default.svc.cluster.local';
     private const INTERNAL_QUEUE = 'http://job-queue-api.default.svc.cluster.local';
+    private const INTERNAL_QUEUE_INTERNAL_API = 'http://job-queue-internal-api.default.svc.cluster.local';
     private const INTERNAL_SANDBOXES_SERVICE = 'http://sandboxes-api.sandboxes.svc.cluster.local';
     private const INTERNAL_SCHEDULER_SERVICE = 'http://scheduler-api.default.svc.cluster.local';
     private const INTERNAL_SYNC_ACTIONS_SERVICE = 'http://runner-sync-api.default.svc.cluster.local';
@@ -85,6 +87,27 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl());
     }
 
+    public function testGetExplicitPublicUrlOfServiceWithoutPublicDns(): void
+    {
+        // configure for default INTERNAL dns and test that PUBLIC is properly passed from the method
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Job queue internal API does not have public DNS');
+
+        $client->getQueueInternalApiUrl(ServiceDnsType::PUBLIC);
+    }
+
+    public function testGetDefaultPublicUrlOfServiceWithoutPublicDns(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Job queue internal API does not have public DNS');
+
+        $client->getQueueInternalApiUrl();
+    }
+
     public function testGetExplicitInternalUrlMethods(): void
     {
         // configure for default PUBLIC dns and test that INTERNAL is properly passed from the method
@@ -101,6 +124,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_QUEUE_INTERNAL_API, $client->getQueueInternalApiUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesApiUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::INTERNAL));
@@ -123,6 +147,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());
         self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl());
         self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl());
+        self::assertSame(self::INTERNAL_QUEUE_INTERNAL_API, $client->getQueueInternalApiUrl());
         self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesApiUrl());
         self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl());
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());

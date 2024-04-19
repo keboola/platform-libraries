@@ -9,4 +9,8 @@ interface SourceInterface
     public function getName(): string;
 
     public function isSliced(): bool;
+
+    public function getWorkspaceId(): string;
+
+    public function getDataObject(): string;
 }

@@ -79,6 +79,7 @@ class Manifest extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
+                ->arrayNode('tags')->prototype('scalar')->cannotBeEmpty()->end()->end()
             ->end()
             ->validate()
                 ->ifTrue(fn($values) =>

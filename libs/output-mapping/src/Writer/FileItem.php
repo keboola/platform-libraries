@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Writer\File;
+namespace Keboola\OutputMapping\Writer;
 
-class FileItem
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+
+class FileItem implements SourceInterface
 {
     /**
      * @param string $name Generalized name (for ABS this can include slashes)
@@ -14,6 +17,7 @@ class FileItem
         private readonly string $pathName,
         private readonly string $path,
         private readonly string $name,
+        private readonly bool $isSliced,
     ) {
     }
 
@@ -30,5 +34,20 @@ class FileItem
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function isSliced(): bool
+    {
+        return $this->isSliced;
+    }
+
+    public function getWorkspaceId(): string
+    {
+        throw new InvalidOutputException('Not implemented');
+    }
+
+    public function getDataObject(): string
+    {
+        throw new InvalidOutputException('Not implemented');
     }
 }

@@ -16,6 +16,7 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\TableLoaderWrapper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Helper\TableColumnsHelper;
@@ -78,6 +79,18 @@ class TableWriter extends AbstractWriter
         bool $createTypedTables,
         bool $isFailedJob,
     ): LoadTableQueue {
+        $features = $this->clientWrapper->getBranchClient()->verifyToken()['owner']['features'];
+        if (in_array('new-output-mapping', $features, true)) {
+            return (new TableLoaderWrapper($this->strategyFactory))->uploadTables(
+                $sourcePathPrefix,
+                $configuration,
+                $systemMetadata,
+                $stagingStorageOutput,
+                $createTypedTables,
+                $isFailedJob,
+            );
+        }
+
         if (empty($systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
@@ -114,7 +127,10 @@ class TableWriter extends AbstractWriter
 
             if (!$strategy instanceof SqlWorkspaceTableStrategy) {
                 try {
-                    RestrictedColumnsHelper::validateRestrictedColumnsInConfig($config);
+                    RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
+                        $config['columns'],
+                        $config['column_metadata'],
+                    );
                 } catch (InvalidOutputException $e) {
                     throw new InvalidOutputException(
                         sprintf(
@@ -206,7 +222,11 @@ class TableWriter extends AbstractWriter
                 $destinationBucket['backend'],
             );
 
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider($this->logger, $destinationTableInfo, $config)) {
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
+                $this->logger,
+                $destinationTableInfo,
+                $config['primary_key'],
+            )) {
                 PrimaryKeyHelper::modifyPrimaryKey(
                     $this->logger,
                     $this->clientWrapper->getTableAndFileStorageClient(),

@@ -340,7 +340,10 @@ class RestrictedColumnsHelperTest extends TestCase
     public function testValidateRestrictedColumnsInConfig(array $config): void
     {
         $this->expectNotToPerformAssertions();
-        RestrictedColumnsHelper::validateRestrictedColumnsInConfig($config);
+        RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
+            $config['columns'] ?? [],
+            $config['column_metadata'] ?? [],
+        );
     }
 
     public function validateRestrictedColumnsInConfigThrowsErrorProvider(): Generator
@@ -472,6 +475,9 @@ class RestrictedColumnsHelperTest extends TestCase
         $this->expectExceptionCode(0);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedErrorMessage);
-        RestrictedColumnsHelper::validateRestrictedColumnsInConfig($config);
+        RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
+            $config['columns'] ?? [],
+            $config['column_metadata'] ?? [],
+        );
     }
 }

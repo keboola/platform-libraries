@@ -30,6 +30,11 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         $this->metadata[] = $metadataDefinition;
     }
 
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
     public function applyMetadata(Metadata $metadataApiClient): void
     {
         foreach ($this->metadata as $metadataDefinition) {

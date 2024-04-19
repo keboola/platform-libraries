@@ -151,18 +151,23 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         ];
         $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessageMatches('/Table "table1a" not found in schema "WORKSPACE_\d+"$/');
-
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            false,
-        );
-        $tableQueue->waitForAll();
+        try {
+            $tableQueue = $writer->uploadTables(
+                '/',
+                ['mapping' => $configs],
+                ['componentId' => 'foo'],
+                'workspace-snowflake',
+                false,
+                false,
+            );
+            $tableQueue->waitForAll();
+            $this->fail('Exception should be thrown');
+        } catch (InvalidOutputException $e) {
+            $this->assertThat($e->getMessage(), $this->logicalOr(
+                $this->stringContains('Table "table1a" not found in schema "WORKSPACE_'),
+                $this->stringContains('Table with manifests not found: "table1a"'),
+            ));
+        }
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
@@ -310,17 +315,22 @@ class WriterWorkspaceTest extends AbstractTestCase
         ];
         $writer = new TableWriter($factory);
 
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
-
-        $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            false,
-        );
+        try {
+            $writer->uploadTables(
+                '/',
+                ['mapping' => $configs],
+                ['componentId' => 'foo'],
+                'workspace-snowflake',
+                false,
+                false,
+            );
+            $this->fail('Exception should be thrown');
+        } catch (InvalidOutputException $e) {
+            $this->assertThat($e->getMessage(), $this->logicalOr(
+                $this->stringContains('Failed to resolve destination for output table "table1a".'),
+                $this->stringContains('Table with manifests not found: "table1a"'),
+            ));
+        }
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]

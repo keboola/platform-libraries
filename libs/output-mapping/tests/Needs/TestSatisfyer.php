@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Needs;
 
 use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
 use ReflectionAttribute;
@@ -66,6 +67,19 @@ class TestSatisfyer
         );
     }
 
+    private static function ensureRemoveBucket(
+        ClientWrapper $clientWrapper,
+        string $bucketId,
+    ): void {
+        try {
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket($bucketId);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+    }
+
     /**
      * @param ReflectionAttribute<object> $attribute
      */
@@ -109,7 +123,13 @@ class TestSatisfyer
             NeedsEmptyRedshiftInputBucket::class,
         );
 
+        $removeBucket = self::getAttribute($reflection, $methodName, NeedsRemoveBucket::class);
+
         $testTable = self::getAttribute($reflection, $methodName, NeedsTestTables::class);
+
+        if ($removeBucket !== null) {
+            self::ensureRemoveBucket($clientWrapper, $removeBucket->getArguments()[0]);
+        }
 
         if ($emptyOutputBucket !== null) {
             $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Empty', Client::STAGE_OUT);

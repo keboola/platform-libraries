@@ -13,34 +13,44 @@ class RestrictedColumnsHelper
     public static function removeRestrictedColumnsFromConfig(array $config): array
     {
         if (!empty($config['columns'])) {
-            $config['columns'] = array_filter($config['columns'], function ($column): bool {
-                return self::isRestrictedColumn((string) $column);
-            });
+            $config['columns'] = self::removeRestrictedColumnsFromColumns($config['columns']);
         }
 
         if (!empty($config['column_metadata'])) {
-            $columnNames = array_keys($config['column_metadata']);
-
-            $columnNamesFiltered = array_filter($columnNames, function ($column) {
-                return self::isRestrictedColumn((string) $column);
-            });
-
-            $config['column_metadata'] = array_diff_key(
-                $config['column_metadata'],
-                array_flip(
-                    array_diff($columnNames, $columnNamesFiltered),
-                ),
-            );
+            $config['column_metadata'] = self::removeRestrictedColumnsFromColumnMetadata($config['column_metadata']);
         }
 
         return $config;
     }
 
-    public static function validateRestrictedColumnsInConfig(array $config): void
+    public static function removeRestrictedColumnsFromColumns(array $columns): array
+    {
+        return array_filter($columns, function ($column): bool {
+            return self::isRestrictedColumn((string) $column);
+        });
+    }
+
+    public static function removeRestrictedColumnsFromColumnMetadata(array $columnMetadata): array
+    {
+        $columnNames = array_keys($columnMetadata);
+
+        $columnNamesFiltered = array_filter($columnNames, function ($column) {
+            return self::isRestrictedColumn((string) $column);
+        });
+
+        return array_diff_key(
+            $columnMetadata,
+            array_flip(
+                array_diff($columnNames, $columnNamesFiltered),
+            ),
+        );
+    }
+
+    public static function validateRestrictedColumnsInConfig(array $columns, array $columnMetadata): void
     {
         $errors = [];
-        if (!empty($config['columns'])) {
-            $restrictedColumns = array_filter($config['columns'], function ($column): bool {
+        if (!empty($columns)) {
+            $restrictedColumns = array_filter($columns, function ($column): bool {
                 return !self::isRestrictedColumn((string) $column);
             });
             if ($restrictedColumns) {
@@ -51,8 +61,8 @@ class RestrictedColumnsHelper
             }
         }
 
-        if (!empty($config['column_metadata'])) {
-            $columnNames = array_keys($config['column_metadata']);
+        if (!empty($columnMetadata)) {
+            $columnNames = array_keys($columnMetadata);
             $restrictedColumns = array_filter($columnNames, function ($column): bool {
                 return !self::isRestrictedColumn((string) $column);
             });

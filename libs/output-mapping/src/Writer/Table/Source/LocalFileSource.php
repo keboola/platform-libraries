@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Source;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use SplFileInfo;
 
 class LocalFileSource implements SourceInterface
@@ -28,5 +29,15 @@ class LocalFileSource implements SourceInterface
     public function isSliced(): bool
     {
         return $this->file->isDir();
+    }
+
+    public function getWorkspaceId(): string
+    {
+        throw new InvalidOutputException('Not implemented');
+    }
+
+    public function getDataObject(): string
+    {
+        throw new InvalidOutputException('Not implemented');
     }
 }

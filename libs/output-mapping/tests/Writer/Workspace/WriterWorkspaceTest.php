@@ -692,4 +692,65 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         );
     }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testSnowflakeWriteAlwaysIsFailedJob(): void
+    {
+        $factory = $this->getWorkspaceStagingFactory();
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        )->getDataStorage()->getWorkspaceId();
+
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
+            ],
+            [
+                'source' => 'table2a',
+                'destination' => $this->emptyOutputBucketId . '.table2a',
+                'columns' => ['Id','Name'],
+                'write_always' => true,
+            ],
+        ];
+        $writer = new TableWriter($factory);
+
+        $tableQueue = $writer->uploadTables(
+            sourcePathPrefix: '/',
+            configuration: ['mapping' => $configs],
+            systemMetadata: ['componentId' => 'foo'],
+            stagingStorageOutput: 'workspace-snowflake',
+            createTypedTables: false,
+            isFailedJob: true,
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['Id', 'Name'],
+        ], $jobIds[0]);
+
+        $this->assertTablesExists(
+            $this->emptyOutputBucketId,
+            [
+                $this->emptyOutputBucketId . '.table2a',
+            ],
+        );
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.table2a',
+            [
+                '"id","name","foo","bar"',
+                '"id1","name1","foo1","bar1"',
+                '"id2","name2","foo2","bar2"',
+                '"id3","name3","foo3","bar3"',
+            ],
+        );
+    }
 }

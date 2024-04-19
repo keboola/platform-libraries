@@ -14,7 +14,7 @@ class WorkspaceSourcesValidatorTest extends TestCase
 {
     public function testValidateManifestWithConfiguration(): void
     {
-        $validator = new WorkspaceSourcesValidator();
+        $validator = new WorkspaceSourcesValidator(false);
         $manifests = [$this->createConfiguredMock(FileItem::class, ['getName' => 'valid.manifest'])];
         $configurationSource = [$this->createConfiguredMock(
             MappingFromRawConfiguration::class,
@@ -28,7 +28,7 @@ class WorkspaceSourcesValidatorTest extends TestCase
 
     public function testValidateManifestWithConfigurationWithInvalidManifest(): void
     {
-        $validator = new WorkspaceSourcesValidator();
+        $validator = new WorkspaceSourcesValidator(false);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table with manifests not found: "invalid"');
 

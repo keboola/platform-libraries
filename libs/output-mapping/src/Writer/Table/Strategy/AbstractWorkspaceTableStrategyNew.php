@@ -106,6 +106,6 @@ abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNe
 
     public function getSourcesValidator(): SourcesValidatorInterface
     {
-        return new WorkspaceSourcesValidator();
+        return new WorkspaceSourcesValidator($this->isFailedJob);
     }
 }

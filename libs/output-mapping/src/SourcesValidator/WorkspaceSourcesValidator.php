@@ -9,6 +9,9 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 
 class WorkspaceSourcesValidator implements SourcesValidatorInterface
 {
+    public function __construct(private readonly bool $isFailedJob)
+    {
+    }
 
     public function validatePhysicalFilesWithManifest(array $dataItems, array $manifests): void
     {
@@ -20,6 +23,9 @@ class WorkspaceSourcesValidator implements SourcesValidatorInterface
 
     public function validateManifestWithConfiguration(array $manifests, array $configurationSource): void
     {
+        if ($this->isFailedJob) {
+            return;
+        }
         $invalidManifests = [];
         foreach ($configurationSource as $source) {
             $manifestFound = false;

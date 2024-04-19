@@ -692,4 +692,69 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         );
     }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testSnowflakeWriteALwaysIsFailedJob(): void
+    {
+        $factory = $this->getWorkspaceStagingFactory();
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        )->getDataStorage()->getWorkspaceId();
+
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
+
+        $root = $this->temp->getTmpFolder();
+        // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
+        // target bucket with the same backend)
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
+                'incremental' => true,
+                'columns' => ['Id'],
+            ],
+            [
+                'source' => 'table2a',
+                'destination' => $this->emptyOutputBucketId . '.table2a',
+                'columns' => ['Id','Name'],
+                'write_always' => true,
+            ],
+        ];
+        $writer = new TableWriter($factory);
+
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake',
+            false,
+            true,
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        self::assertNotEmpty($jobIds[0]);
+
+        $this->assertJobParamsMatches([
+            'incremental' => false,
+            'columns' => ['Id', 'Name'],
+        ], $jobIds[0]);
+
+        $this->assertTablesExists(
+            $this->emptyOutputBucketId,
+            [
+                $this->emptyOutputBucketId . '.table2a',
+            ],
+        );
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.table2a',
+            [
+                '"id","name","foo","bar"',
+                '"id1","name1","foo1","bar1"',
+                '"id2","name2","foo2","bar2"',
+                '"id3","name3","foo3","bar3"',
+            ],
+        );
+    }
 }

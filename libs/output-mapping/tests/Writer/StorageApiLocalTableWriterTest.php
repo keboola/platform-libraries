@@ -780,7 +780,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $tableQueue->waitForAll();
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(
+            logger: $this->testLogger,
+        ));
         $tableQueue =  $writer->uploadTables(
             '/upload',
             [
@@ -803,6 +805,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
             $this->emptyOutputBucketId . '.table15',
         );
+        self::assertFalse($this->testHandler->hasWarning(
+            'Modifying primary key of table "out.c-testWriteTableOutputMappingWithPkOverwriteEmpty.table15" ' .
+            'from "Id" to "Id".',
+        ));
         self::assertEquals(['Id'], $tableInfo['primaryKey']);
     }
 

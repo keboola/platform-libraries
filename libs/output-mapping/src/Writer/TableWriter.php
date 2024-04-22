@@ -224,7 +224,7 @@ class TableWriter extends AbstractWriter
 
             if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
                 $this->logger,
-                $destinationTableInfo,
+                $destinationTableInfo['primaryKey'],
                 $config['primary_key'],
             )) {
                 PrimaryKeyHelper::modifyPrimaryKey(

@@ -8,13 +8,13 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
-use Keboola\OutputMapping\Writer\Table\TableConfigurationResolverNew;
+use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class TableConfigurationResolverNewTest extends TestCase
+class TableConfigurationResolverTest extends TestCase
 {
     private TestHandler $testHandler;
 
@@ -55,7 +55,7 @@ class TableConfigurationResolverNewTest extends TestCase
             'delimiter' => 'NEWDELIMITER',
         ];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
         $config = $resolver->resolveTableConfiguration(
             $configuration,
             $source,
@@ -112,7 +112,7 @@ class TableConfigurationResolverNewTest extends TestCase
             ],
         ];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
         $config = $resolver->resolveTableConfiguration(
             $configuration,
             $source,
@@ -173,7 +173,7 @@ class TableConfigurationResolverNewTest extends TestCase
             ],
         ];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
         $config = $resolver->resolveTableConfiguration(
             $configuration,
             $source,
@@ -228,7 +228,7 @@ class TableConfigurationResolverNewTest extends TestCase
 
         $mappingFromConfiguration = [];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
         $config = $resolver->resolveTableConfiguration(
             $configuration,
             $source,
@@ -281,7 +281,7 @@ class TableConfigurationResolverNewTest extends TestCase
 
         $mappingFromConfiguration = [];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
 
         $config = $resolver->resolveTableConfiguration(
             $configuration,
@@ -311,7 +311,7 @@ class TableConfigurationResolverNewTest extends TestCase
 
         $mappingFromConfiguration = [];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
 
         $config = $resolver->resolveTableConfiguration(
             $configuration,
@@ -349,7 +349,7 @@ class TableConfigurationResolverNewTest extends TestCase
 
         $mappingFromConfiguration = [];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
 
         $this->expectException(InvalidOutputException::class);
         $resolver->resolveTableConfiguration(
@@ -382,7 +382,7 @@ class TableConfigurationResolverNewTest extends TestCase
             'destination' => 'in.c-main.table2.wrong',
         ];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to resolve destination for output table "table1".');
@@ -414,7 +414,7 @@ class TableConfigurationResolverNewTest extends TestCase
 
         $mappingFromConfiguration = [];
 
-        $resolver = new TableConfigurationResolverNew($this->logger);
+        $resolver = new TableConfigurationResolver($this->logger);
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to resolve destination for output table "table1".');

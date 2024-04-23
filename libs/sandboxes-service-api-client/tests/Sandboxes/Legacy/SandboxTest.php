@@ -16,6 +16,7 @@ class SandboxTest extends TestCase
     {
         $sandbox = Sandbox::fromArray([
             'id' => 'id',
+            'componentId' => 'keboola.data-apps',
             'projectId' => 'project-id',
             'tokenId' => 'token-id',
             'type' => 'python',
@@ -26,6 +27,7 @@ class SandboxTest extends TestCase
             'deletedTimestamp' => '2024-02-02 16:00:00',
             'branchId' => 'branch-id',
             'configurationId' => 'configuration-id',
+            'configurationVersion' => '4',
             'physicalId' => 'physical-id',
             'size' => 'small',
             'sizeParameters' => [
@@ -57,6 +59,7 @@ class SandboxTest extends TestCase
         ]);
 
         self::assertSame('id', $sandbox->getId());
+        self::assertSame('keboola.data-apps', $sandbox->getComponentId());
         self::assertSame('project-id', $sandbox->getProjectId());
         self::assertSame('small', $sandbox->getSize());
         self::assertTrue($sandbox->getActive());
@@ -68,6 +71,7 @@ class SandboxTest extends TestCase
         self::assertSame('url', $sandbox->getUrl());
         self::assertSame('branch-id', $sandbox->getBranchId());
         self::assertSame('configuration-id', $sandbox->getConfigurationId());
+        self::assertSame('4', $sandbox->getConfigurationVersion());
         self::assertSame('physical-id', $sandbox->getPhysicalId());
         self::assertSame('image-version', $sandbox->getImageVersion());
         self::assertSame(['foo', 'bar'], $sandbox->getPackages());

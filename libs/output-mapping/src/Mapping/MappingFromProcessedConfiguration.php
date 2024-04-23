@@ -63,7 +63,13 @@ class MappingFromProcessedConfiguration
 
     public function getDeleteWhereColumn(): ?string
     {
-        return $this->mapping['delete_where_column'] ?? null;
+        if (!isset($this->mapping['delete_where_column'])) {
+            return null;
+        }
+        if ($this->mapping['delete_where_column'] === '') {
+            return null;
+        }
+        return $this->mapping['delete_where_column'];
     }
 
     public function getDeleteWhereValues(): array

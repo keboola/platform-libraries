@@ -19,6 +19,7 @@ class VariablesResolver
     public function __construct(
         private readonly ConfigurationVariablesResolver $configurationVariablesResolver,
         private readonly VaultVariablesResolver $vaultVariablesResolver,
+        // @phpstan-ignore-next-line
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -81,12 +82,12 @@ class VariablesResolver
             ));
         }
 
-        if (count($replacedVariables) > 0) {
-            $this->logger->info(sprintf(
-                'Replaced values for variables: %s',
-                implode(', ', $replacedVariables),
-            ));
-        }
+//        if (count($replacedVariables) > 0) {
+//            $this->logger->info(sprintf(
+//                'Replaced values for variables: %s',
+//                implode(', ', $replacedVariables),
+//            ));
+//        }
 
         return new ResolveResults(
             $configurationResult->configuration,

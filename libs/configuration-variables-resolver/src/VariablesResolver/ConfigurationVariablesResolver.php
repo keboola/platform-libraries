@@ -111,7 +111,7 @@ class ConfigurationVariablesResolver
         ?array $variableValuesData,
     ): array {
         if (!empty($variableValuesData['values'])) {
-            $this->logger->info('Replacing variables using inline values.');
+            // $this->logger->info('Replacing variables using inline values.');
             return $variableValuesData;
         }
 

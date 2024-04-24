@@ -1969,6 +1969,55 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testSlicingTableOutputMapping(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        for ($rows= 0; $rows < 2000000; $rows++) {
+            file_put_contents(
+                $root . '/upload/table1a.csv',
+                "longlonglongrow{$rows}, abcdefghijklnoppqrstuvwxyz\n",
+                FILE_APPEND,
+            );
+        }
+
+        $configs = [
+            [
+                'source' => 'table1a.csv',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
+            ],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            false,
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
+        self::assertCount(1, $tables);
+        $tableIds = [];
+        sort($tableIds);
+        self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
+        self::assertNotEmpty($jobIds[0]);
+
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
+        $fileId = $job['operationParams']['source']['fileId'];
+        $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
+        self::assertEquals([], $file['tags']);
+
+        /** @var TableInfo[] $tables */
+        $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
+        self::assertCount(1, $tables);
+    }
+
     private function getTableIdFromJobDetail(array $jobData): string
     {
         $operationName = $jobData['operationName'];

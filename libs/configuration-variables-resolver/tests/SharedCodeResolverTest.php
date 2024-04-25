@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver\Tests;
 
+use Keboola\ConfigurationVariablesResolver\ComponentsClientHelper;
 use Keboola\ConfigurationVariablesResolver\Exception\UserException;
 use Keboola\ConfigurationVariablesResolver\SharedCodeResolver;
 use Keboola\StorageApi\Client;
@@ -38,10 +39,10 @@ class SharedCodeResolverTest extends TestCase
         );
         $components = new Components($this->clientWrapper->getBasicClient());
         $listOptions = new ListComponentConfigurationsOptions();
-        $listOptions->setComponentId('keboola.shared-code');
+        $listOptions->setComponentId(ComponentsClientHelper::KEBOOLA_SHARED_CODE);
         $configurations = $components->listComponentConfigurations($listOptions);
         foreach ($configurations as $configuration) {
-            $components->deleteConfiguration('keboola.shared-code', $configuration['id']);
+            $components->deleteConfiguration(ComponentsClientHelper::KEBOOLA_SHARED_CODE, $configuration['id']);
         }
 
         $this->testHandler = new TestHandler();

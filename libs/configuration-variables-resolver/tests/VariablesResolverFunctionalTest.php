@@ -12,6 +12,7 @@ use Keboola\StorageApi\Components;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
+use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
@@ -71,13 +72,18 @@ class VariablesResolverFunctionalTest extends TestCase
 
     private function setupConfigurationVariables(array $data, array $rowData): void
     {
-        $components = new Components($this->clientWrapper->getBranchClient());
+        $components = new Components($this->clientWrapper->getBasicClient());
+        $listOptions = new ListComponentConfigurationsOptions();
+        $listOptions->setComponentId(ComponentsClientHelper::KEBOOLA_VARIABLES);
+        $configurations = $components->listComponentConfigurations($listOptions);
 
-        try {
-            $components->deleteConfiguration(ComponentsClientHelper::KEBOOLA_VARIABLES, self::CONFIG_ID);
-        } catch (StorageApiClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
+        foreach ($configurations as $configuration) {
+            try {
+                $components->deleteConfiguration(ComponentsClientHelper::KEBOOLA_VARIABLES, $configuration['id']);
+            } catch (StorageApiClientException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
             }
         }
 

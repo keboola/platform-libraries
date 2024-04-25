@@ -9,6 +9,7 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -2017,8 +2018,17 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
         self::assertCount(1, $tables);
 
-        self::assertTrue($this->testHandler->hasInfo('Slicing table "table1a.csv".'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Table "table1a.csv" sliced: in/out: 1 / 1 slices'));
+        $hasSlicingTableMessage = $this->testHandler->hasInfo('Slicing table "table1a.csv".');
+        $hasSlicedTableMessage = $this->testHandler->hasInfoThatContains(
+            'Table "table1a.csv" sliced: in/out: 1 / 1 slices',
+        );
+        if ($this->clientWrapper->getToken()->hasFeature(OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE)) {
+            self::assertTrue($hasSlicingTableMessage);
+            self::assertTrue($hasSlicedTableMessage);
+        } else {
+            self::assertFalse($hasSlicingTableMessage);
+            self::assertFalse($hasSlicedTableMessage);
+        }
     }
 
     private function getTableIdFromJobDetail(array $jobData): string

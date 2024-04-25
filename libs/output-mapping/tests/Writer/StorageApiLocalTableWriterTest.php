@@ -1988,7 +1988,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -2016,6 +2016,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         /** @var TableInfo[] $tables */
         $tables = iterator_to_array($tableQueue->getTableResult()->getTables());
         self::assertCount(1, $tables);
+
+        self::assertTrue($this->testHandler->hasInfo('Slicing table "table1a.csv".'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Table "table1a.csv" sliced: in/out: 1 / 1 slices'));
     }
 
     private function getTableIdFromJobDetail(array $jobData): string

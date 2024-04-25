@@ -115,7 +115,7 @@ class Sandbox
     ];
 
     private string $id;
-    private ?string $componentId = null;
+    private string $componentId;
     private string $projectId;
     private string $tokenId;
     private string $type;
@@ -124,7 +124,7 @@ class Sandbox
 
     private ?string $branchId = null;
     private string $configurationId;
-    private ?string $configurationVersion = null;
+    private string $configurationVersion;
     private string $physicalId;
     private string $size;
     private ?SandboxSizeParameters $sizeParameters = null;
@@ -168,7 +168,7 @@ class Sandbox
 
         $sandbox = new Sandbox();
         $sandbox->setId((string) $in['id']);
-        $sandbox->setComponentId(isset($in['componentId']) ? (string) $in['componentId'] : null);
+        $sandbox->setComponentId((string) $in['componentId']);
         $sandbox->setProjectId((string) $in['projectId']);
         $sandbox->setTokenId((string) $in['tokenId']);
         $sandbox->setType($in['type']);
@@ -178,11 +178,7 @@ class Sandbox
 
         $sandbox->setBranchId(isset($in['branchId']) ? (string) $in['branchId'] : null);
         $sandbox->setConfigurationId(isset($in['configurationId']) ? (string) $in['configurationId'] : '');
-        $sandbox->setConfigurationVersion(
-            isset($in['configurationVersion']) ?
-                (string) $in['configurationVersion'] :
-                null,
-        );
+        $sandbox->setConfigurationVersion((string) $in['configurationVersion']);
         $sandbox->setPhysicalId($in['physicalId'] ?? '');
         $sandbox->setSize($in['size'] ?? '');
         $sandbox->setSizeParameters(
@@ -470,17 +466,13 @@ class Sandbox
         return $this->configurationId;
     }
 
-    public function setConfigurationVersion(?string $configurationVersion): self
+    public function setConfigurationVersion(string $configurationVersion): self
     {
-        if ($configurationVersion === '') {
-            $configurationVersion = null;
-        }
-
         $this->configurationVersion = $configurationVersion;
         return $this;
     }
 
-    public function getConfigurationVersion(): ?string
+    public function getConfigurationVersion(): string
     {
         return $this->configurationVersion;
     }
@@ -654,17 +646,13 @@ class Sandbox
         return $this->id;
     }
 
-    public function setComponentId(?string $componentId): self
+    public function setComponentId(string $componentId): self
     {
-        if ($componentId === '') {
-            $componentId = null;
-        }
-
         $this->componentId = $componentId;
         return $this;
     }
 
-    public function getComponentId(): ?string
+    public function getComponentId(): string
     {
         return $this->componentId;
     }

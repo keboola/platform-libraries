@@ -102,10 +102,12 @@ class SandboxTest extends TestCase
 
         $sandbox = Sandbox::fromArray([
             'id' => 1,
+            'componentId' => 'component-id',
             'projectId' => '123',
             'tokenId' => '3453',
             'type' => 'python',
             'active' => true,
+            'configurationVersion' => '1',
             'createdTimestamp' => (new DateTimeImmutable())->format('c'),
         ]);
         $nullPassword = $sandbox->getPassword();

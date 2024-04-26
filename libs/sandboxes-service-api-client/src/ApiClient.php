@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient;
 
+use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -18,16 +19,24 @@ use Psr\Http\Message\ResponseInterface;
 
 class ApiClient
 {
+    private const MAX_HTTP_ERROR_MESSAGE_LENGTH = 1024^2;
     private readonly HandlerStack $requestHandlerStack;
     private readonly GuzzleClient $httpClient;
 
     public function __construct(ApiClientConfiguration $configuration)
     {
         $this->requestHandlerStack = HandlerStack::create($configuration->requestHandler);
+
         $this->requestHandlerStack->remove('auth');
         $this->requestHandlerStack->push(
             Middleware::mapRequest(new StorageTokenAuthenticator($configuration->storageToken)),
             'auth',
+        );
+
+        $this->requestHandlerStack->remove('http_errors');
+        $this->requestHandlerStack->unshift(
+            Middleware::httpErrors(new BodySummarizer(self::MAX_HTTP_ERROR_MESSAGE_LENGTH)),
+            'http_errors',
         );
 
         if ($configuration->backoffMaxTries > 0) {

@@ -45,10 +45,10 @@ class BaseConfigurationTest extends TestCase
                     'name' => 'test',
                     'data_type' => [
                         'base' => [
-                            'type' => 'string'
+                            'type' => 'string',
                         ],
-                    ]
-                ]
+                    ],
+                ],
             ],
         ];
 
@@ -75,7 +75,7 @@ class BaseConfigurationTest extends TestCase
                     ],
                     'nullable' => true,
                     'primary_key' => false,
-                ]
+                ],
             ],
         ];
 

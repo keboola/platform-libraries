@@ -10,6 +10,8 @@ use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
+use Keboola\OutputMapping\MappingCombiner\WorkspaceMappingCombiner;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
@@ -107,5 +109,10 @@ abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNe
     public function getSourcesValidator(): SourcesValidatorInterface
     {
         return new WorkspaceSourcesValidator($this->isFailedJob);
+    }
+
+    public function getMappingCombiner(): MappingCombinerInterface
+    {
+        return new WorkspaceMappingCombiner($this->dataStorage->getWorkspaceId());
     }
 }

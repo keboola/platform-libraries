@@ -227,13 +227,12 @@ class TableLoader
         $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping());
         $sourcesValidator->validateManifestWithConfiguration($physicalManifests, $configuration->getMapping());
 
-        $mappingCombiner = new Mapping\MappingCombiner();
+        $mappingCombiner = $strategy->getMappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
             $physicalDataFiles,
             $configuration->getMapping(),
         );
 
-        $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
         return $mappingCombiner->combineSourcesWithManifests(
             $combinedSources,
             $physicalManifests,

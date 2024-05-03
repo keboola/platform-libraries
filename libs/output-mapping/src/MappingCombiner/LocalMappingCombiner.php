@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Keboola\OutputMapping\Mapping;
+namespace Keboola\OutputMapping\MappingCombiner;
 
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
 
-class MappingCombiner
+class LocalMappingCombiner implements MappingCombinerInterface
 {
     /**
      * @param array<SourceInterface> $dataItems

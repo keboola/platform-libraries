@@ -82,11 +82,361 @@ class BaseConfigurationTest extends TestCase
         $this->testManifestAndConfig($config, $expectedArray);
     }
 
-//    public function test()
-//    {
-//
-//    }
+    public function testSchemaOptionalDataType(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                ],
+            ],
+        ];
 
+        $expectedArray = [
+            'destination' => 'in.c-main.test','primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'nullable' => true,
+                    'primary_key' => false,
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            $expectedArray,
+        );
+    }
+
+    public function testFullConfig(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'table_metadata' => [
+                'KBC.table_metadata' => 'test_metadata',
+            ],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'redshift' => [
+                            'type' => 'string',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                        ],
+                        'synapse' => [
+                            'type' => 'string',
+                        ],
+                        'bigquery' => [
+                            'type' => 'string',
+                        ],
+                        'exasol' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'nullable' => false,
+                    'primary_key' => true,
+                    'description' => 'test',
+                    'metadata' => [
+                        'KBC.metadata' => 'test_metadata',
+                    ],
+                ],
+            ],
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test','primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'table_metadata' => [
+                'KBC.table_metadata' => 'test_metadata',
+            ],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'redshift' => [
+                            'type' => 'string',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                        ],
+                        'synapse' => [
+                            'type' => 'string',
+                        ],
+                        'bigquery' => [
+                            'type' => 'string',
+                        ],
+                        'exasol' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'nullable' => false,
+                    'primary_key' => true,
+                    'description' => 'test',
+                    'metadata' => [
+                        'KBC.metadata' => 'test_metadata',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            $expectedArray,
+        );
+    }
+
+    public function testErrorSchemaAndMetadataSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                ],
+            ],
+            'metadata' => [
+                [
+                    'key' => 'test',
+                    'value' => 'test',
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table": ' .
+            'Only one of "schema" or "metadata" can be defined.',
+        );
+    }
+
+    public function testErrorSchemaAndColumnMetadataSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                ],
+            ],
+            'column_metadata' => [
+                [
+                    'name' => 'test',
+                    'metadata' => [
+                        'key' => 'test',
+                        'value' => 'test',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table": ' .
+            'Only one of "schema" or "column_metadata" can be defined.',
+        );
+    }
+
+    public function testErrorDescriptionAndTableMetadataDescriptionSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'description' => 'test',
+            'table_metadata' => [
+                'KBC.description' => 'description',
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table": ' .
+            'Only one of "description" or "table_metadata.KBC.description" can be defined.',
+        );
+    }
+
+    public function testErrorPKAndSchemaPKSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'primary_key' => ['test'],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'primary_key' => true,
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Only one of "primary_key" or "schema[].primary_key" can be defined.',
+        );
+    }
+
+    public function testErrorSchemaDescriptionAndSchemaMetadataDescriptionSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'description' => 'test',
+                    'metadata' => [
+                        'KBC.description' => 'test',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table.schema.0": ' .
+            'Only one of "description" or "metadata.KBC.description" can be defined.',
+        );
+    }
+
+    public function testErrorSchemaDataTypeBaseTypeNotSet(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'The child config "type" under "table.schema.0.data_type.base" must be configured.',
+        );
+    }
+
+    public function testErrorSchemaDataTypeOptionalTypeNotSet(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'snowflake' => [
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'The "type" is required for the "snowflake" data type.',
+        );
+    }
+
+    public function testErrorSchemaDataTypeSetUnknownType(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                        'unknown' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'The "unknown" data type is not supported.',
+        );
+    }
 
     private function testManifestAndConfig(
         array $config,

@@ -121,9 +121,7 @@ abstract class BaseConfiguration extends Configuration
                             ->booleanNode('nullable')->defaultTrue()->end()
                             ->booleanNode('primary_key')->defaultFalse()->end()
                             ->scalarNode('description')->end()
-                            ->arrayNode('metadata')
-                                ->ignoreExtraKeys(false)
-                            ->end()
+                            ->variableNode('metadata')->end()
                         ->end()
                         ->validate()
                             ->ifTrue(fn($values) => isset($values['description']) &&

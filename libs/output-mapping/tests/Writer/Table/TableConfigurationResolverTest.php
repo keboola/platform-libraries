@@ -79,6 +79,7 @@ class TableConfigurationResolverTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         self::assertEquals($expectedConfig, $config);
@@ -139,6 +140,7 @@ class TableConfigurationResolverTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         self::assertEquals($expectedConfig, $config);
@@ -200,6 +202,7 @@ class TableConfigurationResolverTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         self::assertEquals($expectedConfig, $config);
@@ -256,6 +259,7 @@ class TableConfigurationResolverTest extends TestCase
                 'configurationId: 123',
                 'configurationRowId: 456',
             ],
+            'schema' => [],
         ];
 
         self::assertEquals($expectedConfig, $config);

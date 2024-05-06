@@ -52,7 +52,7 @@ class WorkspaceMappingCombiner implements MappingCombinerInterface
      */
     public function combineSourcesWithManifests(array $sources, array $manifests): array
     {
-        $orphanedManifests = $manifests;
+        $manifestsWithoutSource = $manifests;
         $combinedSources = [];
         foreach ($sources as $source) {
             $sourceKey = array_search($source->getManifestName(), array_map(fn($v) => $v->getName(), $manifests));
@@ -61,10 +61,10 @@ class WorkspaceMappingCombiner implements MappingCombinerInterface
                 $source,
                 $sourceKey !== false ? $manifests[$sourceKey] : null,
             );
-            unset($orphanedManifests[$sourceKey]);
+            unset($manifestsWithoutSource[$sourceKey]);
         }
 
-        foreach ($orphanedManifests as $manifest) {
+        foreach ($manifestsWithoutSource as $manifest) {
             $sourceName = basename($manifest->getName(), '.manifest');
             $source = new WorkspaceItemSource(
                 $sourceName,

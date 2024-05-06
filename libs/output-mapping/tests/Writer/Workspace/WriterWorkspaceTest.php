@@ -592,7 +592,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
-    public function testOrphanedManifest(): void
+    public function testManifestWithoutConfiguration(): void
     {
         $factory = $this->getWorkspaceStagingFactory();
         // initialize the workspace mock

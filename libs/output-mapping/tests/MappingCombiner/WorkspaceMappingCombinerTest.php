@@ -64,9 +64,9 @@ class WorkspaceMappingCombinerTest extends TestCase
         $manifests = [
             new FileItem('manifestPathName', 'manifestPath', 'name.manifest', false),
             new FileItem(
-                'orphanedManifestPathName',
-                'orphanedManifestPath',
-                'orphanedName.manifest',
+                'manifestWithoutConfigurationPathName',
+                'manifestWithoutConfigurationPath',
+                'manifestWithoutConfigurationName.manifest',
                 false,
             ),
         ];
@@ -75,6 +75,7 @@ class WorkspaceMappingCombinerTest extends TestCase
 
         $this->assertCount(2, $combined);
         $this->assertInstanceOf(MappingFromRawConfigurationAndPhysicalDataWithManifest::class, $combined[0]);
+        $this->assertInstanceOf(MappingFromRawConfigurationAndPhysicalDataWithManifest::class, $combined[1]);
 
         $mapping = $combined[0];
         $this->assertNotNull($mapping->getManifest());
@@ -83,8 +84,8 @@ class WorkspaceMappingCombinerTest extends TestCase
 
         $mapping = $combined[1];
         $this->assertNotNull($mapping->getManifest());
-        $this->assertEquals('orphanedManifestPathName', $mapping->getManifest()->getPathName());
-        $this->assertEquals('orphanedManifestPath', $mapping->getManifest()->getPath());
+        $this->assertEquals('manifestWithoutConfigurationPathName', $mapping->getManifest()->getPathName());
+        $this->assertEquals('manifestWithoutConfigurationPath', $mapping->getManifest()->getPath());
     }
 
     public function testCombineSourcesWithManifestsNoManifests(): void

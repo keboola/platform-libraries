@@ -23,7 +23,7 @@ class WorkspaceSourcesValidatorTest extends TestCase
 
         $validator->validateManifestWithConfiguration($manifests, $configurationSource);
 
-        $this->assertTrue(true);
+        self::assertTrue(true);
     }
 
     public function testValidateManifestWithConfigurationWithInvalidManifest(): void
@@ -41,7 +41,7 @@ class WorkspaceSourcesValidatorTest extends TestCase
         $validator->validateManifestWithConfiguration($manifests, $configurationSource);
     }
 
-    public function testValidateManifestWithConfigurationWithInvalidManifestAndFailedJod(): void
+    public function testValidateManifestWithConfigurationWithInvalidManifestAndFailedJob(): void
     {
         $validator = new WorkspaceSourcesValidator(true);
 
@@ -53,6 +53,6 @@ class WorkspaceSourcesValidatorTest extends TestCase
 
         $validator->validateManifestWithConfiguration($manifests, $configurationSource);
 
-        $this->assertTrue(true);
+        self::assertTrue(true);
     }
 }

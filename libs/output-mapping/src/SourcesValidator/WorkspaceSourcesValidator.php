@@ -24,6 +24,7 @@ class WorkspaceSourcesValidator implements SourcesValidatorInterface
     public function validateManifestWithConfiguration(array $manifests, array $configurationSource): void
     {
         if ($this->isFailedJob) {
+            // if the job fails, we should not validate the sources, because write_always tables can be processed
             return;
         }
         $invalidManifests = [];

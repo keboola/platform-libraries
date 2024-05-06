@@ -10,6 +10,8 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\MappingCombiner\LocalMappingCombiner;
+use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
 use Keboola\OutputMapping\SourcesValidator\LocalSourcesValidator;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
@@ -150,6 +152,11 @@ class LocalTableStrategyNew extends AbstractTableStrategyNew
     public function getSourcesValidator(): SourcesValidatorInterface
     {
         return new LocalSourcesValidator($this->isFailedJob);
+    }
+
+    public function getMappingCombiner(): MappingCombinerInterface
+    {
+        return new LocalMappingCombiner();
     }
 
     public function hasSlicer(): bool

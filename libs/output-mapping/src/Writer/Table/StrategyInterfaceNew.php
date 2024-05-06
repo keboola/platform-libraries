@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Writer\Table;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
@@ -32,6 +33,8 @@ interface StrategyInterfaceNew
     public function listManifests(string $dir): array;
 
     public function getSourcesValidator(): SourcesValidatorInterface;
+
+    public function getMappingCombiner(): MappingCombinerInterface;
 
     public function hasSlicer(): bool;
 

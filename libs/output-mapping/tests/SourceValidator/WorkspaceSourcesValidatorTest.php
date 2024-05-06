@@ -23,7 +23,7 @@ class WorkspaceSourcesValidatorTest extends TestCase
 
         $validator->validateManifestWithConfiguration($manifests, $configurationSource);
 
-        $this->assertTrue(true);
+        self::assertTrue(true);
     }
 
     public function testValidateManifestWithConfigurationWithInvalidManifest(): void
@@ -39,5 +39,20 @@ class WorkspaceSourcesValidatorTest extends TestCase
         )];
 
         $validator->validateManifestWithConfiguration($manifests, $configurationSource);
+    }
+
+    public function testValidateManifestWithConfigurationWithInvalidManifestAndFailedJob(): void
+    {
+        $validator = new WorkspaceSourcesValidator(true);
+
+        $manifests = [$this->createConfiguredMock(FileItem::class, ['getName' => 'valid.manifest'])];
+        $configurationSource = [$this->createConfiguredMock(
+            MappingFromRawConfiguration::class,
+            ['getSourceName' => 'invalid'],
+        )];
+
+        $validator->validateManifestWithConfiguration($manifests, $configurationSource);
+
+        self::assertTrue(true);
     }
 }

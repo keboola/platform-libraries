@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Mapping;
 
-use Keboola\OutputMapping\Mapping\MappingCombiner;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\MappingCombiner\LocalMappingCombiner;
 use Keboola\OutputMapping\Writer\FileItem;
 use PHPUnit\Framework\TestCase;
 
-class MappingCombinerTest extends TestCase
+class LocalMappingCombinerTest extends TestCase
 {
-    private MappingCombiner $combiner;
+    private LocalMappingCombiner $combiner;
 
     protected function setUp(): void
     {
-        $this->combiner = new MappingCombiner();
+        $this->combiner = new LocalMappingCombiner();
     }
 
     public function testCombineDataItemsWithConfigurations(): void

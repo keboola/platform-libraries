@@ -66,7 +66,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -107,7 +106,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
     }
@@ -143,7 +141,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -312,7 +309,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -445,7 +441,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -608,7 +603,6 @@ class TableDefinitionTest extends AbstractTestCase
             ],
             ['componentId' => 'foo'],
             'local',
-            true,
             false,
         );
         $jobIds = $tableQueue->waitForAll();

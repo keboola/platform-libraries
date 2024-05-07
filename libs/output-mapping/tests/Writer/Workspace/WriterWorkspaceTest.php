@@ -71,7 +71,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -136,7 +135,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
         $tableQueue->waitForAll();
     }
@@ -157,7 +155,6 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['mapping' => $configs],
                 ['componentId' => 'foo'],
                 'workspace-snowflake',
-                false,
                 false,
             );
             $tableQueue->waitForAll();
@@ -228,7 +225,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -289,7 +285,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
     }
 
@@ -321,7 +316,6 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['mapping' => $configs],
                 ['componentId' => 'foo'],
                 'workspace-snowflake',
-                false,
                 false,
             );
             $this->fail('Exception should be thrown');
@@ -370,7 +364,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
             ['componentId' => 'foo'],
             'workspace-snowflake',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -452,7 +445,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'workspace-snowflake',
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -508,7 +500,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -577,7 +568,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-snowflake',
-            false,
             true,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -622,7 +612,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
             ['componentId' => 'foo'],
             'workspace-snowflake',
-            false,
             false,
         );
 
@@ -736,7 +725,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -812,7 +800,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             configuration: ['mapping' => $configs],
             systemMetadata: ['componentId' => 'foo'],
             stagingStorageOutput: 'workspace-snowflake',
-            createTypedTables: false,
             isFailedJob: true,
         );
         $jobIds = $tableQueue->waitForAll();

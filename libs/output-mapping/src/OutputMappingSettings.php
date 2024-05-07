@@ -18,9 +18,9 @@ class OutputMappingSettings
 
     public const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
 
-    private StorageApiToken $storageApiToken;
+    public const NATIVE_TYPES_FEATURE = 'native-types';
 
-    private bool $createTypedTables;
+    private StorageApiToken $storageApiToken;
 
     private bool $isFailedJob;
 
@@ -28,7 +28,6 @@ class OutputMappingSettings
         array $configuration,
         string $sourcePathPrefix,
         StorageApiToken $storageApiToken,
-        bool $createTypedTables,
         bool $isFailedJob,
     ) {
         // TODO: validate
@@ -38,7 +37,6 @@ class OutputMappingSettings
         }
         $this->sourcePathPrefix = $sourcePathPrefix;
         $this->storageApiToken = $storageApiToken;
-        $this->createTypedTables = $createTypedTables;
         $this->isFailedJob = $isFailedJob;
     }
 
@@ -50,6 +48,11 @@ class OutputMappingSettings
     public function hasTagStagingFilesFeature(): bool
     {
         return $this->storageApiToken->hasFeature(self::TAG_STAGING_FILES_FEATURE);
+    }
+
+    public function hasNativeTypesFeature(): bool
+    {
+        return $this->storageApiToken->hasFeature(self::NATIVE_TYPES_FEATURE);
     }
 
     public function getSourcePathPrefix(): string
@@ -69,11 +72,6 @@ class OutputMappingSettings
     public function getDefaultBucket(): ?string
     {
         return $this->bucket;
-    }
-
-    public function hasCreateTypedTables(): bool
-    {
-        return $this->createTypedTables;
     }
 
     public function isFailedJob(): bool

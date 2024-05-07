@@ -51,7 +51,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -127,7 +126,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -179,7 +177,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -228,7 +225,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -267,7 +263,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -317,7 +312,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -357,7 +351,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
     }
@@ -399,7 +392,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -448,7 +440,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -500,7 +491,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -563,7 +553,6 @@ class StorageApiSlicedWriterRedshiftTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();

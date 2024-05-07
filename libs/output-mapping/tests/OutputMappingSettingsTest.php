@@ -25,20 +25,20 @@ class OutputMappingSettingsTest extends TestCase
             ->willReturnMap([
                 [OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE, true],
                 [OutputMappingSettings::TAG_STAGING_FILES_FEATURE, false],
+                [OutputMappingSettings::NATIVE_TYPES_FEATURE, true],
             ]);
 
         $outputMappingSettings = new OutputMappingSettings(
             $configuration,
             $sourcePathPrefix,
             $storageApiToken,
-            true,
             false,
         );
 
         $this->assertTrue($outputMappingSettings->hasSlicingFeature());
         $this->assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
+        $this->assertTrue($outputMappingSettings->hasNativeTypesFeature());
 
-        $this->assertTrue($outputMappingSettings->hasCreateTypedTables());
         $this->assertFalse($outputMappingSettings->isFailedJob());
 
         $this->assertEquals($sourcePathPrefix, $outputMappingSettings->getSourcePathPrefix());

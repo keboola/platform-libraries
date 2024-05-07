@@ -8,7 +8,6 @@ use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyNewInterface;
 
 class OutputMappingStagingDefinition extends AbstractStagingDefinition
 {

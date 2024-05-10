@@ -41,5 +41,5 @@ interface StrategyInterface
     /**
      * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedMapping
      */
-    public function sliceFiles(array $combinedMapping): void;
+    public function sliceFiles(array $combinedMapping, string $dataType): void;
 }

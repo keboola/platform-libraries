@@ -15,6 +15,7 @@ class SliceCommandBuilder
         string $sourceName,
         string $inputPath,
         string $outputPath,
+        string $dataType,
         ?string $inputSizeThreshold = null,
     ): Process {
         $command = [
@@ -22,6 +23,7 @@ class SliceCommandBuilder
             '--table-input-path=' . $inputPath,
             '--table-name=' . $sourceName,
             '--table-output-path=' . $outputPath,
+            '--data-type-mode=' . self::resolveDataType($dataType),
             '--table-output-manifest-path=' . $outputPath . '.manifest',
             '--gzip=true',
             '--input-size-low-exit-code=' . self::SLICER_SKIPPED_EXIT_CODE,
@@ -40,5 +42,13 @@ class SliceCommandBuilder
             command: $command,
             timeout: 7200.0,
         );
+    }
+
+    private static function resolveDataType(string $dataType): string
+    {
+        return match ($dataType) {
+            'none' => 'columns',
+            default => 'schema',
+        };
     }
 }

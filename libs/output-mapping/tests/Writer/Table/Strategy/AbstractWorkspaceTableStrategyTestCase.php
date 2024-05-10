@@ -136,6 +136,6 @@ abstract class AbstractWorkspaceTableStrategyTestCase extends AbstractTestCase
     {
         $this->expectException(Throwable::class);
         $this->expectExceptionMessage('Not implemented');
-        $this->strategy->sliceFiles([]);
+        $this->strategy->sliceFiles([], 'none');
     }
 }

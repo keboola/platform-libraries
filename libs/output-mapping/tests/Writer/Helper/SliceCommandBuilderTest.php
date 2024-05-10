@@ -28,6 +28,7 @@ class SliceCommandBuilderTest extends TestCase
             $this->testFile->getBasename(),
             $this->testFile->getPathname(),
             $this->temp->getTmpFolder() . '/slicer-output-dir',
+            'hint',
         );
 
         self::assertSame(7200.0, $process->getTimeout());
@@ -39,6 +40,7 @@ class SliceCommandBuilderTest extends TestCase
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
+                    "'--data-type-mode=hint'",
                     sprintf(
                         "'--table-output-manifest-path=%s/slicer-output-dir.manifest'",
                         $this->temp->getTmpFolder(),
@@ -57,6 +59,7 @@ class SliceCommandBuilderTest extends TestCase
             $this->testFile->getBasename(),
             $this->testFile->getPathname(),
             $this->temp->getTmpFolder() . '/slicer-output-dir',
+            'hint',
             '3GB',
         );
 
@@ -69,6 +72,7 @@ class SliceCommandBuilderTest extends TestCase
                     sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
                     "'--table-name=data.csv'",
                     sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
+                    "'--data-type-mode=hint'",
                     sprintf(
                         "'--table-output-manifest-path=%s/slicer-output-dir.manifest'",
                         $this->temp->getTmpFolder(),

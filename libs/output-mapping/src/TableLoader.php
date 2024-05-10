@@ -50,7 +50,7 @@ class TableLoader
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
             $sourcesForSlicing = (new SlicerDecider($this->logger))->decideSliceFiles($combinedSources);
 
-            $strategy->sliceFiles($sourcesForSlicing);
+            $strategy->sliceFiles($sourcesForSlicing, $configuration->getDataTypes());
 
             $combinedSources = $this->getCombinedSources($strategy, $configuration);
         }

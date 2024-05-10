@@ -55,7 +55,7 @@ class ManifestTest extends TestCase
             'write_always' => false,
             'tags' => [],
             'schema' => [],
-            'manifest_type' => 'table',
+            'manifest_type' => 'output',
         ];
 
         $expectedArray = $config;

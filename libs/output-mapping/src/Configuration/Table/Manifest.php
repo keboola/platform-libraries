@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Configuration\Table;
 
-use Keboola\OutputMapping\Configuration\Configuration;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class Manifest extends BaseConfiguration
 {

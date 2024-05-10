@@ -75,6 +75,7 @@ class BaseConfigurationTest extends TestCase
                     ],
                     'nullable' => true,
                     'primary_key' => false,
+                    'distribution_key' => false,
                 ],
             ],
         ];
@@ -82,7 +83,7 @@ class BaseConfigurationTest extends TestCase
         $this->testManifestAndConfig($config, $expectedArray);
     }
 
-    public function testSchemaOptionalDataType(): void
+    public function testSchemaOptionalBackendDataType(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
@@ -127,6 +128,7 @@ class BaseConfigurationTest extends TestCase
                     ],
                     'nullable' => true,
                     'primary_key' => false,
+                    'distribution_key' => false,
                 ],
             ],
         ];
@@ -169,23 +171,35 @@ class BaseConfigurationTest extends TestCase
                     ],
                     'nullable' => false,
                     'primary_key' => true,
+                    'distribution_key' => false,
                     'description' => 'test',
                     'metadata' => [
                         'KBC.metadata' => 'test_metadata',
                     ],
                 ],
             ],
+            'incremental' => true,
+            'delete_where_column' => 'column',
+            'delete_where_values' => [
+                'test',
+            ],
+            'delete_where_operator' => 'eq',
+            'delimiter' => 'xyz',
+            'enclosure' => 'abc',
+            'description' => 'descTest',
         ];
 
         $expectedArray = [
             'destination' => 'in.c-main.test','primary_key' => [],
             'distribution_key' => [],
             'columns' => [],
-            'incremental' => false,
-            'delete_where_values' => [],
+            'incremental' => true,
+            'delete_where_values' => [
+                'test',
+            ],
             'delete_where_operator' => 'eq',
-            'delimiter' => ',',
-            'enclosure' => '"',
+            'delimiter' => 'xyz',
+            'enclosure' => 'abc',
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
@@ -218,12 +232,15 @@ class BaseConfigurationTest extends TestCase
                     ],
                     'nullable' => false,
                     'primary_key' => true,
+                    'distribution_key' => false,
                     'description' => 'test',
                     'metadata' => [
                         'KBC.metadata' => 'test_metadata',
                     ],
                 ],
             ],
+            'delete_where_column' => 'column',
+            'description' => 'descTest',
         ];
 
         $this->testManifestAndConfig(
@@ -335,6 +352,31 @@ class BaseConfigurationTest extends TestCase
             $config,
             [],
             'Only one of "primary_key" or "schema[].primary_key" can be defined.',
+        );
+    }
+
+    public function testErrorDistributionKeyAndSchemaDistributionKeySetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'distribution_key' => ['test'],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'distribution_key' => true,
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Only one of "distribution_key" or "schema[].distribution_key" can be defined.',
         );
     }
 

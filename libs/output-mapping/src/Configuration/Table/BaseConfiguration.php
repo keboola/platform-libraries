@@ -89,7 +89,7 @@ abstract class BaseConfiguration extends Configuration
                     ->prototype('array')
                         ->children()
                             ->scalarNode('name')->isRequired()->cannotBeEmpty()->end()
-                            ->arrayNode('data_type')->isRequired()
+                            ->arrayNode('data_type')
                                 ->ignoreExtraKeys(false)
                                 ->children()
                                     ->arrayNode('base')->isRequired()
@@ -120,6 +120,7 @@ abstract class BaseConfiguration extends Configuration
                             ->end()
                             ->booleanNode('nullable')->defaultTrue()->end()
                             ->booleanNode('primary_key')->defaultFalse()->end()
+                            ->booleanNode('distribution_key')->defaultFalse()->end()
                             ->scalarNode('description')->end()
                             ->variableNode('metadata')->end()
                         ->end()
@@ -155,6 +156,11 @@ abstract class BaseConfiguration extends Configuration
                 if (!empty($v['schema']) && !empty($v['primary_key'])) {
                     throw new InvalidConfigurationException(
                         'Only one of "primary_key" or "schema[].primary_key" can be defined.',
+                    );
+                }
+                if (!empty($v['schema']) && !empty($v['distribution_key'])) {
+                    throw new InvalidConfigurationException(
+                        'Only one of "distribution_key" or "schema[].distribution_key" can be defined.',
                     );
                 }
                 return $v;

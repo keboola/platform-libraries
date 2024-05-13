@@ -638,6 +638,47 @@ class WriterWorkspaceTest extends AbstractTestCase
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testConfigurationWithoutManifestAndDatafile(): void
+    {
+        $factory = $this->getWorkspaceStagingFactory();
+        // initialize the workspace mock
+        $factory->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        )->getDataStorage()->getWorkspaceId();
+
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
+                'columns' => ['Id', 'Name'],
+            ],
+        ];
+
+        $writer = new TableWriter($factory);
+
+        $tableQueue = $writer->uploadTables(
+            '/',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'workspace-snowflake',
+            false,
+            false,
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $this->assertTablesExists(
+            $this->emptyOutputBucketId,
+            [
+                $this->emptyOutputBucketId . '.table1a',
+            ],
+        );
+    }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
     {
         $factory = $this->getWorkspaceStagingFactory();

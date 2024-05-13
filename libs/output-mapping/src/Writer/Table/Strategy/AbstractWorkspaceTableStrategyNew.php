@@ -108,7 +108,7 @@ abstract class AbstractWorkspaceTableStrategyNew extends AbstractTableStrategyNe
 
     public function getSourcesValidator(): SourcesValidatorInterface
     {
-        return new WorkspaceSourcesValidator($this->isFailedJob);
+        return new WorkspaceSourcesValidator();
     }
 
     public function getMappingCombiner(): MappingCombinerInterface

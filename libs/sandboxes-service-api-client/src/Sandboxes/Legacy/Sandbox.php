@@ -115,6 +115,7 @@ class Sandbox
     ];
 
     private string $id;
+    private string $componentId;
     private string $projectId;
     private string $tokenId;
     private string $type;
@@ -123,6 +124,7 @@ class Sandbox
 
     private ?string $branchId = null;
     private string $configurationId;
+    private string $configurationVersion;
     private string $physicalId;
     private string $size;
     private ?SandboxSizeParameters $sizeParameters = null;
@@ -166,6 +168,7 @@ class Sandbox
 
         $sandbox = new Sandbox();
         $sandbox->setId((string) $in['id']);
+        $sandbox->setComponentId((string) $in['componentId']);
         $sandbox->setProjectId((string) $in['projectId']);
         $sandbox->setTokenId((string) $in['tokenId']);
         $sandbox->setType($in['type']);
@@ -175,6 +178,7 @@ class Sandbox
 
         $sandbox->setBranchId(isset($in['branchId']) ? (string) $in['branchId'] : null);
         $sandbox->setConfigurationId(isset($in['configurationId']) ? (string) $in['configurationId'] : '');
+        $sandbox->setConfigurationVersion((string) $in['configurationVersion']);
         $sandbox->setPhysicalId($in['physicalId'] ?? '');
         $sandbox->setSize($in['size'] ?? '');
         $sandbox->setSizeParameters(
@@ -234,8 +238,14 @@ class Sandbox
         if (!empty($this->id)) {
             $result['id'] = $this->id;
         }
+        if (!empty($this->componentId)) {
+            $result['componentId'] = $this->componentId;
+        }
         if (!empty($this->configurationId)) {
             $result['configurationId'] = $this->configurationId;
+        }
+        if (!empty($this->configurationVersion)) {
+            $result['configurationVersion'] = $this->configurationVersion;
         }
         if (!empty($this->physicalId)) {
             $result['physicalId'] = $this->physicalId;
@@ -456,6 +466,17 @@ class Sandbox
         return $this->configurationId;
     }
 
+    public function setConfigurationVersion(string $configurationVersion): self
+    {
+        $this->configurationVersion = $configurationVersion;
+        return $this;
+    }
+
+    public function getConfigurationVersion(): string
+    {
+        return $this->configurationVersion;
+    }
+
     /**
      * @param string|int $physicalId
      * @return $this
@@ -623,6 +644,17 @@ class Sandbox
     public function getId(): string
     {
         return $this->id;
+    }
+
+    public function setComponentId(string $componentId): self
+    {
+        $this->componentId = $componentId;
+        return $this;
+    }
+
+    public function getComponentId(): string
+    {
+        return $this->componentId;
     }
 
     public function setSize(string $size): self

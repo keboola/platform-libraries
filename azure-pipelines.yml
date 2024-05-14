@@ -70,6 +70,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/slicer
+    - repository: encryption-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/encryption-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -99,7 +103,8 @@ stages:
                 settle:libs/settle \
                 stagingProvider:libs/staging-provider \
                 vaultApiClient:libs/vault-api-client \
-                slicer:libs/slicer
+                slicer:libs/slicer \
+                encryptionApiClient:libs/encryption-api-client
             displayName: 'Find changes'
             name: findChanges
 
@@ -235,6 +240,14 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_slicer'])
     jobs:
       - template: libs/slicer/azure-pipelines.tests.yml
+
+  - stage: tests_encryptionApiClient
+    displayName: Tests - Encryption API Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_encryptionApiClient'])
+    jobs:
+      - template: libs/encryption-api-client/azure-pipelines.tests.yml
 
   - stage: testsResults
     displayName: Wait for tests results
@@ -402,3 +415,11 @@ stages:
           targetRepo: slicer
           libraryPath: libs/slicer
           tagPrefix: slicer/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_encryptionApiClient'])
+          sourceRepo: platform-libraries
+          targetRepo: encryption-api-php-client
+          libraryPath: libs/encryption-api-client
+          tagPrefix: encryption-api-client/

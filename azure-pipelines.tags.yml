@@ -70,6 +70,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/slicer
+    - repository: encryption-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/encryption-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -180,7 +184,6 @@ jobs:
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
 
-
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/vault-api-client/')
@@ -196,3 +199,11 @@ jobs:
       targetRepo: slicer
       libraryPath: libs/slicer
       tagPrefix: slicer/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/encryption-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: encryption-api-php-client
+      libraryPath: libs/encryption-api-client
+      tagPrefix: encryption-api-client/

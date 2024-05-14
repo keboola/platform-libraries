@@ -141,3 +141,8 @@ services:
   dev-logging-bundle:
     <<: *dev
     working_dir: /code/libs/logging-bundle
+
+  dev-encryption-api-client:
+    <<: *dev82
+    image: keboola/encryption-api-client
+    working_dir: /code/libs/encryption-api-client

@@ -418,7 +418,8 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_encryptionApiClient'])
+          # temp. disabled
+          condition: and(eq(1,2), succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_encryptionApiClient'])
           sourceRepo: platform-libraries
           targetRepo: encryption-api-php-client
           libraryPath: libs/encryption-api-client

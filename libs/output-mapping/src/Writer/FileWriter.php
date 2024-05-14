@@ -10,6 +10,7 @@ use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -113,7 +114,12 @@ class FileWriter extends AbstractWriter
                 );
             }
             try {
-                $storageConfig = TagsHelper::addSystemTags($storageConfig, $systemMetadata, $this->logger);
+                if ($systemMetadata) {
+                    $storageConfig = TagsHelper::addSystemTags(
+                        $storageConfig,
+                        new SystemMetadata($systemMetadata),
+                    );
+                }
                 if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()) {
                     $storageConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
                 }

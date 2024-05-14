@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
-use Keboola\OutputMapping\Writer\Table\MappingResolver\MappingResolverInterface;
-use Keboola\OutputMapping\Writer\Table\MappingResolver\WorkspaceMappingResolver;
-use Keboola\OutputMapping\Writer\Table\Source\SqlWorkspaceItemSourceFactory;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
+use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 
 class SqlWorkspaceTableStrategy extends AbstractWorkspaceTableStrategy
 {
-    public function getMappingResolver(): MappingResolverInterface
+    /**
+     * @param MappingFromRawConfiguration[] $configurations
+     */
+    public function listSources(string $dir, array $configurations): array
     {
-        return new WorkspaceMappingResolver(
-            $this->metadataStorage->getPath(),
-            new SqlWorkspaceItemSourceFactory($this->dataStorage),
-        );
+        $sources = [];
+        foreach ($configurations as $mapping) {
+            $source = $mapping->getSourceName();
+            $sources[$source] = new WorkspaceItemSource($source, $this->dataStorage->getWorkspaceId(), $source, false);
+        }
+        return $sources;
     }
 }

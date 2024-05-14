@@ -26,8 +26,8 @@ class SliceCommandBuilderTest extends TestCase
     {
         $process = SliceCommandBuilder::createProcess(
             $this->testFile->getBasename(),
-            $this->testFile,
-            new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
+            $this->testFile->getPathname(),
+            $this->temp->getTmpFolder() . '/slicer-output-dir',
         );
 
         self::assertSame(7200.0, $process->getTimeout());
@@ -45,37 +45,6 @@ class SliceCommandBuilderTest extends TestCase
                     ),
                     "'--gzip=true'",
                     "'--input-size-low-exit-code=200'",
-                ],
-            ),
-            $process->getCommandLine(),
-        );
-    }
-
-    public function testCreateProcessWithManifest(): void
-    {
-        $process = SliceCommandBuilder::createProcess(
-            $this->testFile->getBasename(),
-            $this->testFile,
-            new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
-            $this->temp->createFile('data.csv.manifest'),
-        );
-
-        self::assertSame(7200.0, $process->getTimeout());
-        self::assertSame(
-            implode(
-                ' ',
-                [
-                    sprintf("'%s'", Slicer::getBinaryPath()),
-                    sprintf("'--table-input-path=%s/data.csv'", $this->temp->getTmpFolder()),
-                    "'--table-name=data.csv'",
-                    sprintf("'--table-output-path=%s/slicer-output-dir'", $this->temp->getTmpFolder()),
-                    sprintf(
-                        "'--table-output-manifest-path=%s/slicer-output-dir.manifest'",
-                        $this->temp->getTmpFolder(),
-                    ),
-                    "'--gzip=true'",
-                    "'--input-size-low-exit-code=200'",
-                    sprintf("'--table-input-manifest-path=%s/data.csv.manifest'", $this->temp->getTmpFolder()),
                 ],
             ),
             $process->getCommandLine(),
@@ -86,9 +55,8 @@ class SliceCommandBuilderTest extends TestCase
     {
         $process = SliceCommandBuilder::createProcess(
             $this->testFile->getBasename(),
-            $this->testFile,
-            new SplFileInfo($this->temp->getTmpFolder() . '/slicer-output-dir'),
-            null,
+            $this->testFile->getPathname(),
+            $this->temp->getTmpFolder() . '/slicer-output-dir',
             '3GB',
         );
 

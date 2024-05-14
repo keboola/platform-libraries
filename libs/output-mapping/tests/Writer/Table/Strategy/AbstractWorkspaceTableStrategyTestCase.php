@@ -12,12 +12,12 @@ use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
-use Keboola\OutputMapping\Writer\Table\StrategyInterfaceNew;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Throwable;
 
-abstract class AbstractWorkspaceTableStrategyNewTestCase extends AbstractTestCase
+abstract class AbstractWorkspaceTableStrategyTestCase extends AbstractTestCase
 {
-    protected StrategyInterfaceNew $strategy;
+    protected StrategyInterface $strategy;
 
     public function testPrepareLoadTaskOptions(): void
     {

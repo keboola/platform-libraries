@@ -6,8 +6,8 @@ namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
-use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategyNew;
-use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategyNew;
+use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +15,7 @@ class TableConfigurationValidatorTest extends TestCase
 {
     public function testValidConfig(): void
     {
-        $strategy = $this->createMock(LocalTableStrategyNew::class);
+        $strategy = $this->createMock(LocalTableStrategy::class);
         $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $validator = new TableConfigurationValidator();
 
@@ -30,7 +30,7 @@ class TableConfigurationValidatorTest extends TestCase
 
     public function testInvalidDestination(): void
     {
-        $strategy = $this->createMock(LocalTableStrategyNew::class);
+        $strategy = $this->createMock(LocalTableStrategy::class);
         $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $validator = new TableConfigurationValidator();
 
@@ -45,7 +45,7 @@ class TableConfigurationValidatorTest extends TestCase
 
     public function testMissingColumns(): void
     {
-        $strategy = $this->createMock(LocalTableStrategyNew::class);
+        $strategy = $this->createMock(LocalTableStrategy::class);
         $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $source->method('isSliced')->willReturn(true);
         $source->method('getSourceName')->willReturn('source');
@@ -63,7 +63,7 @@ class TableConfigurationValidatorTest extends TestCase
 
     public function testErrorSystemColumns(): void
     {
-        $strategy = $this->createMock(LocalTableStrategyNew::class);
+        $strategy = $this->createMock(LocalTableStrategy::class);
         $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $validator = new TableConfigurationValidator();
 
@@ -80,7 +80,7 @@ class TableConfigurationValidatorTest extends TestCase
 
     public function testSystemColumnsOnSqlWorkspaceStrategy(): void
     {
-        $strategy = $this->createMock(SqlWorkspaceTableStrategyNew::class);
+        $strategy = $this->createMock(SqlWorkspaceTableStrategy::class);
         $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $validator = new TableConfigurationValidator();
 

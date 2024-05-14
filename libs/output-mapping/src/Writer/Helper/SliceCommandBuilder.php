@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Helper;
 
 use Keboola\Slicer\Slicer;
-use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 class SliceCommandBuilder
@@ -14,23 +13,23 @@ class SliceCommandBuilder
 
     public static function createProcess(
         string $sourceName,
-        SplFileInfo $inputFile,
-        SplFileInfo $outputDir,
-        ?SplFileInfo $inputManifestFile = null,
+        string $inputPath,
+        string $outputPath,
         ?string $inputSizeThreshold = null,
     ): Process {
         $command = [
             Slicer::getBinaryPath(),
-            '--table-input-path=' . $inputFile->getPathname(),
+            '--table-input-path=' . $inputPath,
             '--table-name=' . $sourceName,
-            '--table-output-path=' . $outputDir->getPathname(),
-            '--table-output-manifest-path=' . $outputDir->getPathname() . '.manifest',
+            '--table-output-path=' . $outputPath,
+            '--table-output-manifest-path=' . $outputPath . '.manifest',
             '--gzip=true',
             '--input-size-low-exit-code=' . self::SLICER_SKIPPED_EXIT_CODE,
         ];
 
-        if ($inputManifestFile) {
-            $command[] = '--table-input-manifest-path=' . $inputManifestFile->getPathname();
+        $manifestFile = $inputPath . '.manifest';
+        if (file_exists($manifestFile)) {
+            $command[] = '--table-input-manifest-path=' . $manifestFile;
         }
 
         if ($inputSizeThreshold) {

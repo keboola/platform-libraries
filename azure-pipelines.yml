@@ -268,6 +268,7 @@ stages:
       - tests_stagingProvider
       - tests_vaultApiClient
       - tests_slicer
+      - tests_encryptionApiClient
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
@@ -284,7 +285,8 @@ stages:
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_encryptionApiClient.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:

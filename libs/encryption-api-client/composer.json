@@ -1,0 +1,60 @@
+{
+    "name": "keboola/encryption-api-php-client",
+    "type": "library",
+    "license": "MIT",
+    "description": "Keboola Encryption API Client",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\EncryptionApiClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\EncryptionApiClient\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^7.4 || ^8.2",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "guzzlehttp/guzzle": "^6.5|^7.8"
+    },
+    "config": {
+        "lock": false,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "infection/extension-installer": true
+        }
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^15.0",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-phpunit": "^1.3",
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4"
+    },
+    "scripts": {
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@phpcs",
+            "@phpstan",
+            "@tests",
+            "@infection"
+        ],
+        "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
+        ],
+        "infection": "infection --log-verbosity=all --threads=20 --min-covered-msi=90 --coverage=/tmp/build-logs --only-covered"
+    }
+}

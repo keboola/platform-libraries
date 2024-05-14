@@ -1,0 +1,6 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests
+      serviceName: dev-encryption-api-client
+      testCommand: bash -c 'composer install && composer ci'

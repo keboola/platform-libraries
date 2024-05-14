@@ -1,0 +1,14 @@
+parameters:
+    checkMissingIterableValueType: false
+    level: max
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        -
+            message: '#Static method GuzzleHttp\\Middleware::httpErrors\(\) invoked with 1 parameter, 0 required\.#'
+            path: %currentWorkingDirectory%/src/Common.php
+            reportUnmatched: false # error occurs only at PHP 7.4/Guzzle 6.5
+
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon

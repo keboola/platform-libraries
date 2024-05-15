@@ -32,6 +32,7 @@ class ConfigurationTest extends ManifestTest
             'write_always' => false,
             'tags' => [],
             'source' => 'in.c-main.source',
+            'schema' => [],
         ];
 
         $processedConfiguration = (new Table\Configuration())->parse(['config' => $config]);

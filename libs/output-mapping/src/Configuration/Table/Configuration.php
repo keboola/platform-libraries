@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Configuration\Table;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Configuration extends Manifest
+class Configuration extends BaseConfiguration
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {

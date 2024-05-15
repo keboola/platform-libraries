@@ -32,6 +32,7 @@ class TableTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);
@@ -56,6 +57,7 @@ class TableTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         $expectedArray = $config;
@@ -110,6 +112,7 @@ class TableTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
@@ -138,6 +141,7 @@ class TableTest extends TestCase
             'column_metadata' => [],
             'write_always' => false,
             'tags' => [],
+            'schema' => [],
         ];
 
         $processedConfiguration = (new Table())->parse(['config' => $config]);

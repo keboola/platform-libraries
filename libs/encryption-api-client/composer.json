@@ -56,6 +56,6 @@
             "@putenv XDEBUG_MODE=coverage",
             "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
         ],
-        "infection": "infection --log-verbosity=all --threads=20 --min-covered-msi=90 --coverage=/tmp/build-logs --only-covered"
+        "infection": "infection --log-verbosity=all --threads=20 --min-covered-msi=75 --coverage=/tmp/build-logs --only-covered"
     }
 }

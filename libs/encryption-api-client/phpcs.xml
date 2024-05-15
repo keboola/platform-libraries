@@ -6,6 +6,7 @@
         <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint"/>
         <!-- PHP 7.4 does not support trailing commas in func args -->
         <exclude name="SlevomatCodingStandard.Functions.RequireTrailingCommaInDeclaration"/>
+        <exclude name="SlevomatCodingStandard.Functions.RequireTrailingCommaInCall"/>
     </rule>
     <exclude-pattern>*/src/Kernel.php</exclude-pattern>
 </ruleset>

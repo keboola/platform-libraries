@@ -653,7 +653,6 @@ class WriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-snowflake',
             false,
-            false,
         );
 
         $jobIds = $tableQueue->waitForAll();

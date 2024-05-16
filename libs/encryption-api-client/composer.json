@@ -23,7 +23,7 @@
         "php": "^7.4 || ^8.2",
         "ext-json": "*",
         "ext-curl": "*",
-        "guzzlehttp/guzzle": "^6.5|^7.8"
+        "guzzlehttp/guzzle": "^6.5 || ^7.8"
     },
     "config": {
         "lock": false,
@@ -34,7 +34,7 @@
         }
     },
     "require-dev": {
-        "infection/infection": "^0.27.9",
+        "infection/infection": "0.26.3 || ^0.27.9",
         "keboola/coding-standard": "^15.0",
         "phpstan/phpstan": "^1.10",
         "phpstan/phpstan-phpunit": "^1.3",

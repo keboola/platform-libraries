@@ -104,6 +104,22 @@ jobs:
         STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
         SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
 
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php74_tableWriter_newNativeTypes
+      dependsOn: [ cs ]
+      displayName: NEW Native types tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite new-native-types'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(OUTPUT_MAPPING_NEW_NATIVE_TYPES__STORAGE_API_TOKEN_AWSš)
+        STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       jobName: tests_php74_tableWriter_slice

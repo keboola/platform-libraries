@@ -1,6 +1,12 @@
 jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      displayName: Tests
-      serviceName: dev-encryption-api-client
-      testCommand: bash -c 'composer install && composer ci'
+      displayName: Tests (PHP 7.4)
+      serviceName: dev74
+      testCommand: bash -c 'composer update --prefer-lowest && composer ci'
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests (PHP 8.2)
+      serviceName: dev82
+      testCommand: bash -c 'composer update && composer ci'

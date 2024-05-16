@@ -17,5 +17,5 @@ jobs:
       testCommand: |
         bash -c '\
           cd libs/encryption-api-client && \
-          composer update \
+          composer update && \
           composer ci'

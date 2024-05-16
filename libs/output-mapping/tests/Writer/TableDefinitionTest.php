@@ -67,6 +67,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -107,6 +108,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -142,6 +144,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -310,6 +313,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -442,6 +446,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -604,6 +609,7 @@ class TableDefinitionTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

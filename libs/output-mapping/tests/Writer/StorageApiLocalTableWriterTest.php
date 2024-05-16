@@ -58,6 +58,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -154,6 +155,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -222,6 +224,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -293,6 +296,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -339,6 +343,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -350,6 +355,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -384,6 +390,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -413,6 +420,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -450,6 +458,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -482,6 +491,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -506,6 +516,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -544,6 +555,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -565,6 +577,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -580,6 +593,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             [],
             'local',
             false,
+            'none',
         );
     }
 
@@ -611,6 +625,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -623,6 +638,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -667,6 +683,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -697,6 +714,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -728,6 +746,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -758,6 +777,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $tableQueue->waitForAll();
 
@@ -778,6 +798,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -813,6 +834,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $tableQueue->waitForAll();
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -835,6 +857,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -869,6 +892,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -887,6 +911,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -933,6 +958,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $tableQueue->waitForAll();
 
@@ -966,6 +992,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -1007,6 +1034,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $tableQueue->waitForAll();
 
@@ -1053,6 +1081,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         try {
             $tableQueue->waitForAll();
@@ -1112,6 +1141,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1144,6 +1174,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
     }
 
@@ -1186,6 +1217,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo', 'branchId' => $branchId],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1228,6 +1260,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
     }
 
@@ -1277,6 +1310,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             $isFailedJob,
+            'none',
         );
         $queue->waitForAll();
 
@@ -1427,6 +1461,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $tableQueue->waitForAll();
     }
@@ -1494,6 +1529,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1551,6 +1587,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -1578,6 +1615,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             [],
             'local',
             false,
+            'none',
         );
     }
 
@@ -1597,6 +1635,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -1620,6 +1659,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -1647,6 +1687,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
+            'none',
         );
         $queue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
@@ -1679,6 +1720,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             true,
+            'none',
         );
         $queue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
@@ -1706,6 +1748,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1728,6 +1771,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
 
         $jobIds = $tableQueue->waitForAll();
@@ -1758,6 +1802,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1780,6 +1825,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1814,6 +1860,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         try {
             $jobIds = $tableQueue->waitForAll();
@@ -1864,6 +1911,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         try {
             $jobIds = $tableQueue->waitForAll();
@@ -1918,6 +1966,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
     }
 
@@ -1948,6 +1997,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

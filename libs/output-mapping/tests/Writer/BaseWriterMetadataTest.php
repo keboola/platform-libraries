@@ -83,6 +83,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -169,6 +170,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -240,6 +242,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -322,6 +325,7 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ['componentId' => 'testComponent'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

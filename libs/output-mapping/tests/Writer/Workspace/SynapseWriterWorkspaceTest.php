@@ -126,6 +126,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::WORKSPACE_SYNAPSE,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

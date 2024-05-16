@@ -51,6 +51,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -123,6 +124,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -172,6 +174,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -218,6 +221,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -257,6 +261,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -305,6 +310,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -345,6 +351,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
     }
 
@@ -384,6 +391,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -447,6 +455,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -505,6 +514,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -562,6 +572,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -622,6 +633,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::LOCAL,
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

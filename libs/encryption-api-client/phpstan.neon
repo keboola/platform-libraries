@@ -1,11 +1,10 @@
 parameters:
+    checkMissingIterableValueType: false
     level: max
     paths:
         - src
         - tests
     ignoreErrors:
-        -
-            identifier: missingType.iterableValue
         -
             message: '#Static method GuzzleHttp\\Middleware::httpErrors\(\) invoked with 1 parameter, 0 required\.#'
             path: %currentWorkingDirectory%/src/Common.php

@@ -3,10 +3,10 @@ jobs:
     parameters:
       displayName: Tests (PHP 7.4)
       serviceName: dev74
-      testCommand: bash -c 'composer update --prefer-lowest && composer ci'
+      testCommand: bash -c 'cd libs/encryption-api-client && composer update --prefer-lowest && composer ci'
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       displayName: Tests (PHP 8.2)
       serviceName: dev82
-      testCommand: bash -c 'composer update && composer ci'
+      testCommand: bash -c 'cd libs/encryption-api-client && composer update && composer ci'

@@ -3,10 +3,19 @@ jobs:
     parameters:
       displayName: Tests (PHP 7.4)
       serviceName: dev74
-      testCommand: bash -c 'cd libs/encryption-api-client && composer update --prefer-lowest && composer ci'
+      testCommand: |
+        bash -c '\
+          echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/xdebug.ini
+          cd libs/encryption-api-client && \
+          composer update --prefer-lowest && \
+          composer ci'
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
       displayName: Tests (PHP 8.2)
       serviceName: dev82
-      testCommand: bash -c 'cd libs/encryption-api-client && composer update && composer ci'
+      testCommand: |
+        bash -c '\
+          cd libs/encryption-api-client && \
+          composer update \
+          composer ci'

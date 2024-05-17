@@ -22,6 +22,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/configuration-variables-resolver
+    - repository: encryption-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/encryption-api-php-client
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -58,6 +62,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
+    - repository: slicer
+      type: github
+      endpoint: keboola
+      name: keboola/slicer
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -66,14 +74,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
-    - repository: slicer
-      type: github
-      endpoint: keboola
-      name: keboola/slicer
-    - repository: encryption-api-php-client
-      type: github
-      endpoint: keboola
-      name: keboola/encryption-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -103,6 +103,14 @@ jobs:
       targetRepo: configuration-variables-resolver
       libraryPath: libs/configuration-variables-resolver
       tagPrefix: configuration-variables-resolver/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/encryption-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: encryption-api-php-client
+      libraryPath: libs/encryption-api-client
+      tagPrefix: encryption-api-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
@@ -178,6 +186,14 @@ jobs:
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/slicer/')
+      sourceRepo: platform-libraries
+      targetRepo: slicer
+      libraryPath: libs/slicer
+      tagPrefix: slicer/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/staging-provider/')
       sourceRepo: platform-libraries
       targetRepo: staging-provider
@@ -191,19 +207,3 @@ jobs:
       targetRepo: vault-api-php-client
       libraryPath: libs/vault-api-client
       tagPrefix: vault-api-client/
-
-  - template: azure-pipelines/jobs/split-library.yml
-    parameters:
-      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/slicer/')
-      sourceRepo: platform-libraries
-      targetRepo: slicer
-      libraryPath: libs/slicer
-      tagPrefix: slicer/
-
-  - template: azure-pipelines/jobs/split-library.yml
-    parameters:
-      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/encryption-api-client/')
-      sourceRepo: platform-libraries
-      targetRepo: encryption-api-php-client
-      libraryPath: libs/encryption-api-client
-      tagPrefix: encryption-api-client/

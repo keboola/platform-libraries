@@ -60,6 +60,11 @@ services:
       - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
 
+  dev-encryption-api-client:
+    <<: *dev
+    image: keboola/encryption-api-client
+    working_dir: /code/libs/encryption-api-client
+
   dev-input-mapping:
     <<: *dev
     image: keboola/input-mapping
@@ -76,6 +81,10 @@ services:
     <<: *dev82
     image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
+
+  dev-logging-bundle:
+    <<: *dev
+    working_dir: /code/libs/logging-bundle
 
   dev-messenger-bundle:
     <<: *dev82
@@ -117,6 +126,11 @@ services:
     image: keboola/settle
     working_dir: /code/libs/settle
 
+  dev-slicer:
+    <<: *dev
+    image: keboola/slicer
+    working_dir: /code/libs/slicer
+
   dev-staging-provider:
     <<: *dev
     image: keboola/staging-provider
@@ -132,17 +146,3 @@ services:
     <<: *dev82
     image: keboola/vault-api-client
     working_dir: /code/libs/vault-api-client
-
-  dev-slicer:
-    <<: *dev
-    image: keboola/slicer
-    working_dir: /code/libs/slicer
-
-  dev-logging-bundle:
-    <<: *dev
-    working_dir: /code/libs/logging-bundle
-
-  dev-encryption-api-client:
-    <<: *dev
-    image: keboola/encryption-api-client
-    working_dir: /code/libs/encryption-api-client

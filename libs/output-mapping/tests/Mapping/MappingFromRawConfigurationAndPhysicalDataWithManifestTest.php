@@ -27,7 +27,7 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifestTest extends TestCas
         $mapping = new MappingFromRawConfigurationAndPhysicalDataWithManifest($source, $manifest);
 
         $this->assertEquals('name', $mapping->getSourceName());
-        $this->assertEquals('pathname.manifest', $mapping->getPathNameManifest());
+        $this->assertEquals('pathName.manifest', $mapping->getPathNameManifest());
         $this->assertInstanceOf(FileItem::class, $mapping->getManifest());
         $this->assertFalse($mapping->isSliced());
         $this->assertEquals('pathName', $mapping->getPathName());

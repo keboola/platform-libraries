@@ -103,7 +103,6 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'workspace-abs',
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -172,7 +171,6 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-abs',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -258,7 +256,6 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ['mapping' => $configs],
             ['componentId' => 'foo'],
             'workspace-abs',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();

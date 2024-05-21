@@ -82,7 +82,6 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
             ['componentId' => 'foo'],
             AbstractStrategyFactory::WORKSPACE_REDSHIFT,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

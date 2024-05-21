@@ -28,7 +28,6 @@ class TableWriter extends AbstractWriter
         array $configuration,
         array $systemMetadata,
         string $stagingStorageOutput,
-        bool $createTypedTables,
         bool $isFailedJob,
     ): LoadTableQueue {
         // TODO: this will be moved to caller
@@ -37,7 +36,6 @@ class TableWriter extends AbstractWriter
             $configuration,
             $sourcePathPrefix,
             $this->clientWrapper->getToken(),
-            $createTypedTables,
             $isFailedJob,
         );
 

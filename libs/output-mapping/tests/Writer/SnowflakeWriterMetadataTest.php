@@ -77,7 +77,6 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -115,7 +114,6 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             $config,
             $systemMetadata,
             'local',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();
@@ -159,7 +157,6 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             $config,
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
-            false,
             false,
         );
         $this->expectException(InvalidOutputException::class);
@@ -229,7 +226,6 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             $systemMetadata,
             AbstractStrategyFactory::LOCAL,
             false,
-            false,
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -268,7 +264,6 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             $config,
             $systemMetadata,
             'local',
-            false,
             false,
         );
         $jobIds = $tableQueue->waitForAll();

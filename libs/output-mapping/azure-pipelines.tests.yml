@@ -15,7 +15,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_unitTests
+      jobName: tests_php81_unitTests
       dependsOn: [cs]
       displayName: General Tests
       serviceName: dev-output-mapping
@@ -30,7 +30,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_mainWriter1
+      jobName: tests_php81_mainWriter1
       dependsOn: [ cs ]
       displayName: First Main Writer Tests
       serviceName: dev-output-mapping
@@ -45,7 +45,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_mainWriter2
+      jobName: tests_php81_mainWriter2
       dependsOn: [ cs ]
       displayName: Second Main Writer Tests
       serviceName: dev-output-mapping
@@ -61,7 +61,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_workspaceWriter
+      jobName: tests_php81_workspaceWriter
       dependsOn: [ cs ]
       displayName: Workspace Writer Tests
       serviceName: dev-output-mapping
@@ -76,7 +76,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_redshiftWriter
+      jobName: tests_php81_redshiftWriter
       dependsOn: [ cs ]
       displayName: Redshift Writer Tests
       serviceName: dev-output-mapping
@@ -91,7 +91,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter_nativeTypes
+      jobName: tests_php81_tableWriter_nativeTypes
       dependsOn: [ cs ]
       displayName: Native types tests
       serviceName: dev-output-mapping
@@ -104,9 +104,25 @@ jobs:
         STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
         SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
 
+
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter_slice
+      jobName: tests_php81_tableWriter_newNativeTypes
+      dependsOn: [ cs ]
+      displayName: NEW Native types tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite new-native-types'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AWS)
+        RUN_SYNAPSE_TESTS: 0
+      secrets:
+        STORAGE_API_TOKEN: $(OUTPUT_MAPPING_NEW_NATIVE_TYPES__STORAGE_API_TOKEN_AWS)
+        STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)
+        SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: tests_php81_tableWriter_slice
       dependsOn: [ cs ]
       displayName: Slice feature tests
       serviceName: dev-output-mapping

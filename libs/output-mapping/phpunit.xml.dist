@@ -47,6 +47,9 @@
         <testsuite name="native-types">
             <file>tests/Writer/TableDefinitionTest.php</file>
         </testsuite>
+        <testsuite name="new-native-types">
+            <file>tests/Writer/TableDefinitionV2Test.php</file>
+        </testsuite>
         <testsuite name="slice">
             <directory>tests/Writer/Table</directory>
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>

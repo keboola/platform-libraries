@@ -166,15 +166,16 @@ class LocalTableStrategy extends AbstractTableStrategy
     /**
      * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedMapping
      */
-    public function sliceFiles(array $combinedMapping): void
+    public function sliceFiles(array $combinedMapping, string $dataType): void
     {
         foreach ($combinedMapping as $combinedMappingItem) {
             $outputDirPath = uniqid($combinedMappingItem->getPathName() . '-', true);
 
             $process = SliceCommandBuilder::createProcess(
-                $combinedMappingItem->getSourceName(),
-                $combinedMappingItem->getPathName(),
-                $outputDirPath,
+                sourceName: $combinedMappingItem->getSourceName(),
+                inputPath: $combinedMappingItem->getPathName(),
+                outputPath: $outputDirPath,
+                dataType: $dataType,
             );
 
             $result = $process->run(function ($type, $buffer) {

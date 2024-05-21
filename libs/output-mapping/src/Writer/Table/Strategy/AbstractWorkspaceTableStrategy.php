@@ -101,7 +101,7 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
         return false;
     }
 
-    public function sliceFiles(array $combinedMapping): void
+    public function sliceFiles(array $combinedMapping, string $dataType): void
     {
         throw new Exception('Not implemented');
     }

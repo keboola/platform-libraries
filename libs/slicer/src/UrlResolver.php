@@ -20,7 +20,7 @@ class UrlResolver
     public function __construct()
     {
         $this->pageSize = 100;
-        $this->slicerBaseVersion = 'v2.2';
+        $this->slicerBaseVersion = 'v3.0';
     }
 
     public function getDownloadUrl(

@@ -68,6 +68,32 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
     }
 
+    public function testHasSchemaConfiguration(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'schema' => [
+                [
+                    'name' => 'col1',
+                ],
+                [
+                    'name' => 'col2',
+                ],
+            ],
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertCount(2, $mapping->getSchema());
+
+        $schema = $mapping->getSchema();
+        self::assertEquals('col1', $schema[0]->getName());
+        self::assertEquals('col2', $schema[1]->getName());
+    }
+    
     /**
      * @dataProvider deleteWhereParamsDataProvider
      */

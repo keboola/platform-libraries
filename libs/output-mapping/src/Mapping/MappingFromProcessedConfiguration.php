@@ -158,4 +158,13 @@ class MappingFromProcessedConfiguration
     {
         return $this->source->getItemSourceClass();
     }
+
+    /** @return null|MappingFromConfigurationSchema[] */
+    public function getSchema(): ?array
+    {
+        if (empty($this->mapping['schema'])) {
+            return null;
+        }
+        return array_map(fn($v) => new MappingFromConfigurationSchema($v), $this->mapping['schema']);
+    }
 }

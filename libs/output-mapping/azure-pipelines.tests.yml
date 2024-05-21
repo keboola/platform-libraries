@@ -15,7 +15,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_unitTests
+      jobName: tests_php81_unitTests
       dependsOn: [cs]
       displayName: General Tests
       serviceName: dev-output-mapping
@@ -30,7 +30,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_mainWriter1
+      jobName: tests_php81_mainWriter1
       dependsOn: [ cs ]
       displayName: First Main Writer Tests
       serviceName: dev-output-mapping
@@ -45,7 +45,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_mainWriter2
+      jobName: tests_php81_mainWriter2
       dependsOn: [ cs ]
       displayName: Second Main Writer Tests
       serviceName: dev-output-mapping
@@ -61,7 +61,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_workspaceWriter
+      jobName: tests_php81_workspaceWriter
       dependsOn: [ cs ]
       displayName: Workspace Writer Tests
       serviceName: dev-output-mapping
@@ -76,7 +76,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_redshiftWriter
+      jobName: tests_php81_redshiftWriter
       dependsOn: [ cs ]
       displayName: Redshift Writer Tests
       serviceName: dev-output-mapping
@@ -91,7 +91,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter_nativeTypes
+      jobName: tests_php81_tableWriter_nativeTypes
       dependsOn: [ cs ]
       displayName: Native types tests
       serviceName: dev-output-mapping
@@ -107,7 +107,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter_newNativeTypes
+      jobName: tests_php81_tableWriter_newNativeTypes
       dependsOn: [ cs ]
       displayName: NEW Native types tests
       serviceName: dev-output-mapping
@@ -122,7 +122,7 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      jobName: tests_php74_tableWriter_slice
+      jobName: tests_php81_tableWriter_slice
       dependsOn: [ cs ]
       displayName: Slice feature tests
       serviceName: dev-output-mapping

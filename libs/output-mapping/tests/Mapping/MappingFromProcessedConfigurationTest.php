@@ -87,13 +87,14 @@ class MappingFromProcessedConfigurationTest extends TestCase
         $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
 
+        self::assertNotNull($mapping->getSchema());
         self::assertCount(2, $mapping->getSchema());
 
         $schema = $mapping->getSchema();
         self::assertEquals('col1', $schema[0]->getName());
         self::assertEquals('col2', $schema[1]->getName());
     }
-    
+
     /**
      * @dataProvider deleteWhereParamsDataProvider
      */

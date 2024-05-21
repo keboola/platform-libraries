@@ -40,7 +40,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
                     'type' => 'INT',
                     'length' => '2',
                     'default' => 'defaultSnowflake',
-                ]
+                ],
             ],
             'nullable' => false,
             'primary_key' => true,

@@ -53,7 +53,7 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         self::assertEquals('DATETIME', $mapping->getType('bigquery'));
         self::assertNull($mapping->getLength('bigquery'));
         self::assertEquals('defaultBigQuery', $mapping->getDefault('bigquery'));
-        
+
         self::assertEquals('VARCHAR', $mapping->getType('teradata'));
         self::assertNull($mapping->getLength('teradata'));
         self::assertNull($mapping->getDefault('teradata'));

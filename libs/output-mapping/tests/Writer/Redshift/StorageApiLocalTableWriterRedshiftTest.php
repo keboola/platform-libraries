@@ -32,6 +32,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -81,6 +82,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -92,6 +94,7 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ['componentId' => 'foo'],
             'local',
             false,
+            'none',
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

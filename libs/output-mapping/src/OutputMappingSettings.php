@@ -24,11 +24,14 @@ class OutputMappingSettings
 
     private bool $isFailedJob;
 
+    private string $dataTypeSupport;
+
     public function __construct(
         array $configuration,
         string $sourcePathPrefix,
         StorageApiToken $storageApiToken,
         bool $isFailedJob,
+        string $dataTypeSupport,
     ) {
         // TODO: validate
         $this->bucket = $configuration['bucket'] ?? null;
@@ -38,6 +41,7 @@ class OutputMappingSettings
         $this->sourcePathPrefix = $sourcePathPrefix;
         $this->storageApiToken = $storageApiToken;
         $this->isFailedJob = $isFailedJob;
+        $this->dataTypeSupport = $dataTypeSupport;
     }
 
     public function hasSlicingFeature(): bool
@@ -53,6 +57,11 @@ class OutputMappingSettings
     public function hasNativeTypesFeature(): bool
     {
         return $this->storageApiToken->hasFeature(self::NATIVE_TYPES_FEATURE);
+    }
+
+    public function getDataTypeSupport(): string
+    {
+        return $this->dataTypeSupport;
     }
 
     public function getSourcePathPrefix(): string

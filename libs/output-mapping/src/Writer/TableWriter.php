@@ -29,6 +29,7 @@ class TableWriter extends AbstractWriter
         array $systemMetadata,
         string $stagingStorageOutput,
         bool $isFailedJob,
+        string $dataTypeSupport,
     ): LoadTableQueue {
         // TODO: this will be moved to caller
         $systemMetadata = new SystemMetadata($systemMetadata);
@@ -37,6 +38,7 @@ class TableWriter extends AbstractWriter
             $sourcePathPrefix,
             $this->clientWrapper->getToken(),
             $isFailedJob,
+            $dataTypeSupport,
         );
 
         $tableLoader = new TableLoader($this->logger, $this->clientWrapper, $this->strategyFactory);

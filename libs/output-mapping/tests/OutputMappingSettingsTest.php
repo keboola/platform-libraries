@@ -33,6 +33,7 @@ class OutputMappingSettingsTest extends TestCase
             $sourcePathPrefix,
             $storageApiToken,
             false,
+            'authoritative',
         );
 
         $this->assertTrue($outputMappingSettings->hasSlicingFeature());
@@ -43,6 +44,7 @@ class OutputMappingSettingsTest extends TestCase
 
         $this->assertEquals($sourcePathPrefix, $outputMappingSettings->getSourcePathPrefix());
         $this->assertEquals($configuration['bucket'], $outputMappingSettings->getDefaultBucket());
+        $this->assertEquals('authoritative', $outputMappingSettings->getDataTypeSupport());
 
         foreach ($outputMappingSettings->getMapping() as $item) {
             $this->assertInstanceOf(MappingFromRawConfiguration::class, $item);

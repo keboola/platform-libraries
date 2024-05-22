@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Mapping;
 
-use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchema;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use PHPUnit\Framework\TestCase;
 
 class MappingFromConfigurationSchemaTest extends TestCase
@@ -15,7 +15,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
             'name' => 'col1',
         ];
 
-        $mappingSchema = new MappingFromConfigurationSchema($config);
+        $mappingSchema = new MappingFromConfigurationSchemaColumn($config);
 
         self::assertEquals('col1', $mappingSchema->getName());
         self::assertNull($mappingSchema->getDataType());
@@ -52,7 +52,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
             ],
         ];
 
-        $mappingSchema = new MappingFromConfigurationSchema($config);
+        $mappingSchema = new MappingFromConfigurationSchemaColumn($config);
 
         self::assertEquals('col1', $mappingSchema->getName());
 
@@ -60,9 +60,9 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertEquals('string', $mappingSchema->getDataType()->getBaseType());
         self::assertEquals('1', $mappingSchema->getDataType()->getBaseLength());
         self::assertEquals('defaultBase', $mappingSchema->getDataType()->getBaseDefault());
-        self::assertEquals('INT', $mappingSchema->getDataType()->getType('snowflake'));
+        self::assertEquals('INT', $mappingSchema->getDataType()->getTypeName('snowflake'));
         self::assertEquals('2', $mappingSchema->getDataType()->getLength('snowflake'));
-        self::assertEquals('defaultSnowflake', $mappingSchema->getDataType()->getDefault('snowflake'));
+        self::assertEquals('defaultSnowflake', $mappingSchema->getDataType()->getDefaultValue('snowflake'));
 
         self::assertFalse($mappingSchema->isNullable());
         self::assertTrue($mappingSchema->isPrimaryKey());

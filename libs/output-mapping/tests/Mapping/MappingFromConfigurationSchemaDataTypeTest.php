@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Mapping;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaDataType;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumnDataType;
 use PHPUnit\Framework\TestCase;
 
 class MappingFromConfigurationSchemaDataTypeTest extends TestCase
@@ -36,27 +36,27 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
             ],
         ];
 
-        $mapping = new MappingFromConfigurationSchemaDataType($config);
+        $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
 
         self::assertEquals('string', $mapping->getBaseType());
         self::assertEquals('1', $mapping->getBaseLength());
         self::assertEquals('defaultBase', $mapping->getBaseDefault());
 
-        self::assertEquals('INT', $mapping->getType('snowflake'));
+        self::assertEquals('INT', $mapping->getTypeName('snowflake'));
         self::assertEquals('2', $mapping->getLength('snowflake'));
-        self::assertEquals('defaultSnowflake', $mapping->getDefault('snowflake'));
+        self::assertEquals('defaultSnowflake', $mapping->getDefaultValue('snowflake'));
 
-        self::assertEquals('TEXT', $mapping->getType('exasol'));
+        self::assertEquals('TEXT', $mapping->getTypeName('exasol'));
         self::assertEquals('3', $mapping->getLength('exasol'));
-        self::assertNull($mapping->getDefault('exasol'));
+        self::assertNull($mapping->getDefaultValue('exasol'));
 
-        self::assertEquals('DATETIME', $mapping->getType('bigquery'));
+        self::assertEquals('DATETIME', $mapping->getTypeName('bigquery'));
         self::assertNull($mapping->getLength('bigquery'));
-        self::assertEquals('defaultBigQuery', $mapping->getDefault('bigquery'));
+        self::assertEquals('defaultBigQuery', $mapping->getDefaultValue('bigquery'));
 
-        self::assertEquals('VARCHAR', $mapping->getType('teradata'));
+        self::assertEquals('VARCHAR', $mapping->getTypeName('teradata'));
         self::assertNull($mapping->getLength('teradata'));
-        self::assertNull($mapping->getDefault('teradata'));
+        self::assertNull($mapping->getDefaultValue('teradata'));
     }
 
     public function testInvalidBackend(): void
@@ -67,10 +67,10 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
             ],
         ];
 
-        $mapping = new MappingFromConfigurationSchemaDataType($config);
+        $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Backend "snowflake" not found in mapping.');
-        $mapping->getType('snowflake');
+        $mapping->getTypeName('snowflake');
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Mapping;
 
-class MappingFromConfigurationSchema
+class MappingFromConfigurationSchemaColumn
 {
     public function __construct(private readonly array $mapping)
     {
@@ -15,12 +15,12 @@ class MappingFromConfigurationSchema
         return $this->mapping['name'];
     }
 
-    public function getDataType(): ?MappingFromConfigurationSchemaDataType
+    public function getDataType(): ?MappingFromConfigurationSchemaColumnDataType
     {
         if (!isset($this->mapping['data_type'])) {
             return null;
         }
-        return new MappingFromConfigurationSchemaDataType($this->mapping['data_type']);
+        return new MappingFromConfigurationSchemaColumnDataType($this->mapping['data_type']);
     }
 
     public function isNullable(): bool

@@ -16,6 +16,7 @@ class MappingStorageSourcesTest extends TestCase
         $bucketInfo = new BucketInfo([
             'id' => 'in.c-main',
             'backend' => 'snowflake',
+            'metadata' => [],
         ]);
 
         $table = new TableInfo([

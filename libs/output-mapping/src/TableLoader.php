@@ -57,7 +57,7 @@ class TableLoader
 
         $loadTableTasks = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
-        $tableConfigurationValidator = new TableConfigurationValidator();
+        $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
 
@@ -79,7 +79,7 @@ class TableLoader
                 );
 
                 $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-                $tableConfigurationValidator->validate($strategy, $combinedSource, $processedConfig);
+                $tableConfigurationValidator->validate($combinedSource, $processedConfig);
             } catch (Throwable $e) {
                 if (!$configuration->isFailedJob()) {
                     throw $e;

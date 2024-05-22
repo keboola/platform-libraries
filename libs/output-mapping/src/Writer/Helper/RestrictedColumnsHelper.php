@@ -20,6 +20,10 @@ class RestrictedColumnsHelper
             $config['column_metadata'] = self::removeRestrictedColumnsFromColumnMetadata($config['column_metadata']);
         }
 
+        if (!empty($config['schema'])) {
+            $config['schema'] = self::removeRestrictedColumnsFromSchema($config['schema']);
+        }
+
         return $config;
     }
 
@@ -46,8 +50,18 @@ class RestrictedColumnsHelper
         );
     }
 
-    public static function validateRestrictedColumnsInConfig(array $columns, array $columnMetadata): void
+    public static function removeRestrictedColumnsFromSchema(array $schema): array
     {
+        return array_filter($schema, function ($column): bool {
+            return self::isRestrictedColumn((string) $column['name']);
+        });
+    }
+
+    public static function validateRestrictedColumnsInConfig(
+        array $columns,
+        array $columnMetadata,
+        array $schema,
+    ): void {
         $errors = [];
         if (!empty($columns)) {
             $restrictedColumns = array_filter($columns, function ($column): bool {
@@ -70,6 +84,18 @@ class RestrictedColumnsHelper
                 $errors[] = sprintf(
                     'Metadata for system columns "%s" cannot be imported to the table.',
                     implode(', ', $restrictedColumns),
+                );
+            }
+        }
+
+        if (!empty($schema)) {
+            $restrictedColumns = array_filter($schema, function ($column): bool {
+                return !self::isRestrictedColumn((string) $column['name']);
+            });
+            if ($restrictedColumns) {
+                $errors[] = sprintf(
+                    'Schema for system columns "%s" cannot be imported to the table.',
+                    implode(', ', array_column($restrictedColumns, 'name')),
                 );
             }
         }

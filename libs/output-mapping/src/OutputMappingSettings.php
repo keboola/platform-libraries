@@ -20,6 +20,14 @@ class OutputMappingSettings
 
     public const NATIVE_TYPES_FEATURE = 'native-types';
 
+    public const NEW_NATIVE_TYPES_FEATURE = 'new-native-types';
+
+    public const DATA_TYPES_SUPPORT_AUTHORITATIVE = 'authoritative';
+
+    public const DATA_TYPES_SUPPORT_HINTS = 'hints';
+
+    public const DATA_TYPES_SUPPORT_NONE = 'none';
+
     private StorageApiToken $storageApiToken;
 
     private bool $isFailedJob;
@@ -57,6 +65,11 @@ class OutputMappingSettings
     public function hasNativeTypesFeature(): bool
     {
         return $this->storageApiToken->hasFeature(self::NATIVE_TYPES_FEATURE);
+    }
+
+    public function hasNewNativeTypesFeature(): bool
+    {
+        return $this->storageApiToken->hasFeature(self::NEW_NATIVE_TYPES_FEATURE);
     }
 
     public function getDataTypeSupport(): string

@@ -242,6 +242,20 @@ class RestrictedColumnsHelperTest extends TestCase
                         ],
                     ],
                 ],
+                'schema' => [
+                    [
+                        'name' => 'id',
+                    ],
+                    [
+                        'name' => 'name',
+                    ],
+                    [
+                        'name' => '_timestamp',
+                    ],
+                    [
+                        'name' => '_TIMESTAMP',
+                    ],
+                ],
             ],
             'expectedResult' => [
                 'destination' => 'in.c-myBucket.myTable',
@@ -269,6 +283,14 @@ class RestrictedColumnsHelperTest extends TestCase
                             'key' => 'KBC.datatype.basetype',
                             'value' => 'STRING',
                         ],
+                    ],
+                ],
+                'schema' => [
+                    [
+                        'name' => 'id',
+                    ],
+                    [
+                        'name' => 'name',
                     ],
                 ],
             ],
@@ -332,6 +354,20 @@ class RestrictedColumnsHelperTest extends TestCase
                 ],
             ],
         ];
+
+        yield 'config with columns in schema' => [
+            [
+                'destination' => 'in.c-myBucket.myTable',
+                'schema' => [
+                    [
+                        'name' => 'id',
+                    ],
+                    [
+                        'name' => 'name',
+                    ],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -343,6 +379,7 @@ class RestrictedColumnsHelperTest extends TestCase
         RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
             $config['columns'] ?? [],
             $config['column_metadata'] ?? [],
+            $config['schema'] ?? [],
         );
     }
 
@@ -478,6 +515,7 @@ class RestrictedColumnsHelperTest extends TestCase
         RestrictedColumnsHelper::validateRestrictedColumnsInConfig(
             $config['columns'] ?? [],
             $config['column_metadata'] ?? [],
+            $config['schema'] ?? [],
         );
     }
 }

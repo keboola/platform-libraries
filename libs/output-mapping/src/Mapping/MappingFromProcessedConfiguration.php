@@ -162,9 +162,10 @@ class MappingFromProcessedConfiguration
     /** @return null|MappingFromConfigurationSchemaColumn[] */
     public function getSchema(): ?array
     {
-        if (empty($this->mapping['schema'])) {
-            return null;
-        }
-        return array_map(fn($v) => new MappingFromConfigurationSchemaColumn($v), $this->mapping['schema']);
+        $schema = $this->mapping['schema'] ?
+            RestrictedColumnsHelper::removeRestrictedColumnsFromSchema($this->mapping['schema']) :
+            [];
+
+        return $schema ? array_map(fn($v) => new MappingFromConfigurationSchemaColumn($v), $schema) : null;
     }
 }

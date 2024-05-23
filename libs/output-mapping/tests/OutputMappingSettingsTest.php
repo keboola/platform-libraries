@@ -26,6 +26,7 @@ class OutputMappingSettingsTest extends TestCase
                 [OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE, true],
                 [OutputMappingSettings::TAG_STAGING_FILES_FEATURE, false],
                 [OutputMappingSettings::NATIVE_TYPES_FEATURE, true],
+                [OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE, true],
             ]);
 
         $outputMappingSettings = new OutputMappingSettings(
@@ -39,6 +40,7 @@ class OutputMappingSettingsTest extends TestCase
         $this->assertTrue($outputMappingSettings->hasSlicingFeature());
         $this->assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
         $this->assertTrue($outputMappingSettings->hasNativeTypesFeature());
+        $this->assertTrue($outputMappingSettings->hasNewNativeTypesFeature());
 
         $this->assertFalse($outputMappingSettings->isFailedJob());
 

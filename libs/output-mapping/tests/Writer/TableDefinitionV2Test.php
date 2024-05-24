@@ -93,6 +93,81 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyInputBucket]
+    public function testValidateTableStructure(): void
+    {
+        $tableId = $this->emptyInputBucketId . '.tableDefinition';
+        $idDatatype = new GenericStorage('int', ['nullable' => false]);
+        $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
+
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyInputBucketId, [
+            'name' => 'tableDefinition',
+            'primaryKeysNames' => [],
+            'columns' => [
+                [
+                    'name' => 'Id',
+                    'basetype' => $idDatatype->getBasetype(),
+                ],
+                [
+                    'name' => 'Name',
+                    'basetype' => $nameDatatype->getBasetype(),
+                ],
+            ],
+        ]);
+
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $tableId,
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                        'snowflake' => [
+                            'type' => 'VARCHAR',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "Id","Name"
+            "1","bob"
+            "2","alice"
+            EOT,
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+    }
+
     public function conflictsConfigurationWithManifestProvider(): Generator
     {
         yield 'conflict-columns' => [

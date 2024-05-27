@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 
 class TableStructureValidatorTest extends AbstractTestCase
 {
@@ -55,6 +57,45 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
 
         self::assertTrue(true);
+    }
+
+    public function testSkipValidationWithoutFeature(): void
+    {
+        $schema = [];
+        $validator = new TableStructureValidator(false, $this->getClientMock());
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
+    public function testSkipValidationIfTableNotExists(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->method('getTable')
+            ->willThrowException(new ClientException('Table not found', 404));
+
+        $schema = [];
+
+        $validator = new TableStructureValidator(true, $clientMock);
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
+    public function testErrorCatchStorageApiException(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->method('getTable')
+            ->willThrowException(new ClientException('Bad request', 400));
+
+        $schema = [];
+        $validator = new TableStructureValidator(true, $clientMock);
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Bad request');
+        $validator->validateTable('in.c-main.table', $schema);
     }
 
     public function testErrorWrongCountColumns(): void

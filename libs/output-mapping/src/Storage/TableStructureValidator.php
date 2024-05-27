@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 
 class TableStructureValidator
 {
@@ -26,7 +27,14 @@ class TableStructureValidator
             return;
         }
 
-        $table = $this->client->getTable($tableId);
+        try {
+            $table = $this->client->getTable($tableId);
+        } catch (ClientException $e) {
+            if ($e->getCode() === 404) {
+                return;
+            }
+            throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+        }
 
         $this->validateColumnsName($table, $schemaColumns);
         if ($table['isTyped']) {

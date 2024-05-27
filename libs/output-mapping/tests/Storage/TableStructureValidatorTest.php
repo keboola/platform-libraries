@@ -61,8 +61,10 @@ class TableStructureValidatorTest extends AbstractTestCase
 
     public function testSkipValidationWithoutFeature(): void
     {
+        $clientMock = $this->createMock(Client::class);
+
         $schema = [];
-        $validator = new TableStructureValidator(false, $this->getClientMock());
+        $validator = new TableStructureValidator(false, $clientMock);
         $validator->validateTable('in.c-main.table', $schema);
 
         self::assertTrue(true);
@@ -406,58 +408,60 @@ class TableStructureValidatorTest extends AbstractTestCase
     private function getClientMock(): Client
     {
         $clientMock = $this->createMock(Client::class);
-        $clientMock->method('getTable')->willReturn([
-            'id' => 'in.c-main.table',
-            'isTyped' => true,
-            'columns' => [
-                'col1',
-                'col2',
-                'col3',
-            ],
-            'columnMetadata' => [
-                'col1' => [
-                    [
-                        'key' => 'KBC.datatype.type',
-                        'value' => 'VARCHAR',
+        $clientMock
+            ->expects(self::once())
+            ->method('getTable')->willReturn([
+                'id' => 'in.c-main.table',
+                'isTyped' => true,
+                'columns' => [
+                    'col1',
+                    'col2',
+                    'col3',
+                ],
+                'columnMetadata' => [
+                    'col1' => [
+                        [
+                            'key' => 'KBC.datatype.type',
+                            'value' => 'VARCHAR',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'STRING',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.length',
+                            'value' => '255',
+                        ],
                     ],
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'STRING',
+                    'col2' => [
+                        [
+                            'key' => 'KBC.datatype.type',
+                            'value' => 'INT',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'NUMERIC',
+                        ],
                     ],
-                    [
-                        'key' => 'KBC.datatype.length',
-                        'value' => '255',
+                    'col3' => [
+                        [
+                            'key' => 'KBC.datatype.type',
+                            'value' => 'INT',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'NUMERIC',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.length',
+                            'value' => '123',
+                        ],
                     ],
                 ],
-                'col2' => [
-                    [
-                        'key' => 'KBC.datatype.type',
-                        'value' => 'INT',
-                    ],
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'NUMERIC',
-                    ],
+                'bucket' => [
+                    'backend' => 'snowflake',
                 ],
-                'col3' => [
-                    [
-                        'key' => 'KBC.datatype.type',
-                        'value' => 'INT',
-                    ],
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'NUMERIC',
-                    ],
-                    [
-                        'key' => 'KBC.datatype.length',
-                        'value' => '123',
-                    ],
-                ],
-            ],
-            'bucket' => [
-                'backend' => 'snowflake',
-            ],
-        ]);
+            ]);
 
         return $clientMock;
     }

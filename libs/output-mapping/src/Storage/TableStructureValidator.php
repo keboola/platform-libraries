@@ -7,13 +7,17 @@ namespace Keboola\OutputMapping\Storage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
+use Psr\Log\LoggerInterface;
 
 class TableStructureValidator
 {
     public function __construct(
         readonly private bool $hasNewNativeTypeFeature,
+        readonly private LoggerInterface $logger,
         readonly private Client $client,
     ) {
     }
@@ -36,8 +40,25 @@ class TableStructureValidator
             throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
         }
 
-        $this->validateColumnsName($table, $schemaColumns);
         if ($table['isTyped']) {
+            $this->validateColumnsName(
+                $table['id'],
+                array_map(
+                    fn($column) => $column['name'],
+                    $table['definition']['columns'],
+                ),
+                $schemaColumns,
+            );
+            $this->validatePrimaryKeys(
+                $table['definition']['primaryKeysNames'],
+                array_map(
+                    fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                    array_filter(
+                        $schemaColumns,
+                        fn(MappingFromConfigurationSchemaColumn $column) => $column->isPrimaryKey(),
+                    ),
+                ),
+            );
             $this->validateTypedTable($table, $schemaColumns, $table['bucket']['backend']);
         }
     }
@@ -52,17 +73,18 @@ class TableStructureValidator
             if (!$schemaColumn->getDataType()) {
                 continue;
             }
-            $tableColumnMetadata = $table['columnMetadata'][$schemaColumn->getName()];
-            $tableColumnMetadata = array_combine(
-                array_map(fn($column) => $column['key'], $tableColumnMetadata),
-                array_map(fn($column) => $column['value'], $tableColumnMetadata),
+            $filteresTableColumns = array_filter(
+                $table['definition']['columns'],
+                fn($column) => $column['name'] === ColumnNameSanitizer::sanitize($schemaColumn->getName()),
             );
+
+            $tableColumn = current($filteresTableColumns);
             try {
                 $schemaColumnType = $schemaColumn->getDataType()->getTypeName($bucketBackend);
-                $tableColumnType = $tableColumnMetadata['KBC.datatype.type'];
+                $tableColumnType = $tableColumn['definition']['type'];
             } catch (InvalidOutputException) {
                 $schemaColumnType = $schemaColumn->getDataType()->getBaseType();
-                $tableColumnType = $tableColumnMetadata['KBC.datatype.basetype'];
+                $tableColumnType = $tableColumn['basetype'];
             }
 
             if (strtolower($schemaColumnType) !== strtolower($tableColumnType)) {
@@ -82,24 +104,25 @@ class TableStructureValidator
                 $schemaColumnLength = $schemaColumn->getDataType()->getBaseLength();
             }
 
-            if (!$schemaColumnLength) {
-                continue;
-            }
-
-            if (!isset($tableColumnMetadata['KBC.datatype.length'])) {
-                $validationErrors[] = sprintf(
-                    'Table "%s" column "%s" has not set length.',
-                    $table['id'],
-                    $schemaColumn->getName(),
-                );
-            } elseif (strtolower($schemaColumnLength) !== strtolower($tableColumnMetadata['KBC.datatype.length'])) {
+            if ($schemaColumnLength && $schemaColumnLength !== $tableColumn['definition']['length']) {
                 $validationErrors[] = sprintf(
                     'Table "%s" column "%s" has different length than the schema.'.
                     ' Table length: "%s", schema length: "%s".',
                     $table['id'],
                     $schemaColumn->getName(),
-                    $tableColumnMetadata['KBC.datatype.length'],
+                    $tableColumn['definition']['length'],
                     $schemaColumnLength,
+                );
+            }
+
+            if ($schemaColumn->isNullable() !== $tableColumn['definition']['nullable']) {
+                $validationErrors[] = sprintf(
+                    'Table "%s" column "%s" has different nullable than the schema.'.
+                    ' Table nullable: "%s", schema nullable: "%s".',
+                    $table['id'],
+                    $schemaColumn->getName(),
+                    $tableColumn['definition']['nullable'] ? 'true' : 'false',
+                    $schemaColumn->isNullable() ? 'true' : 'false',
                 );
             }
         }
@@ -109,32 +132,54 @@ class TableStructureValidator
         }
     }
 
-    private function validateColumnsName(array $table, array $schemaColumns): void
+    private function validateColumnsName(string $tableId, array $tableColumns, array $schemaColumns): void
     {
         $schemaColumnsNames = array_map(
-            fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+            fn(MappingFromConfigurationSchemaColumn $column) => ColumnNameSanitizer::sanitize($column->getName()),
             $schemaColumns,
         );
-
-        $tableColumns = $table['columns'];
 
         if (count($schemaColumnsNames) !== count($tableColumns)) {
             throw new InvalidTableStructureException(sprintf(
                 'Table "%s" does not contain the same number of columns as the schema.'.
                 ' Table columns: %s, schema columns: %s.',
-                $table['id'],
+                $tableId,
                 count($tableColumns),
                 count($schemaColumnsNames),
             ));
         }
 
-        $diff = array_diff($schemaColumnsNames, $table['columns']);
+        $diff = array_diff($schemaColumnsNames, $tableColumns);
 
         if ($diff) {
             throw new InvalidTableStructureException(sprintf(
                 'Table "%s" does not contain columns: "%s".',
-                $table['id'],
+                $tableId,
                 implode('", "', $diff),
+            ));
+        }
+    }
+
+    private function validatePrimaryKeys(array $tableKeys, array $schemaKeys): void
+    {
+        $schemaKeys = array_map(fn(string $column) => ColumnNameSanitizer::sanitize($column), $schemaKeys);
+        $schemaKeys = PrimaryKeyHelper::normalizeKeyArray($this->logger, $schemaKeys);
+
+        $invalidKeys = false;
+        if (count($tableKeys) !== count($schemaKeys)) {
+            $invalidKeys = true;
+        }
+        $currentTablePkColumnsCount = count($tableKeys);
+        if (count(array_intersect($tableKeys, $schemaKeys)) !== $currentTablePkColumnsCount) {
+            $invalidKeys = true;
+        }
+
+        if ($invalidKeys) {
+            throw new InvalidTableStructureException(sprintf(
+                'Table primary keys does not contain the same number of columns as the schema.'.
+                ' Table primary keys: "%s", schema primary keys: "%s".',
+                implode(', ', $tableKeys),
+                implode(', ', $schemaKeys),
             ));
         }
     }

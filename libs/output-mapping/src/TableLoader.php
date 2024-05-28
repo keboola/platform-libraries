@@ -62,6 +62,7 @@ class TableLoader
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableStructureValidator = new TableStructureValidator(
             $configuration->hasNewNativeTypesFeature(),
+            $this->logger,
             $this->clientWrapper->getTableAndFileStorageClient(),
         );
         foreach ($combinedSources as $combinedSource) {

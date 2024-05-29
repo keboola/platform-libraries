@@ -16,6 +16,7 @@ class BucketInfoTest extends TestCase
         $this->bucketInfo = new BucketInfo([
             'id' => 'bucketId',
             'backend' => 'backendType',
+            'metadata' => [],
         ]);
     }
 
@@ -23,5 +24,6 @@ class BucketInfoTest extends TestCase
     {
         $this->assertEquals('bucketId', $this->bucketInfo->id);
         $this->assertEquals('backendType', $this->bucketInfo->backend);
+        $this->assertEquals([], $this->bucketInfo->metadata);
     }
 }

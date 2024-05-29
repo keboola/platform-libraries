@@ -10,11 +10,13 @@ use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
@@ -58,6 +60,11 @@ class TableLoader
         $loadTableTasks = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
+        $tableStructureValidator = new TableStructureValidator(
+            $configuration->hasNewNativeTypesFeature(),
+            $this->logger,
+            $this->clientWrapper->getTableAndFileStorageClient(),
+        );
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
 
@@ -92,6 +99,15 @@ class TableLoader
             }
 
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
+
+            try {
+                $tableStructureValidator->validateTable(
+                    $processedSource->getDestination()->getTableId(),
+                    $processedSource->getSchema() ?? [],
+                );
+            } catch (InvalidTableStructureException $e) {
+                throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+            }
 
             $storagePreparer = new StoragePreparer($this->clientWrapper, $this->logger);
             $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);

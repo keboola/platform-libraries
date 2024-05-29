@@ -372,6 +372,101 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
+    public function testErrorWrongColumnNullable(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                        'length' => '255',
+                    ],
+                ],
+                'primary_key' => true,
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                        'length' => '123',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" column "col3" has different nullable than the schema. '.
+            'Table nullable: "true", schema nullable: "false".',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorWrongColumnMultipleErrors(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '254',
+                    ],
+                ],
+                'primary_key' => true,
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                        'length' => '123',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $this->expectException(InvalidTableStructureException::class);
+        $expectedMessage = 'Table "in.c-main.table" column "col1" has different length than the schema. ';
+        $expectedMessage .= 'Table length: "255", schema length: "254". ';
+        $expectedMessage .= 'Table "in.c-main.table" column "col2" has different type than the schema. ';
+        $expectedMessage .= 'Table type: "NUMERIC", schema type: "STRING". ';
+        $expectedMessage .= 'Table "in.c-main.table" column "col3" has different nullable than the schema. ';
+        $expectedMessage .= 'Table nullable: "true", schema nullable: "false".';
+        $this->expectExceptionMessage($expectedMessage);
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
     public function testErrorCountPrimaryKeys(): void
     {
         $schema = [

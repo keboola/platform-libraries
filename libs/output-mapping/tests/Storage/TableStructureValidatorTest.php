@@ -15,7 +15,7 @@ use Psr\Log\NullLogger;
 
 class TableStructureValidatorTest extends AbstractTestCase
 {
-    public function testValidateTableStructure(): void
+    public function testValidateTypedTableStructure(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -58,7 +58,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $validator->validateTable('in.c-main.table', $schema);
 
         self::assertTrue(true);
@@ -105,7 +105,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongCountColumns(): void
+    public function testErrorTypedTableWrongCountColumns(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -131,7 +131,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" does not contain the same number of columns as the schema.'.
@@ -140,7 +140,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongSchemaColumnName(): void
+    public function testErrorTypedTableWrongSchemaColumnName(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -174,13 +174,13 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage('Table "in.c-main.table" does not contain columns: "col4".');
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnDataTypeBackendType(): void
+    public function testErrorTypedTableWrongColumnDataTypeBackendType(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -220,7 +220,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col3" has different type than the schema. '.
@@ -229,7 +229,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnDataTypeBaseType(): void
+    public function testErrorTypedTableWrongColumnDataTypeBaseType(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -269,7 +269,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col2" has different type than the schema. '.
@@ -278,7 +278,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnDataTypeBackendLength(): void
+    public function testErrorTypedTableWrongColumnDataTypeBackendLength(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -318,7 +318,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col3" has different length than the schema. '.
@@ -327,7 +327,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnDataTypeBaseLength(): void
+    public function testErrorTypedTableWrongColumnDataTypeBaseLength(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -363,7 +363,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col3" has different length than the schema. '.
@@ -372,7 +372,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnNullable(): void
+    public function testErrorTypedTableWrongColumnNullable(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -411,7 +411,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col3" has different nullable than the schema. '.
@@ -420,7 +420,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongColumnMultipleErrors(): void
+    public function testErrorTypedTableWrongColumnMultipleErrors(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -455,7 +455,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
         $this->expectException(InvalidTableStructureException::class);
         $expectedMessage = 'Table "in.c-main.table" column "col1" has different length than the schema. ';
         $expectedMessage .= 'Table length: "255", schema length: "254". ';
@@ -467,7 +467,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorCountPrimaryKeys(): void
+    public function testErrorTypedTableCountPrimaryKeys(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -511,7 +511,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
 
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
@@ -521,7 +521,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorWrongPrimaryKey(): void
+    public function testErrorTypedTableWrongPrimaryKey(): void
     {
         $schema = [
             new MappingFromConfigurationSchemaColumn([
@@ -564,7 +564,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMock());
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
 
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
@@ -574,7 +574,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testWebalizeColumns(): void
+    public function testWebalizeTypedTableColumns(): void
     {
         $clientMock = $this->createMock(Client::class);
         $clientMock
@@ -623,7 +623,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         self::assertTrue(true);
     }
 
-    private function getClientMock(): Client
+    private function getClientMockTypedTable(): Client
     {
         $clientMock = $this->createMock(Client::class);
         $clientMock

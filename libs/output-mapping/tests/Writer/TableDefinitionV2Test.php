@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Generator;
-use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
-use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
-use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionV2Test extends AbstractTestCase
@@ -94,7 +92,7 @@ class TableDefinitionV2Test extends AbstractTestCase
     }
 
     #[NeedsEmptyInputBucket]
-    public function testValidateTableStructure(): void
+    public function testValidateTypedTableStructure(): void
     {
         $tableId = $this->emptyInputBucketId . '.tableDefinition';
         $idDatatype = new GenericStorage('int', ['nullable' => false]);
@@ -148,6 +146,77 @@ class TableDefinitionV2Test extends AbstractTestCase
             "Id","Name"
             "1","bob"
             "2","alice"
+            EOT,
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+    }
+
+    #[NeedsTestTables]
+    public function testValidateNonTypedTableStructure(): void
+    {
+        $tableId = $this->testBucketId . '.test1';
+
+        $config = [
+            'source' => 'table.csv',
+            'destination' => $tableId,
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'foo',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'bar',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table.csv',
+            <<< EOT
+            "Id","Name","foo","bar"
+            "1","bob","firtFoo","firstBar"
+            "2","alice","secondFoo","secondBar"
             EOT,
         );
 

@@ -623,6 +623,375 @@ class TableStructureValidatorTest extends AbstractTestCase
         self::assertTrue(true);
     }
 
+    public function testValidateNonTypedTableStructure(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '123',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
+    public function testErrorNonTypedTableWrongCountColumns(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" does not contain the same number of columns as the schema.'.
+            ' Table columns: 3, schema columns: 2.',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableWrongSchemaColumnName(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col4',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage('Table "in.c-main.table" does not contain columns: "col4".');
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableWrongColumnDataTypeBackendType(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" is untyped, but schema column "col2" has unsupported type "NUMERIC".',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableHasSetSpecificBackendColumnType(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                        'length' => '255',
+                    ],
+                ],
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '123',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" is untyped, but schema has set specific backend column "col1".',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableWrongColumnMultipleErrors(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                    ],
+                ],
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $expectedMessage = 'Table "in.c-main.table" is untyped, but schema has set specific backend column "col1". ';
+        $expectedMessage .= 'Table "in.c-main.table" is untyped, ';
+        $expectedMessage .= 'but schema column "col3" has unsupported type "NUMERIC".';
+        $this->expectExceptionMessage($expectedMessage);
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableCountPrimaryKeys(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                        'length' => '255',
+                    ],
+                ],
+                'nullable' => false,
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+                'nullable' => false,
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                        'length' => '123',
+                    ],
+                    'snowflake' => [
+                        'type' => 'INT',
+                        'length' => '123',
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table primary keys does not contain the same number of columns as the schema. '.
+            'Table primary keys: "col1", schema primary keys: "col1, col2".',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testErrorNonTypedTableWrongPrimaryKey(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+                'nullable' => false,
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                        'length' => '123',
+                    ],
+                    'snowflake' => [
+                        'type' => 'INT',
+                        'length' => '123',
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table primary keys does not contain the same number of columns as the schema. '.
+            'Table primary keys: "col1", schema primary keys: "col2".',
+        );
+        $validator->validateTable('in.c-main.table', $schema);
+    }
+
+    public function testWebalizeNonTypedTableColumns(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::once())
+            ->method('getTable')->willReturn([
+                'id' => 'in.c-main.table',
+                'isTyped' => false,
+                'primaryKey' => [
+                    'AbcdefGHij_k_lm',
+                ],
+                'columns' => [
+                    'AbcdefGHij_k_lm',
+                ],
+                'bucket' => [
+                    'backend' => 'snowflake',
+                ],
+            ]);
+
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => '_-AbčďěfGHíj-k_lm_',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                ],
+                'nullable' => false,
+                'primary_key' => true,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
     private function getClientMockTypedTable(): Client
     {
         $clientMock = $this->createMock(Client::class);
@@ -664,6 +1033,30 @@ class TableStructureValidatorTest extends AbstractTestCase
                             'basetype' => 'NUMERIC',
                         ],
                     ],
+                ],
+                'bucket' => [
+                    'backend' => 'snowflake',
+                ],
+            ]);
+
+        return $clientMock;
+    }
+
+    private function getClientMockNonTypedTable(): Client
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::once())
+            ->method('getTable')->willReturn([
+                'id' => 'in.c-main.table',
+                'isTyped' => false,
+                'primaryKey' => [
+                    'col1',
+                ],
+                'columns' => [
+                    'col1',
+                    'col2',
+                    'col3',
                 ],
                 'bucket' => [
                     'backend' => 'snowflake',

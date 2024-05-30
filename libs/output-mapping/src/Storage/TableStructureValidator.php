@@ -60,6 +60,19 @@ class TableStructureValidator
                 ),
             );
             $this->validateTypedTable($table, $schemaColumns, $table['bucket']['backend']);
+        } else {
+            $this->validateColumnsName($table['id'], $table['columns'], $schemaColumns);
+            $this->validatePrimaryKeys(
+                $table['primaryKey'],
+                array_map(
+                    fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                    array_filter(
+                        $schemaColumns,
+                        fn(MappingFromConfigurationSchemaColumn $column) => $column->isPrimaryKey(),
+                    ),
+                ),
+            );
+            $this->validateUntypedTable($table, $schemaColumns);
         }
     }
 
@@ -124,6 +137,42 @@ class TableStructureValidator
                     $tableColumn['definition']['nullable'] ? 'true' : 'false',
                     $schemaColumn->isNullable() ? 'true' : 'false',
                 );
+            }
+        }
+
+        if ($validationErrors) {
+            throw new InvalidTableStructureException(implode(' ', $validationErrors));
+        }
+    }
+
+    /**
+     * @param MappingFromConfigurationSchemaColumn[] $schemaColumns
+     */
+    private function validateUntypedTable(array $table, array $schemaColumns): void
+    {
+        $validationErrors = [];
+        foreach ($schemaColumns as $schemaColumn) {
+            if (!$schemaColumn->getDataType()) {
+                continue;
+            }
+
+            try {
+                $schemaColumn->getDataType()->getTypeName($table['bucket']['backend']);
+                $this->logger->warning(sprintf(
+                    'Table "%s" is untyped, but schema has set specific backend column "%s".',
+                    $table['id'],
+                    $schemaColumn->getName(),
+                ));
+                throw new InvalidOutputException('Backend column type is not allowed.');
+            } catch (InvalidOutputException) {
+                if ($schemaColumn->getDataType()->getBaseType() !== 'STRING') {
+                    $validationErrors[] = sprintf(
+                        'Table "%s" is untyped, but schema column "%s" has unsupported type "%s".',
+                        $table['id'],
+                        $schemaColumn->getName(),
+                        $schemaColumn->getDataType()->getBaseType(),
+                    );
+                }
             }
         }
 

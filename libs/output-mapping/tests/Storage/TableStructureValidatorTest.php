@@ -12,6 +12,7 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Psr\Log\NullLogger;
+use Psr\Log\Test\TestLogger;
 
 class TableStructureValidatorTest extends AbstractTestCase
 {
@@ -800,12 +801,13 @@ class TableStructureValidatorTest extends AbstractTestCase
             ]),
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage(
-            'Table "in.c-main.table" is untyped, but schema has set specific backend column "col1".',
-        );
+        $logger = new TestLogger();
+        $validator = new TableStructureValidator(true, $logger, $this->getClientMockNonTypedTable());
         $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue($logger->hasWarning(
+            'Table "in.c-main.table" is untyped, but schema has set specific backend column "col1".',
+        ));
     }
 
     public function testErrorNonTypedTableWrongColumnMultipleErrors(): void
@@ -815,7 +817,7 @@ class TableStructureValidatorTest extends AbstractTestCase
                 'name' => 'col1',
                 'data_type' => [
                     'base' => [
-                        'type' => 'STRING',
+                        'type' => 'DATE',
                     ],
                     'snowflake' => [
                         'type' => 'VARCHAR',
@@ -843,7 +845,7 @@ class TableStructureValidatorTest extends AbstractTestCase
 
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
         $this->expectException(InvalidTableStructureException::class);
-        $expectedMessage = 'Table "in.c-main.table" is untyped, but schema has set specific backend column "col1". ';
+        $expectedMessage = 'Table "in.c-main.table" is untyped, but schema column "col1" has unsupported type "DATE". ';
         $expectedMessage .= 'Table "in.c-main.table" is untyped, ';
         $expectedMessage .= 'but schema column "col3" has unsupported type "NUMERIC".';
         $this->expectExceptionMessage($expectedMessage);

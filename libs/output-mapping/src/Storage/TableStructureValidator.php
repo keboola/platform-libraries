@@ -158,11 +158,12 @@ class TableStructureValidator
 
             try {
                 $schemaColumn->getDataType()->getTypeName($table['bucket']['backend']);
-                $validationErrors[] = sprintf(
+                $this->logger->warning(sprintf(
                     'Table "%s" is untyped, but schema has set specific backend column "%s".',
                     $table['id'],
                     $schemaColumn->getName(),
-                );
+                ));
+                throw new InvalidOutputException('Backend column type is not allowed.');
             } catch (InvalidOutputException) {
                 if ($schemaColumn->getDataType()->getBaseType() !== 'STRING') {
                     $validationErrors[] = sprintf(

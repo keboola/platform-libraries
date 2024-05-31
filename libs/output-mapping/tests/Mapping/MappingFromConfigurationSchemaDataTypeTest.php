@@ -38,25 +38,25 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
 
         $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
 
-        self::assertEquals('string', $mapping->getBaseType());
+        self::assertEquals('string', $mapping->getBaseTypeName());
         self::assertEquals('1', $mapping->getBaseLength());
-        self::assertEquals('defaultBase', $mapping->getBaseDefault());
+        self::assertEquals('defaultBase', $mapping->getBaseDefaultValue());
 
-        self::assertEquals('INT', $mapping->getTypeName('snowflake'));
-        self::assertEquals('2', $mapping->getLength('snowflake'));
-        self::assertEquals('defaultSnowflake', $mapping->getDefaultValue('snowflake'));
+        self::assertEquals('INT', $mapping->getBackendTypeName('snowflake'));
+        self::assertEquals('2', $mapping->getBackendLength('snowflake'));
+        self::assertEquals('defaultSnowflake', $mapping->getBackendDefaultValue('snowflake'));
 
-        self::assertEquals('TEXT', $mapping->getTypeName('exasol'));
-        self::assertEquals('3', $mapping->getLength('exasol'));
-        self::assertNull($mapping->getDefaultValue('exasol'));
+        self::assertEquals('TEXT', $mapping->getBackendTypeName('exasol'));
+        self::assertEquals('3', $mapping->getBackendLength('exasol'));
+        self::assertNull($mapping->getBackendDefaultValue('exasol'));
 
-        self::assertEquals('DATETIME', $mapping->getTypeName('bigquery'));
-        self::assertNull($mapping->getLength('bigquery'));
-        self::assertEquals('defaultBigQuery', $mapping->getDefaultValue('bigquery'));
+        self::assertEquals('DATETIME', $mapping->getBackendTypeName('bigquery'));
+        self::assertNull($mapping->getBackendLength('bigquery'));
+        self::assertEquals('defaultBigQuery', $mapping->getBackendDefaultValue('bigquery'));
 
-        self::assertEquals('VARCHAR', $mapping->getTypeName('teradata'));
-        self::assertNull($mapping->getLength('teradata'));
-        self::assertNull($mapping->getDefaultValue('teradata'));
+        self::assertEquals('VARCHAR', $mapping->getBackendTypeName('teradata'));
+        self::assertNull($mapping->getBackendLength('teradata'));
+        self::assertNull($mapping->getBackendDefaultValue('teradata'));
     }
 
     public function testInvalidBackend(): void
@@ -71,6 +71,6 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Backend "snowflake" not found in mapping.');
-        $mapping->getTypeName('snowflake');
+        $mapping->getBackendTypeName('snowflake');
     }
 }

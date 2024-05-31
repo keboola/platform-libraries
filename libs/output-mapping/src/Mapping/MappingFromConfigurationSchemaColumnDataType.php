@@ -12,7 +12,7 @@ class MappingFromConfigurationSchemaColumnDataType
     {
     }
 
-    public function getBaseType(): string
+    public function getBaseTypeName(): string
     {
         return $this->mapping['base']['type'];
     }
@@ -22,12 +22,12 @@ class MappingFromConfigurationSchemaColumnDataType
         return $this->mapping['base']['length'] ?? null;
     }
 
-    public function getBaseDefault(): ?string
+    public function getBaseDefaultValue(): ?string
     {
         return $this->mapping['base']['default'] ?? null;
     }
 
-    public function getTypeName(string $backend): string
+    public function getBackendTypeName(string $backend): string
     {
         if (!isset($this->mapping[$backend])) {
             throw new InvalidOutputException(sprintf('Backend "%s" not found in mapping.', $backend));
@@ -35,7 +35,7 @@ class MappingFromConfigurationSchemaColumnDataType
         return $this->mapping[$backend]['type'];
     }
 
-    public function getLength(string $backend): ?string
+    public function getBackendLength(string $backend): ?string
     {
         if (!isset($this->mapping[$backend])) {
             throw new InvalidOutputException(sprintf('Backend "%s" not found in mapping.', $backend));
@@ -43,7 +43,7 @@ class MappingFromConfigurationSchemaColumnDataType
         return $this->mapping[$backend]['length'] ?? null;
     }
 
-    public function getDefaultValue(string $backend): ?string
+    public function getBackendDefaultValue(string $backend): ?string
     {
         if (!isset($this->mapping[$backend])) {
             throw new InvalidOutputException(sprintf('Backend "%s" not found in mapping.', $backend));

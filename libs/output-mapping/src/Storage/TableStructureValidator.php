@@ -93,10 +93,10 @@ class TableStructureValidator
 
             $tableColumn = current($filteresTableColumns);
             try {
-                $schemaColumnType = $schemaColumn->getDataType()->getTypeName($bucketBackend);
+                $schemaColumnType = $schemaColumn->getDataType()->getBackendTypeName($bucketBackend);
                 $tableColumnType = $tableColumn['definition']['type'];
             } catch (InvalidOutputException) {
-                $schemaColumnType = $schemaColumn->getDataType()->getBaseType();
+                $schemaColumnType = $schemaColumn->getDataType()->getBaseTypeName();
                 $tableColumnType = $tableColumn['basetype'];
             }
 
@@ -112,7 +112,7 @@ class TableStructureValidator
             }
 
             try {
-                $schemaColumnLength = $schemaColumn->getDataType()->getLength($bucketBackend);
+                $schemaColumnLength = $schemaColumn->getDataType()->getBackendLength($bucketBackend);
             } catch (InvalidOutputException) {
                 $schemaColumnLength = $schemaColumn->getDataType()->getBaseLength();
             }
@@ -157,7 +157,7 @@ class TableStructureValidator
             }
 
             try {
-                $schemaColumn->getDataType()->getTypeName($table['bucket']['backend']);
+                $schemaColumn->getDataType()->getBackendTypeName($table['bucket']['backend']);
                 $this->logger->warning(sprintf(
                     'Table "%s" is untyped, but schema has set specific backend column "%s".',
                     $table['id'],
@@ -165,12 +165,12 @@ class TableStructureValidator
                 ));
                 throw new InvalidOutputException('Backend column type is not allowed.');
             } catch (InvalidOutputException) {
-                if ($schemaColumn->getDataType()->getBaseType() !== 'STRING') {
+                if ($schemaColumn->getDataType()->getBaseTypeName() !== 'STRING') {
                     $validationErrors[] = sprintf(
                         'Table "%s" is untyped, but schema column "%s" has unsupported type "%s".',
                         $table['id'],
                         $schemaColumn->getName(),
-                        $schemaColumn->getDataType()->getBaseType(),
+                        $schemaColumn->getDataType()->getBaseTypeName(),
                     );
                 }
             }

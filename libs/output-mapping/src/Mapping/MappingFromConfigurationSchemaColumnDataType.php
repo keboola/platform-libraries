@@ -12,6 +12,45 @@ class MappingFromConfigurationSchemaColumnDataType
     {
     }
 
+    public function getTypeName(?string $backend = null): string
+    {
+        if ($backend === null) {
+            return $this->getBaseTypeName();
+        }
+
+        try {
+            return $this->getBackendTypeName($backend);
+        } catch (InvalidOutputException $e) {
+            return $this->getBaseTypeName();
+        }
+    }
+
+    public function getLength(?string $backend = null): ?string
+    {
+        if ($backend === null) {
+            return $this->getBaseLength();
+        }
+
+        try {
+            return $this->getBackendLength($backend);
+        } catch (InvalidOutputException $e) {
+            return $this->getBaseLength();
+        }
+    }
+
+    public function getDefaultValue(?string $backend = null): ?string
+    {
+        if ($backend === null) {
+            return $this->getBaseDefaultValue();
+        }
+
+        try {
+            return $this->getBackendDefaultValue($backend);
+        } catch (InvalidOutputException $e) {
+            return $this->getBaseDefaultValue();
+        }
+    }
+
     public function getBaseTypeName(): string
     {
         return $this->mapping['base']['type'];

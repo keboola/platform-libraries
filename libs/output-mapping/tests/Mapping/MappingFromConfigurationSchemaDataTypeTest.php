@@ -73,4 +73,56 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         $this->expectExceptionMessage('Backend "snowflake" not found in mapping.');
         $mapping->getBackendTypeName('snowflake');
     }
+
+    public function testDecideTypeName(): void
+    {
+        $config = [
+            'base' => [
+                'type' => 'string',
+            ],
+            'snowflake' => [
+                'type' => 'INT',
+            ],
+        ];
+
+        $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
+        self::assertEquals('INT', $mapping->getTypeName('snowflake'));
+        self::assertEquals('string', $mapping->getTypeName('bigquery'));
+    }
+
+    public function testDecideLength(): void
+    {
+        $config = [
+            'base' => [
+                'type' => 'string',
+                'length' => '1',
+            ],
+            'snowflake' => [
+                'type' => 'INT',
+                'length' => '2',
+            ],
+        ];
+
+        $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
+        self::assertEquals('2', $mapping->getLength('snowflake'));
+        self::assertEquals('1', $mapping->getLength('bigquery'));
+    }
+
+    public function testDecideDefaultValue(): void
+    {
+        $config = [
+            'base' => [
+                'type' => 'string',
+                'default' => 'defaultBase',
+            ],
+            'snowflake' => [
+                'type' => 'INT',
+                'default' => 'defaultSnowflake',
+            ],
+        ];
+
+        $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
+        self::assertEquals('defaultSnowflake', $mapping->getDefaultValue('snowflake'));
+        self::assertEquals('defaultBase', $mapping->getDefaultValue('bigquery'));
+    }
 }

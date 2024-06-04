@@ -13,11 +13,10 @@ class TableDefinitionFromSchemaTest extends TestCase
 {
     /** @dataProvider convertSchemaDataProvider */
     public function testConvertSchemaToTableDefinitionStructure(
-        array  $columns,
+        array $columns,
         string $backend,
-        array  $expectedOutput,
-    ): void
-    {
+        array $expectedOutput,
+    ): void {
         $tableDefinition = new TableDefinitionFromSchema('testTableName', $columns, 'snowflake');
         self::assertEquals($expectedOutput, $tableDefinition->getRequestData());
     }

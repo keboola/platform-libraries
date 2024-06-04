@@ -88,6 +88,7 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
         self::assertEquals('INT', $mapping->getTypeName('snowflake'));
         self::assertEquals('string', $mapping->getTypeName('bigquery'));
+        self::assertEquals('string', $mapping->getTypeName());
     }
 
     public function testDecideLength(): void
@@ -106,6 +107,7 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
         self::assertEquals('2', $mapping->getLength('snowflake'));
         self::assertEquals('1', $mapping->getLength('bigquery'));
+        self::assertEquals('1', $mapping->getLength());
     }
 
     public function testDecideDefaultValue(): void
@@ -124,5 +126,6 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
         self::assertEquals('defaultSnowflake', $mapping->getDefaultValue('snowflake'));
         self::assertEquals('defaultBase', $mapping->getDefaultValue('bigquery'));
+        self::assertEquals('defaultBase', $mapping->getDefaultValue());
     }
 }

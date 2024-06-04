@@ -57,12 +57,12 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertEquals('col1', $mappingSchema->getName());
 
         self::assertNotNull($mappingSchema->getDataType());
-        self::assertEquals('string', $mappingSchema->getDataType()->getBaseType());
+        self::assertEquals('string', $mappingSchema->getDataType()->getBaseTypeName());
         self::assertEquals('1', $mappingSchema->getDataType()->getBaseLength());
-        self::assertEquals('defaultBase', $mappingSchema->getDataType()->getBaseDefault());
-        self::assertEquals('INT', $mappingSchema->getDataType()->getTypeName('snowflake'));
-        self::assertEquals('2', $mappingSchema->getDataType()->getLength('snowflake'));
-        self::assertEquals('defaultSnowflake', $mappingSchema->getDataType()->getDefaultValue('snowflake'));
+        self::assertEquals('defaultBase', $mappingSchema->getDataType()->getBaseDefaultValue());
+        self::assertEquals('INT', $mappingSchema->getDataType()->getBackendTypeName('snowflake'));
+        self::assertEquals('2', $mappingSchema->getDataType()->getBackendLength('snowflake'));
+        self::assertEquals('defaultSnowflake', $mappingSchema->getDataType()->getBackendDefaultValue('snowflake'));
 
         self::assertFalse($mappingSchema->isNullable());
         self::assertTrue($mappingSchema->isPrimaryKey());

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
-class TableDefinition
+use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+
+class TableDefinition implements TableDefinitionInterface
 {
     private string $name;
 

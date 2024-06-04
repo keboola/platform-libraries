@@ -24,8 +24,8 @@ use Keboola\OutputMapping\Writer\Table\SlicerDecider;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
-use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
@@ -204,8 +204,10 @@ class TableLoader
         );
     }
 
-    private function createTableDefinition(MappingDestination $destination, TableDefinition $tableDefinition): void
-    {
+    private function createTableDefinition(
+        MappingDestination $destination,
+        TableDefinitionInterface $tableDefinition,
+    ): void {
         $requestData = $tableDefinition->getRequestData();
 
         try {

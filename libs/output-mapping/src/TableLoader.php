@@ -11,6 +11,7 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
@@ -25,6 +26,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -116,7 +118,7 @@ class TableLoader
                 $strategy,
                 $processedSource,
                 $storageSources,
-                $configuration->hasNativeTypesFeature(),
+                $configuration,
             );
 
             $metadataSetter = new MetadataSetter();
@@ -139,27 +141,19 @@ class TableLoader
         StrategyInterface $strategy,
         MappingFromProcessedConfiguration $source,
         MappingStorageSources $storageSources,
-        bool $createTypedTables,
+        OutputMappingSettings $settings,
     ): LoadTableTaskInterface {
-        $loadOptions = [
-            'columns' => $source->getColumns(),
-            'primaryKey' => implode(',', $source->getPrimaryKey()),
-            'incremental' => $source->isIncremental(),
-        ];
-
-        if (!$storageSources->didTableExistBefore() && $source->hasDistributionKey()) {
-            $loadOptions['distributionKey'] = implode(',', $source->getDistributionKey());
-        }
-
-        $loadOptions = array_merge(
-            $loadOptions,
-            $strategy->prepareLoadTaskOptions($source),
+        $loadOptions = $this->buildLoadOPtions(
+            $source,
+            $strategy,
+            $storageSources->didTableExistBefore(),
+            $settings->hasNewNativeTypesFeature(),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($createTypedTables &&
+        if ($settings->hasNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
             $source->hasColumns() && $source->hasColumnMetadata()
         ) {
@@ -172,6 +166,17 @@ class TableLoader
                 $source->getDestination()->getTableName(),
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
+            );
+            $this->createTableDefinition($source->getDestination(), $tableDefinition);
+            $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
+        } elseif ($settings->hasNewNativeTypesFeature() &&
+            !$storageSources->didTableExistBefore() &&
+            $source->getSchema()
+        ) {
+            $tableDefinition = new TableDefinitionFromSchema(
+                $source->getDestination()->getTableName(),
+                $source->getSchema(),
+                $storageSources->getBucket()->backend,
             );
             $this->createTableDefinition($source->getDestination(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
@@ -254,6 +259,53 @@ class TableLoader
         return $mappingCombiner->combineSourcesWithManifests(
             $combinedSources,
             $physicalManifests,
+        );
+    }
+
+    private function buildLoadOptions(
+        MappingFromProcessedConfiguration $source,
+        StrategyInterface $strategy,
+        bool $didTableExistBefore,
+        bool $hasNewNativeTypesFeature,
+    ): array {
+        if ($hasNewNativeTypesFeature && $source->getSchema()) {
+            $columns = array_map(
+                fn (MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                $source->getSchema(),
+            );
+            $primaryKeys = array_map(
+                fn (MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                array_filter(
+                    $source->getSchema(),
+                    fn (MappingFromConfigurationSchemaColumn $column) => $column->isPrimaryKey(),
+                ),
+            );
+            $distributionKey = array_map(
+                fn (MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                array_filter(
+                    $source->getSchema(),
+                    fn (MappingFromConfigurationSchemaColumn $column) => $column->isDistributionKey(),
+                ),
+            );
+        } else {
+            $columns = $source->getColumns();
+            $primaryKeys = $source->getPrimaryKey();
+            $distributionKey = $source->getDistributionKey();
+        }
+
+        $loadOptions = [
+            'columns' => $columns,
+            'primaryKey' => implode(',', $primaryKeys),
+            'incremental' => $source->isIncremental(),
+        ];
+
+        if (!$didTableExistBefore && $distributionKey) {
+            $loadOptions['distributionKey'] = implode(',', $distributionKey);
+        }
+
+        return array_merge(
+            $loadOptions,
+            $strategy->prepareLoadTaskOptions($source),
         );
     }
 }

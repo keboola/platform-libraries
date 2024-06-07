@@ -401,6 +401,39 @@ class TableConfigurationTest extends TestCase
                 InvalidConfigurationException::class,
                 'The path "table.source_search.value" cannot contain an empty value, but got "".',
             ],
+            'WhereColumnEmpty' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'where_column' => '',
+                ],
+                InvalidConfigurationException::class,
+                'The "where_column" must be a non-empty string.',
+            ],
+            'WhereColumnWithWhitespaceOnly' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'where_column' => ' ',
+                ],
+                InvalidConfigurationException::class,
+                'The "where_column" must be a non-empty string.',
+            ],
+            'WhereColumnSetButWhereValuesNotProvided' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'where_column' => 'col',
+                ],
+                InvalidConfigurationException::class,
+                'When "where_column" is set, "where_values" must be provided.',
+            ],
+            'WhereColumnSetButWhereValuesEmpty' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'where_column' => 'col',
+                    'where_values' => [],
+                ],
+                InvalidConfigurationException::class,
+                'When "where_column" is set, "where_values" must be provided.',
+            ],
         ];
     }
 

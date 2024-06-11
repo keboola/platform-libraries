@@ -18,14 +18,16 @@ use Psr\Log\LoggerInterface;
 
 class StoragePreparer
 {
-    public function __construct(readonly private ClientWrapper $clientWrapper, readonly private LoggerInterface $logger)
-    {
+    public function __construct(
+        readonly private ClientWrapper $clientWrapper,
+        readonly private LoggerInterface $logger,
+        readonly bool $hasNewNativeTypeFeature = false,
+    ) {
     }
 
     public function prepareStorageBucketAndTable(
         MappingFromProcessedConfiguration $processedSource,
         SystemMetadata $systemMetadata,
-        bool $hasNewNativeTypeFeature = false,
     ): MappingStorageSources {
         $bucketCreator = new BucketCreator($this->clientWrapper);
         $destinationBucket = $bucketCreator->ensureDestinationBucket(
@@ -36,7 +38,7 @@ class StoragePreparer
         $destinationTableInfo = $this->getDestinationTableInfoIfExists(
             $processedSource->getDestination()->getTableId(),
         );
-        if (!$hasNewNativeTypeFeature && $destinationTableInfo !== null) {
+        if (!$this->hasNewNativeTypeFeature && $destinationTableInfo !== null) {
             $tableStructureModifier = new TableStructureModifier($this->clientWrapper, $this->logger);
             $tableStructureModifier->updateTableStructure(
                 $destinationBucket,

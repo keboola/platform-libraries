@@ -138,33 +138,37 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithChangeTableDataOnNewNativeTypeFeature(): void
     {
-        $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
+        $storagePreparer = new StoragePreparer(
+            $this->clientWrapper,
+            $this->testLogger,
+            true, // <<<< new native type feature
+        );
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableDataTest.test1',
+                'destination' => 'in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1',
             ]),
             $this->createSystemMetadata(),
         );
 
         $table = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataTest.test1');
+            ->getTable('in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1');
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableDataTest.test1',
+                'primary_key' => ['Id', 'Name'],
+                'destination' => 'in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1',
                 'delete_where_column' => 'Id',
                 'delete_where_operator' => 'eq',
                 'delete_where_values' => ['id1', 'id2'],
             ]),
             $this->createSystemMetadata(),
-            true, // <<<< new native type feature
         );
 
         $updatedTable = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataTest.test1');
+            ->getTable('in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1');
 
         // no changes
         self::assertEquals($this->dropTimestampParams($table), $this->dropTimestampParams($updatedTable));

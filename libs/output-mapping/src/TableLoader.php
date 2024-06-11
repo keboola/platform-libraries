@@ -111,12 +111,12 @@ class TableLoader
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }
 
-            $storagePreparer = new StoragePreparer($this->clientWrapper, $this->logger);
-            $storageSources = $storagePreparer->prepareStorageBucketAndTable(
-                $processedSource,
-                $systemMetadata,
+            $storagePreparer = new StoragePreparer(
+                $this->clientWrapper,
+                $this->logger,
                 $configuration->hasNewNativeTypesFeature(),
             );
+            $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);
 
             $loadTableTask = $this->createLoadTableTask(
                 $strategy,

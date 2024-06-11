@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Storage\BucketCreator;
 use Keboola\OutputMapping\Storage\TableDataModifier;
 use Keboola\OutputMapping\Storage\TableInfo;
@@ -17,8 +18,11 @@ use Psr\Log\LoggerInterface;
 
 class StoragePreparer
 {
-    public function __construct(readonly private ClientWrapper $clientWrapper, readonly private LoggerInterface $logger)
-    {
+    public function __construct(
+        readonly private ClientWrapper $clientWrapper,
+        readonly private LoggerInterface $logger,
+        readonly bool $hasNewNativeTypeFeature = false,
+    ) {
     }
 
     public function prepareStorageBucketAndTable(
@@ -34,7 +38,7 @@ class StoragePreparer
         $destinationTableInfo = $this->getDestinationTableInfoIfExists(
             $processedSource->getDestination()->getTableId(),
         );
-        if ($destinationTableInfo !== null) {
+        if (!$this->hasNewNativeTypeFeature && $destinationTableInfo !== null) {
             $tableStructureModifier = new TableStructureModifier($this->clientWrapper, $this->logger);
             $tableStructureModifier->updateTableStructure(
                 $destinationBucket,

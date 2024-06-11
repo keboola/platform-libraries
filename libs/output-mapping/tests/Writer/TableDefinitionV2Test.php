@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Generator;
+use Keboola\Datatype\Definition\BaseType;
+use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
 
@@ -143,7 +147,6 @@ class TableDefinitionV2Test extends AbstractTestCase
         file_put_contents(
             $root . '/upload/tableDefinition.csv',
             <<< EOT
-            "Id","Name"
             "1","bob"
             "2","alice"
             EOT,
@@ -164,6 +167,227 @@ class TableDefinitionV2Test extends AbstractTestCase
 
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
+    }
+
+    /**
+     * @dataProvider configProvider
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testWriterCreateTableDefinition(
+        array $configTemplate,
+        array $expectedTypes,
+    ): void {
+        array_walk_recursive($configTemplate, function (&$value) {
+            $value = is_string($value) ? sprintf($value, $this->emptyOutputBucketId) : $value;
+        });
+        $config = $configTemplate;
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT,
+        );
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'authoritative',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($config['destination']);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'Id'),
+            $expectedTypes['Id'],
+        );
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'Name'),
+            $expectedTypes['Name'],
+        );
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'birthweight'),
+            $expectedTypes['birthweight'],
+        );
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'created'),
+            $expectedTypes['created'],
+        );
+    }
+
+    public function configProvider(): Generator
+    {
+        yield 'base types' => [
+            [
+                'source' => 'tableDefinition.csv',
+                'destination' => '%s.tableDefinition',
+                'schema' => [
+                    [
+                        'name' => 'Id',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'Name',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::STRING,
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'birthweight',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                                'length' => '38,9',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => 'created',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::TIMESTAMP,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'Id' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,0', // default integer length
+                    'nullable' => false,
+                ],
+                'Name' => [
+                    'type' => Snowflake::TYPE_VARCHAR,
+                    'length' => '16777216', // default varchar length
+                    'nullable' => false,
+                ],
+                'birthweight' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,9',
+                    'nullable' => true,
+                ],
+                'created' => [
+                    'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+                    'length' => '9',
+                    'nullable' => true,
+                ],
+            ],
+        ];
+
+        yield 'native snowflake types' => [
+            [
+                'source' => 'tableDefinition.csv',
+                'destination' => '%s.tableDefinition',
+                'schema' => [
+                    [
+                        'name' => 'Id',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                            ],
+                            'snowflake' => [
+                                'type' => Snowflake::TYPE_INTEGER,
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'Name',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::STRING,
+                            ],
+                            'snowflake' => [
+                                'type' => Snowflake::TYPE_TEXT,
+                                'length' => '17',
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'birthweight',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                            ],
+                            'snowflake' => [
+                                'type' => Snowflake::TYPE_DECIMAL,
+                                'length' => '10,2',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => 'created',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::TIMESTAMP,
+                            ],
+                            'snowflake' => [
+                                'type' => Snowflake::TYPE_TIMESTAMP_TZ,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                // INTEGER is an alias of NUMBER in snflk and describe returns the root type
+                'Id' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '38,0', // default integer length
+                    'nullable' => false,
+                ],
+                // likewise TEXT is an alias of VARCHAR
+                'Name' => [
+                    'type' => Snowflake::TYPE_VARCHAR,
+                    'length' => '17',
+                    'nullable' => false,
+                ],
+                'birthweight' => [
+                    'type' => Snowflake::TYPE_NUMBER,
+                    'length' => '10,2',
+                    'nullable' => true,
+                ],
+                // this one stays the same because it is not an alias
+                'created' => [
+                    'type' => Snowflake::TYPE_TIMESTAMP_TZ,
+                    'length' => '9', // timestamp_tz has length 9 apparently
+                    'nullable' => true,
+                ],
+            ],
+        ];
+    }
+
+    private static function assertDataTypeDefinition(array $definitionColumn, array $expectedType): void
+    {
+        self::assertCount(1, $definitionColumn);
+        $definitionColumn = current($definitionColumn);
+
+        self::assertSame($expectedType['type'], $definitionColumn['definition']['type']);
+        self::assertSame($expectedType['length'], $definitionColumn['definition']['length']);
+        self::assertSame($expectedType['nullable'], $definitionColumn['definition']['nullable']);
     }
 
     #[NeedsTestTables]

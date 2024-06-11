@@ -112,7 +112,11 @@ class TableLoader
             }
 
             $storagePreparer = new StoragePreparer($this->clientWrapper, $this->logger);
-            $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);
+            $storageSources = $storagePreparer->prepareStorageBucketAndTable(
+                $processedSource,
+                $systemMetadata,
+                $configuration->hasNewNativeTypesFeature(),
+            );
 
             $loadTableTask = $this->createLoadTableTask(
                 $strategy,
@@ -143,7 +147,7 @@ class TableLoader
         MappingStorageSources $storageSources,
         OutputMappingSettings $settings,
     ): LoadTableTaskInterface {
-        $loadOptions = $this->buildLoadOPtions(
+        $loadOptions = $this->buildLoadOptions(
             $source,
             $strategy,
             $storageSources->didTableExistBefore(),

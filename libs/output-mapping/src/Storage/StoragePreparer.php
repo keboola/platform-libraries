@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Storage\BucketCreator;
 use Keboola\OutputMapping\Storage\TableDataModifier;
 use Keboola\OutputMapping\Storage\TableInfo;
@@ -24,6 +25,7 @@ class StoragePreparer
     public function prepareStorageBucketAndTable(
         MappingFromProcessedConfiguration $processedSource,
         SystemMetadata $systemMetadata,
+        bool $hasNewNativeTypeFeature = false,
     ): MappingStorageSources {
         $bucketCreator = new BucketCreator($this->clientWrapper);
         $destinationBucket = $bucketCreator->ensureDestinationBucket(
@@ -34,7 +36,7 @@ class StoragePreparer
         $destinationTableInfo = $this->getDestinationTableInfoIfExists(
             $processedSource->getDestination()->getTableId(),
         );
-        if ($destinationTableInfo !== null) {
+        if (!$hasNewNativeTypeFeature && $destinationTableInfo !== null) {
             $tableStructureModifier = new TableStructureModifier($this->clientWrapper, $this->logger);
             $tableStructureModifier->updateTableStructure(
                 $destinationBucket,

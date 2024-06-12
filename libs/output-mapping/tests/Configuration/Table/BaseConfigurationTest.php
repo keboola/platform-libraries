@@ -279,6 +279,33 @@ class BaseConfigurationTest extends TestCase
         );
     }
 
+    public function testErrorSchemaAndColumnsSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                ],
+            ],
+            'columns' => [
+                'test',
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table": ' .
+            'Only one of "schema" or "columns" can be defined.',
+        );
+    }
+
     public function testErrorSchemaAndColumnMetadataSetTogether(): void
     {
         $config = [

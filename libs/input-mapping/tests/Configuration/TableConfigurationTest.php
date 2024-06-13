@@ -346,6 +346,45 @@ class TableConfigurationTest extends TestCase
                     'source_branch_id' => null,
                 ],
             ],
+            'EmptyWhereColumnAndWhereValues' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'EmptyWhereColumn' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
         ];
     }
 

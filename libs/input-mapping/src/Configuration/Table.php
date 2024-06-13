@@ -56,12 +56,7 @@ class Table extends Configuration
                         ->end()
                     ->end()
                 ->end()
-                ->scalarNode('where_column')
-                    ->validate()
-                        ->ifTrue(fn($v) => trim($v) === '')
-                        ->thenInvalid('The "where_column" must be a non-empty string.')
-                    ->end()
-                ->end()
+                ->scalarNode('where_column')->end()
                 ->integerNode('limit')->end()
                 ->arrayNode('where_values')->prototype('scalar')->end()->end()
                 ->scalarNode('where_operator')
@@ -88,8 +83,17 @@ class Table extends Configuration
                 ->thenInvalid('Either "source" or "source_search" must be configured.')
             ->end()
             ->validate()
-                ->ifTrue(fn($v) => isset($v['where_column']) && count($v['where_values']) === 0)
+                ->ifTrue(fn($v) =>
+                    isset($v['where_column']) &&
+                    strlen(trim($v['where_column'])) !== 0 &&
+                    count($v['where_values']) === 0)
                 ->thenInvalid('When "where_column" is set, "where_values" must be provided.')
+            ->end()
+            ->validate()
+                ->ifTrue(fn($v) =>
+                    count($v['where_values']) > 0 &&
+                    (!isset($v['where_column']) || strlen(trim($v['where_column'])) === 0))
+                ->thenInvalid('When "where_values" is set, non-empty string in "where_column" must be provided.')
             ->end()
         ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND

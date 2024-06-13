@@ -346,6 +346,45 @@ class TableConfigurationTest extends TestCase
                     'source_branch_id' => null,
                 ],
             ],
+            'EmptyWhereColumnAndWhereValues' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'EmptyWhereColumn' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_column' => '',
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
         ];
     }
 
@@ -401,21 +440,31 @@ class TableConfigurationTest extends TestCase
                 InvalidConfigurationException::class,
                 'The path "table.source_search.value" cannot contain an empty value, but got "".',
             ],
-            'WhereColumnEmpty' => [
+            'WhereValuesSetButWhereColumnNotProvided' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'where_values' => ['value'],
+                ],
+                InvalidConfigurationException::class,
+                'When "where_values" is set, non-empty string in "where_column" must be provided.',
+            ],
+            'WhereValuesSetButWhereColumnEmpty' => [
                 [
                     'source' => 'in.c-main.test',
                     'where_column' => '',
+                    'where_values' => ['value'],
                 ],
                 InvalidConfigurationException::class,
-                'The "where_column" must be a non-empty string.',
+                'When "where_values" is set, non-empty string in "where_column" must be provided.',
             ],
-            'WhereColumnWithWhitespaceOnly' => [
+            'WhereValuesContainingWhitespaceSetButWhereColumnNotProvided' => [
                 [
                     'source' => 'in.c-main.test',
                     'where_column' => ' ',
+                    'where_values' => ['value'],
                 ],
                 InvalidConfigurationException::class,
-                'The "where_column" must be a non-empty string.',
+                'When "where_values" is set, non-empty string in "where_column" must be provided.',
             ],
             'WhereColumnSetButWhereValuesNotProvided' => [
                 [

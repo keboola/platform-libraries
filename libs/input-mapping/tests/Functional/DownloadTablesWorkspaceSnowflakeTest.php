@@ -225,7 +225,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage(
-            'Likely datatype conversion: odbc_execute(): SQL error: Numeric value \'id2\' is not recognized',
+            'odbc_execute(): SQL error: Numeric value \'id2\' is not recognized',
         );
         $reader->downloadTables(
             $configuration,

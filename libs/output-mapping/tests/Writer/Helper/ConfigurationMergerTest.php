@@ -98,6 +98,90 @@ class ConfigurationMergerTest extends TestCase
                     ],
                 ],
             ],
+            'override-full-schema' => [
+                'mapping' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                                'snowflake' => [
+                                    'type' => 'DATE',
+                                ],
+                                'exasol' => [
+                                    'type' => 'INT',
+                                    'length' => 35,
+                                ],
+                            ],
+                            'nullable' => false,
+                            'primary_key' => false,
+                            'description' => 'mappingDesc',
+                            'metadata' => [
+                                'a' => 'c',
+                                'd' => 'e',
+                            ],
+                        ],
+                    ],
+                ],
+                'manifest' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                                'snowflake' => [
+                                    'type' => 'VARCHAR',
+                                    'length' => 255,
+                                ],
+                                'synapse' => [
+                                    'type' => 'NVARCHAR',
+                                    'length' => 35,
+                                ],
+                            ],
+                            'nullable' => true,
+                            'primary_key' => true,
+                            'description' => 'desc',
+                            'metadata' => [
+                                'a' => 'b',
+                            ],
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                                'snowflake' => [
+                                    'type' => 'DATE',
+                                ],
+                                'exasol' => [
+                                    'type' => 'INT',
+                                    'length' => 35,
+                                ],
+                                'synapse' => [
+                                    'type' => 'NVARCHAR',
+                                    'length' => 35,
+                                ],
+                            ],
+                            'nullable' => false,
+                            'primary_key' => false,
+                            'description' => 'mappingDesc',
+                            'metadata' => [
+                                'a' => 'c',
+                                'd' => 'e',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
             'schema-add-new-column-in-mapping' => [
                 'mapping' => [
                     'schema' => [

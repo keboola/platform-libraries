@@ -24,6 +24,168 @@ class ConfigurationMergerTest extends TestCase
     public function provideConfigurations(): array
     {
         return [
+            'schema-empty-mapping' => [
+                'mapping' => [],
+                'manifest' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => false,
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => false,
+                        ],
+                    ],
+                ],
+            ],
+            'schema-empty-manifest' => [
+                'mapping' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => false,
+                        ],
+                    ],
+                ],
+                'manifest' => [],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => false,
+                        ],
+                    ],
+                ],
+            ],
+            'override-schema-manifest' => [
+                'mapping' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => true,
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'manifest' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => false,
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'nullable' => true,
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'schema-add-new-column-in-mapping' => [
+                'mapping' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                        ],
+                        [
+                            'name' => 'col2',
+                            'primary_key' => true,
+                        ],
+                    ],
+                ],
+                'manifest' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                        ],
+                        [
+                            'name' => 'col2',
+                            'primary_key' => true,
+                        ],
+                    ],
+                ],
+            ],
+            'override-table-metadata' => [
+                'mapping' => [
+                    'table_metadata' => [
+                        'a' => 'a1',
+                        'c' => 'c1',
+                    ],
+                ],
+                'manifest' => [
+                    'table_metadata' => [
+                        'a' => 'a2',
+                        'b' => 'b2',
+                    ],
+                ],
+                'expected' => [
+                    'table_metadata' => [
+                        'a' => 'a1',
+                        'b' => 'b2',
+                        'c' => 'c1',
+                    ],
+                ],
+            ],
+            'override-schema-metadata' => [
+                'mapping' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'metadata' => [
+                                'a' => 'a1',
+                                'c' => 'c1',
+                            ],
+                        ],
+                    ],
+                ],
+                'manifest' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'metadata' => [
+                                'a' => 'a2',
+                                'b' => 'b2',
+                            ],
+                        ],
+                    ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'col1',
+                            'metadata' => [
+                                'a' => 'a1',
+                                'b' => 'b2',
+                                'c' => 'c1',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
             'empty-manifest' => [
                 'mapping' => [
                     'destination' => 'in.c-main.test',

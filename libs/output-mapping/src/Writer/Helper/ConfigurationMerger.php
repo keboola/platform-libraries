@@ -37,6 +37,10 @@ class ConfigurationMerger
                 if (!isset($config[$key]) || is_array($value)) {
                     $config[$key] = $value;
                 }
+            } elseif ($key === 'table_metadata') {
+                $config[$key] = self::mergeKeyValueArray($config[$key], $value);
+            } elseif ($key === 'schema') {
+                $config[$key] = self::mergeSchema($config[$key] ?? [], $value);
             } else {
                 if (!isset($config[$key]) || $value) {
                     $config[$key] = $value;
@@ -62,5 +66,38 @@ class ConfigurationMerger
         }
 
         return $metadataList;
+    }
+
+    private static function mergeSchema(array $manifest, array $mapping): array
+    {
+        foreach ($mapping as $keyColumn => $column) {
+            $manifestColumn = array_filter($manifest, fn($v) => $v['name'] === $column['name']);
+            if (!$manifestColumn) {
+                $manifest[] = $column;
+                continue;
+            }
+            $manifestColumn = reset($manifestColumn);
+            foreach ($column as $key => $value) {
+                switch ($key) {
+                    case 'data_type':
+                    case 'metadata':
+                        $manifestColumn[$key] = self::mergeKeyValueArray($manifestColumn[$key] ?? [], $value);
+                        break;
+                    default:
+                        $manifestColumn[$key] = $value;
+                }
+            }
+            $manifest[$keyColumn] = $manifestColumn;
+        }
+
+        return $manifest;
+    }
+
+    private static function mergeKeyValueArray(array $manifest, array $mapping): array
+    {
+        foreach ($mapping as $key => $value) {
+            $manifest[$key] = $value;
+        }
+        return $manifest;
     }
 }

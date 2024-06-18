@@ -28,6 +28,7 @@ use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Temp\Temp;
@@ -62,6 +63,7 @@ class TableLoader
         $loadTableTasks = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
+        $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
         $tableStructureValidator = new TableStructureValidator(
             $configuration->hasNewNativeTypesFeature(),
             $this->logger,
@@ -88,6 +90,11 @@ class TableLoader
                 );
 
                 $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
+                if ($configuration->getDataTypeSupport() === 'hints') {
+                    $processedConfig = $tableColumnsConfigurationHintsResolver
+                        ->resolveColumnsConfiguration($processedConfig);
+                }
+
                 $tableConfigurationValidator->validate($combinedSource, $processedConfig);
             } catch (Throwable $e) {
                 if (!$configuration->isFailedJob()) {

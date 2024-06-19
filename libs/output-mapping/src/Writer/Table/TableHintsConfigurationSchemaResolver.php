@@ -27,7 +27,11 @@ class TableHintsConfigurationSchemaResolver
                 if ($dataTypes->getBaseDefaultValue() !== null) {
                     $item['metadata'][Common::KBC_METADATA_KEY_DEFAULT] = $dataTypes->getBaseDefaultValue();
                 }
-                unset($item['data_type']);
+                $item['data_type'] = [
+                    'base' => [
+                        'type' => BaseType::STRING,
+                    ],
+                ];
             }
             if (array_key_exists('nullable', $item)) {
                 $item['metadata'][Common::KBC_METADATA_KEY_NULLABLE] = (int) $item['nullable'];

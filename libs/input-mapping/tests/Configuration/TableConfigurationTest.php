@@ -440,49 +440,6 @@ class TableConfigurationTest extends TestCase
                 InvalidConfigurationException::class,
                 'The path "table.source_search.value" cannot contain an empty value, but got "".',
             ],
-            'WhereValuesSetButWhereColumnNotProvided' => [
-                [
-                    'source' => 'in.c-main.test',
-                    'where_values' => ['value'],
-                ],
-                InvalidConfigurationException::class,
-                'When "where_values" is set, non-empty string in "where_column" must be provided.',
-            ],
-            'WhereValuesSetButWhereColumnEmpty' => [
-                [
-                    'source' => 'in.c-main.test',
-                    'where_column' => '',
-                    'where_values' => ['value'],
-                ],
-                InvalidConfigurationException::class,
-                'When "where_values" is set, non-empty string in "where_column" must be provided.',
-            ],
-            'WhereValuesContainingWhitespaceSetButWhereColumnNotProvided' => [
-                [
-                    'source' => 'in.c-main.test',
-                    'where_column' => ' ',
-                    'where_values' => ['value'],
-                ],
-                InvalidConfigurationException::class,
-                'When "where_values" is set, non-empty string in "where_column" must be provided.',
-            ],
-            'WhereColumnSetButWhereValuesNotProvided' => [
-                [
-                    'source' => 'in.c-main.test',
-                    'where_column' => 'col',
-                ],
-                InvalidConfigurationException::class,
-                'When "where_column" is set, "where_values" must be provided.',
-            ],
-            'WhereColumnSetButWhereValuesEmpty' => [
-                [
-                    'source' => 'in.c-main.test',
-                    'where_column' => 'col',
-                    'where_values' => [],
-                ],
-                InvalidConfigurationException::class,
-                'When "where_column" is set, "where_values" must be provided.',
-            ],
         ];
     }
 

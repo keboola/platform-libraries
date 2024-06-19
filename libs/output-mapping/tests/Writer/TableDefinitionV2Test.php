@@ -10,6 +10,7 @@ use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
@@ -459,6 +460,96 @@ class TableDefinitionV2Test extends AbstractTestCase
 
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testConvertDataTypesToMetadata(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.test1';
+
+        $config = [
+            'source' => 'table.csv',
+            'destination' => $tableId,
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'foo',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'DATE',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table.csv',
+            <<< EOT
+            "1","bob","firtFoo"
+            "2","alice","secondFoo"
+            EOT,
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($config['destination']);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'Id'),
+            [
+                'type' => Snowflake::TYPE_VARCHAR,
+                'length' => '16777216',
+                'nullable' => true,
+            ],
+        );
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'Name'),
+            [
+                'type' => Snowflake::TYPE_VARCHAR,
+                'length' => '16777216',
+                'nullable' => true,
+            ],
+        );
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'foo'),
+            [
+                'type' => Snowflake::TYPE_VARCHAR,
+                'length' => '16777216',
+                'nullable' => true,
+            ],
+        );
     }
 
     public function conflictsConfigurationWithManifestProvider(): Generator

@@ -12,8 +12,8 @@ use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -2029,6 +2029,55 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             self::assertFalse($hasSlicingTableMessage);
             self::assertFalse($hasSlicedTableMessage);
         }
+    }
+
+    #[NeedsTestTables(1)]
+    public function testReorderingColumns(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/test1.csv',
+            "\"newName 1\",\"ID1\",\"new bar 1\",\"new foo 1\"\n" .
+            "\"newName 2\",\"ID2\",\"new bar 2\",\"new foo 2\"\n",
+        );
+
+        file_put_contents(
+            $root . DIRECTORY_SEPARATOR . 'upload/test1.csv.manifest',
+            json_encode([
+                'destination' => $this->testBucketId . '.test1',
+                'primary_key' => ['Id'],
+                'columns' => ['Name', 'Id', 'bar', 'foo'],
+                'incremental' => true,
+            ]),
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
+        $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
+        $exporter->exportTable($this->testBucketId . '.test1', $downloadedFile, []);
+
+        $expectedData = <<<CSV
+"Id","Name","foo","bar"
+"id1","name1","foo1","bar1"
+"id2","name2","foo2","bar2"
+"id3","name3","foo3","bar3"
+"ID1","newName 1","new foo 1","new bar 1"
+"ID2","newName 2","new foo 2","new bar 2"
+
+CSV;
+
+        self::assertEquals($expectedData, (string) file_get_contents($downloadedFile));
     }
 
     private function getTableIdFromJobDetail(array $jobData): string

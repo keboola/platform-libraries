@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
+use Keboola\Datatype\Definition\BaseType;
+use Keboola\Datatype\Definition\Common;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumnDataType;
 
 class TableHintsConfigurationSchemaResolver
@@ -18,17 +20,17 @@ class TableHintsConfigurationSchemaResolver
         foreach ($processedConfig['schema'] as $item) {
             if (isset($item['data_type'])) {
                 $dataTypes = new MappingFromConfigurationSchemaColumnDataType($item['data_type']);
-                $item['metadata']['KBC.datatype.basetype'] = $dataTypes->getBaseTypeName();
+                $item['metadata'][Common::KBC_METADATA_KEY_BASETYPE] = $dataTypes->getBaseTypeName();
                 if ($dataTypes->getBaseLength() !== null) {
-                    $item['metadata']['KBC.datatype.length'] = $dataTypes->getBaseLength();
+                    $item['metadata'][Common::KBC_METADATA_KEY_LENGTH] = $dataTypes->getBaseLength();
                 }
                 if ($dataTypes->getBaseDefaultValue() !== null) {
-                    $item['metadata']['KBC.datatype.default'] = $dataTypes->getBaseDefaultValue();
+                    $item['metadata'][Common::KBC_METADATA_KEY_DEFAULT] = $dataTypes->getBaseDefaultValue();
                 }
                 unset($item['data_type']);
             }
             if (array_key_exists('nullable', $item)) {
-                $item['metadata']['KBC.datatype.nullable'] = (int) $item['nullable'];
+                $item['metadata'][Common::KBC_METADATA_KEY_NULLABLE] = (int) $item['nullable'];
                 unset($item['nullable']);
             }
             if (array_key_exists('distribution_key', $item)) {

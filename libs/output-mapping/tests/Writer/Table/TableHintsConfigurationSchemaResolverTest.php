@@ -24,6 +24,25 @@ class TableHintsConfigurationSchemaResolverTest extends TestCase
             [],
         ];
 
+        yield 'empty schema config' => [
+            [
+                'source' => 'table',
+                'columns' => [
+                    'col1',
+                    'col2',
+                    'col3',
+                ],
+            ],
+            [
+                'source' => 'table',
+                'columns' => [
+                    'col1',
+                    'col2',
+                    'col3',
+                ],
+            ],
+        ];
+
         yield 'config with data type' => [
             [
                 'schema' => [
@@ -37,16 +56,63 @@ class TableHintsConfigurationSchemaResolverTest extends TestCase
                             ],
                         ],
                     ],
+                    [
+                        'name' => 'colWithoutLength',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'VARCHAR',
+                                'default' => 'default',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => 'colWithoutDefault',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'VARCHAR',
+                                'length' => '255',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             [
                 'schema' => [
                     [
                         'name' => 'col1',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
                         'metadata' => [
                             'KBC.datatype.basetype' => 'VARCHAR',
                             'KBC.datatype.length' => '255',
                             'KBC.datatype.default' => 'default',
+                        ],
+                    ],
+                    [
+                        'name' => 'colWithoutLength',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
+                        'metadata' => [
+                            'KBC.datatype.basetype' => 'VARCHAR',
+                            'KBC.datatype.default' => 'default',
+                        ],
+                    ],
+                    [
+                        'name' => 'colWithoutDefault',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
+                        'metadata' => [
+                            'KBC.datatype.basetype' => 'VARCHAR',
+                            'KBC.datatype.length' => '255',
                         ],
                     ],
                 ],
@@ -119,6 +185,11 @@ class TableHintsConfigurationSchemaResolverTest extends TestCase
                 'schema' => [
                     [
                         'name' => 'col1',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
                         'metadata' => [
                             'KBC.datatype.basetype' => 'VARCHAR',
                             'KBC.datatype.length' => '255',

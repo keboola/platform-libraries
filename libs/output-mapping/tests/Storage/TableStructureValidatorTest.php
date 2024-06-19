@@ -76,6 +76,17 @@ class TableStructureValidatorTest extends AbstractTestCase
         self::assertTrue(true);
     }
 
+    public function testSkipValidationWithoutConfigSchema(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $schema = [];
+
+        $validator = new TableStructureValidator(false, new NullLogger(), $clientMock);
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
     public function testSkipValidationIfTableNotExists(): void
     {
         $clientMock = $this->createMock(Client::class);

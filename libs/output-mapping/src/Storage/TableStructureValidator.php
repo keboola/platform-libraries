@@ -30,6 +30,9 @@ class TableStructureValidator
         if (!$this->hasNewNativeTypeFeature) {
             return;
         }
+        if (!$schemaColumns) {
+            return;
+        }
 
         try {
             $table = $this->client->getTable($tableId);

@@ -109,7 +109,21 @@ class TableStructureValidatorTest extends AbstractTestCase
             ->method('getTable')
             ->willThrowException(new ClientException('Bad request', 400));
 
-        $schema = [];
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                        'length' => '255',
+                    ],
+                ],
+            ]),
+        ];
         $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
 
         $this->expectException(InvalidOutputException::class);

@@ -90,7 +90,7 @@ class TableLoader
                 );
 
                 $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-                if ($configuration->getDataTypeSupport() === 'hints') {
+                if ($configuration->getDataTypeSupport() === OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS) {
                     $processedConfig = $tableColumnsConfigurationHintsResolver
                         ->resolveColumnsConfiguration($processedConfig);
                 }

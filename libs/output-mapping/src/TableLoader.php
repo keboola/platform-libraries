@@ -310,6 +310,10 @@ class TableLoader
             'incremental' => $source->isIncremental(),
         ];
 
+        if ($source->hasHeader()) {
+            $loadOptions['ignoredLinesCount'] = 1;
+        }
+
         if (!$didTableExistBefore && $distributionKey) {
             $loadOptions['distributionKey'] = implode(',', $distributionKey);
         }

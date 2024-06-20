@@ -2080,6 +2080,53 @@ CSV;
         self::assertEquals($expectedData, (string) file_get_contents($downloadedFile));
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingWithHasHeader(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/test1.csv',
+            '"Id","Name","foo","bar"' . "\n" .
+                '"id1","name1","foo1","bar1"' . "\n" .
+                '"id2","name2","foo2","bar2"',
+        );
+
+        file_put_contents(
+            $root . DIRECTORY_SEPARATOR . 'upload/test1.csv.manifest',
+            json_encode([
+                'destination' => $this->emptyOutputBucketId . '.test1',
+                'primary_key' => ['Id'],
+                'columns' => ['Id', 'Name', 'foo', 'bar'],
+                'has_header' => true,
+            ]),
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
+        $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
+        $exporter->exportTable($this->emptyOutputBucketId . '.test1', $downloadedFile, []);
+
+        $expectedData = <<<CSV
+"Id","Name","foo","bar"
+"id1","name1","foo1","bar1"
+"id2","name2","foo2","bar2"
+
+CSV;
+
+        self::assertEquals($expectedData, (string) file_get_contents($downloadedFile));
+    }
+
     private function getTableIdFromJobDetail(array $jobData): string
     {
         $operationName = $jobData['operationName'];

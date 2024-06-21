@@ -168,4 +168,9 @@ class MappingFromProcessedConfiguration
 
         return $schema ? array_map(fn($v) => new MappingFromConfigurationSchemaColumn($v), $schema) : null;
     }
+
+    public function hasHeader(): bool
+    {
+        return $this->mapping['has_header'] ?? false;
+    }
 }

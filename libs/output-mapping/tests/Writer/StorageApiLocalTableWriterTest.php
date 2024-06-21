@@ -2086,7 +2086,7 @@ CSV;
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/test1.csv',
-            '"Id","Name","foo","bar"' . "\n" .
+            '"fileHeader-Id","fileHeader-Name","fileHeader-foo","fileHeader-bar"' . "\n" .
                 '"id1","name1","foo1","bar1"' . "\n" .
                 '"id2","name2","foo2","bar2"',
         );

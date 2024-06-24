@@ -119,6 +119,7 @@ class ArgumentResolver implements ValueResolverInterface
             Response::HTTP_BAD_REQUEST,
             enableFlexibleCasting: true,
             enableExtraKeys: $attribute->allowExtraKeys,
+            allowPermissiveTypes: $attribute->allowPermissiveTypes,
         );
     }
 }

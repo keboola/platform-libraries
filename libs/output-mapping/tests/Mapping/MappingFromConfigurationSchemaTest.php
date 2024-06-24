@@ -22,7 +22,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertTrue($mappingSchema->isNullable());
         self::assertFalse($mappingSchema->isPrimaryKey());
         self::assertFalse($mappingSchema->isDistributionKey());
-        self::assertEquals([], $mappingSchema->geMetadata());
+        self::assertEquals([], $mappingSchema->getMetadata());
     }
 
     public function testFullConfig(): void
@@ -70,6 +70,6 @@ class MappingFromConfigurationSchemaTest extends TestCase
             'key1' => 'value1',
             'key2' => 'value2',
             'KBC.description' => 'col1 description',
-        ], $mappingSchema->geMetadata());
+        ], $mappingSchema->getMetadata());
     }
 }

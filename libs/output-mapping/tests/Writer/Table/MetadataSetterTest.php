@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Generator;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\SystemMetadata;
@@ -47,6 +48,7 @@ class MetadataSetterTest extends TestCase
         $mockMappingFromProcessedConfiguration->method('getDestination')->willReturn($mappingDestination);
         $mockMappingFromProcessedConfiguration->method('hasMetadata')->willReturn(false);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(false);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(false);
 
         yield 'set-minimal' => [
             $mockMappingFromProcessedConfiguration,
@@ -59,8 +61,25 @@ class MetadataSetterTest extends TestCase
         $mockMappingFromProcessedConfiguration->method('hasMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getMetadata')->willReturn(['metadata']);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(false);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(false);
 
         yield 'set-metadata' => [
+            $mockMappingFromProcessedConfiguration,
+            true,
+            2,
+        ];
+
+        $mockMappingFromProcessedConfiguration = $this->createMock(MappingFromProcessedConfiguration::class);
+        $mockMappingFromProcessedConfiguration->method('getDestination')->willReturn($mappingDestination);
+        $mockMappingFromProcessedConfiguration->method('hasTableMetadata')->willReturn(true);
+        $mockMappingFromProcessedConfiguration->method('getTableMetadata')->willReturn([
+            'key1' => 'val1',
+            'key2' => 'val2',
+        ]);
+        $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(false);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(false);
+
+        yield 'set-table-metadata' => [
             $mockMappingFromProcessedConfiguration,
             true,
             2,
@@ -71,8 +90,32 @@ class MetadataSetterTest extends TestCase
         $mockMappingFromProcessedConfiguration->method('hasMetadata')->willReturn(false);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getColumnMetadata')->willReturn(['columnMetadata']);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(false);
 
         yield 'set-column-metadata' => [
+            $mockMappingFromProcessedConfiguration,
+            true,
+            2,
+        ];
+
+        $mockMappingFromProcessedConfiguration = $this->createMock(MappingFromProcessedConfiguration::class);
+        $mockMappingFromProcessedConfiguration->method('getDestination')->willReturn($mappingDestination);
+        $mockMappingFromProcessedConfiguration->method('hasMetadata')->willReturn(false);
+        $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(false);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(true);
+        $mockMappingFromProcessedConfiguration->method('getSchema')->willReturn([
+            new MappingFromConfigurationSchemaColumn([
+                'mapping' => [
+                    'description' => 'column desc',
+                    'metadata' => [
+                        'key1' => 'val1',
+                        'key2' => 'val2',
+                    ],
+                ],
+            ]),
+        ]);
+
+        yield 'set-schema-column-metadata' => [
             $mockMappingFromProcessedConfiguration,
             true,
             2,
@@ -84,11 +127,23 @@ class MetadataSetterTest extends TestCase
         $mockMappingFromProcessedConfiguration->method('getMetadata')->willReturn(['metadata']);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getColumnMetadata')->willReturn(['columnMetadata']);
+        $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(true);
+        $mockMappingFromProcessedConfiguration->method('getSchema')->willReturn([
+            new MappingFromConfigurationSchemaColumn([
+                'mapping' => [
+                    'description' => 'column desc',
+                    'metadata' => [
+                        'key1' => 'val1',
+                        'key2' => 'val2',
+                    ],
+                ],
+            ]),
+        ]);
 
         yield 'set-all' => [
             $mockMappingFromProcessedConfiguration,
             false,
-            4,
+            5,
         ];
     }
 }

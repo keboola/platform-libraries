@@ -38,13 +38,12 @@ class MappingFromConfigurationSchemaColumn
         return $this->mapping['distribution_key'] ?? false;
     }
 
-    public function getDescription(): string
-    {
-        return $this->mapping['description'] ?? '';
-    }
-
     public function geMetadata(): array
     {
-        return $this->mapping['metadata'] ?? [];
+        $metadata = $this->mapping['metadata'] ?? [];
+        if (isset($this->mapping['description'])) {
+            $metadata['KBC.description'] = $this->mapping['description'];
+        }
+        return $metadata;
     }
 }

@@ -151,6 +151,15 @@ class MappingFromProcessedConfiguration
         return $this->mapping['metadata'] ?? [];
     }
 
+    public function getTableMetadata(): array
+    {
+        $metadata = $this->mapping['table_metadata'] ?? [];
+        if (isset($this->mapping['description'])) {
+            $metadata['KBC.description'] = $this->mapping['description'];
+        }
+        return $metadata;
+    }
+
     /**
      * @return class-string<SourceInterface>
      */

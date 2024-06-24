@@ -22,7 +22,6 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertTrue($mappingSchema->isNullable());
         self::assertFalse($mappingSchema->isPrimaryKey());
         self::assertFalse($mappingSchema->isDistributionKey());
-        self::assertEquals('', $mappingSchema->getDescription());
         self::assertEquals([], $mappingSchema->geMetadata());
     }
 
@@ -67,7 +66,10 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertFalse($mappingSchema->isNullable());
         self::assertTrue($mappingSchema->isPrimaryKey());
         self::assertTrue($mappingSchema->isDistributionKey());
-        self::assertEquals('col1 description', $mappingSchema->getDescription());
-        self::assertEquals(['key1' => 'value1', 'key2' => 'value2'], $mappingSchema->geMetadata());
+        self::assertEquals([
+            'key1' => 'value1',
+            'key2' => 'value2',
+            'KBC.description' => 'col1 description',
+        ], $mappingSchema->geMetadata());
     }
 }

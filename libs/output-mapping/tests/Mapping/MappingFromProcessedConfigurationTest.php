@@ -63,6 +63,8 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertFalse($mapping->hasColumns());
         self::assertFalse($mapping->hasDistributionKey());
         self::assertFalse($mapping->hasMetadata());
+        self::assertFalse($mapping->hasTableMetadata());
+        self::assertFalse($mapping->hasSchemaColumnMetadata());
         self::assertFalse($mapping->hasWriteAlways());
         self::assertFalse($mapping->isIncremental());
         self::assertEquals(WorkspaceItemSource::class, $mapping->getItemSourceClass());
@@ -90,6 +92,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
             'key2' => 'val2',
             'KBC.description' => 'table desc',
         ], $mapping->getTableMetadata());
+        self::assertTrue($mapping->hasTableMetadata());
     }
 
     public function testHasSchemaConfiguration(): void
@@ -104,6 +107,9 @@ class MappingFromProcessedConfigurationTest extends TestCase
                 ],
                 [
                     'name' => 'col2',
+                    'metadata' => [
+                        'key1' => 'val1',
+                    ],
                 ],
             ],
         ];
@@ -117,6 +123,8 @@ class MappingFromProcessedConfigurationTest extends TestCase
         $schema = $mapping->getSchema();
         self::assertEquals('col1', $schema[0]->getName());
         self::assertEquals('col2', $schema[1]->getName());
+
+        self::assertTrue($mapping->hasSchemaColumnMetadata());
     }
 
     /**

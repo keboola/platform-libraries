@@ -43,13 +43,20 @@ class SchemaColumnMetadataTest extends TestCase
                             'value' => 'col2 description',
                         ],
                     ],
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'key3',
+                            'value' => 'val3',
+                        ],
+                    ],
                 ],
             ],
         ];
 
         yield 'load in chunks' => [
             'bulkSize' => 1,
-            'expectedApiCalls' => 2,
+            'expectedApiCalls' => 3,
             'expectedColumnsMetadata' => [
                 [
                     'col1' => [
@@ -74,6 +81,15 @@ class SchemaColumnMetadataTest extends TestCase
                         ],
                     ],
                 ],
+                [
+                    'webalize_test' => [
+                        [
+                            'columnName' => 'webalize_test',
+                            'key' => 'key3',
+                            'value' => 'val3',
+                        ],
+                    ],
+                ],
             ],
         ];
     }
@@ -84,21 +100,22 @@ class SchemaColumnMetadataTest extends TestCase
     public function testApply(int $bulkSize, int $expectedApiCalls, array $expectedColumnsMetadata): void
     {
         $metadataClientMock = $this->createMock(Metadata::class);
-        $metadataClientMock->expects(self::exactly($expectedApiCalls))
+        $matcher = self::exactly($expectedApiCalls);
+        $metadataClientMock->expects($matcher)
             ->method('postTableMetadataWithColumns')
-            ->withConsecutive(...array_map(function (array $columnsMetadata): array {
-                return [self::callback(function (TableMetadataUpdateOptions $options) use ($columnsMetadata) {
+            ->willReturnCallback(
+                function (TableMetadataUpdateOptions $options) use ($matcher, $expectedColumnsMetadata): array {
                     self::assertSame('in.c-testApply.table', $options->getTableId());
                     self::assertSame(
                         [
                             'provider' => 'keboola.sample-component',
-                            'columnsMetadata' => $columnsMetadata,
+                            'columnsMetadata' => $expectedColumnsMetadata[$matcher->getInvocationCount() - 1],
                         ],
                         $options->toParamsArray(),
                     );
-                    return true;
-                })];
-            }, $expectedColumnsMetadata))
+                    return $expectedColumnsMetadata;
+                },
+            )
         ;
 
         $schemaMetadata = [
@@ -115,6 +132,12 @@ class SchemaColumnMetadataTest extends TestCase
             ]),
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'webalize | test 😁',
+                'metadata' => [
+                    'key3' => 'val3',
+                ],
             ]),
         ];
 

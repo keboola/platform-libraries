@@ -54,6 +54,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertEquals([], $mapping->getColumns());
         self::assertEquals([], $mapping->getDistributionKey());
         self::assertEquals([], $mapping->getMetadata());
+        self::assertEquals([], $mapping->getTableMetadata());
         self::assertEquals([], $mapping->getPrimaryKey());
         self::assertEquals([], $mapping->getTags());
         self::assertNull($mapping->getDeleteWhereColumn());
@@ -66,6 +67,29 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertFalse($mapping->isIncremental());
         self::assertEquals(WorkspaceItemSource::class, $mapping->getItemSourceClass());
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
+    }
+
+    public function testTableMetadata(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'description' => 'table desc',
+            'table_metadata' => [
+                'key1' => 'val1',
+                'key2' => 'val2',
+            ],
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertEquals([
+            'key1' => 'val1',
+            'key2' => 'val2',
+            'KBC.description' => 'table desc',
+        ], $mapping->getTableMetadata());
     }
 
     public function testHasSchemaConfiguration(): void

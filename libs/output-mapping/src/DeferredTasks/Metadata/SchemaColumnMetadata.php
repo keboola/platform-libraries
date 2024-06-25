@@ -38,7 +38,13 @@ class SchemaColumnMetadata implements MetadataInterface
                     ];
                 }
 
-                $columnsMetadata[$columnName] = $columnMetadata;
+                if ($columnMetadata) {
+                    $columnsMetadata[$columnName] = $columnMetadata;
+                }
+            }
+
+            if (!$columnsMetadata) {
+                continue;
             }
 
             $options = new TableMetadataUpdateOptions(

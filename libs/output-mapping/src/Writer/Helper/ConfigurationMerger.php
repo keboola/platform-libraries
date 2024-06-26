@@ -38,7 +38,7 @@ class ConfigurationMerger
                     $config[$key] = $value;
                 }
             } elseif ($key === 'table_metadata') {
-                $config[$key] = self::mergeKeyValueArray($config[$key], $value);
+                $config[$key] = self::mergeKeyValueArray($config[$key] ?? [], $value);
             } elseif ($key === 'schema') {
                 $config[$key] = self::mergeSchema($config[$key] ?? [], $value);
             } else {

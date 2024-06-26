@@ -234,6 +234,21 @@ class ConfigurationMergerTest extends TestCase
                     ],
                 ],
             ],
+            'override-table-metadata-empty-manifest' => [
+                'mapping' => [
+                    'table_metadata' => [
+                        'a' => 'a1',
+                        'c' => 'c1',
+                    ],
+                ],
+                'manifest' => [],
+                'expected' => [
+                    'table_metadata' => [
+                        'a' => 'a1',
+                        'c' => 'c1',
+                    ],
+                ],
+            ],
             'override-schema-metadata' => [
                 'mapping' => [
                     'schema' => [

@@ -41,6 +41,9 @@ class TableHintsConfigurationSchemaResolver
                 $item['metadata']['KBC.datatype.distribution_key'] = $item['distribution_key'];
                 unset($item['distribution_key']);
             }
+            if (array_key_exists('primary_key', $item) && $item['primary_key'] === true) {
+                $item['nullable'] = false;
+            }
             $convertedSchemaConfig[] = $item;
         }
 

@@ -154,6 +154,7 @@ class TableHintsConfigurationSchemaResolverTest extends TestCase
                     [
                         'name' => 'col1',
                         'primary_key' => true,
+                        'nullable' => false,
                     ],
                 ],
             ],
@@ -199,6 +200,7 @@ class TableHintsConfigurationSchemaResolverTest extends TestCase
                             'KBC.datatype.distribution_key' => 1,
                         ],
                         'primary_key' => true,
+                        'nullable' => false,
                         'description' => 'description value',
                     ],
                 ],

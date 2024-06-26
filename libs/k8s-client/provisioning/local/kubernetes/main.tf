@@ -50,6 +50,14 @@ resource "kubernetes_role" "k8s_client" {
     ]
     verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
   }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = [
+      "deployments",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
+  }
 }
 
 resource "kubernetes_role_binding" "k8s_client" {

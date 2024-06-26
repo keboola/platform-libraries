@@ -22,6 +22,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertTrue($mappingSchema->isNullable());
         self::assertFalse($mappingSchema->isPrimaryKey());
         self::assertFalse($mappingSchema->isDistributionKey());
+        self::assertFalse($mappingSchema->hasMetadata());
         self::assertEquals([], $mappingSchema->getMetadata());
     }
 
@@ -66,6 +67,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertFalse($mappingSchema->isNullable());
         self::assertTrue($mappingSchema->isPrimaryKey());
         self::assertTrue($mappingSchema->isDistributionKey());
+        self::assertTrue($mappingSchema->hasMetadata());
         self::assertEquals([
             'key1' => 'value1',
             'key2' => 'value2',

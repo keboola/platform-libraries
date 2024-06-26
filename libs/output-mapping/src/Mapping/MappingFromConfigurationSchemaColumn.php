@@ -38,6 +38,11 @@ class MappingFromConfigurationSchemaColumn
         return $this->mapping['distribution_key'] ?? false;
     }
 
+    public function hasMetadata(): bool
+    {
+        return !empty($this->getMetadata());
+    }
+
     public function getMetadata(): array
     {
         $metadata = $this->mapping['metadata'] ?? [];

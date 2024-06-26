@@ -4,37 +4,47 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
-class ColumnMetadata implements MetadataInterface
+class SchemaColumnMetadata implements MetadataInterface
 {
+    /** @param MappingFromConfigurationSchemaColumn[] $schema */
     public function __construct(
         private readonly string $tableId,
         private readonly string $provider,
-        private readonly array $metadata,
+        private readonly array $schema,
     ) {
     }
 
     public function apply(Metadata $apiClient, int $bulkSize = 100): void
     {
         assert($bulkSize > 0);
-        foreach (array_chunk($this->metadata, $bulkSize, true) as $chunk) {
+
+        /** @var MappingFromConfigurationSchemaColumn[] $chunk */
+        foreach (array_chunk($this->schema, $bulkSize, true) as $chunk) {
             $columnsMetadata = [];
 
-            foreach ($chunk as $column => $metadataArray) {
+            foreach ($chunk as $metadataArray) {
                 $columnMetadata = [];
-                $columnName = ColumnNameSanitizer::sanitize($column);
-                foreach ($metadataArray as $metadata) {
+                $columnName = ColumnNameSanitizer::sanitize($metadataArray->getName());
+                foreach ($metadataArray->getMetadata() as $key => $value) {
                     $columnMetadata[] = [
                         'columnName' => $columnName,
-                        'key' => (string) $metadata['key'],
-                        'value' => (string) $metadata['value'],
+                        'key' => (string) $key,
+                        'value' => (string) $value,
                     ];
                 }
 
-                $columnsMetadata[$columnName] = $columnMetadata;
+                if ($columnMetadata) {
+                    $columnsMetadata[$columnName] = $columnMetadata;
+                }
+            }
+
+            if (!$columnsMetadata) {
+                continue;
             }
 
             $options = new TableMetadataUpdateOptions(

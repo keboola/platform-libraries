@@ -102,6 +102,19 @@ class MappingFromProcessedConfiguration
         return !empty($this->getColumnMetadata());
     }
 
+    public function hasSchemaColumnMetadata(): bool
+    {
+        if ($this->getSchema() === null) {
+            return false;
+        }
+        foreach ($this->getSchema() as $item) {
+            if ($item->hasMetadata()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function isIncremental(): bool
     {
         return $this->mapping['incremental'];
@@ -149,6 +162,11 @@ class MappingFromProcessedConfiguration
     public function getMetadata(): array
     {
         return $this->mapping['metadata'] ?? [];
+    }
+
+    public function hasTableMetadata(): bool
+    {
+        return !empty($this->getTableMetadata());
     }
 
     public function getTableMetadata(): array

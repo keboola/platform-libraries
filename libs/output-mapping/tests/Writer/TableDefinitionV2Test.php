@@ -16,6 +16,7 @@ use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
+use Keboola\StorageApi\Metadata;
 
 class TableDefinitionV2Test extends AbstractTestCase
 {
@@ -552,6 +553,134 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testSaveTableAndColumnMetadata(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.test1';
+
+        $config = [
+            'source' => 'table.csv',
+            'destination' => $tableId,
+            'description' => 'table description',
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                    'metadata' => [
+                        'key1' => 'value1',
+                        'key2' => 'value2',
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                    'description' => 'name description',
+                ],
+                [
+                    'name' => 'foo',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'DATE',
+                        ],
+                    ],
+                    'metadata' => [
+                        'key3' => 'value3',
+                    ],
+                    'description' => 'foo description',
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table.csv',
+            <<< EOT
+            "1","bob","firtFoo"
+            "2","alice","secondFoo"
+            EOT,
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+
+        // Table has only description
+        $tableMetadata = $metadataApi->listTableMetadata($tableId);
+        $filteredTableMetadata = array_filter(
+            $tableMetadata,
+            fn($v) => in_array($v['key'], ['KBC.description']),
+        );
+        self::assertCount(1, $filteredTableMetadata);
+        self::assertEquals(
+            ['KBC.description' => 'table description'],
+            $this->getMetadataValues($filteredTableMetadata),
+        );
+
+        // Id column has only metadata
+        $columnIdMetadata = $metadataApi->listColumnMetadata($tableId . '.Id');
+        $filteredColumnIdMetadata = array_filter(
+            $columnIdMetadata,
+            fn($v) => in_array($v['key'], ['key1', 'key2']),
+        );
+        self::assertCount(2, $filteredColumnIdMetadata);
+        self::assertEquals(
+            [
+                'key1' => 'value1',
+                'key2' => 'value2',
+            ],
+            $this->getMetadataValues($filteredColumnIdMetadata),
+        );
+
+        // Name column has only description
+        $columnNameMetadata = $metadataApi->listColumnMetadata($tableId . '.Name');
+        $filteredColumnNameMetadata = array_filter(
+            $columnNameMetadata,
+            fn($v) => in_array($v['key'], ['KBC.description']),
+        );
+        self::assertCount(1, $filteredColumnNameMetadata);
+        self::assertEquals(
+            ['KBC.description' => 'name description'],
+            $this->getMetadataValues($filteredColumnNameMetadata),
+        );
+
+        // foo column has metadata and description
+        $columnFooMetadata = $metadataApi->listColumnMetadata($tableId . '.foo');
+        $filteredColumnFooMetadata = array_filter(
+            $columnFooMetadata,
+            fn($v) => in_array($v['key'], ['key3', 'KBC.description']),
+        );
+        self::assertCount(2, $filteredColumnFooMetadata);
+        self::assertEquals(
+            [
+                'key3' => 'value3',
+                'KBC.description' => 'foo description',
+            ],
+            $this->getMetadataValues($filteredColumnFooMetadata),
+        );
+    }
+
     public function conflictsConfigurationWithManifestProvider(): Generator
     {
         yield 'conflict-columns' => [
@@ -604,5 +733,14 @@ class TableDefinitionV2Test extends AbstractTestCase
             ],
             'Only one of "schema" or "column_metadata" can be defined.',
         ];
+    }
+
+    protected function getMetadataValues(array $metadata): array
+    {
+        $result = [];
+        foreach ($metadata as $item) {
+            $result[$item['key']] = $item['value'];
+        }
+        return $result;
     }
 }

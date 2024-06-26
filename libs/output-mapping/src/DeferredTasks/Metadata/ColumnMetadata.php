@@ -10,7 +10,6 @@ use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class ColumnMetadata implements MetadataInterface
 {
-    /** @param array<string, array> $metadata */
     public function __construct(
         private readonly string $tableId,
         private readonly string $provider,

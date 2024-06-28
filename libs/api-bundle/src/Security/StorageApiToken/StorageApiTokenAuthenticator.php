@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\Attribute\StorageApiTokenRole;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\StorageApi\ClientException;
@@ -62,6 +63,28 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
                 'Authentication token is valid but missing following features: %s',
                 implode(', ', $missingFeatures),
             ));
+        }
+
+        if ($authAttribute->isAdmin !== null) {
+            $isAdminToken = $token->getRole() !== null;
+
+            if ($authAttribute->isAdmin === true && $isAdminToken === false) {
+                throw new AccessDeniedException('Authentication token is valid but is not admin token');
+            }
+
+            if ($authAttribute->isAdmin === false && $isAdminToken === true) {
+                throw new AccessDeniedException('Authentication token is valid but is admin token');
+            }
+        }
+
+        if ($authAttribute->role !== null) {
+            $passingRolesMask = $authAttribute->role & StorageApiTokenRole::rolesToMask($token->getRoles());
+            if ($passingRolesMask === 0) {
+                throw new AccessDeniedException(sprintf(
+                    'Authentication token is valid but does not have any of required roles: %s',
+                    implode(', ', StorageApiTokenRole::maskToRoles($authAttribute->role)),
+                ));
+            }
         }
     }
 }

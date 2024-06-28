@@ -223,6 +223,7 @@ class ArgumentResolverTest extends TestCase
                 }
             },
             'extraKeysEnabled' => true,
+            'allowPermissiveTypes' => false,
         ];
 
         yield 'disallow extra keys' => [
@@ -233,12 +234,27 @@ class ArgumentResolverTest extends TestCase
                 }
             },
             'extraKeysEnabled' => false,
+            'allowPermissiveTypes' => false,
+        ];
+
+        yield 'allow permissive types' => [
+            'controller' => new class {
+                public function __invoke(
+                    #[RequestQueryObject(allowPermissiveTypes: true)] RequestData $data,
+                ): void {
+                }
+            },
+            'extraKeysEnabled' => true,
+            'allowPermissiveTypes' => true,
         ];
     }
 
     /** @dataProvider provideValidQueryAttributesTestData */
-    public function testValidQueryRequest(object $controller, bool $extraKeysEnabled): void
-    {
+    public function testValidQueryRequest(
+        object $controller,
+        bool $extraKeysEnabled,
+        bool $allowPermissiveTypes,
+    ): void {
         $request = new Request(
             query: [
                 'foo' => 'bar',
@@ -257,6 +273,7 @@ class ArgumentResolverTest extends TestCase
                 Response::HTTP_BAD_REQUEST,
                 true,
                 $extraKeysEnabled,
+                $allowPermissiveTypes,
             )
             ->willReturn($data)
         ;

@@ -227,6 +227,89 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testAddMissingColumnTableDefinition(): void
+    {
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyOutputBucketId, [
+            'name' => 'tableDefinition',
+            'primaryKeysNames' => [],
+            'columns' => [
+                [
+                    'name' => 'Id',
+                    'basetype' => BaseType::NUMERIC,
+                ],
+                [
+                    'name' => 'Name',
+                    'basetype' => BaseType::STRING,
+                ],
+            ],
+        ]);
+
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $this->emptyOutputBucketId . '.tableDefinition',
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => BaseType::NUMERIC,
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => BaseType::STRING,
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'newColumn',
+                    'data_type' => [
+                        'base' => [
+                            'type' => BaseType::STRING,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","abcdef"
+            EOT,
+        );
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'authoritative',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($config['destination']);
+        self::assertTrue($tableDetails['isTyped']);
+
+        self::assertDataTypeDefinition(
+            array_filter($tableDetails['definition']['columns'], fn($v) => $v['name'] === 'newColumn'),
+            [
+                'type' => Snowflake::TYPE_VARCHAR,
+                'length' => '16777216', // default varchar length
+                'nullable' => true,
+            ],
+        );
+    }
+
     public function configProvider(): Generator
     {
         yield 'base types' => [

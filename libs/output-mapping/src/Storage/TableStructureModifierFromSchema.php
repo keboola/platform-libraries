@@ -36,8 +36,8 @@ class TableStructureModifierFromSchema
                 $this->clientWrapper->getBranchClient()->addTableColumn(
                     $tableId,
                     $requestData['name'],
-                    $requestData['definition'],
-                    $requestData['basetype'],
+                    $requestData['definition'] ?? null,
+                    $requestData['basetype'] ?? null,
                 );
                 $columnsAdded[] = $requestData['name'];
             } catch (ClientException $e) {

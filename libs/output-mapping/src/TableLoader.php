@@ -17,7 +17,6 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\StoragePreparer;
-use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
@@ -111,7 +110,7 @@ class TableLoader
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
-                $tableStructureValidator->validateTable(
+                $tableChangesStore = $tableStructureValidator->validateTable(
                     $processedSource->getDestination()->getTableId(),
                     $processedSource->getSchema() ?? [],
                 );
@@ -127,7 +126,7 @@ class TableLoader
             $storageSources = $storagePreparer->prepareStorageBucketAndTable(
                 $processedSource,
                 $systemMetadata,
-                new TableChangesStore(),
+                $tableChangesStore,
             );
 
             $loadTableTask = $this->createLoadTableTask(

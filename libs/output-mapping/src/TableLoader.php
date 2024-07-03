@@ -17,6 +17,7 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
@@ -123,7 +124,11 @@ class TableLoader
                 $this->logger,
                 $configuration->hasNewNativeTypesFeature(),
             );
-            $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);
+            $storageSources = $storagePreparer->prepareStorageBucketAndTable(
+                $processedSource,
+                $systemMetadata,
+                new TableChangesStore(),
+            );
 
             $loadTableTask = $this->createLoadTableTask(
                 $strategy,

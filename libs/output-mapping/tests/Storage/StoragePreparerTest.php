@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Storage;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsRemoveBucket;
@@ -24,6 +25,7 @@ class StoragePreparerTest extends AbstractTestCase
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration(),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists('in.c-main'));
@@ -48,6 +50,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'destination' => 'in.c-testPrepareStorageWithExistingTableTest.test1',
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $updatedTable = $this->clientWrapper
@@ -67,6 +70,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'destination' => 'in.c-testPrepareStorageWithChangeTableStructureTest.test1',
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $table = $this->clientWrapper
@@ -84,6 +88,7 @@ class StoragePreparerTest extends AbstractTestCase
                 ]),
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $updatedTable = $this->clientWrapper
@@ -108,6 +113,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'destination' => 'in.c-testPrepareStorageWithChangeTableDataTest.test1',
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $table = $this->clientWrapper
@@ -122,6 +128,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'delete_where_values' => ['id1', 'id2'],
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $updatedTable = $this->clientWrapper
@@ -149,6 +156,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'destination' => 'in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1',
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $table = $this->clientWrapper
@@ -164,6 +172,7 @@ class StoragePreparerTest extends AbstractTestCase
                 'delete_where_values' => ['id1', 'id2'],
             ]),
             $this->createSystemMetadata(),
+            new TableChangesStore(),
         );
 
         $updatedTable = $this->clientWrapper

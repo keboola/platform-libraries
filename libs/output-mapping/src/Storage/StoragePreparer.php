@@ -16,7 +16,6 @@ class StoragePreparer
     public function __construct(
         readonly private ClientWrapper $clientWrapper,
         readonly private LoggerInterface $logger,
-        readonly bool $hasNewNativeTypeFeature = false,
     ) {
     }
 

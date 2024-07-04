@@ -36,7 +36,7 @@ class StoragePreparer
         );
 
         if ($destinationTableInfo !== null) {
-            if ($processedSource->getSchema()) {
+            if ($tableChangesStore->hasChanges()) {
                 $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->logger);
                 $tableStructureModifier->updateTableStructure(
                     $destinationBucket,

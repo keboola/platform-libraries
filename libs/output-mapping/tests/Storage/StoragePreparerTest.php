@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Storage;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
+use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\SystemMetadata;
@@ -14,6 +15,7 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsRemoveBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
+use function PHPUnit\Framework\assertSame;
 
 class StoragePreparerTest extends AbstractTestCase
 {
@@ -25,13 +27,14 @@ class StoragePreparerTest extends AbstractTestCase
 
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration(),
             $this->createSystemMetadata(),
             new TableChangesStore(),
         );
 
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
+        self::assertStorageSourcesContainBucket($expectedBucketId, $mappingStorageSources);
     }
 
     #[NeedsTestTables(1)]
@@ -48,7 +51,7 @@ class StoragePreparerTest extends AbstractTestCase
             ->getTableAndFileStorageClient()
             ->getTable($this->firstTableId);
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
                 'destination' => $this->firstTableId,
             ]),
@@ -61,6 +64,8 @@ class StoragePreparerTest extends AbstractTestCase
             ->getTable($this->firstTableId);
 
         self::assertEquals($table, $updatedTable);
+
+        self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
     }
 
     #[NeedsTestTables(1)]
@@ -80,7 +85,7 @@ class StoragePreparerTest extends AbstractTestCase
             ->getTableAndFileStorageClient()
             ->getTable($this->firstTableId);
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
                 'destination' => $this->firstTableId,
                 'columns' => array_merge($table['columns'], [
@@ -104,6 +109,8 @@ class StoragePreparerTest extends AbstractTestCase
         ]);
 
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
+
+        self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
     }
 
     #[NeedsTestTables(1)]
@@ -123,7 +130,7 @@ class StoragePreparerTest extends AbstractTestCase
             ->getTableAndFileStorageClient()
             ->getTable($this->firstTableId);
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
                 'destination' => $this->firstTableId,
                 'delete_where_column' => 'Id',
@@ -143,6 +150,8 @@ class StoragePreparerTest extends AbstractTestCase
         $expectedTable['bucket']['rowsCount'] -= 2;
 
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
+
+        self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
     }
 
     #[NeedsTestTables(1)]
@@ -157,7 +166,7 @@ class StoragePreparerTest extends AbstractTestCase
             ->getTableAndFileStorageClient()
             ->getTable($this->firstTableId);
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
                 'schema' => [
                     [
@@ -185,6 +194,8 @@ class StoragePreparerTest extends AbstractTestCase
         $expectedTable['bucket']['rowsCount'] -= 2;
 
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
+
+        self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
     }
 
     #[NeedsEmptyOutputBucket]
@@ -224,7 +235,7 @@ class StoragePreparerTest extends AbstractTestCase
             ],
         ]));
 
-        $storagePreparer->prepareStorageBucketAndTable(
+        $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
                 'destination' => $tableId,
                 'schema' => [
@@ -303,6 +314,8 @@ class StoragePreparerTest extends AbstractTestCase
         ];
 
         self::assertEquals($this->dropTimestampParams($expectedTables), $this->dropTimestampParams($updatedTable));
+
+        self::assertStorageSourcesContainBucket($this->emptyOutputBucketId, $mappingStorageSources);
     }
 
     private function createMappingFromProcessedConfiguration(array $newMapping = []): MappingFromProcessedConfiguration
@@ -335,5 +348,13 @@ class StoragePreparerTest extends AbstractTestCase
         unset($table['lastChangeDate']);
         unset($table['bucket']['lastChangeDate']);
         return $table;
+    }
+
+    private static function assertStorageSourcesContainBucket(
+        string $expectedBucketId,
+        MappingStorageSources $storageSources
+    ): void {
+        self::assertNotNull($storageSources->getBucket());
+        self::assertSame($expectedBucketId, $storageSources->getBucket()->id);
     }
 }

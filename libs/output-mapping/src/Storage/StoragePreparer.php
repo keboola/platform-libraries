@@ -57,6 +57,10 @@ class StoragePreparer
                 $processedSource,
                 $processedSource->getDestination(),
             );
+
+            $destinationTableInfo = $this->getDestinationTableInfoIfExists(
+                $processedSource->getDestination()->getTableId(),
+            );
         }
 
         return new MappingStorageSources($destinationBucket, $destinationTableInfo);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
-use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
@@ -21,9 +20,10 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsRemoveBucket('in.c-main')]
     public function testPrepareBucket(): void
     {
+        $expectedBucketId = 'in.c-main';
         $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
 
-        self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists('in.c-main'));
+        self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration(),
@@ -31,7 +31,7 @@ class StoragePreparerTest extends AbstractTestCase
             new TableChangesStore(),
         );
 
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists('in.c-main'));
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
     }
 
     #[NeedsTestTables(1)]
@@ -42,15 +42,15 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertTrue(
             $this->clientWrapper
                 ->getTableAndFileStorageClient()
-                ->bucketExists('in.c-testPrepareStorageWithExistingTableTest'),
+                ->bucketExists($this->testBucketId),
         );
         $table = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithExistingTableTest.test1');
+            ->getTable($this->firstTableId);
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithExistingTableTest.test1',
+                'destination' => $this->firstTableId,
             ]),
             $this->createSystemMetadata(),
             new TableChangesStore(),
@@ -58,7 +58,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $updatedTable = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithExistingTableTest.test1');
+            ->getTable($this->firstTableId);
 
         self::assertEquals($table, $updatedTable);
     }
@@ -70,7 +70,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableStructureTest.test1',
+                'destination' => $this->firstTableId,
             ]),
             $this->createSystemMetadata(),
             new TableChangesStore(),
@@ -78,11 +78,11 @@ class StoragePreparerTest extends AbstractTestCase
 
         $table = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableStructureTest.test1');
+            ->getTable($this->firstTableId);
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableStructureTest.test1',
+                'destination' => $this->firstTableId,
                 'columns' => array_merge($table['columns'], [
                     'newColumn',
                 ]),
@@ -96,7 +96,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $updatedTable = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableStructureTest.test1');
+            ->getTable($this->firstTableId);
 
         $expectedTable = array_merge_recursive($table, [
             'columns' => ['newColumn'],
@@ -113,7 +113,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableDataTest.test1',
+                'destination' => $this->firstTableId,
             ]),
             $this->createSystemMetadata(),
             new TableChangesStore(),
@@ -121,11 +121,11 @@ class StoragePreparerTest extends AbstractTestCase
 
         $table = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataTest.test1');
+            ->getTable($this->firstTableId);
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
-                'destination' => 'in.c-testPrepareStorageWithChangeTableDataTest.test1',
+                'destination' => $this->firstTableId,
                 'delete_where_column' => 'Id',
                 'delete_where_operator' => 'eq',
                 'delete_where_values' => ['id1', 'id2'],
@@ -136,7 +136,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $updatedTable = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataTest.test1');
+            ->getTable($this->firstTableId);
 
         $expectedTable = $table;
         $expectedTable['rowsCount'] -= 2;
@@ -155,7 +155,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $table = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1');
+            ->getTable($this->firstTableId);
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
@@ -167,7 +167,7 @@ class StoragePreparerTest extends AbstractTestCase
                         'name' => 'Name',
                     ],
                 ],
-                'destination' => 'in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1',
+                'destination' => $this->firstTableId,
                 'delete_where_column' => 'Id',
                 'delete_where_operator' => 'eq',
                 'delete_where_values' => ['id1', 'id2'],
@@ -178,7 +178,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         $updatedTable = $this->clientWrapper
             ->getTableAndFileStorageClient()
-            ->getTable('in.c-testPrepareStorageWithChangeTableDataOnNewNativeTypeFeatureTest.test1');
+            ->getTable($this->firstTableId);
 
         $expectedTable = $table;
         $expectedTable['rowsCount'] -= 2;

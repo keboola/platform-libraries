@@ -10,12 +10,12 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableChangesStore;
+use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsRemoveBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
-use function PHPUnit\Framework\assertSame;
 
 class StoragePreparerTest extends AbstractTestCase
 {
@@ -35,6 +35,7 @@ class StoragePreparerTest extends AbstractTestCase
 
         self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
         self::assertStorageSourcesContainBucket($expectedBucketId, $mappingStorageSources);
+        self::assertNull($mappingStorageSources->getTable());
     }
 
     #[NeedsTestTables(1)]
@@ -66,6 +67,18 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertEquals($table, $updatedTable);
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
+        self::assertTableInfoEquals(
+            $this->firstTableId,
+            [
+                'Id',
+                'Name',
+                'foo',
+                'bar',
+            ],
+            [],
+            false,
+            $mappingStorageSources->getTable(),
+        );
     }
 
     #[NeedsTestTables(1)]
@@ -111,6 +124,18 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
+        self::assertTableInfoEquals(
+            $this->firstTableId,
+            [
+                'Id',
+                'Name',
+                'foo',
+                'bar',
+            ],
+            [],
+            false,
+            $mappingStorageSources->getTable(),
+        );
     }
 
     #[NeedsTestTables(1)]
@@ -152,11 +177,24 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
+        self::assertTableInfoEquals(
+            $this->firstTableId,
+            [
+                'Id',
+                'Name',
+                'foo',
+                'bar',
+            ],
+            [],
+            false,
+            $mappingStorageSources->getTable(),
+        );
     }
 
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithChangeTableDataOnNewNativeTypeFeature(): void
     {
+        //@TODO wtf
         $storagePreparer = new StoragePreparer(
             $this->clientWrapper,
             $this->testLogger,
@@ -174,6 +212,9 @@ class StoragePreparerTest extends AbstractTestCase
                     ],
                     [
                         'name' => 'Name',
+                    ],
+                    [
+                        'name' => 'Pokus',
                     ],
                 ],
                 'destination' => $this->firstTableId,
@@ -196,6 +237,18 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
+        self::assertTableInfoEquals(
+            $this->firstTableId,
+            [
+                'Id',
+                'Name',
+                'foo',
+                'bar',
+            ],
+            [],
+            false,
+            $mappingStorageSources->getTable(),
+        );
     }
 
     #[NeedsEmptyOutputBucket]
@@ -316,6 +369,16 @@ class StoragePreparerTest extends AbstractTestCase
         self::assertEquals($this->dropTimestampParams($expectedTables), $this->dropTimestampParams($updatedTable));
 
         self::assertStorageSourcesContainBucket($this->emptyOutputBucketId, $mappingStorageSources);
+        self::assertTableInfoEquals(
+            $expectedTables['id'],
+            [
+                'Id',
+                'Name',
+            ],
+            [],
+            true,
+            $mappingStorageSources->getTable(),
+        );
     }
 
     private function createMappingFromProcessedConfiguration(array $newMapping = []): MappingFromProcessedConfiguration
@@ -356,5 +419,18 @@ class StoragePreparerTest extends AbstractTestCase
     ): void {
         self::assertNotNull($storageSources->getBucket());
         self::assertSame($expectedBucketId, $storageSources->getBucket()->id);
+    }
+
+    private static function assertTableInfoEquals(
+        string $expectedTableId,
+        array $expectedColumns,
+        array $expectedPrimaryKey,
+        bool $expectedIsTyped,
+        TableInfo $tableInfo,
+    ): void {
+        self::assertSame($expectedTableId, $tableInfo->getId());
+        self::assertSame($expectedColumns, $tableInfo->getColumns());
+        self::assertSame($expectedPrimaryKey, $tableInfo->getPrimaryKey());
+        self::assertSame($expectedIsTyped, $tableInfo->isTyped());
     }
 }

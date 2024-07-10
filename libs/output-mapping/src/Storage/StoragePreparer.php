@@ -16,7 +16,6 @@ class StoragePreparer
     public function __construct(
         readonly private ClientWrapper $clientWrapper,
         readonly private LoggerInterface $logger,
-        readonly bool $hasNewNativeTypeFeature = false,
     ) {
     }
 
@@ -36,7 +35,7 @@ class StoragePreparer
         );
 
         if ($destinationTableInfo !== null) {
-            if ($processedSource->getSchema()) {
+            if ($tableChangesStore->hasChanges()) {
                 $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->logger);
                 $tableStructureModifier->updateTableStructure(
                     $destinationBucket,
@@ -57,6 +56,10 @@ class StoragePreparer
             $tableDataModifier->updateTableData(
                 $processedSource,
                 $processedSource->getDestination(),
+            );
+
+            $destinationTableInfo = $this->getDestinationTableInfoIfExists(
+                $processedSource->getDestination()->getTableId(),
             );
         }
 

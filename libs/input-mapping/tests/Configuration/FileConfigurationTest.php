@@ -17,7 +17,6 @@ class FileConfigurationTest extends TestCase
             'tags' => ['tag1', 'tag2'],
             'query' => 'esquery',
             'processed_tags' => ['tag3'],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'overwrite' => false,
         ];
@@ -32,7 +31,6 @@ class FileConfigurationTest extends TestCase
             'tags' => [],
             'query' => 'esquery',
             'processed_tags' => ['tag3'],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'overwrite' => true,
         ];
@@ -50,7 +48,6 @@ class FileConfigurationTest extends TestCase
             'tags' => ['tag3'],
             'query' => 'esquery',
             'processed_tags' => [],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'overwrite' => true,
         ];
@@ -68,7 +65,6 @@ class FileConfigurationTest extends TestCase
             'tags' => ['tag1'],
             'query' => '',
             'processed_tags' => ['tag3'],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'overwrite' => true,
         ];
@@ -85,7 +81,6 @@ class FileConfigurationTest extends TestCase
         $config = [
             'query' => 'esquery',
             'processed_tags' => ['tag3'],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'source' => [
                 'tags' => [
@@ -207,7 +202,6 @@ class FileConfigurationTest extends TestCase
             'query' => 'aaa',
             'file_ids' => [],
             'processed_tags' => ['tag3'],
-            'filter_by_run_id' => true,
             'limit' => 1000,
             'overwrite' => true,
         ];
@@ -243,10 +237,6 @@ class FileConfigurationTest extends TestCase
 
         yield [
             ['limit' => 1],
-        ];
-
-        yield [
-            ['filter_by_run_id' => true],
         ];
 
         yield [

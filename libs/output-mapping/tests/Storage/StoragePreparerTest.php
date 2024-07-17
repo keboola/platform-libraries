@@ -298,7 +298,7 @@ class StoragePreparerTest extends AbstractTestCase
         $storagePreparer = new StoragePreparer(
             $this->clientWrapper,
             $this->testLogger,
-            true
+            true,
         );
 
         $tableChangeStorage = new TableChangesStore();

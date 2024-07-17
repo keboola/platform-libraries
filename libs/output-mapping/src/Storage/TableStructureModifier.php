@@ -9,19 +9,10 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
-use Psr\Log\LoggerInterface;
 
-class TableStructureModifier
+class TableStructureModifier extends AbstractTableStructureModifier
 {
-    public function __construct(
-        private readonly ClientWrapper $clientWrapper,
-        private readonly LoggerInterface $logger,
-    ) {
-    }
-
     public function updateTableStructure(
         BucketInfo $destinationBucket,
         TableInfo $destinationTableInfo,
@@ -137,95 +128,5 @@ class TableStructureModifier
         }, $newTableConfigurationColumns);
 
         return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
-    }
-
-    /**
-     * @param array $keys
-     * @param LoggerInterface $logger
-     * @return array
-     */
-    private function normalizeKeyArray(LoggerInterface $logger, array $keys)
-    {
-        return array_map(
-            function ($key) {
-                return trim($key);
-            },
-            array_unique(
-                array_filter($keys, function ($col) use ($logger) {
-                    if ($col !== '') {
-                        return true;
-                    }
-                    $logger->warning('Found empty column name in key array.');
-                    return false;
-                }),
-            ),
-        );
-    }
-
-    private function modifyPrimaryKeyDecider(
-        LoggerInterface $logger,
-        array $currentTablePrimaryKey,
-        array $newTableConfigurationPrimaryKey,
-    ): bool {
-        $configPK = $this->normalizeKeyArray($logger, $newTableConfigurationPrimaryKey);
-        if (count($currentTablePrimaryKey) !== count($configPK)) {
-            return true;
-        }
-        $currentTablePkColumnsCount = count($currentTablePrimaryKey);
-        if (count(array_intersect($currentTablePrimaryKey, $configPK)) !== $currentTablePkColumnsCount) {
-            return true;
-        }
-        return false;
-    }
-
-    private function modifyPrimaryKey(
-        LoggerInterface $logger,
-        Client $client,
-        string $tableId,
-        array $tablePrimaryKey,
-        array $configPrimaryKey,
-    ): void {
-        $logger->warning(sprintf(
-            'Modifying primary key of table "%s" from "%s" to "%s".',
-            $tableId,
-            join(', ', $tablePrimaryKey),
-            join(', ', $configPrimaryKey),
-        ));
-        if ($this->removePrimaryKey($logger, $client, $tableId, $tablePrimaryKey)) {
-            // modify primary key
-            try {
-                if (count($configPrimaryKey)) {
-                    $client->createTablePrimaryKey($tableId, $configPrimaryKey);
-                }
-            } catch (ClientException $e) {
-                // warn and try to rollback to original state
-                $logger->warning(
-                    "Error changing primary key of table {$tableId}: " . $e->getMessage(),
-                );
-                if (count($tablePrimaryKey) > 0) {
-                    $client->createTablePrimaryKey($tableId, $tablePrimaryKey);
-                }
-            }
-        }
-    }
-
-    private function removePrimaryKey(
-        LoggerInterface $logger,
-        Client $client,
-        string $tableId,
-        array $tablePrimaryKey,
-    ): bool {
-        if (count($tablePrimaryKey) > 0) {
-            try {
-                $client->removeTablePrimaryKey($tableId);
-            } catch (ClientException $e) {
-                // warn and go on
-                $logger->warning(
-                    "Error deleting primary key of table {$tableId}: " . $e->getMessage(),
-                );
-                return false;
-            }
-        }
-        return true;
     }
 }

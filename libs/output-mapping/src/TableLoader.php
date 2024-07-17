@@ -110,7 +110,7 @@ class TableLoader
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
-                $tableStructureValidator->validateTable(
+                $tableChangesStore = $tableStructureValidator->validateTable(
                     $processedSource->getDestination()->getTableId(),
                     $processedSource->getSchema() ?? [],
                 );
@@ -121,9 +121,12 @@ class TableLoader
             $storagePreparer = new StoragePreparer(
                 $this->clientWrapper,
                 $this->logger,
-                $configuration->hasNewNativeTypesFeature(),
             );
-            $storageSources = $storagePreparer->prepareStorageBucketAndTable($processedSource, $systemMetadata);
+            $storageSources = $storagePreparer->prepareStorageBucketAndTable(
+                $processedSource,
+                $systemMetadata,
+                $tableChangesStore,
+            );
 
             $loadTableTask = $this->createLoadTableTask(
                 $strategy,

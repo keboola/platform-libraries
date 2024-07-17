@@ -131,6 +131,55 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
+    public function testTypedTableMissingColumnInStorage(): void
+    {
+        $newColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col4',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
+                ],
+            ],
+        ]);
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                ],
+                'primary_key' => true,
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+            $newColumn,
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
+        $tableChangesStore = $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue($tableChangesStore->hasMissingColumns());
+        self::assertEquals([$newColumn], $tableChangesStore->getMissingColumns());
+    }
+
     public function testErrorTypedTableWrongCountColumns(): void
     {
         $schema = [
@@ -684,6 +733,50 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
 
         self::assertTrue(true);
+    }
+
+    public function testNonTypedTableMissingColumnInStorage(): void
+    {
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col3',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col4',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage('Cannot add columns to untyped table "in.c-main.table". Columns: "col4".');
+        $validator->validateTable('in.c-main.table', $schema);
     }
 
     public function testErrorNonTypedTableWrongCountColumns(): void

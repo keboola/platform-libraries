@@ -23,7 +23,11 @@ class StoragePreparerTest extends AbstractTestCase
     public function testPrepareBucket(): void
     {
         $expectedBucketId = 'in.c-main';
-        $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
+        $storagePreparer = new StoragePreparer(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: false,
+        );
 
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
 
@@ -41,7 +45,11 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithExistingTable(): void
     {
-        $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
+        $storagePreparer = new StoragePreparer(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: false,
+        );
 
         self::assertTrue(
             $this->clientWrapper
@@ -85,7 +93,11 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithChangeTableStructure(): void
     {
-        $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
+        $storagePreparer = new StoragePreparer(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: false,
+        );
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
@@ -144,7 +156,11 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithChangeTableData(): void
     {
-        $storagePreparer = new StoragePreparer($this->clientWrapper, $this->testLogger);
+        $storagePreparer = new StoragePreparer(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: false,
+        );
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration([
@@ -200,8 +216,9 @@ class StoragePreparerTest extends AbstractTestCase
     {
         //@TODO wtf
         $storagePreparer = new StoragePreparer(
-            $this->clientWrapper,
-            $this->testLogger,
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: true,
         );
 
         $table = $this->clientWrapper
@@ -281,6 +298,7 @@ class StoragePreparerTest extends AbstractTestCase
         $storagePreparer = new StoragePreparer(
             $this->clientWrapper,
             $this->testLogger,
+            true
         );
 
         $tableChangeStorage = new TableChangesStore();

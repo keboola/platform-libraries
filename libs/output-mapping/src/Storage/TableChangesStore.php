@@ -25,9 +25,4 @@ class TableChangesStore
     {
         $this->missingColumns[] = $missingColumn;
     }
-
-    public function hasChanges(): bool
-    {
-        return $this->hasMissingColumns();
-    }
 }

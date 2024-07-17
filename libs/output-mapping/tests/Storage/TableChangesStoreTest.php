@@ -15,7 +15,6 @@ class TableChangesStoreTest extends TestCase
         $changesStore = new TableChangesStore();
 
         self::assertFalse($changesStore->hasMissingColumns());
-        self::assertFalse($changesStore->hasChanges());
         self::assertSame([], $changesStore->getMissingColumns());
 
         $changesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
@@ -51,7 +50,6 @@ class TableChangesStoreTest extends TestCase
         $changesStore->addMissingColumn($expectedSchemaColumn);
 
         self::assertTrue($changesStore->hasMissingColumns());
-        self::assertTrue($changesStore->hasChanges());
         self::assertSame([$expectedSchemaColumn], $changesStore->getMissingColumns());
     }
 }

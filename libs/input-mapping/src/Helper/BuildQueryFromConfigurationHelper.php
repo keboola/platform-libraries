@@ -10,14 +10,16 @@ class BuildQueryFromConfigurationHelper
 {
     public static function buildQuery(array $configuration): string
     {
-        if (isset($configuration['query']) && isset($configuration['source']['tags'])) {
+        $tagsPresent = count($configuration['source']['tags'] ?? []) > 0;
+
+        if (isset($configuration['query']) && $tagsPresent) {
             return sprintf(
                 '%s AND (%s)',
                 $configuration['query'],
                 self::buildQueryForSourceTags($configuration['source']['tags']),
             );
         }
-        if (isset($configuration['source']['tags'])) {
+        if ($tagsPresent) {
             return self::buildQueryForSourceTags(
                 $configuration['source']['tags'],
                 $configuration['changed_since'] ?? null,

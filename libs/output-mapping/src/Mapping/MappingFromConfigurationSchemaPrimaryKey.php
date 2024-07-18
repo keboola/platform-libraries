@@ -18,4 +18,14 @@ class MappingFromConfigurationSchemaPrimaryKey
     {
         $this->columns[] = $column;
     }
+
+    public function getPrimaryKeyColumnNames(): array
+    {
+        return array_map(
+            function (MappingFromConfigurationSchemaColumn $column): string {
+                return $column->getName();
+            },
+            $this->columns,
+        );
+    }
 }

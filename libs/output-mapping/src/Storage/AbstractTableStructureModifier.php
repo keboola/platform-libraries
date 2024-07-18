@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Storage;
 
+use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -77,13 +78,15 @@ abstract class AbstractTableStructureModifier
                     $this->client->createTablePrimaryKey($tableId, $configPrimaryKey);
                 }
             } catch (ClientException $e) {
-                // warn and try to rollback to original state
-                $this->logger->warning(
-                    "Error changing primary key of table {$tableId}: " . $e->getMessage(),
-                );
+                $message = sprintf('Error changing primary key of table %s: %s', $tableId, $e->getMessage());
+                $this->logger->warning($message);
+
+                // rollback to original state
                 if (count($tablePrimaryKey) > 0) {
                     $this->client->createTablePrimaryKey($tableId, $tablePrimaryKey);
                 }
+
+                throw new PrimaryKeyNotChangedException($message, $e->getCode(), $e);
             }
         }
     }

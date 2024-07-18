@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\Datatype\Definition\BaseType;
+use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
@@ -24,15 +25,16 @@ class TableStructureModifier extends AbstractTableStructureModifier
             $destinationBucket->backend,
         );
 
-        if ($this->modifyPrimaryKeyDecider(
-            $destinationTableInfo->getPrimaryKey(),
-            $source->getPrimaryKey(),
-        )) {
-            $this->modifyPrimaryKey(
-                $destination->getTableId(),
-                $destinationTableInfo->getPrimaryKey(),
-                $source->getPrimaryKey(),
-            );
+        if ($this->modifyPrimaryKeyDecider($destinationTableInfo->getPrimaryKey(), $source->getPrimaryKey(),)) {
+            try {
+                $this->modifyPrimaryKey(
+                    $destination->getTableId(),
+                    $destinationTableInfo->getPrimaryKey(),
+                    $source->getPrimaryKey(),
+                );
+            } catch (PrimaryKeyNotChangedException $e) {
+                // ignore
+            }
         }
     }
 

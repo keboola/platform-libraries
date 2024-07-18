@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchemaColumn;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
 
 class TableStructureModifierFromSchema extends AbstractTableStructureModifier
 {
@@ -16,6 +15,23 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
     {
         if ($changesStore->hasMissingColumns()) {
             $this->addColumns($table->getId(), $bucket->backend, $changesStore->getMissingColumns());
+        }
+
+        if ($changesStore->getPrimaryKey() !== null) {
+            if ($this->modifyPrimaryKeyDecider(
+                $table->getPrimaryKey(),
+                $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
+            )) {
+                try {
+                    $this->modifyPrimaryKey(
+                        $table->getId(),
+                        $table->getPrimaryKey(),
+                        $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
+                    );
+                } catch (PrimaryKeyNotChangedException $e) {
+                    throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+                }
+            }
         }
     }
 

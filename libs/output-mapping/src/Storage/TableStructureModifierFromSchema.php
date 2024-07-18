@@ -10,14 +10,8 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class TableStructureModifierFromSchema
+class TableStructureModifierFromSchema extends AbstractTableStructureModifier
 {
-    public function __construct(
-        readonly ClientWrapper $clientWrapper,
-        readonly LoggerInterface $logger,
-    ) {
-    }
-
     public function updateTableStructure(BucketInfo $bucket, TableInfo $table, TableChangesStore $changesStore): void
     {
         if ($changesStore->hasMissingColumns()) {

@@ -19,11 +19,11 @@ abstract class AbstractTableStructureModifier
 
     /**
      * @param array $keys
-     * @param LoggerInterface $logger
      * @return array
      */
-    protected function normalizeKeyArray(LoggerInterface $logger, array $keys)
+    protected function normalizeKeyArray(array $keys)
     {
+        $logger = $this->logger;
         return array_map(
             function ($key) {
                 return trim($key);
@@ -41,11 +41,10 @@ abstract class AbstractTableStructureModifier
     }
 
     protected function modifyPrimaryKeyDecider(
-        LoggerInterface $logger,
         array $currentTablePrimaryKey,
         array $newTableConfigurationPrimaryKey,
     ): bool {
-        $configPK = $this->normalizeKeyArray($logger, $newTableConfigurationPrimaryKey);
+        $configPK = $this->normalizeKeyArray($newTableConfigurationPrimaryKey);
         if (count($currentTablePrimaryKey) !== count($configPK)) {
             return true;
         }
@@ -57,19 +56,18 @@ abstract class AbstractTableStructureModifier
     }
 
     protected function modifyPrimaryKey(
-        LoggerInterface $logger,
         Client $client,
         string $tableId,
         array $tablePrimaryKey,
         array $configPrimaryKey,
     ): void {
-        $logger->warning(sprintf(
+        $this->logger->warning(sprintf(
             'Modifying primary key of table "%s" from "%s" to "%s".',
             $tableId,
             join(', ', $tablePrimaryKey),
             join(', ', $configPrimaryKey),
         ));
-        if ($this->removePrimaryKey($logger, $client, $tableId, $tablePrimaryKey)) {
+        if ($this->removePrimaryKey($client, $tableId, $tablePrimaryKey)) {
             // modify primary key
             try {
                 if (count($configPrimaryKey)) {
@@ -77,7 +75,7 @@ abstract class AbstractTableStructureModifier
                 }
             } catch (ClientException $e) {
                 // warn and try to rollback to original state
-                $logger->warning(
+                $this->logger->warning(
                     "Error changing primary key of table {$tableId}: " . $e->getMessage(),
                 );
                 if (count($tablePrimaryKey) > 0) {
@@ -88,7 +86,6 @@ abstract class AbstractTableStructureModifier
     }
 
     protected function removePrimaryKey(
-        LoggerInterface $logger,
         Client $client,
         string $tableId,
         array $tablePrimaryKey,
@@ -98,7 +95,7 @@ abstract class AbstractTableStructureModifier
                 $client->removeTablePrimaryKey($tableId);
             } catch (ClientException $e) {
                 // warn and go on
-                $logger->warning(
+                $this->logger->warning(
                     "Error deleting primary key of table {$tableId}: " . $e->getMessage(),
                 );
                 return false;

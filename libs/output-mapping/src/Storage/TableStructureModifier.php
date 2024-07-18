@@ -27,12 +27,10 @@ class TableStructureModifier extends AbstractTableStructureModifier
         );
 
         if ($this->modifyPrimaryKeyDecider(
-            $this->logger,
             $destinationTableInfo->getPrimaryKey(),
             $source->getPrimaryKey(),
         )) {
             $this->modifyPrimaryKey(
-                $this->logger,
                 $this->clientWrapper->getTableAndFileStorageClient(),
                 $destination->getTableId(),
                 $destinationTableInfo->getPrimaryKey(),

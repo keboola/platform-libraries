@@ -20,7 +20,6 @@ class MappingFromConfigurationSchemaPrimaryKeyTest extends TestCase
             'primary_key' => true,
         ]);
 
-
         $primaryKey->addPrimaryKeyColumn($schemColumn);
         self::assertSame([$schemColumn], $primaryKey->getColumns());
     }

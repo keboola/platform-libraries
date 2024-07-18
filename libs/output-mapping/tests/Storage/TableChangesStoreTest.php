@@ -77,6 +77,6 @@ class TableChangesStoreTest extends TestCase
         $changesStore = new TableChangesStore();
         $changesStore->setPrimaryKey($primaryKey);
 
-        self::assertSame([$expectedPkColumn], $changesStore->getPrimaryKey()->getColumns());
+        self::assertSame([$expectedPkColumn], $changesStore->getPrimaryKey()?->getColumns());
     }
 }

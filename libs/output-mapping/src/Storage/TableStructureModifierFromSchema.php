@@ -27,7 +27,7 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
 
             $requestData = $columnData->getRequestData();
             try {
-                $this->clientWrapper->getBranchClient()->addTableColumn(
+                $this->client->addTableColumn(
                     $tableId,
                     $requestData['name'],
                     $requestData['definition'] ?? null,
@@ -37,7 +37,7 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
             } catch (ClientException $e) {
                 // remove added columns
                 foreach ($columnsAdded as $item) {
-                    $this->clientWrapper->getBranchClient()->deleteTableColumn($tableId, $item);
+                    $this->client->deleteTableColumn($tableId, $item);
                 }
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }

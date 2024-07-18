@@ -8,7 +8,6 @@ use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
-use Keboola\StorageApi\Client;
 use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class TableStructureModifier extends AbstractTableStructureModifier
@@ -20,7 +19,6 @@ class TableStructureModifier extends AbstractTableStructureModifier
         MappingDestination $destination,
     ): void {
         $this->addMissingColumns(
-            $this->clientWrapper->getTableAndFileStorageClient(),
             $destinationTableInfo,
             $source,
             $destinationBucket->backend,
@@ -31,7 +29,6 @@ class TableStructureModifier extends AbstractTableStructureModifier
             $source->getPrimaryKey(),
         )) {
             $this->modifyPrimaryKey(
-                $this->clientWrapper->getTableAndFileStorageClient(),
                 $destination->getTableId(),
                 $destinationTableInfo->getPrimaryKey(),
                 $source->getPrimaryKey(),
@@ -40,7 +37,6 @@ class TableStructureModifier extends AbstractTableStructureModifier
     }
 
     private function addMissingColumns(
-        Client $client,
         TableInfo $currentTableInfo,
         MappingFromProcessedConfiguration $newTableConfiguration,
         string $backendType,
@@ -97,7 +93,7 @@ class TableStructureModifier extends AbstractTableStructureModifier
 
         foreach ($missingColumnsData as $missingColumnData) {
             [$columnName, $columnDefinition, $columnBasetype] = $missingColumnData;
-            $client->addTableColumn(
+            $this->client->addTableColumn(
                 $currentTableInfo->getId(),
                 $columnName,
                 $columnDefinition,

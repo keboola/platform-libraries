@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Storage;
 
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -11,10 +12,13 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractTableStructureModifier
 {
+    protected readonly Client|BranchAwareClient $client;
+
     public function __construct(
-        protected readonly ClientWrapper $clientWrapper,
+        ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
     ) {
+        $this->client = $clientWrapper->getTableAndFileStorageClient();
     }
 
     /**
@@ -56,7 +60,6 @@ abstract class AbstractTableStructureModifier
     }
 
     protected function modifyPrimaryKey(
-        Client $client,
         string $tableId,
         array $tablePrimaryKey,
         array $configPrimaryKey,
@@ -67,11 +70,11 @@ abstract class AbstractTableStructureModifier
             join(', ', $tablePrimaryKey),
             join(', ', $configPrimaryKey),
         ));
-        if ($this->removePrimaryKey($client, $tableId, $tablePrimaryKey)) {
+        if ($this->removePrimaryKey($tableId, $tablePrimaryKey)) {
             // modify primary key
             try {
                 if (count($configPrimaryKey)) {
-                    $client->createTablePrimaryKey($tableId, $configPrimaryKey);
+                    $this->client->createTablePrimaryKey($tableId, $configPrimaryKey);
                 }
             } catch (ClientException $e) {
                 // warn and try to rollback to original state
@@ -79,20 +82,19 @@ abstract class AbstractTableStructureModifier
                     "Error changing primary key of table {$tableId}: " . $e->getMessage(),
                 );
                 if (count($tablePrimaryKey) > 0) {
-                    $client->createTablePrimaryKey($tableId, $tablePrimaryKey);
+                    $this->client->createTablePrimaryKey($tableId, $tablePrimaryKey);
                 }
             }
         }
     }
 
     protected function removePrimaryKey(
-        Client $client,
         string $tableId,
         array $tablePrimaryKey,
     ): bool {
         if (count($tablePrimaryKey) > 0) {
             try {
-                $client->removeTablePrimaryKey($tableId);
+                $this->client->removeTablePrimaryKey($tableId);
             } catch (ClientException $e) {
                 // warn and go on
                 $this->logger->warning(

@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Storage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaPrimaryKey;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -56,16 +57,13 @@ class TableStructureValidator
             );
             array_walk($missingColumns, fn($column) => $tableChangesStore->addMissingColumn($column));
 
-            $this->validatePrimaryKeys(
-                $table['definition']['primaryKeysNames'],
-                array_map(
-                    fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
-                    array_filter(
-                        $schemaColumns,
-                        fn(MappingFromConfigurationSchemaColumn $column) => $column->isPrimaryKey(),
-                    ),
-                ),
-            );
+            $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+            foreach ($schemaColumns as $schemaColumn) {
+                if ($schemaColumn->isPrimaryKey()) {
+                    $primaryKey->addPrimaryKeyColumn($schemaColumn);
+                }
+            }
+
             $this->validateTypedTable($table, $schemaColumns, $table['bucket']['backend']);
         } else {
             $missingColumns = $this->validateColumnsName($table['id'], $table['columns'], $schemaColumns);

@@ -214,7 +214,6 @@ class StoragePreparerTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testPrepareStorageWithChangeTableDataOnNewNativeTypeFeature(): void
     {
-        //@TODO wtf
         $storagePreparer = new StoragePreparer(
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
@@ -296,9 +295,9 @@ class StoragePreparerTest extends AbstractTestCase
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
 
         $storagePreparer = new StoragePreparer(
-            $this->clientWrapper,
-            $this->testLogger,
-            true,
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            hasNewNativeTypeFeature: true,
         );
 
         $tableChangeStorage = new TableChangesStore();

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Needs;
 
 use Keboola\Csv\CsvFile;
+use Keboola\Datatype\Definition\BaseType;
+use Keboola\OutputMapping\TableLoader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -86,10 +88,28 @@ class TestSatisfyer
     private static function getTableCount(ReflectionAttribute $attribute): int
     {
         $arguments = $attribute->getArguments();
+        if (isset($arguments['count'])) {
+            return (int) $arguments['count'];
+        }
+
         if (count($arguments) > 0) {
-            return (int) $arguments[0];
+            $firstArgument = reset($arguments);
+            return (int) $firstArgument;
         }
         return 1;
+    }
+
+    /**
+     * @param ReflectionAttribute<object> $attribute
+     */
+    private static function getCreateTypedTable(ReflectionAttribute $attribute): bool
+    {
+        $arguments = $attribute->getArguments();
+        if (isset($arguments['typedTable'])) {
+            return (bool) $arguments['typedTable'];
+        }
+
+        return false;
     }
 
     /**
@@ -159,23 +179,68 @@ class TestSatisfyer
 
         if ($testTable !== null) {
             $testBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Test', Client::STAGE_IN);
-
-            $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
-            $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
-            $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
-            $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
-            $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
-
             $tableCount = self::getTableCount($testTable);
+
             $tableIds = [];
-            // Create table
-            $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
-            for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
-                $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                    $testBucketId,
-                    'test' . ($i + 1),
-                    $csv,
-                );
+            if (!self::getCreateTypedTable($testTable)) {
+                $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+                $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+                $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
+                $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
+                $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
+
+                // Create table
+                $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
+                for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+                    $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+                        $testBucketId,
+                        'test' . ($i + 1),
+                        $csv,
+                    );
+                }
+            } else {
+                $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+                $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+                $csv->writeRow(['1', 'name1', 'foo1', 'bar1']);
+                $csv->writeRow(['2', 'name2', 'foo2', 'bar2']);
+                $csv->writeRow(['3', 'name3', 'foo3', 'bar3']);
+
+                // Create table
+                $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
+                for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+                    $tableName = 'test' . ($i + 1);
+                    $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
+                        $testBucketId,
+                        [
+                            'name' => $tableName,
+                            'primaryKeysNames' => ['Id', 'Name'],
+                            'columns' => [
+                                [
+                                    'name' => 'Id',
+                                    'basetype' => BaseType::INTEGER,
+                                ],
+                                [
+                                    'name' => 'Name',
+                                    'basetype' => BaseType::STRING,
+                                ],
+                                [
+                                    'name' => 'foo',
+                                    'basetype' => BaseType::STRING,
+                                ],
+                                [
+                                    'name' => 'bar',
+                                    'basetype' => BaseType::STRING,
+                                ],
+                            ],
+                        ],
+                    );
+
+                    $clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
+                        $tableId,
+                        $csv,
+                    );
+                    $tableIds[$i] = $tableId;
+                }
             }
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
+use Generator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -542,97 +543,162 @@ class TableStructureValidatorTest extends AbstractTestCase
         $validator->validateTable('in.c-main.table', $schema);
     }
 
-    public function testErrorTypedTableCountPrimaryKeys(): void
+    public function typedTableWithPkDataProvider(): Generator
     {
-        $schema = [
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col1',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'STRING',
-                        'length' => '255',
-                    ],
-                    'snowflake' => [
-                        'type' => 'VARCHAR',
-                        'length' => '255',
-                    ],
+        $primaryKeyColumn1 = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col1',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
                 ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col2',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
+                'snowflake' => [
+                    'type' => 'VARCHAR',
                 ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col3',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                        'length' => '123',
-                    ],
-                    'snowflake' => [
-                        'type' => 'INT',
-                        'length' => '123',
-                    ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
+        $primaryKeyColumn2 = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col2',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
                 ],
-                'nullable' => true,
-            ]),
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
+        yield 'primary key change' => [
+            'schemaColumns' => [
+                $primaryKeyColumn1,
+                $primaryKeyColumn2,
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col3',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                        'snowflake' => [
+                            'type' => 'INT',
+                        ],
+                    ],
+                    'nullable' => true,
+                ]),
+            ],
+            'expectedPrimaryKeyColumns' => [$primaryKeyColumn1, $primaryKeyColumn2],
         ];
 
-        $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
+        yield 'same primary key as table' => [
+            'schemaColumns' => [
+                $primaryKeyColumn1,
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col2',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                    'nullable' => false,
+                ]),
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col3',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                        'snowflake' => [
+                            'type' => 'INT',
+                        ],
+                    ],
+                    'nullable' => true,
+                ]),
+            ],
+            'expectedPrimaryKeyColumns' => [$primaryKeyColumn1],
+        ];
 
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage(
-            'Table primary keys does not contain the same number of columns as the schema. '.
-            'Table primary keys: "col1", schema primary keys: "col1, col2".',
-        );
-        $validator->validateTable('in.c-main.table', $schema);
+        yield 'primary key reset' => [
+            'schemaColumns' => [
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col1',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                        'snowflake' => [
+                            'type' => 'VARCHAR',
+                        ],
+                    ],
+                    'nullable' => false,
+                ]),
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col2',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                    'nullable' => false,
+                ]),
+                new MappingFromConfigurationSchemaColumn([
+                    'name' => 'col3',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                        'snowflake' => [
+                            'type' => 'INT',
+                        ],
+                    ],
+                    'nullable' => true,
+                ]),
+            ],
+            'expectedPrimaryKeyColumns' => [],
+        ];
     }
 
-    public function testErrorTypedTableWrongPrimaryKey(): void
+    /**
+     * @dataProvider typedTableWithPkDataProvider
+     */
+    public function testTypedTableWithPk(array $schemaColumns, array $expectedPrimaryKeyColumns): void
     {
+        $primaryKeyColumn1 = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col1',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+                'snowflake' => [
+                    'type' => 'VARCHAR',
+                ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
+        $primaryKeyColumn2 = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col2',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
+                ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
         $schema = [
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col1',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'STRING',
-                        'length' => '255',
-                    ],
-                    'snowflake' => [
-                        'type' => 'VARCHAR',
-                        'length' => '255',
-                    ],
-                ],
-                'nullable' => false,
-            ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col2',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
+            $primaryKeyColumn1,
+            $primaryKeyColumn2,
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
                 'data_type' => [
                     'base' => [
                         'type' => 'NUMERIC',
-                        'length' => '123',
                     ],
                     'snowflake' => [
                         'type' => 'INT',
-                        'length' => '123',
                     ],
                 ],
                 'nullable' => true,
@@ -641,12 +707,13 @@ class TableStructureValidatorTest extends AbstractTestCase
 
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
 
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage(
-            'Table primary keys does not contain the same number of columns as the schema. '.
-            'Table primary keys: "col1", schema primary keys: "col2".',
+        $tableChangesStore = $validator->validateTable('in.c-main.table', $schemaColumns);
+
+        self::assertNotNull($tableChangesStore->getPrimaryKey());
+        self::assertSame(
+            $expectedPrimaryKeyColumns,
+            $tableChangesStore->getPrimaryKey()->getColumns(),
         );
-        $validator->validateTable('in.c-main.table', $schema);
     }
 
     public function testWebalizeTypedTableColumns(): void

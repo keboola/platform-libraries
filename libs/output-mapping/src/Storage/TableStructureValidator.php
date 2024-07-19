@@ -64,6 +64,8 @@ class TableStructureValidator
                 }
             }
 
+            $tableChangesStore->setPrimaryKey($primaryKey);
+
             $this->validateTypedTable($table, $schemaColumns, $table['bucket']['backend']);
         } else {
             $missingColumns = $this->validateColumnsName($table['id'], $table['columns'], $schemaColumns);

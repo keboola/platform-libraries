@@ -22,44 +22,6 @@ abstract class AbstractTableStructureModifier
         $this->client = $clientWrapper->getTableAndFileStorageClient();
     }
 
-    /**
-     * @param array $keys
-     * @return array
-     */
-    protected function normalizeKeyArray(array $keys)
-    {
-        $logger = $this->logger;
-        return array_map(
-            function ($key) {
-                return trim($key);
-            },
-            array_unique(
-                array_filter($keys, function ($col) use ($logger) {
-                    if ($col !== '') {
-                        return true;
-                    }
-                    $logger->warning('Found empty column name in key array.');
-                    return false;
-                }),
-            ),
-        );
-    }
-
-    protected function modifyPrimaryKeyDecider(
-        array $currentTablePrimaryKey,
-        array $newTableConfigurationPrimaryKey,
-    ): bool {
-        $configPK = $this->normalizeKeyArray($newTableConfigurationPrimaryKey);
-        if (count($currentTablePrimaryKey) !== count($configPK)) {
-            return true;
-        }
-        $currentTablePkColumnsCount = count($currentTablePrimaryKey);
-        if (count(array_intersect($currentTablePrimaryKey, $configPK)) !== $currentTablePkColumnsCount) {
-            return true;
-        }
-        return false;
-    }
-
     protected function modifyPrimaryKey(
         string $tableId,
         array $tablePrimaryKey,

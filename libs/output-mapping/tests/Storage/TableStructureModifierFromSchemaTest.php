@@ -264,6 +264,78 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         ));
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testModifyColumnAttributes(): void
+    {
+        $this->prepareStorageData();
+
+        $tableChangesStore = new TableChangesStore();
+
+        $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
+                ],
+            ],
+            'nullable' => false,
+        ]));
+
+        $this->tableStructureModifier->updateTableStructure(
+            new BucketInfo($this->bucket),
+            new TableInfo($this->table),
+            $tableChangesStore,
+        );
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+
+        self::assertEquals(
+            [
+                'name' => 'Id',
+                'definition' => [
+                    'type' => 'NUMBER',
+                    'nullable' => false,
+                    'length' => '38,0',
+                ],
+                'basetype' => 'NUMERIC',
+                'canBeFiltered' => true,
+            ],
+            $updatedTable['definition']['columns'][0],
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testModifyColumnAttributesError(): void
+    {
+        $this->prepareStorageData();
+
+        $tableChangesStore = new TableChangesStore();
+
+        $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
+                    'default' => 'new default value',
+                ],
+            ],
+        ]));
+
+        try {
+            $this->tableStructureModifier->updateTableStructure(
+                new BucketInfo($this->bucket),
+                new TableInfo($this->table),
+                $tableChangesStore,
+            );
+            $this->fail('UpdateTableStructure should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString(
+                'Cannot change default value of column "Id" from "" to "new default value"',
+                $e->getMessage(),
+            );
+        }
+    }
+
     private function prepareStorageData(array $primaryKeyNames = []): void
     {
         $idDatatype = new GenericStorage('int', ['nullable' => false]);

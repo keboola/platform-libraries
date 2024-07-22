@@ -12,6 +12,9 @@ class TableChangesStore
     /** @var MappingFromConfigurationSchemaColumn[] $missingColumns */
     private array $missingColumns = [];
 
+    /** @var MappingFromConfigurationSchemaColumn[] $columnsAttributes */
+    private array $columnsAttributes = [];
+
     private ?MappingFromConfigurationSchemaPrimaryKey $primaryKey = null;
 
     public function hasMissingColumns(): bool
@@ -37,5 +40,15 @@ class TableChangesStore
     public function setPrimaryKey(?MappingFromConfigurationSchemaPrimaryKey $primaryKey): void
     {
         $this->primaryKey = $primaryKey;
+    }
+
+    public function addColumnAttributeChanges(MappingFromConfigurationSchemaColumn $missingColumn): void
+    {
+        $this->columnsAttributes[] = $missingColumn;
+    }
+
+    public function getColumnAttributes(): array
+    {
+        return $this->columnsAttributes;
     }
 }

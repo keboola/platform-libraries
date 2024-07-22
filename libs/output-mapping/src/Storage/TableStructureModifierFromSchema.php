@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchemaColumn;
 use Keboola\StorageApi\ClientException;
 
@@ -33,6 +34,10 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
                 }
             }
         }
+
+        if (!empty($changesStore->getColumnAttributes())) {
+            $this->modifyColumnsAttributes($table->getId(), $bucket->backend, $changesStore->getColumnAttributes());
+        }
     }
 
     private function addColumns(string $tableId, string $backend, array $missingColumns): void
@@ -55,6 +60,30 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
                 foreach ($columnsAdded as $item) {
                     $this->client->deleteTableColumn($tableId, $item);
                 }
+                throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+    }
+
+    /**
+     * @param MappingFromConfigurationSchemaColumn[] $columns
+     */
+    private function modifyColumnsAttributes(
+        string $tableId,
+        string $backend,
+        array $columns,
+    ): void {
+        foreach ($columns as $column) {
+            try {
+                $this->client->updateTableColumnDefinition(
+                    $tableId,
+                    $column->getName(),
+                    [
+                        'default' => $column->getDataType()?->getDefaultValue($backend),
+                        'nullable' => $column->isNullable(),
+                    ],
+                );
+            } catch (ClientException $e) {
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }
         }

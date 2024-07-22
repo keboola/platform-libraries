@@ -47,15 +47,15 @@ class TableStructureValidator
         }
 
         if ($table['isTyped']) {
-            $missingColumns = $this->validateColumnsName(
+            $tableChangesStore = $this->validateColumnsName(
                 $table['id'],
                 array_map(
                     fn($column) => $column['name'],
                     $table['definition']['columns'],
                 ),
                 $schemaColumns,
+                $tableChangesStore,
             );
-            array_walk($missingColumns, fn($column) => $tableChangesStore->addMissingColumn($column));
 
             $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
             foreach ($schemaColumns as $schemaColumn) {
@@ -66,14 +66,28 @@ class TableStructureValidator
 
             $tableChangesStore->setPrimaryKey($primaryKey);
 
+            $tableChangesStore = $this->validateColumnsAttributes(
+                $table,
+                $schemaColumns,
+                $table['bucket']['backend'],
+                $tableChangesStore,
+            );
             $this->validateTypedTable($table, $schemaColumns, $table['bucket']['backend']);
         } else {
-            $missingColumns = $this->validateColumnsName($table['id'], $table['columns'], $schemaColumns);
-            if ($missingColumns) {
+            $tableChangesStore = $this->validateColumnsName(
+                $table['id'],
+                $table['columns'],
+                $schemaColumns,
+                $tableChangesStore,
+            );
+            if ($tableChangesStore->hasMissingColumns()) {
                 throw new InvalidTableStructureException(sprintf(
                     'Cannot add columns to untyped table "%s". Columns: "%s".',
                     $table['id'],
-                    implode('", "', array_map(fn($column) => $column->getName(), $missingColumns)),
+                    implode(
+                        '", "',
+                        array_map(fn($column) => $column->getName(), $tableChangesStore->getMissingColumns()),
+                    ),
                 ));
             }
             $this->validatePrimaryKeys(
@@ -207,25 +221,30 @@ class TableStructureValidator
 
     /**
      * @param MappingFromConfigurationSchemaColumn[] $schemaColumns
-     * @return MappingFromConfigurationSchemaColumn[]
      */
-    private function validateColumnsName(string $tableId, array $tableColumns, array $schemaColumns): array
-    {
+    private function validateColumnsName(
+        string $tableId,
+        array $tableColumns,
+        array $schemaColumns,
+        TableChangesStore $tableChangesStore,
+    ): TableChangesStore {
         $schemaColumnsNames = array_map(
             fn(MappingFromConfigurationSchemaColumn $column) => ColumnNameSanitizer::sanitize($column->getName()),
             $schemaColumns,
         );
 
         if (count($schemaColumnsNames) !== count($tableColumns)) {
-            $missingColumns = array_diff($schemaColumnsNames, $tableColumns);
-            if ($missingColumns) {
-                return array_filter(
+            $missingColumnsNames = array_diff($schemaColumnsNames, $tableColumns);
+            if ($missingColumnsNames) {
+                $missingColumns = array_filter(
                     $schemaColumns,
                     fn(MappingFromConfigurationSchemaColumn $column) => in_array(
                         ColumnNameSanitizer::sanitize($column->getName()),
-                        $missingColumns,
+                        $missingColumnsNames,
                     ),
                 );
+                array_walk($missingColumns, fn($column) => $tableChangesStore->addMissingColumn($column));
+                return $tableChangesStore;
             }
             throw new InvalidTableStructureException(sprintf(
                 'Table "%s" does not contain the same number of columns as the schema.'.
@@ -246,7 +265,7 @@ class TableStructureValidator
             ));
         }
 
-        return [];
+        return $tableChangesStore;
     }
 
     private function validatePrimaryKeys(array $tableKeys, array $schemaKeys): void
@@ -271,5 +290,46 @@ class TableStructureValidator
                 implode(', ', $schemaKeys),
             ));
         }
+    }
+
+    private function validateColumnsAttributes(
+        array $table,
+        array $schemaColumns,
+        string $bucketBackend,
+        TableChangesStore $tableChangesStore,
+    ): TableChangesStore {
+        foreach ($table['definitions']['columns'] ?? [] as $column) {
+            /** @var MappingFromConfigurationSchemaColumn[] $schemaColumn */
+            $schemaColumn = array_filter(
+                $schemaColumns,
+                fn(MappingFromConfigurationSchemaColumn $item) => ColumnNameSanitizer::sanitize(
+                    $item->getName(),
+                ) === $column['name'],
+            );
+
+            // column not exists
+            if (!$schemaColumn) {
+                continue;
+            }
+
+            $schemaColumn = current($schemaColumn);
+            $tableColumnDefault = $column['definition']['default'] ?? null;
+
+            $hasDefaultValueChanged = false;
+            if ($schemaColumn->getDataType()?->getDefaultValue($bucketBackend) !== $tableColumnDefault) {
+                $hasDefaultValueChanged = true;
+            }
+
+            $hasNullableChanged = false;
+            if ($schemaColumn->isNullable() !== $column['definition']['nullable']) {
+                $hasNullableChanged = true;
+            }
+
+            if ($hasDefaultValueChanged || $hasNullableChanged) {
+                $tableChangesStore->addColumnAttributeChanges($schemaColumn);
+            }
+        }
+
+        return $tableChangesStore;
     }
 }

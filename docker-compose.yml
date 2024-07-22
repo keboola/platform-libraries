@@ -94,6 +94,8 @@ services:
       - RUN_SYNAPSE_TESTS
       - SYNAPSE_STORAGE_API_TOKEN
       - SYNAPSE_STORAGE_API_URL
+      - BIGQUERY_STORAGE_API_TOKEN
+      - BIGQUERY_STORAGE_API_URL
 
   dev-permission-checker:
     <<: *dev81

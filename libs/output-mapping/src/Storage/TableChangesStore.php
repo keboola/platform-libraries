@@ -47,7 +47,7 @@ class TableChangesStore
         $this->columnsAttributes[] = $missingColumn;
     }
 
-    public function getColumnAttributes(): array
+    public function getDifferentColumnAttributes(): array
     {
         return $this->columnsAttributes;
     }

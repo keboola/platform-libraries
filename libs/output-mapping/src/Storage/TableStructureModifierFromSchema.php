@@ -35,8 +35,12 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
             }
         }
 
-        if (!empty($changesStore->getColumnAttributes())) {
-            $this->modifyColumnsAttributes($table->getId(), $bucket->backend, $changesStore->getColumnAttributes());
+        if (!empty($changesStore->getDifferentColumnAttributes())) {
+            $this->modifyColumnsAttributes(
+                $table->getId(),
+                $bucket->backend,
+                $changesStore->getDifferentColumnAttributes(),
+            );
         }
     }
 

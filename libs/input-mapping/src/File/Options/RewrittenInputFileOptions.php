@@ -44,9 +44,6 @@ class RewrittenInputFileOptions extends InputFileOptions
     {
         $options = new ListFilesOptions();
 
-        if (!empty($this->definition['filter_by_run_id'])) {
-            $options->setRunId(Reader::getParentRunId($this->runId));
-        }
         if (isset($this->definition['tags']) && count($this->definition['tags'])) {
             $options->setTags($this->definition['tags']);
         }

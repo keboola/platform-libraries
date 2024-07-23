@@ -72,12 +72,12 @@ class RewrittenInputFileOptionsTest extends TestCase
             'expectedOptions' => (new ListFilesOptions())->setTags(['foo'])->setLimit(100),
             'originalFileOptions' => null,
         ];
-        yield 'tags + filter by run id + limit' => [
-            'rewrittenFileOptions' => ['tags' => ['foo'], 'filter_by_run_id' => true, 'limit' => 50],
+        yield 'tags + limit' => [
+            'rewrittenFileOptions' => ['tags' => ['foo'], 'limit' => 50],
             'isDevBranch' => false,
             'runId' => '1234',
             'filesStates' => new InputFileStateList([]),
-            'expectedOptions' => (new ListFilesOptions())->setTags(['foo'])->setRunId(1234)->setLimit(50),
+            'expectedOptions' => (new ListFilesOptions())->setTags(['foo'])->setLimit(50),
             'originalFileOptions' => null,
         ];
         yield 'source tags include' => [

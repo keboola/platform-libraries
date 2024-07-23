@@ -110,47 +110,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
     }
 
-    public function testReadFilesTagsFilterRunId(): void
-    {
-        $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getLocalStagingFactory());
-        $fo = new FileUploadOptions();
-        $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
-
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        sleep(5);
-
-        $configuration = [
-            [
-                'tags' => [self::DEFAULT_TEST_FILE_TAG],
-                'filter_by_run_id' => true,
-                'overwrite' => true,
-            ],
-        ];
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([]),
-        );
-
-        self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
-        self::assertFalse(file_exists($root . '/download/' . $id2 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id3 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id4 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id5 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id6 . '_upload'));
-    }
-
     public function testReadFilesIncludeAllTags(): void
     {
         $root = $this->temp->getTmpFolder();
@@ -299,45 +258,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
         self::assertTrue(file_exists($root . '/download/' . $id2 . '_upload'));
-    }
-    public function testReadFilesEsQueryFilterRunId(): void
-    {
-        $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getLocalStagingFactory());
-        $fo = new FileUploadOptions();
-        $fo->setTags([self::DEFAULT_TEST_FILE_TAG]);
-
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('xyz');
-        $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567');
-        $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('1234567.8901234');
-        $id5 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        $id6 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $fo);
-        sleep(5);
-
-        $configuration = [
-            [
-                'query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG,
-                'filter_by_run_id' => true,
-                'overwrite' => true,
-            ],
-        ];
-        $reader->downloadFiles(
-            $configuration,
-            'download',
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([]),
-        );
-        self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
-        self::assertFalse(file_exists($root . '/download/' . $id2 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id3 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id4 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id5 . '_upload'));
-        self::assertTrue(file_exists($root . '/download/' . $id6 . '_upload'));
     }
 
     public function testReadFilesLimit(): void

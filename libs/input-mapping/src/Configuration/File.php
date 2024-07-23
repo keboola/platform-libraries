@@ -53,7 +53,6 @@ class File extends Configuration
                     ->end()
                 ->end()
                 ->scalarNode('query')->end()
-                ->booleanNode('filter_by_run_id')->end()
                 ->integerNode('limit')->end()
                 ->booleanNode('overwrite')->defaultValue(true)->end()
                 ->arrayNode('processed_tags')

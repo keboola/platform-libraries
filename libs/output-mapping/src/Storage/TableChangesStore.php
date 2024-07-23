@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaPrimaryKey;
 
 class TableChangesStore
 {
     /** @var MappingFromConfigurationSchemaColumn[] $missingColumns */
     private array $missingColumns = [];
+
+    private ?MappingFromConfigurationSchemaPrimaryKey $primaryKey = null;
 
     public function hasMissingColumns(): bool
     {
@@ -26,8 +29,13 @@ class TableChangesStore
         $this->missingColumns[] = $missingColumn;
     }
 
-    public function hasChanges(): bool
+    public function getPrimaryKey(): ?MappingFromConfigurationSchemaPrimaryKey
     {
-        return $this->hasMissingColumns();
+        return $this->primaryKey;
+    }
+
+    public function setPrimaryKey(?MappingFromConfigurationSchemaPrimaryKey $primaryKey): void
+    {
+        $this->primaryKey = $primaryKey;
     }
 }

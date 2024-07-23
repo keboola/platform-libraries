@@ -5,23 +5,33 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchemaColumn;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\LoggerInterface;
 
-class TableStructureModifierFromSchema
+class TableStructureModifierFromSchema extends AbstractTableStructureModifier
 {
-    public function __construct(
-        readonly ClientWrapper $clientWrapper,
-        readonly LoggerInterface $logger,
-    ) {
-    }
-
     public function updateTableStructure(BucketInfo $bucket, TableInfo $table, TableChangesStore $changesStore): void
     {
         if ($changesStore->hasMissingColumns()) {
             $this->addColumns($table->getId(), $bucket->backend, $changesStore->getMissingColumns());
+        }
+
+        if ($changesStore->getPrimaryKey() !== null) {
+            if ($this->modifyPrimaryKeyDecider(
+                $table->getPrimaryKey(),
+                $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
+            )) {
+                try {
+                    $this->modifyPrimaryKey(
+                        $table->getId(),
+                        $table->getPrimaryKey(),
+                        $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
+                    );
+                } catch (PrimaryKeyNotChangedException $e) {
+                    throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+                }
+            }
         }
     }
 
@@ -33,7 +43,7 @@ class TableStructureModifierFromSchema
 
             $requestData = $columnData->getRequestData();
             try {
-                $this->clientWrapper->getBranchClient()->addTableColumn(
+                $this->client->addTableColumn(
                     $tableId,
                     $requestData['name'],
                     $requestData['definition'] ?? null,
@@ -43,7 +53,7 @@ class TableStructureModifierFromSchema
             } catch (ClientException $e) {
                 // remove added columns
                 foreach ($columnsAdded as $item) {
-                    $this->clientWrapper->getBranchClient()->deleteTableColumn($tableId, $item);
+                    $this->client->deleteTableColumn($tableId, $item);
                 }
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }

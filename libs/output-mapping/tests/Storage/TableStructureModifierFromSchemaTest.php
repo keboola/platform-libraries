@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Storage;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaPrimaryKey;
 use Keboola\OutputMapping\Storage\BucketInfo;
 use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableInfo;
@@ -16,19 +17,27 @@ use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 
 class TableStructureModifierFromSchemaTest extends AbstractTestCase
 {
+    private TableStructureModifierFromSchema $tableStructureModifier;
+
     private array $bucket;
     private array $table;
+
+    public function setup(): void
+    {
+        parent::setup();
+
+        $this->tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->testLogger);
+    }
 
     #[NeedsEmptyOutputBucket]
     public function testEmptyChanges(): void
     {
         $this->prepareStorageData();
-        $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->testLogger);
 
         $tableChangesStore = new TableChangesStore();
         self::assertFalse($tableChangesStore->hasMissingColumns());
 
-        $tableStructureModifier->updateTableStructure(
+        $this->tableStructureModifier->updateTableStructure(
             new BucketInfo($this->bucket),
             new TableInfo($this->table),
             $tableChangesStore,
@@ -46,7 +55,6 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
     public function testAddMissingColumn(): void
     {
         $this->prepareStorageData();
-        $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->testLogger);
 
         $tableChangesStore = new TableChangesStore();
         $tableChangesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
@@ -64,7 +72,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         ]));
         self::assertTrue($tableChangesStore->hasMissingColumns());
 
-        $tableStructureModifier->updateTableStructure(
+        $this->tableStructureModifier->updateTableStructure(
             new BucketInfo($this->bucket),
             new TableInfo($this->table),
             $tableChangesStore,
@@ -94,7 +102,6 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
     public function testErrorColumnAlreadyExists(): void
     {
         $this->prepareStorageData();
-        $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->testLogger);
 
         $tableChangesStore = new TableChangesStore();
         $tableChangesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
@@ -135,7 +142,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         self::assertTrue($tableChangesStore->hasMissingColumns());
 
         try {
-            $tableStructureModifier->updateTableStructure(
+            $this->tableStructureModifier->updateTableStructure(
                 new BucketInfo($this->bucket),
                 new TableInfo($this->table),
                 $tableChangesStore,
@@ -153,14 +160,118 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         );
     }
 
-    private function prepareStorageData(): void
+    #[NeedsEmptyOutputBucket]
+    public function testModifyPrimaryKey(): void
+    {
+        $this->prepareStorageData(['Id']);
+
+        $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'INTEGER',
+                ],
+            ],
+        ]));
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Name',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ]));
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->setPrimaryKey($primaryKey);
+
+        $this->tableStructureModifier->updateTableStructure(
+            new BucketInfo($this->bucket),
+            new TableInfo($this->table),
+            $tableChangesStore,
+        );
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+
+        self::assertEquals(
+            ['Id', 'Name'],
+            $updatedTable['definition']['primaryKeysNames'],
+        );
+
+        self::assertTrue($this->testHandler->hasWarning(
+            sprintf('Modifying primary key of table "%s" from "Id" to "Id, Name".', $updatedTable['id']),
+        ));
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testRestoreOriginalPrimaryKeyOnPrimaryKeyModifyError(): void
+    {
+        $this->prepareStorageData(['Id']);
+
+        $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'INTEGER',
+                ],
+            ],
+        ]));
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'NonExistingColumn',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ]));
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->setPrimaryKey($primaryKey);
+
+        try {
+            $this->tableStructureModifier->updateTableStructure(
+                new BucketInfo($this->bucket),
+                new TableInfo($this->table),
+                $tableChangesStore,
+            );
+            $this->fail('UpdateTableStructure should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString('Error changing primary key of table', $e->getMessage());
+            self::assertStringContainsString(
+                'Primary key columns "NonExistingColumn" not found in "Id, Name"',
+                $e->getMessage(),
+            );
+        }
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+
+        self::assertEquals(
+            $this->dropTimestampParams($this->table),
+            $this->dropTimestampParams($updatedTable),
+        );
+
+        self::assertTrue($this->testHandler->hasWarning(
+            sprintf('Modifying primary key of table "%s" from "Id" to "Id, NonExistingColumn".', $updatedTable['id']),
+        ));
+        self::assertTrue($this->testHandler->hasWarningThatContains(
+            'Primary key columns "NonExistingColumn" not found in "Id, Name"',
+        ));
+    }
+
+    private function prepareStorageData(array $primaryKeyNames = []): void
     {
         $idDatatype = new GenericStorage('int', ['nullable' => false]);
         $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
 
         $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition($this->emptyOutputBucketId, [
             'name' => 'tableDefinition',
-            'primaryKeysNames' => [],
+            'primaryKeysNames' => $primaryKeyNames,
             'columns' => [
                 [
                     'name' => 'Id',

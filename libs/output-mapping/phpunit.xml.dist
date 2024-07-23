@@ -22,6 +22,7 @@
             <directory>tests/Writer/Table</directory>
             <directory>tests/Writer/Helper</directory>
             <directory>tests/Storage</directory>
+            <directory>tests/Mapping</directory>
         </testsuite>
         <testsuite name="main-writer-tests-1">
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>

@@ -121,6 +121,7 @@ class TableLoader
             $storagePreparer = new StoragePreparer(
                 $this->clientWrapper,
                 $this->logger,
+                $configuration->hasNewNativeTypesFeature(),
             );
             $storageSources = $storagePreparer->prepareStorageBucketAndTable(
                 $processedSource,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Storage;
 
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaPrimaryKey;
 use Keboola\OutputMapping\Storage\TableChangesStore;
 use PHPUnit\Framework\TestCase;
 
@@ -15,8 +16,8 @@ class TableChangesStoreTest extends TestCase
         $changesStore = new TableChangesStore();
 
         self::assertFalse($changesStore->hasMissingColumns());
-        self::assertFalse($changesStore->hasChanges());
         self::assertSame([], $changesStore->getMissingColumns());
+        self::assertNull($changesStore->getPrimaryKey());
 
         $changesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
             'name' => 'newColumn',
@@ -51,7 +52,31 @@ class TableChangesStoreTest extends TestCase
         $changesStore->addMissingColumn($expectedSchemaColumn);
 
         self::assertTrue($changesStore->hasMissingColumns());
-        self::assertTrue($changesStore->hasChanges());
         self::assertSame([$expectedSchemaColumn], $changesStore->getMissingColumns());
+    }
+
+    public function testSetPrimaryKey(): void
+    {
+        $expectedPkColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                    'length' => '255',
+                ],
+                'snowflake' => [
+                    'type' => 'VARCHAR',
+                ],
+            ],
+        ]);
+
+        $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+        $primaryKey->addPrimaryKeyColumn($expectedPkColumn);
+
+        $changesStore = new TableChangesStore();
+        $changesStore->setPrimaryKey($primaryKey);
+
+        self::assertSame([$expectedPkColumn], $changesStore->getPrimaryKey()?->getColumns());
     }
 }

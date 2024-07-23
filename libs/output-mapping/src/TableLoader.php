@@ -222,12 +222,24 @@ class TableLoader
         $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv')->getPathname());
         $headerCsvFile->writeRow($columns);
 
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $destination->getBucketId(),
-            $destination->getTableName(),
-            $headerCsvFile,
-            $loadOptions,
-        );
+        try {
+            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+                $destination->getBucketId(),
+                $destination->getTableName(),
+                $headerCsvFile,
+                $loadOptions,
+            );
+        } catch (ClientException $e) {
+            throw new InvalidOutputException(
+                sprintf(
+                    'Cannot create table "%s" in Storage API: %s',
+                    $destination->getTableName(),
+                    json_encode((array) $e->getContextParams()),
+                ),
+                $e->getCode(),
+                $e,
+            );
+        }
     }
 
     private function createTableDefinition(

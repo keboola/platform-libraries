@@ -51,6 +51,7 @@
         </testsuite>
         <testsuite name="new-native-types">
             <file>tests/Writer/TableDefinitionV2Test.php</file>
+            <file>tests/TableLoaderTest.php</file>
         </testsuite>
         <testsuite name="slice">
             <directory>tests/Writer/Table</directory>

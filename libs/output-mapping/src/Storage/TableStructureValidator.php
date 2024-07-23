@@ -165,17 +165,6 @@ class TableStructureValidator
                     $schemaColumnLength,
                 );
             }
-
-            if ($schemaColumn->isNullable() !== $tableColumn['definition']['nullable']) {
-                $validationErrors[] = sprintf(
-                    'Table "%s" column "%s" has different nullable than the schema.'.
-                    ' Table nullable: "%s", schema nullable: "%s".',
-                    $table['id'],
-                    $schemaColumn->getName(),
-                    $tableColumn['definition']['nullable'] ? 'true' : 'false',
-                    $schemaColumn->isNullable() ? 'true' : 'false',
-                );
-            }
         }
 
         if ($validationErrors) {
@@ -298,7 +287,7 @@ class TableStructureValidator
         string $bucketBackend,
         TableChangesStore $tableChangesStore,
     ): TableChangesStore {
-        foreach ($table['definitions']['columns'] ?? [] as $column) {
+        foreach ($table['definition']['columns'] ?? [] as $column) {
             /** @var MappingFromConfigurationSchemaColumn[] $schemaColumn */
             $schemaColumn = array_filter(
                 $schemaColumns,

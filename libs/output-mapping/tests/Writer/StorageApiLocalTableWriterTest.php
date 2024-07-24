@@ -75,6 +75,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
 
+        /** @var array{
+         *     operationParams: array{source: array{fileId: string}},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
@@ -170,6 +174,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         );
 
+        /** @var array{
+         *     operationParams: array{source: array{fileId: string}},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
@@ -2009,6 +2017,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         self::assertEquals($this->emptyOutputBucketId . '.table1a', $tables[0]['id']);
         self::assertNotEmpty($jobIds[0]);
 
+        /** @var array{
+         *     operationParams: array{source: array{fileId: string}},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);

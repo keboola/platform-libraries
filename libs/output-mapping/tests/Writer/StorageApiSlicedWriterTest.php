@@ -71,6 +71,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
+        /** @var array{
+         *     operationParams: array{source: array{fileId: string}},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);
@@ -144,6 +148,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         self::assertContains(['Id' => 'test', 'Name' => 'test'], $table);
         self::assertContains(['Id' => 'aabb', 'Name' => 'ccdd'], $table);
 
+        /** @var array{
+         *     operationParams: array{source: array{fileId: string}},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
         $fileId = $job['operationParams']['source']['fileId'];
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($fileId);

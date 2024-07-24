@@ -269,13 +269,28 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
     {
         $this->prepareStorageData();
 
-        $tableChangesStore = new TableChangesStore();
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+        self::assertEquals(
+            [
+                'name' => 'Name',
+                'definition' => [
+                    'type' => 'VARCHAR',
+                    'nullable' => true,
+                    'length' => '17',
+                ],
+                'basetype' => 'STRING',
+                'canBeFiltered' => true,
+            ],
+            $table['definition']['columns'][1],
+        );
 
+        $tableChangesStore = new TableChangesStore();
         $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
-            'name' => 'Id',
+            'name' => 'Name',
             'data_type' => [
                 'base' => [
-                    'type' => 'NUMERIC',
+                    'type' => 'STRING',
+                    'length' => '255',
                 ],
             ],
             'nullable' => false,
@@ -288,19 +303,18 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         );
 
         $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
-
         self::assertEquals(
             [
-                'name' => 'Id',
+                'name' => 'Name',
                 'definition' => [
-                    'type' => 'NUMBER',
+                    'type' => 'VARCHAR',
                     'nullable' => false,
-                    'length' => '38,0',
+                    'length' => '255',
                 ],
-                'basetype' => 'NUMERIC',
+                'basetype' => 'STRING',
                 'canBeFiltered' => true,
             ],
-            $updatedTable['definition']['columns'][0],
+            $updatedTable['definition']['columns'][1],
         );
     }
 
@@ -315,7 +329,6 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
             'name' => 'Id',
             'data_type' => [
                 'base' => [
-                    'type' => 'NUMERIC',
                     'default' => 'new default value',
                 ],
             ],
@@ -352,6 +365,10 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
                 [
                     'name' => 'Name',
                     'basetype' => $nameDatatype->getBasetype(),
+                    'definition' => [
+                        'type' => $nameDatatype->getType(),
+                        'length' => $nameDatatype->getLength(),
+                    ],
                 ],
             ],
         ]);

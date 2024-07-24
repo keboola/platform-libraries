@@ -38,6 +38,21 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
     {
         $this->prepareStorageData();
 
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+        self::assertEquals(
+            [
+                'name' => 'Name',
+                'definition' => [
+                    'type' => 'STRING',
+                    'nullable' => true,
+                    'length' => '17',
+                ],
+                'basetype' => 'STRING',
+                'canBeFiltered' => true,
+            ],
+            $table['definition']['columns'][1],
+        );
+
         $tableChangesStore = new TableChangesStore();
 
         $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
@@ -45,6 +60,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
             'data_type' => [
                 'base' => [
                     'type' => 'VARCHAR',
+                    'length' => '255',
                     'default' => 'new default value',
                 ],
             ],
@@ -58,13 +74,13 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
         );
 
         $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
-
         self::assertEquals(
             [
                 'name' => 'Name',
                 'definition' => [
                     'type' => 'STRING',
                     'nullable' => true,
+                    'length' => '255',
                     'default' => '\'new default value\'',
                 ],
                 'basetype' => 'STRING',
@@ -109,7 +125,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
     private function prepareStorageData(array $primaryKeyNames = []): void
     {
         $idDatatype = new GenericStorage('int', ['nullable' => false]);
-        $nameDatatype = new GenericStorage('varchar', ['length' => '17', 'nullable' => false]);
+        $nameDatatype = new GenericStorage('string', ['length' => '17', 'nullable' => false]);
 
         $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
             $this->emptyBigqueryOutputBucketId,
@@ -124,6 +140,10 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                     [
                         'name' => 'Name',
                         'basetype' => $nameDatatype->getBasetype(),
+                        'definition' => [
+                            'type' => $nameDatatype->getType(),
+                            'length' => $nameDatatype->getLength(),
+                        ],
                     ],
                 ],
             ],

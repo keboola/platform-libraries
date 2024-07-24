@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Storage;
 
 use Generator;
+use Keboola\Datatype\Definition\BaseType;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -333,7 +335,7 @@ class TableStructureValidatorTest extends AbstractTestCase
                         'length' => '123',
                     ],
                     'snowflake' => [
-                        'type' => 'BIGINT',
+                        'type' => 'VARCHAR',
                         'length' => '123',
                     ],
                 ],
@@ -344,7 +346,7 @@ class TableStructureValidatorTest extends AbstractTestCase
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" column "col3" has different type than the schema. '.
-            'Table type: "INT", schema type: "BIGINT".',
+            'Table type: "NUMBER", schema type: "VARCHAR".',
         );
         $validator->validateTable('in.c-main.table', $schema);
     }
@@ -1179,6 +1181,189 @@ class TableStructureValidatorTest extends AbstractTestCase
         self::assertTrue(true);
     }
 
+    public function testValidateColumnAliases(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::once())
+            ->method('getTable')->willReturn([
+                'id' => 'in.c-main.table',
+                'isTyped' => true,
+                'definition' => [
+                    'primaryKeysNames' => [],
+                    'columns' => [
+                        [
+                            'name' => 'nvarchar2',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_VARCHAR,
+                                'nullable' => false,
+                            ],
+                            'basetype' => BaseType::STRING,
+                        ],
+                        [
+                            'name' => 'integer',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_NUMBER,
+                                'nullable' => false,
+                            ],
+                            'basetype' => BaseType::INTEGER,
+                        ],
+                        [
+                            'name' => 'double',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_FLOAT,
+                                'nullable' => true,
+                            ],
+                            'basetype' => BaseType::FLOAT,
+                        ],
+                    ],
+                ],
+                'bucket' => [
+                    'backend' => 'snowflake',
+                ],
+            ]);
+
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'nvarchar2',
+                'data_type' => [
+                    'base' => [
+                        'type' => BaseType::STRING,
+                    ],
+                    'snowflake' => [
+                        'type' => Snowflake::TYPE_NVARCHAR2,
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'integer',
+                'data_type' => [
+                    'base' => [
+                        'type' => BaseType::INTEGER,
+                    ],
+                    'snowflake' => [
+                        'type' => Snowflake::TYPE_INTEGER,
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'double',
+                'data_type' => [
+                    'base' => [
+                        'type' => BaseType::FLOAT,
+                    ],
+                    'snowflake' => [
+                        'type' => Snowflake::TYPE_DOUBLE,
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
+    public function testValidateColumnTimestampAliases(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock
+            ->expects(self::once())
+            ->method('getTable')->willReturn([
+                'id' => 'in.c-main.table',
+                'isTyped' => true,
+                'definition' => [
+                    'primaryKeysNames' => [],
+                    'columns' => [
+                        [
+                            'name' => 'timestamp',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_TIMESTAMP,
+                                'nullable' => false,
+                                'length' => '255',
+                            ],
+                            'basetype' => BaseType::TIMESTAMP,
+                        ],
+                        [
+                            'name' => 'timestamp_tz',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_TIMESTAMP_TZ,
+                                'nullable' => false,
+                            ],
+                            'basetype' => BaseType::TIMESTAMP,
+                        ],
+                        [
+                            'name' => 'timestamp_ntz',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_TIMESTAMP_NTZ,
+                                'nullable' => true,
+                            ],
+                            'basetype' => BaseType::TIMESTAMP,
+                        ],
+                        [
+                            'name' => 'timestamp_ltz',
+                            'definition' => [
+                                'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+                                'nullable' => true,
+                            ],
+                            'basetype' => BaseType::TIMESTAMP,
+                        ],
+                    ],
+                ],
+                'bucket' => [
+                    'backend' => 'snowflake',
+                ],
+            ]);
+
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'timestamp',
+                'data_type' => [
+                    'base' => [
+                        'type' => Snowflake::TYPE_TIMESTAMP_TZ, // TIMESTAMP in storage
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'timestamp_tz',
+                'data_type' => [
+                    'base' => [
+                        'type' => Snowflake::TYPE_TIMESTAMP_NTZ, // TIMESTAMP_TZ in storage
+                    ],
+                ],
+                'nullable' => false,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'timestamp_ntz',
+                'data_type' => [
+                    'base' => [
+                        'type' => Snowflake::TYPE_TIMESTAMP_LTZ, // TIMESTAMP_NTZ in storage
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'timestamp_ltz',
+                'data_type' => [
+                    'base' => [
+                        'type' => Snowflake::TYPE_TIMESTAMP, // TIMESTAMP_LTZ in storage
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+        ];
+
+        $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
+        $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue(true);
+    }
+
     private function getClientMockTypedTable(): Client
     {
         $clientMock = $this->createMock(Client::class);
@@ -1195,29 +1380,29 @@ class TableStructureValidatorTest extends AbstractTestCase
                         [
                             'name' => 'col1',
                             'definition' => [
-                                'type' => 'VARCHAR',
+                                'type' => Snowflake::TYPE_VARCHAR,
                                 'nullable' => false,
                                 'length' => '255',
                             ],
-                            'basetype' => 'STRING',
+                            'basetype' => BaseType::STRING,
                         ],
                         [
                             'name' => 'col2',
                             'definition' => [
-                                'type' => 'INT',
+                                'type' => Snowflake::TYPE_NUMBER,
                                 'nullable' => false,
                                 'length' => '20',
                             ],
-                            'basetype' => 'NUMERIC',
+                            'basetype' => BaseType::NUMERIC,
                         ],
                         [
                             'name' => 'col3',
                             'definition' => [
-                                'type' => 'INT',
+                                'type' => Snowflake::TYPE_NUMBER,
                                 'nullable' => true,
                                 'length' => '123',
                             ],
-                            'basetype' => 'NUMERIC',
+                            'basetype' => BaseType::NUMERIC,
                         ],
                     ],
                 ],

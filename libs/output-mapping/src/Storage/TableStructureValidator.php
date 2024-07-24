@@ -111,6 +111,7 @@ class TableStructureValidator
      */
     private function validateTypedTable(array $table, array $schemaColumns, string $bucketBackend): void
     {
+        $columnDefinitionClassName = 'Keboola\\Datatype\\Definition\\' . ucfirst(strtolower($bucketBackend));
         $validationErrors = [];
         foreach ($schemaColumns as $schemaColumn) {
             if (!$schemaColumn->getDataType()) {
@@ -133,9 +134,23 @@ class TableStructureValidator
             try {
                 $schemaColumnType = $schemaColumn->getDataType()->getBackendTypeName($bucketBackend);
                 $tableColumnType = $tableColumn['definition']['type'];
+                $columnDefinition = new $columnDefinitionClassName($schemaColumnType);
+                if (method_exists($columnDefinition, 'getBackendBasetype')) {
+                    $schemaColumnType = $columnDefinition->getBackendBasetype();
+                }
             } catch (InvalidOutputException) {
                 $schemaColumnType = $schemaColumn->getDataType()->getBaseTypeName();
                 $tableColumnType = $tableColumn['basetype'];
+            }
+
+            // Snowflake has different types for TIMESTAMP based on settings in Snowflake Account
+            if ($bucketBackend === 'snowflake') {
+                if (in_array($schemaColumnType, ['TIMESTAMP', 'TIMESTAMP_LTZ', 'TIMESTAMP_NTZ', 'TIMESTAMP_TZ'])) {
+                    $schemaColumnType = 'TIMESTAMP';
+                }
+                if (in_array($tableColumnType, ['TIMESTAMP', 'TIMESTAMP_LTZ', 'TIMESTAMP_NTZ', 'TIMESTAMP_TZ'])) {
+                    $tableColumnType = 'TIMESTAMP';
+                }
             }
 
             if (strtolower($schemaColumnType) !== strtolower($tableColumnType)) {

@@ -1,0 +1,73 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Keboola\OutputMapping\Configuration\Table;
+
+use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
+use Keboola\StorageApi\Client;
+
+class Webalizer
+{
+    public function __construct(readonly private Client $client)
+    {
+    }
+
+    public function webalize(array $configuration): array
+    {
+        if (isset($configuration['columns'])) {
+            $configuration['columns'] = $this->getWebalizedColumnNames($configuration['columns']);
+        }
+
+        if (isset($configuration['primaryKey'])) {
+            $configuration['primaryKey'] = $this->getWebalizedColumnNames($configuration['primaryKey']);
+        }
+
+        if (isset($configuration['column_metadata'])) {
+            $configuration['column_metadata'] = $this->webalizeColumnsMetadata($configuration['column_metadata']);
+        }
+
+        if (isset($configuration['schema'])) {
+            $configuration['schema'] = $this->webalizeSchemaColumns($configuration['schema']);
+        }
+
+        return $configuration;
+    }
+
+    private function webalizeColumnsMetadata(array $columnsMetadata): array
+    {
+        $columns = array_keys($columnsMetadata);
+        $columns = array_combine($columns, $this->getWebalizedColumnNames($columns));
+        foreach ($columnsMetadata as $columnName => $metadata) {
+            unset($columnsMetadata[$columnName]);
+            $columnsMetadata[$columns[$columnName]] = $metadata;
+        }
+
+        return $columnsMetadata;
+    }
+
+    private function webalizeSchemaColumns(array $schema): array
+    {
+        $schemaNames = array_map(fn($v) => $v['name'], $schema);
+
+        $schemaNames = array_combine($schemaNames, $this->getWebalizedColumnNames($schemaNames));
+
+        foreach ($schema as $k => $item) {
+            $schema[$k]['name'] = $schemaNames[$item['name']];
+        }
+        return $schema;
+    }
+
+    private function getWebalizedColumnNames(array $columns): array
+    {
+        $webalized = $this->client->webalizeColumnNames($columns);
+        $webalized = $webalized['columnNames'];
+
+        foreach ($columns as $k => $column) {
+            if (!RestrictedColumnsHelper::isRestrictedColumn($column)) {
+                $webalized[$k] = $column;
+            }
+        }
+        return $webalized;
+    }
+}

@@ -11,7 +11,6 @@ use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaPrimaryKey;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
 
 class TableStructureValidator
@@ -119,7 +118,7 @@ class TableStructureValidator
             }
             $findColumnInStorageTable = array_filter(
                 $table['definition']['columns'],
-                fn($column) => $column['name'] === ColumnNameSanitizer::sanitize($schemaColumn->getName()),
+                fn($column) => $column['name'] === $schemaColumn->getName(),
             );
             if (!$findColumnInStorageTable) {
                 continue;
@@ -127,7 +126,7 @@ class TableStructureValidator
 
             $filteresTableColumns = array_filter(
                 $table['definition']['columns'],
-                fn($column) => $column['name'] === ColumnNameSanitizer::sanitize($schemaColumn->getName()),
+                fn($column) => $column['name'] === $schemaColumn->getName(),
             );
 
             $tableColumn = current($filteresTableColumns);
@@ -216,7 +215,7 @@ class TableStructureValidator
         TableChangesStore $tableChangesStore,
     ): TableChangesStore {
         $schemaColumnsNames = array_map(
-            fn(MappingFromConfigurationSchemaColumn $column) => ColumnNameSanitizer::sanitize($column->getName()),
+            fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
             $schemaColumns,
         );
 
@@ -226,7 +225,7 @@ class TableStructureValidator
                 $missingColumns = array_filter(
                     $schemaColumns,
                     fn(MappingFromConfigurationSchemaColumn $column) => in_array(
-                        ColumnNameSanitizer::sanitize($column->getName()),
+                        $column->getName(),
                         $missingColumnsNames,
                     ),
                 );
@@ -257,7 +256,7 @@ class TableStructureValidator
 
     private function validatePrimaryKeys(array $tableKeys, array $schemaKeys): void
     {
-        $schemaKeys = array_map(fn(string $column) => ColumnNameSanitizer::sanitize($column), $schemaKeys);
+        $schemaKeys = array_map(fn(string $column) => $column, $schemaKeys);
         $schemaKeys = PrimaryKeyHelper::normalizeKeyArray($this->logger, $schemaKeys);
 
         $invalidKeys = false;
@@ -289,9 +288,7 @@ class TableStructureValidator
             /** @var MappingFromConfigurationSchemaColumn[] $schemaColumn */
             $schemaColumn = array_filter(
                 $schemaColumns,
-                fn(MappingFromConfigurationSchemaColumn $item) => ColumnNameSanitizer::sanitize(
-                    $item->getName(),
-                ) === $column['name'],
+                fn(MappingFromConfigurationSchemaColumn $item) => $item->getName() === $column['name'],
             );
 
             // column not exists

@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Writer\Helper;
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\StorageApi\Client;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class TableColumnsHelper
 {
@@ -32,8 +31,6 @@ class TableColumnsHelper
         $missingColumnsData = [];
         if (!empty($newTableConfiguration['column_metadata']) && $currentTableInfo['isTyped'] === true) {
             foreach ($newTableConfiguration['column_metadata'] as $columnName => $columnMetadata) {
-                $columnName = ColumnNameSanitizer::sanitize($columnName);
-
                 if (!in_array($columnName, $missingColumns, true)) {
                     continue;
                 }
@@ -80,9 +77,8 @@ class TableColumnsHelper
         $configColumns = [];
 
         if (!empty($newTableConfiguration['column_metadata'])) {
-            $configColumns = array_map(function ($columnName): string {
-                return ColumnNameSanitizer::sanitize($columnName);
-            }, array_keys($newTableConfiguration['column_metadata']));
+            /** @var string[] $configColumns */
+            $configColumns = array_keys($newTableConfiguration['column_metadata']);
         }
 
         return array_udiff($configColumns, $tableColumns, 'strcasecmp');
@@ -91,13 +87,7 @@ class TableColumnsHelper
     private static function getMissingColumnsFromColumns(array $currentTableInfo, array $newTableConfiguration): array
     {
         $tableColumns = $currentTableInfo['columns'];
-        $configColumns = [];
-
-        if (!empty($newTableConfiguration['columns'])) {
-            $configColumns = array_map(function ($columnName): string {
-                return ColumnNameSanitizer::sanitize($columnName);
-            }, $newTableConfiguration['columns']);
-        }
+        $configColumns = $newTableConfiguration['columns'] ?? [];
 
         return array_udiff($configColumns, $tableColumns, 'strcasecmp');
     }

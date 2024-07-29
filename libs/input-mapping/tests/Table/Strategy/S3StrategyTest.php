@@ -39,6 +39,15 @@ class S3StrategyTest extends AbstractTestCase
         $result = $strategy->downloadTable($tableOptions);
         self::assertArrayHasKey('jobId', $result);
         self::assertArrayHasKey('table', $result);
+        /** @var array{
+         *     operationName: string,
+         *     operationParams: array{
+         *         export: array{
+         *             columns: string[]
+         *         }
+         *     }
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($result['jobId']);
         self::assertEquals(
             'tableExport',
@@ -85,6 +94,15 @@ class S3StrategyTest extends AbstractTestCase
         $result = $strategy->downloadTable($tableOptions);
         self::assertArrayHasKey('jobId', $result);
         self::assertArrayHasKey('table', $result);
+        /** @var array{
+         *     operationName: string,
+         *     operationParams: array{
+         *         export: array{
+         *             columns: string[]
+         *         }
+         *     }
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($result['jobId']);
         self::assertEquals(
             'tableExport',

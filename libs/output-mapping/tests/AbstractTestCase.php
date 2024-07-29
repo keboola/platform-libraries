@@ -272,6 +272,10 @@ abstract class AbstractTestCase extends TestCase
 
     protected function assertJobParamsMatches(array $expectedParams, string $jobId): void
     {
+        /** @var array{
+         *     operationParams: array{params: array},
+         * } $job
+         */
         $job = $this->clientWrapper->getBranchClient()->getJob($jobId);
         foreach ($expectedParams as $expectedParam) {
             self::assertContains($expectedParam, $job['operationParams']['params']);

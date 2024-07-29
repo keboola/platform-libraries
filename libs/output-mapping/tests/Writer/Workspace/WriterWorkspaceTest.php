@@ -457,9 +457,9 @@ class WriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
-        $tableIds[] = $jobDetail['tableId'];
+        $tableIds[] = (string) $jobDetail['tableId'];
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
-        $tableIds[] = $jobDetail['tableId'];
+        $tableIds[] = (string) $jobDetail['tableId'];
 
         self::assertMatchesRegularExpression(
             '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table1a#',

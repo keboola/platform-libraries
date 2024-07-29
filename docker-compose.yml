@@ -61,7 +61,7 @@ services:
       - STORAGE_API_URL
 
   dev-input-mapping:
-    <<: *dev
+    <<: *dev82
     image: keboola/input-mapping
     working_dir: /code/libs/input-mapping
     environment:
@@ -84,7 +84,7 @@ services:
       APP_ENV: dev
 
   dev-output-mapping:
-    <<: *dev
+    <<: *dev82
     image: keboola/output-mapping
     working_dir: /code/libs/output-mapping
     environment:

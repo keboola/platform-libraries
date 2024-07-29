@@ -12,8 +12,6 @@ class PrimaryKeyHelperTest extends AbstractTestCase
 {
     /**
      * @dataProvider normalizePrimaryKeyProvider
-     * @param array $pkey
-     * @param array $result
      */
     public function testNormalizePrimaryKey(array $pkey, array $result): void
     {
@@ -34,6 +32,81 @@ class PrimaryKeyHelperTest extends AbstractTestCase
             [
                 ['Id ', 'Name'],
                 ['Id', 'Name'],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider modifyPrimaryKeyDeciderOptionsProvider
+     */
+    public function testModifyPrimaryKeyDecider(
+        array $currentTableInfo,
+        array $newTableConfiguration,
+        bool $result,
+    ): void {
+        self::assertEquals($result, PrimaryKeyHelper::modifyPrimaryKeyDecider(
+            new NullLogger(),
+            $currentTableInfo['primaryKey'],
+            $newTableConfiguration['primary_key'],
+        ));
+    }
+
+    public function modifyPrimaryKeyDeciderOptionsProvider(): array
+    {
+        return [
+            [
+                [
+                    'primaryKey' => [],
+                ],
+                [
+                    'primary_key' => [],
+                ],
+                false,
+            ],
+            [
+                [
+                    'primaryKey' => [],
+                ],
+                [
+                    'primary_key' => ['Id'],
+                ],
+                true,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => [],
+                ],
+                true,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Id'],
+                ],
+                false,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Name'],
+                ],
+                true,
+            ],
+            [
+                [
+                    'primaryKey' => ['Id'],
+                ],
+                [
+                    'primary_key' => ['Id', 'Name'],
+                ],
+                true,
             ],
         ];
     }

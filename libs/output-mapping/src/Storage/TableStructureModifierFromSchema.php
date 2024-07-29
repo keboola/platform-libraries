@@ -19,19 +19,14 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
         }
 
         if ($changesStore->getPrimaryKey() !== null) {
-            if ($this->modifyPrimaryKeyDecider(
-                $table->getPrimaryKey(),
-                $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
-            )) {
-                try {
-                    $this->modifyPrimaryKey(
-                        $table->getId(),
-                        $table->getPrimaryKey(),
-                        $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
-                    );
-                } catch (PrimaryKeyNotChangedException $e) {
-                    throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
-                }
+            try {
+                $this->modifyPrimaryKey(
+                    $table->getId(),
+                    $table->getPrimaryKey(),
+                    $changesStore->getPrimaryKey()->getPrimaryKeyColumnNames(),
+                );
+            } catch (PrimaryKeyNotChangedException $e) {
+                throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }
         }
 

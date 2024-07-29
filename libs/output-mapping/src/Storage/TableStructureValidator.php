@@ -46,6 +46,7 @@ class TableStructureValidator
         }
 
         if ($table['isTyped']) {
+            // fill misssing columns
             $tableChangesStore = $this->validateColumnsName(
                 $table['id'],
                 array_map(
@@ -56,14 +57,27 @@ class TableStructureValidator
                 $tableChangesStore,
             );
 
-            $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
-            foreach ($schemaColumns as $schemaColumn) {
-                if ($schemaColumn->isPrimaryKey()) {
-                    $primaryKey->addPrimaryKeyColumn($schemaColumn);
-                }
-            }
+            // fill primary key if needed
+            $primaryKeyColumns = array_filter(
+                $schemaColumns,
+                function (MappingFromConfigurationSchemaColumn $schemaColumn): bool {
+                    return $schemaColumn->isPrimaryKey();
+                },
+            );
 
-            $tableChangesStore->setPrimaryKey($primaryKey);
+            if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
+                $this->logger,
+                $table['definition']['primaryKeysNames'],
+                array_map(function (MappingFromConfigurationSchemaColumn $column): string {
+                    return $column->getName();
+                }, $primaryKeyColumns),
+            )) {
+                $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+                foreach ($primaryKeyColumns as $primaryKeyColumn) {
+                    $primaryKey->addPrimaryKeyColumn($primaryKeyColumn);
+                }
+                $tableChangesStore->setPrimaryKey($primaryKey);
+            }
 
             $tableChangesStore = $this->validateColumnsAttributes(
                 $table,

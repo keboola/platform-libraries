@@ -8,12 +8,7 @@ use Psr\Log\LoggerInterface;
 
 class PrimaryKeyHelper
 {
-    /**
-     * @param array $keys
-     * @param LoggerInterface $logger
-     * @return array
-     */
-    public static function normalizeKeyArray(LoggerInterface $logger, array $keys)
+    public static function normalizeKeyArray(LoggerInterface $logger, array $keys): array
     {
         return array_map(
             function ($key) {
@@ -29,5 +24,21 @@ class PrimaryKeyHelper
                 }),
             ),
         );
+    }
+
+    public static function modifyPrimaryKeyDecider(
+        LoggerInterface $logger,
+        array $currentTablePrimaryKey,
+        array $newTableConfigurationPrimaryKey,
+    ): bool {
+        $configPK = self::normalizeKeyArray($logger, $newTableConfigurationPrimaryKey);
+        if (count($currentTablePrimaryKey) !== count($configPK)) {
+            return true;
+        }
+        $currentTablePkColumnsCount = count($currentTablePrimaryKey);
+        if (count(array_intersect($currentTablePrimaryKey, $configPK)) !== $currentTablePkColumnsCount) {
+            return true;
+        }
+        return false;
     }
 }

@@ -617,7 +617,7 @@ class TableStructureValidatorTest extends AbstractTestCase
                     'nullable' => true,
                 ]),
             ],
-            'expectedPrimaryKeyColumns' => [$primaryKeyColumn1],
+            'expectedPrimaryKeyColumns' => null,
         ];
 
         yield 'primary key reset' => [
@@ -663,59 +663,21 @@ class TableStructureValidatorTest extends AbstractTestCase
     /**
      * @dataProvider typedTableWithPkDataProvider
      */
-    public function testTypedTableWithPk(array $schemaColumns, array $expectedPrimaryKeyColumns): void
+    public function testTypedTableWithPk(array $schemaColumns, ?array $expectedPrimaryKeyColumns): void
     {
-        $primaryKeyColumn1 = new MappingFromConfigurationSchemaColumn([
-            'name' => 'col1',
-            'data_type' => [
-                'base' => [
-                    'type' => 'STRING',
-                ],
-                'snowflake' => [
-                    'type' => 'VARCHAR',
-                ],
-            ],
-            'nullable' => false,
-            'primary_key' => true,
-        ]);
-
-        $primaryKeyColumn2 = new MappingFromConfigurationSchemaColumn([
-            'name' => 'col2',
-            'data_type' => [
-                'base' => [
-                    'type' => 'NUMERIC',
-                ],
-            ],
-            'nullable' => false,
-            'primary_key' => true,
-        ]);
-
-        $schema = [
-            $primaryKeyColumn1,
-            $primaryKeyColumn2,
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col3',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
-                    'snowflake' => [
-                        'type' => 'INT',
-                    ],
-                ],
-                'nullable' => true,
-            ]),
-        ];
-
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockTypedTable());
 
         $tableChangesStore = $validator->validateTable('in.c-main.table', $schemaColumns);
 
-        self::assertNotNull($tableChangesStore->getPrimaryKey());
-        self::assertSame(
-            $expectedPrimaryKeyColumns,
-            $tableChangesStore->getPrimaryKey()->getColumns(),
-        );
+        if ($expectedPrimaryKeyColumns === null) {
+            self::assertNull($tableChangesStore->getPrimaryKey());
+        } else {
+            self::assertNotNull($tableChangesStore->getPrimaryKey());
+            self::assertSame(
+                $expectedPrimaryKeyColumns,
+                $tableChangesStore->getPrimaryKey()->getColumns(),
+            );
+        }
     }
 
     public function testValidateNonTypedTableStructure(): void

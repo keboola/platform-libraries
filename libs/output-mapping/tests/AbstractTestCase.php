@@ -38,6 +38,7 @@ abstract class AbstractTestCase extends TestCase
     protected string $emptyInputBucketId;
     protected string $emptyOutputBucketId;
     protected string $emptyRedshiftOutputBucketId;
+    protected string $emptyBigqueryOutputBucketId;
     protected string $emptyRedshiftInputBucketId;
     protected string $testBucketId;
     protected string $firstTableId;

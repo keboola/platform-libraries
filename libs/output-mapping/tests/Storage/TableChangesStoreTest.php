@@ -79,4 +79,27 @@ class TableChangesStoreTest extends TestCase
 
         self::assertSame([$expectedPkColumn], $changesStore->getPrimaryKey()?->getColumns());
     }
+
+    public function testColumnAttributeChanges(): void
+    {
+        $expectedPkColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col1',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                    'length' => '255',
+                    'default' => 'default',
+                ],
+                'snowflake' => [
+                    'type' => 'VARCHAR',
+                ],
+            ],
+        ]);
+
+        $changesStore = new TableChangesStore();
+        $changesStore->addColumnAttributeChanges($expectedPkColumn);
+
+        self::assertSame([$expectedPkColumn], $changesStore->getDifferentColumnAttributes());
+    }
 }

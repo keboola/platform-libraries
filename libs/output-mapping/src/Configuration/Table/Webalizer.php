@@ -28,7 +28,7 @@ class Webalizer
         }
 
         if (isset($configuration['schema'])) {
-            $configuration['schema'] = $this->webalizeSchemaColumns($configuration['schema']);
+            $configuration['schema'] = $this->webalizeSchemaColumnNames($configuration['schema']);
         }
 
         return $configuration;
@@ -46,7 +46,7 @@ class Webalizer
         return $columnsMetadata;
     }
 
-    private function webalizeSchemaColumns(array $schema): array
+    private function webalizeSchemaColumnNames(array $schema): array
     {
         $schemaNames = array_map(fn($v) => $v['name'], $schema);
 
@@ -64,6 +64,8 @@ class Webalizer
         $webalized = $webalized['columnNames'];
 
         foreach ($columns as $k => $column) {
+            // System columns should not be webalized and should be preserved
+            // they will be validated later in the validator
             if (!RestrictedColumnsHelper::isRestrictedColumn($column)) {
                 $webalized[$k] = $column;
             }

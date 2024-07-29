@@ -58,26 +58,11 @@ class TableStructureValidator
             );
 
             // fill primary key if needed
-            $primaryKeyColumns = array_filter(
-                $schemaColumns,
-                function (MappingFromConfigurationSchemaColumn $schemaColumn): bool {
-                    return $schemaColumn->isPrimaryKey();
-                },
-            );
-
-            if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
-                $this->logger,
+            $tableChangesStore = $this->validatePrimaryKeys(
                 $table['definition']['primaryKeysNames'],
-                array_map(function (MappingFromConfigurationSchemaColumn $column): string {
-                    return $column->getName();
-                }, $primaryKeyColumns),
-            )) {
-                $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
-                foreach ($primaryKeyColumns as $primaryKeyColumn) {
-                    $primaryKey->addPrimaryKeyColumn($primaryKeyColumn);
-                }
-                $tableChangesStore->setPrimaryKey($primaryKey);
-            }
+                $schemaColumns,
+                $tableChangesStore,
+            );
 
             $tableChangesStore = $this->validateColumnsAttributes(
                 $table,
@@ -103,15 +88,11 @@ class TableStructureValidator
                     ),
                 ));
             }
-            $this->validatePrimaryKeys(
+
+            $tableChangesStore =$this->validatePrimaryKeys(
                 $table['primaryKey'],
-                array_map(
-                    fn(MappingFromConfigurationSchemaColumn $column) => $column->getName(),
-                    array_filter(
-                        $schemaColumns,
-                        fn(MappingFromConfigurationSchemaColumn $column) => $column->isPrimaryKey(),
-                    ),
-                ),
+                $schemaColumns,
+                $tableChangesStore,
             );
             $this->validateUntypedTable($table, $schemaColumns);
         }
@@ -268,28 +249,33 @@ class TableStructureValidator
         return $tableChangesStore;
     }
 
-    private function validatePrimaryKeys(array $tableKeys, array $schemaKeys): void
-    {
-        $schemaKeys = array_map(fn(string $column) => $column, $schemaKeys);
-        $schemaKeys = PrimaryKeyHelper::normalizeKeyArray($this->logger, $schemaKeys);
+    private function validatePrimaryKeys(
+        array $tableKeys,
+        array $schemaColumns,
+        TableChangesStore $tableChangesStore,
+    ): TableChangesStore {
+        $primaryKeyColumns = array_filter(
+            $schemaColumns,
+            function (MappingFromConfigurationSchemaColumn $schemaColumn): bool {
+                return $schemaColumn->isPrimaryKey();
+            },
+        );
 
-        $invalidKeys = false;
-        if (count($tableKeys) !== count($schemaKeys)) {
-            $invalidKeys = true;
-        }
-        $currentTablePkColumnsCount = count($tableKeys);
-        if (count(array_intersect($tableKeys, $schemaKeys)) !== $currentTablePkColumnsCount) {
-            $invalidKeys = true;
+        if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
+            $this->logger,
+            $tableKeys,
+            array_map(function (MappingFromConfigurationSchemaColumn $column): string {
+                return $column->getName();
+            }, $primaryKeyColumns),
+        )) {
+            $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+            foreach ($primaryKeyColumns as $primaryKeyColumn) {
+                $primaryKey->addPrimaryKeyColumn($primaryKeyColumn);
+            }
+            $tableChangesStore->setPrimaryKey($primaryKey);
         }
 
-        if ($invalidKeys) {
-            throw new InvalidTableStructureException(sprintf(
-                'Table primary keys does not contain the same number of columns as the schema.'.
-                ' Table primary keys: "%s", schema primary keys: "%s".',
-                implode(', ', $tableKeys),
-                implode(', ', $schemaKeys),
-            ));
-        }
+        return $tableChangesStore;
     }
 
     private function validateColumnsAttributes(

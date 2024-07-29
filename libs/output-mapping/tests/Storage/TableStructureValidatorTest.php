@@ -954,42 +954,36 @@ class TableStructureValidatorTest extends AbstractTestCase
 
     public function testErrorNonTypedTableCountPrimaryKeys(): void
     {
+        $col1Pk = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col1',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
+        $col2Pk = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col2',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
         $schema = [
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col1',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'STRING',
-                        'length' => '255',
-                    ],
-                    'snowflake' => [
-                        'type' => 'VARCHAR',
-                        'length' => '255',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col2',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
+            $col1Pk,
+            $col2Pk,
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
                 'data_type' => [
                     'base' => [
-                        'type' => 'NUMERIC',
-                        'length' => '123',
-                    ],
-                    'snowflake' => [
-                        'type' => 'INT',
-                        'length' => '123',
+                        'type' => 'STRING',
                     ],
                 ],
                 'nullable' => true,
@@ -997,48 +991,41 @@ class TableStructureValidatorTest extends AbstractTestCase
         ];
 
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
+        $tableChangesStore = $validator->validateTable('in.c-main.table', $schema);
 
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage(
-            'Table primary keys does not contain the same number of columns as the schema. '.
-            'Table primary keys: "col1", schema primary keys: "col1, col2".',
-        );
-        $validator->validateTable('in.c-main.table', $schema);
+        self::assertNotNull($tableChangesStore->getPrimaryKey());
+        self::assertEquals([$col1Pk, $col2Pk], $tableChangesStore->getPrimaryKey()->getColumns());
     }
 
     public function testErrorNonTypedTableWrongPrimaryKey(): void
     {
+        $col2Pk = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col2',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+            'nullable' => false,
+            'primary_key' => true,
+        ]);
+
         $schema = [
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col1',
                 'data_type' => [
                     'base' => [
                         'type' => 'STRING',
-                        'length' => '255',
                     ],
                 ],
                 'nullable' => false,
             ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col2',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
+            $col2Pk,
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
                 'data_type' => [
                     'base' => [
-                        'type' => 'NUMERIC',
-                        'length' => '123',
-                    ],
-                    'snowflake' => [
-                        'type' => 'INT',
-                        'length' => '123',
+                        'type' => 'STRING',
                     ],
                 ],
                 'nullable' => true,
@@ -1047,12 +1034,10 @@ class TableStructureValidatorTest extends AbstractTestCase
 
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
 
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage(
-            'Table primary keys does not contain the same number of columns as the schema. '.
-            'Table primary keys: "col1", schema primary keys: "col2".',
-        );
-        $validator->validateTable('in.c-main.table', $schema);
+        $tableChangesStore = $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertNotNull($tableChangesStore->getPrimaryKey());
+        self::assertEquals([$col2Pk], $tableChangesStore->getPrimaryKey()->getColumns());
     }
 
     public function testValidateColumnAliases(): void

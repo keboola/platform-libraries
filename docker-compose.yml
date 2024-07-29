@@ -120,7 +120,7 @@ services:
     working_dir: /code/libs/settle
 
   dev-staging-provider:
-    <<: *dev
+    <<: *dev82
     image: keboola/staging-provider
     working_dir: /code/libs/staging-provider
     environment:

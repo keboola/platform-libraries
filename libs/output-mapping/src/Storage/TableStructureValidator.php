@@ -148,23 +148,6 @@ class TableStructureValidator
                     $schemaColumnType,
                 );
             }
-
-            try {
-                $schemaColumnLength = $schemaColumn->getDataType()->getBackendLength($bucketBackend);
-            } catch (InvalidOutputException) {
-                $schemaColumnLength = $schemaColumn->getDataType()->getBaseLength();
-            }
-
-            if ($schemaColumnLength && $schemaColumnLength !== $tableColumn['definition']['length']) {
-                $validationErrors[] = sprintf(
-                    'Table "%s" column "%s" has different length than the schema.'.
-                    ' Table length: "%s", schema length: "%s".',
-                    $table['id'],
-                    $schemaColumn->getName(),
-                    $tableColumn['definition']['length'],
-                    $schemaColumnLength,
-                );
-            }
         }
 
         if ($validationErrors) {
@@ -314,7 +297,13 @@ class TableStructureValidator
                 $hasNullableChanged = true;
             }
 
-            if ($hasDefaultValueChanged || $hasNullableChanged) {
+            $hasLengthChanged = false;
+            $length = $schemaColumn->getDataType()?->getLength($bucketBackend);
+            if ($length && $length !== $column['definition']['length']) {
+                $hasLengthChanged = true;
+            }
+
+            if ($hasDefaultValueChanged || $hasNullableChanged || $hasLengthChanged) {
                 $tableChangesStore->addColumnAttributeChanges($schemaColumn);
             }
         }

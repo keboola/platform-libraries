@@ -718,55 +718,6 @@ class TableStructureValidatorTest extends AbstractTestCase
         );
     }
 
-    public function testWebalizeTypedTableColumns(): void
-    {
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('getTable')->willReturn([
-                'id' => 'in.c-main.table',
-                'isTyped' => true,
-                'definition' => [
-                    'primaryKeysNames' => [
-                        'AbcdefGHij_k_lm',
-                    ],
-                    'columns' => [
-                        [
-                            'name' => 'AbcdefGHij_k_lm',
-                            'definition' => [
-                                'type' => 'VARCHAR',
-                                'nullable' => false,
-                                'length' => '255',
-                            ],
-                            'basetype' => 'STRING',
-                        ],
-                    ],
-                ],
-                'bucket' => [
-                    'backend' => 'snowflake',
-                ],
-            ]);
-
-        $schema = [
-            new MappingFromConfigurationSchemaColumn([
-                'name' => '_-AbčďěfGHíj-k_lm_',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'STRING',
-                        'length' => '255',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
-        ];
-
-        $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
-        $validator->validateTable('in.c-main.table', $schema);
-
-        self::assertTrue(true);
-    }
-
     public function testValidateNonTypedTableStructure(): void
     {
         $schema = [
@@ -1140,45 +1091,6 @@ class TableStructureValidatorTest extends AbstractTestCase
             'Table primary keys: "col1", schema primary keys: "col2".',
         );
         $validator->validateTable('in.c-main.table', $schema);
-    }
-
-    public function testWebalizeNonTypedTableColumns(): void
-    {
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('getTable')->willReturn([
-                'id' => 'in.c-main.table',
-                'isTyped' => false,
-                'primaryKey' => [
-                    'AbcdefGHij_k_lm',
-                ],
-                'columns' => [
-                    'AbcdefGHij_k_lm',
-                ],
-                'bucket' => [
-                    'backend' => 'snowflake',
-                ],
-            ]);
-
-        $schema = [
-            new MappingFromConfigurationSchemaColumn([
-                'name' => '_-AbčďěfGHíj-k_lm_',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'STRING',
-                        'length' => '255',
-                    ],
-                ],
-                'nullable' => false,
-                'primary_key' => true,
-            ]),
-        ];
-
-        $validator = new TableStructureValidator(true, new NullLogger(), $clientMock);
-        $validator->validateTable('in.c-main.table', $schema);
-
-        self::assertTrue(true);
     }
 
     public function testValidateColumnAliases(): void

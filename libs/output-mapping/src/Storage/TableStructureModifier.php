@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class TableStructureModifier extends AbstractTableStructureModifier
 {
@@ -64,8 +63,6 @@ class TableStructureModifier extends AbstractTableStructureModifier
         $missingColumnsData = [];
         if ($currentTableInfo->isTyped() === true) {
             foreach ($newTableConfiguration->getColumnMetadata() as $columnName => $columnMetadata) {
-                $columnName = ColumnNameSanitizer::sanitize($columnName);
-
                 if (!in_array($columnName, $missingColumns, true)) {
                     continue;
                 }
@@ -108,21 +105,13 @@ class TableStructureModifier extends AbstractTableStructureModifier
         array $currentTableColumns,
         array $newTableConfigurationColumnMetadata,
     ): array {
-        $configColumns = array_map(function ($columnName): string {
-            return ColumnNameSanitizer::sanitize($columnName);
-        }, array_keys($newTableConfigurationColumnMetadata));
-
-        return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
+        return array_udiff(array_keys($newTableConfigurationColumnMetadata), $currentTableColumns, 'strcasecmp');
     }
 
     private function getMissingColumnsFromColumns(
         array $currentTableColumns,
         array $newTableConfigurationColumns,
     ): array {
-        $configColumns = array_map(function ($columnName): string {
-            return ColumnNameSanitizer::sanitize($columnName);
-        }, $newTableConfigurationColumns);
-
-        return array_udiff($configColumns, $currentTableColumns, 'strcasecmp');
+        return array_udiff($newTableConfigurationColumns, $currentTableColumns, 'strcasecmp');
     }
 }

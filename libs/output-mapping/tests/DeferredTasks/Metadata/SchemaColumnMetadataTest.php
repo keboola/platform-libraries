@@ -43,20 +43,13 @@ class SchemaColumnMetadataTest extends TestCase
                             'value' => 'col2 description',
                         ],
                     ],
-                    'webalize_test' => [
-                        [
-                            'columnName' => 'webalize_test',
-                            'key' => 'key3',
-                            'value' => 'val3',
-                        ],
-                    ],
                 ],
             ],
         ];
 
         yield 'load in chunks' => [
             'bulkSize' => 1,
-            'expectedApiCalls' => 3,
+            'expectedApiCalls' => 2,
             'expectedColumnsMetadata' => [
                 [
                     'col1' => [
@@ -78,15 +71,6 @@ class SchemaColumnMetadataTest extends TestCase
                             'columnName' => 'col2',
                             'key' => 'KBC.description',
                             'value' => 'col2 description',
-                        ],
-                    ],
-                ],
-                [
-                    'webalize_test' => [
-                        [
-                            'columnName' => 'webalize_test',
-                            'key' => 'key3',
-                            'value' => 'val3',
                         ],
                     ],
                 ],
@@ -132,12 +116,6 @@ class SchemaColumnMetadataTest extends TestCase
             ]),
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
-            ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'webalize | test 😁',
-                'metadata' => [
-                    'key3' => 'val3',
-                ],
             ]),
         ];
 

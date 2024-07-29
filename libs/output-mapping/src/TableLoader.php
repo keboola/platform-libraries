@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping;
 
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Configuration\Table\Webalizer;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
@@ -64,6 +65,8 @@ class TableLoader
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
+        $configWebalizer = new Webalizer($this->clientWrapper->getTableAndFileStorageClient());
+
         $tableStructureValidator = new TableStructureValidator(
             $configuration->hasNewNativeTypesFeature(),
             $this->logger,
@@ -78,6 +81,9 @@ class TableLoader
 
             $configFromManifest = $combinedSource->getManifest() ?
                 $strategy->readFileManifest($combinedSource->getManifest()) : [];
+
+            $configFromMapping = $configWebalizer->webalize($configFromMapping);
+            $configFromManifest = $configWebalizer->webalize($configFromManifest);
 
             try {
                 $processedConfig = [];

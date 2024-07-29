@@ -31,7 +31,6 @@
         "keboola/input-mapping": "*@dev",
         "keboola/php-datatypes": "^7.7",
         "keboola/php-file-storage-utils": "^0.2",
-        "keboola/sanitizer": "^0.1",
         "keboola/slicer": "*@dev",
         "keboola/storage-api-client": "^15.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",

@@ -185,7 +185,7 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
 
         $this->assertJobParamsMatches([
             'incremental' => false,
-            'columns' => ['First column', 'Second column'],
+            'columns' => ['First_column', 'Second_column'],
         ], $jobIds[0]);
 
         $this->assertTableRowsEquals($this->emptyOutputBucketId . '.table1a', [
@@ -268,12 +268,12 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
 
         $this->assertJobParamsMatches([
             'incremental' => true,
-            'columns' => ['first column'],
+            'columns' => ['first_column'],
         ], $jobIds[0]);
 
         $this->assertJobParamsMatches([
             'incremental' => false,
-            'columns' => ['first column', 'second column'],
+            'columns' => ['first_column', 'second_column'],
         ], $jobIds[1]);
 
         $this->assertTablesExists(

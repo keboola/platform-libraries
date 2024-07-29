@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class SchemaColumnMetadata implements MetadataInterface
 {
@@ -29,7 +28,7 @@ class SchemaColumnMetadata implements MetadataInterface
 
             foreach ($chunk as $metadataArray) {
                 $columnMetadata = [];
-                $columnName = ColumnNameSanitizer::sanitize($metadataArray->getName());
+                $columnName = $metadataArray->getName();
                 foreach ($metadataArray->getMetadata() as $key => $value) {
                     $columnMetadata[] = [
                         'columnName' => $columnName,

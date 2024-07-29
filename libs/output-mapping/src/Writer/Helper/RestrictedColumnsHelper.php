@@ -105,7 +105,7 @@ class RestrictedColumnsHelper
         }
     }
 
-    private static function isRestrictedColumn(string $columnName): bool
+    public static function isRestrictedColumn(string $columnName): bool
     {
         return mb_strtolower($columnName) !== self::TIMESTAMP_COLUMN_NAME;
     }

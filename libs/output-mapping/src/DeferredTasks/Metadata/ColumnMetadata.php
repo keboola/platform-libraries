@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 
 class ColumnMetadata implements MetadataInterface
 {
@@ -23,9 +22,8 @@ class ColumnMetadata implements MetadataInterface
         foreach (array_chunk($this->metadata, $bulkSize, true) as $chunk) {
             $columnsMetadata = [];
 
-            foreach ($chunk as $column => $metadataArray) {
+            foreach ($chunk as $columnName => $metadataArray) {
                 $columnMetadata = [];
-                $columnName = ColumnNameSanitizer::sanitize($column);
                 foreach ($metadataArray as $metadata) {
                     $columnMetadata[] = [
                         'columnName' => $columnName,

@@ -78,7 +78,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     [
                         'type' => 'INT',
                         'length' => null,
@@ -111,7 +111,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     null,
                     'STRING',
                 ],
@@ -147,7 +147,7 @@ class TableColumnsHelperTest extends TestCase
             [
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     [
                         'type' => 'INT',
                         'length' => null,
@@ -191,7 +191,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     [
                         'type' => 'INT',
                         'length' => null,
@@ -224,7 +224,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable2',
-                    'crm_id',
+                    'crm id',
                     null,
                     'INTEGER',
                 ],
@@ -241,7 +241,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                     'created',
                 ],
             ],
@@ -258,7 +258,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                 ],
             ],
             [
@@ -274,7 +274,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                     'created',
                 ],
             ],
@@ -291,7 +291,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                 ],
             ],
             [
@@ -307,7 +307,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                     'created',
                 ],
             ],
@@ -324,7 +324,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                 ],
             ],
             [
@@ -340,7 +340,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                 ],
             ],
             [
@@ -356,7 +356,7 @@ class TableColumnsHelperTest extends TestCase
                     'ID',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                     'created',
                 ],
             ],
@@ -373,7 +373,7 @@ class TableColumnsHelperTest extends TestCase
                     'ID',
                     'name',
                     'address',
-                    'crm_id',
+                    'crm id',
                     'created',
                 ],
             ],
@@ -390,7 +390,7 @@ class TableColumnsHelperTest extends TestCase
                     'ID',
                     'NAME',
                     'address',
-                    'crm_id',
+                    'crm id',
                 ],
             ],
             [
@@ -399,7 +399,7 @@ class TableColumnsHelperTest extends TestCase
                     'id',
                     'name',
                     'ADDRESS',
-                    'CRM_ID',
+                    'crm id',
                 ],
                 'column_metadata' => self::TEST_COLUMNS_METADATA,
             ],
@@ -505,7 +505,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     null,
                     null,
                 ],
@@ -534,7 +534,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     null,
                     null,
                 ],
@@ -570,7 +570,7 @@ class TableColumnsHelperTest extends TestCase
             [
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     null,
                     null,
                 ],
@@ -606,7 +606,7 @@ class TableColumnsHelperTest extends TestCase
                 ],
                 [
                     'in.c-output-mapping.testTable1',
-                    'crm_id',
+                    'crm id',
                     null,
                     null,
                 ],

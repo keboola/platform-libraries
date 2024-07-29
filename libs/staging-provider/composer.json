@@ -32,8 +32,8 @@
         "keboola/input-mapping": "*@dev",
         "keboola/output-mapping": "*@dev",
         "keboola/slicer": "*@dev",
-        "keboola/storage-api-client": "^14.11.2",
-        "keboola/storage-api-php-client-branch-wrapper": "^5.0"
+        "keboola/storage-api-client": "^15.1",
+        "keboola/storage-api-php-client-branch-wrapper": "^6.0"
     },
     "require-dev": {
         "keboola/coding-standard": ">=14.0",

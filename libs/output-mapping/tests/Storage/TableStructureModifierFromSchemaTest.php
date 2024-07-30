@@ -14,6 +14,7 @@ use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\Storage\TableStructureModifierFromSchema;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 
 class TableStructureModifierFromSchemaTest extends AbstractTestCase
 {
@@ -203,6 +204,118 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
 
         self::assertTrue($this->testHandler->hasWarning(
             sprintf('Modifying primary key of table "%s" from "Id" to "Id, Name".', $updatedTable['id']),
+        ));
+    }
+
+    #[NeedsTestTables(1)]
+    public function testModifyPrimaryKeyNonTypedTable(): void
+    {
+        $this->bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $this->table = $this
+            ->clientWrapper
+            ->getTableAndFileStorageClient()
+            ->getTable($this->firstTableId);
+
+        $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'INTEGER',
+                ],
+            ],
+        ]));
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Name',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ]));
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->setPrimaryKey($primaryKey);
+
+        $this->tableStructureModifier->updateTableStructure(
+            new BucketInfo($this->bucket),
+            new TableInfo($this->table),
+            $tableChangesStore,
+        );
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+
+        self::assertEquals(
+            ['Id', 'Name'],
+            $updatedTable['primaryKey'],
+        );
+
+        self::assertTrue($this->testHandler->hasWarning(
+            sprintf('Modifying primary key of table "%s" from "" to "Id, Name".', $updatedTable['id']),
+        ));
+    }
+
+    #[NeedsTestTables(1)]
+    public function testNonTypedTableRestoreOriginalPrimaryKeyOnPrimaryKeyModifyError(): void
+    {
+        $this->bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $this->table = $this
+            ->clientWrapper
+            ->getTableAndFileStorageClient()
+            ->getTable($this->firstTableId);
+
+        $primaryKey = new MappingFromConfigurationSchemaPrimaryKey();
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'INTEGER',
+                ],
+            ],
+        ]));
+        $primaryKey->addPrimaryKeyColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'NonExistingColumn',
+            'primary_key' => true,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ]));
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->setPrimaryKey($primaryKey);
+
+        try {
+            $this->tableStructureModifier->updateTableStructure(
+                new BucketInfo($this->bucket),
+                new TableInfo($this->table),
+                $tableChangesStore,
+            );
+            $this->fail('UpdateTableStructure should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString('Error changing primary key of table', $e->getMessage());
+            self::assertStringContainsString(
+                'Primary key columns "NonExistingColumn" not found in "Id, Name, foo, bar"',
+                $e->getMessage(),
+            );
+        }
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+
+        self::assertEquals(
+            $this->dropTimestampParams($this->table),
+            $this->dropTimestampParams($updatedTable),
+        );
+
+        self::assertTrue($this->testHandler->hasWarning(
+            sprintf('Modifying primary key of table "%s" from "" to "Id, NonExistingColumn".', $updatedTable['id']),
+        ));
+        self::assertTrue($this->testHandler->hasWarningThatContains(
+            'Primary key columns "NonExistingColumn" not found in "Id, Name, foo, bar"',
         ));
     }
 

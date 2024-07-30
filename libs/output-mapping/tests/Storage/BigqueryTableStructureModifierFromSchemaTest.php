@@ -44,7 +44,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                 'name' => 'Name',
                 'definition' => [
                     'type' => 'STRING',
-                    'nullable' => true,
+                    'nullable' => false,
                     'length' => '17',
                 ],
                 'basetype' => 'STRING',
@@ -64,7 +64,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                     'default' => 'new default value',
                 ],
             ],
-            'nullable' => false,
+            'nullable' => true,
         ]));
 
         $this->tableStructureModifier->updateTableStructure(
@@ -88,6 +88,48 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
             ],
             $updatedTable['definition']['columns'][1],
         );
+    }
+
+    #[NeedsEmptyBigqueryOutputBucket]
+    public function testModifyColumnNullableToFalseError(): void
+    {
+        $this->prepareStorageData();
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+        self::assertEquals(
+            [
+                'name' => 'Id',
+                'definition' => [
+                    'type' => 'INTEGER',
+                    'nullable' => true,
+                ],
+                'basetype' => 'INTEGER',
+                'canBeFiltered' => true,
+            ],
+            $table['definition']['columns'][0],
+        );
+
+        $tableChangesStore = new TableChangesStore();
+
+        $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Id',
+            'data_type' => [
+                'base' => [
+                    'type' => 'NUMERIC',
+                ],
+            ],
+            'nullable' => false,
+        ]));
+
+        try {
+            $this->tableStructureModifier->updateTableStructure(
+                new BucketInfo($this->bucket),
+                new TableInfo($this->table),
+                $tableChangesStore,
+            );
+            $this->fail('UpdateTableStructure should fail with InvalidOutputException');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString('BigQuery column cannot be set as required', $e->getMessage());
+        }
     }
 
     #[NeedsEmptyBigqueryOutputBucket]
@@ -124,7 +166,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
 
     private function prepareStorageData(array $primaryKeyNames = []): void
     {
-        $idDatatype = new GenericStorage('int', ['nullable' => false]);
+        $idDatatype = new GenericStorage('int', ['nullable' => true]);
         $nameDatatype = new GenericStorage('string', ['length' => '17', 'nullable' => false]);
 
         $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
@@ -136,6 +178,10 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                     [
                         'name' => 'Id',
                         'basetype' => $idDatatype->getBasetype(),
+                        'definition' => [
+                            'type' => $idDatatype->getType(),
+                            'nullable' => $idDatatype->isNullable(),
+                        ],
                     ],
                     [
                         'name' => 'Name',
@@ -143,6 +189,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                         'definition' => [
                             'type' => $nameDatatype->getType(),
                             'length' => $nameDatatype->getLength(),
+                            'nullable' => $nameDatatype->isNullable(),
                         ],
                     ],
                 ],

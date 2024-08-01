@@ -6,10 +6,11 @@ namespace Keboola\OutputMapping\Configuration\Table;
 
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\StorageApi\Client;
+use Psr\Log\LoggerInterface;
 
 class Webalizer
 {
-    public function __construct(readonly private Client $client)
+    public function __construct(readonly private Client $client, readonly private LoggerInterface $logger)
     {
     }
 
@@ -68,6 +69,12 @@ class Webalizer
             // they will be validated later in the validator
             if (!RestrictedColumnsHelper::isRestrictedColumn($column)) {
                 $webalized[$k] = $column;
+            } elseif ($webalized[$k] !== $column) {
+                $this->logger->warning(sprintf(
+                    'Column name "%s" was webalized to "%s"',
+                    $column,
+                    $webalized[$k],
+                ));
             }
         }
         return $webalized;

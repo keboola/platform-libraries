@@ -55,6 +55,10 @@ class WebalizerTest extends TestCase
             ],
         ]);
         self::assertCount(4, $testLogger->records);
+        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[0]['level']));
+        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[1]['level']));
+        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[2]['level']));
+        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[3]['level']));
         self::assertEquals(
             'Column name "ěščřžýáíéúů" was webalized to "escrzyaieuu"',
             $testLogger->records[0]['message'],

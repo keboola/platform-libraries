@@ -37,10 +37,10 @@ class TableLoaderTest extends AbstractTestCase
                 'destination' => 'testTable',
                 'schema' => [
                     [
-                        'name' => str_repeat('a', 100),
+                        'name' => 'id',
                         'data_type' => [
                             'base' => [
-                                'type' => 'STRING',
+                                'type' => 'NON_EXISTING_BASETYPE',
                             ],
                         ],
                     ],

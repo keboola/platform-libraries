@@ -124,6 +124,10 @@ class WebalizerTest extends TestCase
                         'key' => 'key1',
                         'val' => 'val1',
                     ],
+                    '1' => [
+                        'key' => 'key2',
+                        'val' => 'val2',
+                    ],
                 ],
                 'schema' => [
                     [
@@ -144,6 +148,10 @@ class WebalizerTest extends TestCase
                     'webalize_test' => [
                         'key' => 'key1',
                         'val' => 'val1',
+                    ],
+                    '1' => [
+                        'key' => 'key2',
+                        'val' => 'val2',
                     ],
                 ],
                 'schema' => [

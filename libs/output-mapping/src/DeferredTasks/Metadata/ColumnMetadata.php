@@ -26,7 +26,7 @@ class ColumnMetadata implements MetadataInterface
                 $columnMetadata = [];
                 foreach ($metadataArray as $metadata) {
                     $columnMetadata[] = [
-                        'columnName' => $columnName,
+                        'columnName' => strval($columnName),
                         'key' => (string) $metadata['key'],
                         'value' => (string) $metadata['value'],
                     ];

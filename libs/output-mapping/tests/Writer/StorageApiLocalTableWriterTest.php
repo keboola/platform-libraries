@@ -1281,26 +1281,33 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/table21.csv',
             "\"aaa\",\"bbb\"\n",
         );
+        file_put_contents(
+            $root . '/upload/table21.csv.manifest',
+            json_encode(
+                [
+                    'columns' => ['1', '2'],
+                    'column_metadata' => [
+                        '1' => [
+                            [
+                                'key' => 'key1',
+                                'value' => 'value1',
+                            ],
+                        ],
+                        '2' => [
+                            [
+                                'key' => 'key2',
+                                'value' => 'value2',
+                            ],
+                        ],
+                    ],
+                ],
+            ),
+        );
 
         $configs = [
             [
                 'source' => 'table21.csv',
                 'destination' => $this->emptyOutputBucketId . '.table21',
-                'columns' => ['1', '2'],
-                'column_metadata' => [
-                    '1' => [
-                        [
-                            'key' => 'key1',
-                            'value' => 'value1',
-                        ],
-                    ],
-                    '2' => [
-                        [
-                            'key' => 'key2',
-                            'value' => 'value2',
-                        ],
-                    ],
-                ],
             ],
         ];
 

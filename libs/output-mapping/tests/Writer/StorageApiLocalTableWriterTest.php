@@ -1272,6 +1272,84 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableIntColumnMetadataNames(): void
+    {
+        $root = $this->temp->getTmpFolder();
+
+        file_put_contents(
+            $root . '/upload/table21.csv',
+            "\"aaa\",\"bbb\"\n",
+        );
+
+        $configs = [
+            [
+                'source' => 'table21.csv',
+                'destination' => $this->emptyOutputBucketId . '.table21',
+                'columns' => ['1', '2'],
+                'column_metadata' => [
+                    '1' => [
+                        [
+                            'key' => 'key1',
+                            'value' => 'value1',
+                        ],
+                    ],
+                    '2' => [
+                        [
+                            'key' => 'key2',
+                            'value' => 'value2',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+        $tableQueue = $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            AbstractStrategyFactory::LOCAL,
+            false,
+            'none',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+        $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
+        $tableId = $this->getTableIdFromJobDetail($jobDetail);
+
+        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertEquals(['1', '2'], $table['columns']);
+
+        $columnsMetadata = [];
+        foreach ($table['columnMetadata'] as $columnName => $metadata) {
+            $columnsMetadata[$columnName] = array_map(function (array $metadata) {
+                return [
+                    'key' => $metadata['key'],
+                    'value' => $metadata['value'],
+                ];
+            }, $metadata);
+        }
+
+        self::assertEquals(
+            [
+                '1' => [
+                    [
+                        'key' => 'key1',
+                        'value' => 'value1',
+                    ],
+                ],
+                '2' => [
+                    [
+                        'key' => 'key2',
+                        'value' => 'value2',
+                    ],
+                ],
+            ],
+            $columnsMetadata,
+        );
+    }
+
     /**
      * @dataProvider provideAllowedDestinationConfigurations
      */

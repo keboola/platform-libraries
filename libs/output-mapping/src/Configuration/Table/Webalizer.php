@@ -61,6 +61,7 @@ class Webalizer
 
     private function getWebalizedColumnNames(array $columns): array
     {
+        $columns = array_map('strval', $columns);
         $webalized = $this->client->webalizeColumnNames($columns);
         $webalized = $webalized['columnNames'];
 

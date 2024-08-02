@@ -1285,9 +1285,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/table21.csv.manifest',
             json_encode(
                 [
-                    'columns' => ['1', '2'],
+                    'columns' => ['0', '2'],
                     'column_metadata' => [
-                        '1' => [
+                        '0' => [
                             [
                                 'key' => 'key1',
                                 'value' => 'value1',
@@ -1326,7 +1326,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableId = $this->getTableIdFromJobDetail($jobDetail);
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertEquals(['1', '2'], $table['columns']);
+        self::assertEquals(['0', '2'], $table['columns']);
 
         $columnsMetadata = [];
         foreach ($table['columnMetadata'] as $columnName => $metadata) {
@@ -1340,7 +1340,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         self::assertEquals(
             [
-                '1' => [
+                '0' => [
                     [
                         'key' => 'key1',
                         'value' => 'value1',

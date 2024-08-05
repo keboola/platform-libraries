@@ -65,7 +65,11 @@ class TableLoader
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
-        $configWebalizer = new Webalizer($this->clientWrapper->getTableAndFileStorageClient(), $this->logger);
+        $configWebalizer = new Webalizer(
+            $this->clientWrapper->getTableAndFileStorageClient(),
+            $this->logger,
+            $configuration->hasConnectionWebalizeFeature(),
+        );
 
         $tableStructureValidator = new TableStructureValidator(
             $configuration->hasNewNativeTypesFeature(),

@@ -27,6 +27,7 @@ class OutputMappingSettingsTest extends TestCase
                 [OutputMappingSettings::TAG_STAGING_FILES_FEATURE, false],
                 [OutputMappingSettings::NATIVE_TYPES_FEATURE, true],
                 [OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE, true],
+                [OutputMappingSettings::OUTPUT_MAPPING_CONNECTION_WEBALIZE, true],
             ]);
 
         $outputMappingSettings = new OutputMappingSettings(
@@ -41,6 +42,7 @@ class OutputMappingSettingsTest extends TestCase
         $this->assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
         $this->assertTrue($outputMappingSettings->hasNativeTypesFeature());
         $this->assertTrue($outputMappingSettings->hasNewNativeTypesFeature());
+        $this->assertTrue($outputMappingSettings->hasConnectionWebalizeFeature());
 
         $this->assertFalse($outputMappingSettings->isFailedJob());
 

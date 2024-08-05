@@ -16,6 +16,8 @@ class OutputMappingSettings
 
     public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
 
+    public const OUTPUT_MAPPING_CONNECTION_WEBALIZE = 'output-mapping-connection-webalize';
+
     public const TAG_STAGING_FILES_FEATURE = 'tag-staging-files';
 
     public const NATIVE_TYPES_FEATURE = 'native-types';
@@ -70,6 +72,11 @@ class OutputMappingSettings
     public function hasNewNativeTypesFeature(): bool
     {
         return $this->storageApiToken->hasFeature(self::NEW_NATIVE_TYPES_FEATURE);
+    }
+
+    public function hasConnectionWebalizeFeature(): bool
+    {
+        return $this->storageApiToken->hasFeature(self::OUTPUT_MAPPING_CONNECTION_WEBALIZE);
     }
 
     public function getDataTypeSupport(): string

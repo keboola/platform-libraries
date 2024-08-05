@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Configuration\Table;
 
 use Generator;
 use Keboola\OutputMapping\Configuration\Table\Webalizer;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Monolog\Handler\TestHandler;
@@ -26,16 +27,43 @@ class WebalizerTest extends TestCase
     }
 
     /** @dataProvider webalizeDataProvider */
-    public function testWebalize(array $config, array $expectedConfig): void
+    public function testWebalize(array $config, array $expectedConfig, int $expectsApiCalls): void
     {
-        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), new TestLogger());
+        // test webalized column names
+        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), new TestLogger(), true);
+        $webalizedColumnNames = $webalizator->webalize($config);
+        self::assertEquals($expectedConfig, $webalizedColumnNames);
+
+        // test the number of API calls
+        $clientMock = self::createMock(Client::class);
+        $clientMock
+            ->expects(self::exactly($expectsApiCalls))
+            ->method('webalizeColumnNames')->will(
+                self::returnCallback(
+                    function ($columns) {
+                        return ['columnNames' => $columns];
+                    },
+                ),
+            );
+
+        $webalizator = new Webalizer($clientMock, new TestLogger(), true);
+        self::assertIsArray($webalizator->webalize($config));
+    }
+
+    /** @dataProvider webalizeDataProvider */
+    public function testLegacyWebalize(array $config, array $expectedConfig): void
+    {
+        $clientMock = self::createMock(Client::class);
+        $clientMock->expects(self::never())->method('webalizeColumnNames');
+
+        $webalizator = new Webalizer($clientMock, new TestLogger(), false);
         self::assertEquals($expectedConfig, $webalizator->webalize($config));
     }
 
     public function testLoggingWebalizedColumnNames(): void
     {
         $testLogger = new TestLogger();
-        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $testLogger);
+        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $testLogger, true);
         $webalizator->webalize([
             'columns' => ['ěščřžýáíéúů'],
             'primaryKey' => ['éíěčíáčšžášřýšěí'],
@@ -82,6 +110,7 @@ class WebalizerTest extends TestCase
         yield 'empty' => [
             [],
             [],
+            0,
         ];
 
         yield 'simple' => [
@@ -113,6 +142,7 @@ class WebalizerTest extends TestCase
                     ],
                 ],
             ],
+            4,
         ];
 
         yield 'special-chars' => [
@@ -166,6 +196,7 @@ class WebalizerTest extends TestCase
                     ],
                 ],
             ],
+            4,
         ];
 
         yield 'system-columns' => [
@@ -199,6 +230,7 @@ class WebalizerTest extends TestCase
                     ],
                 ],
             ],
+            4,
         ];
     }
 

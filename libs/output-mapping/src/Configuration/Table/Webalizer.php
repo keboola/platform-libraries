@@ -6,12 +6,16 @@ namespace Keboola\OutputMapping\Configuration\Table;
 
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\StorageApi\Client;
+use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
 
 class Webalizer
 {
-    public function __construct(readonly private Client $client, readonly private LoggerInterface $logger)
-    {
+    public function __construct(
+        readonly private Client $client,
+        readonly private LoggerInterface $logger,
+        readonly private bool $connectionWebalize,
+    ) {
     }
 
     public function webalize(array $configuration): array
@@ -62,8 +66,12 @@ class Webalizer
     private function getWebalizedColumnNames(array $columns): array
     {
         $columns = array_map('strval', $columns);
-        $webalized = $this->client->webalizeColumnNames($columns);
-        $webalized = $webalized['columnNames'];
+        if ($this->connectionWebalize) {
+            $webalized = $this->client->webalizeColumnNames($columns);
+            $webalized = $webalized['columnNames'];
+        } else {
+            $webalized = array_map(fn($v) => ColumnNameSanitizer::sanitize($v), $columns);
+        }
 
         foreach ($columns as $k => $column) {
             // System columns should not be webalized and should be preserved

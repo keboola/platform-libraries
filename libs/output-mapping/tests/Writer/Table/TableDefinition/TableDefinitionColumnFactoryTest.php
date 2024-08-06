@@ -88,5 +88,20 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
         ];
+
+        yield 'native type without basetype' => [
+            'columnName' => 'testDecimalWithLength',
+            'columnMetadata' => [
+                [
+                    'key' => Snowflake::KBC_METADATA_KEY_NULLABLE,
+                    'value' => false,
+                ],
+            ],
+            'tableMetadata' => [],
+            'backendType' => 'snowflake',
+            'expectedSerialisation' => [
+                'name' => 'testDecimalWithLength',
+            ],
+        ];
     }
 }

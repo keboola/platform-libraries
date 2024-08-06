@@ -28,9 +28,12 @@ class BaseTypeTableDefinitionColumn implements TableDefinitionColumnInterface
 
     public function toArray(): array
     {
-        return [
+        $data = [
             'name' => $this->name,
-            'basetype' => $this->baseType,
         ];
+        if ($this->baseType) {
+            $data['basetype'] = $this->baseType;
+        }
+        return $data;
     }
 }

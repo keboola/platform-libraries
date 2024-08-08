@@ -247,4 +247,28 @@ class MappingFromProcessedConfigurationTest extends TestCase
             ['val1', 'val2'],
         ];
     }
+
+    public function testPrimaryKeyAndColumsAreConvertedToStrings(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'columns' => [
+                null,
+                123,
+                'col1',
+                'col2',
+            ],
+            'primary_key' => [
+                null,
+                123,
+                'col1',
+            ],
+        ];
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertSame(['', '123', 'col1', 'col2'], $mapping->getColumns());
+        self::assertSame(['', '123', 'col1'], $mapping->getPrimaryKey());
+    }
 }

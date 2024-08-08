@@ -84,7 +84,7 @@ class MappingFromProcessedConfiguration
 
     public function getPrimaryKey(): array
     {
-        return $this->mapping['primary_key'];
+        return array_map('strval', $this->mapping['primary_key']);
     }
 
     public function hasWriteAlways(): bool
@@ -122,9 +122,9 @@ class MappingFromProcessedConfiguration
 
     public function getColumns(): array
     {
-        return $this->mapping['columns'] ?
-            RestrictedColumnsHelper::removeRestrictedColumnsFromColumns($this->mapping['columns']) :
-            [];
+        return RestrictedColumnsHelper::removeRestrictedColumnsFromColumns(
+            $this->mapping['columns'] ? array_map('strval', $this->mapping['columns']) : [],
+        );
     }
 
     public function getColumnMetadata(): array

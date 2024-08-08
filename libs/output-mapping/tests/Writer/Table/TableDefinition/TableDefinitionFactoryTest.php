@@ -44,6 +44,7 @@ class TableDefinitionFactoryTest extends TestCase
                 'Name' => (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
                 'birthday' => (new GenericStorage('date'))->toMetadata(),
                 'created' => (new GenericStorage('timestamp'))->toMetadata(),
+                '123' => (new GenericStorage('date'))->toMetadata(),
             ],
             'expectedSerialisation' => [
                 'name' => 'basicTable',
@@ -64,6 +65,10 @@ class TableDefinitionFactoryTest extends TestCase
                     [
                         'name' => 'created',
                         'basetype' => 'TIMESTAMP',
+                    ],
+                    [
+                        'name' => '123',
+                        'basetype' => 'DATE',
                     ],
                 ],
             ],
@@ -86,6 +91,7 @@ class TableDefinitionFactoryTest extends TestCase
                 'Name' => (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
                 'birthtime' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
                 'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
+                '123' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
             ],
             'expectedSerialisation' => [
                 'name' => 'snowflakeNativeTable',
@@ -119,6 +125,14 @@ class TableDefinitionFactoryTest extends TestCase
                         'name' => 'created',
                         'definition' => [
                             'type' => 'TIMESTAMP_TZ',
+                            'length' => null,
+                            'nullable' => true,
+                        ],
+                    ],
+                    [
+                        'name' => '123',
+                        'definition' => [
+                            'type' => 'TIME',
                             'length' => null,
                             'nullable' => true,
                         ],

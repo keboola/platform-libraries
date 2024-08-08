@@ -23,7 +23,7 @@ class TableDefinitionFactory
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
         foreach ($columnMetadata as $columnName => $metadata) {
             $tableDefinition->addColumn(
-                $columnName,
+                (string) $columnName,
                 $metadata,
                 $this->tableMetadata,
                 $this->backendType,

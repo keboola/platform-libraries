@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
+use Generator;
 use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Storage\BucketInfo;
@@ -56,19 +57,22 @@ class TableStructureModifierTest extends AbstractTestCase
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
 
         $this->assertEquals(
-            $this->dropTimestampParams($this->destinationTableInfo),
-            $this->dropTimestampParams($newTable),
+            $this->dropTimestampAttributes($this->destinationTableInfo),
+            $this->dropTimestampAttributes($newTable),
         );
     }
 
+    /**
+     * @dataProvider newColumnNamesProvider
+     */
     #[NeedsTestTables]
-    public function testUpdateTableStructureAddColumns(): void
+    public function testUpdateTableStructureAddColumns(string $newColumnName): void
     {
         $source = $this->createMock(MappingFromProcessedConfiguration::class);
         $source->method('getPrimaryKey')->willReturn($this->destinationTableInfo['primaryKey']);
         $source->method('getColumns')->willReturn(array_merge(
             $this->destinationTableInfo['columns'],
-            ['new_column'],
+            [$newColumnName],
         ));
         $source->method('getMetadata')->willReturn([]);
         $source->method('getColumnMetadata')->willReturn([]);
@@ -82,10 +86,10 @@ class TableStructureModifierTest extends AbstractTestCase
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $expectedTable = array_merge_recursive($this->destinationTableInfo, [
-            'columns' => ['new_column'],
+            'columns' => [$newColumnName],
         ]);
 
-        $this->assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($newTable));
+        $this->assertEquals($this->dropTimestampAttributes($expectedTable), $this->dropTimestampAttributes($newTable));
     }
 
     #[NeedsTestTables]
@@ -112,7 +116,7 @@ class TableStructureModifierTest extends AbstractTestCase
             'primaryKey' => ['Id', 'Name'],
         ]);
 
-        $this->assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($newTable));
+        $this->assertEquals($this->dropTimestampAttributes($expectedTable), $this->dropTimestampAttributes($newTable));
     }
 
     #[NeedsTestTables]
@@ -195,7 +199,98 @@ class TableStructureModifierTest extends AbstractTestCase
         );
     }
 
-    private function dropTimestampParams(array $table): array
+    /**
+     * @dataProvider newColumnNamesProvider
+     */
+    #[NeedsTestTables(typedTable: true)]
+    public function testUpdateTableStructureAddColumnsFromMetadata(string $newColumnName): void
+    {
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getPrimaryKey')->willReturn($this->destinationTableInfo['primaryKey']);
+        $source->method('getColumns')->willReturn([]);
+        $source->method('getMetadata')->willReturn([]);
+        $source->method('getColumnMetadata')->willReturn([
+            $newColumnName => [
+                [
+                    'key' => 'KBC.datatype.type',
+                    'value' => 'INT',
+                ],
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'INTEGER',
+                ],
+            ],
+        ]);
+
+        $this->modifier->updateTableStructure(
+            $this->destinationBucket,
+            new TableInfo($this->destinationTableInfo),
+            $source,
+            $this->destination,
+        );
+
+        $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $expectedTable = array_merge_recursive($this->destinationTableInfo, [
+            'columns' => [$newColumnName],
+            'definition' => [
+                'columns' => [
+                    [
+                        'name' => $newColumnName,
+                        'definition' => [
+                            'type' => 'NUMBER',
+                            'nullable' => true,
+                            'length' => '38,0',
+                        ],
+                        'basetype' => 'NUMERIC',
+                        'canBeFiltered' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        // must be validated separately because the definition columns in $newTable do not guarantee the order.
+        $expectedNewColumnDefinition = [
+            'name' => $newColumnName,
+            'definition' => [
+                'type' => 'NUMBER',
+                'nullable' => true,
+                'length' => '38,0',
+            ],
+            'basetype' => 'NUMERIC',
+            'canBeFiltered' => true,
+        ];
+
+        $newColumnDefinition = null;
+        foreach ($newTable['definition']['columns'] as $column) {
+            if ($column['name'] === $newColumnName) {
+                $newColumnDefinition = $column;
+                break;
+            }
+        }
+
+        self::assertSame($expectedNewColumnDefinition, $newColumnDefinition);
+
+        $this->assertEquals(
+            $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($expectedTable)),
+            $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($newTable)),
+        );
+    }
+
+    public function newColumnNamesProvider(): Generator
+    {
+        yield ['new_column'];
+        yield ['123'];
+    }
+
+    private function dropMetadataAndDefinitionAttributes(array $table): array
+    {
+        unset($table['definition']['columns']);
+        unset($table['columnMetadata']);
+        unset($table['metadata']);
+        return $table;
+    }
+
+    private function dropTimestampAttributes(array $table): array
     {
         unset($table['lastChangeDate']);
         unset($table['bucket']['lastChangeDate']);

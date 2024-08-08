@@ -68,6 +68,7 @@ class TableStructureModifier extends AbstractTableStructureModifier
         $missingColumnsData = [];
         if ($currentTableInfo->isTyped() === true) {
             foreach ($newTableConfiguration->getColumnMetadata() as $columnName => $columnMetadata) {
+                $columnName = (string) $columnName;
                 if (!in_array($columnName, $missingColumns, true)) {
                     continue;
                 }
@@ -110,7 +111,14 @@ class TableStructureModifier extends AbstractTableStructureModifier
         array $currentTableColumns,
         array $newTableConfigurationColumnMetadata,
     ): array {
-        return array_udiff(array_keys($newTableConfigurationColumnMetadata), $currentTableColumns, 'strcasecmp');
+        return array_udiff(
+            array_map(
+                'strval',
+                array_keys($newTableConfigurationColumnMetadata),
+            ),
+            $currentTableColumns,
+            'strcasecmp',
+        );
     }
 
     private function getMissingColumnsFromColumns(

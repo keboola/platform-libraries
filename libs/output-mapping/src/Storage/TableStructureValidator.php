@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Storage;
 
+use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -78,18 +79,8 @@ class TableStructureValidator
                 $schemaColumns,
                 $tableChangesStore,
             );
-            if ($tableChangesStore->hasMissingColumns()) {
-                throw new InvalidTableStructureException(sprintf(
-                    'Cannot add columns to untyped table "%s". Columns: "%s".',
-                    $table['id'],
-                    implode(
-                        '", "',
-                        array_map(fn($column) => $column->getName(), $tableChangesStore->getMissingColumns()),
-                    ),
-                ));
-            }
 
-            $tableChangesStore =$this->validatePrimaryKeys(
+            $tableChangesStore = $this->validatePrimaryKeys(
                 $table['primaryKey'],
                 $schemaColumns,
                 $tableChangesStore,
@@ -184,7 +175,7 @@ class TableStructureValidator
                 ));
                 throw new InvalidOutputException('Backend column type is not allowed.');
             } catch (InvalidOutputException) {
-                if ($schemaColumn->getDataType()->getBaseTypeName() !== 'STRING') {
+                if ($schemaColumn->getDataType()->getBaseTypeName() !== BaseType::STRING) {
                     $validationErrors[] = sprintf(
                         'Table "%s" is untyped, but schema column "%s" has unsupported type "%s".',
                         $table['id'],

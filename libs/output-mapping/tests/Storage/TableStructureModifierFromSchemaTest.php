@@ -53,7 +53,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
-    public function testAddMissingColumn(): void
+    public function testTypedTableAddMissingColumn(): void
     {
         $this->prepareStorageData();
 
@@ -83,6 +83,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
 
         $newColumn = array_diff($updatedTable['columns'], $this->table['columns']);
         self::assertCount(1, $newColumn);
+        self::assertTrue($updatedTable['isTyped']);
 
         self::assertEquals(
             [
@@ -96,6 +97,45 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
                 'canBeFiltered' => true,
             ],
             $updatedTable['definition']['columns'][2],
+        );
+    }
+
+    #[NeedsTestTables(1)]
+    public function testNonTypedTableAddMissingColumn(): void
+    {
+        $this->bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $this->table = $this
+            ->clientWrapper
+            ->getTableAndFileStorageClient()
+            ->getTable($this->firstTableId);
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+        ]));
+        self::assertTrue($tableChangesStore->hasMissingColumns());
+
+        $this->tableStructureModifier->updateTableStructure(
+            new BucketInfo($this->bucket),
+            new TableInfo($this->table),
+            $tableChangesStore,
+        );
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+
+        $newColumn = array_diff($updatedTable['columns'], $this->table['columns']);
+        self::assertCount(1, $newColumn);
+        self::assertFalse($updatedTable['isTyped']);
+
+        self::assertEquals(
+            [
+                'Id',
+                'Name',
+                'foo',
+                'bar',
+                'newColumn',
+            ],
+            $updatedTable['columns'],
         );
     }
 

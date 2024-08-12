@@ -719,6 +719,15 @@ class TableStructureValidatorTest extends AbstractTestCase
 
     public function testNonTypedTableMissingColumnInStorage(): void
     {
+        $newColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'col4',
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ]);
+
         $schema = [
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col1',
@@ -733,7 +742,7 @@ class TableStructureValidatorTest extends AbstractTestCase
                 'name' => 'col2',
                 'data_type' => [
                     'base' => [
-                        'type' => 'NUMERIC',
+                        'type' => 'STRING',
                     ],
                 ],
             ]),
@@ -741,24 +750,18 @@ class TableStructureValidatorTest extends AbstractTestCase
                 'name' => 'col3',
                 'data_type' => [
                     'base' => [
-                        'type' => 'NUMERIC',
+                        'type' => 'STRING',
                     ],
                 ],
             ]),
-            new MappingFromConfigurationSchemaColumn([
-                'name' => 'col4',
-                'data_type' => [
-                    'base' => [
-                        'type' => 'NUMERIC',
-                    ],
-                ],
-            ]),
+            $newColumn,
         ];
 
         $validator = new TableStructureValidator(true, new NullLogger(), $this->getClientMockNonTypedTable());
-        $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage('Cannot add columns to untyped table "in.c-main.table". Columns: "col4".');
-        $validator->validateTable('in.c-main.table', $schema);
+        $tableChangesStore = $validator->validateTable('in.c-main.table', $schema);
+
+        self::assertTrue($tableChangesStore->hasMissingColumns());
+        self::assertEquals([$newColumn], $tableChangesStore->getMissingColumns());
     }
 
     public function testErrorNonTypedTableWrongCountColumns(): void

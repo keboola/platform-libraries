@@ -131,6 +131,9 @@ class LoadTableQueueTest extends TestCase
                 ],
             ])
         ;
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->willReturn(['rowsCount' => 0, 'metadata' => [], 'isTyped' => false]);
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
@@ -441,7 +444,7 @@ class LoadTableQueueTest extends TestCase
             ->method('dropTable')
             ->with('my-table', ['force' => true]);
         $clientMock->method('getTable')
-            ->willReturn(['rowsCount' => 0, 'metadata' => []]);
+            ->willReturn(['rowsCount' => 0, 'metadata' => [], 'isTyped' => false]);
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->method('isUsingFreshlyCreatedTable')

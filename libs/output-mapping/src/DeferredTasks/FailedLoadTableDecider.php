@@ -21,9 +21,14 @@ class FailedLoadTableDecider
             // likely the table doesn't exist, but any other error really prevents us from positive decision
             return false;
         }
+        $metadata = $tableInfo['metadata'];
+        if ($tableInfo['isTyped']) {
+            $metadata = array_filter($metadata, fn($m) => $m['provider'] !== 'storage');
+        }
+
         if ($task->isUsingFreshlyCreatedTable() && // most important
             ($tableInfo['rowsCount'] === 0 || $tableInfo['rowsCount'] === null) && // seems both are possible 🙄
-            (count($tableInfo['metadata']) === 0) // at this point there should be no metadata, they're set after load
+            (count($metadata) === 0) // at this point there should be no metadata, they're set after load
         ) {
             $logger->warning(sprintf('Failed to load table "%s". Dropping table.', $task->getDestinationTableName()));
             return true;

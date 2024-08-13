@@ -21,6 +21,7 @@ class FailedLoadTableDeciderTest extends TestCase
         yield 'table fresh and empty' => [
             'tableInfo' => [
                 'rowsCount' => 0,
+                'isTyped' => false,
                 'metadata' => [],
             ],
             'freshlyCreated' => true,
@@ -29,6 +30,7 @@ class FailedLoadTableDeciderTest extends TestCase
         yield 'table fresh and null empty' => [
             'tableInfo' => [
                 'rowsCount' => null,
+                'isTyped' => false,
                 'metadata' => [],
             ],
             'freshlyCreated' => true,
@@ -37,6 +39,7 @@ class FailedLoadTableDeciderTest extends TestCase
         yield 'table fresh and not empty' => [
             'tableInfo' => [
                 'rowsCount' => 1,
+                'isTyped' => false,
                 'metadata' => [],
             ],
             'freshlyCreated' => true,
@@ -45,17 +48,88 @@ class FailedLoadTableDeciderTest extends TestCase
         yield 'table fresh and not metadata not empty' => [
             'tableInfo' => [
                 'rowsCount' => 0,
+                'isTyped' => false,
                 'metadata' => ['a' => 'b'],
             ],
             'freshlyCreated' => true,
             'expectedResult' => false,
         ];
-        yield 'table not fresh and empty' => [
+        yield 'typed table fresh and storage metadata' => [
             'tableInfo' => [
                 'rowsCount' => 0,
+                'isTyped' => true,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'VARCHAR',
+                        'provider' => 'storage',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.type2',
+                        'value' => 'VARCHAR2',
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => true,
+        ];
+        yield 'typed table fresh and user metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => true,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'VARCHAR',
+                        'provider' => 'extractor',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.type2',
+                        'value' => 'VARCHAR2',
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => false,
+        ];
+        yield 'typed table fresh and empty metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => true,
+                'metadata' => [],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => true,
+        ];
+        yield 'typed table not fresh and empty metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => true,
                 'metadata' => [],
             ],
             'freshlyCreated' => false,
+            'expectedResult' => false,
+        ];
+        yield 'typed table fresh, storage metadata and not empty' => [
+            'tableInfo' => [
+                'rowsCount' => 1,
+                'isTyped' => true,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'VARCHAR',
+                        'provider' => 'storage',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.type2',
+                        'value' => 'VARCHAR2',
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
             'expectedResult' => false,
         ];
     }

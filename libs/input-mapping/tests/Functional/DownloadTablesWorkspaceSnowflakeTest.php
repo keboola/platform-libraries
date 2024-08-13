@@ -133,7 +133,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             [
                 'source' => $this->firstTableId,
                 'destination' => 'test1',
-                'changed_since' => 'adaptive',
+                'days' => 3,
             ],
             [
                 'source' => $this->secondTableId,
@@ -142,7 +142,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         ]);
 
         $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
+        $this->expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
@@ -150,6 +150,69 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
+    }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testTablesAdaptiveChangedSince(): void
+    {
+        $reader = new Reader($this->getWorkspaceStagingFactory());
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'test1',
+                'changed_since' => 'adaptive',
+            ],
+            [
+                'source' => $this->secondTableId,
+                'destination' => 'test2',
+            ],
+        ]);
+
+        $tablesState = new InputTableStateList([
+            [
+                'source' => $this->firstTableId,
+                'lastImportDate' => '1989-11-17T21:00:00+0200',
+            ],
+            [
+                'source' => $this->secondTableId,
+                'lastImportDate' => '1989-11-17T21:00:00+0200',
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            $tablesState,
+            'download',
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            new ReaderOptions(true),
+        );
+
+        $adapter = new Adapter();
+
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
+        self::assertEquals($this->firstTableId, $manifest['id']);
+        self::assertEquals(
+            ['Id'],
+            $manifest['columns'],
+        );
+        // check that the table exists in the workspace
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $this->emptyOutputBucketId,
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataTableName' => 'test1',
+                'name' => 'test1'
+            ],
+        );
+
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
+        );
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+
+        var_dump($this->testHandler->getRecords());
     }
 
     #[NeedsTestTables, NeedsEmptyOutputBucket]

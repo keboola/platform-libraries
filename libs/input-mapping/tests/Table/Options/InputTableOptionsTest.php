@@ -8,6 +8,7 @@ use Generator;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
+use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -276,9 +277,33 @@ class InputTableOptionsTest extends TestCase
             'source' => 'test',
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
-        $this->expectExceptionMessage('Adaptive input mapping is not supported on input mapping to workspace.');
-        $this->expectException(InvalidInputException::class);
-        $definition->getStorageApiLoadOptions(new InputTableStateList([]));
+        $tablesState = new InputTableStateList([[
+            'source' => 'test',
+            'lastImportDate' => '1989-11-17T21:00:00+0200',
+        ]]);
+        self::assertEquals(
+            [
+                'changedSince' => '1989-11-17T21:00:00+0200',
+                'overwrite' => false,
+                'sourceBranchId' => 12345,
+            ],
+            $definition->getStorageApiLoadOptions($tablesState),
+        );
+    }
+
+    public function testGetExportOptionsAdaptiveInputMappingMissingTable(): void
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
+        ]);
+        $tablesState = new InputTableStateList([]);
+        self::assertEquals(
+            [
+                'overwrite' => false,
+            ],
+            $definition->getStorageApiLoadOptions($tablesState),
+        );
     }
 
     public function testGetLoadOptionsDaysMapping(): void

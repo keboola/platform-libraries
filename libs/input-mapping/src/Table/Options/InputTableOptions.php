@@ -152,9 +152,13 @@ class InputTableOptions
         }
         if (!empty($this->definition['changed_since'])) {
             if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
-                throw new InvalidInputException(
-                    'Adaptive input mapping is not supported on input mapping to workspace.',
-                );
+                try {
+                    $exportOptions['changedSince'] = $states
+                        ->getTable($this->getSource())
+                        ->getLastImportDate();
+                } catch (TableNotFoundException) {
+                    // intentionally blank
+                }
             } else {
                 if (strtotime($this->definition['changed_since']) === false) {
                     throw new InvalidInputException(

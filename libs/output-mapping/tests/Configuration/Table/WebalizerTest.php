@@ -66,7 +66,7 @@ class WebalizerTest extends TestCase
         $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $testLogger, true);
         $webalizator->webalize([
             'columns' => ['ěščřžýáíéúů'],
-            'primaryKey' => ['éíěčíáčšžášřýšěí'],
+            'primary_key' => ['éíěčíáčšžášřýšěí'],
             'column_metadata' => [
                 'webalize | test 😁' => [
                     'key' => 'key1',
@@ -116,7 +116,7 @@ class WebalizerTest extends TestCase
         yield 'simple' => [
             [
                 'columns' => ['col1', 'col2'],
-                'primaryKey' => ['col1'],
+                'primary_key' => ['col1'],
                 'column_metadata' => [
                     'col1' => [
                         'name' => 'col1',
@@ -130,7 +130,7 @@ class WebalizerTest extends TestCase
             ],
             [
                 'columns' => ['col1', 'col2'],
-                'primaryKey' => ['col1'],
+                'primary_key' => ['col1'],
                 'column_metadata' => [
                     'col1' => [
                         'name' => 'col1',
@@ -148,7 +148,7 @@ class WebalizerTest extends TestCase
         yield 'special-chars' => [
             [
                 'columns' => ['ěščřžýáíéúů', 'webalize | test 😁'],
-                'primaryKey' => ['ěščřžýáíéúů'],
+                'primary_key' => ['ěščřžýáíéúů'],
                 'column_metadata' => [
                     'webalize | test 😁' => [
                         'key' => 'key1',
@@ -173,7 +173,7 @@ class WebalizerTest extends TestCase
             ],
             [
                 'columns' => ['escrzyaieuu', 'webalize_test'],
-                'primaryKey' => ['escrzyaieuu'],
+                'primary_key' => ['escrzyaieuu'],
                 'column_metadata' => [
                     'webalize_test' => [
                         'key' => 'key1',
@@ -202,7 +202,7 @@ class WebalizerTest extends TestCase
         yield 'system-columns' => [
             [
                 'columns' => ['_timestamp'],
-                'primaryKey' => ['_timestamp'],
+                'primary_key' => ['_timestamp'],
                 'column_metadata' => [
                     '_timestamp' => [
                         'key' => 'key1',
@@ -217,7 +217,7 @@ class WebalizerTest extends TestCase
             ],
             [
                 'columns' => ['_timestamp'],
-                'primaryKey' => ['_timestamp'],
+                'primary_key' => ['_timestamp'],
                 'column_metadata' => [
                     '_timestamp' => [
                         'key' => 'key1',

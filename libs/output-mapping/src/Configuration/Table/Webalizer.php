@@ -24,8 +24,8 @@ class Webalizer
             $configuration['columns'] = $this->getWebalizedColumnNames($configuration['columns']);
         }
 
-        if (isset($configuration['primaryKey'])) {
-            $configuration['primaryKey'] = $this->getWebalizedColumnNames($configuration['primaryKey']);
+        if (isset($configuration['primary_key'])) {
+            $configuration['primary_key'] = $this->getWebalizedColumnNames($configuration['primary_key']);
         }
 
         if (isset($configuration['column_metadata'])) {

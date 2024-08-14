@@ -15,7 +15,6 @@ class S3 extends AbstractStrategy
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
         $exportOptions['gzip'] = true;
-
         $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
             $table->getSource(),
             $exportOptions,

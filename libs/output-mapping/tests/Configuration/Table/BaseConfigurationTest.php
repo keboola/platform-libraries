@@ -83,6 +83,128 @@ class BaseConfigurationTest extends TestCase
         $this->testManifestAndConfig($config, $expectedArray);
     }
 
+    public function testNormalizeDefaultAndLengthIntValue(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                            'default' => 1234,
+                            'length' => 1234,
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                            'default' => 5678,
+                            'length' => 5678,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test','primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                            'default' => '1234',
+                            'length' => '1234',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                            'default' => '5678',
+                            'length' => '5678',
+                        ],
+                    ],
+                    'nullable' => true,
+                    'primary_key' => false,
+                    'distribution_key' => false,
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
+    public function testNormalizeDefaultAndLengthBoolValue(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                            'default' => true,
+                            'length' => false,
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                            'default' => false,
+                            'length' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test','primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [
+                [
+                    'name' => 'test',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'string',
+                            'default' => 'true',
+                            'length' => 'false',
+                        ],
+                        'snowflake' => [
+                            'type' => 'string',
+                            'default' => 'false',
+                            'length' => 'true',
+                        ],
+                    ],
+                    'nullable' => true,
+                    'primary_key' => false,
+                    'distribution_key' => false,
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
     public function testSchemaOptionalBackendDataType(): void
     {
         $config = [

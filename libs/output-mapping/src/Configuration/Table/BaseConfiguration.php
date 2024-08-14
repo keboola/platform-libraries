@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Configuration\Table;
 
+use Closure;
 use Keboola\OutputMapping\Configuration\Configuration;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -95,8 +96,12 @@ abstract class BaseConfiguration extends Configuration
                                     ->arrayNode('base')->isRequired()
                                         ->children()
                                             ->scalarNode('type')->isRequired()->cannotBeEmpty()->end()
-                                            ->scalarNode('length')->end()
-                                            ->scalarNode('default')->end()
+                                            ->scalarNode('length')
+                                                ->beforeNormalization()->always(self::getStringNormalizer())->end()
+                                            ->end()
+                                            ->scalarNode('default')
+                                                ->beforeNormalization()->always(self::getStringNormalizer())->end()
+                                            ->end()
                                         ->end()
                                     ->end()
                                 ->end()
@@ -113,6 +118,12 @@ abstract class BaseConfiguration extends Configuration
                                                 'The "type" is required for the "%s" data type.',
                                                 $item,
                                             ));
+                                        }
+                                        if (isset($itemValues['default'])) {
+                                            $v[$item]['default'] = self::getStringNormalizer()($itemValues['default']);
+                                        }
+                                        if (isset($itemValues['length'])) {
+                                            $v[$item]['length'] = self::getStringNormalizer()($itemValues['length']);
                                         }
                                     }
                                     return $v;
@@ -172,5 +183,18 @@ abstract class BaseConfiguration extends Configuration
             ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
         // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
+    }
+
+    private static function getStringNormalizer(): Closure
+    {
+        return function ($v) {
+            if (is_bool($v)) {
+                return $v ? 'true' : 'false';
+            }
+            if (is_scalar($v)) {
+                return (string) $v;
+            }
+            return $v;
+        };
     }
 }

@@ -152,9 +152,16 @@ class InputTableOptions
         }
         if (!empty($this->definition['changed_since'])) {
             if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
-                throw new InvalidInputException(
-                    'Adaptive input mapping is not supported on input mapping to workspace.',
-                );
+                try {
+                    $lastImportDateString = $states
+                        ->getTable($this->getSource())
+                        ->getLastImportDate();
+
+                    // converting to unix timestamp https://keboolaglobal.slack.com/archives/C054VSPFVST/p1723555870048739?thread_ts=1723531121.814779&cid=C054VSPFVST
+                    $exportOptions['changedSince'] = strtotime($lastImportDateString);
+                } catch (TableNotFoundException) {
+                    // intentionally blank
+                }
             } else {
                 if (strtotime($this->definition['changed_since']) === false) {
                     throw new InvalidInputException(
@@ -164,6 +171,7 @@ class InputTableOptions
                 $exportOptions['seconds'] = time() - strtotime($this->definition['changed_since']);
             }
         }
+
         if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
             $exportOptions['whereColumn'] = $this->definition['where_column'];
             $exportOptions['whereValues'] = $this->definition['where_values'];

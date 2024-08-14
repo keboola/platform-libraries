@@ -16,7 +16,7 @@ Prerequisites:
 * configured `az` CLI tools (run `az login`)
 * existing Azure Synapse Analytics
 
-#### Prepare resoruces
+#### Prepare resources
 
 ```shell
 cat <<EOF > ./provisioning/ci/synapse-auto-stop/terraform.tfvars

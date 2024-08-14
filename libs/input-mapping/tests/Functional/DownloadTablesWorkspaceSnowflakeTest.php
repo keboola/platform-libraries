@@ -155,7 +155,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesAdaptiveChangedSince(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory());
+        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -192,7 +192,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals($this->firstTableId, $manifest['id']);
         self::assertEquals(
-            ['Id'],
+            ['Id', 'Name', 'foo', 'bar'],
             $manifest['columns'],
         );
         // check that the table exists in the workspace
@@ -201,7 +201,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             [
                 'dataWorkspaceId' => $this->workspaceId,
                 'dataTableName' => 'test1',
-                'name' => 'test1'
+                'name' => 'test1',
             ],
         );
 
@@ -209,10 +209,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue(
             $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
         );
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->secondTableId)),
+        );
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
-
-        var_dump($this->testHandler->getRecords());
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
     }
 
     #[NeedsTestTables, NeedsEmptyOutputBucket]

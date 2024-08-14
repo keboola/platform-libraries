@@ -283,9 +283,8 @@ class InputTableOptionsTest extends TestCase
         ]]);
         self::assertEquals(
             [
-                'changedSince' => '1989-11-17T21:00:00+0200',
+                'changedSince' => '627332400',
                 'overwrite' => false,
-                'sourceBranchId' => 12345,
             ],
             $definition->getStorageApiLoadOptions($tablesState),
         );

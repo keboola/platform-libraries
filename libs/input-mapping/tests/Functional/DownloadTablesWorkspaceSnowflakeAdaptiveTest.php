@@ -62,7 +62,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         );
 
         self::assertCount(1, $tablesResult->getInputTableStateList()->jsonSerialize());
-
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
         self::assertTrue(
             $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
@@ -71,7 +70,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
-    #[NeedsTestTables]
+    #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
         $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
@@ -90,7 +89,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             new ReaderOptions(true),
         );
 
-        // Update table
+        // Update the source table
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
@@ -99,7 +98,11 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $csv,
             ['incremental' => true],
         );
+        $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        // now the source table has 4 rows (it has 3 originally)
+        self::assertEquals(4, $updatedTestTableInfo['rowsCount']);
 
+        // load the table to workspace again
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -108,7 +111,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
                 'overwrite' => true,
             ],
         ]);
-        $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $secondTablesResult = $reader->downloadTables(
             $configuration,
             $firstTablesResult->getInputTableStateList(),
@@ -122,6 +124,20 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $secondTablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate(),
         );
         self::assertCount(1, $secondTablesResult->getInputTableStateList()->jsonSerialize());
+
+        // create a Storage table from the workspace table
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $this->emptyOutputBucketId,
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataObject' => 'test1',
+                'name' => 'testWorkspace1',
+            ],
+        );
+        // assert it has just the 1 new row
+        $workspaceTableInfo = $this->clientWrapper->getTableAndFileStorageClient()
+            ->getTable($this->emptyOutputBucketId . '.testWorkspace1');
+        self::assertEquals(1, $workspaceTableInfo['rowsCount']);
     }
 
     #[NeedsTestTables]

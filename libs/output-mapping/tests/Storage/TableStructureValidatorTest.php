@@ -190,7 +190,7 @@ class TableStructureValidatorTest extends AbstractTestCase
             'data_type' => [
                 'base' => [
                     'type' => 'STRING',
-                    'length' => '255',
+                    'length' => '230', // different length
                     'default' => 'new default value', // different default value
                 ],
             ],

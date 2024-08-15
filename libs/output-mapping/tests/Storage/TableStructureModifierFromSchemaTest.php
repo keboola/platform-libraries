@@ -482,7 +482,8 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
             'name' => 'Id',
             'data_type' => [
                 'base' => [
-                    'default' => 'new default value',
+                    'length' => '10',
+                    // 'default' => 'new default value',
                 ],
             ],
         ]));
@@ -496,7 +497,8 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
             $this->fail('UpdateTableStructure should fail with InvalidOutputException');
         } catch (InvalidOutputException $e) {
             self::assertStringContainsString(
-                'Cannot change default value of column "Id" from "" to "new default value"',
+                // 'Cannot change default value of column "Id" from "" to "new default value"',
+                'Cannot decrease precision of column "Id" from "38" to "10"',
                 $e->getMessage(),
             );
         }

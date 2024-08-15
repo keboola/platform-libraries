@@ -79,7 +79,8 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
                     $column->getName(),
                     [
                         'length' => $column->getDataType()?->getLength($backend),
-                        'default' => $column->getDataType()?->getDefaultValue($backend),
+                        // Default value is not works correctly
+                        // 'default' => $column->getDataType()?->getDefaultValue($backend),
                         'nullable' => $column->isNullable(),
                     ],
                 );

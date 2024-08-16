@@ -23,7 +23,10 @@ class FailedLoadTableDecider
         }
         $metadata = $tableInfo['metadata'];
         if ($tableInfo['isTyped']) {
-            $metadata = array_filter($metadata, fn($m) => $m['key'] !== 'KBC.dataTypesEnabled');
+            $metadata = array_filter(
+                $metadata,
+                fn($m) => $m['key'] !== 'KBC.dataTypesEnabled' || $m['provider'] !== 'storage',
+            );
         }
 
         if ($task->isUsingFreshlyCreatedTable() && // most important

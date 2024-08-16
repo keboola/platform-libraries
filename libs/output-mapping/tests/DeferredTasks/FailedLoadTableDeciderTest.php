@@ -54,6 +54,21 @@ class FailedLoadTableDeciderTest extends TestCase
             'freshlyCreated' => true,
             'expectedResult' => false,
         ];
+        yield 'typed table fresh and KBC.dataTypesEnabled metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => true,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.dataTypesEnabled',
+                        'value' => true,
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => true,
+        ];
         yield 'typed table fresh and storage metadata' => [
             'tableInfo' => [
                 'rowsCount' => 0,
@@ -72,7 +87,7 @@ class FailedLoadTableDeciderTest extends TestCase
                 ],
             ],
             'freshlyCreated' => true,
-            'expectedResult' => true,
+            'expectedResult' => false,
         ];
         yield 'typed table fresh and user metadata' => [
             'tableInfo' => [

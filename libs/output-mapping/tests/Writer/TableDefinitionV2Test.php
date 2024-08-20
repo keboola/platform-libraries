@@ -764,6 +764,69 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testDropTypedTableFailedImportData(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.table';
+        $config = [
+            'source' => 'table.csv',
+            'destination' => $tableId,
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'NUMERIC',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table.csv',
+            <<< EOT
+            "1","bob","firtFoo"
+            "2","alice","secondFoo"
+            EOT,
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [$config],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
+        );
+
+        try {
+            $tableQueue->waitForAll();
+            $this->fail('Job should fail');
+        } catch (InvalidOutputException $e) {
+            self::assertStringContainsString('Failed to load table', $e->getMessage());
+        }
+
+        self::assertTrue(
+            $this->testHandler->hasWarning(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
+        );
+
+        self::assertFalse($this->clientWrapper->getBasicClient()->tableExists($tableId));
+    }
+
     public function conflictsConfigurationWithManifestProvider(): Generator
     {
         yield 'conflict-columns' => [

@@ -288,12 +288,13 @@ class TableStructureValidator
             }
 
             $schemaColumn = current($schemaColumn);
-            $tableColumnDefault = $column['definition']['default'] ?? null;
 
-            $hasDefaultValueChanged = false;
-            if ($schemaColumn->getDataType()?->getDefaultValue($bucketBackend) !== $tableColumnDefault) {
-                $hasDefaultValueChanged = true;
-            }
+            // Default value is not works correctly
+            // $tableColumnDefault = $column['definition']['default'] ?? null;
+            // $hasDefaultValueChanged = false;
+            // if ($schemaColumn->getDataType()?->getDefaultValue($bucketBackend) !== $tableColumnDefault) {
+            //     $hasDefaultValueChanged = true;
+            // }
 
             $hasNullableChanged = false;
             if ($schemaColumn->isNullable() !== $column['definition']['nullable']) {
@@ -306,7 +307,7 @@ class TableStructureValidator
                 $hasLengthChanged = true;
             }
 
-            if ($hasDefaultValueChanged || $hasNullableChanged || $hasLengthChanged) {
+            if (/* $hasDefaultValueChanged || */$hasNullableChanged || $hasLengthChanged) {
                 $tableChangesStore->addColumnAttributeChanges($schemaColumn);
             }
         }

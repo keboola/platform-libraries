@@ -34,9 +34,10 @@ class TableDefinitionFromSchemaColumn
             if (!$this->column->isNullable()) {
                 $definition['nullable'] = false;
             }
-            if ($dataType->getDefaultValue($this->backend) !== null) {
-                $definition['default'] = $dataType->getDefaultValue($this->backend);
-            }
+            // Default value is not works correctly
+            // if ($dataType->getDefaultValue($this->backend) !== null) {
+            //    $definition['default'] = $dataType->getDefaultValue($this->backend);
+            // }
 
             if ($definition && !isset($definition['type'])) {
                 $definition['type'] = $dataType->getTypeName($this->backend);

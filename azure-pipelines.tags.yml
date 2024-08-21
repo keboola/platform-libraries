@@ -70,6 +70,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/slicer
+    - repository: doctrine-retry-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/doctrine-retry-bundle
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -196,3 +200,11 @@ jobs:
       targetRepo: slicer
       libraryPath: libs/slicer
       tagPrefix: slicer/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/doctrine-retry-bundle/')
+      sourceRepo: platform-libraries
+      targetRepo: doctrine-retry-bundle
+      libraryPath: libs/doctrine-retry-bundle
+      tagPrefix: doctrine-retry-bundle/

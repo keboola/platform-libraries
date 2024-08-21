@@ -1,5 +1,3 @@
-version: "3.4"
-
 services:
   mockserver:
     image: mockserver/mockserver:5.13.2
@@ -143,3 +141,37 @@ services:
   dev-logging-bundle:
     <<: *dev
     working_dir: /code/libs/logging-bundle
+
+  mysql:
+    platform: linux/x86_64
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_DATABASE=testdatabase
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "13306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 60s
+      retries: 10
+  
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy
+    depends_on:
+      - mysql
+
+  dev-doctrine-retry-bundle:
+    <<: *dev82
+    image: keboola/doctrine-retry-bundle
+    working_dir: /code/libs/doctrine-retry-bundle
+    environment:
+      TEST_DATABASE_URL: mysql://root:root@mysql:3306/testdatabase
+    depends_on:
+      toxiproxy:
+        condition: service_started
+
+volumes:
+  mysql_data:

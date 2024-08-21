@@ -12,10 +12,11 @@ ENV COMPOSER_ALLOW_SUPERUSER 1
 
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
+COPY docker/wait-for-it.sh /usr/local/bin/
 
 RUN apt update -q \
  && apt install -y --no-install-recommends git zip unzip libzip4 libzip-dev zlib1g-dev \
- && docker-php-ext-install pcntl zip \
+ && docker-php-ext-install pdo_mysql pcntl zip \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 

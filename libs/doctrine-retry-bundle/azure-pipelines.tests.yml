@@ -1,0 +1,7 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: doctrine_retry_bundle_tests
+      displayName: Doctrine Retry Bundle Tests
+      serviceName: dev-doctrine-retry-bundle
+      testCommand: bash -c 'composer install && composer ci'

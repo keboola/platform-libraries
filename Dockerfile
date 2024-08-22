@@ -5,7 +5,7 @@ ARG XDEBUG_VERSION="-3.1.6"
 
 FROM php:${PHP_VERSION}-cli as dev
 
-ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractivef
 ARG XDEBUG_VERSION
 ENV COMPOSER_FLAGS="--prefer-dist --no-interaction"
 ENV COMPOSER_ALLOW_SUPERUSER 1
@@ -15,7 +15,7 @@ COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 
 RUN apt update -q \
  && apt install -y --no-install-recommends git zip unzip libzip4 libzip-dev zlib1g-dev \
- && docker-php-ext-install pcntl zip \
+ && docker-php-ext-install pdo_mysql pcntl zip \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 

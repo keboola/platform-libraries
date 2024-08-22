@@ -1,0 +1,61 @@
+{
+    "name": "keboola/doctrine-retry-bundle",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "description": "Doctrine Retry Bundle",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "doctrine/dbal": "^3.3",
+        "doctrine/doctrine-bundle": "^2.1",
+        "keboola/retry": "^0.5.0",
+        "symfony/dependency-injection": "^6.4",
+        "symfony/http-kernel": "^6.4"
+    },
+    "require-dev": {
+        "ext-pdo": "*",
+        "ihsw/toxiproxy-php-client": "^2.0",
+        "keboola/coding-standard": "^15.0",
+        "monolog/monolog": "^2.3",
+        "phpstan/phpstan": "^1.4",
+        "phpstan/phpstan-phpunit": "^1.0",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Keboola\\DoctrineRetryBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\DoctrineRetryBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "lock": false,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "phpunit": "phpunit",
+        "phpstan": "phpstan analyse",
+        "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+        "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
+        "build": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@phpcs",
+            "@phpstan",
+            "@phpunit"
+        ],
+        "ci": [
+            "@build"
+        ]
+    }
+}

@@ -172,6 +172,8 @@ services:
     depends_on:
       toxiproxy:
         condition: service_started
+      mysql:
+        condition: service_healthy        
 
 volumes:
   mysql_data:

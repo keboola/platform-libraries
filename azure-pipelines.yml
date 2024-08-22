@@ -22,6 +22,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/configuration-variables-resolver
+    - repository: doctrine-retry-bundle
+      type: github
+      endpoint: keboola
+      name: keboola/doctrine-retry-bundle      
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -58,6 +62,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/settle
+    - repository: slicer
+      type: github
+      endpoint: keboola
+      name: keboola/slicer      
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -66,14 +74,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
-    - repository: slicer
-      type: github
-      endpoint: keboola
-      name: keboola/slicer
-    - repository: doctrine-retry-bundle
-      type: github
-      endpoint: keboola
-      name: keboola/doctrine-retry-bundle
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -92,6 +92,7 @@ stages:
                 apiBundle:libs/api-bundle \
                 azureApiClient:libs/azure-api-client \
                 configurationVariablesResolver:libs/configuration-variables-resolver \
+                doctrineRetryBundle:libs/doctrine-retry-bundle \
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
                 loggingBundle:libs/logging-bundle \
@@ -101,10 +102,9 @@ stages:
                 sandboxesServiceApiClient:libs/sandboxes-service-api-client \
                 serviceClient:libs/service-client \
                 settle:libs/settle \
-                stagingProvider:libs/staging-provider \
-                vaultApiClient:libs/vault-api-client \
                 slicer:libs/slicer \
-                doctrineRetryBundle:libs/doctrine-retry-bundle
+                stagingProvider:libs/staging-provider \
+                vaultApiClient:libs/vault-api-client
             displayName: 'Find changes'
             name: findChanges
 
@@ -144,6 +144,14 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_configurationVariablesResolver'])
     jobs:
       - template: libs/configuration-variables-resolver/azure-pipelines.tests.yml
+
+  - stage: tests_doctrineRetryBundle
+    displayName: Tests - Doctrine Retry Bundle
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_doctrineRetryBundle'])
+    jobs:
+      - template: libs/doctrine-retry-bundle/azure-pipelines.tests.yml
 
   - stage: tests_inputMapping
     displayName: Tests - Input Mapping
@@ -217,6 +225,14 @@ stages:
     jobs:
       - template: libs/settle/azure-pipelines.tests.yml
 
+  - stage: tests_slicer
+    displayName: Tests - Slicer
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_slicer'])
+    jobs:
+      - template: libs/slicer/azure-pipelines.tests.yml
+
   - stage: tests_stagingProvider
     displayName: Tests - Staging Provider
     lockBehavior: sequential
@@ -233,22 +249,6 @@ stages:
     jobs:
       - template: libs/vault-api-client/azure-pipelines.tests.yml
 
-  - stage: tests_slicer
-    displayName: Tests - Slicer
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_slicer'])
-    jobs:
-      - template: libs/slicer/azure-pipelines.tests.yml
-
-  - stage: tests_doctrineRetryBundle
-    displayName: Tests - Doctrine Retry Bundle
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_doctrineRetryBundle'])
-    jobs:
-      - template: libs/doctrine-retry-bundle/azure-pipelines.tests.yml
-
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -256,6 +256,7 @@ stages:
       - tests_apiBundle
       - tests_azureApiClient
       - tests_configurationVariablesResolver
+      - tests_doctrineRetryBundle
       - tests_inputMapping
       - tests_k8sClient
       - tests_loggingBundle
@@ -265,15 +266,15 @@ stages:
       - tests_sandboxesServiceApiClient
       - tests_serviceClient
       - tests_settle
+      - tests_slicer
       - tests_stagingProvider
       - tests_vaultApiClient
-      - tests_slicer
-      - tests_doctrineRetryBundle
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_azureApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_configurationVariablesResolver.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_doctrineRetryBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_inputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
@@ -283,10 +284,9 @@ stages:
         in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_serviceClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_doctrineRetryBundle.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -321,6 +321,14 @@ stages:
           targetRepo: configuration-variables-resolver
           libraryPath: libs/configuration-variables-resolver
           tagPrefix: configuration-variables-resolver/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_doctrineRetryBundle'])
+          sourceRepo: platform-libraries
+          targetRepo: doctrine-retry-bundle
+          libraryPath: libs/doctrine-retry-bundle
+          tagPrefix: doctrine-retry-bundle/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
@@ -396,6 +404,14 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_slicer'])
+          sourceRepo: platform-libraries
+          targetRepo: slicer
+          libraryPath: libs/slicer
+          tagPrefix: slicer/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_stagingProvider'])
           sourceRepo: platform-libraries
           targetRepo: staging-provider
@@ -409,19 +425,3 @@ stages:
           targetRepo: vault-api-php-client
           libraryPath: libs/vault-api-client
           tagPrefix: vault-api-client/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_slicer'])
-          sourceRepo: platform-libraries
-          targetRepo: slicer
-          libraryPath: libs/slicer
-          tagPrefix: slicer/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_doctrineRetryBundle'])
-          sourceRepo: platform-libraries
-          targetRepo: doctrine-retry-bundle
-          libraryPath: libs/doctrine-retry-bundle
-          tagPrefix: doctrine-retry-bundle/

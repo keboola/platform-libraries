@@ -39,6 +39,11 @@ class PermissionCheckerTest extends TestCase
             {
                 return [];
             }
+
+            public function getProjectId(): string
+            {
+                return '123';
+            }
         };
 
         $expectedInternalToken = StorageApiToken::fromTokenInterface($token);

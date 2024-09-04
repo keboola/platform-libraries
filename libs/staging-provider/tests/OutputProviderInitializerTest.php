@@ -13,8 +13,9 @@ use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StagingProvider\OutputProviderInitializer;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
-use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -37,14 +38,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::LOCAL, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::LOCAL,
@@ -75,14 +77,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_REDSHIFT, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_REDSHIFT,
@@ -128,14 +131,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
@@ -181,14 +185,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SYNAPSE, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_SYNAPSE,
@@ -257,14 +262,15 @@ class OutputProviderInitializerTest extends TestCase
         $configuration->setComponentId('keboola.runner-workspace-abs-test');
         $components->addConfiguration($configuration);
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            $components,
-            new Workspaces($stagingFactory->getClientWrapper()->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+            new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_ABS, null, null),
             'keboola.runner-workspace-abs-test',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_ABS,
@@ -311,14 +317,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_EXASOL, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_EXASOL,
@@ -365,14 +372,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_TERADATA, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_TERADATA,
@@ -420,14 +428,15 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $providerFactory = new ComponentWorkspaceProviderFactory(
-            new Components($clientWrapper->getBasicClient()),
+        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
+            new Components($clientWrapper->getBasicClient()),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_BIGQUERY, null, null),
             'my-test-component',
             'my-test-config',
-            new WorkspaceBackendConfig(null),
         );
-        $init = new OutputProviderInitializer($stagingFactory, $providerFactory, '/tmp/random/data');
+        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
             AbstractStrategyFactory::WORKSPACE_BIGQUERY,

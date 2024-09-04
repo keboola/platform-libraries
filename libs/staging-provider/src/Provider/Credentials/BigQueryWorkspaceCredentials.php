@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\WorkspaceProviderFactory\Credentials;
+namespace Keboola\StagingProvider\Provider\Credentials;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Throwable;

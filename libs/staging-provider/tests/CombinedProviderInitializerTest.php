@@ -11,8 +11,9 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\OutputProviderInitializer;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ComponentWorkspaceProviderFactory;
-use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Workspaces;
@@ -46,19 +47,20 @@ class CombinedProviderInitializerTest extends TestCase
         $workspacesApi = new Workspaces($clientWrapper->getBasicClient());
 
         try {
-            $providerFactory = new ComponentWorkspaceProviderFactory(
-                $componentsApi,
+            $workspaceStagingProvider = new NewWorkspaceStagingProvider(
                 $workspacesApi,
+                $componentsApi,
+                new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null),
                 $componentId,
                 $configId,
-                new WorkspaceBackendConfig(null),
             );
+            $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
 
             $inputStagingFactory = new InputStrategyFactory($clientWrapper, $logger, 'json');
             $inputInitializer = new InputProviderInitializer(
                 $inputStagingFactory,
-                $providerFactory,
-                '/tmp/random/data',
+                $workspaceStagingProvider,
+                $localStagingProvider,
             );
             $inputInitializer->initializeProviders(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
@@ -70,8 +72,8 @@ class CombinedProviderInitializerTest extends TestCase
             $outputStagingFactory = new OutputStrategyFactory($clientWrapper, $logger, 'json');
             $outputInitializer = new OutputProviderInitializer(
                 $outputStagingFactory,
-                $providerFactory,
-                '/tmp/random/data',
+                $workspaceStagingProvider,
+                $localStagingProvider,
             );
             $outputInitializer->initializeProviders(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,

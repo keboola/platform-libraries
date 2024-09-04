@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\WorkspaceProviderFactory\Credentials;
+namespace Keboola\StagingProvider\Provider\Credentials;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Throwable;
 
-class ABSWorkspaceCredentials implements CredentialsInterface
+class DatabaseWorkspaceCredentials implements CredentialsInterface
 {
-    private function __construct(private readonly string $connectionString)
+    private function __construct(private readonly string $password)
     {
     }
 
     public static function fromPasswordResetArray(array $credentials): self
     {
-        // This reads the response from the password reset endpoint for ABS backend
+        // This reads the response from the password reset endpoint for Redshift/Snowflake/Synapse backend
         // https://keboola.docs.apiary.io/#reference/workspaces/password-reset/password-reset
         try {
             return new self(
-                $credentials['connectionString'],
+                $credentials['password'],
             );
         } catch (Throwable $e) {
             throw new StagingProviderException(
                 sprintf(
-                    'Invalid password reset response for ABS backend "%s" - keys: %s',
+                    'Invalid password reset response for DB backend "%s" - keys: %s',
                     $e->getMessage(),
                     implode((array) json_encode(array_keys($credentials))),
                 ),
@@ -36,6 +36,6 @@ class ABSWorkspaceCredentials implements CredentialsInterface
 
     public function toArray(): array
     {
-        return ['connectionString' => $this->connectionString];
+        return ['password' => $this->password];
     }
 }

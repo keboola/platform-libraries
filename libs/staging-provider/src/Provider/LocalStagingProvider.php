@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
+use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Staging\LocalStaging;
 
-/**
- * @extends AbstractStagingProvider<LocalStaging>
- */
-class LocalStagingProvider extends AbstractStagingProvider
+readonly class LocalStagingProvider implements ProviderInterface
 {
-    /**
-     * @param callable(): LocalStaging $stagingGetter
-     */
-    public function __construct(callable $stagingGetter)
+    public function __construct(private string $path)
     {
-        parent::__construct($stagingGetter);
     }
 
     public function getWorkspaceId(): string
@@ -32,7 +25,7 @@ class LocalStagingProvider extends AbstractStagingProvider
 
     public function getPath(): string
     {
-        return $this->getStaging()->getPath();
+        return $this->path;
     }
 
     public function cleanup(): void

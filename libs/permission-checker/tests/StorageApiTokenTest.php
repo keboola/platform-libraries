@@ -101,6 +101,11 @@ class StorageApiTokenTest extends TestCase
             {
                 return ['canCreateJobs', 'canManageBuckets'];
             }
+
+            public function getProjectId(): string
+            {
+                return '123';
+            }
         });
 
         self::assertTrue($token->hasFeature(Feature::QUEUE_V2));
@@ -111,5 +116,16 @@ class StorageApiTokenTest extends TestCase
         self::assertTrue($token->hasPermission(TokenPermission::CAN_CREATE_JOBS));
         self::assertFalse($token->hasPermission(TokenPermission::CAN_MANAGE_TOKENS));
         self::assertSame([TokenPermission::CAN_CREATE_JOBS], $token->getPermissions());
+        self::assertTrue($token->isForProject('123'));
+        self::assertFalse($token->isForProject('456'));
+    }
+
+    public function testIsForProject(): void
+    {
+        $token = new StorageApiToken(
+            projectId: '123',
+        );
+        self::assertTrue($token->isForProject('123'));
+        self::assertFalse($token->isForProject('456'));
     }
 }

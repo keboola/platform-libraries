@@ -13,6 +13,7 @@ class StorageApiToken
         private readonly ?string $role = null,
         private readonly ?array $allowedComponents = null,
         private readonly array $permissions = [],
+        private readonly ?string $projectId = null,
     ) {
     }
 
@@ -23,6 +24,7 @@ class StorageApiToken
             $token->getRole(),
             $token->getAllowedComponents(),
             $token->getPermissions(),
+            $token->getProjectId(),
         );
     }
 
@@ -75,5 +77,10 @@ class StorageApiToken
     public function hasPermission(TokenPermission $permission): bool
     {
         return in_array($permission, $this->getPermissions());
+    }
+
+    public function isForProject(string $projectId): bool
+    {
+        return $this->projectId === $projectId;
     }
 }

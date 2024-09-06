@@ -71,6 +71,7 @@ abstract class BaseConfiguration extends Configuration
                 ->end()
                 ->arrayNode('column_metadata')
                     ->useAttributeAsKey('name')
+                    ->normalizeKeys(false)
                     ->prototype('array')
                         ->prototype('array')
                             ->children()

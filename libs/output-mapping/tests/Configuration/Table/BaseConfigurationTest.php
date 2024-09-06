@@ -629,6 +629,40 @@ class BaseConfigurationTest extends TestCase
         );
     }
 
+    public function testTurnOffNormalizeColumnMetadataKeys(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'column_metadata' => [
+                'phone - client' => [
+                    [
+                        'key' => 'testKey',
+                        'value' => 'testValue',
+                    ],
+                ],
+            ],
+            'incremental' => false,
+            'primary_key' => [],
+            'columns' => [
+                'phone - client',
+            ],
+            'distribution_key' => [],
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            $config,
+        );
+    }
+
     private function testManifestAndConfig(
         array $config,
         array $expectedConfig,

@@ -33,7 +33,6 @@ class DataMapper
         int $errorCode,
         bool $enableFlexibleCasting = false,
         bool $enableExtraKeys = false,
-        bool $allowPermissiveTypes = false,
     ): object {
         $mapperBuilder = $this->mapperBuilder;
         if ($enableFlexibleCasting) {
@@ -42,9 +41,7 @@ class DataMapper
         if ($enableExtraKeys) {
             $mapperBuilder = $mapperBuilder->allowSuperfluousKeys();
         }
-        if ($allowPermissiveTypes) {
-            $mapperBuilder = $mapperBuilder->allowPermissiveTypes();
-        }
+        $mapperBuilder = $mapperBuilder->allowPermissiveTypes();
 
         try {
             $object = $mapperBuilder->mapper()->map($objectType, $data);

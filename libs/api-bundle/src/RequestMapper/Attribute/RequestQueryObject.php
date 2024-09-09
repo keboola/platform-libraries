@@ -11,7 +11,6 @@ class RequestQueryObject implements RequestMapperAttributeInterface
 {
     public function __construct(
         public readonly bool $allowExtraKeys = true,
-        public readonly bool $allowPermissiveTypes = false,
     ) {
     }
 }

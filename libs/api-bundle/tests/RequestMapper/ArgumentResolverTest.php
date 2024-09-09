@@ -189,7 +189,7 @@ class ArgumentResolverTest extends TestCase
             content: '{"foo": "bar"}',
         );
 
-        $data = new RequestData(name: 'my name');
+        $data = new RequestData(name: 'my name', config: null);
 
         $dataMapper = $this->createMock(DataMapper::class);
         $dataMapper->expects(self::once())
@@ -247,7 +247,7 @@ class ArgumentResolverTest extends TestCase
             ],
         );
 
-        $data = new RequestData(name: 'my name');
+        $data = new RequestData(name: 'my name', config: null);
 
         $dataMapper = $this->createMock(DataMapper::class);
         $dataMapper->expects(self::once())

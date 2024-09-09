@@ -189,7 +189,7 @@ class ArgumentResolverTest extends TestCase
             content: '{"foo": "bar"}',
         );
 
-        $data = new RequestData(name: 'my name');
+        $data = new RequestData(name: 'my name', config: null);
 
         $dataMapper = $this->createMock(DataMapper::class);
         $dataMapper->expects(self::once())
@@ -223,7 +223,6 @@ class ArgumentResolverTest extends TestCase
                 }
             },
             'extraKeysEnabled' => true,
-            'allowPermissiveTypes' => false,
         ];
 
         yield 'disallow extra keys' => [
@@ -234,18 +233,6 @@ class ArgumentResolverTest extends TestCase
                 }
             },
             'extraKeysEnabled' => false,
-            'allowPermissiveTypes' => false,
-        ];
-
-        yield 'allow permissive types' => [
-            'controller' => new class {
-                public function __invoke(
-                    #[RequestQueryObject(allowPermissiveTypes: true)] RequestData $data,
-                ): void {
-                }
-            },
-            'extraKeysEnabled' => true,
-            'allowPermissiveTypes' => true,
         ];
     }
 
@@ -253,7 +240,6 @@ class ArgumentResolverTest extends TestCase
     public function testValidQueryRequest(
         object $controller,
         bool $extraKeysEnabled,
-        bool $allowPermissiveTypes,
     ): void {
         $request = new Request(
             query: [
@@ -261,7 +247,7 @@ class ArgumentResolverTest extends TestCase
             ],
         );
 
-        $data = new RequestData(name: 'my name');
+        $data = new RequestData(name: 'my name', config: null);
 
         $dataMapper = $this->createMock(DataMapper::class);
         $dataMapper->expects(self::once())
@@ -273,7 +259,6 @@ class ArgumentResolverTest extends TestCase
                 Response::HTTP_BAD_REQUEST,
                 true,
                 $extraKeysEnabled,
-                $allowPermissiveTypes,
             )
             ->willReturn($data)
         ;

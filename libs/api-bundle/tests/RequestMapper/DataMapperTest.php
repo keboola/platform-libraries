@@ -17,11 +17,13 @@ class DataMapperTest extends TestCase
         yield 'valid data' => [
             'data' => [
                 'name' => 'my name',
+                'config' => null,
             ],
             'enableFlexibleCasting' => false,
             'enableExtraKeys' => false,
             'result' => new RequestData(
                 name: 'my name',
+                config: null,
             ),
         ];
 
@@ -29,22 +31,52 @@ class DataMapperTest extends TestCase
             'data' => [
                 'name' => 'my name',
                 'foo' => 'bar',
+                'config' => null,
             ],
             'enableFlexibleCasting' => false,
             'enableExtraKeys' => true,
             'result' => new RequestData(
                 name: 'my name',
+                config: null,
             ),
         ];
 
         yield 'enabled casting' => [
             'data' => [
                 'name' => 1,
+                'config' => null,
             ],
             'enableFlexibleCasting' => true,
             'enableExtraKeys' => false,
             'result' => new RequestData(
                 name: '1',
+                config: null,
+            ),
+        ];
+
+        yield 'valid array' => [
+            'data' => [
+                'name' => 'array',
+                'config' => ['foo' => 'bar'],
+            ],
+            'enableFlexibleCasting' => false,
+            'enableExtraKeys' => false,
+            'result' => new RequestData(
+                name: 'array',
+                config: ['foo' => 'bar'],
+            ),
+        ];
+
+        yield 'empty array' => [
+            'data' => [
+                'name' => 'array',
+                'config' => [],
+            ],
+            'enableFlexibleCasting' => false,
+            'enableExtraKeys' => false,
+            'result' => new RequestData(
+                name: 'array',
+                config: [],
             ),
         ];
     }
@@ -80,6 +112,7 @@ class DataMapperTest extends TestCase
         yield 'failing type mapping when casting disabled' => [
             'data' => [
                 'name' => 1,
+                'config' => null,
             ],
             'enableFlexibleCasting' => false,
             'enableExtraKeys' => false,
@@ -94,6 +127,7 @@ class DataMapperTest extends TestCase
         yield 'failing type mapping when casting enabled' => [
             'data' => [
                 'name' => [],
+                'config' => [],
             ],
             'enableFlexibleCasting' => true,
             'enableExtraKeys' => false,
@@ -109,13 +143,14 @@ class DataMapperTest extends TestCase
             'data' => [
                 'name' => 'my name',
                 'foo' => 'bar',
+                'config' => [],
             ],
             'enableFlexibleCasting' => false,
             'enableExtraKeys' => false,
             'errorContext' => [
                 [
                     'path' => '*root*',
-                    'message' => 'Unexpected key(s) `foo`, expected `name`.',
+                    'message' => 'Unexpected key(s) `foo`, expected `name`, `config`.',
                 ],
             ],
         ];
@@ -123,6 +158,7 @@ class DataMapperTest extends TestCase
         yield 'failing validation' => [
             'data' => [
                 'name' => 'my name longer than allowed',
+                'config' => [],
             ],
             'enableFlexibleCasting' => false,
             'enableExtraKeys' => false,

@@ -11,6 +11,7 @@ class RequestData
     public function __construct(
         #[Assert\Length(min: 1, max: 16)]
         public readonly string $name,
+        public readonly ?array $config,
     ) {
     }
 }

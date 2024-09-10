@@ -22,6 +22,9 @@ class Result
         $this->tables[] = $table;
     }
 
+    /**
+     * @return Generator<TableInfo>
+     */
     public function getTables(): Generator
     {
         foreach ($this->tables as $table) {

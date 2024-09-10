@@ -15,7 +15,7 @@ class CanManageAppTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $appId = '1';
+        $appId = 1;
         $projectId = '123'; // app project id is the same as token project id
 
         $checker = new CanManageApp($appId, $projectId);
@@ -24,7 +24,7 @@ class CanManageAppTest extends TestCase
 
     public function testDenyManageApp(): void
     {
-        $appId = '1';
+        $appId = 1;
         $appProjectId = '456';
         $tokenProjectId = '123';
 

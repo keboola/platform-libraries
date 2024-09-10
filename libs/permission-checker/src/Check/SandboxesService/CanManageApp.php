@@ -11,7 +11,7 @@ use Keboola\PermissionChecker\StorageApiToken;
 class CanManageApp implements PermissionCheckInterface
 {
     public function __construct(
-        private readonly string $appId,
+        private readonly int $appId,
         private readonly string $appProjectId,
     ) {
     }

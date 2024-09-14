@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory\Configuration;
+namespace Keboola\StagingProvider\Tests\Provider\Configuration;
 
 use Generator;
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\WorkspaceProviderFactory\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use PHPUnit\Framework\TestCase;
 
 class WorkspaceBackendConfigTest extends TestCase

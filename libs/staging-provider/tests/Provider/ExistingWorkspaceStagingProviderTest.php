@@ -141,7 +141,7 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
             $workspaceId,
             DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
         );
-        // the workspace is cleaned event if "not initialized" (no getWorkspaceId called)
+        // the workspace is cleaned even if "not initialized" (no getWorkspaceId called)
         $workspaceProvider->cleanup();
     }
 

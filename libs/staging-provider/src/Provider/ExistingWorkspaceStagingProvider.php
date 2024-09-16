@@ -20,7 +20,7 @@ class ExistingWorkspaceStagingProvider extends AbstractWorkspaceProvider
 
     protected function getWorkspace(): StorageApiWorkspace
     {
-        if (empty($this->workspace)) {
+        if (!isset($this->workspace)) {
             // getWorkspace returns workspace without credentials, these are supplied from the outside and merged
             $data = $this->workspacesApiClient->getWorkspace((int) $this->workspaceId);
             $data['connection'] = array_merge($data['connection'], $this->credentials->toArray());

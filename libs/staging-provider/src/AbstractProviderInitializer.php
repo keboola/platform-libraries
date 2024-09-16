@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
+use Keboola\StagingProvider\Provider\AbstractWorkspaceProvider;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
 
 abstract class AbstractProviderInitializer
 {
     public function __construct(
         private readonly AbstractStrategyFactory $stagingFactory,
-        private readonly ProviderInterface $workspaceStagingProvider,
-        private readonly ProviderInterface $localStagingProvider,
+        private readonly AbstractWorkspaceProvider $workspaceStagingProvider,
+        private readonly LocalStagingProvider $localStagingProvider,
     ) {
     }
 

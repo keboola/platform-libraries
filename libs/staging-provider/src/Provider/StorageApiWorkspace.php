@@ -11,6 +11,7 @@ readonly class StorageApiWorkspace
 {
     public function __construct(
         public string $id,
+        public string $backend,
         public ?string $backendSize,
         /** @var array{
          *     host?: string,
@@ -51,7 +52,7 @@ readonly class StorageApiWorkspace
                     'schema' => $data['connection']['schema'],
                     'user' => $data['connection']['user'],
                     'password' => $data['connection']['password'],
-                    'account' => self::parseAccount($data['connection']['host']),
+                    'account' => self::parseSnowflakeAccount($data['connection']['host']),
                 ],
                 'abs' => [
                     'container' => $data['connection']['container'],
@@ -70,6 +71,7 @@ readonly class StorageApiWorkspace
         }
         return new self(
             (string) $data['id'],
+            $data['connection']['backend'],
             $data['backendSize'],
             $connection,
         );
@@ -81,7 +83,7 @@ readonly class StorageApiWorkspace
      * Based on how Snowflake Python Connector handles account resolution.
      * https://github.com/snowflakedb/snowflake-connector-python/blob/main/src/snowflake/connector/util_text.py#L242
      */
-    private static function parseAccount(string $host): string
+    private static function parseSnowflakeAccount(string $host): string
     {
         $hostParts = explode('.', $host);
 

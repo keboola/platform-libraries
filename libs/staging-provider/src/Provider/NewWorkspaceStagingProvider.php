@@ -23,7 +23,7 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
 
     protected function getWorkspace(): StorageApiWorkspace
     {
-        if (empty($this->workspace)) {
+        if (!isset($this->workspace)) {
             $options = ['backend' => $this->workspaceBackendConfig->getStorageApiWorkspaceType()];
             if ($this->workspaceBackendConfig->getStorageApiWorkspaceSize() !== null) {
                 $options['backendSize'] = $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
@@ -32,7 +32,7 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
                 $options['readOnlyStorageAccess'] = $this->workspaceBackendConfig->getUseReadonlyRole();
             }
 
-            if ($this->configId) {
+            if ($this->configId !== null) {
                 // workspace tied to a component and configuration
                 $data = $this->componentsApiClient->createConfigurationWorkspace(
                     $this->componentId,
@@ -51,7 +51,7 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
 
     public function cleanup(): void
     {
-        if (!empty($this->workspace)) {
+        if (isset($this->workspace)) {
             $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);
         }
     }

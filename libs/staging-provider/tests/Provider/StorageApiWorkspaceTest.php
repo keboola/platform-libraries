@@ -15,11 +15,13 @@ class StorageApiWorkspaceTest extends TestCase
     public function testFromDataArray(
         array $input,
         string $expectedId,
+        string $expectedBackend,
         ?string $expectedBackendSize,
         array $expectedCredentials,
     ): void {
         $workspace = StorageApiWorkspace::fromDataArray($input);
         self::assertSame($expectedId, $workspace->id);
+        self::assertSame($expectedBackend, $workspace->backend);
         self::assertSame($expectedBackendSize, $workspace->backendSize);
         self::assertSame($expectedCredentials, $workspace->credentials);
     }
@@ -37,6 +39,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'abs',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'container' => 'some-host',
@@ -57,6 +60,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'bigquery',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'schema' => 'some-schema',
@@ -79,6 +83,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'exasol',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'host' => 'some-host',
@@ -104,6 +109,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'redshift',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'host' => 'some-host',
@@ -129,6 +135,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'snowflake',
             'expectedBackendSize' => 'large',
             'expectedCredentials' => [
                 'host' => 'some-host',
@@ -155,6 +162,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'snowflake',
             'expectedBackendSize' => 'small',
             'expectedCredentials' => [
                 'host' => 'some-host',
@@ -181,6 +189,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'synapse',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'host' => 'some-host',
@@ -206,6 +215,7 @@ class StorageApiWorkspaceTest extends TestCase
                 ],
             ],
             'expectedId' => '123456',
+            'expectedBackend' => 'teradata',
             'expectedBackendSize' => null,
             'expectedCredentials' => [
                 'host' => 'some-host',

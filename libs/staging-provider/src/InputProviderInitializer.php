@@ -6,9 +6,24 @@ namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\Scope;
+use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
+use Keboola\StagingProvider\Provider\AbstractWorkspaceProvider;
+use Keboola\StagingProvider\Provider\LocalStagingProvider;
 
 class InputProviderInitializer extends AbstractProviderInitializer
 {
+    public function __construct(
+        InputStrategyFactory $stagingFactory, // This is just to make sure the correct StrategyFactory is injected
+        private readonly AbstractWorkspaceProvider $workspaceStagingProvider,
+        private readonly LocalStagingProvider $localStagingProvider,
+    ) {
+        parent::__construct(
+            $stagingFactory,
+            $this->workspaceStagingProvider,
+            $this->localStagingProvider,
+        );
+    }
+
     public function initializeProviders(string $stagingType, array $tokenInfo): void
     {
         $this->addWorkspaceProviders($stagingType, $tokenInfo);

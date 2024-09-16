@@ -51,8 +51,8 @@ enum Service
     {
         return match ($this) {
             self::AI => 'ai-service-api.default',
-            self::BILLING => 'billing-api.buffer',
-            self::BUFFER => 'buffer-api.default',
+            self::BILLING => 'billing-api.default',
+            self::BUFFER => 'buffer-api.buffer',
             self::CONNECTION => 'connection-api.connection',
             self::ENCRYPTION => 'encryption-api.default',
             self::IMPORT => 'sapi-importer.default',

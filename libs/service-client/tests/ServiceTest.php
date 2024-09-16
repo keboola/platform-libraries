@@ -52,8 +52,8 @@ class ServiceTest extends TestCase
     public function provideInternalServiceNames(): iterable
     {
         yield 'ai' => [Service::AI, 'ai-service-api.default'];
-        yield 'billing' => [Service::BILLING, 'billing-api.buffer']; // <-- custom namespace
-        yield 'buffer' => [Service::BUFFER, 'buffer-api.default'];
+        yield 'billing' => [Service::BILLING, 'billing-api.default'];
+        yield 'buffer' => [Service::BUFFER, 'buffer-api.buffer']; // <-- custom namespace
         yield 'connection' => [Service::CONNECTION, 'connection-api.connection']; // <-- custom namespace
         yield 'data-science' => [Service::SANDBOXES_SERVICE, 'sandboxes-service-api.default'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption-api.default'];

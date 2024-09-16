@@ -28,8 +28,8 @@ class ServiceClientTest extends TestCase
     private const PUBLIC_VAULT = 'https://vault.north-europe.azure.keboola.com';
 
     private const INTERNAL_AI_SERVICE = 'http://ai-service-api.default.svc.cluster.local';
-    private const INTERNAL_BILLING_SERVICE = 'http://billing-api.buffer.svc.cluster.local';
-    private const INTERNAL_BUFFER_SERVICE = 'http://buffer-api.default.svc.cluster.local';
+    private const INTERNAL_BILLING_SERVICE = 'http://billing-api.default.svc.cluster.local';
+    private const INTERNAL_BUFFER_SERVICE = 'http://buffer-api.buffer.svc.cluster.local';
     private const INTERNAL_CONNECTION_SERVICE = 'http://connection-api.connection.svc.cluster.local';
     private const INTERNAL_DATA_SCIENCE_SERVICE = 'http://sandboxes-service-api.default.svc.cluster.local';
     private const INTERNAL_ENCRYPTION_SERVICE = 'http://encryption-api.default.svc.cluster.local';

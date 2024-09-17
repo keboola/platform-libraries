@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory\Credentials;
+namespace Keboola\StagingProvider\Tests\Provider\Credentials;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\WorkspaceProviderFactory\Credentials\BigQueryWorkspaceCredentials;
+use Keboola\StagingProvider\Provider\Credentials\BigQueryWorkspaceCredentials;
 use PHPUnit\Framework\TestCase;
 
 class BigQueryWorkspaceCredentialsTest extends TestCase

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Tests\WorkspaceProviderFactory\Credentials;
+namespace Keboola\StagingProvider\Tests\Provider\Credentials;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\WorkspaceProviderFactory\Credentials\ABSWorkspaceCredentials;
+use Keboola\StagingProvider\Provider\Credentials\ABSWorkspaceCredentials;
 use PHPUnit\Framework\TestCase;
 
 class ABSWorkspaceCredentialsTest extends TestCase

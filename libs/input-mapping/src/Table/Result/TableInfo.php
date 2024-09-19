@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Result;
 
-use Generator;
-
 class TableInfo
 {
     private string $id;
@@ -58,11 +56,9 @@ class TableInfo
         return $this->sourceTableId;
     }
 
-    public function getColumns(): Generator
+    public function getColumns(): array
     {
-        foreach ($this->columns as $column) {
-            yield $column;
-        }
+        return $this->columns;
     }
 
     public function getId(): string

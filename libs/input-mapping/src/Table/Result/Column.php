@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Result;
 
-use Generator;
-
 class Column
 {
     private string $name;
@@ -25,10 +23,11 @@ class Column
         return $this->name;
     }
 
-    public function getMetadata(): Generator
+    /**
+     * @return MetadataItem[]
+     */
+    public function getMetadata(): array
     {
-        foreach ($this->metadata as $metadatum) {
-            yield $metadatum;
-        }
+        return $this->metadata;
     }
 }

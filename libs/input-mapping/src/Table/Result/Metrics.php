@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Result;
 
-use Generator;
-
 class Metrics
 {
     /** @var TableMetrics[] */
@@ -19,12 +17,10 @@ class Metrics
     }
 
     /**
-     * @return Generator<TableMetrics>
+     * @return TableMetrics[]
      */
-    public function getTableMetrics(): Generator
+    public function getTableMetrics(): array
     {
-        foreach ($this->metrics as $metric) {
-            yield $metric;
-        }
+        return $this->metrics;
     }
 }

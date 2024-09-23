@@ -77,10 +77,25 @@ class Table extends Configuration
                 ->booleanNode('keep_internal_timestamp_column')->defaultValue(true)->end()
             ->end()
             ->validate()
-            ->ifTrue(function ($v) {
-                return empty($v['source']) && empty($v['source_search']);
-            })
-            ->thenInvalid('Either "source" or "source_search" must be configured.');
+                ->ifTrue(function ($v) {
+                    return empty($v['source']) && empty($v['source_search']);
+                })
+                ->thenInvalid('Either "source" or "source_search" must be configured.')
+            ->end()
+            ->validate()
+                ->ifTrue(fn($v) =>
+                    isset($v['where_column']) &&
+                    strlen(trim($v['where_column'])) !== 0 &&
+                    count($v['where_values']) === 0)
+                ->thenInvalid('When "where_column" is set, "where_values" must be provided.')
+            ->end()
+            ->validate()
+                ->ifTrue(fn($v) =>
+                    count($v['where_values']) > 0 &&
+                    (!isset($v['where_column']) || strlen(trim($v['where_column'])) === 0))
+                ->thenInvalid('When "where_values" is set, non-empty string in "where_column" must be provided.')
+            ->end()
+        ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
         // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
     }

@@ -47,7 +47,7 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
 
         $metrics = $result->getMetrics()?->getTableMetrics();
         self::assertNotNull($metrics);
-        self::assertCount(1, iterator_to_array($metrics));
+        self::assertCount(1, $metrics);
 
         $adapter = new Adapter();
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table;
 
-use Generator;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Result\Metrics;
 use Keboola\InputMapping\Table\Result\TableInfo;
@@ -23,13 +22,11 @@ class Result
     }
 
     /**
-     * @return Generator<TableInfo>
+     * @return TableInfo[]
      */
-    public function getTables(): Generator
+    public function getTables(): array
     {
-        foreach ($this->tables as $table) {
-            yield $table;
-        }
+        return $this->tables;
     }
 
     public function setMetrics(array $jobResults): void

@@ -39,7 +39,7 @@ class TableInfoTest extends TestCase
                 new Column('time_spent_in_shop', []),
                 new Column('number_of_items', []),
             ],
-            iterator_to_array($tableInfo->getColumns()),
+            $tableInfo->getColumns(),
         );
     }
 
@@ -51,7 +51,7 @@ class TableInfoTest extends TestCase
         $tableInfo = new TableInfo($tableInfoArray);
         self::assertEquals(
             $expected,
-            iterator_to_array($tableInfo->getColumns()),
+            $tableInfo->getColumns(),
         );
     }
 
@@ -103,7 +103,7 @@ class TableInfoTest extends TestCase
                     ]],
                 ),
             ],
-            iterator_to_array($tableInfo->getColumns()),
+            $tableInfo->getColumns(),
         );
     }
 

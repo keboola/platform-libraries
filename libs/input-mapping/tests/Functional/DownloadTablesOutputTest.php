@@ -82,13 +82,12 @@ class DownloadTablesOutputTest extends AbstractTestCase
         self::assertCount(2, $tablesResult->getInputTableStateList()->jsonSerialize());
         $tableMetrics = $tablesResult->getMetrics()?->getTableMetrics();
         self::assertNotNull($tableMetrics);
-        $metrics = iterator_to_array($tableMetrics);
-        self::assertEquals($this->firstTableId, $metrics[0]->getTableId());
-        self::assertEquals($this->secondTableId, $metrics[1]->getTableId());
-        self::assertSame(0, $metrics[0]->getUncompressedBytes());
-        self::assertGreaterThan(0, $metrics[0]->getCompressedBytes());
+        self::assertEquals($this->firstTableId, $tableMetrics[0]->getTableId());
+        self::assertEquals($this->secondTableId, $tableMetrics[1]->getTableId());
+        self::assertSame(0, $tableMetrics[0]->getUncompressedBytes());
+        self::assertGreaterThan(0, $tableMetrics[0]->getCompressedBytes());
         /** @var TableInfo[] $tables */
-        $tables = iterator_to_array($tablesResult->getTables());
+        $tables = $tablesResult->getTables();
         self::assertSame($this->firstTableId, $tables[0]->getId());
         self::assertSame($this->secondTableId, $tables[1]->getId());
         self::assertSame('test1', $tables[0]->getName());
@@ -97,10 +96,10 @@ class DownloadTablesOutputTest extends AbstractTestCase
         self::assertSame($test1TableInfo['lastImportDate'], $tables[0]->getLastImportDate());
         self::assertSame($test1TableInfo['lastChangeDate'], $tables[0]->getLastChangeDate());
         /** @var Column[] $columns */
-        $columns = iterator_to_array($tables[0]->getColumns());
+        $columns = $tables[0]->getColumns();
         self::assertSame('Id', $columns[0]->getName());
         /** @var MetadataItem[] $metadata */
-        $metadata = iterator_to_array($columns[0]->getMetadata());
+        $metadata = $columns[0]->getMetadata();
         self::assertSame('someKey', $metadata[0]->getKey());
         self::assertSame('someValue', $metadata[0]->getValue());
         self::assertSame('someProvider', $metadata[0]->getProvider());

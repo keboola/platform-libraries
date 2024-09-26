@@ -26,6 +26,11 @@ abstract class AbstractWorkspaceProvider implements ProviderInterface
         return $this->getWorkspace()->backendSize;
     }
 
+    public function getBackendType(): string
+    {
+        return $this->getWorkspace()->backend;
+    }
+
     public function getPath(): string
     {
         throw new StagingProviderException('Workspace staging provider does not support path.');

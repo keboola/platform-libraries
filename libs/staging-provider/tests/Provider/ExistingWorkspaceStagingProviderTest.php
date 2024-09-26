@@ -43,6 +43,7 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
         self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        self::assertSame('snowflake', $workspaceProvider->getBackendType());
         self::assertSame(
             [
                 'host' => 'some-host',

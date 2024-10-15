@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
+use Keboola\K8sClient\ApiClient\DeploymentsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
 use Keboola\K8sClient\ApiClient\PersistentVolumeClaimsApiClient;
@@ -62,6 +63,7 @@ class GenericClientFacadeFactory
         return new KubernetesApiClientFacade(
             $this->logger,
             new ConfigMapsApiClient($apiClient),
+            new DeploymentsApiClient($apiClient),
             new EventsApiClient($apiClient),
             new IngressesApiClient($apiClient),
             new PersistentVolumeClaimsApiClient($apiClient),

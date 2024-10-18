@@ -85,7 +85,6 @@ class TableStructureValidator
                 $schemaColumns,
                 $tableChangesStore,
             );
-            $this->validateUntypedTable($table, $schemaColumns);
         }
 
         return $tableChangesStore;
@@ -147,42 +146,6 @@ class TableStructureValidator
                     $tableColumnType,
                     $schemaColumnType,
                 );
-            }
-        }
-
-        if ($validationErrors) {
-            throw new InvalidTableStructureException(implode(' ', $validationErrors));
-        }
-    }
-
-    /**
-     * @param MappingFromConfigurationSchemaColumn[] $schemaColumns
-     */
-    private function validateUntypedTable(array $table, array $schemaColumns): void
-    {
-        $validationErrors = [];
-        foreach ($schemaColumns as $schemaColumn) {
-            if (!$schemaColumn->getDataType()) {
-                continue;
-            }
-
-            try {
-                $schemaColumn->getDataType()->getBackendTypeName($table['bucket']['backend']);
-                $this->logger->warning(sprintf(
-                    'Table "%s" is untyped, but schema has set specific backend column "%s".',
-                    $table['id'],
-                    $schemaColumn->getName(),
-                ));
-                throw new InvalidOutputException('Backend column type is not allowed.');
-            } catch (InvalidOutputException) {
-                if ($schemaColumn->getDataType()->getBaseTypeName() !== BaseType::STRING) {
-                    $validationErrors[] = sprintf(
-                        'Table "%s" is untyped, but schema column "%s" has unsupported type "%s".',
-                        $table['id'],
-                        $schemaColumn->getName(),
-                        $schemaColumn->getDataType()->getBaseTypeName(),
-                    );
-                }
             }
         }
 

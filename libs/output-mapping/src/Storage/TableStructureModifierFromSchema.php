@@ -15,7 +15,7 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
     public function updateTableStructure(BucketInfo $bucket, TableInfo $table, TableChangesStore $changesStore): void
     {
         if ($changesStore->hasMissingColumns()) {
-            $this->addColumns($table->getId(), $bucket->backend, $changesStore->getMissingColumns());
+            $this->addColumns($table, $bucket->backend, $changesStore->getMissingColumns());
         }
 
         if ($changesStore->getPrimaryKey() !== null) {
@@ -39,25 +39,27 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
         }
     }
 
-    private function addColumns(string $tableId, string $backend, array $missingColumns): void
+    private function addColumns(TableInfo $table, string $backend, array $missingColumns): void
     {
         $columnsAdded = [];
         foreach ($missingColumns as $missingColumn) {
             $columnData = new TableDefinitionFromSchemaColumn($missingColumn, $backend);
 
             $requestData = $columnData->getRequestData();
+            $definition = $requestData['definition'] ?? null;
+            $baseType = $requestData['basetype'] ?? null;
             try {
                 $this->client->addTableColumn(
-                    $tableId,
+                    $table->getId(),
                     $requestData['name'],
-                    $requestData['definition'] ?? null,
-                    $requestData['basetype'] ?? null,
+                    $table->isTyped() ? $definition : null,
+                    $table->isTyped() ? $baseType : null,
                 );
                 $columnsAdded[] = $requestData['name'];
             } catch (ClientException $e) {
                 // remove added columns
                 foreach ($columnsAdded as $item) {
-                    $this->client->deleteTableColumn($tableId, $item);
+                    $this->client->deleteTableColumn($table->getId(), $item);
                 }
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }

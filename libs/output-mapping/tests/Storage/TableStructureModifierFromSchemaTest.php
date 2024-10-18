@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
+use Keboola\Datatype\Definition\BaseType;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -100,7 +101,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         );
     }
 
-    #[NeedsTestTables(1)]
+    #[NeedsTestTables(count: 1)]
     public function testNonTypedTableAddMissingColumn(): void
     {
         $this->bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
@@ -113,6 +114,14 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         $tableChangesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
             'name' => 'newColumn',
         ]));
+        $tableChangesStore->addMissingColumn(new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn2',
+            'data_type' => [
+                'base' => [
+                    'type' => BaseType::NUMERIC,
+                ],
+            ],
+        ]));
         self::assertTrue($tableChangesStore->hasMissingColumns());
 
         $this->tableStructureModifier->updateTableStructure(
@@ -123,8 +132,8 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
 
         $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
 
-        $newColumn = array_diff($updatedTable['columns'], $this->table['columns']);
-        self::assertCount(1, $newColumn);
+        $newColumns = array_diff($updatedTable['columns'], $this->table['columns']);
+        self::assertCount(2, $newColumns);
         self::assertFalse($updatedTable['isTyped']);
 
         self::assertEquals(
@@ -134,6 +143,7 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
                 'foo',
                 'bar',
                 'newColumn',
+                'newColumn2',
             ],
             $updatedTable['columns'],
         );

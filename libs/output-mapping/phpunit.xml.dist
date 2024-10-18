@@ -19,6 +19,8 @@
             <exclude>tests/Writer/Workspace</exclude>
             <exclude>tests/Writer/TableDefinitionTest.php</exclude>
             <exclude>tests/Writer/TableDefinitionV2Test.php</exclude>
+            <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
+            <exclude>tests/Writer/StorageApiHeadlessWriterTest.php</exclude>
         </testsuite>
         <testsuite name="main-writer-tests-1">
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>

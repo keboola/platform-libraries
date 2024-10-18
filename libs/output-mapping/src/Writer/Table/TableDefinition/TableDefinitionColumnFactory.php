@@ -14,11 +14,16 @@ class TableDefinitionColumnFactory
     /**
      * @var class-string<DefinitionInterface>|null
      */
-    private ?string $nativeDatatypeClass;
+    private ?string $nativeDatatypeClass = null;
 
-    public function __construct(array $tableMetadata, string $backend)
-    {
-        $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
+    public function __construct(
+        array $tableMetadata,
+        string $backend,
+        bool $enforceBaseTypes,
+    ) {
+        if (!$enforceBaseTypes) {
+            $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
+        }
     }
 
     public function createTableDefinitionColumn(string $columnName, array $metadata): TableDefinitionColumnInterface

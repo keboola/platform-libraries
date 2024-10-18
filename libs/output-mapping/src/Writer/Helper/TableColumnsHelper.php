@@ -36,7 +36,7 @@ class TableColumnsHelper
                 }
 
                 $tableMetadata = $newTableConfiguration['metadata'] ?? [];
-                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
+                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType, false))
                     ->createTableDefinitionColumn($columnName, $columnMetadata);
 
                 $columnData = $column->toArray();

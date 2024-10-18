@@ -27,10 +27,11 @@ class TableDefinitionColumnFactoryTest extends TestCase
         array $columnMetadata,
         array $tableMetadata,
         string $backendType,
+        bool $enforceBaseTypes,
         array $expectedSerialisation,
         string $expectedTabeDefinitionColumnClass,
     ): void {
-        $columnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
+        $columnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType, $enforceBaseTypes);
         $column = $columnFactory->createTableDefinitionColumn($columnName, $columnMetadata);
         self::assertInstanceOf($expectedTabeDefinitionColumnClass, $column);
         self::assertSame($expectedSerialisation, $column->toArray());
@@ -43,6 +44,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
             'columnMetadata' => (new GenericStorage('varchar'))->toMetadata(),
             'tableMetadata' => [],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testNoDefinitionUseBaseType',
                 'basetype' => 'STRING',
@@ -60,6 +62,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testTime',
                 'definition' => [
@@ -76,6 +79,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
             'columnMetadata' => (new Snowflake('TEXT', ['nullable' => false, 'length' => '123']))->toMetadata(),
             'tableMetadata' => [],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testNativeToBaseType',
                 'basetype' => 'STRING',
@@ -93,6 +97,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testDecimalWithLength',
                 'definition' => [
@@ -114,6 +119,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
             ],
             'tableMetadata' => [],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testDecimalWithLength',
             ],
@@ -130,6 +136,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'backendType' => 'snowflake',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testTime',
                 'basetype' => 'TIMESTAMP',
@@ -147,6 +154,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'backendType' => 'bigquery',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testTime',
                 'definition' => [
@@ -168,6 +176,7 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'backendType' => 'exasol',
+            'enforceBaseTypes' => false,
             'expectedSerialisation' => [
                 'name' => 'testTime',
                 'definition' => [
@@ -177,6 +186,24 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 ],
             ],
             'expectedTabeDefinitionColumnClass' => NativeTableDefinitionColumn::class,
+        ];
+
+        yield 'bigquery with enforced base types' => [
+            'columnName' => 'testTime',
+            'columnMetadata' => (new Bigquery('TIME'))->toMetadata(),
+            'tableMetadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'bigquery',
+                ],
+            ],
+            'backendType' => 'bigquery',
+            'enforceBaseTypes' => true,
+            'expectedSerialisation' => [
+                'name' => 'testTime',
+                'basetype' => 'TIMESTAMP',
+            ],
+            'expectedTabeDefinitionColumnClass' => BaseTypeTableDefinitionColumn::class,
         ];
     }
 }

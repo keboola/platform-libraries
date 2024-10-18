@@ -74,7 +74,7 @@ class TableStructureModifier extends AbstractTableStructureModifier
                 }
 
                 $tableMetadata = $newTableConfiguration->getMetadata();
-                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
+                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType, false))
                     ->createTableDefinitionColumn($columnName, $columnMetadata);
 
                 $columnData = $column->toArray();

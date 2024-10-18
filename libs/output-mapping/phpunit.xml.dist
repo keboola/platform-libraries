@@ -14,15 +14,11 @@
 >
     <testsuites>
         <testsuite name="general-tests">
-            <directory>tests/Configuration</directory>
-            <directory>tests/DeferredTasks</directory>
-            <directory>tests/Staging</directory>
-            <directory>tests/Table</directory>
-            <directory>tests/Writer/File</directory>
-            <directory>tests/Writer/Table</directory>
-            <directory>tests/Writer/Helper</directory>
-            <directory>tests/Storage</directory>
-            <directory>tests/Mapping</directory>
+            <directory>tests</directory>
+            <exclude>tests/Writer/Redshift</exclude>
+            <exclude>tests/Writer/Workspace</exclude>
+            <exclude>tests/Writer/TableDefinitionTest.php</exclude>
+            <exclude>tests/Writer/TableDefinitionV2Test.php</exclude>
         </testsuite>
         <testsuite name="main-writer-tests-1">
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>

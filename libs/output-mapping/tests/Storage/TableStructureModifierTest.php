@@ -237,25 +237,7 @@ class TableStructureModifierTest extends AbstractTestCase
         );
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
-        $expectedTable = array_merge_recursive($this->destinationTableInfo, [
-            'columns' => [$newColumnName],
-            'definition' => [
-                'columns' => [
-                    [
-                        'name' => $newColumnName,
-                        'definition' => [
-                            'type' => 'NUMBER',
-                            'nullable' => true,
-                            'length' => '38,0',
-                        ],
-                        'basetype' => 'NUMERIC',
-                        'canBeFiltered' => true,
-                    ],
-                ],
-            ],
-        ]);
 
-        // must be validated separately because the definition columns in $newTable do not guarantee the order.
         $expectedNewColumnDefinition = [
             'name' => $newColumnName,
             'definition' => [
@@ -266,7 +248,110 @@ class TableStructureModifierTest extends AbstractTestCase
             'basetype' => 'NUMERIC',
             'canBeFiltered' => true,
         ];
+        $expectedTable = array_merge_recursive($this->destinationTableInfo, [
+            'columns' => [$newColumnName],
+            'definition' => [
+                'columns' => [
+                    $expectedNewColumnDefinition,
+                ],
+            ],
+        ]);
 
+        // must be validated separately because the definition columns in $newTable do not guarantee the order.
+        $newColumnDefinition = null;
+        foreach ($newTable['definition']['columns'] as $column) {
+            if ($column['name'] === $newColumnName) {
+                $newColumnDefinition = $column;
+                break;
+            }
+        }
+
+        self::assertSame($expectedNewColumnDefinition, $newColumnDefinition);
+
+        $this->assertEquals(
+            $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($expectedTable)),
+            $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($newTable)),
+        );
+    }
+
+    public function updateTableStructureAddColumnsFromMetadataWithNativeTypesDataProvider(): Generator
+    {
+        yield 'native types' => [
+            'enforceBaseTypes' => false,
+            'expectedLength' => '10,5',
+        ];
+        yield 'enfoced base types' => [
+            'enforceBaseTypes' => true,
+            'expectedLength' => '38,9',
+        ];
+    }
+
+    /**
+     * @dataProvider updateTableStructureAddColumnsFromMetadataWithNativeTypesDataProvider
+     */
+    #[NeedsTestTables(typedTable: true)]
+    public function testUpdateTableStructureAddColumnsFromMetadataWithNativeTypes(
+        bool $enforceBaseTypes,
+        string $expectedLength,
+    ): void {
+        $newColumnName = 'new_column';
+
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getPrimaryKey')->willReturn($this->destinationTableInfo['primaryKey']);
+        $source->method('getColumns')->willReturn([]);
+        $source->method('getMetadata')->willReturn([
+            [
+                'key' => 'KBC.datatype.backend',
+                'value' => 'snowflake',
+            ],
+        ]);
+        $source->method('getColumnMetadata')->willReturn([
+            $newColumnName => [
+                [
+                    'key' => 'KBC.datatype.type',
+                    'value' => 'NUMBER',
+                ],
+                [
+                    'key' => 'KBC.datatype.length',
+                    'value' => '10,5',
+                ],
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'NUMERIC',
+                ],
+            ],
+        ]);
+
+        $this->modifier->updateTableStructure(
+            $this->destinationBucket,
+            new TableInfo($this->destinationTableInfo),
+            $source,
+            $this->destination,
+            $enforceBaseTypes,
+        );
+
+        $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+
+        $expectedNewColumnDefinition = [
+            'name' => $newColumnName,
+            'definition' => [
+                'type' => 'NUMBER',
+                'nullable' => true,
+                'length' => $expectedLength,
+            ],
+            'basetype' => 'NUMERIC',
+            'canBeFiltered' => true,
+        ];
+        $expectedTable = array_merge_recursive($this->destinationTableInfo, [
+            'columns' => [$newColumnName],
+            'definition' => [
+                'columns' => [
+                    $expectedNewColumnDefinition,
+                ],
+            ],
+        ]);
+
+        // must be validated separately because the definition columns in $newTable do not guarantee the order.
         $newColumnDefinition = null;
         foreach ($newTable['definition']['columns'] as $column) {
             if ($column['name'] === $newColumnName) {

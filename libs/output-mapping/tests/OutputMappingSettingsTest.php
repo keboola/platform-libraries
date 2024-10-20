@@ -21,7 +21,7 @@ class OutputMappingSettingsTest extends TestCase
         $sourcePathPrefix = 'path/to/source';
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
-            ->expects(self::exactly(6))
+            ->expects(self::exactly(5))
             ->method('hasFeature')
             ->willReturn(false)
         ;
@@ -39,7 +39,6 @@ class OutputMappingSettingsTest extends TestCase
         self::assertFalse($outputMappingSettings->hasNativeTypesFeature());
         self::assertFalse($outputMappingSettings->hasNewNativeTypesFeature());
         self::assertFalse($outputMappingSettings->hasConnectionWebalizeFeature());
-        self::assertFalse($outputMappingSettings->hasBigqueryNativeTypesFeature());
 
         self::assertFalse($outputMappingSettings->isFailedJob());
 
@@ -73,10 +72,6 @@ class OutputMappingSettingsTest extends TestCase
         yield 'output-mapping-connection-webalize' => [
             OutputMappingSettings::OUTPUT_MAPPING_CONNECTION_WEBALIZE,
             'hasConnectionWebalizeFeature',
-        ];
-        yield 'bigquery-native-types' => [
-            OutputMappingSettings::BIG_QUERY_NATIVE_TYPES_FEATURE,
-            'hasBigqueryNativeTypesFeature',
         ];
     }
 

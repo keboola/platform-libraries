@@ -30,8 +30,6 @@ class OutputMappingSettings
 
     public const DATA_TYPES_SUPPORT_NONE = 'none';
 
-    public const BIG_QUERY_NATIVE_TYPES_FEATURE = 'bigquery-native-types';
-
     private StorageApiToken $storageApiToken;
 
     private bool $isFailedJob;
@@ -108,10 +106,5 @@ class OutputMappingSettings
     public function isFailedJob(): bool
     {
         return $this->isFailedJob;
-    }
-
-    public function hasBigqueryNativeTypesFeature(): bool
-    {
-        return $this->storageApiToken->hasFeature(self::BIG_QUERY_NATIVE_TYPES_FEATURE);
     }
 }

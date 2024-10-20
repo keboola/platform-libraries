@@ -17,6 +17,7 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
@@ -183,11 +184,17 @@ class TableLoader
             $source->hasColumns() && $source->hasColumnMetadata()
         ) {
             // typovaná tabulka
+            $backend = $storageSources->getBucket()->backend;
+
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
-                $storageSources->getBucket()->backend,
-                false,
+                $backend,
+                NativeTypeDecisionHelper::shouldEnforceBaseTypes(
+                    $this->clientWrapper->getToken(),
+                    $backend,
+                ),
             );
+
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $source->getDestination()->getTableName(),
                 $source->getPrimaryKey(),

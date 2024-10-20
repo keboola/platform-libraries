@@ -52,6 +52,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
@@ -82,6 +83,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
@@ -109,6 +111,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
@@ -136,6 +139,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $expectedErrorMessage = 'Error changing primary key of table in.c-testErrorUpdateTableStructureBadPKTest.test1';
@@ -170,6 +174,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $this->assertTrue($this->testHandler->hasWarningThatContains(
@@ -196,6 +201,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
     }
 
@@ -227,6 +233,7 @@ class TableStructureModifierTest extends AbstractTestCase
             new TableInfo($this->destinationTableInfo),
             $source,
             $this->destination,
+            false,
         );
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);

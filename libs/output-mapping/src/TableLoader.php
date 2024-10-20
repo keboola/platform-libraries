@@ -186,6 +186,7 @@ class TableLoader
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
                 $storageSources->getBucket()->backend,
+                false,
             );
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $source->getDestination()->getTableName(),

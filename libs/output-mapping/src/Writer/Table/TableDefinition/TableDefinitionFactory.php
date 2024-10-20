@@ -9,6 +9,7 @@ class TableDefinitionFactory
     public function __construct(
         private readonly array $tableMetadata,
         private readonly string $backendType,
+        private readonly bool $enforceBaseTypes,
     ) {
     }
 
@@ -18,7 +19,7 @@ class TableDefinitionFactory
             new TableDefinitionColumnFactory(
                 $this->tableMetadata,
                 $this->backendType,
-                false,
+                $this->enforceBaseTypes,
             ),
         );
         $tableDefinition->setName($tableName);

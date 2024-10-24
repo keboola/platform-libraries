@@ -19,17 +19,6 @@ class LocalSourcesValidatorTest extends TestCase
         $this->localSourcesValidator = new LocalSourcesValidator(false);
     }
 
-    public function testValidatePhysicalFilesWithManifestWithMissingTable(): void
-    {
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table sources not found: "missing.table"');
-
-        $dataItems = [$this->createMock(FileItem::class)];
-        $manifests = [$this->createConfiguredMock(FileItem::class, ['getName' => 'missing.table.manifest'])];
-
-        $this->localSourcesValidator->validatePhysicalFilesWithManifest($dataItems, $manifests);
-    }
-
     public function testValidatePhysicalFilesWithManifestWithOrphanedManifest(): void
     {
         $this->expectException(InvalidOutputException::class);

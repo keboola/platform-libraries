@@ -280,7 +280,7 @@ class TableStructureModifierTest extends AbstractTestCase
             'enforceBaseTypes' => false,
             'expectedLength' => '10,5',
         ];
-        yield 'enfoced base types' => [
+        yield 'enforced base types' => [
             'enforceBaseTypes' => true,
             'expectedLength' => '38,9',
         ];

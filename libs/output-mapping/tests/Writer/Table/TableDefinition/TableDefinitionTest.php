@@ -10,6 +10,7 @@ use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\NativeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -17,22 +18,24 @@ class TableDefinitionTest extends TestCase
 {
     /** @dataProvider addTableDefinitionColumnProvider */
     public function testAddTableDefinitionColumn(
-        TableDefinition $definition,
         array $tableMetadata,
         string $columnName,
         array $columnMetadata,
         string $backendType,
         TableDefinitionColumnInterface $expectedColumn,
     ): void {
-        $definition->addColumn($columnName, $columnMetadata, $tableMetadata, $backendType);
-        self::assertCount(1, $definition->getColumns());
-        self::assertEquals($expectedColumn, $definition->getColumns()[0]);
+        $tableDefinition = new TableDefinition(
+            new TableDefinitionColumnFactory($tableMetadata, $backendType, false),
+        );
+
+        $tableDefinition->addColumn($columnName, $columnMetadata);
+        self::assertCount(1, $tableDefinition->getColumns());
+        self::assertEquals($expectedColumn, $tableDefinition->getColumns()[0]);
     }
 
     public function addTableDefinitionColumnProvider(): Generator
     {
         yield 'basetype test' => [
-            'tableDefinition' => new TableDefinition(),
             'tableMetadata' => [],
             'columnName' => 'testColumn',
             'columnMetadata' => (new GenericStorage('varchar', ['length' => '25']))->toMetadata(),
@@ -41,7 +44,6 @@ class TableDefinitionTest extends TestCase
         ];
 
         yield 'native type test' => [
-            'tableDefinition' => new TableDefinition(),
             'tableMetadata' => [
                 [
                     'key' => 'KBC.datatype.backend',
@@ -55,6 +57,19 @@ class TableDefinitionTest extends TestCase
                 'testColumn',
                 new Synapse('varchar', ['length' => '25']),
             ),
+        ];
+
+        yield 'native type test - different backend' => [
+            'tableMetadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'synapse',
+                ],
+            ],
+            'columnName' => 'testColumn',
+            'columnMetadata' => (new Synapse('varchar', ['length' => '25']))->toMetadata(),
+            'backendType' => 'snowflake',
+            'expectedColumn' => new BaseTypeTableDefinitionColumn('testColumn', 'STRING'),
         ];
     }
 }

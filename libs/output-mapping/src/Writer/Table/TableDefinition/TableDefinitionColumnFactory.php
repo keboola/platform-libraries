@@ -6,28 +6,24 @@ namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\DefinitionInterface;
-use Keboola\Datatype\Definition\Exasol;
-use Keboola\Datatype\Definition\Snowflake;
-use Keboola\Datatype\Definition\Synapse;
 
 class TableDefinitionColumnFactory
 {
     public const NATIVE_TYPE_METADATA_KEY = 'KBC.datatype.backend';
 
-    public const NATIVE_BACKEND_TYPE_CLASS_MAP = [
-        'snowflake' => Snowflake::class,
-        'synapse' => Synapse::class,
-        'exasol' => Exasol::class,
-    ];
-
     /**
      * @var class-string<DefinitionInterface>|null
      */
-    private ?string $nativeDatatypeClass;
+    private ?string $nativeDatatypeClass = null;
 
-    public function __construct(array $tableMetadata, string $backend)
-    {
-        $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
+    public function __construct(
+        array $tableMetadata,
+        string $backend,
+        bool $enforceBaseTypes,
+    ) {
+        if (!$enforceBaseTypes) {
+            $this->nativeDatatypeClass = $this->getNativeDatatypeClass($tableMetadata, $backend);
+        }
     }
 
     public function createTableDefinitionColumn(string $columnName, array $metadata): TableDefinitionColumnInterface
@@ -87,11 +83,14 @@ class TableDefinitionColumnFactory
      */
     private function getNativeDatatypeClass(array $tableMetadata, string $backend): ?string
     {
+        $columnDefinitionClassName = 'Keboola\\Datatype\\Definition\\' . ucfirst(strtolower($backend));
+
         $dataTypeBackend = $this->getDatatypeBackendFromMetadata($tableMetadata);
         if ($dataTypeBackend === $backend &&
-            array_key_exists($dataTypeBackend, self::NATIVE_BACKEND_TYPE_CLASS_MAP)
+            class_exists($columnDefinitionClassName) &&
+                is_subclass_of($columnDefinitionClassName, DefinitionInterface::class)
         ) {
-            return self::NATIVE_BACKEND_TYPE_CLASS_MAP[$backend];
+            return $columnDefinitionClassName;
         }
         return null;
     }

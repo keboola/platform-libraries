@@ -6,27 +6,28 @@ namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 class TableDefinitionFactory
 {
-    private array $tableMetadata;
-
-    private string $backendType;
-
-    public function __construct(array $tableMetadata, string $backendType)
-    {
-        $this->tableMetadata = $tableMetadata;
-        $this->backendType = $backendType;
+    public function __construct(
+        private readonly array $tableMetadata,
+        private readonly string $backendType,
+        private readonly bool $enforceBaseTypes,
+    ) {
     }
 
     public function createTableDefinition(string $tableName, array $primaryKeys, array $columnMetadata): TableDefinition
     {
-        $tableDefinition = new TableDefinition();
+        $tableDefinition = new TableDefinition(
+            new TableDefinitionColumnFactory(
+                $this->tableMetadata,
+                $this->backendType,
+                $this->enforceBaseTypes,
+            ),
+        );
         $tableDefinition->setName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
         foreach ($columnMetadata as $columnName => $metadata) {
             $tableDefinition->addColumn(
                 (string) $columnName,
                 $metadata,
-                $this->tableMetadata,
-                $this->backendType,
             );
         }
         return $tableDefinition;

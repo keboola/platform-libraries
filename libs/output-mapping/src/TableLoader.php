@@ -133,6 +133,7 @@ class TableLoader
                 $this->clientWrapper,
                 $this->logger,
                 $configuration->hasNewNativeTypesFeature(),
+                $configuration->hasBigqueryNativeTypesFeature(),
             );
             $storageSources = $storagePreparer->prepareStorageBucketAndTable(
                 $processedSource,
@@ -190,7 +191,7 @@ class TableLoader
                 $source->hasMetadata() ? $source->getMetadata() : [],
                 $backend,
                 NativeTypeDecisionHelper::shouldEnforceBaseTypes(
-                    $this->clientWrapper->getToken(),
+                    $settings->hasBigqueryNativeTypesFeature(),
                     $backend,
                 ),
             );

@@ -17,6 +17,7 @@ class StoragePreparer
         readonly private ClientWrapper $clientWrapper,
         readonly private LoggerInterface $logger,
         readonly private bool $hasNewNativeTypeFeature,
+        readonly private bool $hasBigQueryNativeTypesFeature,
     ) {
     }
 
@@ -51,7 +52,7 @@ class StoragePreparer
                     $processedSource,
                     $processedSource->getDestination(),
                     NativeTypeDecisionHelper::shouldEnforceBaseTypes(
-                        $this->clientWrapper->getToken(),
+                        $this->hasBigQueryNativeTypesFeature,
                         $destinationBucket->backend,
                     ),
                 );

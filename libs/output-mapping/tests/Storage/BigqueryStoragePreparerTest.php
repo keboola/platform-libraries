@@ -14,7 +14,6 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyBigqueryOutputBucket;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Util\Test;
 
 class BigqueryStoragePreparerTest extends AbstractTestCase
@@ -25,7 +24,8 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
         $storagePreparer = new StoragePreparer(
             $this->clientWrapper,
             $this->testLogger,
-            true,
+            hasNewNativeTypeFeature: true,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $tableId = $this->createTestTypedTable($this->emptyBigqueryOutputBucketId);
@@ -75,24 +75,11 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
     #[NeedsEmptyBigqueryOutputBucket]
     public function testPrepareStorageBucketAndTableWithoutEnforcedBaseTypes(): void
     {
-        // mock that token has bigquery-native-types feature
-        $clientWraperMock = $this->getMockBuilder(ClientWrapper::class)
-            ->setConstructorArgs([$this->clientWrapper->getClientOptionsReadOnly()])
-            ->onlyMethods(['getToken'])
-            ->getMock();
-
-        $tokenInfo = $this->clientWrapper->getToken()->getTokenInfo();
-        $tokenInfo['owner']['features'][] = 'bigquery-native-types';
-
-        $clientWraperMock->expects(self::atLeastOnce())
-            ->method('getToken')
-            ->willReturn(new StorageApiToken($tokenInfo, $this->clientWrapper->getToken()->getTokenValue()))
-        ;
-
         $storagePreparer = new StoragePreparer(
-            $clientWraperMock,
+            $this->clientWrapper,
             $this->testLogger,
-            false,
+            hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: true,
         );
 
         $tableId = $this->createTestTypedTable($this->emptyBigqueryOutputBucketId);
@@ -131,7 +118,8 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
         $storagePreparer = new StoragePreparer(
             $this->clientWrapper,
             $this->testLogger,
-            false,
+            hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $tableId = $this->createTestTypedTable($this->emptyBigqueryOutputBucketId);

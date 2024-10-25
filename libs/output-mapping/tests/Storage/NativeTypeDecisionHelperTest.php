@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests\Storage;
 
 use Generator;
 use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
-use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 
 class NativeTypeDecisionHelperTest extends TestCase
@@ -43,13 +42,6 @@ class NativeTypeDecisionHelperTest extends TestCase
         bool $hasFeature,
         bool $expectedResult,
     ): void {
-        $tokenMock = $this->createMock(StorageApiToken::class);
-        $tokenMock->expects(self::once())
-            ->method('hasFeature')
-            ->with('bigquery-native-types')
-            ->willReturn($hasFeature)
-        ;
-
-        self::assertSame($expectedResult, NativeTypeDecisionHelper::shouldEnforceBaseTypes($tokenMock, $backend));
+        self::assertSame($expectedResult, NativeTypeDecisionHelper::shouldEnforceBaseTypes($hasFeature, $backend));
     }
 }

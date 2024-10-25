@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Storage;
 
-use Keboola\StorageApiBranch\StorageApiToken;
-
 class NativeTypeDecisionHelper
 {
-    public static function shouldEnforceBaseTypes(StorageApiToken $token, string $backend): bool
+    public static function shouldEnforceBaseTypes(bool $hasBigQueryNativeTypesFeature, string $backend): bool
     {
-        return !$token->hasFeature('bigquery-native-types') && $backend === 'bigquery';
+        return !$hasBigQueryNativeTypesFeature && $backend === 'bigquery';
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests;
 
+use Generator;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\StorageApiBranch\StorageApiToken;
@@ -20,15 +21,10 @@ class OutputMappingSettingsTest extends TestCase
         $sourcePathPrefix = 'path/to/source';
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
-            ->expects($this->exactly(2))
+            ->expects(self::exactly(6))
             ->method('hasFeature')
-            ->willReturnMap([
-                [OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE, true],
-                [OutputMappingSettings::TAG_STAGING_FILES_FEATURE, false],
-                [OutputMappingSettings::NATIVE_TYPES_FEATURE, true],
-                [OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE, true],
-                [OutputMappingSettings::OUTPUT_MAPPING_CONNECTION_WEBALIZE, true],
-            ]);
+            ->willReturn(false)
+        ;
 
         $outputMappingSettings = new OutputMappingSettings(
             $configuration,
@@ -38,20 +34,73 @@ class OutputMappingSettingsTest extends TestCase
             'authoritative',
         );
 
-        $this->assertTrue($outputMappingSettings->hasSlicingFeature());
-        $this->assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
-        $this->assertTrue($outputMappingSettings->hasNativeTypesFeature());
-        $this->assertTrue($outputMappingSettings->hasNewNativeTypesFeature());
-        $this->assertTrue($outputMappingSettings->hasConnectionWebalizeFeature());
+        self::assertFalse($outputMappingSettings->hasSlicingFeature());
+        self::assertFalse($outputMappingSettings->hasTagStagingFilesFeature());
+        self::assertFalse($outputMappingSettings->hasNativeTypesFeature());
+        self::assertFalse($outputMappingSettings->hasNewNativeTypesFeature());
+        self::assertFalse($outputMappingSettings->hasConnectionWebalizeFeature());
+        self::assertFalse($outputMappingSettings->hasBigqueryNativeTypesFeature());
 
-        $this->assertFalse($outputMappingSettings->isFailedJob());
+        self::assertFalse($outputMappingSettings->isFailedJob());
 
-        $this->assertEquals($sourcePathPrefix, $outputMappingSettings->getSourcePathPrefix());
-        $this->assertEquals($configuration['bucket'], $outputMappingSettings->getDefaultBucket());
-        $this->assertEquals('authoritative', $outputMappingSettings->getDataTypeSupport());
+        self::assertEquals($sourcePathPrefix, $outputMappingSettings->getSourcePathPrefix());
+        self::assertEquals($configuration['bucket'], $outputMappingSettings->getDefaultBucket());
+        self::assertEquals('authoritative', $outputMappingSettings->getDataTypeSupport());
 
         foreach ($outputMappingSettings->getMapping() as $item) {
-            $this->assertInstanceOf(MappingFromRawConfiguration::class, $item);
+            self::assertInstanceOf(MappingFromRawConfiguration::class, $item);
         }
+    }
+
+    public function hasFeatureDataProvider(): Generator
+    {
+        yield 'output-mapping-slice' => [
+            OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE,
+            'hasSlicingFeature',
+        ];
+        yield 'tag-staging-files' => [
+            OutputMappingSettings::TAG_STAGING_FILES_FEATURE,
+            'hasTagStagingFilesFeature',
+        ];
+        yield 'native-types' => [
+            OutputMappingSettings::NATIVE_TYPES_FEATURE,
+            'hasNativeTypesFeature',
+        ];
+        yield 'new-native-types' => [
+            OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE,
+            'hasNewNativeTypesFeature',
+        ];
+        yield 'output-mapping-connection-webalize' => [
+            OutputMappingSettings::OUTPUT_MAPPING_CONNECTION_WEBALIZE,
+            'hasConnectionWebalizeFeature',
+        ];
+        yield 'bigquery-native-types' => [
+            OutputMappingSettings::BIG_QUERY_NATIVE_TYPES_FEATURE,
+            'hasBigqueryNativeTypesFeature',
+        ];
+    }
+
+    /**
+     * @dataProvider hasFeatureDataProvider
+     */
+    public function testHasFeature(string $featureName, string $hasSpecificFeatureMethodName): void
+    {
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken
+            ->expects(self::once())
+            ->method('hasFeature')
+            ->with($featureName)
+            ->willReturn(true)
+        ;
+
+        $outputMappingSettings = new OutputMappingSettings(
+            [],
+            'path/to/source',
+            $storageApiToken,
+            false,
+            'authoritative',
+        );
+
+        self::assertTrue($outputMappingSettings->$hasSpecificFeatureMethodName());
     }
 }

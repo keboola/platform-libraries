@@ -18,11 +18,13 @@ class TableStructureModifier extends AbstractTableStructureModifier
         TableInfo $destinationTableInfo,
         MappingFromProcessedConfiguration $source,
         MappingDestination $destination,
+        bool $enforceBaseTypes,
     ): void {
         $this->addMissingColumns(
             $destinationTableInfo,
             $source,
             $destinationBucket->backend,
+            $enforceBaseTypes,
         );
 
         if (PrimaryKeyHelper::modifyPrimaryKeyDecider(
@@ -46,6 +48,7 @@ class TableStructureModifier extends AbstractTableStructureModifier
         TableInfo $currentTableInfo,
         MappingFromProcessedConfiguration $newTableConfiguration,
         string $backendType,
+        bool $enforceBaseTypes,
     ): void {
         $missingColumns = array_unique(
             array_merge(
@@ -74,7 +77,7 @@ class TableStructureModifier extends AbstractTableStructureModifier
                 }
 
                 $tableMetadata = $newTableConfiguration->getMetadata();
-                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType))
+                $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType, $enforceBaseTypes))
                     ->createTableDefinitionColumn($columnName, $columnMetadata);
 
                 $columnData = $column->toArray();

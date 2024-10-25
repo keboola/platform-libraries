@@ -8,6 +8,11 @@ use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 
 class TableDefinition implements TableDefinitionInterface
 {
+    public function __construct(
+        private readonly TableDefinitionColumnFactory $tableDefinitionColumnFactory,
+    ) {
+    }
+
     private string $name;
 
     /** @var TableDefinitionColumnInterface[] $columns */
@@ -40,11 +45,8 @@ class TableDefinition implements TableDefinitionInterface
     public function addColumn(
         string $name,
         array $columnMetadata,
-        array $tableMetadata,
-        string $backendType,
     ): self {
-        $tableDefinitionColumnFactory = new TableDefinitionColumnFactory($tableMetadata, $backendType);
-        $column = $tableDefinitionColumnFactory->createTableDefinitionColumn($name, $columnMetadata);
+        $column = $this->tableDefinitionColumnFactory->createTableDefinitionColumn($name, $columnMetadata);
         $this->columns[] = $column;
         return $this;
     }

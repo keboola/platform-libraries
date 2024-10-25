@@ -17,6 +17,7 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
@@ -132,6 +133,7 @@ class TableLoader
                 $this->clientWrapper,
                 $this->logger,
                 $configuration->hasNewNativeTypesFeature(),
+                $configuration->hasBigqueryNativeTypesFeature(),
             );
             $storageSources = $storagePreparer->prepareStorageBucketAndTable(
                 $processedSource,
@@ -183,10 +185,17 @@ class TableLoader
             $source->hasColumns() && $source->hasColumnMetadata()
         ) {
             // typovaná tabulka
+            $backend = $storageSources->getBucket()->backend;
+
             $tableDefinitionFactory = new TableDefinitionFactory(
                 $source->hasMetadata() ? $source->getMetadata() : [],
-                $storageSources->getBucket()->backend,
+                $backend,
+                NativeTypeDecisionHelper::shouldEnforceBaseTypes(
+                    $settings->hasBigqueryNativeTypesFeature(),
+                    $backend,
+                ),
             );
+
             $tableDefinition = $tableDefinitionFactory->createTableDefinition(
                 $source->getDestination()->getTableName(),
                 $source->getPrimaryKey(),

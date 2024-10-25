@@ -27,6 +27,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
@@ -49,6 +50,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         self::assertTrue(
@@ -97,6 +99,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $storagePreparer->prepareStorageBucketAndTable(
@@ -160,6 +163,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: false,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $storagePreparer->prepareStorageBucketAndTable(
@@ -218,6 +222,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: true,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $table = $this->clientWrapper
@@ -298,6 +303,7 @@ class StoragePreparerTest extends AbstractTestCase
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
             hasNewNativeTypeFeature: true,
+            hasBigQueryNativeTypesFeature: false,
         );
 
         $tableChangeStorage = new TableChangesStore();

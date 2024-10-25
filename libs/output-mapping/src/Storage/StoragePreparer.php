@@ -16,7 +16,8 @@ class StoragePreparer
     public function __construct(
         readonly private ClientWrapper $clientWrapper,
         readonly private LoggerInterface $logger,
-        readonly bool $hasNewNativeTypeFeature,
+        readonly private bool $hasNewNativeTypeFeature,
+        readonly private bool $hasBigQueryNativeTypesFeature,
     ) {
     }
 
@@ -50,6 +51,10 @@ class StoragePreparer
                     $destinationTableInfo,
                     $processedSource,
                     $processedSource->getDestination(),
+                    NativeTypeDecisionHelper::shouldEnforceBaseTypes(
+                        $this->hasBigQueryNativeTypesFeature,
+                        $destinationBucket->backend,
+                    ),
                 );
             }
 

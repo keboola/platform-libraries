@@ -2178,6 +2178,46 @@ CSV;
     }
 
     #[NeedsEmptyOutputBucket]
+    public function testLongColumnName(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/test1.csv',
+            "\"newName 1\"",
+        );
+
+        file_put_contents(
+            $root . DIRECTORY_SEPARATOR . 'upload/test1.csv.manifest',
+            json_encode([
+                'destination' => $this->emptyOutputBucketId . '.test1',
+                'primary_key' => [],
+                'columns' => ['LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName'],
+                'incremental' => true,
+            ]),
+        );
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        try {
+            $writer->uploadTables(
+                'upload',
+                [],
+                ['componentId' => 'foo'],
+                'local',
+                false,
+                'none',
+            );
+            $this->fail('Must throw exception');
+        } catch (InvalidOutputException $e) {
+            $this->assertStringContainsString(
+                '\'LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName\' '.
+                'is more than 64 characters long',
+                $e->getMessage(),
+            );
+        }
+    }
+
+    #[NeedsEmptyOutputBucket]
     public function testWriteTableOutputMappingWithHasHeader(): void
     {
         $root = $this->temp->getTmpFolder();

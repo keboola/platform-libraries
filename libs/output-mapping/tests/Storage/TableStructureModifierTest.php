@@ -245,7 +245,7 @@ class TableStructureModifierTest extends AbstractTestCase
                 'nullable' => true,
                 'length' => '38,0',
             ],
-            'basetype' => 'NUMERIC',
+            'basetype' => 'INTEGER',
             'canBeFiltered' => true,
         ];
         $expectedTable = array_merge_recursive($this->destinationTableInfo, [

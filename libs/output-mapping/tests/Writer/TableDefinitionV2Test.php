@@ -827,6 +827,60 @@ class TableDefinitionV2Test extends AbstractTestCase
         self::assertFalse($this->clientWrapper->getBasicClient()->tableExists($tableId));
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingWithPkUpdateAndLegacyManifest(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table14.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        $writer = new TableWriter($this->getLocalStagingFactory());
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table14.csv',
+                        'destination' => $this->emptyOutputBucketId . '.table14',
+                        'primary_key' => ['Id', 'Name'],
+                    ],
+                ],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.table14',
+        );
+        $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => [
+                    [
+                        'source' => 'table14.csv',
+                        'destination' => $this->emptyOutputBucketId . '.table14',
+                        'primary_key' => ['Id'],
+                    ],
+                ],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.table14',
+        );
+        $this->assertEquals(['Id'], $tableInfo['primaryKey']);
+    }
+
     public function conflictsConfigurationWithManifestProvider(): Generator
     {
         yield 'conflict-columns' => [

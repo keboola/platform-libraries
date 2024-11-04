@@ -48,7 +48,7 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
 
         $storagePreparer->prepareStorageBucketAndTable(
             $this->createMappingFromProcessedConfiguration(
-                $this->createMappingData($tableId, $newColumnName),
+                $this->createMappingData($tableId, $newColumnName, false),
             ),
             $this->createSystemMetadata(),
             $changesStore,
@@ -195,49 +195,79 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
         ]);
     }
 
-    private function createMappingData(string $tableId, string $newColumnName): array
+    private function createMappingData(string $tableId, string $newColumnName, bool $legacyManifest = true): array
     {
-        return [
-            'destination' => $tableId,
-            'delimiter' => ',',
-            'enclosure' => '"',
-            'columns' => [
-                'col1',
-                $newColumnName,
-            ],
-            'metadata' => [
-                [
-                    'key' => 'KBC.datatype.backend',
-                    'value' => 'bigquery',
+        if ($legacyManifest) {
+            return [
+                'destination' => $tableId,
+                'delimiter' => ',',
+                'enclosure' => '"',
+                'columns' => [
+                    'col1',
+                    $newColumnName,
                 ],
-            ],
-            'column_metadata' => [
-                'col1' => [
+                'metadata' => [
                     [
-                        'key' => 'KBC.datatype.type',
-                        'value' => 'STRING',
-                    ],
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'STRING',
+                        'key' => 'KBC.datatype.backend',
+                        'value' => 'bigquery',
                     ],
                 ],
-                $newColumnName => [
-                    [
-                        'key' => 'KBC.datatype.type',
-                        'value' => 'NUMERIC',
+                'column_metadata' => [
+                    'col1' => [
+                        [
+                            'key' => 'KBC.datatype.type',
+                            'value' => 'STRING',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'STRING',
+                        ],
                     ],
-                    [
-                        'key' => 'KBC.datatype.length',
-                        'value' => '10,5',
-                    ],
-                    [
-                        'key' => 'KBC.datatype.basetype',
-                        'value' => 'NUMERIC',
+                    $newColumnName => [
+                        [
+                            'key' => 'KBC.datatype.type',
+                            'value' => 'NUMERIC',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.length',
+                            'value' => '10,5',
+                        ],
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'NUMERIC',
+                        ],
                     ],
                 ],
-            ],
-        ];
+            ];
+        } else {
+            return [
+                'destination' => $tableId,
+                'delimiter' => ',',
+                'enclosure' => '"',
+                'schema' => [
+                    [
+                        'name' => 'col1',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => $newColumnName,
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'NUMERIC',
+                            ],
+                            'bigquery' => [
+                                'type' => 'NUMERIC',
+                                'length' => '10,5',
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+        }
     }
 
     private function createMappingFromProcessedConfiguration(array $mapping): MappingFromProcessedConfiguration

@@ -2183,7 +2183,7 @@ CSV;
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/test1.csv',
-            "\"newName 1\"",
+            'newName 1',
         );
 
         file_put_contents(

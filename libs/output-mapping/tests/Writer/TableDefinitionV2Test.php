@@ -127,7 +127,7 @@ class TableDefinitionV2Test extends AbstractTestCase
                     'name' => 'Id',
                     'data_type' => [
                         'base' => [
-                            'type' => 'NUMERIC',
+                            'type' => 'INTEGER',
                         ],
                     ],
                 ],

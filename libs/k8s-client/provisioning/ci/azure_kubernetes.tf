@@ -25,7 +25,7 @@ provider "kubernetes" {
 }
 
 module "az_kubernetes" {
-  source    = "../local/kubernetes"
+  source = "../local/kubernetes"
   providers = {
     kubernetes = kubernetes.azure_k8s_cluster
   }

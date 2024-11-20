@@ -27,7 +27,7 @@ provider "kubernetes" {
 }
 
 module "aws_kubernetes" {
-  source    = "../local/kubernetes"
+  source = "../local/kubernetes"
   providers = {
     kubernetes = kubernetes.aws_k8s_cluster
   }

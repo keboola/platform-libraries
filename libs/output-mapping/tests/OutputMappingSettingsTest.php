@@ -50,6 +50,8 @@ class OutputMappingSettingsTest extends TestCase
         foreach ($outputMappingSettings->getMapping() as $item) {
             self::assertInstanceOf(MappingFromRawConfiguration::class, $item);
         }
+
+        self::assertNull($outputMappingSettings->getTreatValuesAsNull());
     }
 
     public function hasFeatureDataProvider(): Generator
@@ -102,5 +104,53 @@ class OutputMappingSettingsTest extends TestCase
         );
 
         self::assertTrue($outputMappingSettings->$hasSpecificFeatureMethodName());
+    }
+
+    public function treatValuesAsNullDataProvider(): Generator
+    {
+        yield 'missing treat config' => [
+            'configuration' => [],
+            'expectedTreatValuesAsNullValue' => null,
+        ];
+        yield 'multiple values' => [
+            'configuration' => [
+                'treat_values_as_null' => ['value1', 'value2'],
+            ],
+            'expectedTreatValuesAsNullValue' => ['value1', 'value2'],
+        ];
+        yield 'null value' => [
+            'configuration' => [
+                'treat_values_as_null' => null,
+            ],
+            'expectedTreatValuesAsNullValue' => null,
+        ];
+        yield 'empty array' => [
+            'configuration' => [
+                'treat_values_as_null' => [],
+            ],
+            'expectedTreatValuesAsNullValue' => [],
+        ];
+        yield 'empty string' => [
+            'configuration' => [
+                'treat_values_as_null' => [''],
+            ],
+            'expectedTreatValuesAsNullValue' => [''],
+        ];
+    }
+
+    /**
+     * @dataProvider treatValuesAsNullDataProvider
+     */
+    public function testTreatValuesAsNull(array $configuration, ?array $expectedTreatValuesAsNullValue): void
+    {
+        $outputMappingSettings = new OutputMappingSettings(
+            $configuration,
+            'path/to/source',
+            $this->createMock(StorageApiToken::class),
+            false,
+            'authoritative',
+        );
+
+        self::assertSame($expectedTreatValuesAsNullValue, $outputMappingSettings->getTreatValuesAsNull());
     }
 }

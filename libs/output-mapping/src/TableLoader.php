@@ -173,8 +173,9 @@ class TableLoader
         $loadOptions = $this->buildLoadOptions(
             $source,
             $strategy,
-            $storageSources->didTableExistBefore(),
+            $storageSources,
             $settings->hasNewNativeTypesFeature(),
+            $settings->getTreatValuesAsNull(),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
@@ -311,8 +312,9 @@ class TableLoader
     private function buildLoadOptions(
         MappingFromProcessedConfiguration $source,
         StrategyInterface $strategy,
-        bool $didTableExistBefore,
+        MappingStorageSources $storageSources,
         bool $hasNewNativeTypesFeature,
+        ?array $treatValuesAsNullConfiguration,
     ): array {
         if ($hasNewNativeTypesFeature && $source->getSchema()) {
             $columns = array_map(
@@ -349,8 +351,12 @@ class TableLoader
             $loadOptions['ignoredLinesCount'] = 1;
         }
 
-        if (!$didTableExistBefore && $distributionKey) {
+        if (!$storageSources->didTableExistBefore() && $distributionKey) {
             $loadOptions['distributionKey'] = implode(',', $distributionKey);
+        }
+
+        if ($treatValuesAsNullConfiguration !== null && $storageSources->getTable()) {
+            $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
         }
 
         return array_merge(

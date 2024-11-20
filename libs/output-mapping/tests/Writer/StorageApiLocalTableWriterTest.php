@@ -2264,6 +2264,225 @@ CSV;
         self::assertEquals($expectedData, (string) file_get_contents($downloadedFile));
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingTreatEmptyValuesAsNull(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/table1a.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
+        );
+        file_put_contents(
+            $root . '/upload/table2a.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
+        );
+        file_put_contents(
+            $root . '/upload/table3a.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
+        );
+
+        // non-typed table prepare
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyOutputBucketId,
+            'table2a',
+            new CsvFile($root . '/upload/table2a.csv'),
+        );
+
+        // typed table prepare
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
+            $this->emptyOutputBucketId,
+            [
+                'name' => 'table3a',
+                'columns' => [
+                    [
+                        'name' => 'Id',
+                        'basetype' => 'STRING',
+                    ],
+                    [
+                        'name' => 'Name',
+                        'basetype' => 'STRING',
+                    ],
+                ],
+            ],
+        );
+
+        $table1Id = $this->emptyOutputBucketId . '.table1a';
+        $table2Id = $this->emptyOutputBucketId . '.table2a';
+        $table3Id = $this->emptyOutputBucketId . '.table3a';
+
+        $configs = [
+            [
+                'source' => 'table1a.csv',
+                'destination' => $table1Id,
+            ],
+            [
+                'source' => 'table2a.csv',
+                'destination' => $table2Id,
+            ],
+            [
+                'source' => 'table3a.csv',
+                'destination' => $table3Id,
+            ],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+
+        $tableQueue =  $writer->uploadTables(
+            'upload',
+            [
+                'mapping' => $configs,
+                'treat_values_as_null' => ['aabb'],
+            ],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(3, $jobIds);
+
+        // new table
+        /** @var array{
+         *      operationName: string,
+         *      operationParams: array{
+         *          source: array{fileId: string},
+         *          params: array,
+         *      },
+         *      results: array{id: string},
+         * } $job
+         */
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
+        self::assertSame('tableCreate', $job['operationName']);
+        self::assertSame($this->emptyOutputBucketId . '.table1a', $job['results']['id']);
+        self::assertArrayNotHasKey('treatValuesAsNull', $job['operationParams']['params']);
+
+        // non-typed table
+        /** @var array{
+         *      operationName: string,
+         *      tableId: string,
+         *      operationParams: array{
+         *          source: array{fileId: string},
+         *          params: array,
+         *      },
+         *      results: array{id: string},
+         * } $job
+         */
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[2]);
+        self::assertSame('tableImport', $job['operationName']);
+        self::assertSame($table2Id, $job['tableId']);
+        self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
+        self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
+
+        /** @var string|array $data */
+        $data = $this->clientWrapper->getTableAndFileStorageClient()->getTableDataPreview(
+            $table2Id,
+            [
+                'format' => 'json',
+                'orderBy' => [
+                    [
+                        'column' => 'Name',
+                        'order' => 'DESC',
+                    ],
+                ],
+            ],
+        );
+
+        self::assertIsArray($data);
+        self::assertArrayHasKey('rows', $data);
+        self::assertSame(
+            [
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                ],
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => '',
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'ccdd',
+                        'isTruncated' => false,
+                    ],
+                ],
+            ],
+            $data['rows'],
+        );
+
+        // typed table
+        /** @var array{
+         *      operationName: string,
+         *      tableId: string,
+         *      operationParams: array{
+         *          source: array{fileId: string},
+         *          params: array,
+         *      },
+         *      results: array{id: string},
+         * } $job
+         */
+        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
+        self::assertSame('tableImport', $job['operationName']);
+        self::assertSame($table3Id, $job['tableId']);
+        self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
+        self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
+
+        /** @var string|array $data */
+        $data = $this->clientWrapper->getTableAndFileStorageClient()->getTableDataPreview(
+            $table3Id,
+            [
+                'format' => 'json',
+                'orderBy' => [
+                    [
+                        'column' => 'Name',
+                        'order' => 'DESC',
+                    ],
+                ],
+            ],
+        );
+
+        self::assertIsArray($data);
+        self::assertArrayHasKey('rows', $data);
+        self::assertSame(
+            [
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                ],
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => null,
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'ccdd',
+                        'isTruncated' => false,
+                    ],
+                ],
+            ],
+            $data['rows'],
+        );
+    }
+
     private function getTableIdFromJobDetail(array $jobData): string
     {
         $operationName = $jobData['operationName'];

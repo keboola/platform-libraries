@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+
 class ConfigurationMerger
 {
     public static function mergeConfigurations(array $configFromManifest, array $configFromMapping): array
@@ -110,7 +112,10 @@ class ConfigurationMerger
         foreach ($primaryKeys as $primaryKey) {
             $manifestColumn = array_filter($manifestSchema, fn($v) => $v['name'] === $primaryKey);
             if (!$manifestColumn) {
-                continue;
+                throw new InvalidOutputException(sprintf(
+                    'Primary key "%s" not found in manifest file.',
+                    $primaryKey,
+                ));
             }
             $manifestSchemaKey = array_key_first($manifestColumn);
             $manifestColumn = reset($manifestColumn);

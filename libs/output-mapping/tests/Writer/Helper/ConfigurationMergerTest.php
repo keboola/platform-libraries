@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
 use PHPUnit\Framework\TestCase;
 
@@ -19,6 +20,40 @@ class ConfigurationMergerTest extends TestCase
     {
         $result = ConfigurationMerger::mergeConfigurations($manifest, $mapping);
         self::assertEquals($expected, $result);
+    }
+
+    public function testMergePrimaryKeysConfigurationHasUnexistsPK(): void
+    {
+        $mapping = [
+            'primary_key' => ['Name2'],
+        ];
+
+        $manifest = [
+            'schema' => [
+                [
+                    'name' => 'Id',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                    'nullable' => false,
+                ],
+                [
+                    'name' => 'Name',
+                    'data_type' => [
+                        'base' => [
+                            'type' => 'STRING',
+                        ],
+                    ],
+                    'nullable' => false,
+                ],
+            ],
+        ];
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Primary key "Name2" not found in manifest file.');
+        ConfigurationMerger::mergeConfigurations($manifest, $mapping);
     }
 
     public function provideConfigurations(): array

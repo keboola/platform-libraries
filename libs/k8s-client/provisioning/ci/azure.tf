@@ -10,7 +10,7 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
-  alias           = "aks_subscription"
+  alias = "aks_subscription"
   features {}
   tenant_id       = var.az_tenant_id
   subscription_id = "9577e289-304e-4165-abe0-91c933200878"

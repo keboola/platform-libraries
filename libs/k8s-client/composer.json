@@ -23,7 +23,7 @@
         "php": "^8.2",
         "keboola/retry": "^0.5.1",
         "kubernetes/php-client": "1.26.10",
-        "kubernetes/php-runtime": "^1.0.10"
+        "kubernetes/php-runtime": "^1.0.11"
     },
     "require-dev": {
         "keboola/coding-standard": "^15.0",

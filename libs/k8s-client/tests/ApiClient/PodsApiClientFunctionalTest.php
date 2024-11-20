@@ -33,10 +33,47 @@ class PodsApiClientFunctionalTest extends TestCase
                 'containers' => [
                     [
                         'name' => 'main',
-                        'image' => 'nginx',
+                        'image' => 'alpine',
+                        'command' => ['sh', '-c', 'echo "Hello World"'],
                     ],
                 ],
             ],
         ]);
+    }
+
+    public function testReadLogWhenNodeSelectorIsUnsatisfied(): void
+    {
+
+        $pod = $this->createResource([
+            'name' => 'test-resource-1',
+            'labels' => [
+                'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
+            ],
+        ]);
+
+        $pod->spec->nodeSelector = [
+            'nodePool' => 'dummy-pool',
+        ];
+
+        $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $pod);
+        self::assertSame('', $this->apiClient->readLog('test-resource-1'));
+    }
+
+    public function testReadLog(): void
+    {
+
+        $pod = $this->createResource([
+            'name' => 'test-resource-1',
+            'labels' => [
+                'app' => 'test-1',
+                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
+            ],
+        ]);
+
+        $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $pod);
+        sleep(5);
+        $log = $this->apiClient->readLog('test-resource-1');
+        self::assertStringContainsString('Hello World', $log);
     }
 }

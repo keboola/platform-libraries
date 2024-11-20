@@ -881,6 +881,64 @@ class TableDefinitionV2Test extends AbstractTestCase
         $this->assertEquals(['Id'], $tableInfo['primaryKey']);
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testAuthoritativeManifestAndLegacyPrimaryKeysInConfiguration(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
+        );
+
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv.manifest',
+            json_encode([
+                'schema' => [
+                    [
+                        'name' => 'Id',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => 'Name',
+                        'data_type' => [
+                            'base' => [
+                                'type' => 'STRING',
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+        );
+
+        $baseConfig = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $this->emptyOutputBucketId . '.tableDefinition',
+            'primary_key' => ['Id'],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
+
+        $tableQueue = $writer->uploadTables(
+            'upload',
+            ['mapping' => [$baseConfig]],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'none',
+        );
+
+        $jobIds = $tableQueue->waitForAll();
+        $this->assertCount(1, $jobIds);
+        $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.tableDefinition',
+        );
+        $this->assertEquals(['Id'], $tableInfo['primaryKey']);
+    }
+
     public function conflictsConfigurationWithManifestProvider(): Generator
     {
         yield 'conflict-columns' => [
@@ -888,13 +946,6 @@ class TableDefinitionV2Test extends AbstractTestCase
                 'columns' => ['Id', 'Name'],
             ],
             'Only one of "schema" or "columns" can be defined.',
-        ];
-
-        yield 'conflict-primary_keys' => [
-            [
-                'primary_key' => ['Id', 'Name'],
-            ],
-            'Only one of "primary_key" or "schema[].primary_key" can be defined.',
         ];
 
         yield 'conflict-distribution_key' => [

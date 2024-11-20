@@ -744,6 +744,76 @@ class ConfigurationMergerTest extends TestCase
                     ],
                 ],
             ],
+            'schema-manifest-legacy-configuration' => [
+                'mapping' => [
+                    'primary_key' => ['Id'],
+                ],
+                'manifest' => [
+                   'schema' => [
+                       [
+                           'name' => 'Id',
+                           'data_type' => [
+                               'base' => [
+                                   'type' => 'STRING',
+                               ],
+                           ],
+                           'nullable' => false,
+                       ],
+                       [
+                           'name' => 'Name',
+                           'data_type' => [
+                               'base' => [
+                                   'type' => 'STRING',
+                               ],
+                           ],
+                           'nullable' => false,
+                       ],
+                       [
+                           'name' => 'Name2',
+                           'data_type' => [
+                               'base' => [
+                                   'type' => 'STRING',
+                               ],
+                           ],
+                           'nullable' => false,
+                           'primary_key' => true,
+                       ],
+                   ],
+                ],
+                'expected' => [
+                    'schema' => [
+                        [
+                            'name' => 'Id',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                            ],
+                            'nullable' => false,
+                            'primary_key' => true,
+                        ],
+                        [
+                            'name' => 'Name',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                            ],
+                            'nullable' => false,
+                        ],
+                        [
+                            'name' => 'Name2',
+                            'data_type' => [
+                                'base' => [
+                                    'type' => 'STRING',
+                                ],
+                            ],
+                            'nullable' => false,
+                            'primary_key' => true,
+                        ],
+                    ],
+                ],
+            ],
             'primary-key-reset' => [
                 'mapping' => [
                     'primary_key' => [],

@@ -50,7 +50,7 @@ class CombinedProviderInitializerTest extends TestCase
             $workspaceStagingProvider = new NewWorkspaceStagingProvider(
                 $workspacesApi,
                 $componentsApi,
-                new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null),
+                new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null, 'system'),
                 $componentId,
                 $configId,
             );

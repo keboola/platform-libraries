@@ -41,7 +41,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::LOCAL, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::LOCAL, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -80,7 +80,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_REDSHIFT, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_REDSHIFT, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -134,7 +134,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -188,7 +188,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SYNAPSE, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SYNAPSE, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -265,7 +265,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_ABS, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_ABS, null, null, 'system'),
             'keboola.runner-workspace-abs-test',
             'my-test-config',
         );
@@ -320,7 +320,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_EXASOL, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_EXASOL, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -375,7 +375,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_TERADATA, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_TERADATA, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );
@@ -431,7 +431,7 @@ class OutputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_BIGQUERY, null, null),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_BIGQUERY, null, null, 'system'),
             'my-test-component',
             'my-test-config',
         );

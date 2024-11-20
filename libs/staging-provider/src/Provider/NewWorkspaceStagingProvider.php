@@ -24,7 +24,10 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
     protected function getWorkspace(): StorageApiWorkspace
     {
         if (!isset($this->workspace)) {
-            $options = ['backend' => $this->workspaceBackendConfig->getStorageApiWorkspaceType()];
+            $options = [
+                'backend' => $this->workspaceBackendConfig->getStorageApiWorkspaceType(),
+                'networkPolicy' => $this->workspaceBackendConfig->getNetworkPolicy(),
+            ];
             if ($this->workspaceBackendConfig->getStorageApiWorkspaceSize() !== null) {
                 $options['backendSize'] = $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
             }

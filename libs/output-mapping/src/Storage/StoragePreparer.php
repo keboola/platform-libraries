@@ -37,7 +37,7 @@ class StoragePreparer
         );
 
         if ($destinationTableInfo !== null) {
-            if ($this->hasNewNativeTypeFeature) {
+            if ($this->hasNewNativeTypeFeature && $processedSource->getSchema()) {
                 $tableStructureModifier = new TableStructureModifierFromSchema($this->clientWrapper, $this->logger);
                 $tableStructureModifier->updateTableStructure(
                     $destinationBucket,

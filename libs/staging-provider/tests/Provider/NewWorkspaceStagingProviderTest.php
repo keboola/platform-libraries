@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\Components;
@@ -52,7 +53,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 $backendSize,
                 null,
-                'user',
+                NetworkPolicy::USER,
             ),
             'test-component',
             'test-config',
@@ -118,7 +119,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 $backendSize,
                 true,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             null,
@@ -174,7 +175,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-abs',
                 null,
                 null,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             'test-config',
@@ -206,7 +207,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 'large',
                 null,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             'test-config',
@@ -253,7 +254,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 'so-so',
                 null,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             'test-config',
@@ -281,7 +282,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 'so-so',
                 null,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             'test-config',
@@ -322,7 +323,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'workspace-snowflake',
                 'so-so',
                 null,
-                'system',
+                NetworkPolicy::SYSTEM,
             ),
             'test-component',
             'test-config',

@@ -6,6 +6,7 @@ namespace Keboola\StagingProvider\Tests\Provider\Configuration;
 
 use Generator;
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ class WorkspaceBackendConfigTest extends TestCase
 {
     public function testGetters(): void
     {
-        $config = new WorkspaceBackendConfig('workspace-snowflake', 'large', true, 'system');
+        $config = new WorkspaceBackendConfig('workspace-snowflake', 'large', true, NetworkPolicy::SYSTEM);
 
         self::assertSame('workspace-snowflake', $config->getStagingType());
         self::assertSame('snowflake', $config->getStorageApiWorkspaceType());
@@ -21,7 +22,7 @@ class WorkspaceBackendConfigTest extends TestCase
         self::assertSame(true, $config->getUseReadonlyRole());
         self::assertSame('system', $config->getNetworkPolicy());
 
-        $config = new WorkspaceBackendConfig('workspace-snowflake', null, null, 'user');
+        $config = new WorkspaceBackendConfig('workspace-snowflake', null, null, NetworkPolicy::USER);
 
         self::assertSame('workspace-snowflake', $config->getStagingType());
         self::assertSame('snowflake', $config->getStorageApiWorkspaceType());
@@ -35,7 +36,7 @@ class WorkspaceBackendConfigTest extends TestCase
      */
     public function testGetStorageApiWorkspaceType(string $stagingType, string $expectedWorkspaceType): void
     {
-        $config = new WorkspaceBackendConfig($stagingType, null, null, 'system');
+        $config = new WorkspaceBackendConfig($stagingType, null, null, NetworkPolicy::SYSTEM);
 
         self::assertSame($stagingType, $config->getStagingType());
         self::assertSame($expectedWorkspaceType, $config->getStorageApiWorkspaceType());
@@ -54,19 +55,10 @@ class WorkspaceBackendConfigTest extends TestCase
 
     public function testGetInvalidStorageApiWorkspaceType(): void
     {
-        $config = new WorkspaceBackendConfig('invalid', null, null, 'system');
+        $config = new WorkspaceBackendConfig('invalid', null, null, NetworkPolicy::SYSTEM);
 
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage('Unknown staging type "invalid"');
         $config->getStorageApiWorkspaceType();
-    }
-
-    public function testGetInvalidNetworkPolicy(): void
-    {
-        $config = new WorkspaceBackendConfig('workspace-snowflake', null, null, 'invalid');
-
-        $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Unknown network policy "invalid"');
-        $config->getNetworkPolicy();
     }
 }

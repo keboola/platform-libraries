@@ -22,6 +22,7 @@ use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
 use Keboola\InputMapping\Table\Strategy\Teradata as InputTableTeradata;
 use Keboola\StagingProvider\InputProviderInitializer;
+use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
@@ -48,7 +49,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::LOCAL, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::LOCAL, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -105,7 +106,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_REDSHIFT, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_REDSHIFT, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -170,7 +171,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -236,7 +237,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SYNAPSE, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_SYNAPSE, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -306,7 +307,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_ABS, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_ABS, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -369,7 +370,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_EXASOL, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_EXASOL, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -436,7 +437,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_TERADATA, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_TERADATA, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );
@@ -508,7 +509,7 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceStagingProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
-            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_BIGQUERY, null, null, 'system'),
+            new WorkspaceBackendConfig(AbstractStrategyFactory::WORKSPACE_BIGQUERY, null, null, NetworkPolicy::SYSTEM),
             'my-test-component',
             'my-test-config',
         );

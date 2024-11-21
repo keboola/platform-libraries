@@ -9,13 +9,11 @@ use Keboola\StagingProvider\Exception\StagingProviderException;
 
 readonly class WorkspaceBackendConfig
 {
-    private const ALLOWED_NETWORK_POLICIES = ['system', 'user'];
-
     public function __construct(
         private string $stagingType,
         private ?string $size,
         private ?bool $useReadonlyRole,
-        private string $networkPolicy,
+        private NetworkPolicy $networkPolicy,
     ) {
     }
 
@@ -48,11 +46,8 @@ readonly class WorkspaceBackendConfig
         return $this->useReadonlyRole;
     }
 
-    public function getNetworkPolicy(): ?string
+    public function getNetworkPolicy(): string
     {
-        if (!in_array($this->networkPolicy, self::ALLOWED_NETWORK_POLICIES, true)) {
-            throw new StagingProviderException(sprintf('Unknown network policy "%s"', $this->networkPolicy));
-        }
-        return $this->networkPolicy;
+        return $this->networkPolicy->value;
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+
 class ConfigurationMerger
 {
     public static function mergeConfigurations(array $configFromManifest, array $configFromMapping): array
@@ -35,7 +37,11 @@ class ConfigurationMerger
                 }
             } elseif ($key === 'primary_key') {
                 if (!isset($config[$key]) || is_array($value)) {
-                    $config[$key] = $value;
+                    if (!empty($config['schema'])) {
+                        $config['schema'] = self::mergePrimaryKeyAndSchema($config['schema'], $value);
+                    } else {
+                        $config[$key] = $value;
+                    }
                 }
             } elseif ($key === 'table_metadata') {
                 $config[$key] = self::mergeKeyValueArray($config[$key] ?? [], $value);
@@ -99,5 +105,24 @@ class ConfigurationMerger
             $manifest[$key] = $value;
         }
         return $manifest;
+    }
+
+    private static function mergePrimaryKeyAndSchema(array $manifestSchema, array $primaryKeys): array
+    {
+        foreach ($primaryKeys as $primaryKey) {
+            $manifestColumn = array_filter($manifestSchema, fn($v) => $v['name'] === $primaryKey);
+            if (!$manifestColumn) {
+                throw new InvalidOutputException(sprintf(
+                    'Primary key column "%s" not found in manifest file.',
+                    $primaryKey,
+                ));
+            }
+            $manifestSchemaKey = array_key_first($manifestColumn);
+            $manifestColumn = reset($manifestColumn);
+            $manifestColumn['primary_key'] = true;
+
+            $manifestSchema[$manifestSchemaKey] = $manifestColumn;
+        }
+        return $manifestSchema;
     }
 }

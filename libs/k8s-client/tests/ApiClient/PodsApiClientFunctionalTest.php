@@ -8,6 +8,7 @@ use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 
 class PodsApiClientFunctionalTest extends TestCase
 {
@@ -57,7 +58,7 @@ class PodsApiClientFunctionalTest extends TestCase
         ];
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $pod);
-        self::assertSame('', $this->apiClient->readLog('test-resource-1'));
+        self::assertSame('', $this->apiClient->readLog('test-resource-1')->getContents());
     }
 
     public function testReadLog(): void
@@ -73,7 +74,12 @@ class PodsApiClientFunctionalTest extends TestCase
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $pod);
         sleep(5);
-        $log = $this->apiClient->readLog('test-resource-1');
-        self::assertStringContainsString('Hello World', $log);
+        $logStream = $this->apiClient->readLog('test-resource-1');
+        self::assertInstanceOf(StreamInterface::class, $logStream);
+        self::assertSame(12, $logStream->getSize());
+        self::assertSame('Hello', $logStream->read(5));
+        self::assertSame(' World', $logStream->read(6));
+        $logStream->getContents();
+        self::assertTrue($logStream->eof());
     }
 }

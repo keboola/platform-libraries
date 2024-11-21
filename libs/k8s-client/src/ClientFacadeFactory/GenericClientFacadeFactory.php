@@ -12,6 +12,7 @@ use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
+use Keboola\K8sClient\ApiClient\StreamClient;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
@@ -44,17 +45,7 @@ class GenericClientFacadeFactory
             ));
         }
 
-        Client::configure(
-            $apiUrl,
-            [
-                'caCert' => $caCertFile,
-                'token' => $token,
-            ],
-            [
-                'connect_timeout' => '30',
-                'timeout' => '60',
-            ],
-        );
+        ClientConfigurator::configureClients($apiUrl, $caCertFile, $token);
 
         $apiClient = new KubernetesApiClient($this->retryProxy, $namespace);
 

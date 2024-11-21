@@ -52,7 +52,7 @@ class ConfigurationMergerTest extends TestCase
         ];
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Primary key "Name2" not found in manifest file.');
+        $this->expectExceptionMessage('Primary key column "Name2" not found in manifest file.');
         ConfigurationMerger::mergeConfigurations($manifest, $mapping);
     }
 

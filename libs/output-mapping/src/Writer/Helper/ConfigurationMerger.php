@@ -113,7 +113,7 @@ class ConfigurationMerger
             $manifestColumn = array_filter($manifestSchema, fn($v) => $v['name'] === $primaryKey);
             if (!$manifestColumn) {
                 throw new InvalidOutputException(sprintf(
-                    'Primary key "%s" not found in manifest file.',
+                    'Primary key column "%s" not found in manifest file.',
                     $primaryKey,
                 ));
             }

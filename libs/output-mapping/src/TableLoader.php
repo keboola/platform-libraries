@@ -355,8 +355,15 @@ class TableLoader
             $loadOptions['distributionKey'] = implode(',', $distributionKey);
         }
 
-        if ($treatValuesAsNullConfiguration !== null && $storageSources->getTable()) {
-            $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
+        if ($treatValuesAsNullConfiguration !== null) {
+            if ($storageSources->getTable()) {
+                $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
+            } else {
+                $this->logger->warning(sprintf(
+                    'Treating values as null for table "%s" was skipped.',
+                    $source->getDestination()->getTableName(),
+                ));
+            }
         }
 
         return array_merge(

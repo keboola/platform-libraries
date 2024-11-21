@@ -2325,7 +2325,9 @@ CSV;
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
+        $writer = new TableWriter($this->getLocalStagingFactory(
+            logger: $this->testLogger,
+        ));
 
         $tableQueue =  $writer->uploadTables(
             'upload',
@@ -2351,6 +2353,10 @@ CSV;
         self::assertNotNull($job);
         self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
         self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
+
+        self::assertTrue($this->testHandler->hasWarningThatContains(
+            'Treating values as null for table "table1a" was skipped.',
+        ));
 
         /** @var string|array $data */
         $data = $this->clientWrapper->getTableAndFileStorageClient()->getTableDataPreview(

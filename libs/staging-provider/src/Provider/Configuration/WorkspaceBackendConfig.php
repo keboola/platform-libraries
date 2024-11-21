@@ -13,6 +13,7 @@ readonly class WorkspaceBackendConfig
         private string $stagingType,
         private ?string $size,
         private ?bool $useReadonlyRole,
+        private NetworkPolicy $networkPolicy,
     ) {
     }
 
@@ -43,5 +44,10 @@ readonly class WorkspaceBackendConfig
     public function getUseReadonlyRole(): ?bool
     {
         return $this->useReadonlyRole;
+    }
+
+    public function getNetworkPolicy(): string
+    {
+        return $this->networkPolicy->value;
     }
 }

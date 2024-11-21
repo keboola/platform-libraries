@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\Components;
@@ -25,7 +26,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->with(
                 'test-component',
                 'test-config',
-                ['backend' => 'snowflake', 'backendSize' => $backendSize],
+                ['backend' => 'snowflake', 'backendSize' => $backendSize, 'networkPolicy' => 'user'],
                 true,
             )
             ->willReturn([
@@ -48,7 +49,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', $backendSize, null),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                $backendSize,
+                null,
+                NetworkPolicy::USER,
+            ),
             'test-component',
             'test-config',
         );
@@ -84,7 +90,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->expects(self::once())
             ->method('createWorkspace')
             ->with(
-                ['backend' => 'snowflake', 'backendSize' => $backendSize, 'readOnlyStorageAccess' => true],
+                [
+                    'backend' => 'snowflake',
+                    'backendSize' => $backendSize,
+                    'readOnlyStorageAccess' => true,
+                    'networkPolicy' => 'system',
+                ],
                 true,
             )
             ->willReturn([
@@ -104,7 +115,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', $backendSize, true),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                $backendSize,
+                true,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             null,
         );
@@ -136,7 +152,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->with(
                 'test-component',
                 'test-config',
-                ['backend' => 'abs'],
+                ['backend' => 'abs', 'networkPolicy' => 'system'],
                 true,
             )
             ->willReturn([
@@ -155,7 +171,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-abs', null, null),
+            new WorkspaceBackendConfig(
+                'workspace-abs',
+                null,
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             'test-config',
         );
@@ -182,7 +203,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', 'large', null),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'large',
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             'test-config',
         );
@@ -224,7 +250,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', 'so-so', null),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'so-so',
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             'test-config',
         );
@@ -247,7 +278,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', 'so-so', null),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'so-so',
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             'test-config',
         );
@@ -283,7 +319,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,
             $componentsApiClient,
-            new WorkspaceBackendConfig('workspace-snowflake', 'so-so', null),
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'so-so',
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
             'test-component',
             'test-config',
         );

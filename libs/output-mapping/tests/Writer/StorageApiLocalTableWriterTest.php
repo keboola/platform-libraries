@@ -2342,34 +2342,13 @@ CSV;
         self::assertCount(3, $jobIds);
 
         // new table
-        /** @var array{
-         *      operationName: string,
-         *      operationParams: array{
-         *          source: array{fileId: string},
-         *          params: array,
-         *      },
-         *      results: array{id: string},
-         * } $job
-         */
-        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
-        self::assertSame('tableCreate', $job['operationName']);
-        self::assertSame($this->emptyOutputBucketId . '.table1a', $job['results']['id']);
+        $job = $this->findTableCreateJobForTable($table1Id, $jobIds);
+        self::assertNotNull($job);
         self::assertArrayNotHasKey('treatValuesAsNull', $job['operationParams']['params']);
 
         // non-typed table
-        /** @var array{
-         *      operationName: string,
-         *      tableId: string,
-         *      operationParams: array{
-         *          source: array{fileId: string},
-         *          params: array,
-         *      },
-         *      results: array{id: string},
-         * } $job
-         */
-        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[2]);
-        self::assertSame('tableImport', $job['operationName']);
-        self::assertSame($table2Id, $job['tableId']);
+        $job = $this->findTableImportJobForTable($table2Id, $jobIds);
+        self::assertNotNull($job);
         self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
         self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
 
@@ -2420,19 +2399,8 @@ CSV;
         );
 
         // typed table
-        /** @var array{
-         *      operationName: string,
-         *      tableId: string,
-         *      operationParams: array{
-         *          source: array{fileId: string},
-         *          params: array,
-         *      },
-         *      results: array{id: string},
-         * } $job
-         */
-        $job = $this->clientWrapper->getBranchClient()->getJob($jobIds[0]);
-        self::assertSame('tableImport', $job['operationName']);
-        self::assertSame($table3Id, $job['tableId']);
+        $job = $this->findTableImportJobForTable($table3Id, $jobIds);
+        self::assertNotNull($job);
         self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
         self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
 
@@ -2494,5 +2462,48 @@ CSV;
         }
 
         self::fail(sprintf('Cannot detect tableId from %s job', $operationName));
+    }
+
+    private function findTableCreateJobForTable(string $tableId, array $jobsIds): ?array
+    {
+        foreach ($jobsIds as $jobId) {
+            /** @var array{
+             *      operationName: string,
+             *      operationParams: array{
+             *          source: array{fileId: string},
+             *          params: array,
+             *      },
+             *      results: array{id: string},
+             * } $job
+             */
+            $job = $this->clientWrapper->getBranchClient()->getJob($jobId);
+            if ($job['operationName'] === 'tableCreate' && $job['results']['id'] === $tableId) {
+                return $job;
+            }
+        }
+
+        return null;
+    }
+
+    private function findTableImportJobForTable(string $tableId, array $jobsIds): ?array
+    {
+        foreach ($jobsIds as $jobId) {
+            /** @var array{
+             *      operationName: string,
+             *      tableId: string,
+             *      operationParams: array{
+             *          source: array{fileId: string},
+             *          params: array,
+             *      },
+             *      results: array{id: string},
+             * } $job
+             */
+            $job = $this->clientWrapper->getBranchClient()->getJob($jobId);
+            if ($job['operationName'] === 'tableImport' && $job['tableId'] === $tableId) {
+                return $job;
+            }
+        }
+
+        return null;
     }
 }

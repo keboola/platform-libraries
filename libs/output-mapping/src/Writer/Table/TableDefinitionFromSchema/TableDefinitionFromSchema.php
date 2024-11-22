@@ -38,4 +38,9 @@ class TableDefinitionFromSchema implements TableDefinitionInterface
             'columns' => $this->columns,
         ];
     }
+
+    public function getTableName(): string
+    {
+        return $this->tableName;
+    }
 }

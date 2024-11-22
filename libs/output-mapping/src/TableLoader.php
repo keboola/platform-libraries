@@ -19,6 +19,7 @@ use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableCreator;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
@@ -29,7 +30,6 @@ use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
-use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -39,11 +39,14 @@ use Throwable;
 
 class TableLoader
 {
+    private readonly TableCreator $tableCreator;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ClientWrapper $clientWrapper,
         private readonly StrategyFactory $strategyFactory,
     ) {
+        $this->tableCreator = new TableCreator($this->clientWrapper);
     }
 
     public function uploadTables(
@@ -202,7 +205,7 @@ class TableLoader
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
             );
-            $this->createTableDefinition($source->getDestination(), $tableDefinition);
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
@@ -213,7 +216,7 @@ class TableLoader
                 $source->getSchema(),
                 $storageSources->getBucket()->backend,
             );
-            $this->createTableDefinition($source->getDestination(), $tableDefinition);
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
@@ -247,30 +250,6 @@ class TableLoader
             throw new InvalidOutputException(
                 sprintf(
                     'Cannot create table "%s" in Storage API: %s',
-                    $destination->getTableName(),
-                    json_encode((array) $e->getContextParams()),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
-    }
-
-    private function createTableDefinition(
-        MappingDestination $destination,
-        TableDefinitionInterface $tableDefinition,
-    ): void {
-        $requestData = $tableDefinition->getRequestData();
-
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
-                $destination->getBucketId(),
-                $requestData,
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot create table "%s" definition in Storage API: %s',
                     $destination->getTableName(),
                     json_encode((array) $e->getContextParams()),
                 ),

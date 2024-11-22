@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping;
 
-use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Configuration\Table\Webalizer;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
@@ -22,7 +21,6 @@ use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableCreator;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
-use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -31,9 +29,7 @@ use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -220,7 +216,12 @@ class TableLoader
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
-            $this->createTable($source->getDestination(), $source->getColumns(), $loadOptions);
+            $this->tableCreator->createTable(
+                $source->getDestination()->getBucketId(),
+                $source->getDestination()->getTableName(),
+                $source->getColumns(),
+                $loadOptions,
+            );
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
@@ -230,33 +231,6 @@ class TableLoader
             $loadTask = new CreateAndLoadTableTask($source->getDestination(), $loadOptions, true);
         }
         return $loadTask;
-    }
-
-    private function createTable(MappingDestination $destination, array $columns, array $loadOptions): void
-    {
-        $tmp = new Temp();
-
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv')->getPathname());
-        $headerCsvFile->writeRow($columns);
-
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                $destination->getBucketId(),
-                $destination->getTableName(),
-                $headerCsvFile,
-                $loadOptions,
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot create table "%s" in Storage API: %s',
-                    $destination->getTableName(),
-                    json_encode((array) $e->getContextParams()),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
     }
 
     /**

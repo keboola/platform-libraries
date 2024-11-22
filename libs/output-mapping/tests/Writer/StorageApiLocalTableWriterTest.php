@@ -2280,6 +2280,14 @@ CSV;
             $root . '/upload/table3a.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
         );
+        file_put_contents(
+            $root . '/upload/table4a.csv',
+            "\"test\",\"test\"\n\"aabb\",\"ccdd\"\n",
+        );
+        file_put_contents(
+            $root . '/upload/table4a.csv.manifest',
+            (string) json_encode(['columns' => ['Id', 'Name']]),
+        );
 
         // non-typed table prepare
         $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
@@ -2309,6 +2317,7 @@ CSV;
         $table1Id = $this->emptyOutputBucketId . '.table1a';
         $table2Id = $this->emptyOutputBucketId . '.table2a';
         $table3Id = $this->emptyOutputBucketId . '.table3a';
+        $table4Id = $this->emptyOutputBucketId . '.table4a';
 
         $configs = [
             [
@@ -2322,6 +2331,10 @@ CSV;
             [
                 'source' => 'table3a.csv',
                 'destination' => $table3Id,
+            ],
+            [
+                'source' => 'table4a.csv',
+                'destination' => $table4Id,
             ],
         ];
 
@@ -2341,7 +2354,7 @@ CSV;
             'none',
         );
         $jobIds = $tableQueue->waitForAll();
-        self::assertCount(3, $jobIds);
+        self::assertCount(4, $jobIds);
 
         // new table
         $job = $this->findTableCreateJobForTable($table1Id, $jobIds);
@@ -2444,6 +2457,58 @@ CSV;
                     [
                         'columnName' => 'Id',
                         'value' => null,
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'ccdd',
+                        'isTruncated' => false,
+                    ],
+                ],
+            ],
+            $data['rows'],
+        );
+
+        // non-typed table with freshlyCreatedTable on OM process
+        $job = $this->findTableImportJobForTable($table4Id, $jobIds);
+        self::assertNotNull($job);
+        self::assertArrayHasKey('treatValuesAsNull', $job['operationParams']['params']);
+        self::assertSame(['aabb'], $job['operationParams']['params']['treatValuesAsNull']);
+
+        /** @var string|array $data */
+        $data = $this->clientWrapper->getTableAndFileStorageClient()->getTableDataPreview(
+            $table4Id,
+            [
+                'format' => 'json',
+                'orderBy' => [
+                    [
+                        'column' => 'Name',
+                        'order' => 'DESC',
+                    ],
+                ],
+            ],
+        );
+
+        self::assertIsArray($data);
+        self::assertArrayHasKey('rows', $data);
+        self::assertSame(
+            [
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                    [
+                        'columnName' => 'Name',
+                        'value' => 'test',
+                        'isTruncated' => false,
+                    ],
+                ],
+                [
+                    [
+                        'columnName' => 'Id',
+                        'value' => '',
                         'isTruncated' => false,
                     ],
                     [

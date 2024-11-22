@@ -228,6 +228,13 @@ class TableLoader
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, false);
         } else {
             // tabulka nemá manifest a tím nemá známé columns
+            if ($settings->getTreatValuesAsNull() !== null) {
+                // @TODO remove after https://keboola.atlassian.net/browse/CT-1858 will be resolved
+                $this->logger->warning(sprintf(
+                    'Treating values as null for table "%s" was skipped.',
+                    $source->getDestination()->getTableName(),
+                ));
+            }
             $loadTask = new CreateAndLoadTableTask($source->getDestination(), $loadOptions, true);
         }
         return $loadTask;
@@ -309,14 +316,7 @@ class TableLoader
         }
 
         if ($treatValuesAsNullConfiguration !== null) {
-            if ($storageSources->getTable()) {
-                $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
-            } else {
-                $this->logger->warning(sprintf(
-                    'Treating values as null for table "%s" was skipped.',
-                    $source->getDestination()->getTableName(),
-                ));
-            }
+            $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
         }
 
         return array_merge(

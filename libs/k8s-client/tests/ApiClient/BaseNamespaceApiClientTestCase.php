@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\BaseNamespaceApiClient;
-use Keboola\K8sClient\ApiClient\StreamClient;
 use Keboola\K8sClient\ClientFacadeFactory\ClientConfigurator;
 use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
@@ -40,10 +39,12 @@ trait BaseNamespaceApiClientTestCase
         string $baseApiClientClass,
         string $apiClientClass,
     ): void {
-        ClientConfigurator::configureClients(
+        Client::configure(
             (string) getenv('K8S_HOST'),
-            (string) getenv('K8S_CA_CERT_PATH'),
-            (string) getenv('K8S_TOKEN'),
+            [
+                'caCert' => (string) getenv('K8S_CA_CERT_PATH'),
+                'token' => (string) getenv('K8S_TOKEN'),
+            ],
         );
 
         $this->baseApiClient = new $baseApiClientClass;

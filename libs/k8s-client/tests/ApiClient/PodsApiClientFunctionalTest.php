@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\PodsApiClient;
+use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ class PodsApiClientFunctionalTest extends TestCase
     {
         parent::setUp();
         $this->setUpBaseNamespaceApiClientTest(
-            PodsApi::class,
+            PodWithLogStream::class,
             PodsApiClient::class,
         );
     }

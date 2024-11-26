@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\DeferredTasks\Metadata;
 
 use Generator;
-use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnsMetadata;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use PHPUnit\Framework\TestCase;
@@ -143,7 +143,7 @@ class ColumnMetadataTest extends TestCase
             }, $expectedColumnsMetadata))
         ;
 
-        $columnMetadata = new ColumnMetadata(
+        $columnMetadata = new ColumnsMetadata(
             self::TEST_TABLE_ID,
             self::TEST_PROVIDER,
             self::TEST_METADATA,

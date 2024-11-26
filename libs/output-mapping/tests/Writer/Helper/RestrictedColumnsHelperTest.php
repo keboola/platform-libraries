@@ -518,4 +518,32 @@ class RestrictedColumnsHelperTest extends TestCase
             $config['schema'] ?? [],
         );
     }
+
+    public function isRestrictedColumnProvider(): Generator
+    {
+        yield 'id' => [
+            'columnName' => 'id',
+            'expectedResult' => false,
+        ];
+        yield 'timestamp' => [
+            'columnName' => 'timestamp',
+            'expectedResult' => false,
+        ];
+        yield 'restricted timestamp with udnerscore' => [
+            'columnName' => '_timestamp',
+            'expectedResult' => true,
+        ];
+        yield 'restricted timestamp with udnerscore - case insensitive' => [
+            'columnName' => '_TimeStamp',
+            'expectedResult' => true,
+        ];
+    }
+
+    /**
+     * @dataProvider isRestrictedColumnProvider
+     */
+    public function testIsRestrictedColumn(string $columName, bool $expectedResult): void
+    {
+        self::assertSame($expectedResult, RestrictedColumnsHelper::isRestrictedColumn($columName));
+    }
 }

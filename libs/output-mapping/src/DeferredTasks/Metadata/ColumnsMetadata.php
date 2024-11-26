@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\DeferredTasks\Metadata;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 
-class ColumnMetadata implements MetadataInterface
+class ColumnsMetadata implements MetadataInterface
 {
     public function __construct(
         private readonly string $tableId,

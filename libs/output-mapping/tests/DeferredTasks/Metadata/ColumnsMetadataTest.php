@@ -10,7 +10,7 @@ use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use PHPUnit\Framework\TestCase;
 
-class ColumnMetadataTest extends TestCase
+class ColumnsMetadataTest extends TestCase
 {
     private const TEST_TABLE_ID = 'in.c-testApply.table';
     private const TEST_PROVIDER = 'keboola.sample-component';

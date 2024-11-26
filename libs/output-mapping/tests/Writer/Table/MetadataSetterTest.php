@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table;
 
 use Generator;
-use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnsMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
@@ -82,7 +82,7 @@ class MetadataSetterTest extends TestCase
                 ],
             ],
         );
-        $columnMetadata = new ColumnMetadata(
+        $columnsMetadata = new ColumnsMetadata(
             'in.c-main.table',
             'keboola.test',
             [
@@ -185,7 +185,7 @@ class MetadataSetterTest extends TestCase
             $mockMappingFromProcessedConfiguration,
             true,
             2,
-            [$tableLastUpdateMetadata, $columnMetadata],
+            [$tableLastUpdateMetadata, $columnsMetadata],
         ];
 
         $mockMappingFromProcessedConfiguration = $this->createMock(MappingFromProcessedConfiguration::class);
@@ -257,7 +257,7 @@ class MetadataSetterTest extends TestCase
                 $tableCreatedByMetadata,
                 $tableLastUpdateMetadata,
                 $tableMetadata,
-                $columnMetadata,
+                $columnsMetadata,
                 $schemaColumnMetadata,
             ],
         ];

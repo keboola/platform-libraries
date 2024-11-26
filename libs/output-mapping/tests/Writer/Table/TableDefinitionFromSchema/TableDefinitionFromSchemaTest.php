@@ -84,4 +84,10 @@ class TableDefinitionFromSchemaTest extends TestCase
             ],
         ];
     }
+
+    public function testGetTableName(): void
+    {
+        $tableDefinition = new TableDefinitionFromSchema('testTableName', [], 'snowflake');
+        self::assertEquals('testTableName', $tableDefinition->getTableName());
+    }
 }

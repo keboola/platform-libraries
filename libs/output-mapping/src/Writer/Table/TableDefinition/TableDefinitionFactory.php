@@ -22,7 +22,7 @@ class TableDefinitionFactory
                 $this->enforceBaseTypes,
             ),
         );
-        $tableDefinition->setName($tableName);
+        $tableDefinition->setTableName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
         foreach ($columnMetadata as $columnName => $metadata) {
             $tableDefinition->addColumn(

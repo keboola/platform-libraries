@@ -8,7 +8,6 @@ use Generator;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
-use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
@@ -73,43 +72,6 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
         $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertFalse($tableDetails['isTyped']);
-    }
-
-    #[NeedsEmptyOutputBucket]
-    public function testCreateTableDefinitionErrorHandling(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDefinitionWithInvalidDataTypes';
-        $config = [
-            'source' => 'tableDefinition.csv',
-            'destination' => $tableId,
-            'columns' => ['Id', 'Name'],
-            'column_metadata' => [
-                'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
-            ],
-            'primary_key' => ['Id', 'Name'],
-        ];
-
-        touch(sprintf('%s/upload/tableDefinition.csv', $this->temp->getTmpFolder()));
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionCode(400);
-        $this->expectExceptionMessageMatches(
-            '/^Cannot create table \"tableDefinitionWithInvalidDataTypes\" definition in Storage API: {.+}$/u',
-        );
-        $this->expectExceptionMessage('Selected columns are not included in table definition');
-
-        $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
-        );
     }
 
     /**

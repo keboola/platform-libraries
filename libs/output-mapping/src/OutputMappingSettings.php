@@ -38,6 +38,8 @@ class OutputMappingSettings
 
     private string $dataTypeSupport;
 
+    private ?array $treatValuesAsNull;
+
     public function __construct(
         array $configuration,
         string $sourcePathPrefix,
@@ -47,6 +49,7 @@ class OutputMappingSettings
     ) {
         // TODO: validate
         $this->bucket = $configuration['bucket'] ?? null;
+        $this->treatValuesAsNull = $configuration['treat_values_as_null'] ?? null;
         foreach ($configuration['mapping'] ?? [] as $mappingItem) {
             $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
         }
@@ -113,5 +116,10 @@ class OutputMappingSettings
     public function hasBigqueryNativeTypesFeature(): bool
     {
         return $this->storageApiToken->hasFeature(self::BIG_QUERY_NATIVE_TYPES_FEATURE);
+    }
+
+    public function getTreatValuesAsNull(): ?array
+    {
+        return $this->treatValuesAsNull;
     }
 }

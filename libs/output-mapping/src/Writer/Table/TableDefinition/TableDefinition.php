@@ -13,22 +13,22 @@ class TableDefinition implements TableDefinitionInterface
     ) {
     }
 
-    private string $name;
+    private string $tableName;
 
     /** @var TableDefinitionColumnInterface[] $columns */
     private array $columns = [];
 
     private array $primaryKeysNames = [];
 
-    public function setName(string $name): self
+    public function setTableName(string $tableName): self
     {
-        $this->name = $name;
+        $this->tableName = $tableName;
         return $this;
     }
 
-    public function getName(): string
+    public function getTableName(): string
     {
-        return $this->name;
+        return $this->tableName;
     }
 
     public function setPrimaryKeysNames(array $primaryKeys): self
@@ -58,7 +58,7 @@ class TableDefinition implements TableDefinitionInterface
             $columns[] = $column->toArray();
         }
         return [
-            'name' => $this->name,
+            'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeysNames,
             'columns' => $columns,
         ];

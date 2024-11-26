@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping;
 
-use Keboola\Csv\CsvFile;
 use Keboola\OutputMapping\Configuration\Table\Webalizer;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
@@ -19,9 +18,9 @@ use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableCreator;
 use Keboola\OutputMapping\Storage\TableStructureValidator;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
-use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
@@ -29,21 +28,21 @@ use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
-use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
-use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 class TableLoader
 {
+    private readonly TableCreator $tableCreator;
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly ClientWrapper $clientWrapper,
         private readonly StrategyFactory $strategyFactory,
     ) {
+        $this->tableCreator = new TableCreator($this->clientWrapper);
     }
 
     public function uploadTables(
@@ -173,8 +172,9 @@ class TableLoader
         $loadOptions = $this->buildLoadOptions(
             $source,
             $strategy,
-            $storageSources->didTableExistBefore(),
+            $storageSources,
             $settings->hasNewNativeTypesFeature(),
+            $settings->getTreatValuesAsNull(),
         );
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
@@ -201,7 +201,7 @@ class TableLoader
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
             );
-            $this->createTableDefinition($source->getDestination(), $tableDefinition);
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
@@ -212,71 +212,32 @@ class TableLoader
                 $source->getSchema(),
                 $storageSources->getBucket()->backend,
             );
-            $this->createTableDefinition($source->getDestination(), $tableDefinition);
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
-            $this->createTable($source->getDestination(), $source->getColumns(), $loadOptions);
+            $this->tableCreator->createTable(
+                $source->getDestination()->getBucketId(),
+                $source->getDestination()->getTableName(),
+                $source->getColumns(),
+                $loadOptions,
+            );
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, false);
         } else {
             // tabulka nemá manifest a tím nemá známé columns
+            if ($settings->getTreatValuesAsNull() !== null) {
+                // @TODO remove after https://keboola.atlassian.net/browse/CT-1858 will be resolved
+                $this->logger->warning(sprintf(
+                    'Treating values as null for table "%s" was skipped.',
+                    $source->getDestination()->getTableName(),
+                ));
+            }
             $loadTask = new CreateAndLoadTableTask($source->getDestination(), $loadOptions, true);
         }
         return $loadTask;
-    }
-
-    private function createTable(MappingDestination $destination, array $columns, array $loadOptions): void
-    {
-        $tmp = new Temp();
-
-        $headerCsvFile = new CsvFile($tmp->createFile($destination->getTableName().'.header.csv')->getPathname());
-        $headerCsvFile->writeRow($columns);
-
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                $destination->getBucketId(),
-                $destination->getTableName(),
-                $headerCsvFile,
-                $loadOptions,
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot create table "%s" in Storage API: %s',
-                    $destination->getTableName(),
-                    json_encode((array) $e->getContextParams()),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
-    }
-
-    private function createTableDefinition(
-        MappingDestination $destination,
-        TableDefinitionInterface $tableDefinition,
-    ): void {
-        $requestData = $tableDefinition->getRequestData();
-
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
-                $destination->getBucketId(),
-                $requestData,
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot create table "%s" definition in Storage API: %s',
-                    $destination->getTableName(),
-                    json_encode((array) $e->getContextParams()),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
     }
 
     /**
@@ -311,8 +272,9 @@ class TableLoader
     private function buildLoadOptions(
         MappingFromProcessedConfiguration $source,
         StrategyInterface $strategy,
-        bool $didTableExistBefore,
+        MappingStorageSources $storageSources,
         bool $hasNewNativeTypesFeature,
+        ?array $treatValuesAsNullConfiguration,
     ): array {
         if ($hasNewNativeTypesFeature && $source->getSchema()) {
             $columns = array_map(
@@ -349,8 +311,12 @@ class TableLoader
             $loadOptions['ignoredLinesCount'] = 1;
         }
 
-        if (!$didTableExistBefore && $distributionKey) {
+        if (!$storageSources->didTableExistBefore() && $distributionKey) {
             $loadOptions['distributionKey'] = implode(',', $distributionKey);
+        }
+
+        if ($treatValuesAsNullConfiguration !== null) {
+            $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
         }
 
         return array_merge(

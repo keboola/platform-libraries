@@ -72,4 +72,12 @@ class TableDefinitionTest extends TestCase
             'expectedColumn' => new BaseTypeTableDefinitionColumn('testColumn', 'STRING'),
         ];
     }
+
+    public function testSetAndGetTableName(): void
+    {
+        $tableDefinition = new TableDefinition($this->createMock(TableDefinitionColumnFactory::class));
+
+        $tableDefinition->setTableName('testTableName');
+        self::assertSame('testTableName', $tableDefinition->getTableName());
+    }
 }

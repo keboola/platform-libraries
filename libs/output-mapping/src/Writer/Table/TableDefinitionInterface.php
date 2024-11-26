@@ -7,4 +7,6 @@ namespace Keboola\OutputMapping\Writer\Table;
 interface TableDefinitionInterface
 {
     public function getRequestData(): array;
+
+    public function getTableName(): string;
 }

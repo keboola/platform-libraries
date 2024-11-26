@@ -6,7 +6,7 @@ namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnsMetadata;
-use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnsMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
@@ -64,7 +64,7 @@ class MetadataSetter
         }
 
         if ($processedSource->getSchema() && $processedSource->hasSchemaColumnMetadata()) {
-            $loadTask->addMetadata(new SchemaColumnMetadata(
+            $loadTask->addMetadata(new SchemaColumnsMetadata(
                 $processedSource->getDestination()->getTableId(),
                 (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getSchema(),

@@ -9,6 +9,7 @@ use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnsMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnsMetadata;
 use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
@@ -86,14 +87,19 @@ class MetadataSetterTest extends TestCase
             'in.c-main.table',
             'keboola.test',
             [
-                [
-                    'key' => 'col-key1',
-                    'value' => 'col-val1',
-                ],
-                [
-                    'key' => 'col-key2',
-                    'value' => 'col-val2',
-                ],
+                new MappingColumnMetadata(
+                    'dummy-column',
+                    [
+                        [
+                            'key' => 'col-key1',
+                            'value' => 'col-val1',
+                        ],
+                        [
+                            'key' => 'col-key2',
+                            'value' => 'col-val2',
+                        ],
+                    ],
+                ),
             ],
         );
         $schemaColumnsMetadata = new SchemaColumnsMetadata(
@@ -170,14 +176,16 @@ class MetadataSetterTest extends TestCase
         $mockMappingFromProcessedConfiguration->method('hasMetadata')->willReturn(false);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getColumnMetadata')->willReturn([
-            [
-                'key' => 'col-key1',
-                'value' => 'col-val1',
-            ],
-            [
-                'key' => 'col-key2',
-                'value' => 'col-val2',
-            ],
+            new MappingColumnMetadata('dummy-column', [
+                [
+                    'key' => 'col-key1',
+                    'value' => 'col-val1',
+                ],
+                [
+                    'key' => 'col-key2',
+                    'value' => 'col-val2',
+                ],
+            ]),
         ]);
         $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(false);
 
@@ -227,14 +235,19 @@ class MetadataSetterTest extends TestCase
         ]);
         $mockMappingFromProcessedConfiguration->method('hasColumnMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getColumnMetadata')->willReturn([
-            [
-                'key' => 'col-key1',
-                'value' => 'col-val1',
-            ],
-            [
-                'key' => 'col-key2',
-                'value' => 'col-val2',
-            ],
+            new MappingColumnMetadata(
+                'dummy-column',
+                [
+                    [
+                        'key' => 'col-key1',
+                        'value' => 'col-val1',
+                    ],
+                    [
+                        'key' => 'col-key2',
+                        'value' => 'col-val2',
+                    ],
+                ],
+            ),
         ]);
         $mockMappingFromProcessedConfiguration->method('hasSchemaColumnMetadata')->willReturn(true);
         $mockMappingFromProcessedConfiguration->method('getSchema')->willReturn([

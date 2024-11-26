@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Storage;
 
 use Generator;
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Storage\BucketInfo;
 use Keboola\OutputMapping\Storage\TableInfo;
@@ -216,16 +217,19 @@ class TableStructureModifierTest extends AbstractTestCase
         $source->method('getColumns')->willReturn([]);
         $source->method('getMetadata')->willReturn([]);
         $source->method('getColumnMetadata')->willReturn([
-            $newColumnName => [
+            new MappingColumnMetadata(
+                $newColumnName,
                 [
-                    'key' => 'KBC.datatype.type',
-                    'value' => 'INT',
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'INT',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.basetype',
+                        'value' => 'INTEGER',
+                    ],
                 ],
-                [
-                    'key' => 'KBC.datatype.basetype',
-                    'value' => 'INTEGER',
-                ],
-            ],
+            ),
         ]);
 
         $this->modifier->updateTableStructure(
@@ -280,6 +284,7 @@ class TableStructureModifierTest extends AbstractTestCase
             'enforceBaseTypes' => false,
             'expectedLength' => '10,5',
         ];
+
         yield 'enforced base types' => [
             'enforceBaseTypes' => true,
             'expectedLength' => '38,9',
@@ -306,7 +311,7 @@ class TableStructureModifierTest extends AbstractTestCase
             ],
         ]);
         $source->method('getColumnMetadata')->willReturn([
-            $newColumnName => [
+            new MappingColumnMetadata($newColumnName, [
                 [
                     'key' => 'KBC.datatype.type',
                     'value' => 'NUMBER',
@@ -319,7 +324,7 @@ class TableStructureModifierTest extends AbstractTestCase
                     'key' => 'KBC.datatype.basetype',
                     'value' => 'NUMERIC',
                 ],
-            ],
+            ]),
         ]);
 
         $this->modifier->updateTableStructure(

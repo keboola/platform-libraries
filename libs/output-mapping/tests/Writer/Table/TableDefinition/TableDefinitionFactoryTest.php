@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 use Generator;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use PHPUnit\Framework\TestCase;
 
@@ -41,11 +42,26 @@ class TableDefinitionFactoryTest extends TestCase
                 'one', 'two',
             ],
             'columnMetadata' => [
-                'Id' => (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
-                'Name' => (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
-                'birthday' => (new GenericStorage('date'))->toMetadata(),
-                'created' => (new GenericStorage('timestamp'))->toMetadata(),
-                '123' => (new GenericStorage('date'))->toMetadata(),
+                new MappingColumnMetadata(
+                    'Id',
+                    (new GenericStorage('int', ['nullable' => false]))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'Name',
+                    (new GenericStorage('varchar', ['length' => '17', 'nullable' => false]))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'birthday',
+                    (new GenericStorage('date'))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'created',
+                    (new GenericStorage('timestamp'))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    '123',
+                    (new GenericStorage('date'))->toMetadata(),
+                ),
             ],
             'enforceBaseTypes' => false,
             'expectedSerialisation' => [
@@ -89,11 +105,26 @@ class TableDefinitionFactoryTest extends TestCase
                 'one', 'two',
             ],
             'columnMetadata' => [
-                'Id' => (new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]))->toMetadata(),
-                'Name' => (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
-                'birthtime' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
-                'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
-                '123' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                new MappingColumnMetadata(
+                    'Id',
+                    (new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'Name',
+                    (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'birthtime',
+                    (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'created',
+                    (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    '123',
+                    (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                ),
             ],
             'enforceBaseTypes' => false,
             'expectedSerialisation' => [
@@ -157,11 +188,26 @@ class TableDefinitionFactoryTest extends TestCase
                 'one', 'two',
             ],
             'columnMetadata' => [
-                'Id' => (new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]))->toMetadata(),
-                'Name' => (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
-                'birthtime' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
-                'created' => (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
-                '123' => (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                new MappingColumnMetadata(
+                    'Id',
+                    (new Snowflake(Snowflake::TYPE_INTEGER, ['nullable' => false]))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'Name',
+                    (new Snowflake(Snowflake::TYPE_TEXT, ['length' => '127']))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'birthtime',
+                    (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    'created',
+                    (new Snowflake(Snowflake::TYPE_TIMESTAMP_TZ))->toMetadata(),
+                ),
+                new MappingColumnMetadata(
+                    '123',
+                    (new Snowflake(Snowflake::TYPE_TIME))->toMetadata(),
+                ),
             ],
             'enforceBaseTypes' => true,
             'expectedSerialisation' => [

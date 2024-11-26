@@ -23,7 +23,7 @@ class SchemaColumnMetadata implements MetadataInterface
         assert($bulkSize > 0);
 
         /** @var MappingFromConfigurationSchemaColumn[] $chunk */
-        foreach (array_chunk($this->schema, $bulkSize, true) as $chunk) {
+        foreach (array_chunk($this->schema, $bulkSize) as $chunk) {
             $columnsMetadata = [];
 
             foreach ($chunk as $metadataArray) {

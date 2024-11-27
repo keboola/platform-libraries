@@ -6,6 +6,8 @@ namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
+use Keboola\K8sClient\Exception\KubernetesResponseException;
+use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use PHPUnit\Framework\TestCase;
@@ -82,5 +84,12 @@ class PodsApiClientFunctionalTest extends TestCase
         self::assertSame(' World', $logStream->read(6));
         $logStream->getContents();
         self::assertTrue($logStream->eof());
+    }
+
+    public function testReadLogResourceNotFound(): void
+    {
+        $this->expectException(ResourceNotFoundException::class);
+        $this->expectExceptionMessage('Resource not found: pods "test-resource-1" not found');
+        $this->apiClient->readLog('test-resource-1');
     }
 }

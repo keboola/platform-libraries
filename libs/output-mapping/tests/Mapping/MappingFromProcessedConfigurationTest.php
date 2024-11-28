@@ -183,9 +183,14 @@ class MappingFromProcessedConfigurationTest extends TestCase
 
         $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
 
-        self::assertEquals(['col1'], $mapping->getColumns());
-        self::assertEquals([
-            'col1' => [
+        self::assertSame(['col1'], $mapping->getColumns());
+
+        $metadataList = $mapping->getColumnMetadata();
+        self::assertCount(1, $metadataList);
+
+        self::assertSame('col1', $metadataList[0]->getColumnName());
+        self::assertSame(
+            [
                 [
                     'key' => 'KBC.datatype.type',
                     'value' => 'INT',
@@ -195,7 +200,8 @@ class MappingFromProcessedConfigurationTest extends TestCase
                     'value' => 'INTEGER',
                 ],
             ],
-        ], $mapping->getColumnMetadata());
+            $metadataList[0]->getMetadata(),
+        );
     }
 
     public function deleteWhereParamsDataProvider(): Generator

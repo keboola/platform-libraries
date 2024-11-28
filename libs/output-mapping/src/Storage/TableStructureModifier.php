@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
@@ -70,15 +71,14 @@ class TableStructureModifier extends AbstractTableStructureModifier
         $defaultBaseTypeValue = $currentTableInfo->isTyped() === true ? BaseType::STRING : null;
         $missingColumnsData = [];
         if ($currentTableInfo->isTyped() === true) {
-            foreach ($newTableConfiguration->getColumnMetadata() as $columnName => $columnMetadata) {
-                $columnName = (string) $columnName;
-                if (!in_array($columnName, $missingColumns, true)) {
+            foreach ($newTableConfiguration->getColumnMetadata() as $columnMetadata) {
+                if (!in_array($columnMetadata->getColumnName(), $missingColumns, true)) {
                     continue;
                 }
 
                 $tableMetadata = $newTableConfiguration->getMetadata();
                 $column = (new TableDefinitionColumnFactory($tableMetadata, $backendType, $enforceBaseTypes))
-                    ->createTableDefinitionColumn($columnName, $columnMetadata);
+                    ->createTableDefinitionColumn($columnMetadata->getColumnName(), $columnMetadata->getMetadata());
 
                 $columnData = $column->toArray();
                 $missingColumnsData[] = [
@@ -115,10 +115,9 @@ class TableStructureModifier extends AbstractTableStructureModifier
         array $newTableConfigurationColumnMetadata,
     ): array {
         return array_udiff(
-            array_map(
-                'strval',
-                array_keys($newTableConfigurationColumnMetadata),
-            ),
+            array_map(function (MappingColumnMetadata $columnMetadata): string {
+                return $columnMetadata->getColumnName();
+            }, $newTableConfigurationColumnMetadata),
             $currentTableColumns,
             'strcasecmp',
         );

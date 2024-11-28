@@ -5,44 +5,14 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\DeferredTasks\Metadata;
 
 use Generator;
-use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnsMetadata;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use PHPUnit\Framework\TestCase;
 
-class ColumnMetadataTest extends TestCase
+class ColumnsMetadataTest extends TestCase
 {
-    private const TEST_TABLE_ID = 'in.c-testApply.table';
-    private const TEST_PROVIDER = 'keboola.sample-component';
-    private const TEST_METADATA = [
-        'id' => [
-            [
-                'columnName' => 'id',
-                'key' => 'timestamp',
-                'value' => '1674226231',
-            ],
-        ],
-        '0' => [
-            [
-                'columnName' => '0',
-                'key' => 'timestamp',
-                'value' => '1674226231',
-            ],
-        ],
-        'aa_caa' => [
-            [
-                'columnName' => 'aa_caa',
-                'key' => 'KBC.datatype.basetype',
-                'value' => 'STRING',
-            ],
-            [
-                'columnName' => 'aa_caa',
-                'key' => '1',
-                'value' => '',
-            ],
-        ],
-    ];
-
     public function applyDataProvider(): Generator
     {
         yield 'load at once' => [
@@ -143,10 +113,42 @@ class ColumnMetadataTest extends TestCase
             }, $expectedColumnsMetadata))
         ;
 
-        $columnMetadata = new ColumnMetadata(
-            self::TEST_TABLE_ID,
-            self::TEST_PROVIDER,
-            self::TEST_METADATA,
+        $columnMetadata = new ColumnsMetadata(
+            'in.c-testApply.table',
+            'keboola.sample-component',
+            [
+                new MappingColumnMetadata(
+                    'id',
+                    [
+                        [
+                            'key' => 'timestamp',
+                            'value' => '1674226231',
+                        ],
+                    ],
+                ),
+                new MappingColumnMetadata(
+                    '0',
+                    [
+                        [
+                            'key' => 'timestamp',
+                            'value' => '1674226231',
+                        ],
+                    ],
+                ),
+                new MappingColumnMetadata(
+                    'aa_caa',
+                    [
+                        [
+                            'key' => 'KBC.datatype.basetype',
+                            'value' => 'STRING',
+                        ],
+                        [
+                            'key' => '1',
+                            'value' => '',
+                        ],
+                    ],
+                ),
+            ],
         );
 
         $columnMetadata->apply($metadataClientMock, $bulkSize);

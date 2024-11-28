@@ -127,11 +127,22 @@ class MappingFromProcessedConfiguration
         );
     }
 
+    /**
+     * @return MappingColumnMetadata[]
+     */
     public function getColumnMetadata(): array
     {
-        return $this->mapping['column_metadata'] ?
+        $columnMetadataFromConfiguration = $this->mapping['column_metadata'] ?
             RestrictedColumnsHelper::removeRestrictedColumnsFromColumnMetadata($this->mapping['column_metadata']) :
-            [];
+            []
+        ;
+
+        $return = [];
+        foreach ($columnMetadataFromConfiguration as $columnName => $metadata) {
+            $return[] = new MappingColumnMetadata((string) $columnName, $metadata);
+        }
+
+        return $return;
     }
 
     public function getPathName(): string

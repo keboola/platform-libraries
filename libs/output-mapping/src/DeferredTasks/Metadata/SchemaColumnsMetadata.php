@@ -8,7 +8,7 @@ use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 
-class SchemaColumnMetadata implements MetadataInterface
+class SchemaColumnsMetadata implements MetadataInterface
 {
     /** @param MappingFromConfigurationSchemaColumn[] $schema */
     public function __construct(
@@ -23,7 +23,7 @@ class SchemaColumnMetadata implements MetadataInterface
         assert($bulkSize > 0);
 
         /** @var MappingFromConfigurationSchemaColumn[] $chunk */
-        foreach (array_chunk($this->schema, $bulkSize, true) as $chunk) {
+        foreach (array_chunk($this->schema, $bulkSize) as $chunk) {
             $columnsMetadata = [];
 
             foreach ($chunk as $metadataArray) {

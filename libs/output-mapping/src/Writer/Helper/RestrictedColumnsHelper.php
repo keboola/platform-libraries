@@ -30,7 +30,7 @@ class RestrictedColumnsHelper
     public static function removeRestrictedColumnsFromColumns(array $columns): array
     {
         return array_filter($columns, function ($column): bool {
-            return self::isRestrictedColumn((string) $column);
+            return !self::isRestrictedColumn((string) $column);
         });
     }
 
@@ -39,7 +39,7 @@ class RestrictedColumnsHelper
         $columnNames = array_keys($columnMetadata);
 
         $columnNamesFiltered = array_filter($columnNames, function ($column) {
-            return self::isRestrictedColumn((string) $column);
+            return !self::isRestrictedColumn((string) $column);
         });
 
         return array_diff_key(
@@ -53,7 +53,7 @@ class RestrictedColumnsHelper
     public static function removeRestrictedColumnsFromSchema(array $schema): array
     {
         return array_filter($schema, function ($column): bool {
-            return self::isRestrictedColumn((string) $column['name']);
+            return !self::isRestrictedColumn((string) $column['name']);
         });
     }
 
@@ -65,7 +65,7 @@ class RestrictedColumnsHelper
         $errors = [];
         if (!empty($columns)) {
             $restrictedColumns = array_filter($columns, function ($column): bool {
-                return !self::isRestrictedColumn((string) $column);
+                return self::isRestrictedColumn((string) $column);
             });
             if ($restrictedColumns) {
                 $errors[] = sprintf(
@@ -78,7 +78,7 @@ class RestrictedColumnsHelper
         if (!empty($columnMetadata)) {
             $columnNames = array_keys($columnMetadata);
             $restrictedColumns = array_filter($columnNames, function ($column): bool {
-                return !self::isRestrictedColumn((string) $column);
+                return self::isRestrictedColumn((string) $column);
             });
             if ($restrictedColumns) {
                 $errors[] = sprintf(
@@ -90,7 +90,7 @@ class RestrictedColumnsHelper
 
         if (!empty($schema)) {
             $restrictedColumns = array_filter($schema, function ($column): bool {
-                return !self::isRestrictedColumn((string) $column['name']);
+                return self::isRestrictedColumn((string) $column['name']);
             });
             if ($restrictedColumns) {
                 $errors[] = sprintf(
@@ -107,6 +107,6 @@ class RestrictedColumnsHelper
 
     public static function isRestrictedColumn(string $columnName): bool
     {
-        return mb_strtolower($columnName) !== self::TIMESTAMP_COLUMN_NAME;
+        return mb_strtolower($columnName) === self::TIMESTAMP_COLUMN_NAME;
     }
 }

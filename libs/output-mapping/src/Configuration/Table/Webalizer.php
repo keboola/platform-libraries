@@ -76,7 +76,7 @@ class Webalizer
         foreach ($columns as $k => $column) {
             // System columns should not be webalized and should be preserved
             // they will be validated later in the validator
-            if (!RestrictedColumnsHelper::isRestrictedColumn($column)) {
+            if (RestrictedColumnsHelper::isRestrictedColumn($column)) {
                 $webalized[$k] = $column;
             } elseif ($webalized[$k] !== $column) {
                 $this->logger->warning(sprintf(

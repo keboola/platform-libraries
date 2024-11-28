@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
+
 class TableDefinitionFactory
 {
     public function __construct(
@@ -13,6 +15,9 @@ class TableDefinitionFactory
     ) {
     }
 
+    /**
+     * @param MappingColumnMetadata[] $columnMetadata
+     */
     public function createTableDefinition(string $tableName, array $primaryKeys, array $columnMetadata): TableDefinition
     {
         $tableDefinition = new TableDefinition(
@@ -24,10 +29,11 @@ class TableDefinitionFactory
         );
         $tableDefinition->setTableName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
-        foreach ($columnMetadata as $columnName => $metadata) {
+
+        foreach ($columnMetadata as $metadata) {
             $tableDefinition->addColumn(
-                (string) $columnName,
-                $metadata,
+                $metadata->getColumnName(),
+                $metadata->getMetadata(),
             );
         }
         return $tableDefinition;

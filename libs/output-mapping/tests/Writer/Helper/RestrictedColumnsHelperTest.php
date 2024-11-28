@@ -11,6 +11,110 @@ use PHPUnit\Framework\TestCase;
 
 class RestrictedColumnsHelperTest extends TestCase
 {
+    private const TEST_COLUMNS_DATA = [
+        'id',
+        'name',
+        '_timestamp',
+        '_TIMESTAMP', // to be sure that filter is not case-sensitive
+    ];
+
+    private const EXPECTED_COLUMNS_DATA = [
+        'id',
+        'name',
+    ];
+
+    private const TEST_COLUMN_METADATA = [
+        'id' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'INT',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'INTEGER',
+            ],
+        ],
+        'name' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'VARCHAR',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'STRING',
+            ],
+        ],
+        '_timestamp' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'TIMESTAMP_NTZ',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'TIMESTAMP',
+            ],
+        ],
+        // to be sure that filter is not case-sensitive
+        '_TIMESTAMP' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'TIMESTAMP_NTZ',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'TIMESTAMP',
+            ],
+        ],
+    ];
+
+    private const EXPECTED_COLUMN_METADATA = [
+        'id' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'INT',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'INTEGER',
+            ],
+        ],
+        'name' => [
+            [
+                'key' => 'KBC.datatype.type',
+                'value' => 'VARCHAR',
+            ],
+            [
+                'key' => 'KBC.datatype.basetype',
+                'value' => 'STRING',
+            ],
+        ],
+    ];
+
+    private const TEST_SCHEMA_DATA = [
+        [
+            'name' => 'id',
+        ],
+        [
+            'name' => 'name',
+        ],
+        [
+            'name' => '_timestamp',
+        ],
+        // to be sure that filter is not case-sensitive
+        [
+            'name' => '_TIMESTAMP',
+        ],
+    ];
+
+    private const EXPECTED_SCHEMA_DATA = [
+        [
+            'name' => 'id',
+        ],
+        [
+            'name' => 'name',
+        ],
+    ];
+
     public function removeRestrictedColumnsFromConfigProvider(): Generator
     {
         yield 'empty config' => [
@@ -47,19 +151,11 @@ class RestrictedColumnsHelperTest extends TestCase
         yield 'config with restricted columns' => [
             'config' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'columns' => [
-                    'id',
-                    'name',
-                    '_timestamp',
-                    '_TIMESTAMP', // to be sure that filter is not case-sensitive
-                ],
+                'columns' => self::TEST_COLUMNS_DATA,
             ],
             'expectedResult' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'columns' => [
-                    'id',
-                    'name',
-                ],
+                'columns' => self::EXPECTED_COLUMNS_DATA,
             ],
         ];
 
@@ -119,180 +215,26 @@ class RestrictedColumnsHelperTest extends TestCase
         yield 'config with restricted columns in metadata' => [
             'config' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                    '_timestamp' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                    // to be sure that filter is not case-sensitive
-                    '_TIMESTAMP' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                ],
+                'column_metadata' => self::TEST_COLUMN_METADATA,
             ],
             'expectedResult' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                ],
+                'column_metadata' => self::EXPECTED_COLUMN_METADATA,
             ],
         ];
 
         yield 'config with restricted columns and restricted columns metadata' => [
             'config' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'columns' => [
-                    'id',
-                    'name',
-                    '_timestamp',
-                    '_TIMESTAMP', // to be sure that filter is not case-sensitive
-                ],
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                    '_timestamp' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                    // to be sure that filter is not case-sensitive
-                    '_TIMESTAMP' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                ],
-                'schema' => [
-                    [
-                        'name' => 'id',
-                    ],
-                    [
-                        'name' => 'name',
-                    ],
-                    [
-                        'name' => '_timestamp',
-                    ],
-                    [
-                        'name' => '_TIMESTAMP',
-                    ],
-                ],
+                'columns' => self::TEST_COLUMNS_DATA,
+                'column_metadata' => self::TEST_COLUMN_METADATA,
+                'schema' => self::TEST_SCHEMA_DATA,
             ],
             'expectedResult' => [
                 'destination' => 'in.c-myBucket.myTable',
-                'columns' => [
-                    'id',
-                    'name',
-                ],
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                ],
-                'schema' => [
-                    [
-                        'name' => 'id',
-                    ],
-                    [
-                        'name' => 'name',
-                    ],
-                ],
+                'columns' => self::EXPECTED_COLUMNS_DATA,
+                'column_metadata' => self::EXPECTED_COLUMN_METADATA,
+                'schema' => self::EXPECTED_SCHEMA_DATA,
             ],
         ];
     }
@@ -387,61 +329,14 @@ class RestrictedColumnsHelperTest extends TestCase
     {
         yield 'config with restricted columns' => [
             'config' => [
-                'columns' => [
-                    'id',
-                    'name',
-                    '_timestamp',
-                    '_TIMESTAMP', // to be sure that validation is not case-sensitive
-                ],
+                'columns' => self::TEST_COLUMNS_DATA,
             ],
             'expectedErrorMessage' => 'System columns "_timestamp, _TIMESTAMP" cannot be imported to the table.',
         ];
 
         yield 'config with restricted columns in metadata' => [
             'config' => [
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                    '_timestamp' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                    // to be sure that validation is not case-sensitive
-                    '_TIMESTAMP' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                ],
+                'column_metadata' => self::TEST_COLUMN_METADATA,
             ],
             'expectedErrorMessage' => 'Metadata for system columns "_timestamp, _TIMESTAMP" '
                 . 'cannot be imported to the table.',
@@ -449,55 +344,8 @@ class RestrictedColumnsHelperTest extends TestCase
 
         yield 'config with restricted columns and restricted columns metadata' => [
             'config' => [
-                'columns' => [
-                    'id',
-                    'name',
-                    '_timestamp',
-                    '_TIMESTAMP', // to be sure that validation is not case-sensitive
-                ],
-                'column_metadata' => [
-                    'id' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'INT',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'INTEGER',
-                        ],
-                    ],
-                    'name' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'VARCHAR',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'STRING',
-                        ],
-                    ],
-                    '_timestamp' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                    // to be sure that validation is not case-sensitive
-                    '_TIMESTAMP' => [
-                        [
-                            'key' => 'KBC.datatype.type',
-                            'value' => 'TIMESTAMP_NTZ',
-                        ],
-                        [
-                            'key' => 'KBC.datatype.basetype',
-                            'value' => 'TIMESTAMP',
-                        ],
-                    ],
-                ],
+                'columns' => self::TEST_COLUMNS_DATA,
+                'column_metadata' => self::TEST_COLUMN_METADATA,
             ],
             'expectedErrorMessage' => 'System columns "_timestamp, _TIMESTAMP" cannot be imported to the table. '
                 . 'Metadata for system columns "_timestamp, _TIMESTAMP" cannot be imported to the table.',
@@ -516,6 +364,64 @@ class RestrictedColumnsHelperTest extends TestCase
             $config['columns'] ?? [],
             $config['column_metadata'] ?? [],
             $config['schema'] ?? [],
+        );
+    }
+
+    public function isRestrictedColumnProvider(): Generator
+    {
+        yield 'id' => [
+            'columnName' => 'id',
+            'expectedResult' => false,
+        ];
+        yield 'timestamp' => [
+            'columnName' => 'timestamp',
+            'expectedResult' => false,
+        ];
+        yield 'restricted timestamp with udnerscore' => [
+            'columnName' => '_timestamp',
+            'expectedResult' => true,
+        ];
+        yield 'restricted timestamp with udnerscore - case insensitive' => [
+            'columnName' => '_TimeStamp',
+            'expectedResult' => true,
+        ];
+    }
+
+    /**
+     * @dataProvider isRestrictedColumnProvider
+     */
+    public function testIsRestrictedColumn(string $columName, bool $expectedResult): void
+    {
+        self::assertSame($expectedResult, RestrictedColumnsHelper::isRestrictedColumn($columName));
+    }
+
+    public function testRemoveRestrictedColumnsFromSchema(): void
+    {
+        self::assertSame(
+            self::EXPECTED_SCHEMA_DATA,
+            RestrictedColumnsHelper::removeRestrictedColumnsFromSchema(
+                self::TEST_SCHEMA_DATA,
+            ),
+        );
+    }
+
+    public function testRemoveRestrictedColumnsFromColumnMetadata(): void
+    {
+        self::assertSame(
+            self::EXPECTED_COLUMN_METADATA,
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumnMetadata(
+                self::TEST_COLUMN_METADATA,
+            ),
+        );
+    }
+
+    public function testRemoveRestrictedColumnsFromColumns(): void
+    {
+        self::assertSame(
+            self::EXPECTED_COLUMNS_DATA,
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumns(
+                self::TEST_COLUMNS_DATA,
+            ),
         );
     }
 }

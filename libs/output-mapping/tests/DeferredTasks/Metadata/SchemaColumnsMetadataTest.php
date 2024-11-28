@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\DeferredTasks\Metadata;
 
 use Generator;
-use Keboola\OutputMapping\DeferredTasks\Metadata\ColumnMetadata;
-use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnMetadata;
+use Keboola\OutputMapping\DeferredTasks\Metadata\SchemaColumnsMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use PHPUnit\Framework\TestCase;
 
-class SchemaColumnMetadataTest extends TestCase
+class SchemaColumnsMetadataTest extends TestCase
 {
     private const TEST_TABLE_ID = 'in.c-testApply.table';
     private const TEST_PROVIDER = 'keboola.sample-component';
@@ -119,12 +118,12 @@ class SchemaColumnMetadataTest extends TestCase
             ]),
         ];
 
-        $columnMetadata = new SchemaColumnMetadata(
+        $columnsMetadata = new SchemaColumnsMetadata(
             self::TEST_TABLE_ID,
             self::TEST_PROVIDER,
             $schemaMetadata,
         );
 
-        $columnMetadata->apply($metadataClientMock, $bulkSize);
+        $columnsMetadata->apply($metadataClientMock, $bulkSize);
     }
 }

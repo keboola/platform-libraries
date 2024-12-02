@@ -32,6 +32,47 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    public function testNotChangeLength(): void
+    {
+        $this->prepareStorageData();
+
+        $tableChangesStore = new TableChangesStore();
+        $tableChangesStore->addColumnAttributeChanges(new MappingFromConfigurationSchemaColumn([
+            'name' => 'Name',
+            'data_type' => [
+                'base' => [
+                    'type' => BaseType::STRING,
+                ],
+            ],
+            'nullable' => false,
+        ]));
+
+        $this->tableStructureModifier->updateTableStructure(
+            new BucketInfo($this->bucket),
+            new TableInfo($this->table),
+            $tableChangesStore,
+        );
+
+        $updatedTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->table['id']);
+
+        self::assertTrue($updatedTable['isTyped']);
+
+        self::assertEquals(
+            [
+                'name' => 'Name',
+                'definition' => [
+                    'type' => 'VARCHAR',
+                    'nullable' => false,
+                    'length' => '17',
+                ],
+                'basetype' => 'STRING',
+                'canBeFiltered' => true,
+            ],
+            $updatedTable['definition']['columns'][1],
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
     public function testEmptyChanges(): void
     {
         $this->prepareStorageData();

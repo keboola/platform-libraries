@@ -75,16 +75,19 @@ class TableStructureModifierFromSchema extends AbstractTableStructureModifier
         array $columns,
     ): void {
         foreach ($columns as $column) {
+            $params = [
+                'nullable' => $column->isNullable(),
+                // Default value is not works correctly
+                // 'default' => $column->getDataType()?->getDefaultValue($backend),
+            ];
+            if ($column->getDataType() !== null && $column->getDataType()->getLength($backend) !== null) {
+                $params['length'] = $column->getDataType()->getLength($backend);
+            }
             try {
                 $this->client->updateTableColumnDefinition(
                     $tableId,
                     $column->getName(),
-                    [
-                        'length' => $column->getDataType()?->getLength($backend),
-                        // Default value is not works correctly
-                        // 'default' => $column->getDataType()?->getDefaultValue($backend),
-                        'nullable' => $column->isNullable(),
-                    ],
+                    $params,
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);

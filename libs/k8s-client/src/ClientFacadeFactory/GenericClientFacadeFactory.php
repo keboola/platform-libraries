@@ -12,10 +12,10 @@ use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
+use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
-use Kubernetes\API\Pod;
 use KubernetesRuntime\Client;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
@@ -66,7 +66,7 @@ class GenericClientFacadeFactory
             new IngressesApiClient($apiClient),
             new PersistentVolumeClaimsApiClient($apiClient),
             new PersistentVolumesApiClient($apiClient),
-            new PodsApiClient($apiClient, new Pod()),
+            new PodsApiClient($apiClient, new PodWithLogStream()),
             new SecretsApiClient($apiClient),
             new ServicesApiClient($apiClient),
         );

@@ -39,7 +39,7 @@ class KubernetesApiClient
      * @param class-string<TResult> $expectedResult
      * @param mixed ...$args
      * @return TResult
-     * @template TResult of \KubernetesRuntime\AbstractModel
+     * @template TResult
      */
     public function request(AbstractAPI $api, string $method, string $expectedResult, ...$args)
     {
@@ -54,7 +54,7 @@ class KubernetesApiClient
      * @param class-string<TResult> $expectedResult
      * @param mixed ...$args
      * @return TResult
-     * @template TResult of \KubernetesRuntime\AbstractModel
+     * @template TResult
      */
     public function clusterRequest(AbstractAPI $api, string $method, string $expectedResult, ...$args)
     {

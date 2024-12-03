@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ApiClient;
 
-use Keboola\K8sClient\Exception\KubernetesResponseException;
+use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\KubernetesApiClient;
 use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * @template-extends BaseNamespaceApiClient<PodsApi, PodList, Pod>
  */
 class PodsApiClient extends BaseNamespaceApiClient
 {
-    public function __construct(KubernetesApiClient $apiClient, PodsApi $baseApi)
+    public function __construct(KubernetesApiClient $apiClient, PodWithLogStream $baseApi)
     {
         parent::__construct(
             $apiClient,
@@ -31,22 +31,16 @@ class PodsApiClient extends BaseNamespaceApiClient
         return $this->apiClient->request($this->baseApi, 'readStatus', Pod::class, $name, $queries);
     }
 
-    public function readLog(string $name, array $queries = []): string
+    public function readLog(string $name, array $queries = []): StreamInterface
     {
-        // do not use $this->request() wrapper, method does not return a class
-        $result = $this->baseApi->readLog($this->apiClient->getK8sNamespace(), $name, $queries);
+        $response = $this->apiClient->request(
+            $this->baseApi,
+            'readLog',
+            StreamInterface::class,
+            $name,
+            $queries,
+        );
 
-        if ($result instanceof Status) {
-            throw new KubernetesResponseException(sprintf('K8S request has failed: %s', $result->message), $result);
-        }
-
-        if (!is_string($result)) {
-            throw new KubernetesResponseException(
-                sprintf('Unexpected response type: %s', get_debug_type($result)),
-                null,
-            );
-        }
-
-        return $result;
+        return $response;
     }
 }

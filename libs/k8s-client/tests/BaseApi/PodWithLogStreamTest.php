@@ -4,30 +4,25 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests\PodWithLogStream;
 
-use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
+use Keboola\K8sClient\Tests\ReflectionPropertyAccessTestCase;
 use KubernetesRuntime\Client;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-use ReflectionClass;
 
 class PodWithLogStreamTest extends TestCase
 {
+    use ReflectionPropertyAccessTestCase;
+
     public function testReadLogReturnsBodyOnSuccess(): void
     {
         $namespace = 'default';
         $podName = 'test-pod';
         $queries = ['foo' => 'bar'];
 
-        $responseMock = $this->createMock(ResponseInterface::class);
-        $responseMock->method('getStatusCode')->willReturn(200);
-        $responseBody = $this->createMock(StreamInterface::class);
-        $responseMock->method('getBody')->willReturn($responseBody);
-
         $clientMock = $this->createMock(Client::class);
-
         $clientMock->expects($this->once())
             ->method('request')
             ->with(
@@ -41,31 +36,21 @@ class PodWithLogStreamTest extends TestCase
                     $this->assertArrayHasKey('handler', $options);
                     $this->assertInstanceOf(HandlerStack::class, $options['handler']);
 
-                    $handlerStack = $options['handler'];
-                    $reflection = new ReflectionClass($handlerStack);
-                    $property = $reflection->getProperty('handler');
-                    $property->setAccessible(true);
-                    $handler = $property->getValue($handlerStack);
-                    $this->assertInstanceOf(CurlHandler::class, $handler);
-
                     return true;
                 }),
             )
-            ->willReturn($responseMock);
+            ->willReturn(new Response(200));
 
         $podWithLogStream = $this->getMockBuilder(PodWithLogStream::class)
             ->setConstructorArgs([$namespace])
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $reflection = new ReflectionClass($podWithLogStream);
-        $property = $reflection->getProperty('client');
-        $property->setAccessible(true);
-        $property->setValue($podWithLogStream, $clientMock);
+        self::setPrivatePropertyValue($podWithLogStream, 'client', $clientMock);
 
         $result = $podWithLogStream->readLog($namespace, $podName, $queries);
 
-        $this->assertEquals($responseBody, $result);
+        $this->assertInstanceOf(StreamInterface::class, $result);
     }
 
     public function testReadLogCallsParseResponseOnError(): void
@@ -74,11 +59,9 @@ class PodWithLogStreamTest extends TestCase
         $podName = 'test-pod';
         $queries = [];
 
-        $responseMock = $this->createMock(ResponseInterface::class);
-        $responseMock->method('getStatusCode')->willReturn(404);
+        $response = new Response(404);
 
         $clientMock = $this->createMock(Client::class);
-
         $clientMock->expects($this->once())
             ->method('request')
             ->with(
@@ -95,7 +78,7 @@ class PodWithLogStreamTest extends TestCase
                     return true;
                 }),
             )
-            ->willReturn($responseMock);
+            ->willReturn($response);
 
         $podWithLogStream = $this->getMockBuilder(PodWithLogStream::class)
             ->setConstructorArgs([$namespace])
@@ -104,13 +87,10 @@ class PodWithLogStreamTest extends TestCase
 
         $podWithLogStream->expects($this->once())
             ->method('parseResponse')
-            ->with($responseMock, 'readCoreV1NamespacedPodLog')
+            ->with($response, 'readCoreV1NamespacedPodLog')
             ->willReturn('parsed response');
 
-        $reflection = new ReflectionClass($podWithLogStream);
-        $property = $reflection->getProperty('client');
-        $property->setAccessible(true);
-        $property->setValue($podWithLogStream, $clientMock);
+        self::setPrivatePropertyValue($podWithLogStream, 'client', $clientMock);
 
         $result = $podWithLogStream->readLog($namespace, $podName, $queries);
 

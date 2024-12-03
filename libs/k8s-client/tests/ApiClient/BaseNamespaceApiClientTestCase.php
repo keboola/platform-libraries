@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\BaseNamespaceApiClient;
-use Keboola\K8sClient\ClientFacadeFactory\ClientConfigurator;
 use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\KubernetesApiClient;

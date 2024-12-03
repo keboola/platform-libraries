@@ -12,24 +12,17 @@ use Psr\Http\Message\ResponseInterface;
 
 class PodWithLogStream extends Pod
 {
-    public function __construct($namespace = 'default')
-    {
-        $this->client = Client::getInstance();
-        $this->namespace = $namespace;
-    }
 
     public function readLog(string $namespace, string $name, array $queries = [])
     {
-        $handler = new CurlHandler();
-        $handlerStack = HandlerStack::create($handler);
-
         /** @var ResponseInterface $response */
         $response = $this->client->request(
             'get',
             sprintf('/api/v1/namespaces/%s/pods/%s/log', $namespace, $name),
             [
                 'query' => $queries,
-                'handler' => $handlerStack,
+                // use custom handler stack to prevent loading whole response by logger
+                'handler' => HandlerStack::create(),
             ],
         );
 

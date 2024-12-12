@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Storage;
 
 use Generator;
 use Keboola\Csv\CsvFile;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Storage\BucketInfo;
@@ -14,7 +15,6 @@ use Keboola\OutputMapping\Storage\TableStructureModifier;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\StorageApi\ClientException;
 
 class TableStructureModifierTest extends AbstractTestCase
 {
@@ -195,7 +195,7 @@ class TableStructureModifierTest extends AbstractTestCase
         $source->method('getMetadata')->willReturn([]);
         $source->method('getColumnMetadata')->willReturn([]);
 
-        $this->expectException(ClientException::class);
+        $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Invalid parameters - name: This value should not be blank.');
         $this->modifier->updateTableStructure(
             $this->destinationBucket,
@@ -370,6 +370,55 @@ class TableStructureModifierTest extends AbstractTestCase
         $this->assertEquals(
             $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($expectedTable)),
             $this->dropMetadataAndDefinitionAttributes($this->dropTimestampAttributes($newTable)),
+        );
+    }
+
+    #[NeedsTestTables(typedTable: true)]
+    public function testUpdateTableStructureAddColumnsFailureThrowsInvalidOutputException(): void
+    {
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getColumns')->willReturn(array_merge(
+            $this->destinationTableInfo['columns'],
+            ['newColumn'],
+        ));
+        $source->method('getMetadata')->willReturn([
+            [
+                'key' => 'KBC.datatype.backend',
+                'value' => 'snowflake',
+            ],
+        ]);
+        $source->method('getColumnMetadata')->willReturn([
+            new MappingColumnMetadata(
+                'newColumn',
+                [
+                    [
+                        'key' => 'KBC.datatype.type',
+                        'value' => 'VARCHAR',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.basetype',
+                        'value' => 'STRING',
+                    ],
+                    [
+                        'key' => 'KBC.datatype.nullable',
+                        'value' => false,
+                    ],
+                ],
+            ),
+        ]);
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
+            'Non-nullable column "newColumn" cannot be added to non-empty table '
+            . '"test1" unless it has a non-null default value.',
+        );
+
+        $this->modifier->updateTableStructure(
+            $this->destinationBucket,
+            new TableInfo($this->destinationTableInfo),
+            $source,
+            $this->destination,
+            false,
         );
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Provider;
 
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 
@@ -55,6 +56,16 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
     public function cleanup(): void
     {
         if (isset($this->workspace)) {
+            // cleanup can be called multiple times, so we need to check if workspace still exists
+            try {
+                $this->workspacesApiClient->getWorkspace((int) $this->getWorkspaceId());
+            } catch (ClientException $e) {
+                if ($e->getCode() === 404) {
+                    return;
+                }
+                throw $e;
+            }
+
             $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);
         }
     }

@@ -8,6 +8,7 @@ use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -222,30 +223,91 @@ class NewWorkspaceStagingProviderTest extends TestCase
     public function testCleanupDeletedWorkspaceStaging(): void
     {
         $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'large',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+            ],
+        ];
 
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
             ->expects(self::once())
             ->method('createConfigurationWorkspace')
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => 'so-so',
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'password' => 'secret',
-                ],
-            ]);
+            ->willReturn($workspaceData)
+        ;
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient
             ->expects(self::once())
+            ->method('getWorkspace')
+            ->with($workspaceId)
+            ->willReturn($workspaceData)
+        ;
+        $workspacesApiClient
+            ->expects(self::once())
             ->method('deleteWorkspace')
-            ->with($workspaceId, [], true);
+            ->with($workspaceId, [], true)
+        ;
+
+        $workspaceProvider = new NewWorkspaceStagingProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'so-so',
+                null,
+                NetworkPolicy::SYSTEM,
+            ),
+            'test-component',
+            'test-config',
+        );
+        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());  // Ensure workspace is initialized
+        $workspaceProvider->cleanup();
+    }
+
+    public function testCleanupDeletedWorkspaceStagingWithAlreadyDeletedWorkspace(): void
+    {
+        $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'large',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+            ],
+        ];
+
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient
+            ->expects(self::once())
+            ->method('createConfigurationWorkspace')
+            ->willReturn($workspaceData)
+        ;
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient
+            ->expects(self::once())
+            ->method('getWorkspace')
+            ->with($workspaceId)
+            ->willThrowException(new ClientException('Workspace not found', 404))
+        ;
+        $workspacesApiClient
+            ->expects(self::never())
+            ->method('deleteWorkspace')
+        ;
 
         $workspaceProvider = new NewWorkspaceStagingProvider(
             $workspacesApiClient,

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\Datatype\Definition\BaseType;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\PrimaryKeyNotChangedException;
 use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
+use Keboola\StorageApi\ClientException;
 
 class TableStructureModifier extends AbstractTableStructureModifier
 {
@@ -99,14 +101,18 @@ class TableStructureModifier extends AbstractTableStructureModifier
             ];
         }
 
-        foreach ($missingColumnsData as $missingColumnData) {
-            [$columnName, $columnDefinition, $columnBasetype] = $missingColumnData;
-            $this->client->addTableColumn(
-                $currentTableInfo->getId(),
-                $columnName,
-                $columnDefinition,
-                $columnBasetype,
-            );
+        try {
+            foreach ($missingColumnsData as $missingColumnData) {
+                [$columnName, $columnDefinition, $columnBasetype] = $missingColumnData;
+                $this->client->addTableColumn(
+                    $currentTableInfo->getId(),
+                    $columnName,
+                    $columnDefinition,
+                    $columnBasetype,
+                );
+            }
+        } catch (ClientException $e) {
+            throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
         }
     }
 

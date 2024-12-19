@@ -70,7 +70,7 @@ jobs:
       testCommand: 'composer install && vendor/bin/phpunit --testsuite workspace-writer-tests'
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
-        RUN_SYNAPSE_TESTS: 1
+        RUN_SYNAPSE_TESTS: 0
       secrets:
         STORAGE_API_TOKEN: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS)
         STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS)

@@ -727,7 +727,7 @@ class TypedTableStructureValidatorTest extends TestCase
         );
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table is not typed.');
+        $this->expectExceptionMessage('Table "in.c-main.table" is not typed.');
         $validator->validate($schema);
 
         self::assertTrue(true);

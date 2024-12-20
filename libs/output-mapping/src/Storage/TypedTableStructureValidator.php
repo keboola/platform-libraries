@@ -13,7 +13,7 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
     public function validate(?array $schemaColumns): TableChangesStore
     {
         if ($this->table['isTyped'] === false) {
-            throw new InvalidOutputException('Table is not typed.');
+            throw new InvalidOutputException(sprintf('Table "%s" is not typed.', $this->table['id']));
         }
 
         $tableChangesStore = new TableChangesStore();

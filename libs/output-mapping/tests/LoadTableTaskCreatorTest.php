@@ -5,14 +5,109 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping;
 
 use Generator;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
+use Keboola\OutputMapping\Storage\BucketInfo;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 
 class LoadTableTaskCreatorTest extends AbstractTestCase
 {
+
+    #[NeedsEmptyOutputBucket]
+    public function testNativeTypeLoadTaskTableNotExists(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(true);
+        $settings->expects(self::once())->method('hasBigqueryNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(true);
+        $source->expects(self::once())->method('hasColumnMetadata')->willReturn(true);
+        $source->expects(self::once())->method('hasMetadata')->willReturn(false);
+        $source->expects(self::exactly(3))->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
+        );
+        $source->expects(self::exactly(2))->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::once())->method('getColumnMetadata')->willReturn([
+            new MappingColumnMetadata('col1', [
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'STRING',
+                ],
+            ]),
+            new MappingColumnMetadata('col2', [
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'INTEGER',
+                ],
+            ]),
+        ]);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+        $storageSources->expects(self::once())->method('getBucket')->willReturn(
+            new BucketInfo([
+                'id' => $this->emptyOutputBucketId,
+                'backend' => 'Snowflake',
+                'metadata' => [],
+            ]),
+        );
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        self::assertSame(
+            'out.c-testNativeTypeLoadTaskTableNotExistsEmpty.destinationTable',
+            $loadTask->getDestinationTableName(),
+        );
+        $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId.'.destinationTable',
+        );
+        self::assertSame(
+            [
+                [
+                    'name' => 'col1',
+                    'definition' => [
+                        'type' => 'VARCHAR',
+                        'nullable' => true,
+                        'length' => '16777216',
+                    ],
+                    'basetype' => 'STRING',
+                    'canBeFiltered' => true,
+                ],
+                [
+                    'name' => 'col2',
+                    'definition' => [
+                        'type' => 'NUMBER',
+                        'nullable' => true,
+                        'length' => '38,0',
+                    ],
+                    'basetype' => 'INTEGER',
+                    'canBeFiltered' => true,
+                ],
+            ],
+            $storageTable['definition']['columns'],
+        );
+    }
 
     /**
      * @dataProvider buildLoadOptionsDataProvider

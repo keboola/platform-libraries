@@ -47,6 +47,7 @@
         <testsuite name="workspace-writer-tests">
             <directory>tests/Writer/Workspace</directory>
             <exclude>tests/Writer/Workspace/AbsWriterWorkspaceTest.php</exclude>
+            <exclude>tests/Writer/Workspace/SynapseWriterWorkspaceTest.php</exclude>
         </testsuite>
         <testsuite name="native-types">
             <file>tests/Writer/TableDefinitionTest.php</file>
@@ -66,6 +67,7 @@
             <file>tests/Writer/Table/Source/AbsWorkspaceItemSourceFactoryTest.php</file>
             <file>tests/Writer/Table/Strategy/AbsWorkspaceTableStrategyTest.php</file>
             <file>tests/Writer/Workspace/AbsWriterWorkspaceTest.php</file>
+            <file>tests/Writer/Workspace/SynapseWriterWorkspaceTest.php</file>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">

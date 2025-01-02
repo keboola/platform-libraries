@@ -11,6 +11,7 @@ use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
+use Keboola\OutputMapping\Exception\TableNotFoundException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
@@ -18,8 +19,9 @@ use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\StoragePreparer;
+use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableCreator;
-use Keboola\OutputMapping\Storage\TableStructureValidator;
+use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
@@ -71,11 +73,6 @@ class TableLoader
             $configuration->hasConnectionWebalizeFeature(),
         );
 
-        $tableStructureValidator = new TableStructureValidator(
-            $configuration->hasNewNativeTypesFeature(),
-            $this->logger,
-            $this->clientWrapper->getTableAndFileStorageClient(),
-        );
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
 
@@ -120,10 +117,15 @@ class TableLoader
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
-                $tableChangesStore = $tableStructureValidator->validateTable(
+                $factory = new TableStructureValidatorFactory($this->logger, $this->clientWrapper);
+                $tableStructureValidator = $factory->ensureStructureValidator(
                     $processedSource->getDestination()->getTableId(),
-                    $processedSource->getSchema() ?? [],
                 );
+
+                $tableChangesStore = $tableStructureValidator->validate($processedSource->getSchema());
+            } catch (TableNotFoundException) {
+                $tableChangesStore = new TableChangesStore();
+                // table not found, we will create it
             } catch (InvalidTableStructureException $e) {
                 throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
             }

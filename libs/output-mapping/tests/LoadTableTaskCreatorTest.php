@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping;
 
 use Generator;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
+use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Storage\BucketInfo;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
+use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 
@@ -74,6 +78,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             settings: $settings,
         );
 
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
             'out.c-testNativeTypeLoadTaskTableNotExistsEmpty.destinationTable',
@@ -82,6 +87,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
             $this->emptyOutputBucketId.'.destinationTable',
         );
+
+        self::assertTrue($storageTable['isTyped']);
         self::assertSame(
             [
                 [
@@ -106,6 +113,237 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                 ],
             ],
             $storageTable['definition']['columns'],
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testNewNativeTypeLoadTaskTableNotExists(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(true);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::exactly(3))->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
+        );
+        $source->expects(self::exactly(6))->method('getSchema')->willReturn([
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '16777216',
+                    ],
+                ],
+                'primary_key' => true,
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'INTEGER',
+                    ],
+                ],
+            ]),
+        ]);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+        $storageSources->expects(self::once())->method('getBucket')->willReturn(
+            new BucketInfo([
+                'id' => $this->emptyOutputBucketId,
+                'backend' => 'Snowflake',
+                'metadata' => [],
+            ]),
+        );
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        self::assertSame(
+            'out.c-testNewNativeTypeLoadTaskTableNotExistsEmpty.destinationTable',
+            $loadTask->getDestinationTableName(),
+        );
+        $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId.'.destinationTable',
+        );
+
+        self::assertTrue($storageTable['isTyped']);
+        self::assertSame(
+            [
+                [
+                    'name' => 'col1',
+                    'definition' => [
+                        'type' => 'VARCHAR',
+                        'nullable' => false,
+                        'length' => '16777216',
+                    ],
+                    'basetype' => 'STRING',
+                    'canBeFiltered' => true,
+                ],
+                [
+                    'name' => 'col2',
+                    'definition' => [
+                        'type' => 'NUMBER',
+                        'nullable' => true,
+                        'length' => '38,0',
+                    ],
+                    'basetype' => 'INTEGER',
+                    'canBeFiltered' => true,
+                ],
+            ],
+            $storageTable['definition']['columns'],
+        );
+        self::assertSame(['col1'], $storageTable['definition']['primaryKeysNames']);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testLoadTaskTableNotExists(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(true);
+        $source->expects(self::exactly(3))->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
+        );
+        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::exactly(2))->method('getColumns')->willReturn(['col1', 'col2']);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        self::assertSame(
+            'out.c-testLoadTaskTableNotExistsEmpty.destinationTable',
+            $loadTask->getDestinationTableName(),
+        );
+        $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId.'.destinationTable',
+        );
+
+        self::assertFalse($storageTable['isTyped']);
+        self::assertArrayNotHasKey('definition', $storageTable);
+        self::assertSame(
+            ['col1', 'col2'],
+            $storageTable['columns'],
+        );
+    }
+
+    #[NeedsTestTables(count: 1)]
+    public function testLoadTaskTableExists(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getDestination')->willReturn(
+            new MappingDestination($this->testBucketId . '.test0'),
+        );
+        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::once())->method('getColumns')->willReturn(['col1', 'col2']);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(3))->method('didTableExistBefore')->willReturn(true);
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
+        self::assertFalse($loadTask->isUsingFreshlyCreatedTable());
+        self::assertSame(
+            'in.c-testLoadTaskTableExistsTest.test0',
+            $loadTask->getDestinationTableName(),
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testLoadTaskTableNotExistsManifestNotExists(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(false);
+        $source->expects(self::once())->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.test0'),
+        );
+        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(3))->method('didTableExistBefore')->willReturn(false);
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(CreateAndLoadTableTask::class, $loadTask);
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        self::assertSame(
+            'out.c-testLoadTaskTableNotExistsManifestNotExistsEmpty.test0',
+            $loadTask->getDestinationTableName(),
         );
     }
 

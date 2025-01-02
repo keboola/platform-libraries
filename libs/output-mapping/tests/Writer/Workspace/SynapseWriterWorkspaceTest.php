@@ -20,14 +20,6 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
 {
     use InitSynapseStorageClientTrait;
 
-    public function setUp(): void
-    {
-        if (!$this->checkSynapseTests()) {
-            self::markTestSkipped('Synapse tests disabled.');
-        }
-        parent::setUp();
-    }
-
     protected function initClient(?string $branchId = null): void
     {
         $this->clientWrapper = $this->getSynapseClientWrapper();

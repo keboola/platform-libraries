@@ -25,9 +25,6 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
 
     public function setUp(): void
     {
-        if (!$this->checkSynapseTests()) {
-            self::markTestSkipped('Synapse tests disabled.');
-        }
         parent::setUp();
         $this->clearFileUploads([self::FILE_TAG]);
     }

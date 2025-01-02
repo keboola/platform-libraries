@@ -24,14 +24,6 @@ class AbsWorkspaceItemSourceFactoryTest extends AbstractTestCase
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
-    public function setUp(): void
-    {
-        if (!$this->checkSynapseTests()) {
-            self::markTestSkipped('Synapse tests disabled.');
-        }
-        parent::setUp();
-    }
-
     public function testCreateSource(): void
     {
         $workspaces = new Workspaces($this->clientWrapper->getBranchClient());

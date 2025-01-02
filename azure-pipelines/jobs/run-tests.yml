@@ -34,8 +34,13 @@ parameters:
     type: string
     default: docker-images.tar
 
+  - name: condition
+    type: string
+    default: 'always()'
+
 jobs:
   - job: ${{ parameters.jobName }}
+    condition: ${{ parameters.condition }}
     dependsOn: ${{ parameters.dependsOn }}
     displayName: ${{ parameters.displayName }}
     variables: ${{ parameters.variables }}

@@ -65,6 +65,7 @@ abstract class AbstractTestCase extends TestCase
             $this->clientWrapper,
             $this->temp,
             $method,
+            (string) $this->dataName(),
         );
         foreach ($objects as $name => $value) {
             if ($value !== null) {

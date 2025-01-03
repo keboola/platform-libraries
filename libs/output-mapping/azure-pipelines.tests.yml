@@ -93,6 +93,22 @@ jobs:
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
+      jobName: tests_php81_tableWriter_synapse
+      condition: eq(variables.RUN_SYNAPSE_TESTS, '1')
+      dependsOn: [cs]
+      displayName: Synapse Writer Tests
+      serviceName: dev-output-mapping
+      testCommand: 'composer install && vendor/bin/phpunit --testsuite synapse-writer-tests'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+        SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+      secrets:
+        STORAGE_API_TOKEN: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+        STORAGE_API_TOKEN_MASTER: $(OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
+        SYNAPSE_STORAGE_API_TOKEN: $(OUTPUT_MAPPING__SYNAPSE_STORAGE_API_TOKEN)
+
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
       jobName: tests_php81_tableWriter_nativeTypes
       dependsOn: [ cs ]
       displayName: Native types tests

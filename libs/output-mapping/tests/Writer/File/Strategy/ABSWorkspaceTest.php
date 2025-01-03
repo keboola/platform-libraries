@@ -26,14 +26,6 @@ class ABSWorkspaceTest extends AbstractTestCase
         $this->clientWrapper = $this->getSynapseClientWrapper();
     }
 
-    public function setUp(): void
-    {
-        if (!$this->checkSynapseTests()) {
-            self::markTestSkipped('Synapse tests disabled.');
-        }
-        parent::setUp();
-    }
-
     private function getProvider(array $data = []): ProviderInterface
     {
         $mock = self::getMockBuilder(NullProvider::class)

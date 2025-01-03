@@ -10,23 +10,11 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
-use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\Client;
-use Keboola\StorageApi\TableExporter;
 
 class SynapseWriterWorkspaceTest extends AbstractTestCase
 {
     use InitSynapseStorageClientTrait;
-
-    public function setUp(): void
-    {
-        if (!$this->checkSynapseTests()) {
-            self::markTestSkipped('Synapse tests disabled.');
-        }
-        parent::setUp();
-    }
 
     protected function initClient(?string $branchId = null): void
     {
@@ -34,39 +22,10 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsEmptyInputBucket]
     public function testSynapseTableOutputMapping(): void
     {
         // snowflake bucket does not work - https://keboola.atlassian.net/browse/KBC-228
-        $bucketName = 'testSynapseTableOutputMapping';
-
-        $outBucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_OUT);
-        if ($outBucketId !== null) {
-            $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($outBucketId, ['include' => '']);
-            foreach ($tables as $table) {
-                $this->clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
-            }
-        } else {
-            $outBucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
-                name: $bucketName,
-                stage: Client::STAGE_OUT,
-                backend: 'synapse',
-            );
-        }
-
-        $bucketId = TestSatisfyer::getBucketIdByDisplayName($this->clientWrapper, $bucketName, Client::STAGE_IN);
-        if ($bucketId !== null) {
-            $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
-            foreach ($tables as $table) {
-                $this->clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
-            }
-        } else {
-            $bucketId  = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
-                name: $bucketName,
-                stage: Client::STAGE_IN,
-                backend: 'synapse',
-            );
-        }
-
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
@@ -77,7 +36,7 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         // Create table
         for ($i = 0; $i < 2; $i++) {
             $tableIds[$i] = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-                $bucketId,
+                $this->emptyInputBucketId,
                 'test' . ($i + 1),
                 $csv,
             );
@@ -93,16 +52,16 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         $factory->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SYNAPSE)
             ->getDataStorage()->getWorkspaceId();
         $root = $this->temp->getTmpFolder();
-        $this->prepareWorkspaceWithTables($bucketId);
+        $this->prepareWorkspaceWithTables($this->emptyInputBucketId);
         $configs = [
             [
                 'source' => 'table1a',
-                'destination' => $outBucketId . '.table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1a',
                 'distribution_key' => [],
             ],
             [
                 'source' => 'table2a',
-                'destination' => $outBucketId . '.table2a',
+                'destination' => $this->emptyOutputBucketId . '.table2a',
                 'distribution_key' => ['Id'],
             ],
         ];
@@ -131,21 +90,21 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
 
-        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($outBucketId);
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(2, $tables);
         $sortedTables = [$tables[0]['id'] => $tables[0], $tables[1]['id'] => $tables[1]];
         ksort($sortedTables);
         self::assertEquals(
-            [$outBucketId . '.table1a', $outBucketId . '.table2a'],
+            [$this->emptyOutputBucketId . '.table1a', $this->emptyOutputBucketId . '.table2a'],
             array_keys($sortedTables),
         );
-        self::assertArrayHasKey('distributionKey', $sortedTables[$outBucketId . '.table2a']);
-        self::assertEquals(['Id'], $sortedTables[$outBucketId . '.table2a']['distributionKey']);
+        self::assertArrayHasKey('distributionKey', $sortedTables[$this->emptyOutputBucketId . '.table2a']);
+        self::assertEquals(['Id'], $sortedTables[$this->emptyOutputBucketId . '.table2a']['distributionKey']);
         self::assertCount(2, $jobIds);
         self::assertNotEmpty($jobIds[0]);
         self::assertNotEmpty($jobIds[1]);
-        self::assertTableRowsEquals(
-            $outBucketId . '.table1a',
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.table1a',
             [
                 '"id","name","foo","bar"',
                 '"id1","name1","foo1","bar1"',

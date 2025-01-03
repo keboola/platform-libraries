@@ -43,6 +43,7 @@
         "symfony/yaml": "^5.4|^6.0"
     },
     "require-dev": {
+        "brianium/paratest": "^6.11",
         "keboola/coding-standard": ">=14.0",
         "keboola/php-temp": "^2.0",
         "phpstan/phpstan": "^1.9",

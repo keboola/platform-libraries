@@ -129,6 +129,7 @@ class TestSatisfyer
         ClientWrapper $clientWrapper,
         Temp $temp,
         string $methodName,
+        string $dataName,
     ): array {
         $emptyOutputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyOutputBucket::class);
         $emptyInputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyInputBucket::class);
@@ -156,18 +157,20 @@ class TestSatisfyer
             self::ensureRemoveBucket($clientWrapper, $removeBucket->getArguments()[0]);
         }
 
+        $emptyBucketName = $methodName . 'Empty' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName);
+
         if ($emptyOutputBucket !== null) {
-            $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Empty', Client::STAGE_OUT);
+            $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_OUT);
         }
 
         if ($emptyInputBucket !== null) {
-            $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Empty', Client::STAGE_IN);
+            $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_IN);
         }
 
         if ($emptyRedshiftOutputBucket !== null) {
             $emptyRedshiftOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty',
+                $emptyBucketName,
                 Client::STAGE_OUT,
                 'redshift',
             );
@@ -176,7 +179,7 @@ class TestSatisfyer
         if ($emptyBigqueryOutputBucket !== null) {
             $emptyBigqueryOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty',
+                $emptyBucketName,
                 Client::STAGE_OUT,
                 'bigquery',
             );
@@ -185,14 +188,14 @@ class TestSatisfyer
         if ($emptyRedshiftInputBucket !== null) {
             $emptyRedshiftInputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty',
+                $emptyBucketName,
                 Client::STAGE_IN,
                 'redshift',
             );
         }
 
         if ($testTable !== null) {
-            $testBucketId = self::ensureEmptyBucket($clientWrapper, $methodName . 'Test', Client::STAGE_IN);
+            $testBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_IN);
             $tableCount = self::getTableCount($testTable);
 
             $tableIds = [];

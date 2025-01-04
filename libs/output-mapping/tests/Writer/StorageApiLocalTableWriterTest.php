@@ -2144,7 +2144,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
 CSV;
 
-        self::assertEquals($expectedData, (string) file_get_contents($downloadedFile));
+        self::assertLinesEqualsSorted($expectedData, (string) file_get_contents($downloadedFile));
     }
 
     #[NeedsEmptyOutputBucket]

@@ -239,7 +239,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         $fakeDevEmptyOutputBucketId = str_replace(
             'out.c-',
-            'out.c-' . $this->devBranchId . '-',
+            'out.(c-)?' . $this->devBranchId . '-',
             $this->emptyOutputBucketId,
         );
 

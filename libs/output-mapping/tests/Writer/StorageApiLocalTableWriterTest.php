@@ -18,7 +18,6 @@ use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
 
 class StorageApiLocalTableWriterTest extends AbstractTestCase
@@ -188,13 +187,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testWriteTableOutputMappingFakeDevMode(): void
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-                $this->devBranchId,
-            ),
-        );
+        $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -251,14 +244,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testWriteTableOutputMappingRealDevMode(): void
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $this->devBranchId,
-                useBranchStorage: true, // this is the important part
-            ),
-        );
+        $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
+            ->setBranchId($this->devBranchId)
+            ->setUseBranchStorage(true) // this is the important part
+        ;
+        $this->clientWrapper = new ClientWrapper($clientOptions);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -1098,14 +1088,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testWriteTableExistingBucketDevModeNoDev(): void
     {
+        $this->initClient($this->devBranchId);
+
         $root = $this->temp->getTmpFolder();
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-                $this->devBranchId,
-            ),
-        );
 
         file_put_contents(
             $root . '/upload/table21.csv',
@@ -1167,14 +1152,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testWriteTableExistingBucketDevModeDifferentDev(): void
     {
+        $this->initClient($this->devBranchId);
+
         $root = $this->temp->getTmpFolder();
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-                $this->devBranchId,
-            ),
-        );
 
         file_put_contents(
             $root . '/upload/table21.csv',

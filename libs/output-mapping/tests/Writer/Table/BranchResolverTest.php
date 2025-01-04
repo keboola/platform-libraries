@@ -10,7 +10,6 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class BranchResolverTest extends AbstractTestCase
 {
@@ -32,14 +31,11 @@ class BranchResolverTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testRewriteBranchSourceInBranchStorage(array $config, string $expectedDestination): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $this->devBranchId,
-                useBranchStorage: true, // this is the important part
-            ),
-        );
+        $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
+            ->setBranchId($this->devBranchId)
+            ->setUseBranchStorage(true) // this is the important part
+        ;
+        $clientWrapper = new ClientWrapper($clientOptions);
 
         $branchResolver = new BranchResolver($clientWrapper);
 

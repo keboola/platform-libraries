@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
-use Keboola\Csv\CsvFile;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
@@ -15,8 +14,6 @@ use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class WriterWorkspaceTest extends AbstractTestCase
 {
@@ -387,13 +384,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket, NeedsDevBranch]
     public function testWriteTableOutputMappingDevMode(): void
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-                $this->devBranchId,
-            ),
-        );
+        $this->initClient($this->devBranchId);
 
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $factory = $this->getWorkspaceStagingFactory(

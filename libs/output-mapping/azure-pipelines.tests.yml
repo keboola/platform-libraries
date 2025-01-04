@@ -36,7 +36,7 @@ jobs:
       dependsOn: [ cs ]
       displayName: First Main Writer Tests
       serviceName: dev-output-mapping
-      testCommand: 'composer install && composer paratests -- --testsuite main-writer-tests-1'
+      testCommand: 'composer install && composer paratests -- --testsuite main-writer-tests-1 -f'
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0

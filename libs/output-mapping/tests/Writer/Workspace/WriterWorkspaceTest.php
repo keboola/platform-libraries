@@ -10,20 +10,16 @@ use Keboola\Datatype\Definition\Snowflake;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
-use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
-use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\Temp\Temp;
 
 class WriterWorkspaceTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMapping(): void
     {
@@ -388,21 +384,14 @@ class WriterWorkspaceTest extends AbstractTestCase
         ]);
     }
 
-    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket, NeedsDevBranch]
     public function testWriteTableOutputMappingDevMode(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-        $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-                $branchId,
+                $this->devBranchId,
             ),
         );
 
@@ -449,7 +438,7 @@ class WriterWorkspaceTest extends AbstractTestCase
         $tableQueue = $writer->uploadTables(
             '/',
             ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $branchId],
+            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
             'workspace-snowflake',
             false,
             'none',
@@ -461,14 +450,16 @@ class WriterWorkspaceTest extends AbstractTestCase
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
         $tableIds[] = (string) $jobDetail['tableId'];
 
-        self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table1a#',
-            $tableIds[0],
+        sort($tableIds);
+
+        $fakeDevEmptyOutputBucketId = str_replace(
+            'out.c-',
+            'out.(c-)?' . $this->devBranchId . '-',
+            $this->emptyOutputBucketId,
         );
-        self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingDevModeEmpty\.table2a#',
-            $tableIds[1],
-        );
+
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '.table1a#', $tableIds[0]);
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '.table2a#', $tableIds[1]);
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]

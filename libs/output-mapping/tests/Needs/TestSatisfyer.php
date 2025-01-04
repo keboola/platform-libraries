@@ -157,7 +157,11 @@ class TestSatisfyer
             self::ensureRemoveBucket($clientWrapper, $removeBucket->getArguments()[0]);
         }
 
-        $emptyBucketName = $methodName . 'Empty' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName);
+        $emptyBucketName = substr(
+            $methodName . 'Empty' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName),
+            0,
+            96,
+        );
 
         if ($emptyOutputBucket !== null) {
             $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_OUT);

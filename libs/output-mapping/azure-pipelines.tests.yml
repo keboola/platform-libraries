@@ -19,7 +19,7 @@ jobs:
       dependsOn: [cs]
       displayName: General Tests
       serviceName: dev-output-mapping
-      testCommand: 'composer install && composer paratests -- --testsuite general-tests -f'
+      testCommand: 'composer install && composer paratests -- --testsuite general-tests -f -p 4'
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
         RUN_SYNAPSE_TESTS: 0

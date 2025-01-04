@@ -32,7 +32,9 @@ class StoragePreparerTest extends AbstractTestCase
         );
 
         $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
-            $this->createMappingFromProcessedConfiguration(),
+            $this->createMappingFromProcessedConfiguration(
+                ['destination' => $this->emptyInputBucketId . '.table'],
+            ),
             $this->createSystemMetadata(),
             new TableChangesStore(),
         );

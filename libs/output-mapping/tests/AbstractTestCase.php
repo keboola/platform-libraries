@@ -45,6 +45,9 @@ abstract class AbstractTestCase extends TestCase
     protected string $secondTableId;
     protected string $thirdTableId;
 
+    protected string $devBranchName;
+    protected string $devBranchId;
+
     protected TestHandler $testHandler;
     protected Logger $testLogger;
 

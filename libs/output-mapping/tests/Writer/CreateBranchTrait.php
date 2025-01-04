@@ -9,6 +9,9 @@ use Keboola\StorageApiBranch\ClientWrapper;
 
 trait CreateBranchTrait
 {
+    /**
+     * @deprecated Use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch argument from TestSatisfyer
+     */
     public function createBranch(ClientWrapper $clientWrapper, string $branchName): string
     {
         $branches = new DevBranches($clientWrapper->getBasicClient());

@@ -6,10 +6,11 @@ namespace Keboola\OutputMapping\Tests\Needs;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Datatype\Definition\BaseType;
-use Keboola\OutputMapping\TableLoader;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use ReflectionAttribute;
 use ReflectionObject;
@@ -112,6 +113,26 @@ class TestSatisfyer
         return false;
     }
 
+    private static function ensureDevBranch(
+        ClientWrapper $clientWrapper,
+        string $branchName,
+    ): string {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                $clientWrapper->getBasicClient()->getApiUrl(),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            ),
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === $branchName) {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        return (string) $branches->createBranch($branchName)['id'];
+    }
+
     /**
      * @return array{
      *      emptyOutputBucketId: ?string,
@@ -157,7 +178,7 @@ class TestSatisfyer
             self::ensureRemoveBucket($clientWrapper, $removeBucket->getArguments()[0]);
         }
 
-        $emptyBucketName = substr(
+        $testResourceName = substr(
             sprintf(
                 '%s_%s%s',
                 $reflection->getShortName(),
@@ -169,17 +190,17 @@ class TestSatisfyer
         );
 
         if ($emptyOutputBucket !== null) {
-            $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_OUT);
+            $emptyOutputBucketId = self::ensureEmptyBucket($clientWrapper, $testResourceName, Client::STAGE_OUT);
         }
 
         if ($emptyInputBucket !== null) {
-            $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_IN);
+            $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $testResourceName, Client::STAGE_IN);
         }
 
         if ($emptyRedshiftOutputBucket !== null) {
             $emptyRedshiftOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $emptyBucketName,
+                $testResourceName,
                 Client::STAGE_OUT,
                 'redshift',
             );
@@ -188,7 +209,7 @@ class TestSatisfyer
         if ($emptyBigqueryOutputBucket !== null) {
             $emptyBigqueryOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $emptyBucketName,
+                $testResourceName,
                 Client::STAGE_OUT,
                 'bigquery',
             );
@@ -197,14 +218,14 @@ class TestSatisfyer
         if ($emptyRedshiftInputBucket !== null) {
             $emptyRedshiftInputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $emptyBucketName,
+                $testResourceName,
                 Client::STAGE_IN,
                 'redshift',
             );
         }
 
         if ($testTable !== null) {
-            $testBucketId = self::ensureEmptyBucket($clientWrapper, $emptyBucketName, Client::STAGE_IN);
+            $testBucketId = self::ensureEmptyBucket($clientWrapper, $testResourceName, Client::STAGE_IN);
             $tableCount = self::getTableCount($testTable);
 
             $tableIds = [];
@@ -270,6 +291,11 @@ class TestSatisfyer
             }
         }
 
+        $devBranch = self::getAttribute($reflection, $methodName, NeedsDevBranch::class);
+        if ($devBranch) {
+            $devBranchId = self::ensureDevBranch($clientWrapper, $testResourceName);
+        }
+
         return [
             'emptyOutputBucketId' => !empty($emptyOutputBucketId) ? (string) $emptyOutputBucketId : null,
             'emptyInputBucketId' => !empty($emptyInputBucketId) ? (string) $emptyInputBucketId : null,
@@ -282,10 +308,12 @@ class TestSatisfyer
             'emptyRedshiftInputBucketId' => !empty($emptyRedshiftInputBucketId) ?
                 (string) $emptyRedshiftInputBucketId :
                 null,
-            'testBucketId' => !empty($testBucketId) ? (string) $testBucketId : null,
+            'testBucketId' => !empty($testBucketId) ? $testBucketId : null,
             'firstTableId' => !empty($tableIds[0]) ? (string) $tableIds[0] : null,
             'secondTableId' => !empty($tableIds[1]) ? (string) $tableIds[1] : null,
             'thirdTableId' => !empty($tableIds[2]) ? (string) $tableIds[2] : null,
+            'devBranchName' => !empty($devBranchId) ? $testResourceName : null,
+            'devBranchId' => !empty($devBranchId) ? $devBranchId : null,
         ];
     }
 }

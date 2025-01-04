@@ -244,16 +244,14 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
         $tableIds[] = $this->getTableIdFromJobDetail($jobDetail);
 
-        sort($tableIds);
-        self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table11a#',
-            $tableIds[0],
+        $fakeDevEmptyOutputBucketId = str_replace(
+            'out.c-',
+            'out.c-' . $branchId,
+            $this->emptyOutputBucketId,
         );
 
-        self::assertMatchesRegularExpression(
-            '#out\.(c-)?' . $branchId . '-testWriteTableOutputMappingFakeDevModeEmpty\.table21a#',
-            $tableIds[1],
-        );
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '\.table11a#', $tableIds[0]);
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '\.table21a#', $tableIds[0]);
     }
 
     #[NeedsEmptyOutputBucket]
@@ -317,8 +315,8 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableIds[] = $this->getTableIdFromJobDetail($jobDetail);
 
         sort($tableIds);
-        self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a', $tableIds[0]);
-        self::assertSame('out.c-testWriteTableOutputMappingRealDevModeEmpty.table21a', $tableIds[1]);
+        self::assertSame($this->emptyOutputBucketId . '.table11a', $tableIds[0]);
+        self::assertSame($this->emptyOutputBucketId . '.table21a', $tableIds[1]);
         // tables exist in the branch
         $this->clientWrapper->getBranchClient()->tableExists(
             'out.c-testWriteTableOutputMappingRealDevModeEmpty.table11a',

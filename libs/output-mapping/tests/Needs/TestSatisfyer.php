@@ -158,7 +158,12 @@ class TestSatisfyer
         }
 
         $emptyBucketName = substr(
-            $methodName . 'Empty' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName),
+            sprintf(
+                '%s_%s%s',
+                $reflection->getShortName(),
+                $methodName,
+                $dataName ? '_' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName) : '',
+            ),
             0,
             96,
         );

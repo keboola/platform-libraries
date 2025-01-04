@@ -11,6 +11,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -22,10 +23,6 @@ use Keboola\StorageApiBranch\StorageApiToken;
 
 class StorageApiLocalTableWriterTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
-    private const BRANCH_NAME = self::class;
-
     #[NeedsEmptyOutputBucket]
     public function testWriteTableOutputMapping(): void
     {
@@ -188,20 +185,14 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsDevBranch]
     public function testWriteTableOutputMappingFakeDevMode(): void
     {
-        $clientWrapper= new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-        $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
-                $branchId,
+                $this->devBranchId,
             ),
         );
 
@@ -229,7 +220,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $branchId],
+            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
             'local',
             false,
             'none',
@@ -244,33 +235,28 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $jobDetail = $this->clientWrapper->getBranchClient()->getJob($jobIds[1]);
         $tableIds[] = $this->getTableIdFromJobDetail($jobDetail);
 
+        sort($tableIds);
+
         $fakeDevEmptyOutputBucketId = str_replace(
             'out.c-',
-            'out.c-' . $branchId,
+            'out.c-' . $this->devBranchId . '-',
             $this->emptyOutputBucketId,
         );
 
-        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '\.table11a#', $tableIds[0]);
-        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '\.table21a#', $tableIds[0]);
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '.table11a#', $tableIds[0]);
+        self::assertMatchesRegularExpression('#' . $fakeDevEmptyOutputBucketId . '.table21a#', $tableIds[1]);
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsDevBranch]
     public function testWriteTableOutputMappingRealDevMode(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                useBranchStorage: true, // this is the important part
-            ),
-        );
-        $branchId = $this->createBranch($clientWrapper, self::class);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 url: (string) getenv('STORAGE_API_URL'),
                 token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $branchId,
-                useBranchStorage: true,
+                branchId: $this->devBranchId,
+                useBranchStorage: true, // this is the important part
             ),
         );
 
@@ -299,7 +285,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $branchId],
+            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
             'local',
             false,
             'none',
@@ -1109,22 +1095,15 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsDevBranch]
     public function testWriteTableExistingBucketDevModeNoDev(): void
     {
         $root = $this->temp->getTmpFolder();
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-
-        $branchId = $this->createBranch($this->clientWrapper, self::BRANCH_NAME);
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
+                (string) getenv('STORAGE_API_TOKEN'),
+                $this->devBranchId,
             ),
         );
 
@@ -1144,7 +1123,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $branchId],
+            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
             AbstractStrategyFactory::LOCAL,
             false,
             'none',
@@ -1169,10 +1148,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME .
+            '"' . $branchBucketId . '" on branch "' . $this->devBranchName .
             '" (ID "%s"), but the bucket is not assigned ' .
             'to any development branch.',
-            $branchId,
+            $this->devBranchId,
         ));
         $writer->uploadTables(
             '/upload',
@@ -1185,22 +1164,15 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsDevBranch]
     public function testWriteTableExistingBucketDevModeDifferentDev(): void
     {
         $root = $this->temp->getTmpFolder();
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-
-        $branchId = $this->createBranch($this->clientWrapper, self::BRANCH_NAME);
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
+                (string) getenv('STORAGE_API_TOKEN'),
+                $this->devBranchId,
             ),
         );
 
@@ -1220,7 +1192,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $tableQueue =  $writer->uploadTables(
             '/upload',
             ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $branchId],
+            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
             AbstractStrategyFactory::LOCAL,
             false,
             'none',
@@ -1256,9 +1228,9 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
             'Trying to create a table in the development bucket ' .
-            '"' . $branchBucketId . '" on branch "' . self::BRANCH_NAME . '" (ID "%s"). ' .
+            '"' . $branchBucketId . '" on branch "' . $this->devBranchName . '" (ID "%s"). ' .
             'The bucket metadata marks it as assigned to branch with ID "12345".',
-            $branchId,
+            $this->devBranchId,
         ));
         $writer->uploadTables(
             '/upload',

@@ -8,16 +8,12 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Storage\BucketCreator;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
-use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class BucketCreatorTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
     #[NeedsEmptyInputBucket]
     public function testEnsureDestinationBucket(): void
     {
@@ -61,7 +57,7 @@ class BucketCreatorTest extends AbstractTestCase
         $this->assertEquals($this->emptyInputBucketId, $bucketInfo->id);
     }
 
-    #[NeedsEmptyInputBucket]
+    #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testEnsureDestinationBucketDevBranch(): void
     {
         $this->clientWrapper->getTableAndFileStorageClient()->dropBucket($this->emptyInputBucketId);
@@ -78,25 +74,16 @@ class BucketCreatorTest extends AbstractTestCase
         // create bucket in main branch
         $bucketCreator->ensureDestinationBucket($destination, $systemMetadata);
 
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null,
-            ),
-        );
-        $branchName = self::class;
-        $branchId = $this->createBranch($clientWrapper, $branchName);
-
         // set it to use a branch
-        $this->initClient($branchId);
+        $this->initClient($this->devBranchId);
 
         $bucketCreator = new BucketCreator($this->clientWrapper);
 
         $expectedMessage = 'Trying to create a table in the development bucket "';
         $expectedMessage .= $this->emptyInputBucketId;
-        $expectedMessage .= '" on branch "Keboola\OutputMapping\Tests\Storage\BucketCreatorTest"';
-        $expectedMessage .= ' (ID "' . $branchId . '"), but the bucket is not assigned to any development branch.';
+        $expectedMessage .= '" on branch "' . $this->devBranchName . '"';
+        $expectedMessage .= ' (ID "' . $this->devBranchId . '"), ';
+        $expectedMessage .= 'but the bucket is not assigned to any development branch.';
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedMessage);

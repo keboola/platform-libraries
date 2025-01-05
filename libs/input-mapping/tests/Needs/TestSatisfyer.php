@@ -6,7 +6,9 @@ namespace Keboola\InputMapping\Tests\Needs;
 
 use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use ReflectionAttribute;
 use ReflectionObject;
@@ -166,6 +168,11 @@ class TestSatisfyer
             }
         }
 
+        $devBranch = self::getAttribute($reflection, $methodName, NeedsDevBranch::class);
+        if ($devBranch) {
+            $devBranchId = self::ensureDevBranch($clientWrapper, $testResourceName);
+        }
+
         return [
             'emptyOutputBucketId' => !empty($emptyOutputBucketId) ? (string) $emptyOutputBucketId : null,
             'emptyInputBucketId' => !empty($emptyInputBucketId) ? (string) $emptyInputBucketId : null,
@@ -173,6 +180,8 @@ class TestSatisfyer
             'firstTableId' => !empty($tableIds[0]) ? (string) $tableIds[0] : null,
             'secondTableId' => !empty($tableIds[1]) ? (string) $tableIds[1] : null,
             'thirdTableId' => !empty($tableIds[2]) ? (string) $tableIds[2] : null,
+            'devBranchName' => !empty($devBranchId) ? $testResourceName : null,
+            'devBranchId' => !empty($devBranchId) ? $devBranchId : null,
         ];
     }
 
@@ -185,5 +194,25 @@ class TestSatisfyer
             return $needsStorageBackend->backend;
         }
         return null;
+    }
+
+    private static function ensureDevBranch(
+        ClientWrapper $clientWrapper,
+        string $branchName,
+    ): string {
+        $clientWrapper = new ClientWrapper(
+            new ClientOptions(
+                $clientWrapper->getClientOptionsReadOnly()->getUrl(),
+                (string) getenv('STORAGE_API_TOKEN_MASTER'),
+            ),
+        );
+
+        $branches = new DevBranches($clientWrapper->getBasicClient());
+        foreach ($branches->listBranches() as $branch) {
+            if ($branch['name'] === $branchName) {
+                $branches->deleteBranch($branch['id']);
+            }
+        }
+        return (string) $branches->createBranch($branchName)['id'];
     }
 }

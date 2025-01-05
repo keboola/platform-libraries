@@ -18,18 +18,18 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 2']),
         );
         sleep(2);
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [
             [
-                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'tags' => [$this->testFileTag, 'adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -43,7 +43,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         $convertedTags = [
             [
-                'name' => self::DEFAULT_TEST_FILE_TAG,
+                'name' => $this->testFileTag,
             ], [
                 'name' => 'adaptive',
             ],
@@ -59,11 +59,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         // now load some new files and make sure we just grab the latest since the last run
         $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 3']),
         );
         $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 4']),
         );
         sleep(2);
 
@@ -95,22 +95,22 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 2']),
         );
         $idExclude = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'exclude']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'exclude']),
         );
         sleep(2);
 
         $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper));
         $sourceConfigTags = [
             [
-                'name' => self::DEFAULT_TEST_FILE_TAG,
+                'name' => $this->testFileTag,
                 'match' => 'include',
             ], [
                 'name' => 'adaptive',
@@ -148,11 +148,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         // now load some new files and make sure we just grab the latest since the last run
         $id3 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 3']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 3']),
         );
         $id4 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 4']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 4']),
         );
         sleep(2);
 
@@ -183,7 +183,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [
             [
-                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'tags' => [$this->testFileTag, 'adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -205,18 +205,18 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 2']),
         );
         sleep(2);
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [
             [
-                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'tags' => [$this->testFileTag, 'adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -230,7 +230,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         $convertedTags = [
             [
-                'name' => self::DEFAULT_TEST_FILE_TAG,
+                'name' => $this->testFileTag,
             ], [
                 'name' => 'adaptive',
             ],
@@ -261,18 +261,18 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive']),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG, 'adaptive', 'test 2']),
+            (new FileUploadOptions())->setTags([$this->testFileTag, 'adaptive', 'test 2']),
         );
         sleep(2);
 
         $reader = new Reader($this->getLocalStagingFactory());
         $configuration = [
             [
-                'tags' => [self::DEFAULT_TEST_FILE_TAG, 'adaptive'],
+                'tags' => [$this->testFileTag, 'adaptive'],
                 'changed_since' => '-5 minutes',
                 'overwrite' => true,
             ],

@@ -43,7 +43,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchTag = sprintf('%s-%s', $branchId, $this->testFileTagForBranch);
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
@@ -51,13 +51,13 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch]),
         );
         sleep(2);
 
         $convertedTags = [
             [
-                'name' => self::TEST_FILE_TAG_FOR_BRANCH,
+                'name' => $this->testFileTagForBranch,
             ], [
                 'name' => 'adaptive',
             ],
@@ -67,7 +67,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         $configuration = [
             [
-                'tags' => [self::TEST_FILE_TAG_FOR_BRANCH, 'adaptive'],
+                'tags' => [$this->testFileTagForBranch, 'adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -95,9 +95,9 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             sprintf(
                 'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
                 $branchId,
-                self::TEST_FILE_TAG_FOR_BRANCH,
+                $this->testFileTagForBranch,
                 $branchId,
-                self::TEST_FILE_TAG_FOR_BRANCH,
+                $this->testFileTagForBranch,
             ),
         ));
         // add another valid file and assert that it gets downloaded and the previous doesn't

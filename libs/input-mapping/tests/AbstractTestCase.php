@@ -10,6 +10,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -238,5 +239,17 @@ abstract class AbstractTestCase extends TestCase
             ],
         );
         return $stagingFactory;
+    }
+
+    protected function clearFileUploads(array $tags): void
+    {
+        // Delete file uploads
+        $options = new ListFilesOptions();
+        $options->setTags($tags);
+        sleep(1);
+        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
+        foreach ($files as $file) {
+            $this->clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+        }
     }
 }

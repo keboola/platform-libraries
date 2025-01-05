@@ -513,6 +513,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsDevBranch]
     public function testWorkspaceInputMappingRealDevStorage(): void
     {
+        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $bucketName = $bucket['displayName'];
+
         $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
             ->setBranchId($this->devBranchId)
             ->setUseBranchStorage(true) // this is the important part
@@ -528,8 +531,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         $buckets = [
-            'in.c-testWorkspaceInputMappingRealDevStorageTest',
-            'out.c-testWorkspaceInputMappingRealDevStorageTest',
+            $this->testBucketId,
+            str_replace('in.c-', 'out.c-', $this->testBucketId),
         ];
         foreach ($buckets as $bucket) {
             try {
@@ -543,15 +546,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         }
 
         // create input bucket in branch
-        $this->clientWrapper->getBranchClient()->createBucket(
-            'testWorkspaceInputMappingRealDevStorageTest',
+        $branchBucket = $this->clientWrapper->getBranchClient()->createBucket(
+            $bucketName,
             'in',
         );
         $this->clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
 
         // create output bucket in branch
         $this->emptyOutputBucketId = $this->clientWrapper->getBranchClient()->createBucket(
-            'testWorkspaceInputMappingRealDevStorageTest',
+            $bucketName,
             'out',
         );
 
@@ -627,20 +630,20 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
                 $this->clientWrapper->getDefaultBranch()->id,
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+                $this->testBucketId .'.test1',
             ),
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
                 $this->clientWrapper->getDefaultBranch()->id,
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+                $this->testBucketId .'.test1',
             ),
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "%s" from branch "%s" instead of default branch "%s".',
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
+                $this->testBucketId .'.test2',
                 $this->devBranchId,
                 $this->clientWrapper->getDefaultBranch()->id,
             ),
@@ -649,7 +652,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev input "%s" from branch "%s" instead of default branch "%s".',
-                    'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
+                    $this->testBucketId .'.test2',
                     $this->devBranchId,
                     $this->clientWrapper->getDefaultBranch()->id,
                 ),

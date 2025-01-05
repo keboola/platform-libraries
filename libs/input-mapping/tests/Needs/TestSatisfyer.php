@@ -102,6 +102,7 @@ class TestSatisfyer
         ClientWrapper $clientWrapper,
         Temp $temp,
         string $methodName,
+        string $dataName,
     ): array {
         $storageBackend = self::getStorageBackendFromAttribute($reflection) ?: 'snowflake';
 
@@ -110,10 +111,21 @@ class TestSatisfyer
 
         $testTable = self::getAttribute($reflection, $methodName, NeedsTestTables::class);
 
+        $testResourceName = substr(
+            sprintf(
+                '%s_%s%s',
+                $reflection->getShortName(),
+                $methodName,
+                $dataName ? '_' . preg_replace('/[^a-zA-Z0-9-_]/', '-', $dataName) : '',
+            ),
+            0,
+            96,
+        );
+
         if ($emptyOutputBucket !== null) {
             $emptyOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty',
+                $testResourceName,
                 Client::STAGE_OUT,
                 $storageBackend,
             );
@@ -122,7 +134,7 @@ class TestSatisfyer
         if ($emptyInputBucket !== null) {
             $emptyInputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Empty',
+                $testResourceName,
                 Client::STAGE_IN,
                 $storageBackend,
             );
@@ -131,7 +143,7 @@ class TestSatisfyer
         if ($testTable !== null) {
             $testBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
-                $methodName . 'Test',
+                $testResourceName,
                 Client::STAGE_IN,
                 $storageBackend,
             );

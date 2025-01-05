@@ -17,6 +17,7 @@ use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionObject;
@@ -67,11 +68,20 @@ abstract class AbstractTestCase extends TestCase
         }
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): void
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('STORAGE_API_URL'))
+            ->setToken((string) getenv('STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
+
+        $this->clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

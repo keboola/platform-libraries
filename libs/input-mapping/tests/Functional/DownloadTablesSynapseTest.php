@@ -17,6 +17,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
+use PHPUnit\Util\Test;
 
 class DownloadTablesSynapseTest extends AbstractTestCase
 {
@@ -60,15 +61,20 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         );
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): void
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-            ),
-        );
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
+            ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
 
+        $this->clientWrapper = new ClientWrapper($clientOptions);
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',

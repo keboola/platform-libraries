@@ -23,32 +23,10 @@ use Monolog\Logger;
 
 class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
 {
-    private string $emptyBranchInputBucketId;
-
-    private function initEmptyBranchInputBucket(): void
-    {
-        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
-
-        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
-            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
-                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                    $bucket['id'],
-                    ['force' => true, 'async' => true],
-                );
-            }
-        }
-
-        $this->emptyBranchInputBucketId = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
-            $this->devBranchId . '-' . $emptyInputBucket['displayName'],
-            Client::STAGE_IN,
-        );
-    }
-
-
     #[NeedsEmptyInputBucket, NeedsEmptyOutputBucket, NeedsDevBranch]
     public function testNoBranch(): void
     {
-        $this->initEmptyBranchInputBucket();
+        $this->initEmptyFakeBranchInputBucket();
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
@@ -246,7 +224,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTablesExists(): void
     {
-        $this->initEmptyBranchInputBucket();
+        $this->initEmptyFakeBranchInputBucket();
 
         $this->initClient($this->devBranchId);
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
@@ -333,7 +311,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTableStates(): void
     {
-        $this->initEmptyBranchInputBucket();
+        $this->initEmptyFakeBranchInputBucket();
         $this->initClient($this->devBranchId);
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');

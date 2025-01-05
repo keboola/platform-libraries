@@ -274,4 +274,27 @@ abstract class AbstractTestCase extends TestCase
             Client::STAGE_IN,
         );
     }
+
+    protected function initEmptyRealBranchInputBucket(): void
+    {
+        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $clientWraper = new ClientWrapper(
+            $this->clientWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
+        );
+
+        $this->emptyBranchInputBucketId = $clientWraper->getBranchClient()->createBucket(
+            $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
+    }
 }

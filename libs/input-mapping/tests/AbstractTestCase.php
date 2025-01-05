@@ -10,6 +10,7 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -42,6 +43,8 @@ abstract class AbstractTestCase extends TestCase
 
     protected string $devBranchName;
     protected string $devBranchId;
+
+    protected string $emptyBranchInputBucketId;
 
     public function setUp(): void
     {
@@ -251,5 +254,24 @@ abstract class AbstractTestCase extends TestCase
         foreach ($files as $file) {
             $this->clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
         }
+    }
+
+    protected function initEmptyFakeBranchInputBucket(): void
+    {
+        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $this->emptyBranchInputBucketId = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
+            $this->devBranchId . '-' . $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
     }
 }

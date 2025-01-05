@@ -17,7 +17,6 @@ use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionObject;
@@ -55,7 +54,8 @@ abstract class AbstractTestCase extends TestCase
             new ReflectionObject($this),
             $this->clientWrapper,
             $this->temp,
-            Test::describe($this)[1],
+            $this->getName(false),
+            (string) $this->dataName(),
         );
         foreach ($objects as $name => $value) {
             if ($value !== null) {

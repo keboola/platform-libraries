@@ -13,10 +13,10 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 
@@ -511,29 +511,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
     }
 
-    #[NeedsTestTables(2)]
+    #[NeedsTestTables(2), NeedsDevBranch]
     public function testWorkspaceInputMappingRealDevStorage(): void
     {
-        // create a branch
-        $masterClientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-        $branchesApi = new DevBranches($masterClientWrapper->getBasicClient());
-        foreach ($branchesApi->listBranches() as $branch) {
-            if ($branch['name'] === self::class) {
-                $branchesApi->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branchesApi->createBranch(self::class)['id'];
 
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
                 url: (string) getenv('STORAGE_API_URL'),
                 token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $branchId,
+                branchId: $this->devBranchId,
                 useBranchStorage: true,
             ),
         );
@@ -660,7 +646,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             sprintf(
                 'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
-                $branchId,
+                $this->devBranchId,
                 $clientWrapper->getDefaultBranch()->id,
             ),
         ));
@@ -669,7 +655,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 sprintf(
                     'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                     'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
-                    $branchId,
+                    $this->devBranchId,
                     $clientWrapper->getDefaultBranch()->id,
                 ),
             ),

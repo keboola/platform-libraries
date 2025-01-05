@@ -26,16 +26,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload_second',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(5);
 
         $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
-        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
+        $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -73,13 +73,13 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(3);
 
         $reader = new Reader($this->getLocalStagingFactory());
         // download files for the first time
-        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => true]];
+        $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -101,7 +101,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         // download files without overwrite
         $this->expectException(InputOperationException::class);
         $this->expectExceptionMessage('Overwrite cannot be turned off for local mapping.');
-        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'overwrite' => false]];
+        $configuration = [['tags' => [$this->testFileTag], 'overwrite' => false]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -271,7 +271,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         for ($i = 0; $i < 102; $i++) {
             $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
                 $root . '/upload',
-                (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+                (new FileUploadOptions())->setTags([$this->testFileTag]),
             );
         }
         sleep(5);
@@ -314,7 +314,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $fs = new Filesystem();
         $fs->remove($this->temp->getTmpFolder());
         $reader = new Reader($this->getLocalStagingFactory());
-        $configuration = [['tags' => [self::DEFAULT_TEST_FILE_TAG], 'limit' => 102, 'overwrite' => true]];
+        $configuration = [['tags' => [$this->testFileTag], 'limit' => 102, 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
@@ -408,13 +408,13 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(5);
 
         $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper, 'yaml'));
         $configuration = [[
-            'tags' => [self::DEFAULT_TEST_FILE_TAG],
+            'tags' => [$this->testFileTag],
             'overwrite' => true,
         ]];
         $reader->downloadFiles(
@@ -442,11 +442,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload_second',
-            (new FileUploadOptions())->setTags([self::DEFAULT_TEST_FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(5);
 

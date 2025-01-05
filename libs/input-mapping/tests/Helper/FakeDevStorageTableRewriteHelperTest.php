@@ -10,116 +10,59 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Helper\FakeDevStorageTableRewriteHelper;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
-use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
+use Keboola\InputMapping\Tests\Needs\NeedsEmptyInputBucket;
+use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 
-class FakeDevStorageTableRewriteHelperTest extends TestCase
+class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
 {
-    private string $branchId;
-    private string $outBucketId;
-    private string $outBranchBucketId;
+    private string $emptyBranchInputBucketId;
 
-    public function setUp(): void
+    private function initEmptyBranchInputBucket(): void
     {
-        parent::setUp();
-        $clientWrapper = $this->getClientWrapper(null);
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'dev branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        $this->branchId = (string) $branches->createBranch('dev branch')['id'];
-    }
+        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
 
-    protected function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
-    }
-
-    private function initBuckets(): void
-    {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $inBucket = TestSatisfyer::getBucketByDisplayName($clientWrapper, 'main', Client::STAGE_IN);
-        if ($inBucket) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                $inBucket['id'],
-                ['force' => true, 'async' => true],
-            );
-        }
-
-        $outBucket = TestSatisfyer::getBucketByDisplayName($clientWrapper, 'main', Client::STAGE_OUT);
-        if ($outBucket) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                $outBucket['id'],
-                ['force' => true, 'async' => true],
-            );
-        }
-
-        $outDevBucket = TestSatisfyer::getBucketByDisplayName(
-            $clientWrapper,
-            'dev-branch-main',
-            Client::STAGE_OUT,
-        );
-        if ($outDevBucket) {
-            $clientWrapper->getTableAndFileStorageClient()->dropBucket(
-                $outDevBucket['id'],
-                ['force' => true, 'async' => true],
-            );
-        }
-
-        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
-            if (preg_match('/^(c-)?[0-9]+-output-mapping-test$/ui', $bucket['name'])) {
-                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
                     ['force' => true, 'async' => true],
                 );
             }
         }
 
-        $this->outBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket('main', Client::STAGE_OUT);
-        $this->outBranchBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
-            $this->branchId . '-main',
-            Client::STAGE_OUT,
+        $this->emptyBranchInputBucketId = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
+            $this->devBranchId . '-' . $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
         );
     }
 
+
+    #[NeedsEmptyInputBucket, NeedsEmptyOutputBucket, NeedsDevBranch]
     public function testNoBranch(): void
     {
-        $this->initBuckets();
-        $clientWrapper = $this->getClientWrapper(null);
-        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_IN);
-        $temp = new Temp();
-        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        $this->initEmptyBranchInputBucket();
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
         $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         // Create table
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBucketId,
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyOutputBucketId,
             'my-table',
             $csv,
         );
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            'in.c-main',
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyInputBucketId,
             'my-table-2',
             $csv,
         );
@@ -128,27 +71,30 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyOutputBucketId . '.my-table',
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
             ],
             [
-                'source' => 'in.c-main.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
             ],
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $clientWrapper,
+            $this->clientWrapper,
             $testLogger,
         );
-        self::assertEquals($this->outBucketId . '.my-table', $destinations->getTables()[0]->getSource());
+        self::assertEquals(
+            $this->emptyOutputBucketId . '.my-table',
+            $destinations->getTables()[0]->getSource(),
+        );
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyOutputBucketId . '.my-table',
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
@@ -161,15 +107,15 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
-        self::assertEquals('in.c-main.my-table-2', $destinations->getTables()[1]->getSource());
+        self::assertEquals($this->emptyInputBucketId . '.my-table-2', $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
         self::assertEquals(
             [
-                'source' => 'in.c-main.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
                 'column_types' => [
@@ -181,84 +127,84 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
     }
 
+    #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testInvalidName(): void
     {
-        $clientWrapper = $this->getClientWrapper($this->branchId);
+        $this->initClient($this->devBranchId);
+
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
-                'source' => 'out.c-main',
+                'source' => $this->emptyInputBucketId,
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
             ],
         ]);
         $this->expectException(InputOperationException::class);
-        $this->expectExceptionMessage('Invalid destination: "out.c-main"');
+        $this->expectExceptionMessage('Invalid destination: "' . $this->emptyInputBucketId . '"');
         (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $clientWrapper,
+            $this->clientWrapper,
             $testLogger,
         );
     }
 
+    #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteNoTables(): void
     {
-        $this->initBuckets();
-        $clientWrapper = $this->getClientWrapper(null);
-        $this->outBucketId = $clientWrapper->getBasicClient()->createBucket('main', Client::STAGE_IN);
-        $temp = new Temp();
-        $csv = new CsvFile($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
+        // !!$this->initBuckets();
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
         $csv->writeRow(['id2', 'name2', 'foo2', 'bar2']);
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         // Create table
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBucketId,
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyInputBucketId,
             'my-table',
             $csv,
         );
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBucketId,
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyInputBucketId,
             'my-table-2',
             $csv,
         );
 
-        $clientWrapper = $this->getClientWrapper($this->branchId);
+        $this->initClient($this->devBranchId);
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyInputBucketId . '.my-table',
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
             ],
             [
-                'source' => $this->outBucketId . '.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
             ],
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $clientWrapper,
+            $this->clientWrapper,
             $testLogger,
         );
-        self::assertEquals($this->outBucketId . '.my-table', $destinations->getTables()[0]->getSource());
+        self::assertEquals($this->emptyInputBucketId. '.my-table', $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyInputBucketId . '.my-table',
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
@@ -271,15 +217,15 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
-        self::assertEquals($this->outBucketId . '.my-table-2', $destinations->getTables()[1]->getSource());
+        self::assertEquals($this->emptyInputBucketId . '.my-table-2', $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
         self::assertEquals(
             [
-                'source' => $this->outBucketId . '.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
                 'column_types' => [
@@ -291,27 +237,28 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
     }
 
+    #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTablesExists(): void
     {
-        $this->initBuckets();
-        $clientWrapper = $this->getClientWrapper($this->branchId);
-        $temp = new Temp(uniqid('input-mapping'));
-        file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
-        $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
+        $this->initEmptyBranchInputBucket();
 
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBranchBucketId,
+        $this->initClient($this->devBranchId);
+        file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
+        $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
+
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyBranchInputBucketId,
             'my-table',
             $csvFile,
         );
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBranchBucketId,
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyBranchInputBucketId,
             'my-table-2',
             $csvFile,
         );
@@ -319,23 +266,23 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyInputBucketId . '.my-table',
                 'destination' => 'my-table.csv',
                 'days' => 12,
                 'columns' => ['id', 'name'],
             ],
             [
-                'source' => $this->outBucketId . '.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'destination' => 'my-table-2.csv',
                 'columns' => ['foo', 'bar'],
             ],
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $clientWrapper,
+            $this->clientWrapper,
             $testLogger,
         );
-        $expectedTableId = sprintf('%s.my-table', $this->outBranchBucketId);
+        $expectedTableId = sprintf('%s.my-table', $this->emptyBranchInputBucketId);
         self::assertEquals($expectedTableId, $destinations->getTables()[0]->getSource());
         self::assertEquals('my-table.csv', $destinations->getTables()[0]->getDestination());
         self::assertEquals(
@@ -353,11 +300,11 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
-        $expectedTableId = sprintf('%s.my-table-2', $this->outBranchBucketId);
+        $expectedTableId = sprintf('%s.my-table-2', $this->emptyBranchInputBucketId);
         self::assertEquals($expectedTableId, $destinations->getTables()[1]->getSource());
         self::assertEquals('my-table-2.csv', $destinations->getTables()[1]->getDestination());
         self::assertEquals(
@@ -374,29 +321,29 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
         self::assertTrue($testHandler->hasInfoThatContains(
-            sprintf('Using dev input "%s" instead of "%s.my-table-2".', $expectedTableId, $this->outBucketId),
+            sprintf('Using dev input "%s" instead of "%s.my-table-2".', $expectedTableId, $this->emptyInputBucketId),
         ));
     }
 
+    #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTableStates(): void
     {
-        $this->initBuckets();
-        $clientWrapper = $this->getClientWrapper($this->branchId);
-        $temp = new Temp(uniqid('input-mapping'));
-        file_put_contents($temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
-        $csvFile = new CsvFile($temp->getTmpFolder() . 'data.csv');
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBranchBucketId,
+        $this->initEmptyBranchInputBucket();
+        $this->initClient($this->devBranchId);
+        file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
+        $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyBranchInputBucketId,
             'my-table',
             $csvFile,
         );
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
-            $this->outBranchBucketId,
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyBranchInputBucketId,
             'my-table-2',
             $csvFile,
         );
@@ -404,27 +351,27 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesStates = new InputTableStateList([
             [
-                'source' => $this->outBucketId . '.my-table',
+                'source' => $this->emptyInputBucketId . '.my-table',
                 'lastImportDate' => '1605741600',
             ],
             [
-                'source' => $this->outBucketId . '.my-table-2',
+                'source' => $this->emptyInputBucketId . '.my-table-2',
                 'lastImportDate' => '1605741600',
             ],
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableStatesDestinations(
             $inputTablesStates,
-            $clientWrapper,
+            $this->clientWrapper,
             $testLogger,
         );
         self::assertEquals(
             [
                 [
-                    'source' => sprintf('%s.my-table', $this->outBranchBucketId),
+                    'source' => sprintf('%s.my-table', $this->emptyBranchInputBucketId),
                     'lastImportDate' => '1605741600',
                 ],
                 [
-                    'source' => sprintf('%s.my-table-2', $this->outBranchBucketId),
+                    'source' => sprintf('%s.my-table-2', $this->emptyBranchInputBucketId),
                     'lastImportDate' => '1605741600',
                 ],
             ],
@@ -433,22 +380,22 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         self::assertTrue($testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "%s.my-table-2" instead of "%s.my-table-2".',
-                $this->outBranchBucketId,
-                $this->outBucketId,
+                $this->emptyBranchInputBucketId,
+                $this->emptyInputBucketId,
             ),
         ));
     }
 
     public function testIsDevelopmentBranchRewriteWithPrefix(): void
     {
-        $storageClientMock = self::createMock(Client::class);
+        $storageClientMock = $this->createMock(Client::class);
         $storageClientMock->expects(self::once())->method('tableExists')
             ->with('out.c-123456-main.my-table')->willReturn(true);
-        $branchClientMock = self::createMock(BranchAwareClient::class);
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
 
-        $clientWrapper = self::createMock(ClientWrapper::class);
+        $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($branchClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn(true);
@@ -493,14 +440,14 @@ class FakeDevStorageTableRewriteHelperTest extends TestCase
         int $checkCount,
         bool $isDevelopmentBranch,
     ): void {
-        $storageClientMock = self::createMock(Client::class);
+        $storageClientMock = $this->createMock(Client::class);
         $storageClientMock->expects(self::exactly($checkCount))->method('tableExists')
             ->with($destinationTable)->willReturn(true);
-        $branchClientMock = self::createMock(BranchAwareClient::class);
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
         $storageClientMock->expects(self::once())->method('getTable')
             ->willReturn(['id' => 'out.c-123456-main.my-table']);
 
-        $clientWrapper = self::createMock(ClientWrapper::class);
+        $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($branchClientMock);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($storageClientMock);
         $clientWrapper->expects(self::once())->method('isDevelopmentBranch')->willReturn($isDevelopmentBranch);

@@ -15,6 +15,8 @@ class StorageApiToken extends BaseStorageApiToken implements TokenInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->getTokenId();
+        /** @var non-empty-string $tokenId */
+        $tokenId = $this->getTokenId();
+        return $tokenId;
     }
 }

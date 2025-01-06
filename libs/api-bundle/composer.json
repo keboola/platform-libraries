@@ -2,21 +2,23 @@
     "name": "keboola/api-bundle",
     "description": "Keboola API Bundle",
     "type": "symfony-bundle",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.2",
         "cuyz/valinor-bundle": "^0.2.3",
         "keboola/permission-checker": "^2.0",
         "keboola/service-client": "^1.0",
         "monolog/monolog": "^2.0",
-        "symfony/dependency-injection": "^6.0",
+        "symfony/dependency-injection": "^7.0|^6.0",
         "symfony/monolog-bundle": "^3.8",
-        "symfony/security-bundle": "^6.1"
+        "symfony/security-bundle": "^7.0|^6.0"
     },
     "require-dev": {
-        "keboola/api-error-control": "^4.1",
+        "keboola/api-error-control": "dev-adamvyborny-allow-symfony-7 as 4.1",
         "keboola/coding-standard": "^15.0",
         "keboola/kbc-manage-api-php-client": "^7.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^5.1",
+        "keboola/storage-api-php-client-branch-wrapper": "dev-adamvyborny-allow-symfony-7 as 6.0",
         "phpstan/phpstan": "^1.8",
         "phpstan/phpstan-phpunit": "^1.1",
         "phpstan/phpstan-symfony": "^1.3",

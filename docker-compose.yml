@@ -38,7 +38,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   dev-api-bundle:
-    <<: *dev81
+    <<: *dev82
     image: keboola/api-bundle
     working_dir: /code/libs/api-bundle
 

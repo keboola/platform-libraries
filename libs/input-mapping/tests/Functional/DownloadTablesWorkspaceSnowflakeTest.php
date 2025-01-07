@@ -24,6 +24,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(3), NeedsEmptyOutputBucket]
     public function testTablesSnowflakeBackend(): void
     {
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBranchClient()->setRunId($runId);
+
         $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
@@ -110,9 +113,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);
+        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs();
         $params = null;
         foreach ($jobs as $job) {
+            if ($runId !== $job['runId']) {
+                continue;
+            }
             if ($job['operationName'] === 'workspaceLoadClone') {
                 $params = $job['operationParams'];
                 break;

@@ -37,7 +37,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             [
                 'name' => $this->testFileTagForBranch,
             ], [
-                'name' => 'adaptive',
+                'name' => $this->testFileTagForBranch . '-adaptive',
             ],
         ];
 
@@ -45,7 +45,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         $configuration = [
             [
-                'tags' => [$this->testFileTagForBranch, 'adaptive'],
+                'tags' => [$this->testFileTagForBranch, $this->testFileTagForBranch . '-adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -71,10 +71,12 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
-                'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
+                'Using dev tags "%s-%s, %s-%s-adaptive" instead of "%s, %s-adaptive".',
                 $this->devBranchId,
                 $this->testFileTagForBranch,
                 $this->devBranchId,
+                $this->testFileTagForBranch,
+                $this->testFileTagForBranch,
                 $this->testFileTagForBranch,
             ),
         ));

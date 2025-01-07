@@ -113,7 +113,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs();
+        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
         $params = null;
         foreach ($jobs as $job) {
             if ($runId !== $job['runId']) {

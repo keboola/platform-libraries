@@ -22,6 +22,9 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesBigQueryBackend(): void
     {
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBranchClient()->setRunId($runId);
+
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
                 null,
@@ -74,9 +77,12 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);
+        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs();
         $params = null;
         foreach ($jobs as $job) {
+            if ($runId !== $job['runId']) {
+                continue;
+            }
             if ($job['operationName'] === 'workspaceLoad') {
                 $params = $job['operationParams'];
                 break;

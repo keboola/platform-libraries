@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use ReflectionObject;
 
 class DownloadFilesTestAbstract extends AbstractTestCase
 {
@@ -23,11 +24,12 @@ class DownloadFilesTestAbstract extends AbstractTestCase
 
     protected function getFileTag(string $suffix = ''): string
     {
-        $tag = $this->getName(false);
+        $tag =  (new ReflectionObject($this))->getShortName();
+        $tag .= '_' . $this->getName(false);
         $dataName = (string) $this->dataName();
 
         if ($dataName) {
-            $tag .= '-' . $dataName;
+            $tag .= '_' . $dataName;
         }
 
         return $tag . $suffix;

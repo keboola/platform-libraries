@@ -14,8 +14,8 @@
         "doctrine/dbal": "^3.3",
         "doctrine/doctrine-bundle": "^2.1",
         "keboola/retry": "^0.5.0",
-        "symfony/dependency-injection": "^6.4",
-        "symfony/http-kernel": "^6.4"
+        "symfony/dependency-injection": "^7.0|^6.4",
+        "symfony/http-kernel": "^7.0|^6.4"
     },
     "require-dev": {
         "ext-pdo": "*",

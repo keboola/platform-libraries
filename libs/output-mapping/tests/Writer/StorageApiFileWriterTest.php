@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -16,14 +17,15 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class StorageApiFileWriterTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
-    private const FILE_TAG = 'StorageApiFileWriterTest';
+    private string $testFileTag;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearFileUploads([self::FILE_TAG]);
+
+        $this->testFileTag = $this->getFileTag();
+
+        $this->clearFileUploads([$this->testFileTag]);
     }
 
     public function testWriteBasicFiles(): void
@@ -33,12 +35,12 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file2', 'test');
         file_put_contents(
             $root . '/upload/file2.manifest',
-            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": false}',
+            '{"tags": ["' . $this->testFileTag . '", "xxx"],"is_public": false}',
         );
         file_put_contents($root . '/upload/file3', 'test');
         file_put_contents(
             $root . '/upload/file3.manifest',
-            '{"tags": ["' . self::FILE_TAG . '"],"is_public": true}',
+            '{"tags": ["' . $this->testFileTag . '"],"is_public": true}',
         );
 
         $systemMetadata = [
@@ -52,11 +54,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
             ],
             [
                 'source' => 'file2',
-                'tags' => [self::FILE_TAG, 'another-tag'],
+                'tags' => [$this->testFileTag, 'another-tag'],
                 'is_public' => true,
             ],
         ];
@@ -74,7 +76,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(3, $files);
 
@@ -92,7 +94,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         }
 
         $expectedTags = [
-            self::FILE_TAG,
+            $this->testFileTag,
             'componentId: testComponent',
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',
@@ -129,7 +131,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
             ],
         ];
 
@@ -146,7 +148,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         // no files should be uploaded since, isFailedJob was true and write_always is not implemented for files
         self::assertCount(0, $files);
@@ -160,7 +162,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
             ],
         ];
 
@@ -177,7 +179,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
@@ -190,28 +192,15 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         self::assertNotNull($file1);
         self::assertEquals(4, $file1['sizeBytes']);
-        self::assertEquals([self::FILE_TAG], $file1['tags']);
+        self::assertEquals([$this->testFileTag], $file1['tags']);
     }
 
+    #[NeedsDevBranch]
     public function testWriteFilesOutputMappingFakeDevMode(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null,
-            ),
-        );
-        $branchName = self::class;
-        $branchId = $this->createBranch($clientWrapper, $branchName);
-        $this->clearFileUploads([$branchName . '-' . self::FILE_TAG]);
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN'),
-                $branchId,
-            ),
-        );
+        $this->clearFileUploads([$this->devBranchName . '-' . $this->testFileTag]);
+
+        $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/file1', 'test');
@@ -219,7 +208,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
             ],
         ];
 
@@ -229,7 +218,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             'componentId' => 'testComponent',
             'configurationId' => 'metadata-write-test',
             'configurationRowId' => '12345',
-            'branchId' => $branchId,
+            'branchId' => $this->devBranchId,
             'runId' => '999',
         ];
 
@@ -244,7 +233,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([sprintf('%s-' . self::FILE_TAG, $branchId)]);
+        $options->setTags([sprintf('%s-' . $this->testFileTag, $this->devBranchId)]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
@@ -256,12 +245,12 @@ class StorageApiFileWriterTest extends AbstractTestCase
         }
 
         $expectedTags = [
-            sprintf('%s-' . self::FILE_TAG, $branchId),
-            sprintf('%s-componentId: testComponent', $branchId),
-            sprintf('%s-configurationId: metadata-write-test', $branchId),
-            sprintf('%s-configurationRowId: 12345', $branchId),
-            sprintf('%s-branchId: %s', $branchId, $branchId),
-            sprintf('%s-runId: 999', $branchId),
+            sprintf('%s-' . $this->testFileTag, $this->devBranchId),
+            sprintf('%s-componentId: testComponent', $this->devBranchId),
+            sprintf('%s-configurationId: metadata-write-test', $this->devBranchId),
+            sprintf('%s-configurationRowId: 12345', $this->devBranchId),
+            sprintf('%s-branchId: %s', $this->devBranchId, $this->devBranchId),
+            sprintf('%s-runId: 999', $this->devBranchId),
         ];
 
         self::assertNotNull($file1);
@@ -269,23 +258,15 @@ class StorageApiFileWriterTest extends AbstractTestCase
         self::assertEquals($expectedTags, $file1['tags']);
     }
 
+    #[NeedsDevBranch]
     public function testWriteFilesOutputMappingRealDevMode(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null,
-            ),
-        );
-        $branchName = self::class;
-        $branchId = $this->createBranch($clientWrapper, $branchName);
-        $this->clearFileUploads([$branchName . '-' . self::FILE_TAG]);
+        $this->clearFileUploads([$this->devBranchName . '-' . $this->testFileTag]);
         $this->clientWrapper = new ClientWrapper(
             new ClientOptions(
                 url: (string) getenv('STORAGE_API_URL'),
                 token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $branchId,
+                branchId: $this->devBranchId,
                 useBranchStorage: true, // This is the important setting
             ),
         );
@@ -296,7 +277,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
             ],
         ];
 
@@ -307,7 +288,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             'componentId' => 'testComponent',
             'configurationId' => 'metadata-write-test',
             'configurationRowId' => '12345',
-            'branchId' => $branchId,
+            'branchId' => $this->devBranchId,
             'runId' => '999',
         ];
 
@@ -322,7 +303,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getBranchClient()->listFiles($options);
         self::assertCount(1, $files);
 
@@ -334,11 +315,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         }
 
         $expectedTags = [
-            self::FILE_TAG,
+            $this->testFileTag,
             'componentId: testComponent',
             'configurationId: metadata-write-test',
             'configurationRowId: 12345',
-            sprintf('branchId: %s', $branchId),
+            sprintf('branchId: %s', $this->devBranchId),
             'runId: 999',
         ];
 
@@ -353,13 +334,13 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '", "xxx"],"is_public": true}',
+            '{"tags": ["' . $this->testFileTag . '", "xxx"],"is_public": true}',
         );
 
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG, 'yyy'],
+                'tags' => [$this->testFileTag, 'yyy'],
                 'is_public' => false,
             ],
         ];
@@ -376,7 +357,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
@@ -389,7 +370,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         self::assertNotNull($file1);
         self::assertEquals(4, $file1['sizeBytes']);
-        self::assertEquals([self::FILE_TAG, 'yyy', 'componentId: foo'], $file1['tags']);
+        self::assertEquals([$this->testFileTag, 'yyy', 'componentId: foo'], $file1['tags']);
         self::assertFalse($file1['isPublic']);
     }
 
@@ -402,7 +383,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG, 'yyy'],
+                'tags' => [$this->testFileTag, 'yyy'],
                 'is_public' => false,
             ],
         ];
@@ -430,7 +411,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'file1',
-                'tags' => [self::FILE_TAG, 'yyy'],
+                'tags' => [$this->testFileTag, 'yyy'],
                 'is_public' => false,
             ],
         ];
@@ -455,13 +436,13 @@ class StorageApiFileWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/file1', 'test');
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}',
+            '{"tags": ["' . $this->testFileTag . '-xxx"],"is_public": true}',
         );
 
         $configs = [
             [
                 'source' => 'file2',
-                'tags' => [self::FILE_TAG],
+                'tags' => [$this->testFileTag],
                 'is_public' => false,
             ],
         ];
@@ -484,7 +465,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents(
             $root . '/upload/file1.manifest',
-            '{"tags": ["' . self::FILE_TAG . '-xxx"],"is_public": true}',
+            '{"tags": ["' . $this->testFileTag . '-xxx"],"is_public": true}',
         );
         $writer = new FileWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
@@ -521,16 +502,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(1);
 
         $writer = new FileWriter($this->getLocalStagingFactory());
-        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
@@ -546,103 +527,85 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(1);
 
         $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
             $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
         )));
-        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
-        self::assertSame(['StorageApiFileWriterTest'], $file['tags']);
+        self::assertSame([$this->testFileTag], $file['tags']);
         $file = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
-        self::assertSame(['StorageApiFileWriterTest'], $file['tags']);
+        self::assertSame([$this->testFileTag], $file['tags']);
     }
 
+    #[NeedsDevBranch]
     public function testTagBranchProcessedFiles(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null,
-            ),
-        );
-        $branchName = self::class;
-        $branchId = $this->createBranch($clientWrapper, $branchName);
-
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->devBranchId . '-' . $this->testFileTag]),
         );
         sleep(1);
         // set it to use a branch
-        $this->initClient($branchId);
+        $this->initClient($this->devBranchId);
 
         $writer = new FileWriter($this->getLocalStagingFactory());
-        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         // first file shouldn't be marked as processed because a branch file exists
         $file1 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
-        self::assertTrue(!in_array($branchId . '-downloaded', $file1['tags']));
+        self::assertTrue(!in_array($this->devBranchId . '-downloaded', $file1['tags']));
         $file2 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
-        self::assertTrue(in_array($branchId . '-downloaded', $file2['tags']));
-        self::assertTrue(in_array($branchId . '-' . self::FILE_TAG, $file2['tags']));
+        self::assertTrue(in_array($this->devBranchId . '-downloaded', $file2['tags']));
+        self::assertTrue(in_array($this->devBranchId . '-' . $this->testFileTag, $file2['tags']));
     }
 
+    #[NeedsDevBranch]
     public function testTagBranchProcessedFilesIsIgnoredWhenBranchStorageFlagIsUsed(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                null,
-            ),
-        );
-        $branchName = self::class;
-        $branchId = $this->createBranch($clientWrapper, $branchName);
-
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/test', 'test');
 
         $id1 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         $id2 = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload/test',
-            (new FileUploadOptions())->setTags([$branchId . '-' . self::FILE_TAG]),
+            (new FileUploadOptions())->setTags([$this->devBranchId . '-' . $this->testFileTag]),
         );
         sleep(1);
         // set it to use a branch
-        $this->initClient($branchId);
+        $this->initClient($this->devBranchId);
 
         $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
             $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
         )));
-        $configuration = [['tags' => [self::FILE_TAG], 'processed_tags' => ['downloaded']]];
+        $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
         // first file shouldn't be marked as processed because a branch file exists
         $file1 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id1);
-        self::assertSame(['StorageApiFileWriterTest'], $file1['tags']);
+        self::assertSame([$this->testFileTag], $file1['tags']);
         $file2 = $this->clientWrapper->getTableAndFileStorageClient()->getFile($id2);
-        self::assertSame([$branchId . '-StorageApiFileWriterTest'], $file2['tags']);
+        self::assertSame([$this->devBranchId . '-' . $this->testFileTag], $file2['tags']);
     }
 
     public function testTableFiles(): void
@@ -662,7 +625,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             'runId' => '999',
         ];
         $tableFiles = [
-            'tags' => [self::FILE_TAG, 'another-tag'],
+            'tags' => [$this->testFileTag, 'another-tag'],
             'is_permanent' => true,
         ];
 
@@ -679,12 +642,12 @@ class StorageApiFileWriterTest extends AbstractTestCase
         sleep(1);
 
         $options = new ListFilesOptions();
-        $options->setTags([self::FILE_TAG]);
+        $options->setTags([$this->testFileTag]);
         $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
         self::assertCount(1, $files);
 
         $expectedTags = [
-            self::FILE_TAG,
+            $this->testFileTag,
             'another-tag',
             'componentId: testComponent',
             'configurationId: metadata-write-test',
@@ -697,5 +660,17 @@ class StorageApiFileWriterTest extends AbstractTestCase
         self::assertEquals(4, $file['sizeBytes']);
         self::assertEquals(sort($expectedTags), sort($file['tags']));
         self::assertNull($file['maxAgeDays']);
+    }
+
+    private function getFileTag(): string
+    {
+        $tag = $this->getName(false);
+        $dataName = (string) $this->dataName();
+
+        if ($dataName) {
+            $tag .= '-' . $dataName;
+        }
+
+        return $tag;
     }
 }

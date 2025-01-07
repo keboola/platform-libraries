@@ -45,6 +45,9 @@ abstract class AbstractTestCase extends TestCase
     protected string $secondTableId;
     protected string $thirdTableId;
 
+    protected string $devBranchName;
+    protected string $devBranchId;
+
     protected TestHandler $testHandler;
     protected Logger $testLogger;
 
@@ -65,6 +68,7 @@ abstract class AbstractTestCase extends TestCase
             $this->clientWrapper,
             $this->temp,
             $method,
+            (string) $this->dataName(),
         );
         foreach ($objects as $name => $value) {
             if ($value !== null) {
@@ -354,5 +358,14 @@ abstract class AbstractTestCase extends TestCase
         $fs->mkdir($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload');
         $fs->mkdir($temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         return $temp;
+    }
+
+    public static function assertLinesEqualsSorted(string $expected, string $actual): void
+    {
+        $expected = explode("\n", $expected);
+        $actual = explode("\n", $actual);
+        sort($expected);
+        sort($actual);
+        self::assertSame($expected, $actual);
     }
 }

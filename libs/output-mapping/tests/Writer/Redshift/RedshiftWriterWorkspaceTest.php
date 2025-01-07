@@ -9,13 +9,10 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
-use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
 use Keboola\OutputMapping\Writer\TableWriter;
 
 class RedshiftWriterWorkspaceTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
     public function setUp(): void
     {
         parent::setUp();

@@ -38,8 +38,12 @@
             <exclude>tests/Writer/Redshift</exclude>
             <exclude>tests/Writer/Workspace</exclude>
             <exclude>tests/Writer/TableDefinitionTest.php</exclude>
-            <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
+            <exclude>tests/Writer/TableDefinitionV2Test.php</exclude>
+            <exclude>tests/Writer/SnowflakeWriterMetadataTest.php</exclude>
+            <exclude>tests/Writer/StorageApiFileWriterTest.php</exclude>
             <exclude>tests/Writer/StorageApiHeadlessWriterTest.php</exclude>
+            <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
+            <exclude>tests/Writer/StorageApiSlicedWriterTest.php</exclude>
         </testsuite>
         <testsuite name="redshift-writer-tests">
             <directory>tests/Writer/Redshift</directory>

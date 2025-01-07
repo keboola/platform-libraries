@@ -4,41 +4,34 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
-use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use PHPUnit\Framework\TestCase;
 
-class TagsHelperTest extends TestCase
+class TagsHelperTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
+    private const STORAGE_CONFIG = [
+        'tags' => [
+            'first-tag',
+            'secondary-tag',
+        ],
+        'is_public' => true,
+        'is_permanent' => false,
+        'is_encrypted' => true,
+        'notify' => false,
+    ];
 
-    private function getStorageConfig(): array
-    {
-        return [
-            'tags' => [
-                'first-tag',
-                'secondary-tag',
-            ],
-            'is_public' => true,
-            'is_permanent' => false,
-            'is_encrypted' => true,
-            'notify' => false,
-        ];
-    }
-
+    #[NeedsDevBranch]
     public function testRewriteTags(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $branchId = $this->createBranch($clientWrapper, 'dev 123');
-        $clientWrapper = $this->getClientWrapper($branchId);
-        $storageConfig = $this->getStorageConfig();
-        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
+        $this->initClient($this->devBranchId);
+
+        $storageConfig = self::STORAGE_CONFIG;
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
         self::assertEquals(
             [
-                sprintf('%s-first-tag', $branchId),
-                sprintf('%s-secondary-tag', $branchId),
+                sprintf('%s-first-tag', $this->devBranchId),
+                sprintf('%s-secondary-tag', $this->devBranchId),
             ],
             $expectedConfig['tags'],
         );
@@ -47,36 +40,24 @@ class TagsHelperTest extends TestCase
         self::assertEquals($storageConfig, $expectedConfig);
     }
 
+    #[NeedsDevBranch]
     public function testRewriteEmptyTags(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $branchId = $this->createBranch($clientWrapper, 'dev 123');
-        $clientWrapper = $this->getClientWrapper($branchId);
-        $storageConfig = $this->getStorageConfig();
+        $this->initClient($this->devBranchId);
+
+        $storageConfig = self::STORAGE_CONFIG;
         $storageConfig['tags'] = [];
-        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
         self::assertEquals([], $expectedConfig['tags']);
         unset($expectedConfig['tags']);
         unset($storageConfig['tags']);
         self::assertEquals($storageConfig, $expectedConfig);
     }
 
-    protected function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
-    }
-
     public function testRewriteNoBranch(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $storageConfig = $this->getStorageConfig();
-        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $clientWrapper);
+        $storageConfig = self::STORAGE_CONFIG;
+        $expectedConfig = TagsHelper::rewriteTags($storageConfig, $this->clientWrapper);
         self::assertEquals(
             [
                 'first-tag',

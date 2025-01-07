@@ -143,7 +143,7 @@ class TableStructureModifierTest extends AbstractTestCase
             false,
         );
 
-        $expectedErrorMessage = 'Error changing primary key of table in.c-testErrorUpdateTableStructureBadPKTest.test1';
+        $expectedErrorMessage = 'Error changing primary key of table ' . $this->testBucketId .'.test1';
         $expectedErrorMessage .= ': Primary key columns "invalidPK" not found in "Id, Name, foo, bar"';
         $this->assertTrue($this->testHandler->hasWarning($expectedErrorMessage));
     }

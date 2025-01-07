@@ -6,60 +6,37 @@ namespace Keboola\OutputMapping\Tests\Writer\Helper;
 
 use Generator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Tests\Writer\CreateBranchTrait;
+use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Writer\Helper\DestinationRewriter;
 use Keboola\StorageApi\BranchAwareClient;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use PHPUnit\Framework\TestCase;
 
-class DestinationRewriterTest extends TestCase
+class DestinationRewriterTest extends AbstractTestCase
 {
-    use CreateBranchTrait;
-
-    private function getConfig(): array
-    {
-        return [
-            'source' => 'some-table.csv',
-            'destination' => 'in.c-main.table',
-            'primary_key' => ['id', 'name'],
-            'columns' => ['id', 'name', 'description', 'foo', 'bar'],
-            'delimiter' => ',',
-            'enclosure' => '',
-            'metadata' => [
-                [
-                    'key' => 'foo',
-                    'bar' => 'value',
-                ],
+    private const MAPPING_CONFIG = [
+        'source' => 'some-table.csv',
+        'destination' => 'in.c-main.table',
+        'primary_key' => ['id', 'name'],
+        'columns' => ['id', 'name', 'description', 'foo', 'bar'],
+        'delimiter' => ',',
+        'enclosure' => '',
+        'metadata' => [
+            [
+                'key' => 'foo',
+                'bar' => 'value',
             ],
-        ];
-    }
+        ],
+    ];
 
-    protected function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-                null,
-                null,
-                null,
-                1,
-            ),
-        );
-    }
-
+    #[NeedsDevBranch]
     public function testRewriteBranch(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $branchId = $this->createBranch($clientWrapper, 'dev 123');
-        $clientWrapper = $this->getClientWrapper($branchId);
+        $this->initClient($this->devBranchId);
 
-        $config = $this->getConfig();
-        $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
-        self::assertEquals(sprintf('in.c-%s-main.table', $branchId), $expectedConfig['destination']);
+        $config = self::MAPPING_CONFIG;
+        $expectedConfig = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
+        self::assertEquals(sprintf('in.c-%s-main.table', $this->devBranchId), $expectedConfig['destination']);
         unset($expectedConfig['destination']);
         unset($config['destination']);
         self::assertEquals($config, $expectedConfig);
@@ -67,33 +44,32 @@ class DestinationRewriterTest extends TestCase
 
     public function testRewriteNoBranch(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $config = $this->getConfig();
-        $expectedConfig = DestinationRewriter::rewriteDestination($config, $clientWrapper);
+        $config = self::MAPPING_CONFIG;
+        $expectedConfig = DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
         self::assertEquals('in.c-main.table', $expectedConfig['destination']);
         unset($expectedConfig['destination']);
         unset($config['destination']);
         self::assertEquals($config, $expectedConfig);
     }
 
+    #[NeedsDevBranch]
     public function testRewriteInvalidName(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-        $branchId = $this->createBranch($clientWrapper, self::class);
-        $clientWrapper = $this->getClientWrapper($branchId);
-        $config = $this->getConfig();
+        $this->initClient($this->devBranchId);
+
+        $config = self::MAPPING_CONFIG;
         $config['destination'] = 'in.c-main-table';
-        self::expectExceptionMessage('Invalid destination: "in.c-main-table"');
-        self::expectException(InvalidOutputException::class);
-        DestinationRewriter::rewriteDestination($config, $clientWrapper);
+        $this->expectExceptionMessage('Invalid destination: "in.c-main-table"');
+        $this->expectException(InvalidOutputException::class);
+        DestinationRewriter::rewriteDestination($config, $this->clientWrapper);
     }
 
     /** @dataProvider rewriteConfigProvider  */
     public function testRewritePrefixes(array $config, ?string $branchId, string $expectedDestination): void
     {
-        $clientMock = self::createMock(BranchAwareClient::class);
+        $clientMock = $this->createMock(BranchAwareClient::class);
 
-        $clientWrapper = self::createMock(ClientWrapper::class);
+        $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($clientMock);
         // let's say 456 is branchId of default branch
         $clientWrapper->method('getBranchId')->willReturn($branchId ?? '456');

@@ -13,16 +13,17 @@ use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
+use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Tests\Needs\NeedsRemoveBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 
 class StoragePreparerTest extends AbstractTestCase
 {
-    #[NeedsRemoveBucket('in.c-main')]
+    #[NeedsEmptyInputBucket]
     public function testPrepareBucket(): void
     {
-        $expectedBucketId = 'in.c-main';
+        $this->clientWrapper->getTableAndFileStorageClient()->dropBucket($this->emptyInputBucketId);
+
         $storagePreparer = new StoragePreparer(
             clientWrapper: $this->clientWrapper,
             logger: $this->testLogger,
@@ -30,16 +31,16 @@ class StoragePreparerTest extends AbstractTestCase
             hasBigQueryNativeTypesFeature: false,
         );
 
-        self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
-
         $mappingStorageSources = $storagePreparer->prepareStorageBucketAndTable(
-            $this->createMappingFromProcessedConfiguration(),
+            $this->createMappingFromProcessedConfiguration(
+                ['destination' => $this->emptyInputBucketId . '.table'],
+            ),
             $this->createSystemMetadata(),
             new TableChangesStore(),
         );
 
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($expectedBucketId));
-        self::assertStorageSourcesContainBucket($expectedBucketId, $mappingStorageSources);
+        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->bucketExists($this->emptyInputBucketId));
+        self::assertStorageSourcesContainBucket($this->emptyInputBucketId, $mappingStorageSources);
         self::assertNull($mappingStorageSources->getTable());
     }
 

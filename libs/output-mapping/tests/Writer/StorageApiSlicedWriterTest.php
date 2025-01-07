@@ -10,24 +10,12 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
-use Keboola\StorageApi\BranchAwareClient;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\StorageApiToken;
 
 class StorageApiSlicedWriterTest extends AbstractTestCase
 {
-    public function initBucket(string $backendType): void
-    {
-        $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
-            'StorageApiSlicedWriterTest',
-            'out',
-            '',
-            $backendType,
-        );
-    }
-
     #[NeedsEmptyOutputBucket]
     public function testWriteTableOutputMapping(): void
     {
@@ -428,7 +416,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
     {
         $csvFile = new CsvFile($this->temp->createFile('header')->getPathname());
         $csvFile->writeRow(['Id', 'Name']);
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'table',
             $csvFile,
@@ -446,7 +434,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $configs = [
             [
                 'source' => 'table.csv',
-                'destination' => $this->emptyOutputBucketId . '.table',
+                'destination' => $tableId,
                 'incremental' => $incrementalFlag,
                 'columns' => ['Id','Name','City'],
             ],
@@ -487,7 +475,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
 
         $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download.csv';
-        $exporter->exportTable($this->emptyOutputBucketId . '.table', $downloadedFile, []);
+        $exporter->exportTable($tableId, $downloadedFile, []);
         $table = $this->clientWrapper->getTableAndFileStorageClient()->parseCsv(
             (string) file_get_contents($downloadedFile),
         );

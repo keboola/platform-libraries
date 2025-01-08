@@ -81,7 +81,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
-            'out.c-testNativeTypeLoadTaskTableNotExistsEmpty.destinationTable',
+            $this->emptyOutputBucketId . '.destinationTable',
             $loadTask->getDestinationTableName(),
         );
         $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -177,7 +177,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
-            'out.c-testNewNativeTypeLoadTaskTableNotExistsEmpty.destinationTable',
+            $this->emptyOutputBucketId . '.destinationTable',
             $loadTask->getDestinationTableName(),
         );
         $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -250,7 +250,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
-            'out.c-testLoadTaskTableNotExistsEmpty.destinationTable',
+            $this->emptyOutputBucketId . '.destinationTable',
             $loadTask->getDestinationTableName(),
         );
         $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -301,7 +301,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertFalse($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
-            'in.c-testLoadTaskTableExistsTest.test0',
+            $this->testBucketId . '.test0',
             $loadTask->getDestinationTableName(),
         );
     }
@@ -342,7 +342,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         self::assertInstanceOf(CreateAndLoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
-            'out.c-testLoadTaskTableNotExistsManifestNotExistsEmpty.test0',
+            $this->emptyOutputBucketId . '.test0',
             $loadTask->getDestinationTableName(),
         );
     }

@@ -119,7 +119,7 @@ class TestSatisfyer
     ): string {
         $clientWrapper = new ClientWrapper(
             new ClientOptions(
-                $clientWrapper->getBasicClient()->getApiUrl(),
+                $clientWrapper->getClientOptionsReadOnly()->getUrl(),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
             ),
         );

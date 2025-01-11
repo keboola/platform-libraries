@@ -274,7 +274,7 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 (new FileUploadOptions())->setTags([$this->testFileTag]),
             );
         }
-        sleep(5);
+        sleep(10);
 
         // valid configuration, but does nothing
         $reader = new Reader($this->getLocalStagingFactory());

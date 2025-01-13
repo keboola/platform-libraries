@@ -195,9 +195,7 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
             AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
-        var_dump($this->testFileTag);
 
-        var_dump($outputStateList->jsonSerialize());
         self::assertEmpty($outputStateList->jsonSerialize());
     }
 

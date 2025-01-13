@@ -204,10 +204,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesWithSourceSearch(): void
     {
+        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $sourceName = $bucket['name'];
         $tableMetadata = [
             [
                 'key' => 'source',
-                'value' => 'testReadTablesWithSourceSearch',
+                'value' => $sourceName,
             ],
         ];
         $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
@@ -219,7 +221,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             [
                 'source_search' => [
                     'key' => 'source',
-                    'value' => 'testReadTablesWithSourceSearch',
+                    'value' => $sourceName,
                 ],
                 'destination' => 'test.csv',
             ],
@@ -245,7 +247,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         self::assertArrayHasKey('timestamp', $manifest['metadata'][0]);
         self::assertEquals('dataLoaderTest', $manifest['metadata'][0]['provider']);
         self::assertEquals('source', $manifest['metadata'][0]['key']);
-        self::assertEquals('testReadTablesWithSourceSearch', $manifest['metadata'][0]['value']);
+        self::assertEquals($sourceName, $manifest['metadata'][0]['value']);
     }
 
     #[NeedsTestTables]

@@ -13,18 +13,20 @@ use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 {
     #[NeedsTestTables(3), NeedsEmptyOutputBucket]
     public function testTablesSnowflakeBackend(): void
     {
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getBranchClient()->setRunId($runId);
+
         $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
@@ -111,9 +113,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 20]);
+        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
         $params = null;
         foreach ($jobs as $job) {
+            if ($runId !== $job['runId']) {
+                continue;
+            }
             if ($job['operationName'] === 'workspaceLoadClone') {
                 $params = $job['operationParams'];
                 break;
@@ -511,33 +516,18 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
     }
 
-    #[NeedsTestTables(2)]
+    #[NeedsTestTables(2), NeedsDevBranch]
     public function testWorkspaceInputMappingRealDevStorage(): void
     {
-        // create a branch
-        $masterClientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-        $branchesApi = new DevBranches($masterClientWrapper->getBasicClient());
-        foreach ($branchesApi->listBranches() as $branch) {
-            if ($branch['name'] === self::class) {
-                $branchesApi->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branchesApi->createBranch(self::class)['id'];
+        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $bucketName = $bucket['displayName'];
 
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $branchId,
-                useBranchStorage: true,
-            ),
-        );
-        $this->clientWrapper = $clientWrapper;
+        $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
+            ->setBranchId($this->devBranchId)
+            ->setUseBranchStorage(true) // this is the important part
+        ;
+
+        $this->clientWrapper = new ClientWrapper($clientOptions);
 
         // create a table in the branch
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
@@ -547,13 +537,13 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         $buckets = [
-            'in.c-testWorkspaceInputMappingRealDevStorageTest',
-            'out.c-testWorkspaceInputMappingRealDevStorageTest',
+            $this->testBucketId,
+            str_replace('in.c-', 'out.c-', $this->testBucketId),
         ];
         foreach ($buckets as $bucket) {
             try {
                 // drop buckets in branch, test satisfyer can't touch this #mc-hammer
-                $clientWrapper->getBranchClient()->dropBucket($bucket, ['force' => true, 'async' => true]);
+                $this->clientWrapper->getBranchClient()->dropBucket($bucket, ['force' => true, 'async' => true]);
             } catch (ClientException $e) {
                 if ($e->getCode() !== 404) {
                     throw $e;
@@ -562,19 +552,19 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         }
 
         // create input bucket in branch
-        $clientWrapper->getBranchClient()->createBucket(
-            'testWorkspaceInputMappingRealDevStorageTest',
+        $branchBucket = $this->clientWrapper->getBranchClient()->createBucket(
+            $bucketName,
             'in',
         );
-        $clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
+        $this->clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
 
         // create output bucket in branch
-        $this->emptyOutputBucketId = $clientWrapper->getBranchClient()->createBucket(
-            'testWorkspaceInputMappingRealDevStorageTest',
+        $this->emptyOutputBucketId = $this->clientWrapper->getBranchClient()->createBucket(
+            $bucketName,
             'out',
         );
 
-        $reader = new Reader($this->getWorkspaceStagingFactory($clientWrapper, logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory($this->clientWrapper, logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [ // cloned table from production
                 'source' => $this->firstTableId,
@@ -645,32 +635,32 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $clientWrapper->getDefaultBranch()->id,
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+                $this->clientWrapper->getDefaultBranch()->id,
+                $this->testBucketId .'.test1',
             ),
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $clientWrapper->getDefaultBranch()->id,
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test1',
+                $this->clientWrapper->getDefaultBranch()->id,
+                $this->testBucketId .'.test1',
             ),
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using dev input "%s" from branch "%s" instead of default branch "%s".',
-                'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
-                $branchId,
-                $clientWrapper->getDefaultBranch()->id,
+                $this->testBucketId .'.test2',
+                $this->devBranchId,
+                $this->clientWrapper->getDefaultBranch()->id,
             ),
         ));
         self::assertTrue(
             $this->testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev input "%s" from branch "%s" instead of default branch "%s".',
-                    'in.c-testWorkspaceInputMappingRealDevStorageTest.test2',
-                    $branchId,
-                    $clientWrapper->getDefaultBranch()->id,
+                    $this->testBucketId .'.test2',
+                    $this->devBranchId,
+                    $this->clientWrapper->getDefaultBranch()->id,
                 ),
             ),
         );

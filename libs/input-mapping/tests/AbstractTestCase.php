@@ -10,6 +10,8 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Client;
+use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -25,6 +27,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 abstract class AbstractTestCase extends TestCase
 {
+    /** @deprecated use initClient() instead */
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
     protected TestHandler $testHandler;
@@ -39,6 +42,11 @@ abstract class AbstractTestCase extends TestCase
     protected string $secondTableId;
     protected string $thirdTableId;
 
+    protected string $devBranchName;
+    protected string $devBranchId;
+
+    protected string $emptyBranchInputBucketId;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -49,13 +57,14 @@ abstract class AbstractTestCase extends TestCase
         $this->temp = new Temp('input-mapping');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
-        $this->initClient();
+        $this->clientWrapper = $this->initClient();
 
         $objects = TestSatisfyer::satisfyTestNeeds(
             new ReflectionObject($this),
-            $this->clientWrapper,
+            $this->initClient(),
             $this->temp,
-            Test::describe($this)[1],
+            $this->getName(false),
+            (string) $this->dataName(),
         );
         foreach ($objects as $name => $value) {
             if ($value !== null) {
@@ -64,20 +73,30 @@ abstract class AbstractTestCase extends TestCase
         }
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('STORAGE_API_URL'))
+            ->setToken((string) getenv('STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
+
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     public function tearDown(): void
@@ -225,5 +244,63 @@ abstract class AbstractTestCase extends TestCase
             ],
         );
         return $stagingFactory;
+    }
+
+    protected function clearFileUploads(array $tags): void
+    {
+        $clinetWrapper = $this->initClient();
+
+        // Delete file uploads
+        $options = new ListFilesOptions();
+        $options->setTags($tags);
+        sleep(1);
+        $files = $clinetWrapper->getTableAndFileStorageClient()->listFiles($options);
+        foreach ($files as $file) {
+            $clinetWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+        }
+    }
+
+    protected function initEmptyFakeBranchInputBucket(): void
+    {
+        $clinetWrapper = $this->initClient();
+        $emptyInputBucket = $this->initClient()->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $this->emptyBranchInputBucketId = $clinetWrapper->getTableAndFileStorageClient()->createBucket(
+            $this->devBranchId . '-' . $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
+    }
+
+    protected function initEmptyRealBranchInputBucket(): void
+    {
+        $clinetWrapper = $this->initClient();
+        $emptyInputBucket = $clinetWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $clientWraper = new ClientWrapper(
+            $clinetWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
+        );
+
+        $this->emptyBranchInputBucketId = $clientWraper->getBranchClient()->createBucket(
+            $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
     }
 }

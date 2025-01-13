@@ -260,34 +260,32 @@ abstract class AbstractTestCase extends TestCase
         }
     }
 
-    protected function initEmptyFakeBranchInputBucket(): void
+    protected function initEmptyFakeBranchInputBucket(ClientWrapper $clientWrapper): void
     {
-        $clinetWrapper = $this->initClient();
-        $emptyInputBucket = $this->initClient()->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+        $emptyInputBucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
 
-        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
-                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
                     ['force' => true, 'async' => true],
                 );
             }
         }
 
-        $this->emptyBranchInputBucketId = $clinetWrapper->getTableAndFileStorageClient()->createBucket(
+        $this->emptyBranchInputBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
             $this->devBranchId . '-' . $emptyInputBucket['displayName'],
             Client::STAGE_IN,
         );
     }
 
-    protected function initEmptyRealBranchInputBucket(): void
+    protected function initEmptyRealBranchInputBucket(ClientWrapper $clientWrapper): void
     {
-        $clinetWrapper = $this->initClient();
-        $emptyInputBucket = $clinetWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+        $emptyInputBucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
 
-        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
-                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
                     ['force' => true, 'async' => true],
                 );
@@ -295,7 +293,7 @@ abstract class AbstractTestCase extends TestCase
         }
 
         $clientWraper = new ClientWrapper(
-            $clinetWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
+            $clientWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
         );
 
         $this->emptyBranchInputBucketId = $clientWraper->getBranchClient()->createBucket(

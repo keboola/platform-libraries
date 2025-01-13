@@ -34,7 +34,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         parent::setUp();
     }
 
-    protected function initClient(?string $branchId = null): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
         $clientOptions = (new ClientOptions())
             ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
@@ -47,16 +47,17 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             ->setUserAgent(implode('::', Test::describe($this)))
         ;
 
-        $this->clientWrapper = new ClientWrapper($clientOptions);
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     protected function assertBlobs(string $basePath): void

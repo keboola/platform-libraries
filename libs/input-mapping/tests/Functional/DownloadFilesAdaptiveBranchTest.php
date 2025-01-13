@@ -69,17 +69,15 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file1Id, $manifest1['id']);
         self::assertEquals([$branchTag], $manifest1['tags']);
 
-        self::assertTrue($this->testHandler->hasInfoThatContains(
-            sprintf(
-                'Using dev tags "%s-%s, %s-%s-adaptive" instead of "%s, %s-adaptive".',
-                $this->devBranchId,
-                $this->testFileTagForBranch,
-                $this->devBranchId,
-                $this->testFileTagForBranch,
-                $this->testFileTagForBranch,
-                $this->testFileTagForBranch,
-            ),
-        ));
+        $expectedMessageTemplate = 'Using dev tags "{devBranchId}-{fileTag}, {devBranchId}-{fileTag}-adaptive" ' .
+            'instead of "{fileTag}, {fileTag}-adaptive".';
+
+        $replacements = [
+            '{devBranchId}' => $this->devBranchId,
+            '{fileTag}'     => $this->testFileTagForBranch,
+        ];
+
+        self::assertTrue($this->testHandler->hasInfoThatContains(strtr($expectedMessageTemplate, $replacements)));
         // add another valid file and assert that it gets downloaded and the previous doesn't
         $file3Id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',

@@ -26,7 +26,8 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsEmptyOutputBucket, NeedsDevBranch]
     public function testNoBranch(): void
     {
-        $this->initEmptyFakeBranchInputBucket();
+        $clientWrapper = $this->initClient();
+        $this->initEmptyFakeBranchInputBucket($clientWrapper);
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
@@ -34,12 +35,12 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         // Create table
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyOutputBucketId,
             'my-table',
             $csv,
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyInputBucketId,
             'my-table-2',
             $csv,
@@ -62,7 +63,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger,
         );
         self::assertEquals(
@@ -85,7 +86,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -105,7 +106,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -114,7 +115,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testInvalidName(): void
     {
-        $this->initClient($this->devBranchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
@@ -130,7 +131,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         $this->expectExceptionMessage('Invalid destination: "' . $this->emptyInputBucketId . '"');
         (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger,
         );
     }
@@ -138,7 +139,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteNoTables(): void
     {
-        // !!$this->initBuckets();
+        $clientWrapper = $this->initClient();
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id1', 'name1', 'foo1', 'bar1']);
@@ -146,18 +147,18 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         $csv->writeRow(['id3', 'name3', 'foo3', 'bar3']);
 
         // Create table
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyInputBucketId,
             'my-table',
             $csv,
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyInputBucketId,
             'my-table-2',
             $csv,
         );
 
-        $this->initClient($this->devBranchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
         $inputTablesOptions = new InputTableOptionsList([
@@ -175,7 +176,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger,
         );
         self::assertEquals($this->emptyInputBucketId. '.my-table', $destinations->getTables()[0]->getSource());
@@ -195,7 +196,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -215,7 +216,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -224,18 +225,18 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTablesExists(): void
     {
-        $this->initEmptyFakeBranchInputBucket();
+        $this->initEmptyFakeBranchInputBucket($this->initClient());
 
-        $this->initClient($this->devBranchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
 
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyBranchInputBucketId,
             'my-table',
             $csvFile,
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyBranchInputBucketId,
             'my-table-2',
             $csvFile,
@@ -257,7 +258,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableOptionsSources(
             $inputTablesOptions,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger,
         );
         $expectedTableId = sprintf('%s.my-table', $this->emptyBranchInputBucketId);
@@ -278,7 +279,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[0]->getDefinition(),
         );
@@ -299,7 +300,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
                 'overwrite' => false,
                 'use_view' => false,
                 'keep_internal_timestamp_column' => true,
-                'source_branch_id' => $this->clientWrapper->getDefaultBranch()->id,
+                'source_branch_id' => $clientWrapper->getDefaultBranch()->id,
             ],
             $destinations->getTables()[1]->getDefinition(),
         );
@@ -311,16 +312,16 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
     #[NeedsEmptyInputBucket, NeedsDevBranch]
     public function testBranchRewriteTableStates(): void
     {
-        $this->initEmptyFakeBranchInputBucket();
-        $this->initClient($this->devBranchId);
+        $this->initEmptyFakeBranchInputBucket($this->initClient());
+        $clientWrapper = $this->initClient($this->devBranchId);
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyBranchInputBucketId,
             'my-table',
             $csvFile,
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyBranchInputBucketId,
             'my-table-2',
             $csvFile,
@@ -339,7 +340,7 @@ class FakeDevStorageTableRewriteHelperTest extends AbstractTestCase
         ]);
         $destinations = (new FakeDevStorageTableRewriteHelper())->rewriteTableStatesDestinations(
             $inputTablesStates,
-            $this->clientWrapper,
+            $clientWrapper,
             $testLogger,
         );
         self::assertEquals(

@@ -92,7 +92,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test-synapse.test',
@@ -124,7 +124,7 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test-synapse.test',
@@ -151,15 +151,16 @@ class DownloadTablesSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
+        $clientWrapper = $this->initClient();
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             'in.c-docker-test-synapse',
             'empty',
             $headerCsvFile,
@@ -168,12 +169,12 @@ class DownloadTablesSynapseTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
             'in.c-docker-test-synapse.empty',
             $options,
         );
 
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'in.c-docker-test-synapse.empty',

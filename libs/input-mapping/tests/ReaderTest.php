@@ -24,7 +24,7 @@ use Symfony\Component\Finder\Finder;
 
 class ReaderTest extends AbstractTestCase
 {
-    protected function getStagingFactory(
+    private function getStagingFactory(
         ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
@@ -56,32 +56,33 @@ class ReaderTest extends AbstractTestCase
 
     public function testParentId(): void
     {
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
+        $clientWrapper = $this->initClient();
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId((string) $this->clientWrapper->getTableAndFileStorageClient()->getRunId()),
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432');
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432');
         self::assertEquals(
             '123456789',
-            Reader::getParentRunId((string) $this->clientWrapper->getTableAndFileStorageClient()->getRunId()),
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432.4563456');
+        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432.4563456');
         self::assertEquals(
             '123456789.98765432',
-            Reader::getParentRunId((string) $this->clientWrapper->getTableAndFileStorageClient()->getRunId()),
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
-        $this->clientWrapper->getTableAndFileStorageClient()->setRunId(null);
+        $clientWrapper->getTableAndFileStorageClient()->setRunId(null);
         self::assertEquals(
             '',
-            Reader::getParentRunId((string) $this->clientWrapper->getTableAndFileStorageClient()->getRunId()),
+            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
     }
 
     public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->clientWrapper));
+        $reader = new Reader($this->getStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
@@ -97,7 +98,7 @@ class ReaderTest extends AbstractTestCase
 
     public function testReadTablesDefaultBackend(): void
     {
-        $reader = new Reader($this->getStagingFactory($this->clientWrapper));
+        $reader = new Reader($this->getStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'not-needed.test',
@@ -121,10 +122,11 @@ class ReaderTest extends AbstractTestCase
     #[NeedsDevBranch]
     public function testReadTablesDefaultBackendBranchRewrite(): void
     {
+        $clientWrapper = $this->initClient();
+
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
 
-        $clientWrapper = $this->clientWrapper;
         $branchBucket = TestSatisfyer::getBucketByDisplayName(
             $clientWrapper,
             'my-branch-input-mapping-test',
@@ -168,8 +170,7 @@ class ReaderTest extends AbstractTestCase
             Client::STAGE_IN,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync($branchBucketId, 'test', $csvFile);
-        $this->initClient($this->devBranchId);
-        $reader = new Reader($this->getStagingFactory($this->clientWrapper));
+        $reader = new Reader($this->getStagingFactory($this->initClient($this->devBranchId)));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $inBucketId . '.test',

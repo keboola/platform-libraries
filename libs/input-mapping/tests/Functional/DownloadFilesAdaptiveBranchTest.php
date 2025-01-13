@@ -16,18 +16,18 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
     #[NeedsDevBranch]
     public function testReadFilesAdaptiveWithBranch(): void
     {
-        $this->initClient($this->devBranchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
         $branchTag = sprintf('%s-%s', $this->devBranchId, $this->testFileTagForBranch);
 
-        $file1Id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+        $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag]),
         );
-        $file2Id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+        $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$this->testFileTagForBranch]),
         );
@@ -41,7 +41,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $reader = new Reader($this->getLocalStagingFactory($this->clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [
             [
@@ -79,7 +79,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         self::assertTrue($this->testHandler->hasInfoThatContains(strtr($expectedMessageTemplate, $replacements)));
         // add another valid file and assert that it gets downloaded and the previous doesn't
-        $file3Id = $this->clientWrapper->getTableAndFileStorageClient()->uploadFile(
+        $file3Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $this->devBranchId)]),
         );

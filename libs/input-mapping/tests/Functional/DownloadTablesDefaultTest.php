@@ -13,6 +13,7 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
@@ -28,7 +29,10 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesDefaultBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getLocalStagingFactory(
+            clientWrapper: $this->initClient(),
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -72,7 +76,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesEmptyDaysFilter(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -98,7 +102,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesEmptyChangedSinceFilter(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -124,6 +128,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesMetadata(): void
     {
+        $clientWrapper = $this->initClient();
         $tableMetadata = [
             [
                 'key' => 'foo',
@@ -142,7 +147,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 ],
             ],
         ];
-        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions(
                 $this->firstTableId,
@@ -151,7 +156,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $columnMetadata,
             ),
         );
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -204,7 +209,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesWithSourceSearch(): void
     {
-        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $clientWrapper = $this->initClient();
+        $bucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
         $sourceName = $bucket['name'];
         $tableMetadata = [
             [
@@ -212,11 +218,11 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 'value' => $sourceName,
             ],
         ];
-        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata),
         );
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source_search' => [
@@ -253,6 +259,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableColumns(): void
     {
+        $clientWrapper = $this->initClient();
         $tableMetadata = [
             [
                 'key' => 'foo',
@@ -278,7 +285,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             ],
         ];
 
-        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions(
                 $this->firstTableId,
@@ -287,7 +294,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $columnMetadata,
             ),
         );
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -351,7 +358,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableColumnsDataTypes(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -398,7 +405,8 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableLimitTest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientWrapper = $this->initClient();
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         $tokenInfo['owner']['limits'][Local::EXPORT_SIZE_LIMIT_NAME] = [
             'name' => Local::EXPORT_SIZE_LIMIT_NAME,
             'value' => 10,
@@ -456,7 +464,11 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesDevBucket(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
+        $clientWrapper  = $this->initClient();
+        $reader = new Reader($this->getLocalStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -467,7 +479,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 'destination' => 'test2.csv',
             ],
         ]);
-        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
         $metadata->postBucketMetadata(
             $this->testBucketId,
             'test',
@@ -509,11 +521,9 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables(1)]
     public function testReadTablesDevBucketProtectedBranch(): void
     {
-        $clientWrapper = new ClientWrapper(new ClientOptions(
-            url: (string) getenv('STORAGE_API_URL'),
-            token: (string) getenv('STORAGE_API_TOKEN'),
-            useBranchStorage: true,
-        ));
+        $clientWrapper = new ClientWrapper(
+            $this->initClient()->getClientOptionsReadOnly()->setUseBranchStorage(true),
+        );
         $reader = new Reader($this->getLocalStagingFactory(clientWrapper: $clientWrapper, logger: $this->testLogger));
         $configuration = new InputTableOptionsList([
             [
@@ -521,7 +531,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 'destination' => 'test.csv',
             ],
         ]);
-        $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
+        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
         $metadata->postBucketMetadata(
             $this->testBucketId,
             'test',
@@ -534,7 +544,7 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         );
 
         // without the check it passes
-        $result = $reader->downloadTables(
+        $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
@@ -553,33 +563,14 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         self::assertCount(1, $result->getTables());
     }
 
-    #[NeedsTestTables(1)]
+    #[NeedsTestTables(1), NeedsDevBranch]
     public function testReadTablesDevBranchFallback(): void
     {
-        // create a branch
-        $masterClientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-            ),
-        );
-        $branchesApi = new DevBranches($masterClientWrapper->getBasicClient());
-        foreach ($branchesApi->listBranches() as $branch) {
-            if ($branch['name'] === self::class) {
-                $branchesApi->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branchesApi->createBranch(self::class)['id'];
-
         $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN'),
-                branchId: $branchId,
-                useBranchStorage: true,
-            ),
+            $this->initClient()->getClientOptionsReadOnly()
+                ->setUseBranchStorage(true)
+                ->setBranchId($this->devBranchId),
         );
-        $this->clientWrapper = $clientWrapper;
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([

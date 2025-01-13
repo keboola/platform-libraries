@@ -24,10 +24,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(3), NeedsEmptyOutputBucket]
     public function testTablesSnowflakeBackend(): void
     {
-        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
-        $this->clientWrapper->getBranchClient()->setRunId($runId);
+        $clientWrapper = $this->initClient();
+        $runId = $clientWrapper->getBasicClient()->generateRunId();
+        $clientWrapper->getBranchClient()->setRunId($runId);
 
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -67,7 +71,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->firstTableId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
             );
@@ -79,11 +83,11 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         // this is copy, so it doesn't contain the _timestamp column
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+        self::assertTrue($clientWrapper->getTableAndFileStorageClient()->tableExists(
             $this->emptyOutputBucketId . '.test2',
         ));
 
@@ -91,11 +95,11 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertEquals($this->thirdTableId, $manifest['id']);
         /* we want to check that the table exists in the workspace, so we try to load it. This time it
             doesn't fail because keep_internal_timestamp_column=false was provided */
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
         );
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+        self::assertTrue($clientWrapper->getTableAndFileStorageClient()->tableExists(
             $this->emptyOutputBucketId . '.test3',
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
@@ -113,7 +117,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $this->clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
+        $jobs = $clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
         $params = null;
         foreach ($jobs as $job) {
             if ($runId !== $job['runId']) {
@@ -133,7 +137,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testTablesInvalidMapping(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory());
+        $reader = new Reader($this->getWorkspaceStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -160,7 +164,11 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesAdaptiveChangedSince(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -201,7 +209,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $manifest['columns'],
         );
         // check that the table exists in the workspace
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             [
                 'dataWorkspaceId' => $this->workspaceId,
@@ -225,7 +233,11 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesSnowflakeDataTypes(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -260,7 +272,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $manifest['columns'],
         );
         // check that the table exists in the workspace
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
@@ -276,7 +288,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testTablesSnowflakeDataTypesInvalid(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory());
+        $reader = new Reader($this->getWorkspaceStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -309,7 +321,11 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testTablesSnowflakeOverwrite(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -350,7 +366,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $manifest['columns'],
         );
         // check that the table exists in the workspace
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
@@ -388,7 +404,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
             the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns'],
             );
@@ -411,7 +427,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
         }
 
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $this->initClient(),
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -438,9 +457,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(1), NeedsEmptyOutputBucket]
     public function testDownloadTablesPreserveFalse(): void
     {
+        $clientWrapper = $this->initClient();
+
         // first we create the workspace and load there some data.
         // then we will do a new load with preserve=false to make sure that the old data was removed
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -480,7 +504,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
         // the initial_table should not be present in the workspace anymore
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 [
                     'dataWorkspaceId' => $this->workspaceId,
@@ -498,7 +522,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         // check that the tables exist in the workspace. the cloned table will throw the _timestamp col error
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 [
                     'dataWorkspaceId' => $this->workspaceId,
@@ -510,7 +534,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             self::assertStringContainsString('Invalid columns: _timestamp:', $exception->getMessage());
         }
 
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table'],
         );
@@ -519,15 +543,16 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsDevBranch]
     public function testWorkspaceInputMappingRealDevStorage(): void
     {
-        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
+        $clientWrapper = $this->initClient();
+        $bucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
         $bucketName = $bucket['displayName'];
 
-        $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
+        $clientOptions = $clientWrapper->getClientOptionsReadOnly()
             ->setBranchId($this->devBranchId)
             ->setUseBranchStorage(true) // this is the important part
         ;
 
-        $this->clientWrapper = new ClientWrapper($clientOptions);
+        $clientWrapper = new ClientWrapper($clientOptions);
 
         // create a table in the branch
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
@@ -543,7 +568,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         foreach ($buckets as $bucket) {
             try {
                 // drop buckets in branch, test satisfyer can't touch this #mc-hammer
-                $this->clientWrapper->getBranchClient()->dropBucket($bucket, ['force' => true, 'async' => true]);
+                $clientWrapper->getBranchClient()->dropBucket($bucket, ['force' => true, 'async' => true]);
             } catch (ClientException $e) {
                 if ($e->getCode() !== 404) {
                     throw $e;
@@ -552,19 +577,22 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         }
 
         // create input bucket in branch
-        $branchBucket = $this->clientWrapper->getBranchClient()->createBucket(
+        $clientWrapper->getBranchClient()->createBucket(
             $bucketName,
             'in',
         );
-        $this->clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
+        $clientWrapper->getBranchClient()->createTableAsync($this->testBucketId, 'test2', $csv);
 
         // create output bucket in branch
-        $this->emptyOutputBucketId = $this->clientWrapper->getBranchClient()->createBucket(
+        $this->emptyOutputBucketId = $clientWrapper->getBranchClient()->createBucket(
             $bucketName,
             'out',
         );
 
-        $reader = new Reader($this->getWorkspaceStagingFactory($this->clientWrapper, logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [ // cloned table from production
                 'source' => $this->firstTableId,
@@ -619,7 +647,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 $this->temp->getTmpFolder() . '/download/' . $table_name . '.manifest',
             );
             self::assertEquals($table_id, $manifest['id']);
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 [
                     'dataWorkspaceId' => $this->workspaceId,
@@ -627,7 +655,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'name' => 'test' . $table_name,
                 ],
             );
-            self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists(
+            self::assertTrue($clientWrapper->getTableAndFileStorageClient()->tableExists(
                 $this->emptyOutputBucketId . '.test' . $table_name,
             ));
         }
@@ -635,14 +663,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $this->clientWrapper->getDefaultBranch()->id,
+                $clientWrapper->getDefaultBranch()->id,
                 $this->testBucketId .'.test1',
             ),
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
                 'Using fallback to default branch "%s" for input "%s".',
-                $this->clientWrapper->getDefaultBranch()->id,
+                $clientWrapper->getDefaultBranch()->id,
                 $this->testBucketId .'.test1',
             ),
         ));
@@ -651,7 +679,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                 'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                 $this->testBucketId .'.test2',
                 $this->devBranchId,
-                $this->clientWrapper->getDefaultBranch()->id,
+                $clientWrapper->getDefaultBranch()->id,
             ),
         ));
         self::assertTrue(
@@ -660,7 +688,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'Using dev input "%s" from branch "%s" instead of default branch "%s".',
                     $this->testBucketId .'.test2',
                     $this->devBranchId,
-                    $this->clientWrapper->getDefaultBranch()->id,
+                    $clientWrapper->getDefaultBranch()->id,
                 ),
             ),
         );

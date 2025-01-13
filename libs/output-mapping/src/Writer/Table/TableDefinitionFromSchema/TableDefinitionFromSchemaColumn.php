@@ -25,8 +25,8 @@ class TableDefinitionFromSchemaColumn
             $data['basetype'] = $dataType->getBaseTypeName();
 
             $definition = [];
-            if ($dataType->getBaseTypeName() !== $dataType->getTypeName($this->backend)) {
-                $definition['type'] = $dataType->getTypeName($this->backend);
+            if ($this->backend !== null && $dataType->hasBackendType($this->backend)) {
+                $definition['type'] = $dataType->getBackendTypeName($this->backend);
             }
             if ($dataType->getLength($this->backend) !== null) {
                 $definition['length'] = $dataType->getLength($this->backend);

@@ -27,6 +27,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 abstract class AbstractTestCase extends TestCase
 {
+    /** @deprecated use initClient() instead */
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
     protected TestHandler $testHandler;
@@ -56,11 +57,11 @@ abstract class AbstractTestCase extends TestCase
         $this->temp = new Temp('input-mapping');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
-        $this->initClient();
+        $this->clientWrapper = $this->initClient();
 
         $objects = TestSatisfyer::satisfyTestNeeds(
             new ReflectionObject($this),
-            $this->clientWrapper,
+            $this->initClient(),
             $this->temp,
             $this->getName(false),
             (string) $this->dataName(),
@@ -72,7 +73,7 @@ abstract class AbstractTestCase extends TestCase
         }
     }
 
-    protected function initClient(?string $branchId = null): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
         $clientOptions = (new ClientOptions())
             ->setUrl((string) getenv('STORAGE_API_URL'))
@@ -85,16 +86,17 @@ abstract class AbstractTestCase extends TestCase
             ->setUserAgent(implode('::', Test::describe($this)))
         ;
 
-        $this->clientWrapper = new ClientWrapper($clientOptions);
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     public function tearDown(): void
@@ -246,30 +248,33 @@ abstract class AbstractTestCase extends TestCase
 
     protected function clearFileUploads(array $tags): void
     {
+        $clinetWrapper = $this->initClient();
+
         // Delete file uploads
         $options = new ListFilesOptions();
         $options->setTags($tags);
         sleep(1);
-        $files = $this->clientWrapper->getTableAndFileStorageClient()->listFiles($options);
+        $files = $clinetWrapper->getTableAndFileStorageClient()->listFiles($options);
         foreach ($files as $file) {
-            $this->clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+            $clinetWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
         }
     }
 
     protected function initEmptyFakeBranchInputBucket(): void
     {
-        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+        $clinetWrapper = $this->initClient();
+        $emptyInputBucket = $this->initClient()->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
 
-        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
-                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
                     ['force' => true, 'async' => true],
                 );
             }
         }
 
-        $this->emptyBranchInputBucketId = $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
+        $this->emptyBranchInputBucketId = $clinetWrapper->getTableAndFileStorageClient()->createBucket(
             $this->devBranchId . '-' . $emptyInputBucket['displayName'],
             Client::STAGE_IN,
         );
@@ -277,11 +282,12 @@ abstract class AbstractTestCase extends TestCase
 
     protected function initEmptyRealBranchInputBucket(): void
     {
-        $emptyInputBucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+        $clinetWrapper = $this->initClient();
+        $emptyInputBucket = $clinetWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
 
-        foreach ($this->clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+        foreach ($clinetWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
             if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
-                $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                $clinetWrapper->getTableAndFileStorageClient()->dropBucket(
                     $bucket['id'],
                     ['force' => true, 'async' => true],
                 );
@@ -289,7 +295,7 @@ abstract class AbstractTestCase extends TestCase
         }
 
         $clientWraper = new ClientWrapper(
-            $this->clientWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
+            $clinetWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
         );
 
         $this->emptyBranchInputBucketId = $clientWraper->getBranchClient()->createBucket(

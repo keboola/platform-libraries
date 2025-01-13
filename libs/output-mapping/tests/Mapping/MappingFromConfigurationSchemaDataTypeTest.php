@@ -57,6 +57,8 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         self::assertEquals('VARCHAR', $mapping->getBackendTypeName('teradata'));
         self::assertNull($mapping->getBackendLength('teradata'));
         self::assertNull($mapping->getBackendDefaultValue('teradata'));
+
+        self::assertTrue($mapping->hasBackendType('snowflake'));
     }
 
     public function testInvalidBackend(): void
@@ -68,6 +70,8 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         ];
 
         $mapping = new MappingFromConfigurationSchemaColumnDataType($config);
+
+        self::assertFalse($mapping->hasBackendType('snowflake'));
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Backend "snowflake" not found in mapping.');

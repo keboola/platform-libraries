@@ -89,4 +89,12 @@ class MappingFromConfigurationSchemaColumnDataType
         }
         return $this->mapping[$backend]['default'] ?? null;
     }
+
+    public function hasBackendType(string $backend): bool
+    {
+        if (!isset($this->mapping[$backend])) {
+            return false;
+        }
+        return true;
+    }
 }

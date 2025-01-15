@@ -161,13 +161,13 @@ abstract class AbstractTestCase extends TestCase
     }
 
     protected function getWorkspaceStagingFactory(
-        ?ClientWrapper $clientWrapper = null,
+        ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
         array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'],
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
@@ -175,9 +175,9 @@ abstract class AbstractTestCase extends TestCase
             ->setMethods(['getWorkspaceId'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend) {
+            function () use ($backend, $clientWrapper) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
+                    $workspaces = new Workspaces($clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];

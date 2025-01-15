@@ -23,7 +23,7 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesBigQuery(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -93,15 +93,16 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
     #[NeedsEmptyInputBucket]
     public function testReadTablesEmptySlices(): void
     {
+        $clientWrapper = $this->initClient();
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->emptyInputBucketId,
             'empty',
             $headerCsvFile,
@@ -110,12 +111,12 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
             $tableId,
             $options,
         );
 
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $tableId,

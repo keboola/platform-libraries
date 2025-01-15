@@ -19,7 +19,10 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesABSDefaultBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getLocalStagingFactory(
+            clientWrapper: $this->initClient(),
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -55,7 +58,7 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesS3UnsupportedBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,

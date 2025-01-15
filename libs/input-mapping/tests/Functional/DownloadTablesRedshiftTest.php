@@ -22,7 +22,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesRedshift(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -53,7 +53,7 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesS3Redshift(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -78,15 +78,16 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesEmptySlices(): void
     {
+        $clientWrapper = $this->initClient();
         $fileUploadOptions = new FileUploadOptions();
         $fileUploadOptions
             ->setIsSliced(true)
             ->setFileName('emptyfile');
-        $uploadFileId = $this->clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
+        $uploadFileId = $clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         $columns = ['Id', 'Name'];
         $headerCsvFile = new CsvFile($this->temp->getTmpFolder() . 'header.csv');
         $headerCsvFile->writeRow($columns);
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
             $this->firstTableId,
             'empty',
             $headerCsvFile,
@@ -95,12 +96,12 @@ class DownloadTablesRedshiftTest extends AbstractTestCase
 
         $options['columns'] = $columns;
         $options['dataFileId'] = $uploadFileId;
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->writeTableAsyncDirect(
             $this->testBucketId . '.empty',
             $options,
         );
 
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->testBucketId . '.empty',

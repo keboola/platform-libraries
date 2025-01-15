@@ -22,8 +22,10 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testTablesRedshiftBackend(): void
     {
+        $clientWrapper = $this->initClient();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
                 logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),
@@ -63,17 +65,17 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
         self::assertEquals($this->firstTableId, $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
         );
         self::assertEquals($this->emptyOutputBucketId . '.test1', $tableId);
-        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        $table = $clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
@@ -93,6 +95,7 @@ class DownloadTablesWorkspaceRedshiftTest extends AbstractTestCase
     {
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
+                clientWrapper: $this->initClient(),
                 logger: $this->testLogger,
                 backend: [AbstractStrategyFactory::WORKSPACE_REDSHIFT, 'redshift'],
             ),

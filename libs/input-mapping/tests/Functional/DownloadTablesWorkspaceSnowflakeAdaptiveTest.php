@@ -22,7 +22,11 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testDownloadTablesDownloadsEmptyTable(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -31,7 +35,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             ],
         ]);
 
-        $testTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $testTableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $inputTablesState = new InputTableStateList([
             [
                 'source' => $this->firstTableId,
@@ -56,7 +60,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         self::assertEquals($this->firstTableId, $manifest['id']);
 
         // check that the table exists in the workspace
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
         );
@@ -73,7 +77,11 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables, NeedsEmptyOutputBucket]
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -93,12 +101,12 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
             $this->firstTableId,
             $csv,
             ['incremental' => true],
         );
-        $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $updatedTestTableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         // now the source table has 4 rows (it has 3 originally)
         self::assertEquals(4, $updatedTestTableInfo['rowsCount']);
 
@@ -126,7 +134,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         self::assertCount(1, $secondTablesResult->getInputTableStateList()->jsonSerialize());
 
         // create a Storage table from the workspace table
-        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             [
                 'dataWorkspaceId' => $this->workspaceId,
@@ -135,7 +143,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             ],
         );
         // assert it has just the 1 new row
-        $workspaceTableInfo = $this->clientWrapper->getTableAndFileStorageClient()
+        $workspaceTableInfo = $clientWrapper->getTableAndFileStorageClient()
             ->getTable($this->emptyOutputBucketId . '.testWorkspace1');
         self::assertEquals(1, $workspaceTableInfo['rowsCount']);
     }
@@ -143,7 +151,10 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesInvalidDate(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(logger: $this->testLogger));
+        $reader = new Reader($this->getWorkspaceStagingFactory(
+            clientWrapper: $this->initClient(),
+            logger: $this->testLogger,
+        ));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,

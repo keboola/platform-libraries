@@ -78,7 +78,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         }
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                null,
+                $this->initClient(),
                 'json',
                 $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
@@ -148,7 +148,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             self::markTestSkipped('Synapse tests disabled');
         }
         $reader = new Reader($this->getWorkspaceStagingFactory(
-            null,
+            $this->initClient(),
             'json',
             $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
@@ -187,7 +187,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         }
 
         $reader = new Reader($this->getWorkspaceStagingFactory(
-            null,
+            $this->initClient(),
             'json',
             $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],

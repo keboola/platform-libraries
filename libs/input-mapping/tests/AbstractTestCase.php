@@ -211,12 +211,12 @@ abstract class AbstractTestCase extends TestCase
     }
 
     protected function getLocalStagingFactory(
-        ?ClientWrapper $clientWrapper = null,
+        ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );

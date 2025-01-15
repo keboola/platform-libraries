@@ -20,7 +20,8 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesDownloadsEmptyTable(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -28,7 +29,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
                 'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
             ],
         ]);
-        $testTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $testTableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $inputTablesState = new InputTableStateList([
             [
                 'source' => $this->firstTableId,
@@ -57,7 +58,8 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $clientWrapper = $this->initClient();
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -77,13 +79,13 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
         $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'upload.csv');
         $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
         $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
-        $this->clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
+        $clientWrapper->getTableAndFileStorageClient()->writeTableAsync(
             $this->firstTableId,
             $csv,
             ['incremental' => true],
         );
 
-        $updatedTestTableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $updatedTestTableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
         $secondTablesResult = $reader->downloadTables(
             $configuration,
             $firstTablesResult->getInputTableStateList(),
@@ -106,7 +108,7 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesInvalidDate(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory());
+        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,

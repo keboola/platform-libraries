@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use GuzzleHttp\HandlerStack;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
@@ -13,7 +14,9 @@ use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
+use Keboola\K8sClient\ClientFacadeFactory\Token\TokenInterface;
 use Keboola\K8sClient\Exception\ConfigurationException;
+use Keboola\K8sClient\Guzzle\AuthMiddleware;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use KubernetesRuntime\Client;
@@ -33,7 +36,7 @@ class GenericClientFacadeFactory
 
     public function createClusterClient(
         string $apiUrl,
-        string $token,
+        TokenInterface|string $token,
         string $caCertFile,
         string $namespace,
     ): KubernetesApiClientFacade {
@@ -44,13 +47,20 @@ class GenericClientFacadeFactory
             ));
         }
 
+        if (is_string($token)) {
+            $token = new Token\StaticToken($token);
+        }
+
+        $guzzleHandler = HandlerStack::create();
+        $guzzleHandler->push(new AuthMiddleware($token), 'auth');
+
         Client::configure(
             $apiUrl,
             [
                 'caCert' => $caCertFile,
-                'token' => $token,
             ],
             [
+                'handler' => $guzzleHandler,
                 'connect_timeout' => '30',
                 'timeout' => '60',
             ],

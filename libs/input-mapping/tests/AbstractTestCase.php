@@ -33,6 +33,7 @@ abstract class AbstractTestCase extends TestCase
     protected TestHandler $testHandler;
     protected Logger $testLogger;
     protected ?string $workspaceId = null;
+    protected ?Workspaces $workspaceClient = null;
     protected array $workspaceCredentials;
 
     protected string $emptyInputBucketId;
@@ -101,9 +102,8 @@ abstract class AbstractTestCase extends TestCase
 
     public function tearDown(): void
     {
-        if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
-            $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
+        if ($this->workspaceId && $this->workspaceClient) {
+            $this->workspaceClient->deleteWorkspace((int) $this->workspaceId, [], true);
             $this->workspaceId = null;
         }
         parent::tearDown();
@@ -181,6 +181,7 @@ abstract class AbstractTestCase extends TestCase
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
+                    $this->workspaceClient = $workspaces;
                 }
                 return $this->workspaceId;
             },

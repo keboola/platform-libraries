@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\PodWithLogStream;
+namespace Keboola\K8sClient\Tests\BaseApi;
 
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\Tests\ReflectionPropertyAccessTestCase;
@@ -26,18 +25,11 @@ class PodWithLogStreamTest extends TestCase
         $clientMock->expects($this->once())
             ->method('request')
             ->with(
-                $this->equalTo('get'),
-                $this->equalTo(sprintf('/api/v1/namespaces/%s/pods/%s/log', $namespace, $podName)),
-                $this->callback(function ($options) use ($queries) {
-                    $this->assertArrayHasKey('query', $options);
-                    $this->assertEquals($queries, $options['query']);
-
-                    // Check that 'handler' is set and is an instance of HandlerStack
-                    $this->assertArrayHasKey('handler', $options);
-                    $this->assertInstanceOf(HandlerStack::class, $options['handler']);
-
-                    return true;
-                }),
+                'get',
+                sprintf('/api/v1/namespaces/%s/pods/%s/log', $namespace, $podName),
+                [
+                    'query' => $queries,
+                ],
             )
             ->willReturn(new Response(200));
 
@@ -65,18 +57,11 @@ class PodWithLogStreamTest extends TestCase
         $clientMock->expects($this->once())
             ->method('request')
             ->with(
-                $this->equalTo('get'),
-                $this->equalTo(sprintf('/api/v1/namespaces/%s/pods/%s/log', $namespace, $podName)),
-                $this->callback(function ($options) use ($queries) {
-                    $this->assertArrayHasKey('query', $options);
-                    $this->assertEquals($queries, $options['query']);
-
-                    // Check that 'handler' is set and is an instance of HandlerStack
-                    $this->assertArrayHasKey('handler', $options);
-                    $this->assertInstanceOf(HandlerStack::class, $options['handler']);
-
-                    return true;
-                }),
+                'get',
+                sprintf('/api/v1/namespaces/%s/pods/%s/log', $namespace, $podName),
+                [
+                    'query' => $queries,
+                ],
             )
             ->willReturn($response);
 

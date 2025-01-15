@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\BaseClusterApiClient;
+use Keboola\K8sClient\ClientFacadeFactory\ClientConfigurator;
 use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\KubernetesApiClient;
@@ -12,7 +13,6 @@ use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractAPI;
 use KubernetesRuntime\AbstractModel;
-use KubernetesRuntime\Client;
 use Retry\RetryProxy;
 use RuntimeException;
 
@@ -36,12 +36,10 @@ trait BaseClusterApiClientTestCase
      */
     public function setUpBaseClusterApiClientTest(string $baseApiClientClass, string $apiClientClass): void
     {
-        Client::configure(
-            (string) getenv('K8S_HOST'),
-            [
-                'caCert' => (string) getenv('K8S_CA_CERT_PATH'),
-                'token' => (string) getenv('K8S_TOKEN'),
-            ],
+        ClientConfigurator::configureBaseClient(
+            apiUrl: (string) getenv('K8S_HOST'),
+            caCertFile: (string) getenv('K8S_CA_CERT_PATH'),
+            token: (string) getenv('K8S_TOKEN'),
         );
 
         $this->baseApiClient = new $baseApiClientClass;

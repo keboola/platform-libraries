@@ -11,7 +11,10 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\Settle\SettleFactory;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApi\Options\ListFilesOptions;
+use Psr\Log\NullLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -283,7 +286,23 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
                 (new FileUploadOptions())->setTags([$this->testFileTag]),
             );
         }
-        sleep(10);
+
+        $settleFactory = new SettleFactory(new NullLogger());
+        $settle = $settleFactory->createSettle(10, 2);
+
+        $settle->settle(
+            function (int $expectedFilesCount) use ($clientWrapper): bool {
+                $files = $clientWrapper->getTableAndFileStorageClient()->listFiles(
+                    (new ListFilesOptions())
+                        ->setTags([$this->testFileTag])
+                        ->setLimit(102),
+                );
+                return count($files) === $expectedFilesCount;
+            },
+            function (): int {
+                return 102;
+            },
+        );
 
         // valid configuration, but does nothing
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));

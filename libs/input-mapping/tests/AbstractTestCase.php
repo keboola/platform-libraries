@@ -251,13 +251,14 @@ abstract class AbstractTestCase extends TestCase
     {
         $clinetWrapper = $this->initClient();
 
-        // Delete file uploads
+        // Delete all file uploads with specified tags
         $options = new ListFilesOptions();
         $options->setTags($tags);
-        sleep(1);
-        $files = $clinetWrapper->getTableAndFileStorageClient()->listFiles($options);
-        foreach ($files as $file) {
-            $clinetWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+
+        while ($files = $clinetWrapper->getTableAndFileStorageClient()->listFiles($options)) {
+            foreach ($files as $file) {
+                $clinetWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+            }
         }
     }
 

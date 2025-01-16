@@ -24,6 +24,7 @@
         "brianium/paratest": "^6.11",
         "keboola/coding-standard": ">=14.0",
         "keboola/php-temp": "^2.0",
+        "keboola/settle": "^1.0",
         "monolog/monolog": "^3.0",
         "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-phpunit": "^1.3",

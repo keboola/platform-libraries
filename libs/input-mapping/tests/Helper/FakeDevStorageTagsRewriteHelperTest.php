@@ -6,71 +6,28 @@ namespace Keboola\InputMapping\Tests\Helper;
 
 use Keboola\InputMapping\File\Options\InputFileOptions;
 use Keboola\InputMapping\Helper\FakeDevStorageTagsRewriteHelper;
-use Keboola\StorageApi\DevBranches;
+use Keboola\InputMapping\Tests\AbstractTestCase;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\StorageApi\Options\ListFilesOptions;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 
-class FakeDevStorageTagsRewriteHelperTest extends TestCase
+class FakeDevStorageTagsRewriteHelperTest extends AbstractTestCase
 {
-    private const TEST_REWRITE_BASE_TAG = 'im-files-test';
-
-    private static string $branchId;
-    private static string $branchTag;
-    protected string $tmpDir;
+    private string $testFileTag;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        // Create folders
-        $temp = new Temp('docker');
-        $this->tmpDir = $temp->getTmpFolder();
-        sleep(2);
-        $clientWrapper = self::getClientWrapper(null);
-        $files = $clientWrapper->getTableAndFileStorageClient()->listFiles(
-            (new ListFilesOptions())->setTags([self::TEST_REWRITE_BASE_TAG, self::$branchTag]),
-        );
-        foreach ($files as $file) {
-            $clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
-        }
-    }
-
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-        $branchesApi = new DevBranches(self::getClientWrapper(null)->getBasicClient());
-        self::$branchId = (string) $branchesApi->createBranch(uniqid('TagsRewriteHelperTest'))['id'];
-        self::$branchTag = sprintf('%s-' . self::TEST_REWRITE_BASE_TAG, self::$branchId);
-    }
-
-    public static function tearDownAfterClass(): void
-    {
-        $branchesApi = new DevBranches(self::getClientWrapper(null)->getBasicClient());
-        $branchesApi->deleteBranch((int) self::$branchId);
-        parent::tearDownAfterClass();
-    }
-
-    private static function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
+        $this->testFileTag = $this->getFileTag();
+        $this->clearFileUploads([$this->testFileTag]);
     }
 
     public function testNoBranch(): void
     {
-        $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
-        $clientWrapper = self::getClientWrapper(null);
+        $configuration = ['tags' => [$this->testFileTag]];
+        $clientWrapper = $this->initClient();
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
@@ -88,18 +45,20 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         self::assertSame($expectedConfiguration, $processedConfiguration);
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteFilesExists(): void
     {
-        $root = $this->tmpDir;
+        $branchTag = $this->getFakeBranchFileTag();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::$branchTag]),
+            (new FileUploadOptions())->setTags([$branchTag]),
         );
         sleep(2);
 
-        $configuration = ['tags' => ['im-files-test']];
+        $configuration = ['tags' => [$this->testFileTag]];
 
         $configuration = new InputFileOptions(
             $configuration,
@@ -116,28 +75,30 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         )->getDefinition();
 
         self::assertTrue($testHandler->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
+            sprintf('Using dev tags "%s" instead of "' . $this->testFileTag . '".', $branchTag),
         ));
 
-        self::assertEquals([self::$branchTag], $expectedConfiguration['tags']);
+        self::assertEquals([$branchTag], $expectedConfiguration['tags']);
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteSourceTagsFilesExists(): void
     {
-        $root = $this->tmpDir;
+        $branchTag = $this->getFakeBranchFileTag();
+        $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         $clientWrapper
             ->getTableAndFileStorageClient()
-            ->uploadFile($root . '/upload', (new FileUploadOptions())->setTags([self::$branchTag]));
+            ->uploadFile($root . '/upload', (new FileUploadOptions())->setTags([$branchTag]));
         sleep(2);
 
         $configuration = [
             'source' => [
                 'tags' => [
                     [
-                        'name' => self::TEST_REWRITE_BASE_TAG,
+                        'name' => $this->testFileTag,
                         'match' => 'include',
                     ],
                 ],
@@ -158,28 +119,30 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         self::assertTrue(
             $testHandler->hasInfoThatContains(
                 sprintf(
-                    'Using dev source tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".',
-                    self::$branchTag,
+                    'Using dev source tags "%s" instead of "' . $this->testFileTag . '".',
+                    $branchTag,
                 ),
             ),
         );
 
         self::assertEquals(
             [[
-                'name' => self::$branchTag,
+                'name' => $branchTag,
                 'match' => 'include',
             ]],
             $expectedConfiguration['source']['tags'],
         );
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteNoFiles(): void
     {
-        $configuration = ['tags' => [self::TEST_REWRITE_BASE_TAG]];
+        $branchTag = $this->getFakeBranchFileTag();
+        $configuration = ['tags' => [$this->testFileTag]];
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
         sleep(2); // wait for storage files cleanup to take effect
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -191,7 +154,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         )->getDefinition();
 
         self::assertFalse($testHandler->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
+            sprintf('Using dev tags "%s" instead of "' . $this->testFileTag . '".', $branchTag),
         ));
         $expectedConfiguration = $configuration;
         $expectedConfiguration['overwrite'] = true;
@@ -199,13 +162,15 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         self::assertEquals($expectedConfiguration, $processedConfiguration);
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteSourceTagsNoFiles(): void
     {
+        $branchTag = $this->getFakeBranchFileTag();
         $configuration = [
             'source' => [
                 'tags' => [
                     [
-                        'name' => self::TEST_REWRITE_BASE_TAG,
+                        'name' => $this->testFileTag,
                         'match' => 'include',
                     ],
                 ],
@@ -214,7 +179,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
 
         $testHandler = new TestHandler();
         $testLogger = new Logger('testLogger', [$testHandler]);
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
         $processedConfiguration = (new FakeDevStorageTagsRewriteHelper())->rewriteFileTags(
             new InputFileOptions(
                 $configuration,
@@ -227,7 +192,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
 
         self::assertFalse(
             $testHandler->hasInfoThatContains(
-                sprintf('Using dev tags "%s" instead of "' . self::TEST_REWRITE_BASE_TAG . '".', self::$branchTag),
+                sprintf('Using dev tags "%s" instead of "' . $this->testFileTag . '".', $branchTag),
             ),
         );
         $expectedConfiguration = $configuration;
@@ -236,23 +201,26 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         self::assertEquals($expectedConfiguration, $processedConfiguration);
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteExcludedProcessedSourceTagFilesExist(): void
     {
-        $branchProcessedTag = sprintf('%s-processed', self::$branchId);
-        file_put_contents($this->tmpDir . '/upload', 'test');
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $branchTag = $this->getFakeBranchFileTag();
+        $root = $this->temp->getTmpFolder();
+        $branchProcessedTag = sprintf('%s-processed', $this->devBranchId);
+        file_put_contents($root . '/upload', 'test');
+        $clientWrapper = $this->initClient($this->devBranchId);
         $clientWrapper
             ->getTableAndFileStorageClient()
             ->uploadFile(
-                $this->tmpDir . '/upload',
-                (new FileUploadOptions())->setTags([self::$branchTag, $branchProcessedTag]),
+                $root . '/upload',
+                (new FileUploadOptions())->setTags([$branchTag, $branchProcessedTag]),
             );
         sleep(2);
         $configuration = [
             'source' => [
                 'tags' => [
                     [
-                        'name' => self::$branchTag,
+                        'name' => $branchTag,
                         'match' => 'include',
                     ],
                     [
@@ -284,23 +252,26 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         );
     }
 
+    #[NeedsDevBranch]
     public function testBranchRewriteExcludedProcessedSourceTagBranchFileDoesNotExist(): void
     {
-        $branchProcessedTag = sprintf('%s-processed', self::$branchId);
-        file_put_contents($this->tmpDir . '/upload', 'test');
-        $clientWrapper = self::getClientWrapper(self::$branchId);
+        $branchTag = $this->getFakeBranchFileTag();
+        $root = $this->temp->getTmpFolder();
+        $branchProcessedTag = sprintf('%s-processed', $this->devBranchId);
+        file_put_contents($root . '/upload', 'test');
+        $clientWrapper = $this->initClient($this->devBranchId);
         $clientWrapper
             ->getTableAndFileStorageClient()
             ->uploadFile(
-                $this->tmpDir . '/upload',
-                (new FileUploadOptions())->setTags([self::TEST_REWRITE_BASE_TAG, 'processed']),
+                $root . '/upload',
+                (new FileUploadOptions())->setTags([$this->testFileTag, 'processed']),
             );
         sleep(2);
         $configuration = [
             'source' => [
                 'tags' => [
                     [
-                        'name' => self::TEST_REWRITE_BASE_TAG,
+                        'name' => $this->testFileTag,
                         'match' => 'include',
                     ],
                     [
@@ -326,7 +297,7 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
         // but it SHOULD rewrite the processed tag for this branch
         self::assertEquals(
             [[
-                'name' => self::TEST_REWRITE_BASE_TAG,
+                'name' => $this->testFileTag,
                 'match' => 'include',
             ], [
                 'name' => $branchProcessedTag,
@@ -334,5 +305,10 @@ class FakeDevStorageTagsRewriteHelperTest extends TestCase
             ]],
             $expectedConfiguration['source']['tags'],
         );
+    }
+
+    private function getFakeBranchFileTag(): string
+    {
+        return sprintf('%s-%s', $this->devBranchId, $this->testFileTag);
     }
 }

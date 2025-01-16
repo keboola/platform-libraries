@@ -303,4 +303,17 @@ abstract class AbstractTestCase extends TestCase
             Client::STAGE_IN,
         );
     }
+
+    protected function getFileTag(string $suffix = ''): string
+    {
+        $tag =  (new ReflectionObject($this))->getShortName();
+        $tag .= '_' . $this->getName(false);
+        $dataName = (string) $this->dataName();
+
+        if ($dataName) {
+            $tag .= '_' . $dataName;
+        }
+
+        return $tag . $suffix;
+    }
 }

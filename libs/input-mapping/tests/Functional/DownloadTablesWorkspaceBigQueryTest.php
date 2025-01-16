@@ -78,19 +78,29 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
-        $jobs = $clientWrapper->getTableAndFileStorageClient()->listJobs();
-        $params = null;
-        foreach ($jobs as $job) {
-            if ($runId !== $job['runId']) {
-                continue;
-            }
-            if ($job['operationName'] === 'workspaceLoad') {
-                $params = $job['operationParams'];
-                break;
-            }
-        }
-        self::assertNotEmpty($params);
-        self::assertEquals(1, count($params['input']));
-        self::assertEquals('test1', $params['input'][0]['destination']);
+
+        $jobs = array_filter(
+            $clientWrapper->getBranchClient()->listJobs(),
+            function (array $job) use ($runId): bool {
+                return $runId === $job['runId'];
+            },
+        );
+
+        self::assertCount(2, $jobs);
+
+        $workspaceLoadJob = array_shift($jobs);
+        self::assertArrayHasKey('operationName', $workspaceLoadJob);
+        self::assertSame('workspaceLoad', $workspaceLoadJob['operationName']);
+
+        self::assertArrayHasKey('operationParams', $workspaceLoadJob);
+        $jobParams = $workspaceLoadJob['operationParams'];
+        self::assertNotEmpty($jobParams);
+        self::assertCount(1, $jobParams['input']);
+        self::assertEquals('test1', $jobParams['input'][0]['destination']);
+
+        $workspaceCreateJob = array_shift($jobs);
+        self::assertArrayHasKey('operationName', $workspaceCreateJob);
+        self::assertSame('workspaceCreate', $workspaceCreateJob['operationName']);
+
     }
 }

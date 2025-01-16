@@ -11,6 +11,7 @@ use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -249,15 +250,21 @@ abstract class AbstractTestCase extends TestCase
 
     protected function clearFileUploads(array $tags): void
     {
-        $clinetWrapper = $this->initClient();
+        $clientWrapper = $this->initClient();
 
         // Delete all file uploads with specified tags
         $options = new ListFilesOptions();
         $options->setTags($tags);
 
-        while ($files = $clinetWrapper->getTableAndFileStorageClient()->listFiles($options)) {
+        while ($files = $clientWrapper->getTableAndFileStorageClient()->listFiles($options)) {
             foreach ($files as $file) {
-                $clinetWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+                try {
+                    $clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+                } catch (ClientException $e) {
+                    if ($e->getCode() !== 404) {
+                        throw $e;
+                    }
+                }
             }
         }
     }

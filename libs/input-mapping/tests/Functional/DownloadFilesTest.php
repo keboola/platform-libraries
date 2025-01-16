@@ -23,23 +23,23 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 {
     public function testReadFiles(): void
     {
-        $clinetWrapper = $this->initClient();
+        $clientWrapper = $this->initClient();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
         file_put_contents($root . '/upload_second', 'test');
 
-        $id1 = $clinetWrapper->getTableAndFileStorageClient()->uploadFile(
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
-        $id2 = $clinetWrapper->getTableAndFileStorageClient()->uploadFile(
+        $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload_second',
             (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(5);
 
         $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $clinetWrapper,
+            clientWrapper: $clientWrapper,
             logger: $this->testLogger,
         ));
         $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
@@ -75,17 +75,17 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
     public function testReadFilesOverwrite(): void
     {
-        $clinetWrapper = $this->initClient();
+        $clientWrapper = $this->initClient();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $id1 = $clinetWrapper->getTableAndFileStorageClient()->uploadFile(
+        $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
             (new FileUploadOptions())->setTags([$this->testFileTag]),
         );
         sleep(3);
 
-        $reader = new Reader($this->getLocalStagingFactory($clinetWrapper));
+        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
         // download files for the first time
         $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
         $reader->downloadFiles(

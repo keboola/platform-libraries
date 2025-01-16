@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ClientFacadeFactory\Token\InClusterToken;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 
@@ -27,7 +28,7 @@ class InClusterClientFacadeFactory
     {
         return $this->genericFactory->createClusterClient(
             self::IN_CLUSTER_API_URL,
-            $this->readInClusterConfigFile('token'),
+            new InClusterToken($this->findInClusterConfigFile('token')),
             $this->findInClusterConfigFile('ca.crt'),
             $namespace ?? $this->readInClusterConfigFile('namespace'),
         );

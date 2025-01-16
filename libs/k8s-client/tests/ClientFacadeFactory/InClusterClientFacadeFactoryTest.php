@@ -6,6 +6,7 @@ namespace Keboola\K8sClient\Tests\ClientFacadeFactory;
 
 use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
 use Keboola\K8sClient\ClientFacadeFactory\InClusterClientFacadeFactory;
+use Keboola\K8sClient\ClientFacadeFactory\Token\InClusterToken;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use PHPUnit\Framework\TestCase;
@@ -44,7 +45,7 @@ class InClusterClientFacadeFactoryTest extends TestCase
             ->method('createClusterClient')
             ->with(
                 'https://kubernetes.default.svc',
-                'token',
+                new InClusterToken($this->credentialsPath.'/token'),
                 $this->credentialsPath.'/ca.crt',
                 'namespace',
             )
@@ -123,7 +124,7 @@ class InClusterClientFacadeFactoryTest extends TestCase
             ->method('createClusterClient')
             ->with(
                 'https://kubernetes.default.svc',
-                'token',
+                new InClusterToken($this->credentialsPath.'/token'),
                 $this->credentialsPath.'/ca.crt',
                 'custom-namespace',
             )

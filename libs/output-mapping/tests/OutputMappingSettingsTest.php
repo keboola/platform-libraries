@@ -21,7 +21,7 @@ class OutputMappingSettingsTest extends TestCase
         $sourcePathPrefix = 'path/to/source';
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
-            ->expects(self::exactly(6))
+            ->expects(self::exactly(7))
             ->method('hasFeature')
             ->willReturn(false)
         ;
@@ -83,17 +83,55 @@ class OutputMappingSettingsTest extends TestCase
     }
 
     /**
+     * @dataProvider hasBothNativeTypesFeaturesDataProvider
+     */
+    public function testBothNativeTypesFeatures(
+        bool $hasNativeTypesFeature,
+        bool $hasNewNativeTypesFeature,
+        bool $expectedHasNativeTypesSettingsGetter,
+        bool $expectedHasNewNativeTypesSettingsGetter,
+    ): void {
+
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken
+            ->method('hasFeature')
+            ->willReturnCallback(
+                function (string $feature) use ($hasNativeTypesFeature, $hasNewNativeTypesFeature) {
+                    if ($feature === OutputMappingSettings::NATIVE_TYPES_FEATURE) {
+                        return $hasNativeTypesFeature;
+                    }
+                    if ($feature === OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE) {
+                        return $hasNewNativeTypesFeature;
+                    }
+                    return false;
+                },
+            );
+
+        $outputMappingSettings = new OutputMappingSettings(
+            [],
+            'path/to/source',
+            $storageApiToken,
+            false,
+            'authoritative',
+        );
+
+        self::assertSame($expectedHasNativeTypesSettingsGetter, $outputMappingSettings->hasNativeTypesFeature());
+        self::assertSame($expectedHasNewNativeTypesSettingsGetter, $outputMappingSettings->hasNewNativeTypesFeature());
+    }
+
+    /**
      * @dataProvider hasFeatureDataProvider
      */
     public function testHasFeature(string $featureName, string $hasSpecificFeatureMethodName): void
     {
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
-            ->expects(self::once())
             ->method('hasFeature')
-            ->with($featureName)
-            ->willReturn(true)
-        ;
+            ->willReturnCallback(
+                function (string $feature) use ($featureName) {
+                    return $feature === $featureName;
+                },
+            );
 
         $outputMappingSettings = new OutputMappingSettings(
             [],
@@ -152,5 +190,36 @@ class OutputMappingSettingsTest extends TestCase
         );
 
         self::assertSame($expectedTreatValuesAsNullValue, $outputMappingSettings->getTreatValuesAsNull());
+    }
+
+    public function hasBothNativeTypesFeaturesDataProvider(): Generator
+    {
+        yield 'both-native-types-features' => [
+            true, // hasNativeTypesFeature
+            true, // hasNewNativeTypesFeature
+            false, // expectedHasNativeTypesSettingsGetter
+            true, // expectedHasNewNativeTypesSettingsGetter
+        ];
+
+        yield 'no-native-types-features' => [
+            false, // hasNativeTypesFeature
+            true, // hasNewNativeTypesFeature
+            false, // expectedHasNativeTypesSettingsGetter
+            true, // expectedHasNewNativeTypesSettingsGetter
+        ];
+
+        yield 'no-new-native-types-features' => [
+            true, // hasNativeTypesFeature
+            false, // hasNewNativeTypesFeature
+            true, // expectedHasNativeTypesSettingsGetter
+            false, // expectedHasNewNativeTypesSettingsGetter
+        ];
+
+        yield 'no-both-native-types-features' => [
+            false, // hasNativeTypesFeature
+            false, // hasNewNativeTypesFeature
+            false, // expectedHasNativeTypesSettingsGetter
+            false, // expectedHasNewNativeTypesSettingsGetter
+        ];
     }
 }

@@ -71,6 +71,9 @@ class OutputMappingSettings
 
     public function hasNativeTypesFeature(): bool
     {
+        if ($this->hasNewNativeTypesFeature()) {
+            return false;
+        }
         return $this->storageApiToken->hasFeature(self::NATIVE_TYPES_FEATURE);
     }
 

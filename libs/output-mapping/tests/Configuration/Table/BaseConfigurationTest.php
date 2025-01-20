@@ -31,6 +31,7 @@ class BaseConfigurationTest extends TestCase
             'write_always' => false,
             'tags' => [],
             'schema' => [],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -78,6 +79,7 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -139,6 +141,7 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -200,6 +203,7 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -253,6 +257,7 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(
@@ -309,6 +314,7 @@ class BaseConfigurationTest extends TestCase
             'delimiter' => 'xyz',
             'enclosure' => 'abc',
             'description' => 'descTest',
+            'delete_where' => [],
         ];
 
         $expectedArray = [
@@ -363,6 +369,7 @@ class BaseConfigurationTest extends TestCase
             ],
             'delete_where_column' => 'column',
             'description' => 'descTest',
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(
@@ -655,6 +662,7 @@ class BaseConfigurationTest extends TestCase
             'write_always' => false,
             'tags' => [],
             'schema' => [],
+            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(

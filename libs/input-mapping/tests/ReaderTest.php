@@ -11,57 +11,20 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
-use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\Temp\Temp;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-class ReaderTest extends TestCase
+class ReaderTest extends AbstractTestCase
 {
-    private Temp $temp;
-
-    public function setUp(): void
-    {
-        // Create folders
-        $this->temp = new Temp('docker');
-        $fs = new Filesystem();
-        $fs->mkdir($this->temp->getTmpFolder() . '/download');
-        $clientWrapper = $this->getClientWrapper(null);
-        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
-        print(sprintf(
-            'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
-            $tokenInfo['description'],
-            $tokenInfo['id'],
-            $tokenInfo['owner']['name'],
-            $tokenInfo['owner']['id'],
-            $clientWrapper->getBranchClient()->getApiUrl(),
-        ));
-    }
-
-    private function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
-    }
-
-    protected function getStagingFactory(
+    private function getStagingFactory(
         ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
@@ -71,7 +34,7 @@ class ReaderTest extends TestCase
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
+        $mockLocal = $this->getMockBuilder(NullProvider::class)
             ->onlyMethods(['getPath'])
             ->getMock();
         $mockLocal->method('getPath')->willReturnCallback(
@@ -93,7 +56,7 @@ class ReaderTest extends TestCase
 
     public function testParentId(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
+        $clientWrapper = $this->initClient();
         $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
         self::assertEquals(
             '123456789',
@@ -119,7 +82,7 @@ class ReaderTest extends TestCase
     public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
+        $reader = new Reader($this->getStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
@@ -135,7 +98,7 @@ class ReaderTest extends TestCase
 
     public function testReadTablesDefaultBackend(): void
     {
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper(null)));
+        $reader = new Reader($this->getStagingFactory($this->initClient()));
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'not-needed.test',
@@ -156,12 +119,14 @@ class ReaderTest extends TestCase
         );
     }
 
+    #[NeedsDevBranch]
     public function testReadTablesDefaultBackendBranchRewrite(): void
     {
+        $clientWrapper = $this->initClient();
+
         file_put_contents($this->temp->getTmpFolder() . 'data.csv', "foo,bar\n1,2");
         $csvFile = new CsvFile($this->temp->getTmpFolder() . 'data.csv');
 
-        $clientWrapper = $this->getClientWrapper(null);
         $branchBucket = TestSatisfyer::getBucketByDisplayName(
             $clientWrapper,
             'my-branch-input-mapping-test',
@@ -193,14 +158,6 @@ class ReaderTest extends TestCase
             }
         }
 
-        $branchesApi = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branchesApi->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branchesApi->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branchesApi->createBranch('my-branch')['id'];
-
         $inBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
             'input-mapping-test',
             Client::STAGE_IN,
@@ -209,11 +166,11 @@ class ReaderTest extends TestCase
         // hence - create the bucket, get it id, and drop it
         $clientWrapper->getTableAndFileStorageClient()->dropBucket($inBucketId, ['force' => true, 'async' => true]);
         $branchBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
-            sprintf('%s-input-mapping-test', $branchId),
+            sprintf('%s-input-mapping-test', $this->devBranchId),
             Client::STAGE_IN,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync($branchBucketId, 'test', $csvFile);
-        $reader = new Reader($this->getStagingFactory($this->getClientWrapper($branchId)));
+        $reader = new Reader($this->getStagingFactory($this->initClient($this->devBranchId)));
         $configuration = new InputTableOptionsList([
             [
                 'source' => $inBucketId . '.test',

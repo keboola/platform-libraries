@@ -9,39 +9,17 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\StorageApi\DevBranches;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Monolog\Handler\TestHandler;
-use Monolog\Logger;
 use Psr\Log\NullLogger;
 
 class DownloadFilesBranchTest extends DownloadFilesTestAbstract
 {
-    protected function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
-    }
-
+    #[NeedsDevBranch]
     public function testReadFilesIncludeAllTagsWithBranchOverwrite(): void
     {
-        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
-
+        $clientWrapper = $this->initClient($this->devBranchId);
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
@@ -49,10 +27,10 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $file1->setTags(['tag-1']);
 
         $file2 = new FileUploadOptions();
-        $file2->setTags([sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]);
+        $file2->setTags([sprintf('%s-tag-1', $this->devBranchId), sprintf('%s-tag-2', $this->devBranchId)]);
 
         $file3 = new FileUploadOptions();
-        $file3->setTags(['tag-1', sprintf('%s-tag-2', $branchId)]);
+        $file3->setTags(['tag-1', sprintf('%s-tag-2', $this->devBranchId)]);
 
         $id1 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file1);
         $id2 = $clientWrapper->getTableAndFileStorageClient()->uploadFile($root . '/upload', $file2);
@@ -93,26 +71,26 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $this->testHandler->hasInfoThatContains(
                 sprintf(
                     'Using dev source tags "%s" instead of "tag-1, tag-2".',
-                    implode(', ', [sprintf('%s-tag-1', $branchId), sprintf('%s-tag-2', $branchId)]),
+                    implode(
+                        ', ',
+                        [
+                            sprintf('%s-tag-1', $this->devBranchId),
+                            sprintf('%s-tag-2', $this->devBranchId),
+                        ],
+                    ),
                 ),
             ),
         );
     }
 
+    #[NeedsDevBranch]
     public function testReadAndDownloadFilesWithEsQueryIsRestrictedForBranch(): void
     {
-        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
 
-        $fileConfiguration = ['query' => 'tags: ' . self::DEFAULT_TEST_FILE_TAG];
+        $fileConfiguration = ['query' => 'tags: ' . $this->testFileTag];
 
         try {
             $reader->downloadFiles(
@@ -140,22 +118,15 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         }
     }
 
+    #[NeedsDevBranch]
     public function testReadFilesForBranchFakeDevStorage(): void
     {
-        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchTag = sprintf('%s-%s', $this->devBranchId, $this->testFileTagForBranch);
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
@@ -163,14 +134,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch]),
         );
         sleep(5);
 
         $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
 
         $configuration = [[
-            'tags' => [self::TEST_FILE_TAG_FOR_BRANCH],
+            'tags' => [$this->testFileTagForBranch],
             'overwrite' => true,
         ]];
         $reader->downloadFiles(
@@ -191,43 +162,34 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertEquals([$branchTag], $manifest1['tags']);
 
         self::assertTrue($this->testHandler->hasInfoThatContains(
-            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, self::TEST_FILE_TAG_FOR_BRANCH),
+            sprintf('Using dev tags "%s" instead of "%s".', $branchTag, $this->testFileTagForBranch),
         ));
     }
 
+    #[NeedsDevBranch]
     public function testReadFilesForBranchRealDevStorage(): void
     {
-        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
+        $clientOptions = $this->initClient()->getClientOptionsReadOnly()
+            ->setBranchId($this->devBranchId)
+            ->setUseBranchStorage(true) // this is the important part
+        ;
 
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                url: (string) getenv('STORAGE_API_URL'),
-                token: (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                branchId: $branchId,
-                useBranchStorage: true,
-            ),
-        );
+        $clientWrapper = new ClientWrapper($clientOptions);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
         $file1Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1']),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch, 'tag-1']),
         );
         $file2Id = $clientWrapper->getBasicClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2']),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch, 'tag-2']),
         );
         $file3Id = $clientWrapper->getBranchClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2']),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch, 'tag-2']),
         );
         sleep(5);
 
@@ -259,14 +221,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         self::assertArrayHasKey('id', $manifest1);
         self::assertArrayHasKey('tags', $manifest1);
         self::assertEquals($file1Id, $manifest1['id']);
-        self::assertEquals([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-1'], $manifest1['tags']);
+        self::assertEquals([$this->testFileTagForBranch, 'tag-1'], $manifest1['tags']);
 
         $manifest3 = $adapter->readFromFile($root . '/download/' . $file3Id . '_upload.manifest');
 
         self::assertArrayHasKey('id', $manifest3);
         self::assertArrayHasKey('tags', $manifest3);
         self::assertEquals($file3Id, $manifest3['id']);
-        self::assertEquals([self::TEST_FILE_TAG_FOR_BRANCH, 'tag-2'], $manifest3['tags']);
+        self::assertEquals([$this->testFileTagForBranch, 'tag-2'], $manifest3['tags']);
 
         self::assertTrue($this->testHandler->hasInfoThatContains(
             sprintf(
@@ -283,26 +245,19 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         ));
     }
 
+    #[NeedsDevBranch]
     public function testReadFilesForBranchWithProcessedTags(): void
     {
-        $branches = new DevBranches($this->getClientWrapper(null)->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchTag = sprintf('%s-%s', $this->devBranchId, $this->testFileTagForBranch);
 
-        $processedTag = sprintf('processed-%s', self::TEST_FILE_TAG_FOR_BRANCH);
-        $branchProcessedTag = sprintf('%s-processed-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
-        $excludeTag = sprintf('exclude-%s', self::TEST_FILE_TAG_FOR_BRANCH);
+        $processedTag = sprintf('processed-%s', $this->testFileTagForBranch);
+        $branchProcessedTag = sprintf('%s-processed-%s', $this->devBranchId, $this->testFileTagForBranch);
+        $excludeTag = sprintf('exclude-%s', $this->testFileTagForBranch);
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
@@ -310,7 +265,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch]),
         );
         $processedFileId = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
@@ -333,7 +288,7 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
                 'source' => [
                     'tags' => [
                         [
-                            'name' => self::TEST_FILE_TAG_FOR_BRANCH,
+                            'name' => $this->testFileTagForBranch,
                             'match' => 'include',
                         ],
                         [

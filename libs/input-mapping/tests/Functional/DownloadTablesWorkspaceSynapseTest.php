@@ -17,6 +17,7 @@ use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
+use PHPUnit\Util\Test;
 use Throwable;
 
 #[NeedsStorageBackend('synapse')]
@@ -33,23 +34,30 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         parent::setUp();
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-            ),
-        );
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
+            ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
+
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
@@ -58,9 +66,10 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         if (!$this->runSynapseTests) {
             self::markTestSkipped('Synapse tests disabled');
         }
+        $clientWrapper = $this->initClient();
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                null,
+                $clientWrapper,
                 'json',
                 $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_SYNAPSE, 'synapse'],
@@ -108,17 +117,17 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
 
         self::assertEquals($this->firstTableId, $manifest['id']);
         // test that the table exists in the workspace
-        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test1', 'name' => 'test1'],
         );
         self::assertEquals($this->emptyOutputBucketId . '.test1', $tableId);
-        $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        $table = $clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertEquals(['Id'], $table['columns']);
 
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
-        $tableId = $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+        $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
             $this->emptyOutputBucketId,
             ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
         );
@@ -129,7 +138,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         self::assertEquals($this->firstTableId, $manifest['id']);
 
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
             );
@@ -166,7 +175,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
         );
         // the initially loaded tables should not be present in the workspace anymore
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
             );
@@ -175,7 +184,7 @@ class DownloadTablesWorkspaceSynapseTest extends AbstractTestCase
             self::assertStringContainsString('Table "test2" not found in schema', $exception->getMessage());
         }
         try {
-            $this->clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
                 $this->emptyOutputBucketId,
                 ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test3', 'name' => 'test3'],
             );

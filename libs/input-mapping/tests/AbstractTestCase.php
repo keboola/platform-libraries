@@ -10,6 +10,9 @@ use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -25,11 +28,13 @@ use Symfony\Component\Filesystem\Filesystem;
 
 abstract class AbstractTestCase extends TestCase
 {
+    /** @deprecated use initClient() instead */
     protected ClientWrapper $clientWrapper;
     protected Temp $temp;
     protected TestHandler $testHandler;
     protected Logger $testLogger;
     protected ?string $workspaceId = null;
+    protected ?Workspaces $workspaceClient = null;
     protected array $workspaceCredentials;
 
     protected string $emptyInputBucketId;
@@ -38,6 +43,11 @@ abstract class AbstractTestCase extends TestCase
     protected string $firstTableId;
     protected string $secondTableId;
     protected string $thirdTableId;
+
+    protected string $devBranchName;
+    protected string $devBranchId;
+
+    protected string $emptyBranchInputBucketId;
 
     public function setUp(): void
     {
@@ -49,13 +59,14 @@ abstract class AbstractTestCase extends TestCase
         $this->temp = new Temp('input-mapping');
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/download');
-        $this->initClient();
+        $this->clientWrapper = $this->initClient();
 
         $objects = TestSatisfyer::satisfyTestNeeds(
             new ReflectionObject($this),
-            $this->clientWrapper,
+            $this->initClient(),
             $this->temp,
-            Test::describe($this)[1],
+            $this->getName(false),
+            (string) $this->dataName(),
         );
         foreach ($objects as $name => $value) {
             if ($value !== null) {
@@ -64,27 +75,36 @@ abstract class AbstractTestCase extends TestCase
         }
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('STORAGE_API_URL'))
+            ->setToken((string) getenv('STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
+
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     public function tearDown(): void
     {
-        if ($this->workspaceId) {
-            $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
-            $workspaces->deleteWorkspace((int) $this->workspaceId, [], true);
+        if ($this->workspaceId && $this->workspaceClient) {
+            $this->workspaceClient->deleteWorkspace((int) $this->workspaceId, [], true);
             $this->workspaceId = null;
         }
         parent::tearDown();
@@ -142,13 +162,13 @@ abstract class AbstractTestCase extends TestCase
     }
 
     protected function getWorkspaceStagingFactory(
-        ?ClientWrapper $clientWrapper = null,
+        ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
         array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'],
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
@@ -156,12 +176,13 @@ abstract class AbstractTestCase extends TestCase
             ->setMethods(['getWorkspaceId'])
             ->getMock();
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend) {
+            function () use ($backend, $clientWrapper) {
                 if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
+                    $workspaces = new Workspaces($clientWrapper->getBranchClient());
                     $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
                     $this->workspaceId = (string) $workspace['id'];
                     $this->workspaceCredentials = $workspace['connection'];
+                    $this->workspaceClient = $workspaces;
                 }
                 return $this->workspaceId;
             },
@@ -192,12 +213,12 @@ abstract class AbstractTestCase extends TestCase
     }
 
     protected function getLocalStagingFactory(
-        ?ClientWrapper $clientWrapper = null,
+        ClientWrapper $clientWrapper,
         string $format = 'json',
         ?LoggerInterface $logger = null,
     ): StrategyFactory {
         $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
@@ -225,5 +246,81 @@ abstract class AbstractTestCase extends TestCase
             ],
         );
         return $stagingFactory;
+    }
+
+    protected function clearFileUploads(array $tags): void
+    {
+        $clientWrapper = $this->initClient();
+
+        // Delete all file uploads with specified tags
+        $options = new ListFilesOptions();
+        $options->setTags($tags);
+
+        while ($files = $clientWrapper->getTableAndFileStorageClient()->listFiles($options)) {
+            foreach ($files as $file) {
+                try {
+                    $clientWrapper->getTableAndFileStorageClient()->deleteFile($file['id']);
+                } catch (ClientException $e) {
+                    if ($e->getCode() !== 404) {
+                        throw $e;
+                    }
+                }
+            }
+        }
+    }
+
+    protected function initEmptyFakeBranchInputBucket(ClientWrapper $clientWrapper): void
+    {
+        $emptyInputBucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $this->emptyBranchInputBucketId = $clientWrapper->getTableAndFileStorageClient()->createBucket(
+            $this->devBranchId . '-' . $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
+    }
+
+    protected function initEmptyRealBranchInputBucket(ClientWrapper $clientWrapper): void
+    {
+        $emptyInputBucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+
+        foreach ($clientWrapper->getTableAndFileStorageClient()->listBuckets() as $bucket) {
+            if (preg_match('/^(c-)?[0-9]+-' . $emptyInputBucket['displayName'] . '$/ui', $bucket['name'])) {
+                $clientWrapper->getTableAndFileStorageClient()->dropBucket(
+                    $bucket['id'],
+                    ['force' => true, 'async' => true],
+                );
+            }
+        }
+
+        $clientWraper = new ClientWrapper(
+            $clientWrapper->getClientOptionsReadOnly()->setBranchId($this->devBranchId),
+        );
+
+        $this->emptyBranchInputBucketId = $clientWraper->getBranchClient()->createBucket(
+            $emptyInputBucket['displayName'],
+            Client::STAGE_IN,
+        );
+    }
+
+    protected function getFileTag(string $suffix = ''): string
+    {
+        $tag =  (new ReflectionObject($this))->getShortName();
+        $tag .= '_' . $this->getName(false);
+        $dataName = (string) $this->dataName();
+
+        if ($dataName) {
+            $tag .= '_' . $dataName;
+        }
+
+        return $tag . $suffix;
     }
 }

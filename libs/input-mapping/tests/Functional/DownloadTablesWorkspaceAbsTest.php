@@ -18,6 +18,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use PHPUnit\Util\Test;
 
 #[NeedsStorageBackend('synapse')]
 class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
@@ -33,23 +34,30 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         parent::setUp();
     }
 
-    protected function initClient(): void
+    protected function initClient(?string $branchId = null): ClientWrapper
     {
-        $this->clientWrapper = new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('SYNAPSE_STORAGE_API_URL'),
-                (string) getenv('SYNAPSE_STORAGE_API_TOKEN'),
-            ),
-        );
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
+        $clientOptions = (new ClientOptions())
+            ->setUrl((string) getenv('SYNAPSE_STORAGE_API_URL'))
+            ->setToken((string) getenv('SYNAPSE_STORAGE_API_TOKEN'))
+            ->setBranchId($branchId)
+            ->setBackoffMaxTries(1)
+            ->setJobPollRetryDelay(function () {
+                return 1;
+            })
+            ->setUserAgent(implode('::', Test::describe($this)))
+        ;
+
+        $clientWrapper = new ClientWrapper($clientOptions);
+        $tokenInfo = $clientWrapper->getBranchClient()->verifyToken();
         print(sprintf(
             'Authorized as "%s (%s)" to project "%s (%s)" at "%s" stack.',
             $tokenInfo['description'],
             $tokenInfo['id'],
             $tokenInfo['owner']['name'],
             $tokenInfo['owner']['id'],
-            $this->clientWrapper->getBranchClient()->getApiUrl(),
+            $clientWrapper->getBranchClient()->getApiUrl(),
         ));
+        return $clientWrapper;
     }
 
     protected function assertBlobs(string $basePath): void
@@ -70,7 +78,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         }
         $reader = new Reader(
             $this->getWorkspaceStagingFactory(
-                null,
+                $this->initClient(),
                 'json',
                 $this->testLogger,
                 [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
@@ -140,7 +148,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
             self::markTestSkipped('Synapse tests disabled');
         }
         $reader = new Reader($this->getWorkspaceStagingFactory(
-            null,
+            $this->initClient(),
             'json',
             $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],
@@ -179,7 +187,7 @@ class DownloadTablesWorkspaceAbsTest extends AbstractTestCase
         }
 
         $reader = new Reader($this->getWorkspaceStagingFactory(
-            null,
+            $this->initClient(),
             'json',
             $this->testLogger,
             [AbstractStrategyFactory::WORKSPACE_ABS, 'abs'],

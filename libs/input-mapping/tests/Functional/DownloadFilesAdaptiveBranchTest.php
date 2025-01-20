@@ -8,42 +8,20 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
-use Keboola\StorageApi\DevBranches;
+use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\StorageApi\Options\FileUploadOptions;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 {
-    protected function getClientWrapper(?string $branchId): ClientWrapper
-    {
-        return new ClientWrapper(
-            new ClientOptions(
-                (string) getenv('STORAGE_API_URL'),
-                (string) getenv('STORAGE_API_TOKEN_MASTER'),
-                $branchId,
-            ),
-        );
-    }
-
+    #[NeedsDevBranch]
     public function testReadFilesAdaptiveWithBranch(): void
     {
-        $clientWrapper = $this->getClientWrapper(null);
-
-        $branches = new DevBranches($clientWrapper->getBasicClient());
-        foreach ($branches->listBranches() as $branch) {
-            if ($branch['name'] === 'my-branch') {
-                $branches->deleteBranch($branch['id']);
-            }
-        }
-
-        $branchId = (string) $branches->createBranch('my-branch')['id'];
-        $clientWrapper = $this->getClientWrapper($branchId);
+        $clientWrapper = $this->initClient($this->devBranchId);
 
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
 
-        $branchTag = sprintf('%s-%s', $branchId, self::TEST_FILE_TAG_FOR_BRANCH);
+        $branchTag = sprintf('%s-%s', $this->devBranchId, $this->testFileTagForBranch);
 
         $file1Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
@@ -51,15 +29,15 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         );
         $file2Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([self::TEST_FILE_TAG_FOR_BRANCH]),
+            (new FileUploadOptions())->setTags([$this->testFileTagForBranch]),
         );
         sleep(2);
 
         $convertedTags = [
             [
-                'name' => self::TEST_FILE_TAG_FOR_BRANCH,
+                'name' => $this->testFileTagForBranch,
             ], [
-                'name' => 'adaptive',
+                'name' => $this->testFileTagForBranch . '-adaptive',
             ],
         ];
 
@@ -67,7 +45,7 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
 
         $configuration = [
             [
-                'tags' => [self::TEST_FILE_TAG_FOR_BRANCH, 'adaptive'],
+                'tags' => [$this->testFileTagForBranch, $this->testFileTagForBranch . '-adaptive'],
                 'changed_since' => 'adaptive',
                 'overwrite' => true,
             ],
@@ -91,19 +69,19 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         self::assertEquals($file1Id, $manifest1['id']);
         self::assertEquals([$branchTag], $manifest1['tags']);
 
-        self::assertTrue($this->testHandler->hasInfoThatContains(
-            sprintf(
-                'Using dev tags "%s-%s, %s-adaptive" instead of "%s, adaptive".',
-                $branchId,
-                self::TEST_FILE_TAG_FOR_BRANCH,
-                $branchId,
-                self::TEST_FILE_TAG_FOR_BRANCH,
-            ),
-        ));
+        $expectedMessageTemplate = 'Using dev tags "{devBranchId}-{fileTag}, {devBranchId}-{fileTag}-adaptive" ' .
+            'instead of "{fileTag}, {fileTag}-adaptive".';
+
+        $replacements = [
+            '{devBranchId}' => $this->devBranchId,
+            '{fileTag}'     => $this->testFileTagForBranch,
+        ];
+
+        self::assertTrue($this->testHandler->hasInfoThatContains(strtr($expectedMessageTemplate, $replacements)));
         // add another valid file and assert that it gets downloaded and the previous doesn't
         $file3Id = $clientWrapper->getTableAndFileStorageClient()->uploadFile(
             $root . '/upload',
-            (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $branchId)]),
+            (new FileUploadOptions())->setTags([$branchTag, sprintf('%s-adaptive', $this->devBranchId)]),
         );
         sleep(2);
         $newOutputStateFileList = $reader->downloadFiles(

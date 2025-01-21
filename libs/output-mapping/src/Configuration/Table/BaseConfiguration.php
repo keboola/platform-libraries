@@ -13,6 +13,7 @@ abstract class BaseConfiguration extends Configuration
 {
     public const DEFAULT_DELIMITER = ',';
     public const DEFAULT_ENCLOSURE = '"';
+    private const DEFAULT_DELETE_WHERE_OPERATOR = 'eq';
 
     private const ALLOWED_DATA_TYPES_BACKEND = [
         'base',
@@ -22,6 +23,8 @@ abstract class BaseConfiguration extends Configuration
         'bigquery',
         'exasol',
     ];
+
+    private const ALLOWED_DELETE_WHERE_OPERATORS = ['eq', 'ne'];
 
     public static function configureNode(ArrayNodeDefinition $node): void
     {
@@ -47,15 +50,15 @@ abstract class BaseConfiguration extends Configuration
                 ->scalarNode('delete_where_column')->end()
                 ->arrayNode('delete_where_values')->prototype('scalar')->end()->end()
                 ->scalarNode('delete_where_operator')
-                    ->defaultValue('eq')
+                    ->defaultValue(self::DEFAULT_DELETE_WHERE_OPERATOR)
                     ->beforeNormalization()
                         ->ifInArray(['', null])
                         ->then(function () {
-                            return 'eq';
+                            return self::DEFAULT_DELETE_WHERE_OPERATOR;
                         })
                     ->end()
                     ->validate()
-                    ->ifNotInArray(['eq', 'ne'])
+                    ->ifNotInArray(self::ALLOWED_DELETE_WHERE_OPERATORS)
                         ->thenInvalid('Invalid operator in delete_where_operator %s.')
                     ->end()
                 ->end()
@@ -67,8 +70,17 @@ abstract class BaseConfiguration extends Configuration
                             ->arrayNode('where_filters')
                                 ->prototype('array')
                                     ->children()
-                                        ->scalarNode('column')->end()
-                                        ->scalarNode('operator')->defaultValue('eq')->end()
+                                        ->scalarNode('column')->isRequired()->cannotBeEmpty()->end()
+                                        ->scalarNode('operator')
+                                            ->defaultValue(self::DEFAULT_DELETE_WHERE_OPERATOR)
+                                            ->validate()
+                                                ->ifNotInArray(self::ALLOWED_DELETE_WHERE_OPERATORS)
+                                                ->thenInvalid(
+                                                    'Invalid operator %s. Valid values are "' .
+                                                        implode('" or "', self::ALLOWED_DELETE_WHERE_OPERATORS) . '".',
+                                                )
+                                            ->end()
+                                        ->end()
                                         ->arrayNode('values_from_set')
                                             ->prototype('scalar')->end()
                                         ->end()
@@ -87,8 +99,62 @@ abstract class BaseConfiguration extends Configuration
                                             ->end()
                                         ->end()
                                     ->end()
+                                    ->validate()
+                                        ->always(function ($v) {
+                                            if (empty($v['values_from_set'])) {
+                                                unset($v['values_from_set']);
+                                            }
+                                            return $v;
+                                        })
+                                    ->end()
+                                    ->validate()
+                                        ->ifTrue(function ($v) {
+                                            $valuesSources = array_filter([
+                                                !empty($v['values_from_set']),
+                                                !empty($v['values_from_workspace']),
+                                                !empty($v['values_from_storage']),
+                                            ]);
+                                            return count($valuesSources) > 1;
+                                        })
+                                        ->thenInvalid(
+                                            'Only one of "values_from_set", "values_from_workspace", ' .
+                                            'or "values_from_storage" can be defined.',
+                                        )
+                                    ->end()
+                                    ->validate()
+                                        ->ifTrue(function ($v) {
+                                            $valuesSources = array_filter([
+                                                !empty($v['values_from_set']),
+                                                !empty($v['values_from_workspace']),
+                                                !empty($v['values_from_storage']),
+                                            ]);
+                                            return count($valuesSources) === 0;
+                                        })
+                                        ->thenInvalid(
+                                            'One of "values_from_set", "values_from_workspace", ' .
+                                            'or "values_from_storage" must be defined.',
+                                        )
+                                    ->end()
                                 ->end()
                             ->end()
+                        ->end()
+                        ->validate()
+                            ->always(function ($v) {
+                                if (empty($v['where_filters'])) {
+                                    unset($v['where_filters']);
+                                }
+                                return $v;
+                            })
+                        ->end()
+                        ->validate()
+                            ->ifTrue(function ($v) {
+                                return empty($v['changed_since']) && empty($v['changed_until']) &&
+                                    empty($v['where_filters']);
+                            })
+                            ->thenInvalid(
+                                'At least one of "changed_since", "changed_until", or "where_filters" ' .
+                                'must be defined.',
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -214,6 +280,20 @@ abstract class BaseConfiguration extends Configuration
                 }
                 return $v;
             })->end()
+            ->validate()
+            ->always(function ($v) {
+                if (empty($v['delete_where'])) {
+                    unset($v['delete_where']);
+                }
+                return $v;
+            })
+            ->end()
+            ->validate()
+            ->ifTrue(fn($values) =>
+                isset($values['delete_where_column']) && $values['delete_where_column'] !== '' &&
+                isset($values['delete_where']))
+            ->thenInvalid('Only one of "delete_where_column" or "delete_where" can be defined.')
+            ->end()
             ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
         // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation

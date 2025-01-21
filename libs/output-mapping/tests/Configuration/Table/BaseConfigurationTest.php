@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Configuration\Table;
 
+use Generator;
 use Keboola\OutputMapping\Configuration\Table;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -31,7 +32,6 @@ class BaseConfigurationTest extends TestCase
             'write_always' => false,
             'tags' => [],
             'schema' => [],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -79,7 +79,6 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -141,7 +140,6 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -203,7 +201,6 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig($config, $expectedArray);
@@ -257,7 +254,6 @@ class BaseConfigurationTest extends TestCase
                     'distribution_key' => false,
                 ],
             ],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(
@@ -314,7 +310,6 @@ class BaseConfigurationTest extends TestCase
             'delimiter' => 'xyz',
             'enclosure' => 'abc',
             'description' => 'descTest',
-            'delete_where' => [],
         ];
 
         $expectedArray = [
@@ -369,7 +364,6 @@ class BaseConfigurationTest extends TestCase
             ],
             'delete_where_column' => 'column',
             'description' => 'descTest',
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(
@@ -662,7 +656,6 @@ class BaseConfigurationTest extends TestCase
             'write_always' => false,
             'tags' => [],
             'schema' => [],
-            'delete_where' => [],
         ];
 
         $this->testManifestAndConfig(
@@ -670,6 +663,429 @@ class BaseConfigurationTest extends TestCase
             $config,
         );
     }
+
+    public function provideDeleteWhereConfigurations(): Generator
+    {
+        yield 'only changed_since' => [
+            'deleteWhere' => [
+                [
+                    'changed_since' => '-7 days',
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'changed_since' => '-7 days',
+                ],
+            ],
+        ];
+
+        yield 'only changed_until' => [
+            'deleteWhere' => [
+                [
+                    'changed_until' => '2024-03-20 10:00:00',
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'changed_until' => '2024-03-20 10:00:00',
+                ],
+            ],
+        ];
+
+        yield 'both changed_since and changed_until' => [
+            'deleteWhere' => [
+                [
+                    'changed_since' => '-1 hour',
+                    'changed_until' => 'now',
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'changed_since' => '-1 hour',
+                    'changed_until' => 'now',
+                ],
+            ],
+        ];
+
+        yield 'single where_filter with values_from_set' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'values_from_set' => ['pending', 'processing'],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'operator' => 'eq',
+                            'values_from_set' => ['pending', 'processing'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'single where_filter with values_from_workspace' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'city',
+                            'values_from_workspace' => [
+                                'id' => '123',
+                                'table' => 'cities',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'city',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'id' => '123',
+                                'table' => 'cities',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'single where_filter with values_from_storage' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'country',
+                            'values_from_storage' => [
+                                'bucket' => 'in.c-main',
+                                'table' => 'countries',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'country',
+                            'operator' => 'eq',
+                            'values_from_storage' => [
+                                'bucket' => 'in.c-main',
+                                'table' => 'countries',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'multiple where_filters with different operators' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'operator' => 'eq',
+                            'values_from_set' => ['active'],
+                        ],
+                        [
+                            'column' => 'type',
+                            'operator' => 'ne',
+                            'values_from_set' => ['deleted'],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'operator' => 'eq',
+                            'values_from_set' => ['active'],
+                        ],
+                        [
+                            'column' => 'type',
+                            'operator' => 'ne',
+                            'values_from_set' => ['deleted'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'combination of all features' => [
+            'deleteWhere' => [
+                [
+                    'changed_since' => '-1 day',
+                    'changed_until' => 'now',
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'values_from_set' => ['new'],
+                        ],
+                        [
+                            'column' => 'region',
+                            'values_from_workspace' => [
+                                'id' => '456',
+                                'table' => 'regions',
+                            ],
+                            'values_from_set' => [],
+                        ],
+                        [
+                            'column' => 'category',
+                            'operator' => 'ne',
+                            'values_from_storage' => [
+                                'bucket' => 'in.c-main',
+                                'table' => 'categories',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'changed_since' => '-1 day',
+                    'changed_until' => 'now',
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'operator' => 'eq',
+                            'values_from_set' => ['new'],
+                        ],
+                        [
+                            'column' => 'region',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'id' => '456',
+                                'table' => 'regions',
+                            ],
+                        ],
+                        [
+                            'column' => 'category',
+                            'operator' => 'ne',
+                            'values_from_storage' => [
+                                'bucket' => 'in.c-main',
+                                'table' => 'categories',
+                                'column' => 'name',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideDeleteWhereConfigurations
+     */
+    public function testDeleteWhereConfigurations(array $deleteWhere, array $expectedDeleteWhereConfig): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'delete_where' => $deleteWhere,
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+            'delete_where' => $expectedDeleteWhereConfig,
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
+    public function provideInvalidDeleteWhereConfigurations(): Generator
+    {
+        yield 'empty delete_where item' => [
+            'deleteWhere' => [
+                [
+                    // empty item
+                ],
+            ],
+            'expectedError' => 'Invalid configuration for path "table.delete_where.0": '
+                . 'At least one of "changed_since", "changed_until", or "where_filters" must be defined.',
+        ];
+
+        yield 'missing column in where_filters' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'values_from_set' => ['value'],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'The child config "column" under "table.delete_where.0.where_filters.0" '
+                . 'must be configured.',
+        ];
+
+        yield 'empty column in where_filters' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => '',
+                            'values_from_set' => ['value'],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'The path "table.delete_where.0.where_filters.0.column" '
+                . 'cannot contain an empty value, but got "".',
+        ];
+
+        yield 'invalid operator in where_filters' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'operator' => 'invalid',
+                            'values_from_set' => ['value'],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'Invalid configuration for path "table.delete_where.0.where_filters.0.operator": '
+                . 'Invalid operator "invalid". Valid values are "eq" or "ne".',
+        ];
+
+        yield 'multiple value sources in where_filters' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'values_from_set' => ['value'],
+                            'values_from_workspace' => [
+                                'id' => '123',
+                                'table' => 'table',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'Invalid configuration for path "table.delete_where.0.where_filters.0": '
+                . 'Only one of "values_from_set", "values_from_workspace", or "values_from_storage" can be defined.',
+        ];
+
+        yield 'missing required fields in values_from_workspace' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'values_from_workspace' => [
+                                'id' => '123',
+                                // missing required 'table'
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'The child config "table" under '
+                . '"table.delete_where.0.where_filters.0.values_from_workspace" must be configured.',
+        ];
+
+        yield 'missing required fields in values_from_storage' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            'values_from_storage' => [
+                                'bucket' => 'in.c-main',
+                                // missing required 'table'
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'The child config "table" under '
+                . '"table.delete_where.0.where_filters.0.values_from_storage" must be configured.',
+        ];
+
+        yield 'no value source in where_filters' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'status',
+                            // no value source specified
+                        ],
+                    ],
+                ],
+            ],
+            'expectedError' => 'Invalid configuration for path "table.delete_where.0.where_filters.0": '
+                . 'One of "values_from_set", "values_from_workspace", or "values_from_storage" must be defined.',
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidDeleteWhereConfigurations
+     */
+    public function testInvalidDeleteWhereConfigurations(array $deleteWhere, string $expectedError): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'delete_where' => $deleteWhere,
+        ];
+
+        $this->testManifestAndConfig($config, [], $expectedError);
+    }
+
+    public function testErrorDeleteWhereAndDeleteWhereColumnSetTogether(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'delete_where_column' => 'city',
+            'delete_where_values' => ['Prague'],
+            'delete_where' => [
+                [
+                    'changed_since' => '-7 days',
+                ],
+            ],
+        ];
+
+        $this->testManifestAndConfig(
+            $config,
+            [],
+            'Invalid configuration for path "table": Only one of "delete_where_column" '
+                . 'or "delete_where" can be defined.',
+        );
+    }
+
 
     private function testManifestAndConfig(
         array $config,

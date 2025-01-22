@@ -738,7 +738,7 @@ class BaseConfigurationTest extends TestCase
                         [
                             'column' => 'city',
                             'values_from_workspace' => [
-                                'id' => '123',
+                                'workspace_id' => '123',
                                 'table' => 'cities',
                                 'column' => 'name',
                             ],
@@ -753,7 +753,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'city',
                             'operator' => 'eq',
                             'values_from_workspace' => [
-                                'id' => '123',
+                                'workspace_id' => '123',
                                 'table' => 'cities',
                                 'column' => 'name',
                             ],
@@ -770,7 +770,7 @@ class BaseConfigurationTest extends TestCase
                         [
                             'column' => 'country',
                             'values_from_storage' => [
-                                'bucket' => 'in.c-main',
+                                'bucket_id' => 'in.c-main',
                                 'table' => 'countries',
                                 'column' => 'name',
                             ],
@@ -785,7 +785,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'country',
                             'operator' => 'eq',
                             'values_from_storage' => [
-                                'bucket' => 'in.c-main',
+                                'bucket_id' => 'in.c-main',
                                 'table' => 'countries',
                                 'column' => 'name',
                             ],
@@ -843,7 +843,7 @@ class BaseConfigurationTest extends TestCase
                         [
                             'column' => 'region',
                             'values_from_workspace' => [
-                                'id' => '456',
+                                'workspace_id' => '456',
                                 'table' => 'regions',
                             ],
                             'values_from_set' => [],
@@ -852,7 +852,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'category',
                             'operator' => 'ne',
                             'values_from_storage' => [
-                                'bucket' => 'in.c-main',
+                                'bucket_id' => 'in.c-main',
                                 'table' => 'categories',
                                 'column' => 'name',
                             ],
@@ -874,7 +874,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'region',
                             'operator' => 'eq',
                             'values_from_workspace' => [
-                                'id' => '456',
+                                'workspace_id' => '456',
                                 'table' => 'regions',
                             ],
                         ],
@@ -882,7 +882,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'category',
                             'operator' => 'ne',
                             'values_from_storage' => [
-                                'bucket' => 'in.c-main',
+                                'bucket_id' => 'in.c-main',
                                 'table' => 'categories',
                                 'column' => 'name',
                             ],
@@ -989,7 +989,7 @@ class BaseConfigurationTest extends TestCase
                             'column' => 'status',
                             'values_from_set' => ['value'],
                             'values_from_workspace' => [
-                                'id' => '123',
+                                'workspace_id' => '123',
                                 'table' => 'table',
                             ],
                         ],
@@ -1007,7 +1007,7 @@ class BaseConfigurationTest extends TestCase
                         [
                             'column' => 'status',
                             'values_from_workspace' => [
-                                'id' => '123',
+                                'workspace_id' => '123',
                                 // missing required 'table'
                             ],
                         ],
@@ -1025,7 +1025,7 @@ class BaseConfigurationTest extends TestCase
                         [
                             'column' => 'status',
                             'values_from_storage' => [
-                                'bucket' => 'in.c-main',
+                                'bucket_id' => 'in.c-main',
                                 // missing required 'table'
                             ],
                         ],

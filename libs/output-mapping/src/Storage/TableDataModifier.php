@@ -19,23 +19,28 @@ class TableDataModifier
 
     public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination): void
     {
-        if (!is_null($source->getDeleteWhereColumn())) {
-            // Delete rows
-            $deleteOptions = [
-                'whereColumn' => $source->getDeleteWhereColumn(),
-                'whereOperator' => $source->getDeleteWhereOperator(),
-                'whereValues' => $source->getDeleteWhereValues(),
-            ];
+        $tableId = $destination->getTableId();
+        $deleteOptionsList = [];
+
+        if ($source->getDeleteWhereColumn() !== null) {
+            $deleteOptionsList[] = DeleteTableRowsOptionsFactory::createFromLegacyDeleteWhereColumn(
+                $source->getDeleteWhereColumn(),
+                $source->getDeleteWhereOperator(),
+                $source->getDeleteWhereValues(),
+            );
+        }
+
+        foreach ($deleteOptionsList as $deleteOptions) {
             try {
                 $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
-                    $destination->getTableId(),
+                    $tableId,
                     $deleteOptions,
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot delete rows from table "%s" in Storage: %s',
-                        $destination->getTableId(),
+                        $tableId,
                         $e->getMessage(),
                     ),
                     $e->getCode(),

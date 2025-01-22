@@ -93,6 +93,107 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
         );
     }
 
+    #[NeedsEmptyBigqueryOutputBucket]
+    public function testWriteTableOutputMappingExistingTable(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents(
+            $root . '/upload/tableDefinition.csv',
+            <<< EOT
+            "1","bob","10.11","2021-12-12 16:45:21"
+            "2","alice","5.63","2020-12-12 15:45:21"
+            EOT,
+        );
+
+        $configs = [
+            [
+                'source' => 'tableDefinition.csv',
+                'destination' => $this->emptyBigqueryOutputBucketId . '.tableDefinitionBackendType',
+                'schema' => [
+                    [
+                        'name' => 'Id',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                            ],
+                            'bigquery' => [
+                                'type' => Bigquery::TYPE_INT64,
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'Name',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::STRING,
+                            ],
+                            'bigquery' => [
+                                'type' => Bigquery::TYPE_STRING,
+                                'length' => '17',
+                            ],
+                        ],
+                        'nullable' => false,
+                        'primary_key' => true,
+                    ],
+                    [
+                        'name' => 'birthweight',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::NUMERIC,
+                            ],
+                            'bigquery' => [
+                                'type' => Bigquery::TYPE_DECIMAL,
+                                'length' => '10,2',
+                            ],
+                        ],
+                    ],
+                    [
+                        'name' => 'created',
+                        'data_type' => [
+                            'base' => [
+                                'type' => BaseType::TIMESTAMP,
+                            ],
+                            'bigquery' => [
+                                'type' => Bigquery::TYPE_TIMESTAMP,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $writer = new TableWriter($this->getLocalStagingFactory());
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'authoritative',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        // And again
+        $tableQueue =  $writer->uploadTables(
+            '/upload',
+            ['mapping' => $configs],
+            ['componentId' => 'foo'],
+            'local',
+            false,
+            'authoritative',
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
+
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyBigqueryOutputBucketId);
+        self::assertCount(1, $tables);
+        self::assertEquals($this->emptyBigqueryOutputBucketId . '.tableDefinitionBackendType', $tables[0]['id']);
+        self::assertNotEmpty($jobIds[0]);
+    }
+
     public function configProvider(): Generator
     {
         yield 'base types' => [

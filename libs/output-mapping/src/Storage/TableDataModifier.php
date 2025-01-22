@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\ClientException;
@@ -17,30 +18,44 @@ class TableDataModifier
     ) {
     }
 
-    public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination): void
+    private function prepareDeleteOptionsList(MappingFromProcessedConfiguration $source): array
     {
-        $tableId = $destination->getTableId();
-        $deleteOptionsList = [];
-
-        if ($source->getDeleteWhereColumn() !== null) {
-            $deleteOptionsList[] = DeleteTableRowsOptionsFactory::createFromLegacyDeleteWhereColumn(
-                $source->getDeleteWhereColumn(),
-                $source->getDeleteWhereOperator(),
-                $source->getDeleteWhereValues(),
+        if ($source->getDeleteWhere() !== null) {
+            return array_filter(
+                array_map(
+                    function (MappingFromConfigurationDeleteWhere $deleteWhere) {
+                        return DeleteTableRowsOptionsFactory::createFromDeleteWhere($deleteWhere);
+                    },
+                    $source->getDeleteWhere(),
+                ),
             );
         }
+        if ($source->getDeleteWhereColumn() !== null) {
+            return [
+                DeleteTableRowsOptionsFactory::createFromLegacyDeleteWhereColumn(
+                    $source->getDeleteWhereColumn(),
+                    $source->getDeleteWhereOperator(),
+                    $source->getDeleteWhereValues(),
+                ),
+            ];
+        }
 
-        foreach ($deleteOptionsList as $deleteOptions) {
+        return [];
+    }
+
+    public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination): void
+    {
+        foreach ($this->prepareDeleteOptionsList($source) as $deleteOptions) {
             try {
                 $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
-                    $tableId,
+                    $destination->getTableId(),
                     $deleteOptions,
                 );
             } catch (ClientException $e) {
                 throw new InvalidOutputException(
                     sprintf(
                         'Cannot delete rows from table "%s" in Storage: %s',
-                        $tableId,
+                        $destination->getTableId(),
                         $e->getMessage(),
                     ),
                     $e->getCode(),

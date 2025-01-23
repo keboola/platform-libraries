@@ -11,6 +11,7 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\FileItem;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Throwable;
@@ -22,7 +23,7 @@ abstract class AbstractWorkspaceTableStrategyTestCase extends AbstractTestCase
     public function testPrepareLoadTaskOptions(): void
     {
         $source = $this->createMock(MappingFromProcessedConfiguration::class);
-        $source->method('getItemSourceClass')->willReturn(WorkspaceItemSource::class);
+        $source->method('getItemSourceType')->willReturn(SourceType::WORKSPACE);
         $source->method('getWorkspaceId')->willReturn('123455');
         $source->method('getDataObject')->willReturn('987655');
 

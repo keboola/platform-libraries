@@ -10,8 +10,10 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\ConfigurationMerger;
+use Keboola\OutputMapping\Writer\Helper\DeleteWhereHelper;
 use Keboola\OutputMapping\Writer\Helper\PrimaryKeyHelper;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -36,6 +38,7 @@ class TableConfigurationResolver
             $mappingFromManifest['destination'] ?? null,
             $mappingFromConfiguration['destination'] ?? null,
         );
+
         if (isset($config['primary_key'])) {
             $config['primary_key'] = PrimaryKeyHelper::normalizeKeyArray($this->logger, $config['primary_key']);
         }
@@ -44,6 +47,20 @@ class TableConfigurationResolver
                 $this->logger,
                 $config['distribution_key'],
             );
+        }
+
+        if (isset($config['delete_where'])) {
+            if ($source->getSourceType() === SourceType::WORKSPACE) {
+                $config['delete_where'] = array_map(
+                    function (array $deleteWhere) use ($source): array {
+                        return DeleteWhereHelper::addWorkspaceIdToValuesFromWorkspaceIfMissing(
+                            $deleteWhere,
+                            $source->getWorkspaceId(),
+                        );
+                    },
+                    $config['delete_where'],
+                );
+            }
         }
 
         if ($configuration->hasTagStagingFilesFeature()) {

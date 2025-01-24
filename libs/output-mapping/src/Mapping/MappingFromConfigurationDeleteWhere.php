@@ -29,7 +29,7 @@ class MappingFromConfigurationDeleteWhere
     }
 
     /**
-     * @return AbstractMappingFromConfigurationDeleteWhereFilter[]|null
+     * @return (MappingFromConfigurationDeleteWhereFilterFromSet|MappingFromConfigurationDeleteWhereFilterFromWorkspace)[]|null
      */
     public function getWhereFilters(): ?array
     {

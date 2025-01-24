@@ -62,7 +62,7 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
                     'column' => 'columnName',
                     'operator' => 'ne',
                     'values_from_workspace' => [
-                        'workspaceId' => '123',
+                        'workspace_id' => '123',
                         'table' => 'tableInWorkspace',
                         'column' => 'columnInWorkspace',
                     ],
@@ -92,7 +92,7 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
                     'column' => 'columnName',
                     'operator' => 'ne',
                     'values_from_workspace' => [
-                        'workspaceId' => '123',
+                        'workspace_id' => '123',
                         'table' => 'tableInWorkspace',
                         'column' => 'columnInWorkspace',
                     ],

@@ -40,7 +40,7 @@ class DeleteTableRowsOptionsFactory
         $whereFilters = [];
         foreach ($deleteWhere->getWhereFilters() as $deleteFilter) {
             $whereFilter = [
-                'column' => $deleteFilter->getWorkspaceColumn(),
+                'column' => $deleteFilter->getColumn(),
                 'operator' => $deleteFilter->getOperator(),
             ];
 
@@ -52,7 +52,7 @@ class DeleteTableRowsOptionsFactory
                 $whereFilter['valuesByTableInWorkspace'] = [
                     'workspaceId' => $deleteFilter->getWorkspaceId(),
                     'table' => $deleteFilter->getWorkspaceTable(),
-                    'columnt' => $deleteFilter->getWorkspaceColumn(),
+                    'column' => $deleteFilter->getWorkspaceColumn(),
                 ];
                 $whereFilters[] = $whereFilter;
             }

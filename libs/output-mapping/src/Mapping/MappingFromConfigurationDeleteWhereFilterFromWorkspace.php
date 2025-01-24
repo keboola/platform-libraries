@@ -11,12 +11,12 @@ class MappingFromConfigurationDeleteWhereFilterFromWorkspace extends AbstractMap
         return $this->mapping['values_from_workspace']['workspaceId'];
     }
 
-    public function getTableId(): string
+    public function getWorkspaceTable(): string
     {
         return $this->mapping['values_from_workspace']['table'];
     }
 
-    public function getColumn(): string
+    public function getWorkspaceColumn(): string
     {
         return $this->mapping['values_from_workspace']['column'];
     }

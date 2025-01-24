@@ -33,7 +33,6 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
      */
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
-
         if ($source->getItemSourceType() !== SourceType::WORKSPACE) {
             throw new InvalidArgumentException(sprintf(
                 'Argument $source is expected to be type of "%s", "%s" given',

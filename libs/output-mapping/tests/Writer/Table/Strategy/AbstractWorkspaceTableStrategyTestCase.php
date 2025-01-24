@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
+use InvalidArgumentException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
@@ -34,6 +35,17 @@ abstract class AbstractWorkspaceTableStrategyTestCase extends AbstractTestCase
             ],
             $this->strategy->prepareLoadTaskOptions($source),
         );
+    }
+
+    public function testPrepareLoadTaskOptionsErrorOnNonWorkspaceSourceType(): void
+    {
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getItemSourceType')->willReturn(SourceType::LOCAL);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Argument $source is expected to be type of "workspace", "local" given');
+
+        $this->strategy->prepareLoadTaskOptions($source);
     }
 
     public function testListManifests(): void

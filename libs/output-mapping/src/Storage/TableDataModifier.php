@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\ClientException;
@@ -41,6 +42,16 @@ class TableDataModifier
 
     private function prepareDeleteOptionsList(MappingFromProcessedConfiguration $source): array
     {
+        if ($source->getDeleteWhere() !== null) {
+            return array_filter(
+                array_map(
+                    function (MappingFromConfigurationDeleteWhere $deleteWhere) {
+                        return DeleteTableRowsOptionsFactory::createFromDeleteWhere($deleteWhere);
+                    },
+                    $source->getDeleteWhere(),
+                ),
+            );
+        }
         if ($source->getDeleteWhereColumn() !== null) {
             return [
                 DeleteTableRowsOptionsFactory::createFromLegacyDeleteWhereColumn(

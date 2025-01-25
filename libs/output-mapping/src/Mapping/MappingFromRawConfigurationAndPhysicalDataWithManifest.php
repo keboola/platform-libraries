@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Writer\FileItem;
-use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 
 class MappingFromRawConfigurationAndPhysicalDataWithManifest
 {
@@ -50,14 +50,6 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifest
         return $this->source->getPath();
     }
 
-    /**
-     * @return class-string<SourceInterface>
-     */
-    public function getItemSourceClass(): string
-    {
-        return $this->source->getItemSourceClass();
-    }
-
     public function getWorkspaceId(): string
     {
         return $this->source->getWorkspaceId();
@@ -66,5 +58,10 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifest
     public function getDataObject(): string
     {
         return $this->source->getDataObject();
+    }
+
+    public function getSourceType(): SourceType
+    {
+        return $this->source->getItemSourceType();
     }
 }

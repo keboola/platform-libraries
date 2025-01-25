@@ -13,4 +13,6 @@ interface SourceInterface
     public function getWorkspaceId(): string;
 
     public function getDataObject(): string;
+
+    public function getSourceType(): SourceType;
 }

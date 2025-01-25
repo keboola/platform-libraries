@@ -40,4 +40,9 @@ class LocalFileSource implements SourceInterface
     {
         throw new InvalidOutputException('Not implemented');
     }
+
+    public function getSourceType(): SourceType
+    {
+        return SourceType::LOCAL;
+    }
 }

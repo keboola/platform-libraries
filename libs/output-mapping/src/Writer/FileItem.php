@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Writer;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 
 class FileItem implements SourceInterface
 {
@@ -49,5 +50,10 @@ class FileItem implements SourceInterface
     public function getDataObject(): string
     {
         throw new InvalidOutputException('Not implemented');
+    }
+
+    public function getSourceType(): SourceType
+    {
+        return SourceType::FILE;
     }
 }

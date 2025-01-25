@@ -69,6 +69,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertFalse($mapping->isIncremental());
         self::assertEquals(SourceType::WORKSPACE, $mapping->getItemSourceType());
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
+        self::assertNull($mapping->getDeleteWhere());
     }
 
     public function testTableMetadata(): void
@@ -276,5 +277,32 @@ class MappingFromProcessedConfigurationTest extends TestCase
 
         self::assertSame(['', '123', 'col1', 'col2'], $mapping->getColumns());
         self::assertSame(['', '123', 'col1'], $mapping->getPrimaryKey());
+    }
+
+    public function testGetDeleteWhere(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delete_where' => [
+                [
+                    'changed_since' => '-7 days',
+                ],
+                [
+                    'changed_until' => '-2 days',
+                ],
+            ],
+        ];
+
+        $mapping = new MappingFromProcessedConfiguration(
+            $mapping,
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        $deleteWhere = $mapping->getDeleteWhere();
+        self::assertNotNull($deleteWhere);
+        self::assertCount(2, $deleteWhere);
+
+        self::assertSame('-7 days', $deleteWhere[0]->getChangedSince());
+        self::assertSame('-2 days', $deleteWhere[1]->getChangedUntil());
     }
 }

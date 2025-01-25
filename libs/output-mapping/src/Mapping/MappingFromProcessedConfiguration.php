@@ -208,4 +208,21 @@ class MappingFromProcessedConfiguration
     {
         return $this->source->getSourceType();
     }
+
+    /**
+     * @return MappingFromConfigurationDeleteWhere[]|null
+     */
+    public function getDeleteWhere(): ?array
+    {
+        if (!isset($this->mapping['delete_where'])) {
+            return null;
+        }
+
+        return array_map(
+            function (array $deleteWhere): MappingFromConfigurationDeleteWhere {
+                return new MappingFromConfigurationDeleteWhere($deleteWhere);
+            },
+            $this->mapping['delete_where'],
+        );
+    }
 }

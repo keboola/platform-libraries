@@ -19,13 +19,7 @@ class TableDataModifier
 
     public function updateTableData(MappingFromProcessedConfiguration $source, MappingDestination $destination): void
     {
-        if (!is_null($source->getDeleteWhereColumn())) {
-            // Delete rows
-            $deleteOptions = [
-                'whereColumn' => $source->getDeleteWhereColumn(),
-                'whereOperator' => $source->getDeleteWhereOperator(),
-                'whereValues' => $source->getDeleteWhereValues(),
-            ];
+        foreach ($this->prepareDeleteOptionsList($source) as $deleteOptions) {
             try {
                 $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
                     $destination->getTableId(),
@@ -43,5 +37,20 @@ class TableDataModifier
                 );
             }
         }
+    }
+
+    private function prepareDeleteOptionsList(MappingFromProcessedConfiguration $source): array
+    {
+        if ($source->getDeleteWhereColumn() !== null) {
+            return [
+                DeleteTableRowsOptionsFactory::createFromLegacyDeleteWhereColumn(
+                    $source->getDeleteWhereColumn(),
+                    $source->getDeleteWhereOperator(),
+                    $source->getDeleteWhereValues(),
+                ),
+            ];
+        }
+
+        return [];
     }
 }

@@ -115,6 +115,34 @@ class DeleteTableRowsOptionsFactoryTest extends TestCase
             ],
         ];
 
+        yield 'mapping with values_from_workspace filter - use column from filter' => [
+            'mapping' => [
+                'where_filters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'values_from_workspace' => [
+                            'workspace_id' => 'workspace123',
+                            'table' => 'table1',
+                        ],
+                    ],
+                ],
+            ],
+            'expectedResult' => [
+                'whereFilters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'valuesByTableInWorkspace' => [
+                            'workspaceId' => 'workspace123',
+                            'table' => 'table1',
+                            'column' => 'test_column',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
         yield 'mapping with multiple filters and dates' => [
             'mapping' => [
                 'changed_since' => '2024-01-01',

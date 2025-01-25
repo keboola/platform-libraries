@@ -64,7 +64,7 @@ class DeleteTableRowsOptionsFactory
                 $whereFilter['valuesByTableInWorkspace'] = [
                     'workspaceId' => $deleteFilter->getWorkspaceId(),
                     'table' => $deleteFilter->getWorkspaceTable(),
-                    'column' => $deleteFilter->getWorkspaceColumn(),
+                    'column' => $deleteFilter->getWorkspaceColumn() ?: $deleteFilter->getColumn(),
                 ];
                 $whereFilters[] = $whereFilter;
             }

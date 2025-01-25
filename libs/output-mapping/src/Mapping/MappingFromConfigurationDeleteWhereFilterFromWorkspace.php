@@ -16,8 +16,8 @@ class MappingFromConfigurationDeleteWhereFilterFromWorkspace extends AbstractMap
         return $this->mapping['values_from_workspace']['table'];
     }
 
-    public function getWorkspaceColumn(): string
+    public function getWorkspaceColumn(): ?string
     {
-        return $this->mapping['values_from_workspace']['column'];
+        return $this->mapping['values_from_workspace']['column'] ?? null;
     }
 }

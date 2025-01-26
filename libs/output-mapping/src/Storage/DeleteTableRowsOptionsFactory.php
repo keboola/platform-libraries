@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromSet;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromStorage;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromWorkspace;
 
 class DeleteTableRowsOptionsFactory
@@ -65,6 +66,17 @@ class DeleteTableRowsOptionsFactory
                     'workspaceId' => $deleteFilter->getWorkspaceId(),
                     'table' => $deleteFilter->getWorkspaceTable(),
                     'column' => $deleteFilter->getWorkspaceColumn() ?: $deleteFilter->getColumn(),
+                ];
+                $whereFilters[] = $whereFilter;
+            }
+            if ($deleteFilter instanceof MappingFromConfigurationDeleteWhereFilterFromStorage) {
+                $whereFilter['valuesByTableInStorage'] = [
+                    'tableId' => sprintf(
+                        '%s.%s',
+                        $deleteFilter->getStorageBucketId(),
+                        $deleteFilter->getStorageTable(),
+                    ),
+                    'column' => $deleteFilter->getStorageColumn() ?: $deleteFilter->getColumn(),
                 ];
                 $whereFilters[] = $whereFilter;
             }

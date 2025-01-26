@@ -143,6 +143,61 @@ class DeleteTableRowsOptionsFactoryTest extends TestCase
             ],
         ];
 
+        yield 'mapping with values_from_storage filter' => [
+            'mapping' => [
+                'where_filters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'values_from_storage' => [
+                            'bucket_id' => 'in.c-main',
+                            'table' => 'table1',
+                            'column' => 'column1',
+                        ],
+                    ],
+                ],
+            ],
+            'expectedResult' => [
+                'whereFilters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'valuesByTableInStorage' => [
+                            'tableId' => 'in.c-main.table1',
+                            'column' => 'column1',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'mapping with values_from_storage filter - use column from filter' => [
+            'mapping' => [
+                'where_filters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'values_from_storage' => [
+                            'bucket_id' => 'in.c-main',
+                            'table' => 'table1',
+                        ],
+                    ],
+                ],
+            ],
+            'expectedResult' => [
+                'whereFilters' => [
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'valuesByTableInStorage' => [
+                            'tableId' => 'in.c-main.table1',
+                            'column' => 'test_column',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
         yield 'mapping with multiple filters and dates' => [
             'mapping' => [
                 'changed_since' => '2024-01-01',
@@ -158,6 +213,15 @@ class DeleteTableRowsOptionsFactoryTest extends TestCase
                         'operator' => 'ne',
                         'values_from_workspace' => [
                             'workspace_id' => 'workspace123',
+                            'table' => 'table1',
+                            'column' => 'column1',
+                        ],
+                    ],
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'values_from_storage' => [
+                            'bucket_id' => 'in.c-main',
                             'table' => 'table1',
                             'column' => 'column1',
                         ],
@@ -179,6 +243,14 @@ class DeleteTableRowsOptionsFactoryTest extends TestCase
                         'valuesByTableInWorkspace' => [
                             'workspaceId' => 'workspace123',
                             'table' => 'table1',
+                            'column' => 'column1',
+                        ],
+                    ],
+                    [
+                        'column' => 'test_column',
+                        'operator' => 'ne',
+                        'valuesByTableInStorage' => [
+                            'tableId' => 'in.c-main.table1',
                             'column' => 'column1',
                         ],
                     ],

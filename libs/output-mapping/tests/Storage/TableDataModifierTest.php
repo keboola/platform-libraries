@@ -165,4 +165,9 @@ class TableDataModifierTest extends AbstractTestCase
     {
         $this->markTestIncomplete('Not implemented yet on Storage API side.');
     }
+
+    public function testaDeleteTableRowsFromDeleteWhereConfigWithStorage(): void
+    {
+        $this->markTestIncomplete('Not implemented yet on Storage API side.');
+    }
 }

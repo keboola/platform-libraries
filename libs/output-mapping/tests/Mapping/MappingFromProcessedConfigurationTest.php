@@ -10,7 +10,7 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use PHPUnit\Framework\TestCase;
 
 class MappingFromProcessedConfigurationTest extends TestCase
@@ -32,7 +32,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
         $sourceMock->method('getWorkspaceId')->willReturn('workspaceId');
         $sourceMock->method('getDataObject')->willReturn('dataObject');
         $sourceMock->method('getSourceName')->willReturn('sourceName');
-        $sourceMock->method('getItemSourceClass')->willReturn(WorkspaceItemSource::class);
+        $sourceMock->method('getItemSourceType')->willReturn(SourceType::WORKSPACE);
 
         $fileItemMock = $this->createMock(FileItem::class);
 
@@ -67,7 +67,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertFalse($mapping->hasSchemaColumnMetadata());
         self::assertFalse($mapping->hasWriteAlways());
         self::assertFalse($mapping->isIncremental());
-        self::assertEquals(WorkspaceItemSource::class, $mapping->getItemSourceClass());
+        self::assertEquals(SourceType::WORKSPACE, $mapping->getItemSourceType());
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
     }
 

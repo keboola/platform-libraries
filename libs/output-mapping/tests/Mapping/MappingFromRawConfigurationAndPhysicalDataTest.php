@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Writer\FileItem;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
 use PHPUnit\Framework\TestCase;
 
@@ -35,7 +36,7 @@ class MappingFromRawConfigurationAndPhysicalDataTest extends TestCase
         $this->assertFalse($mapping->isSliced());
         $this->assertEquals('/tmp/path/mockfile.csv', $mapping->getPathName());
         $this->assertEquals('/tmp/path/', $mapping->getPath());
-        $this->assertEquals('Keboola\OutputMapping\Writer\FileItem', $mapping->getItemSourceClass());
+        $this->assertEquals(SourceType::FILE, $mapping->getItemSourceType());
 
         try {
             $mapping->getWorkspaceId();
@@ -73,8 +74,8 @@ class MappingFromRawConfigurationAndPhysicalDataTest extends TestCase
         $this->assertEquals('mockfile.csv.manifest', $mapping->getManifestName());
         $this->assertFalse($mapping->isSliced());
         $this->assertEquals(
-            'Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource',
-            $mapping->getItemSourceClass(),
+            SourceType::WORKSPACE,
+            $mapping->getItemSourceType(),
         );
         $this->assertEquals('1234567890', $mapping->getWorkspaceId());
         $this->assertEquals('TestDataObject', $mapping->getDataObject());

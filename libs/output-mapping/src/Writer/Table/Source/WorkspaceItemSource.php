@@ -33,4 +33,9 @@ class WorkspaceItemSource implements SourceInterface
     {
         return $this->isSliced;
     }
+
+    public function getSourceType(): SourceType
+    {
+        return SourceType::WORKSPACE;
+    }
 }

@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\FileItem;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use PHPUnit\Framework\TestCase;
 
 class MappingFromRawConfigurationAndPhysicalDataWithManifestTest extends TestCase
@@ -32,6 +33,6 @@ class MappingFromRawConfigurationAndPhysicalDataWithManifestTest extends TestCas
         $this->assertFalse($mapping->isSliced());
         $this->assertEquals('pathName', $mapping->getPathName());
         $this->assertEquals('path', $mapping->getPath());
-        $this->assertEquals(FileItem::class, $mapping->getItemSourceClass());
+        $this->assertEquals(SourceType::FILE, $mapping->getSourceType());
     }
 }

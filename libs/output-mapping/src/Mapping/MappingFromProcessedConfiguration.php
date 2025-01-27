@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Mapping;
 use Keboola\OutputMapping\Configuration\Table\Configuration;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 
 class MappingFromProcessedConfiguration
 {
@@ -189,14 +189,6 @@ class MappingFromProcessedConfiguration
         return $metadata;
     }
 
-    /**
-     * @return class-string<SourceInterface>
-     */
-    public function getItemSourceClass(): string
-    {
-        return $this->source->getItemSourceClass();
-    }
-
     /** @return null|MappingFromConfigurationSchemaColumn[] */
     public function getSchema(): ?array
     {
@@ -210,5 +202,10 @@ class MappingFromProcessedConfiguration
     public function hasHeader(): bool
     {
         return $this->mapping['has_header'] ?? false;
+    }
+
+    public function getItemSourceType(): SourceType
+    {
+        return $this->source->getSourceType();
     }
 }

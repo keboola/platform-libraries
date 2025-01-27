@@ -16,7 +16,7 @@ use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
-use Keboola\OutputMapping\Writer\Table\Source\WorkspaceItemSource;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -32,12 +32,11 @@ abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
      */
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
-        $itemClass = $source->getItemSourceClass();
-        if ($itemClass !== WorkspaceItemSource::class) {
+        if ($source->getItemSourceType() !== SourceType::WORKSPACE) {
             throw new InvalidArgumentException(sprintf(
-                'Argument $source is expected to be instance of %s, %s given',
-                WorkspaceItemSource::class,
-                $itemClass,
+                'Argument $source is expected to be type of "%s", "%s" given',
+                SourceType::WORKSPACE->value,
+                $source->getItemSourceType()->value,
             ));
         }
 

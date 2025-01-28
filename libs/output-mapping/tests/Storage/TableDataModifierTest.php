@@ -50,6 +50,28 @@ class TableDataModifierTest extends AbstractTestCase
                 ]),
             ],
             'expectedRowsCount' => 1,
+            'expectedJobsProperties' => [
+                'job1' => [
+                    'operationParams' => [
+                        'queue' => 'main',
+                        'request' => [
+                            'changedSince' => null,
+                            'changedUntil' => null,
+                            'whereFilters' => [
+                                [
+                                    'column' => 'Id',
+                                    'values' => ['id1', 'id2'],
+                                    'operator' => 'eq',
+                                ],
+                            ],
+                        ],
+                        'backendConfiguration' => [],
+                    ],
+                    'results' => [
+                        'deletedRows' => null, //2, (bug in Storage API)
+                    ],
+                ],
+            ],
         ];
 
         yield 'multiple delete where' => [
@@ -75,6 +97,48 @@ class TableDataModifierTest extends AbstractTestCase
                 ]),
             ],
             'expectedRowsCount' => 1,
+            'expectedJobsProperties' => [
+                'job2' => [
+                    'operationParams' => [
+                        'queue' => 'main',
+                        'request' => [
+                            'changedSince' => null,
+                            'changedUntil' => null,
+                            'whereFilters' => [
+                                [
+                                    'column' => 'Id',
+                                    'values' => ['id2'],
+                                    'operator' => 'eq',
+                                ],
+                            ],
+                        ],
+                        'backendConfiguration' => [],
+                    ],
+                    'results' => [
+                        'deletedRows' => null, //1, (bug in Storage API)
+                    ],
+                ],
+                'job1' => [
+                    'operationParams' => [
+                        'queue' => 'main',
+                        'request' => [
+                            'changedSince' => null,
+                            'changedUntil' => null,
+                            'whereFilters' => [
+                                [
+                                    'column' => 'Id',
+                                    'values' => ['id1'],
+                                    'operator' => 'eq',
+                                ],
+                            ],
+                        ],
+                        'backendConfiguration' => [],
+                    ],
+                    'results' => [
+                        'deletedRows' => null, //1, (bug in Storage API)
+                    ],
+                ],
+            ],
         ];
 
         yield 'multiple where_filters' => [
@@ -96,6 +160,33 @@ class TableDataModifierTest extends AbstractTestCase
                 ]),
             ],
             'expectedRowsCount' => 3, // Condition Id IN('id1') AND Id IN('id2') will never be true
+            'expectedJobsProperties' => [
+                'job1' => [
+                    'operationParams' => [
+                        'queue' => 'main',
+                        'request' => [
+                            'changedSince' => null,
+                            'changedUntil' => null,
+                            'whereFilters' => [
+                                [
+                                    'column' => 'Id',
+                                    'values' => ['id1'],
+                                    'operator' => 'eq',
+                                ],
+                                [
+                                    'column' => 'Id',
+                                    'values' => ['id2'],
+                                    'operator' => 'eq',
+                                ],
+                            ],
+                        ],
+                        'backendConfiguration' => [],
+                    ],
+                    'results' => [
+                        'deletedRows' => null, //0, (bug in Storage API)
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -103,8 +194,11 @@ class TableDataModifierTest extends AbstractTestCase
      * @dataProvider provideDeleteTableRowsFromDeleteWhereConfig
      */
     #[NeedsTestTables(count: 1)]
-    public function testDeleteTableRowsFromDeleteWhereConfig(array $deleteWhere, int $expectedRowsCount): void
-    {
+    public function testDeleteTableRowsFromDeleteWhereConfig(
+        array $deleteWhere,
+        int $expectedRowsCount,
+        array $expectedJobsProperties,
+    ): void {
         $tableDataModifier = new TableDataModifier($this->clientWrapper);
 
         $destination = new MappingDestination($this->firstTableId);
@@ -112,13 +206,29 @@ class TableDataModifierTest extends AbstractTestCase
         $source = $this->createMock(MappingFromProcessedConfiguration::class);
         $source->method('getDeleteWhere')->willReturn($deleteWhere);
 
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
+
         $tableDataModifier->updateTableData($source, $destination);
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
 
         $this->assertEquals($expectedRowsCount, $newTable['rowsCount']);
 
-        //@TODO: Validate also Storage job params and results
+        $jobs = array_values(
+            array_filter(
+                $this->clientWrapper->getBasicClient()->listJobs(),
+                function (array $job) use ($runId): bool {
+                    return $job['runId'] === $runId;
+                },
+            ),
+        );
+
+        self::assertCount(count($expectedJobsProperties), $jobs);
+        foreach (array_values($expectedJobsProperties) as $key => $expectedJobProperties) {
+            self::assertArrayHasKey($key, $jobs);
+            self::assertJobParams($expectedJobProperties, $jobs[$key]);
+        }
     }
 
     #[NeedsTestTables(count: 1)]
@@ -164,5 +274,13 @@ class TableDataModifierTest extends AbstractTestCase
     public function testaDeleteTableRowsFromDeleteWhereConfigWithWorkspace(): void
     {
         $this->markTestIncomplete('Not implemented yet on Storage API side.');
+    }
+
+    private static function assertJobParams(array $expectedJobParams, array $actualJobParams): void
+    {
+        foreach ($expectedJobParams as $jobParam => $jobParamValues) {
+            self::assertArrayHasKey($jobParam, $actualJobParams);
+            self::assertSame($jobParamValues, $actualJobParams[$jobParam]);
+        }
     }
 }

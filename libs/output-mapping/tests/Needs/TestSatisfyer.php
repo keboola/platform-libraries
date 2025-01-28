@@ -238,7 +238,7 @@ class TestSatisfyer
 
                 // Create table
                 $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
-                for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+                for ($i = 0; $i < $tableCount; $i++) {
                     $tableIds[$i] = $clientWrapper->getTableAndFileStorageClient()->createTableAsync(
                         $testBucketId,
                         'test' . ($i + 1),
@@ -254,7 +254,7 @@ class TestSatisfyer
 
                 // Create table
                 $propNames = ['firstTableId', 'secondTableId', 'thirdTableId'];
-                for ($i = 0; $i < max($tableCount, count($propNames)); $i++) {
+                for ($i = 0; $i < $tableCount; $i++) {
                     $tableName = 'test' . ($i + 1);
                     $tableId = $clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
                         $testBucketId,

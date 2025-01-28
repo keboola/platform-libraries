@@ -68,7 +68,7 @@ class TableDataModifierTest extends AbstractTestCase
                         'backendConfiguration' => [],
                     ],
                     'results' => [
-                        'deletedRows' => null, //2, (bug in Storage API)
+                        'deletedRows' => 2,
                     ],
                 ],
             ],
@@ -115,7 +115,7 @@ class TableDataModifierTest extends AbstractTestCase
                         'backendConfiguration' => [],
                     ],
                     'results' => [
-                        'deletedRows' => null, //1, (bug in Storage API)
+                        'deletedRows' => 1,
                     ],
                 ],
                 'job1' => [
@@ -135,7 +135,7 @@ class TableDataModifierTest extends AbstractTestCase
                         'backendConfiguration' => [],
                     ],
                     'results' => [
-                        'deletedRows' => null, //1, (bug in Storage API)
+                        'deletedRows' => 1,
                     ],
                 ],
             ],
@@ -183,7 +183,7 @@ class TableDataModifierTest extends AbstractTestCase
                         'backendConfiguration' => [],
                     ],
                     'results' => [
-                        'deletedRows' => null, //0, (bug in Storage API)
+                        'deletedRows' => 0,
                     ],
                 ],
             ],
@@ -245,7 +245,7 @@ class TableDataModifierTest extends AbstractTestCase
 
         $expectedMessage = 'Cannot delete rows ' .
             'from table "in.c-TableDataModifierTest_testDeleteTableRowsWithUnexistColumn.test1" ' .
-            'in Storage: exceptions.storage.tables.columnNotExists';
+            'in Storage: Cannot filter by column "UnexistColumn", column does not exist';
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedMessage);

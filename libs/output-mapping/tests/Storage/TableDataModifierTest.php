@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Storage;
 
 use Generator;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
@@ -12,6 +13,8 @@ use Keboola\OutputMapping\Storage\TableDataModifier;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\StorageApi\Workspaces;
 
 class TableDataModifierTest extends AbstractTestCase
 {
@@ -27,11 +30,55 @@ class TableDataModifierTest extends AbstractTestCase
         $source->method('getDeleteWhereOperator')->willReturn('eq');
         $source->method('getDeleteWhereValues')->willReturn(['id1', 'id2']);
 
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
+
         $tableDataModifier->updateTableData($source, $destination);
 
         $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
 
         $this->assertEquals(1, $newTable['rowsCount']);
+
+        $jobs = array_values(
+            array_filter(
+                $this->clientWrapper->getBasicClient()->listJobs(),
+                function (array $job) use ($runId): bool {
+                    return $job['runId'] === $runId;
+                },
+            ),
+        );
+
+        self::assertCount(1, $jobs);
+
+        $job = $jobs[0];
+
+        self::assertArrayHasKey('operationParams', $job);
+        self::assertSame(
+            [
+                'queue' => 'main',
+                'request' => [
+                    'changedSince' => null,
+                    'changedUntil' => null,
+                    'whereFilters' => [
+                        [
+                            'column' => 'Id',
+                            'values' => ['id1', 'id2'],
+                            'operator' => 'eq',
+                        ],
+                    ],
+                ],
+                'backendConfiguration' => [],
+            ],
+            $job['operationParams'],
+        );
+
+        self::assertArrayHasKey('results', $job);
+        self::assertSame(
+            [
+                'deletedRows' => 2,
+            ],
+            $job['results'],
+        );
     }
 
     public static function provideDeleteTableRowsFromDeleteWhereConfig(): Generator
@@ -271,9 +318,127 @@ class TableDataModifierTest extends AbstractTestCase
         $this->assertEquals(3, $newTable['rowsCount']);
     }
 
-    public function testaDeleteTableRowsFromDeleteWhereConfigWithWorkspace(): void
+    public static function provideDeleteTableRowsFromDeleteWhereConfigWithWorkspace(): Generator
     {
-        $this->markTestIncomplete('Not implemented yet on Storage API side.');
+        yield 'normal situation' => [
+            'deleteFilterForTableInWorkspace' => [
+                'whereColumn' => 'Id',
+                'whereOperator' => 'eq',
+                'whereValues' => ['id2'],
+            ],
+            'expectedRowsCount' => 1,
+            'expectedDeletedRowsCount' => 2,
+        ];
+        yield 'table in workspace is empty' => [
+            'deleteFilterForTableInWorkspace' => [
+                'whereColumn' => 'Id',
+                'whereOperator' => 'eq',
+                'whereValues' => ['id1', 'id2', 'id3'],
+            ],
+            'expectedRowsCount' => 3, // no records will be deleted
+            'expectedDeletedRowsCount' => 0,
+        ];
+    }
+
+    /**
+     * @dataProvider provideDeleteTableRowsFromDeleteWhereConfigWithWorkspace
+     */
+    #[NeedsTestTables(count: 2)]
+    public function testaDeleteTableRowsFromDeleteWhereConfigWithWorkspace(
+        array $deleteFilterForTableInWorkspace,
+        int $expectedRowsCount,
+        int $expectedDeletedRowsCount,
+    ): void {
+        $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy(
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        );
+        self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $workspace);
+
+        $workspaces = new Workspaces($this->clientWrapper->getBasicClient());
+
+        $workspaceId = $workspace->getDataStorage()->getWorkspaceId();
+
+        $this->clientWrapper->getTableAndFileStorageClient()->deleteTableRows(
+            $this->secondTableId,
+            $deleteFilterForTableInWorkspace,
+        );
+
+        $workspaces->cloneIntoWorkspace((int) $workspaceId, [
+            'input' => [
+                [
+                    'source' => $this->secondTableId,
+                    'destination' => 'deleteFilter',
+                ],
+            ],
+        ]);
+
+        $deleteWhere = [
+            new MappingFromConfigurationDeleteWhere([
+                'where_filters' => [
+                    [
+                        'column' => 'Id',
+                        'operator' => 'eq',
+                        'values_from_workspace' => [
+                            'workspace_id' => $workspaceId,
+                            'table' => 'deleteFilter',
+                        ],
+                    ],
+                ],
+            ]),
+        ];
+
+        $tableDataModifier = new TableDataModifier($this->clientWrapper);
+
+        $destination = new MappingDestination($this->firstTableId);
+
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->method('getDeleteWhere')->willReturn($deleteWhere);
+
+        $runId = $this->clientWrapper->getBasicClient()->generateRunId();
+        $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
+
+        $tableDataModifier->updateTableData($source, $destination);
+
+        $newTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $this->assertEquals($expectedRowsCount, $newTable['rowsCount']);
+
+        $jobs = array_values(
+            array_filter(
+                $this->clientWrapper->getBasicClient()->listJobs(),
+                function (array $job) use ($runId): bool {
+                    return $job['runId'] === $runId;
+                },
+            ),
+        );
+
+        self::assertCount(1, $jobs);
+        self::assertJobParams(
+            [
+                'operationParams' => [
+                    'queue' => 'main',
+                    'request' => [
+                        'changedSince' => null,
+                        'changedUntil' => null,
+                        'whereFilters' => [
+                            [
+                                'column' => 'Id',
+                                'operator' => 'eq',
+                                'valuesByTableInWorkspace' => [
+                                    'table' => 'deleteFilter',
+                                    'column' => 'Id',
+                                    'workspaceId' => (int) $workspaceId,
+                                ],
+                            ],
+                        ],
+                    ],
+                    'backendConfiguration' => [],
+                ],
+                'results' => [
+                    'deletedRows' => $expectedDeletedRowsCount,
+                ],
+            ],
+            $jobs[0],
+        );
     }
 
     private static function assertJobParams(array $expectedJobParams, array $actualJobParams): void

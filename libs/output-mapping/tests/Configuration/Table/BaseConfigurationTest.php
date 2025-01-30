@@ -763,6 +763,34 @@ class BaseConfigurationTest extends TestCase
             ],
         ];
 
+        yield 'single where_filter with values_from_workspace wihout column and workspace_id' => [
+            'deleteWhere' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'city',
+                            'values_from_workspace' => [
+                                'table' => 'cities',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'expectedDeleteWhereConfig' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'city',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'table' => 'cities',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
         yield 'single where_filter with values_from_storage' => [
             'deleteWhere' => [
                 [

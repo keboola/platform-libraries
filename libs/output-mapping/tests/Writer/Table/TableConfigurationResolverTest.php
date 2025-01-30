@@ -8,6 +8,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
+use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -429,5 +430,119 @@ class TableConfigurationResolverTest extends TestCase
             $mappingFromConfiguration,
             $systemMetadata,
         );
+    }
+
+    public function testConfigurationAddWorkspaceIdIfSourceIsWorkspaceType(): void
+    {
+
+        $configuration = $this->createMock(OutputMappingSettings::class);
+        $configuration->expects(self::once())
+            ->method('getDefaultBucket')
+            ->willReturn('in.c-main')
+        ;
+        $configuration->expects(self::once())
+            ->method('hasTagStagingFilesFeature')
+            ->willReturn(false)
+        ;
+
+        $source = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $source->expects(self::once())
+            ->method('getSourceType')
+            ->willReturn(SourceType::WORKSPACE)
+        ;
+        $source->expects(self::once())
+            ->method('getWorkspaceId')
+            ->willReturn('123')
+        ;
+
+        $systemMetadata = new SystemMetadata([
+            'componentId' => 'keboola.ex-db-snowflake',
+            'configurationId' => '123',
+            'configurationRowId' => '456',
+        ]);
+
+        $mappingFromManifest = [
+            'destination' => 'in.c-main.table1',
+            'source' => 'in.c-main.table1',
+        ];
+
+        $mappingFromConfiguration = [
+            'delete_where' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'id',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'table' => 'table1',
+                                'column' => 'column1',
+                            ],
+                        ],
+                        [
+                            'column' => 'city',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'workspace_id' => '456',
+                                'table' => 'table2',
+                                'column' => 'column1',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $resolver = new TableConfigurationResolver($this->logger);
+        $config = $resolver->resolveTableConfiguration(
+            $configuration,
+            $source,
+            $mappingFromManifest,
+            $mappingFromConfiguration,
+            $systemMetadata,
+        );
+
+        $expectedConfig = [
+            'destination' => 'in.c-main.table1',
+            'source' => 'in.c-main.table1',
+            'incremental' => false,
+            'primary_key' => [],
+            'columns' => [],
+            'distribution_key' => [],
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+            'delete_where' => [
+                [
+                    'where_filters' => [
+                        [
+                            'column' => 'id',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'table' => 'table1',
+                                'column' => 'column1',
+                                'workspace_id' => '123',
+                            ],
+                        ],
+                        [
+                            'column' => 'city',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'workspace_id' => '456',
+                                'table' => 'table2',
+                                'column' => 'column1',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        self::assertEquals($expectedConfig, $config);
     }
 }

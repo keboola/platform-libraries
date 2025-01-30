@@ -86,7 +86,7 @@ abstract class BaseConfiguration extends Configuration
                                         ->end()
                                         ->arrayNode('values_from_workspace')
                                             ->children()
-                                                ->scalarNode('workspace_id')->isRequired()->cannotBeEmpty()->end()
+                                                ->scalarNode('workspace_id')->end()
                                                 ->scalarNode('table')->isRequired()->cannotBeEmpty()->end()
                                                 ->scalarNode('column')->end()
                                             ->end()

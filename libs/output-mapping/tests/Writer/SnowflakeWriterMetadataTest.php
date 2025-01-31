@@ -6,8 +6,9 @@ namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
 class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
@@ -70,14 +71,16 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'branchId' => '1234',
         ];
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            $config,
-            $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $config,
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata($systemMetadata),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -110,13 +113,16 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            $config,
-            $systemMetadata,
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $config,
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata($systemMetadata),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -153,14 +159,16 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         ];
         $systemMetadata = ['componentId' => 'testComponent'];
 
-        $writer = new TableWriter($this->getStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            $config,
-            $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $config,
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata($systemMetadata),
         );
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to load table ' . $this->emptyOutputBucketId .
@@ -222,14 +230,16 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'configurationRowId' => 'row-1',
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            $config,
-            $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $config,
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata($systemMetadata),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -263,13 +273,16 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            $config,
-            $systemMetadata,
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $config,
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata($systemMetadata),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

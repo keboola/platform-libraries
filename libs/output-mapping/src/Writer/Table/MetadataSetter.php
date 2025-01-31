@@ -12,7 +12,6 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\AbstractWriter;
-use Keboola\OutputMapping\Writer\TableWriter;
 
 class MetadataSetter
 {
@@ -25,14 +24,14 @@ class MetadataSetter
         if (!$storageSources->didTableExistBefore()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
-                TableWriter::SYSTEM_METADATA_PROVIDER,
+                SystemMetadata::SYSTEM_METADATA_PROVIDER,
                 $systemMetadata->getCreatedMetadata(),
             ));
         }
 
         $loadTask->addMetadata(new TableMetadata(
             $processedSource->getDestination()->getTableId(),
-            TableWriter::SYSTEM_METADATA_PROVIDER,
+            SystemMetadata::SYSTEM_METADATA_PROVIDER,
             $systemMetadata->getUpdatedMetadata(),
         ));
 

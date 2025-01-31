@@ -7,10 +7,11 @@ namespace Keboola\OutputMapping\Tests\Writer;
 use Generator;
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\Datatype\Definition\Bigquery;
-use Keboola\Datatype\Definition\Snowflake;
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyBigqueryOutputBucket;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Util\Test;
@@ -58,20 +59,21 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'authoritative',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => [$config]],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'authoritative',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
+
         $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($config['destination']);
         self::assertTrue($tableDetails['isTyped']);
 
@@ -164,26 +166,32 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'authoritative',
+        // První nahrání
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'authoritative',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        // And again
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'authoritative',
+        // Druhé nahrání
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'authoritative',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

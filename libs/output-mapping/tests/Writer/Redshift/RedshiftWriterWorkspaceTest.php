@@ -6,6 +6,9 @@ namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
+use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
@@ -71,15 +74,17 @@ class RedshiftWriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_REDSHIFT,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $factory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

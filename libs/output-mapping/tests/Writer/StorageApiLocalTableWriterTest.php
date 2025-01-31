@@ -10,11 +10,11 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -46,16 +46,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
 
@@ -124,14 +126,14 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         ];
 
         $tokenHasOutputMappingSliceFeature = $this->clientWrapper->getToken()
-            ->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)
+            ->hasFeature(OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE)
         ;
 
         $token = $this->createMock(StorageApiToken::class);
         $token
             ->method('hasFeature')
             ->willReturnCallback(function (string $feature) use ($tokenHasOutputMappingSliceFeature): bool {
-                if ($feature === TableWriter::OUTPUT_MAPPING_SLICE_FEATURE) {
+                if ($feature === OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE) {
                     return $tokenHasOutputMappingSliceFeature;
                 }
 
@@ -147,15 +149,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn(
             $this->clientWrapper->getBranchClient(),
         );
-        $writer = new TableWriter($this->getLocalStagingFactory($clientWrapper));
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        /** @var ClientWrapper $clientWrapper */
+        $stagingFactory = $this->getLocalStagingFactory(clientWrapper: $clientWrapper);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -209,15 +215,20 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 'destination' => $this->emptyOutputBucketId . '.table21a',
             ],
         ];
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
-            'local',
-            false,
-            'none',
+
+        $stagingFactory = $this->getLocalStagingFactory();
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
         self::assertNotEmpty($jobIds[0]);
@@ -271,14 +282,17 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
         // pass the special client wrapper
-        $writer = new TableWriter($this->getLocalStagingFactory($this->clientWrapper));
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(clientWrapper: $this->clientWrapper);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -318,26 +332,31 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         // And again
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -364,15 +383,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -395,14 +415,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue = $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -432,15 +454,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -464,17 +487,21 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             '{"destination": "' . $this->emptyOutputBucketId . '.table3","primary_key": "Id"}',
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Invalid type for path');
-        $writer->uploadTables(
-            '/upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
+        $tableQueue->waitForAll();
     }
 
     #[NeedsEmptyOutputBucket]
@@ -490,15 +517,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             '{"destination": "' . $this->emptyOutputBucketId . '.table3c","delimiter": "\t","enclosure": "\'"}',
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -528,17 +556,20 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . DIRECTORY_SEPARATOR . 'upload/table.csv.manifest',
             '{"destination": "' . $this->emptyOutputBucketId . '.table3e","primary_key": ["Id", "Name"]}',
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Found orphaned table manifest: "table.csv.manifest"');
-        $writer->uploadTables(
-            '/upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+        $tableQueue->waitForAll();
     }
 
     #[NeedsEmptyOutputBucket]
@@ -550,33 +581,40 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 'destination' => $this->emptyOutputBucketId . '.table81',
             ],
         ];
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table sources not found: "table81.csv"');
-        $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+        $tableQueue->waitForAll();
     }
 
     #[NeedsEmptyOutputBucket]
     public function testWriteTableMetadataMissing(): void
     {
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
-        $writer->uploadTables(
-            '/upload',
-            [],
-            [],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata([]), // prázdná metadata
         );
+
+        $tableQueue->waitForAll();
     }
 
     #[NeedsEmptyOutputBucket]
@@ -599,28 +637,32 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
         $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
 
         // And again, check first incremental table
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -657,15 +699,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/table71.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . '/upload/table71.csv.manifest', '{}');
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['bucket' => $this->emptyOutputBucketId],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $this->emptyOutputBucketId],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -688,15 +731,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         file_put_contents($root . '/upload/table6.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . '/upload/table6.csv.manifest', '{"primary_key": ["Id", "Name"]}');
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['bucket' => $this->emptyOutputBucketId],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $this->emptyOutputBucketId],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -713,22 +757,24 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table16.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table16.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table16',
-                        'primary_key' => ['Id'],
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table16.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table16',
+                            'primary_key' => ['Id'],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -744,43 +790,47 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table15.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table15.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table15',
-                        'primary_key' => ['Id'],
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table15.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table15',
+                            'primary_key' => ['Id'],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
 
-        $writer = new TableWriter($this->getLocalStagingFactory(
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
             logger: $this->testLogger,
-        ));
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table15.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table15',
-                        'primary_key' => ['Id'],
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table15.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table15',
+                            'primary_key' => ['Id'],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -801,22 +851,25 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table12.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger));
-        $tableQueue = $writer->uploadTables(
-            'upload',
+        $configs = [
             [
-                'mapping' => [
-                    [
-                        'source' => 'table12.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table12',
-                        'primary_key' => [],
-                    ],
-                ],
+                'source' => 'table12.csv',
+                'destination' => $this->emptyOutputBucketId . '.table12',
+                'primary_key' => [],
             ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        ];
+
+        $stagingFactory = $this->getLocalStagingFactory(null, 'json', $this->testLogger);
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -824,22 +877,26 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         self::assertEquals([], $tableInfo['primaryKey']);
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger));
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table12.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table12',
-                        'primary_key' => [''],
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+            logger: $this->testLogger,
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table12.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table12',
+                            'primary_key' => [''],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -859,22 +916,24 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table11.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger));
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table11.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table11',
-                        'primary_key' => [],
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table11.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table11',
+                            'primary_key' => [],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -882,18 +941,24 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->createTemp()->getTmpFolder();
         file_put_contents($root . '/upload/table11.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger, $root));
         file_put_contents(
             $root . '/upload/table11.csv.manifest',
             '{"destination": "' . $this->emptyOutputBucketId . '.table11","primary_key": [""]}',
         );
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+            logger: $this->testLogger,
+            stagingPath: $root,
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -912,11 +977,11 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteTableColumnsOverwrite(): void
     {
-        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+        if ($this->clientWrapper->getToken()->hasFeature(OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE)) {
             $this->expectException(InvalidOutputException::class);
             $this->expectExceptionMessage(
-                'Params "delimiter", "enclosure" or "columns" '
-                . 'specified in mapping are not longer supported.',
+                'Params "delimiter", "enclosure" or "columns" ' .
+                'specified in mapping are not longer supported.',
             );
         }
 
@@ -925,22 +990,26 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"Id\",\"Name\"\n\"test\",\"test\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
-        $configuration = [
-            'mapping' => [
-                [
-                    'source' => $this->emptyOutputBucketId . '.table10.csv',
-                    'destination' => $this->emptyOutputBucketId . '.table10',
+
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+            stagingPath: $root,
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => $this->emptyOutputBucketId . '.table10.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table10',
+                        ],
+                    ],
                 ],
-            ],
-        ];
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            $configuration,
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
 
@@ -958,23 +1027,27 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10.csv',
             "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory(stagingPath: $root));
-        $configuration = [
-            'mapping' => [
-                [
-                    'source' => $this->emptyOutputBucketId . '.table10.csv',
-                    'destination' => $this->emptyOutputBucketId . '.table10',
-                    'columns' => ['Boing', 'Tschak'],
+
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+            stagingPath: $root,
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => $this->emptyOutputBucketId . '.table10.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table10',
+                            'columns' => ['Boing', 'Tschak'],
+                        ],
+                    ],
                 ],
-            ],
-        ];
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            $configuration,
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
 
         $this->expectException(InvalidOutputException::class);
@@ -996,7 +1069,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $root . '/upload/' . $this->emptyOutputBucketId . '.table10b.csv',
             "\"foo\",\"bar\"\n\"baz\",\"bat\"\n",
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
             'mapping' => [
                 [
@@ -1010,13 +1082,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            $configuration,
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $configuration,
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
 
@@ -1044,7 +1119,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ]),
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
         $configuration = [
             'mapping' => [
                 [
@@ -1057,13 +1131,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
                 ],
             ],
         ];
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            $configuration,
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: $configuration,
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         try {
             $tableQueue->waitForAll();
@@ -1104,14 +1181,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1138,13 +1217,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             'to any development branch.',
             $this->devBranchId,
         ));
-        $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
@@ -1168,14 +1250,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1212,13 +1296,17 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             'The bucket metadata marks it as assigned to branch with ID "12345".',
             $this->devBranchId,
         ));
-        $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+
+        $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
@@ -1261,14 +1349,16 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue = $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -1345,17 +1435,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             file_put_contents($root . 'table.csv.manifest', json_encode($manifest));
         }
 
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
-
-        $queue = $tableWriter->uploadTables(
-            'upload',
-            ['bucket' => $defaultBucket, 'mapping' => $mapping],
-            ['componentId' => 'foo'],
-            'local',
-            $isFailedJob,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $defaultBucket, 'mapping' => $mapping],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: $isFailedJob,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
-        $queue->waitForAll();
+
+        $tableQueue->waitForAll();
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         $tablesIds = array_map(function (array $table) {
@@ -1374,7 +1466,6 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             null,
             null,
             [
-
                 [
                     'source' => 'table0.csv',
                     'destination' => '%s.table1',
@@ -1395,7 +1486,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testAllowedMultipleMappingsOfSameSource(): void
     {
-        if ($this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+        if ($this->clientWrapper->getToken()->hasFeature(OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE)) {
             self::markTestSkipped('This test is not relevant for slice feature.');
         }
 
@@ -1413,7 +1504,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testForbiddenMultipleMappingsOfSameSource(): void
     {
-        if (!$this->clientWrapper->getToken()->hasFeature(TableWriter::OUTPUT_MAPPING_SLICE_FEATURE)) {
+        if (!$this->clientWrapper->getToken()->hasFeature(OutputMappingSettings::OUTPUT_MAPPING_SLICE_FEATURE)) {
             self::markTestSkipped('This test is relevant only for slice feature.');
         }
 
@@ -1493,18 +1584,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             file_put_contents($root . 'table.csv.manifest', json_encode($manifest));
         }
 
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
-
-        $this->expectException(InvalidOutputException::class);
+                $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedError);
-
-        $tableQueue = $tableWriter->uploadTables(
-            'upload',
-            ['bucket' => $defaultBucket, 'mapping' => $mapping],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $defaultBucket, 'mapping' => $mapping],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
     }
@@ -1564,16 +1655,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger));
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['bucket' => $defaultBucket],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(null, 'json', $this->testLogger);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $defaultBucket],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -1619,18 +1713,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/' . $fileName, "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $writer = new TableWriter($this->getLocalStagingFactory(null, 'json', $this->testLogger));
-
+        $stagingFactory = $this->getLocalStagingFactory(null, 'json', $this->testLogger);
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedError);
-
-        $writer->uploadTables(
-            '/upload',
-            ['bucket' => $defaultBucket],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $defaultBucket],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
@@ -1647,18 +1742,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
     public function testLocalTableUploadRequiresComponentId(): void
     {
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
-
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
-
-        $tableWriter->uploadTables(
-            'upload',
-            [],
-            [],
-            'local',
-            false,
-            'none',
+        $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata([]),
         );
     }
 
@@ -1667,72 +1762,76 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $root = $this->temp->getTmpFolder() . '/upload/';
         file_put_contents($root . 'table.csv.manifest', json_encode([]));
 
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
-
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Found orphaned table manifest: "table.csv.manifest"');
-
-        $tableWriter->uploadTables(
-            'upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
     public function testLocalTableUploadChecksForUnusedMappingEntries(): void
     {
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
+        $stagingFactory = $this->getLocalStagingFactory(null, 'json', $this->testLogger);
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table sources not found: "unknown.csv"');
-
-        $tableWriter->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'unknown.csv',
-                        'destination' => 'unknown',
+        $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'unknown.csv',
+                            'destination' => 'unknown',
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: '/upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
     #[NeedsEmptyOutputBucket]
     public function testLocalTableUploadChecksForWriteAlwaysMappingEntries(): void
     {
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
         $root = $this->temp->getTmpFolder() . '/upload/';
         file_put_contents($root . 'write-always.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $queue = $tableWriter->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'never-created.csv',
-                        'destination' => $this->emptyOutputBucketId . '.never-created',
-                    ], [
-                        'source' => 'write-always.csv',
-                        'destination' => $this->emptyOutputBucketId . '.write-always',
-                        'write_always' => true,
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'never-created.csv',
+                            'destination' => $this->emptyOutputBucketId . '.never-created',
+                        ], [
+                            'source' => 'write-always.csv',
+                            'destination' => $this->emptyOutputBucketId . '.write-always',
+                            'write_always' => true,
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            true,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: true,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
-        $queue->waitForAll();
+        $tableQueue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.write-always', $tables[0]['id']);
@@ -1741,31 +1840,34 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteAlwaysWhenMissingMappingEntries(): void
     {
-        $tableWriter = new TableWriter($this->getLocalStagingFactory());
         $root = $this->temp->getTmpFolder() . '/upload/';
         file_put_contents($root . 'write-always-2.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . 'something-unexpected.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
-        $queue = $tableWriter->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'never-created.csv',
-                        'destination' => $this->emptyOutputBucketId . '.never-created',
-                    ], [
-                        'source' => 'write-always-2.csv',
-                        'destination' => $this->emptyOutputBucketId . '.write-always-2',
-                        'write_always' => true,
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'never-created.csv',
+                            'destination' => $this->emptyOutputBucketId . '.never-created',
+                        ], [
+                            'source' => 'write-always-2.csv',
+                            'destination' => $this->emptyOutputBucketId . '.write-always-2',
+                            'write_always' => true,
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            true,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: true,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
-        $queue->waitForAll();
+
+        $tableQueue->waitForAll();
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyOutputBucketId . '.write-always-2', $tables[0]['id']);
@@ -1776,23 +1878,27 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     {
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table14.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table14.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table14',
-                        'primary_key' => ['Id'],
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table14.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table14',
+                            'primary_key' => ['Id'],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -1800,21 +1906,24 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $this->assertEquals(['Id'], $tableInfo['primaryKey']);
 
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table14.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table14',
-                        'primary_key' => ['Id', 'Name'],
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table14.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table14',
+                            'primary_key' => ['Id', 'Name'],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
 
         $jobIds = $tableQueue->waitForAll();
@@ -1830,22 +1939,25 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     {
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table13.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table13.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table13',
-                        'primary_key' => ['Id '],
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table13.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table13',
+                            'primary_key' => ['Id '],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
@@ -1854,22 +1966,26 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         );
         $this->assertEquals(['Id'], $tableInfo['primaryKey']);
 
-        $tableQueue = $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => [
-                    [
-                        'source' => 'table13.csv',
-                        'destination' => $this->emptyOutputBucketId . '.table13',
-                        'primary_key' => ['Id ', 'Name '],
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table13.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table13',
+                            'primary_key' => ['Id ', 'Name '],
+                        ],
                     ],
                 ],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         $this->assertCount(1, $jobIds);
         $tableInfo = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -1895,18 +2011,21 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
-
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         try {
-            $jobIds = $tableQueue->waitForAll();
+            $tableQueue->waitForAll();
             self::fail('Must throw exception');
         } catch (InvalidOutputException $e) {
             self::assertStringContainsString(
@@ -1946,18 +2065,21 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             $csv,
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
-
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         try {
-            $jobIds = $tableQueue->waitForAll();
+            $tableQueue->waitForAll();
             self::fail('Must throw exception');
         } catch (InvalidOutputException $e) {
             self::assertStringContainsString(
@@ -1996,20 +2118,20 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             'destination' => $this->emptyOutputBucketId . '.table1a',
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to process mapping for table table1a.csv: '
             . 'System columns "_timestamp" cannot be imported to the table.');
         $this->expectExceptionCode(0);
-
-        $writer->uploadTables(
-            'upload',
-            ['mapping' => [$table1Mapping]],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => [$table1Mapping]],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
     }
 
@@ -2032,16 +2154,19 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory(logger: $this->testLogger));
-
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -2098,15 +2223,18 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ]),
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -2146,16 +2274,17 @@ CSV;
             ]),
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
         try {
-            $writer->uploadTables(
-                'upload',
-                [],
-                ['componentId' => 'foo'],
-                'local',
-                false,
-                'none',
+            $this->getTableLoader()->uploadTables(
+                outputStaging: AbstractStrategyFactory::LOCAL,
+                configuration: new OutputMappingSettings(
+                    configuration: [],
+                    sourcePathPrefix: 'upload',
+                    storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                    isFailedJob: false,
+                    dataTypeSupport: 'none',
+                ),
+                systemMetadata: new SystemMetadata(['componentId' => 'foo']),
             );
             $this->fail('Must throw exception');
         } catch (InvalidOutputException $e) {
@@ -2188,15 +2317,18 @@ CSV;
             ]),
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
@@ -2288,21 +2420,22 @@ CSV;
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory(
-            logger: $this->testLogger,
-        ));
-
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'mapping' => $configs,
-                'treat_values_as_null' => ['aabb'],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
+        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => $configs,
+                    'treat_values_as_null' => ['aabb'],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
+
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(4, $jobIds);
 
@@ -2472,6 +2605,30 @@ CSV;
         );
     }
 
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableWithoutComponentId(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table71.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/table71.csv.manifest', '{}');
+
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('Component Id must be set');
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['bucket' => $this->emptyOutputBucketId],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata([]),
+        );
+        $tableQueue->waitForAll();
+    }
+
     private function getTableIdFromJobDetail(array $jobData): string
     {
         $operationName = $jobData['operationName'];
@@ -2526,5 +2683,58 @@ CSV;
         }
 
         return null;
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableOutputMappingWithPkOverwriteWithDifferentPk(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table14.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        // První nahrání s primárním klíčem Id
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table14.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table14',
+                            'primary_key' => ['Id'],
+                        ],
+                    ],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+            logger: $this->testLogger,
+        ))->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table14.csv',
+                            'destination' => $this->emptyOutputBucketId . '.table14',
+                            'primary_key' => ['Name'],
+                        ],
+                    ],
+                ],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds);
     }
 }

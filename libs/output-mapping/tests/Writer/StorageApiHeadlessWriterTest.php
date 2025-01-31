@@ -6,6 +6,8 @@ namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -27,14 +29,16 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -70,14 +74,16 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -115,14 +121,16 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -157,14 +165,16 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
             '.table","primary_key":["Id","Name"],"columns":["Id","Name"]}',
         );
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -212,14 +222,16 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

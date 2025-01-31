@@ -12,6 +12,16 @@ class SystemMetadata
 {
     private array $systemMetadata;
 
+    public const SYSTEM_METADATA_PROVIDER = 'system';
+    public const KBC_LAST_UPDATED_BY_BRANCH_ID = 'KBC.lastUpdatedBy.branch.id';
+    public const KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID = 'KBC.lastUpdatedBy.configurationRow.id';
+    public const KBC_LAST_UPDATED_BY_CONFIGURATION_ID = 'KBC.lastUpdatedBy.configuration.id';
+    public const KBC_LAST_UPDATED_BY_COMPONENT_ID = 'KBC.lastUpdatedBy.component.id';
+    public const KBC_CREATED_BY_BRANCH_ID = 'KBC.createdBy.branch.id';
+    public const KBC_CREATED_BY_CONFIGURATION_ROW_ID = 'KBC.createdBy.configurationRow.id';
+    public const KBC_CREATED_BY_CONFIGURATION_ID = 'KBC.createdBy.configuration.id';
+    public const KBC_CREATED_BY_COMPONENT_ID = 'KBC.createdBy.component.id';
+
     public function __construct(array $systemMetadata)
     {
         $this->systemMetadata = $systemMetadata;
@@ -48,24 +58,24 @@ class SystemMetadata
     public function getCreatedMetadata(): array
     {
         $metadata[] = [
-            'key' => TableWriter::KBC_CREATED_BY_COMPONENT_ID,
+            'key' => self::KBC_CREATED_BY_COMPONENT_ID,
             'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
         ];
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ID,
+                'key' => self::KBC_CREATED_BY_CONFIGURATION_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
+                'key' => self::KBC_CREATED_BY_CONFIGURATION_ROW_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_CREATED_BY_BRANCH_ID,
+                'key' => self::KBC_CREATED_BY_BRANCH_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
             ];
         }
@@ -75,24 +85,24 @@ class SystemMetadata
     public function getUpdatedMetadata(): array
     {
         $metadata[] = [
-            'key' => TableWriter::KBC_LAST_UPDATED_BY_COMPONENT_ID,
+            'key' => self::KBC_LAST_UPDATED_BY_COMPONENT_ID,
             'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_COMPONENT_ID],
         ];
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
+                'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ID],
             ];
         }
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
+                'key' => self::KBC_LAST_UPDATED_BY_CONFIGURATION_ROW_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_CONFIGURATION_ROW_ID],
             ];
         }
         if (!empty($this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID])) {
             $metadata[] = [
-                'key' => TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID,
+                'key' => self::KBC_LAST_UPDATED_BY_BRANCH_ID,
                 'value' => $this->systemMetadata[AbstractWriter::SYSTEM_KEY_BRANCH_ID],
             ];
         }

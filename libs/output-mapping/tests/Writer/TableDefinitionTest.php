@@ -8,10 +8,11 @@ use Generator;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Writer\TableWriter;
 
 class TableDefinitionTest extends AbstractTestCase
 {
@@ -55,18 +56,20 @@ class TableDefinitionTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: 'local',
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'typedTableEnabled' => true,
+                    'mapping' => [$config],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -95,18 +98,20 @@ class TableDefinitionTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: 'local',
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'typedTableEnabled' => true,
+                    'mapping' => [$config],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -264,18 +269,20 @@ class TableDefinitionTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: 'local',
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'typedTableEnabled' => true,
+                    'mapping' => [$config],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -397,18 +404,20 @@ class TableDefinitionTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: 'local',
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'typedTableEnabled' => true,
+                    'mapping' => [$config],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -560,18 +569,20 @@ class TableDefinitionTest extends AbstractTestCase
             "2","alice","5.63","2020-12-12 15:45:21"
             EOT,
         );
-        $writer = new TableWriter($this->getLocalStagingFactory());
 
-        $tableQueue =  $writer->uploadTables(
-            'upload',
-            [
-                'typedTableEnabled' => true,
-                'mapping' => [$config],
-            ],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
+            outputStaging: 'local',
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'typedTableEnabled' => true,
+                    'mapping' => [$config],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

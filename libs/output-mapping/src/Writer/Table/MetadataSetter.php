@@ -11,7 +11,6 @@ use Keboola\OutputMapping\DeferredTasks\Metadata\TableMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\SystemMetadata;
-use Keboola\OutputMapping\Writer\AbstractWriter;
 
 class MetadataSetter
 {
@@ -38,14 +37,14 @@ class MetadataSetter
         if ($processedSource->hasMetadata()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
-                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(SystemMetadata::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getMetadata(),
             ));
         }
         if ($processedSource->hasTableMetadata()) {
             $loadTask->addMetadata(new TableMetadata(
                 $processedSource->getDestination()->getTableId(),
-                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(SystemMetadata::SYSTEM_KEY_COMPONENT_ID),
                 array_map(
                     fn(string $k, string $v) => ['key' => $k, 'value' => $v],
                     array_keys($processedSource->getTableMetadata()),
@@ -57,7 +56,7 @@ class MetadataSetter
         if ($processedSource->hasColumnMetadata()) {
             $loadTask->addMetadata(new ColumnsMetadata(
                 $processedSource->getDestination()->getTableId(),
-                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(SystemMetadata::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getColumnMetadata(),
             ));
         }
@@ -65,7 +64,7 @@ class MetadataSetter
         if ($processedSource->getSchema() && $processedSource->hasSchemaColumnMetadata()) {
             $loadTask->addMetadata(new SchemaColumnsMetadata(
                 $processedSource->getDestination()->getTableId(),
-                (string) $systemMetadata->getSystemMetadata(AbstractWriter::SYSTEM_KEY_COMPONENT_ID),
+                (string) $systemMetadata->getSystemMetadata(SystemMetadata::SYSTEM_KEY_COMPONENT_ID),
                 $processedSource->getSchema(),
             ));
         }

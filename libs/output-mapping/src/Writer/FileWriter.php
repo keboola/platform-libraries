@@ -10,13 +10,40 @@ use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class FileWriter extends AbstractWriter
+class FileWriter
 {
+    protected ClientWrapper $clientWrapper;
+    protected LoggerInterface $logger;
+
+    /**
+     * @var 'json'|'yaml'
+     */
+    protected string $format = 'json';
+    protected StrategyFactory $strategyFactory;
+
+    public function __construct(StrategyFactory $strategyFactory)
+    {
+        $this->clientWrapper = $strategyFactory->getClientWrapper();
+        $this->logger = $strategyFactory->getLogger();
+        $this->strategyFactory = $strategyFactory;
+    }
+
+    /**
+     * @param 'json'|'yaml' $format
+     */
+    public function setFormat(string $format): void
+    {
+        $this->format = $format;
+    }
+
     /**
      * Upload files from local temp directory to Storage.
      *
@@ -40,7 +67,7 @@ class FileWriter extends AbstractWriter
         if ($isFailedJob) {
             return;
         }
-        if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
+        if (!empty($systemMetadata) && empty($systemMetadata[SystemMetadata::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);

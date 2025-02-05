@@ -20,20 +20,19 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class FileWriter
 {
-    protected ClientWrapper $clientWrapper;
-    protected LoggerInterface $logger;
+    private readonly ClientWrapper $clientWrapper;
+    private readonly LoggerInterface $logger;
 
     /**
      * @var 'json'|'yaml'
      */
-    protected string $format = 'json';
-    protected StrategyFactory $strategyFactory;
+    private string $format = 'json';
 
-    public function __construct(StrategyFactory $strategyFactory)
-    {
+    public function __construct(
+        private readonly StrategyFactory $strategyFactory,
+    ) {
         $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->logger = $strategyFactory->getLogger();
-        $this->strategyFactory = $strategyFactory;
     }
 
     /**

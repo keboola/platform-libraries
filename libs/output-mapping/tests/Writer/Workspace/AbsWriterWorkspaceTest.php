@@ -7,12 +7,13 @@ namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 use Keboola\Csv\CsvFile;
 use Keboola\FileStorage\Abs\ClientFactory;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\OutputMapping\Writer\FileWriter;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Symfony\Component\Filesystem\Filesystem;
@@ -93,14 +94,16 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables(
-            'someday',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-abs',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_ABS,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'someday',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -163,14 +166,16 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables(
-            'data/out/tables/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-abs',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_ABS,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'data/out/tables/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -249,14 +254,16 @@ class AbsWriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables(
-            'data/out/tables/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-abs',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_ABS,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'data/out/tables/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

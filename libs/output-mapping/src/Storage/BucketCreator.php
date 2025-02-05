@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Storage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -55,8 +54,8 @@ class BucketCreator
         $metadata = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         try {
             foreach ($metadata->listBucketMetadata($bucketId) as $metadatum) {
-                if (($metadatum['key'] === TableWriter::KBC_LAST_UPDATED_BY_BRANCH_ID) ||
-                    ($metadatum['key'] === TableWriter::KBC_CREATED_BY_BRANCH_ID)) {
+                if (($metadatum['key'] === SystemMetadata::KBC_LAST_UPDATED_BY_BRANCH_ID) ||
+                    ($metadatum['key'] === SystemMetadata::KBC_CREATED_BY_BRANCH_ID)) {
                     if ((string) $metadatum['value'] === $this->clientWrapper->getBranchId()) {
                         return;
                     }
@@ -110,7 +109,7 @@ class BucketCreator
         $metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
         $metadataClient->postBucketMetadata(
             $destination->getBucketId(),
-            TableWriter::SYSTEM_METADATA_PROVIDER,
+            SystemMetadata::SYSTEM_METADATA_PROVIDER,
             $systemMetadata->getCreatedMetadata(),
         );
     }

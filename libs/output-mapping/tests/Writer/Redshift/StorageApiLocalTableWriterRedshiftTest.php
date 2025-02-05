@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Redshift;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
+use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyRedshiftOutputBucket;
 use Keboola\OutputMapping\Writer\TableWriter;
@@ -25,14 +29,16 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             . "\\t" . '","enclosure": "\'"}',
         );
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            [],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: [],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -74,27 +80,31 @@ class StorageApiLocalTableWriterRedshiftTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($this->getLocalStagingFactory());
-
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
         // And again, check first incremental table
-        $tableQueue =  $writer->uploadTables(
-            '/upload',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'local',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            outputStaging: AbstractStrategyFactory::LOCAL,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/upload',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

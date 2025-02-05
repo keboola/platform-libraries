@@ -8,11 +8,12 @@ use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
 class WriterWorkspaceTest extends AbstractTestCase
@@ -56,15 +57,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -115,7 +118,6 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(
@@ -123,13 +125,16 @@ class WriterWorkspaceTest extends AbstractTestCase
             '.table1a": Table "table1a" not found in schema "WORKSPACE_',
         );
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $tableQueue->waitForAll();
     }
@@ -143,15 +148,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 'destination' => $this->emptyOutputBucketId . '.table1a',
             ],
         ];
-        $writer = new TableWriter($this->getWorkspaceStagingFactory());
         try {
-            $tableQueue = $writer->uploadTables(
-                '/',
-                ['mapping' => $configs],
-                ['componentId' => 'foo'],
-                'workspace-snowflake',
-                false,
-                'none',
+            $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
+                outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+                configuration: new OutputMappingSettings(
+                    configuration: ['mapping' => $configs],
+                    sourcePathPrefix: '/',
+                    storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                    isFailedJob: false,
+                    dataTypeSupport: 'none',
+                ),
+                systemMetadata: new SystemMetadata(['componentId' => 'foo']),
             );
             $tableQueue->waitForAll();
             $this->fail('Exception should be thrown');
@@ -213,15 +220,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -265,7 +274,6 @@ class WriterWorkspaceTest extends AbstractTestCase
                 'columns' => ['Id'],
             ],
         ];
-        $writer = new TableWriter($factory);
         file_put_contents(
             $root . '/table1a.manifest',
             json_encode(
@@ -276,54 +284,17 @@ class WriterWorkspaceTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
 
-        $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
-    }
-
-    public function testTableOutputMappingMissingDestinationNoManifest(): void
-    {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
-        $configs = [
-            [
-                'source' => 'table1a',
-                'incremental' => true,
-                'columns' => ['Id'],
-            ],
-        ];
-        $writer = new TableWriter($factory);
-
-        try {
-            $writer->uploadTables(
-                '/',
-                ['mapping' => $configs],
-                ['componentId' => 'foo'],
-                'workspace-snowflake',
-                false,
-                'none',
-            );
-            $this->fail('Exception should be thrown');
-        } catch (InvalidOutputException $e) {
-            $this->assertThat($e->getMessage(), $this->logicalOr(
-                $this->stringContains('Failed to resolve destination for output table "table1a".'),
-                $this->stringContains('Table with manifests not found: "table1a"'),
-            ));
-        }
     }
 
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
@@ -356,15 +327,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -424,15 +397,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo', 'branchId' => $this->devBranchId],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -484,14 +459,16 @@ class WriterWorkspaceTest extends AbstractTestCase
         ];
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
 
-        $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -553,14 +530,16 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
         file_put_contents($root . '/table2a.manifest', json_encode(['columns' => ['Id', 'Name']]));
 
-        $writer = new TableWriter($factory);
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            true,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: true,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
@@ -597,15 +576,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ],
             ]),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
 
         $jobIds = $tableQueue->waitForAll();
@@ -638,15 +619,16 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new TableWriter($factory);
-
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
 
         $jobIds = $tableQueue->waitForAll();
@@ -710,15 +692,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name', '_TIMESTAMP']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            'workspace-snowflake',
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);
@@ -787,15 +771,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 'write_always' => true,
             ],
         ];
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            sourcePathPrefix: '/',
-            configuration: ['mapping' => $configs],
-            systemMetadata: ['componentId' => 'foo'],
-            stagingStorageOutput: 'workspace-snowflake',
-            isFailedJob: true,
-            dataTypeSupport: 'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: true,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);

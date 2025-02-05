@@ -374,62 +374,6 @@ class StorageApiFileWriterTest extends AbstractTestCase
         self::assertFalse($file1['isPublic']);
     }
 
-    public function testWriteFilesInvalidJson(): void
-    {
-        $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload/file1', 'test');
-        file_put_contents($root . '/upload/file1.manifest', 'this is not at all a {valid} json');
-
-        $configs = [
-            [
-                'source' => 'file1',
-                'tags' => [$this->testFileTag, 'yyy'],
-                'is_public' => false,
-            ],
-        ];
-
-        $writer = new FileWriter($this->getLocalStagingFactory());
-        $writer->setFormat('json');
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('json');
-        $writer->uploadFiles(
-            '/upload',
-            ['mapping' => $configs],
-            [],
-            AbstractStrategyFactory::LOCAL,
-            [],
-            false,
-        );
-    }
-
-    public function testWriteFilesInvalidYaml(): void
-    {
-        $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload/file1', 'test');
-        file_put_contents($root . '/upload/file1.manifest', "\tthis is not \n\t \tat all a {valid} json");
-
-        $configs = [
-            [
-                'source' => 'file1',
-                'tags' => [$this->testFileTag, 'yyy'],
-                'is_public' => false,
-            ],
-        ];
-
-        $writer = new FileWriter($this->getLocalStagingFactory());
-        $writer->setFormat('json');
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('json');
-        $writer->uploadFiles(
-            'upload',
-            ['mapping' => $configs],
-            [],
-            AbstractStrategyFactory::LOCAL,
-            [],
-            false,
-        );
-    }
-
     public function testWriteFilesOutputMappingMissing(): void
     {
         $root = $this->temp->getTmpFolder();

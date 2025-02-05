@@ -10,13 +10,26 @@ use Keboola\OutputMapping\Configuration\File\Manifest as FileManifest;
 use Keboola\OutputMapping\Configuration\TableFile;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Writer\Helper\TagsHelper;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
-class FileWriter extends AbstractWriter
+class FileWriter
 {
+    private readonly ClientWrapper $clientWrapper;
+    private readonly LoggerInterface $logger;
+
+    public function __construct(
+        private readonly StrategyFactory $strategyFactory,
+    ) {
+        $this->clientWrapper = $strategyFactory->getClientWrapper();
+        $this->logger = $strategyFactory->getLogger();
+    }
+
     /**
      * Upload files from local temp directory to Storage.
      *
@@ -40,7 +53,7 @@ class FileWriter extends AbstractWriter
         if ($isFailedJob) {
             return;
         }
-        if (!empty($systemMetadata) && empty($systemMetadata[self::SYSTEM_KEY_COMPONENT_ID])) {
+        if (!empty($systemMetadata) && empty($systemMetadata[SystemMetadata::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
         $strategy = $this->strategyFactory->getFileOutputStrategy($storage);

@@ -6,11 +6,12 @@ namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\OutputMapping\OutputMappingSettings;
+use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\InitSynapseStorageClientTrait;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Writer\TableWriter;
 
 class SynapseWriterWorkspaceTest extends AbstractTestCase
 {
@@ -77,15 +78,17 @@ class SynapseWriterWorkspaceTest extends AbstractTestCase
                 ['columns' => ['Id', 'Name']],
             ),
         );
-        $writer = new TableWriter($factory);
 
-        $tableQueue = $writer->uploadTables(
-            '/',
-            ['mapping' => $configs],
-            ['componentId' => 'foo'],
-            AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-            false,
-            'none',
+        $tableQueue = $this->getTableLoader($factory)->uploadTables(
+            outputStaging: AbstractStrategyFactory::WORKSPACE_SYNAPSE,
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(2, $jobIds);

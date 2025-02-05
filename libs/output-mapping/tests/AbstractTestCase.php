@@ -10,6 +10,7 @@ use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Staging\StrategyFactory;
+use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -244,6 +245,20 @@ abstract class AbstractTestCase extends TestCase
             ],
         );
         return $stagingFactory;
+    }
+
+    public function getTableLoader(?StrategyFactory $strategyFactory = null): TableLoader
+    {
+        if ($strategyFactory === null) {
+            $strategyFactory = $this->getLocalStagingFactory();
+        }
+        $tableLoader = new TableLoader(
+            $strategyFactory->getLogger(),
+            $strategyFactory->getClientWrapper(),
+            $strategyFactory,
+        );
+
+        return $tableLoader;
     }
 
     protected function assertTablesExists(string $bucketId, array $expectedTables): void

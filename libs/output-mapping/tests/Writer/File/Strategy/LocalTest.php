@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
+use Generator;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -18,11 +20,6 @@ use Symfony\Component\Yaml\Yaml;
 
 class LocalTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     private function getProvider(): ProviderInterface
     {
         $mockLocal = self::createMock(NullProvider::class);
@@ -56,8 +53,8 @@ class LocalTest extends AbstractTestCase
             $this->getProvider(),
             'json',
         );
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listFiles('non-existent-directory/and-file');
     }
 
@@ -117,8 +114,8 @@ class LocalTest extends AbstractTestCase
             $this->getProvider(),
             'json',
         );
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listManifests('non-existent-directory/and-file');
     }
 
@@ -259,8 +256,8 @@ class LocalTest extends AbstractTestCase
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('File is not readable:');
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('File is not readable:');
         $strategy->loadFileToStorage('/data/out/files/non-existent', []);
     }
 
@@ -371,32 +368,40 @@ class LocalTest extends AbstractTestCase
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
             '/data/out/files/my-file_one.manifest\' not found.',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 
-    public function testReadFileManifestInvalid(): void
+    public function provideReadFileManifestInvalid(): Generator
+    {
+        yield 'json' => ['json'];
+        yield 'yaml' => ['yaml'];
+    }
+
+    /**
+     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     * @dataProvider provideReadFileManifestInvalid
+     */
+    public function testReadFileManifestInvalid(string $format): void
     {
         $strategy = new Local(
             $this->clientWrapper,
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            $format,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            'not a valid json',
+            sprintf('not a valid %s', $format),
         );
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
-            'data/out/files/my-file_one.manifest" as "json": Syntax error',
-        );
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(sprintf('data/out/files/my-file_one.manifest" as "%s":', $format));
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 }

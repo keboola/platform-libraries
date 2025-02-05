@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
+use Generator;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -378,25 +379,32 @@ class LocalTest extends AbstractTestCase
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 
-    public function testReadFileManifestInvalid(): void
+    public function provideReadFileManifestInvalid(): Generator
+    {
+        yield 'json' => ['json'];
+        yield 'yaml' => ['yaml'];
+    }
+
+    /**
+     * @dataProvider provideReadFileManifestInvalid
+     */
+    public function testReadFileManifestInvalid(string $format): void
     {
         $strategy = new Local(
             $this->clientWrapper,
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            $format,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            'not a valid json',
+            sprintf('not a valid %s', $format),
         );
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
-            'data/out/files/my-file_one.manifest" as "json": Syntax error',
-        );
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(sprintf('data/out/files/my-file_one.manifest" as "%s":', $format));
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 }

@@ -23,24 +23,11 @@ class FileWriter
     private readonly ClientWrapper $clientWrapper;
     private readonly LoggerInterface $logger;
 
-    /**
-     * @var 'json'|'yaml'
-     */
-    private string $format = 'json';
-
     public function __construct(
         private readonly StrategyFactory $strategyFactory,
     ) {
         $this->clientWrapper = $strategyFactory->getClientWrapper();
         $this->logger = $strategyFactory->getLogger();
-    }
-
-    /**
-     * @param 'json'|'yaml' $format
-     */
-    public function setFormat(string $format): void
-    {
-        $this->format = $format;
     }
 
     /**

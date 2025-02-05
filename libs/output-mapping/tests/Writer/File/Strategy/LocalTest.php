@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 use Generator;
 use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -381,7 +382,7 @@ class LocalTest extends AbstractTestCase
     }
 
     /**
-     * @phpstan-param 'json'|'yaml' $format
+     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      * @dataProvider provideReadFileManifestInvalid
      */
     public function testReadFileManifestInvalid(string $format): void

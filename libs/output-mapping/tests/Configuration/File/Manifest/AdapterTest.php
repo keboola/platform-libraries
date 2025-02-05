@@ -4,22 +4,39 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Configuration\File\Manifest;
 
+use Generator;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
 use PHPUnit\Framework\TestCase;
 
 class AdapterTest extends TestCase
 {
-    public function testAccessors(): void
+    public function provideReadFileManifestInvalid(): Generator
     {
-        $adapter = new Adapter('json');
-        self::assertEquals('json', $adapter->getFormat());
-        self::assertEquals('.json', $adapter->getFileExtension());
-        $adapter->setFormat('yaml');
-        self::assertEquals('yaml', $adapter->getFormat());
-        self::assertEquals('.yml', $adapter->getFileExtension());
-        self::assertEquals(null, $adapter->getConfig());
+        yield 'json' => [
+            'format' => 'json',
+            'expectedFileExtension' => '.json',
+        ];
+        yield 'format' => [
+            'format' => 'yaml',
+            'expectedFileExtension' => '.yml',
+        ];
+    }
+
+    /**
+     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     * @dataProvider provideReadFileManifestInvalid
+     */
+    public function testAccessors(
+        string $format,
+        string $expectedFileExtension,
+    ): void {
+        $adapter = new Adapter($format);
+        self::assertSame($format, $adapter->getFormat());
+        self::assertSame($expectedFileExtension, $adapter->getFileExtension());
+        self::assertSame(null, $adapter->getConfig());
+
         $adapter->setConfig(['is_permanent' => false]);
-        self::assertEquals(
+        self::assertSame(
             [
                 'is_permanent' => false,
                 'tags' => [],

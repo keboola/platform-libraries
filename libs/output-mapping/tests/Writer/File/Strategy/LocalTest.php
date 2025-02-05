@@ -19,11 +19,6 @@ use Symfony\Component\Yaml\Yaml;
 
 class LocalTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     private function getProvider(): ProviderInterface
     {
         $mockLocal = self::createMock(NullProvider::class);
@@ -57,8 +52,8 @@ class LocalTest extends AbstractTestCase
             $this->getProvider(),
             'json',
         );
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listFiles('non-existent-directory/and-file');
     }
 
@@ -118,8 +113,8 @@ class LocalTest extends AbstractTestCase
             $this->getProvider(),
             'json',
         );
-        self::expectException(OutputOperationException::class);
-        self::expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
+        $this->expectException(OutputOperationException::class);
+        $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
         $strategy->listManifests('non-existent-directory/and-file');
     }
 
@@ -260,8 +255,8 @@ class LocalTest extends AbstractTestCase
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('File is not readable:');
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('File is not readable:');
         $strategy->loadFileToStorage('/data/out/files/non-existent', []);
     }
 
@@ -372,8 +367,8 @@ class LocalTest extends AbstractTestCase
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
-        self::expectException(InvalidOutputException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
             '/data/out/files/my-file_one.manifest\' not found.',
         );
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
@@ -386,6 +381,7 @@ class LocalTest extends AbstractTestCase
     }
 
     /**
+     * @phpstan-param 'json'|'yaml' $format
      * @dataProvider provideReadFileManifestInvalid
      */
     public function testReadFileManifestInvalid(string $format): void

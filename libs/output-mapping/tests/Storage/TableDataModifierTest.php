@@ -448,4 +448,9 @@ class TableDataModifierTest extends AbstractTestCase
             self::assertSame($jobParamValues, $actualJobParams[$jobParam]);
         }
     }
+
+    public function testaDeleteTableRowsFromDeleteWhereConfigWithStorage(): void
+    {
+        $this->markTestIncomplete('Not implemented yet on Storage API side.');
+    }
 }

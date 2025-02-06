@@ -79,16 +79,12 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
             );
 
             $tableColumn = current($filteresTableColumns);
-            try {
-                $schemaColumnType = $schemaColumn->getDataType()->getBackendTypeName($this->table['bucket']['backend']);
-                $tableColumnType = $tableColumn['definition']['type'];
-                $columnDefinition = new $columnDefinitionClassName($schemaColumnType);
-                if (method_exists($columnDefinition, 'getBackendBasetype')) {
-                    $schemaColumnType = $columnDefinition->getBackendBasetype();
-                }
-            } catch (InvalidOutputException) {
-                $schemaColumnType = $schemaColumn->getDataType()->getBaseTypeName();
-                $tableColumnType = $tableColumn['basetype'];
+            $tableColumnType = $tableColumn['definition']['type'];
+
+            $schemaColumnType = $schemaColumn->getDataType()->getTypeName($this->table['bucket']['backend']);
+            $columnDefinition = new $columnDefinitionClassName($schemaColumnType);
+            if (method_exists($columnDefinition, 'getBackendBasetype')) {
+                $schemaColumnType = $columnDefinition->getBackendBasetype();
             }
 
             // Snowflake has different types for TIMESTAMP based on settings in Snowflake Account

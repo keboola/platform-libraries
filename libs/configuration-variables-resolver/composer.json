@@ -38,6 +38,7 @@
         "php": "^8.2",
         "ext-json": "*",
         "keboola/common-exceptions": "^1.1",
+        "keboola/service-client": "*@dev",
         "keboola/storage-api-client": "^15.2",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "keboola/vault-api-client": "*@dev",

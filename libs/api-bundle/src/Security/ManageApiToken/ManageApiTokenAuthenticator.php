@@ -62,5 +62,13 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
                 implode(', ', $missingScopes),
             ));
         }
+
+        $missingFeatures = array_diff($authAttribute->features, $token->getFeatures());
+        if (count($missingFeatures) > 0) {
+            throw new AccessDeniedException(sprintf(
+                'Authentication token is valid but missing following features: %s',
+                implode(', ', $missingFeatures),
+            ));
+        }
     }
 }

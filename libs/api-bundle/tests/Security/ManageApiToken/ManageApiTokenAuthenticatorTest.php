@@ -89,6 +89,18 @@ class ManageApiTokenAuthenticatorTest extends TestCase
                     'scopes' => ['some:scope', 'some:other-scope'],
                 ]),
         ];
+
+        yield 'feature needed and provided' => [
+            new ManageApiTokenAuth(features: ['can-manage']),
+            ManageApiToken::fromVerifyResponse([
+                'id' => 123,
+                'description' => 'some-description',
+                'scopes' => [],
+                'user' => [
+                    'features' => ['can-manage'],
+                ],
+            ]),
+        ];
     }
 
     public function provideAuthorizeTokenExceptionsData(): Generator
@@ -146,6 +158,22 @@ class ManageApiTokenAuthenticatorTest extends TestCase
                 ],
             ]),
             'Authentication token must not be super admin',
+        ];
+
+        yield 'feature required but no features provided' => [
+            new ManageApiTokenAuth(features: ['can-manage']),
+            ManageApiToken::fromVerifyResponse([
+                'id' => 123,
+                'description' => 'some-description',
+                'scopes' => ['some:scope'],
+                'user' => [
+                    'id' => 3801,
+                    'mfaEnabled' => true,
+                    'isSuperAdmin' => true,
+                    'features' => [],
+                ],
+            ]),
+            'Authentication token is valid but missing following features: can-manage',
         ];
     }
 }

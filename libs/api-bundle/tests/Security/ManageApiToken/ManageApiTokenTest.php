@@ -70,4 +70,41 @@ class ManageApiTokenTest extends TestCase
         self::assertFalse($token->hasScope('other:scope'));
         self::assertFalse($token->isSuperAdmin());
     }
+
+    public function testHasFeature(): void
+    {
+        $token = ManageApiToken::fromVerifyResponse([
+            'id' => 99995,
+            'description' => 'Vlado test',
+            'created' => '2024-03-21T12:26:43+0100',
+            'lastUsed' => '2024-03-21T12:26:54+0100',
+            'expires' => null,
+            'isSessionToken' => false,
+            'isExpired' => false,
+            'isDisabled' => false,
+            'scopes' => [
+            ],
+            'type' => 'super',
+            'creator' => [
+                'id' => 3801,
+                'name' => 'Adam Výborný',
+            ],
+            'user' => [
+                'id' => 3802,
+                'name' => 'Vladimir Kriska',
+                'email' => 'vladimir.kriska@example.com',
+                'mfaEnabled' => true,
+                'features' => [
+                    'power-user',
+                ],
+                'canAccessLogs' => true,
+                'isSuperAdmin' => false,
+            ],
+        ]);
+
+        self::assertFalse($token->hasScope('some:scope'));
+        self::assertFalse($token->isSuperAdmin());
+        self::assertTrue($token->hasFeature('power-user'));
+        self::assertFalse($token->hasFeature('payg'));
+    }
 }

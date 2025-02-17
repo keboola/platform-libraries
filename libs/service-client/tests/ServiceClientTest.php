@@ -226,4 +226,34 @@ class ServiceClientTest extends TestCase
             'https://billing.north-europe.azure.keboola.com',
         );
     }
+
+    /**
+     * @runInSeparateProcess because we override ENV
+     */
+    public function testGetServiceUrlOverridenByEnv(): void
+    {
+        $serviceClient = new ServiceClient('keboola.com', ServiceDnsType::PUBLIC);
+
+        putenv('KBC_CONNECTION_SERVICE_URL=https://connection.example.com');
+
+        // check both PUBLIC and INTERNAL dns is overridden
+        self::assertSame(
+            'https://connection.example.com',
+            $serviceClient->getConnectionServiceUrl(ServiceDnsType::PUBLIC),
+        );
+        self::assertSame(
+            'https://connection.example.com',
+            $serviceClient->getConnectionServiceUrl(ServiceDnsType::INTERNAL),
+        );
+
+        // check other services are unaffected
+        self::assertSame(
+            'https://queue.keboola.com',
+            $serviceClient->getQueueUrl(ServiceDnsType::PUBLIC),
+        );
+        self::assertSame(
+            'http://job-queue-api.default.svc.cluster.local',
+            $serviceClient->getQueueUrl(ServiceDnsType::INTERNAL),
+        );
+    }
 }

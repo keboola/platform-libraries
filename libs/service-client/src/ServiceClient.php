@@ -76,8 +76,13 @@ class ServiceClient
      */
     public function getServiceUrl(Service $service, ?ServiceDnsType $dnsType = null): string
     {
-        $dnsType ??= $this->defaultDnsType;
+        $serviceUrlEnvName = sprintf('KBC_%s_SERVICE_URL', $service->getServiceEnvPrefix());
+        $serviceUrl = getenv($serviceUrlEnvName);
+        if ($serviceUrl !== false && $serviceUrl !== '') {
+            return $serviceUrl;
+        }
 
+        $dnsType ??= $this->defaultDnsType;
         if ($dnsType === ServiceDnsType::INTERNAL) {
             return sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX);
         }

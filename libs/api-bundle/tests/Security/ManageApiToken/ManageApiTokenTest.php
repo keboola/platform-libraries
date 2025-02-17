@@ -25,12 +25,12 @@ class ManageApiTokenTest extends TestCase
             'type' => 'admin',
             'creator' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
+                'name' => 'John Doe',
             ],
             'user' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
-                'email' => 'adam.vyborny@keboola.com',
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
                 'mfaEnabled' => true,
                 'canAccessLogs' => true,
                 'isSuperAdmin' => true,
@@ -48,7 +48,7 @@ class ManageApiTokenTest extends TestCase
     {
         $token = ManageApiToken::fromVerifyResponse([
             'id' => 99994,
-            'description' => 'Adam test',
+            'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',
             'lastUsed' => '2024-03-21T12:26:54+0100',
             'expires' => null,
@@ -61,7 +61,7 @@ class ManageApiTokenTest extends TestCase
             'type' => 'super',
             'creator' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
+                'name' => 'John Doe',
             ],
         ]);
 
@@ -74,7 +74,7 @@ class ManageApiTokenTest extends TestCase
     {
         $token = ManageApiToken::fromVerifyResponse([
             'id' => 99994,
-            'description' => 'Adam test',
+            'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',
             'lastUsed' => '2024-03-21T12:26:54+0100',
             'expires' => null,
@@ -85,8 +85,8 @@ class ManageApiTokenTest extends TestCase
             'type' => 'super',
             'user' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
-                'email' => 'adam.vyborny@keboola.com',
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
                 'features' => [
                     'feat-1',
                     'feat-2',

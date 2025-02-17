@@ -25,15 +25,13 @@ class ManageApiTokenTest extends TestCase
             'type' => 'admin',
             'creator' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
+                'name' => 'John Doe',
             ],
             'user' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
-                'email' => 'adam.vyborny@keboola.com',
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
                 'mfaEnabled' => true,
-                'features' => [
-                ],
                 'canAccessLogs' => true,
                 'isSuperAdmin' => true,
             ],
@@ -42,6 +40,7 @@ class ManageApiTokenTest extends TestCase
         self::assertSame('100001', $token->getUserIdentifier());
         self::assertSame('test', $token->getUsername());
         self::assertSame([], $token->getScopes());
+        self::assertSame([], $token->getFeatures());
         self::assertSame(true, $token->isSuperAdmin());
     }
 
@@ -49,7 +48,7 @@ class ManageApiTokenTest extends TestCase
     {
         $token = ManageApiToken::fromVerifyResponse([
             'id' => 99994,
-            'description' => 'Adam test',
+            'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',
             'lastUsed' => '2024-03-21T12:26:54+0100',
             'expires' => null,
@@ -62,12 +61,41 @@ class ManageApiTokenTest extends TestCase
             'type' => 'super',
             'creator' => [
                 'id' => 3801,
-                'name' => 'Adam Výborný',
+                'name' => 'John Doe',
             ],
         ]);
 
         self::assertTrue($token->hasScope('some:scope'));
         self::assertFalse($token->hasScope('other:scope'));
         self::assertFalse($token->isSuperAdmin());
+    }
+
+    public function testHasFeature(): void
+    {
+        $token = ManageApiToken::fromVerifyResponse([
+            'id' => 99994,
+            'description' => 'John Doe test',
+            'created' => '2024-03-21T12:26:43+0100',
+            'lastUsed' => '2024-03-21T12:26:54+0100',
+            'expires' => null,
+            'isSessionToken' => false,
+            'isExpired' => false,
+            'isDisabled' => false,
+            'scopes' => [],
+            'type' => 'super',
+            'user' => [
+                'id' => 3801,
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
+                'features' => [
+                    'feat-1',
+                    'feat-2',
+                ],
+            ],
+        ]);
+
+        self::assertSame(['feat-1', 'feat-2'], $token->getFeatures());
+        self::assertTrue($token->hasFeature('feat-1'));
+        self::assertFalse($token->hasFeature('feat-3'));
     }
 }

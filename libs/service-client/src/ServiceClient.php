@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\ServiceClient;
 
 use InvalidArgumentException;
+use RuntimeException;
+use ValueError;
 
 class ServiceClient
 {
@@ -13,14 +15,26 @@ class ServiceClient
     private readonly ServiceDnsType $defaultDnsType;
 
     /**
-     * @param non-empty-string $hostnameSuffix
+     * @param non-empty-string|null $hostnameSuffix
      */
     public function __construct(
-        private readonly string $hostnameSuffix,
+        private readonly ?string $hostnameSuffix,
         ServiceDnsType|string $defaultDnsType = ServiceDnsType::PUBLIC,
     ) {
         if (is_string($defaultDnsType)) {
-            $defaultDnsType = ServiceDnsType::from($defaultDnsType);
+            try {
+                $defaultDnsType = ServiceDnsType::from($defaultDnsType);
+            } catch (ValueError $e) {
+                throw new InvalidArgumentException(
+                    sprintf('"%s" is not valid service DNS type', $defaultDnsType),
+                    $e->getCode(),
+                    $e,
+                );
+            }
+        }
+
+        if ($this->hostnameSuffix === null && $defaultDnsType === ServiceDnsType::PUBLIC) {
+            throw new InvalidArgumentException('Hostname suffix must be provided when using public DNS type.');
         }
 
         $this->defaultDnsType = $defaultDnsType;
@@ -62,10 +76,17 @@ class ServiceClient
      */
     public function getServiceUrl(Service $service, ?ServiceDnsType $dnsType = null): string
     {
-        return match ($dnsType ?? $this->defaultDnsType) {
-            ServiceDnsType::INTERNAL => sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX),
-            ServiceDnsType::PUBLIC => sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix),
-        };
+        $dnsType ??= $this->defaultDnsType;
+
+        if ($dnsType === ServiceDnsType::INTERNAL) {
+            return sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX);
+        }
+
+        if ($this->hostnameSuffix === null) {
+            throw new RuntimeException('Can\'t get URL for public DNS type, hostname suffix was not configured.');
+        }
+
+        return sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix);
     }
 
     /**

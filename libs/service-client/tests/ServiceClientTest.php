@@ -46,6 +46,31 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_TEMPLATES = 'http://templates-api.templates-api.svc.cluster.local';
     private const INTERNAL_VAULT = 'http://vault-api.default.svc.cluster.local';
 
+    public function testConstructWithoutHostnameSuffixAndWithPublicDnsFails(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Hostname suffix must be provided when using public DNS type.');
+        new ServiceClient(null, ServiceDnsType::PUBLIC);
+    }
+
+    public function testConstructWithDnsTypeAsString(): void
+    {
+        $client = new ServiceClient(null, 'internal');
+
+        self::assertEquals(
+            new ServiceClient(null, ServiceDnsType::INTERNAL),
+            $client,
+        );
+    }
+
+    public function testConstructWithInvalidDnsTypeStringFails(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"foo" is not valid service DNS type');
+
+        new ServiceClient(null, 'foo');
+    }
+
     public function testGetExplicitPublicUrlMethods(): void
     {
         // configure for default INTERNAL dns and test that PUBLIC is properly passed from the method
@@ -98,6 +123,16 @@ class ServiceClientTest extends TestCase
         $this->expectExceptionMessage('Job queue internal API does not have public DNS');
 
         $client->getQueueInternalApiUrl(ServiceDnsType::PUBLIC);
+    }
+
+    public function testGetExplicitPublicUrlOfServiceFailsIfHostnameSuffixWasNotConfigured(): void
+    {
+        $client = new ServiceClient(null, ServiceDnsType::INTERNAL);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Can\'t get URL for public DNS type, hostname suffix was not configured.');
+
+        $client->getConnectionServiceUrl(ServiceDnsType::PUBLIC);
     }
 
     public function testGetDefaultPublicUrlOfServiceWithoutPublicDns(): void

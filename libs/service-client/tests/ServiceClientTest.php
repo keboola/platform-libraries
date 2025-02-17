@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ServiceClient\Tests;
 
+use InvalidArgumentException;
+use Keboola\ServiceClient\Service;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
@@ -153,5 +155,40 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
+    }
+
+    public function testFromServicePublicUrlCreatesClient(): void
+    {
+        $client = ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'https://connection.north-europe.azure.keboola.com',
+        );
+
+        self::assertEquals(
+            new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC),
+            $client,
+        );
+    }
+
+    public function testFromServicePublicUrlFailsWithInvalidUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid URL "not-an-url"');
+
+        ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'not-an-url',
+        );
+    }
+
+    public function testFromServicePublicUrlFailsForInvalidSubdomain(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"https://billing.north-europe.azure.keboola.com" is not CONNECTION service URL');
+
+        ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'https://billing.north-europe.azure.keboola.com',
+        );
     }
 }

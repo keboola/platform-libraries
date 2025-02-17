@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ServiceClient;
 
+use InvalidArgumentException;
+
 class ServiceClient
 {
     private const K8S_SUFFIX = 'svc.cluster.local';
@@ -22,6 +24,37 @@ class ServiceClient
         }
 
         $this->defaultDnsType = $defaultDnsType;
+    }
+
+    /**
+     * Creates ServiceClient with hostnameSuffix configured same as existing service URL. Always configures
+     * ServiceContainer to use PUBLIC Dns type.
+     */
+    public static function fromServicePublicUrl(Service $service, string $url): self
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host === false || $host === null || $host === '') {
+            throw new InvalidArgumentException(sprintf('Invalid URL "%s"', $url));
+        }
+
+        $serviceSubdomain = $service->getPublicSubdomain();
+        $hostPrefix = $serviceSubdomain . '.';
+
+        if (!str_starts_with($host, $serviceSubdomain)) {
+            throw new InvalidArgumentException(sprintf(
+                '"%s" is not %s service URL',
+                $url,
+                $service->name,
+            ));
+        }
+
+        $hostSuffix = substr($host, strlen($hostPrefix));
+
+        // this is always true, because $hostPrefix always ends with dot, and $host never ends with dot
+        // (otherwise parse_url would fail)
+        assert(strlen($hostSuffix) > 0);
+
+        return new self($hostSuffix, ServiceDnsType::PUBLIC);
     }
 
     /**

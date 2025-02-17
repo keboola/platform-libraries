@@ -12,6 +12,7 @@ class ManageApiToken implements TokenInterface
         private readonly int $id,
         private readonly string $description,
         /** @var list<string> */ private readonly array $scopes,
+        /** @var list<string> */ private readonly array $features,
         private readonly bool $isSuperAdmin,
     ) {
     }
@@ -22,6 +23,7 @@ class ManageApiToken implements TokenInterface
             $data['id'],
             $data['description'],
             $data['scopes'],
+            $data['user']['features'] ?? [],
             $data['user']['isSuperAdmin'] ?? false,
         );
     }
@@ -42,6 +44,16 @@ class ManageApiToken implements TokenInterface
     public function getRoles(): array
     {
         return [];
+    }
+
+    public function getFeatures(): array
+    {
+        return $this->features;
+    }
+
+    public function hasFeature(string $feature): bool
+    {
+        return in_array($feature, $this->features, true);
     }
 
     public function getPassword(): ?string

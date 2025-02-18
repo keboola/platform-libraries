@@ -222,7 +222,6 @@ class SandboxesApiClientTest extends TestCase
     {
         $responseBody = [
             'id' => '123',
-            'mlflowServerVersionLatest' => '',
             'createdTimestamp' => '2024-02-01T08:00:00+01:00',
         ];
 

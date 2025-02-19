@@ -186,7 +186,6 @@ class SandboxTest extends TestCase
         yield 'julia' => ['julia'];
         yield 'python' => ['python'];
         yield 'python-databricks' => ['python-databricks'];
-        yield 'python-mlflow' => ['python-mlflow'];
         yield 'python-snowpark' => ['python-snowpark'];
         yield 'r' => ['r'];
     }

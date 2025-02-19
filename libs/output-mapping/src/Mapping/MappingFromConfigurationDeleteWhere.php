@@ -11,6 +11,7 @@ class MappingFromConfigurationDeleteWhere
     private const SUPPORTED_WHERE_FILTERS_CLASS_MAP = [
         'values_from_set' => MappingFromConfigurationDeleteWhereFilterFromSet::class,
         'values_from_workspace' => MappingFromConfigurationDeleteWhereFilterFromWorkspace::class,
+        'values_from_storage' => MappingFromConfigurationDeleteWhereFilterFromStorage::class,
     ];
 
     public function __construct(
@@ -29,7 +30,7 @@ class MappingFromConfigurationDeleteWhere
     }
 
     /**
-     * @return (MappingFromConfigurationDeleteWhereFilterFromSet|MappingFromConfigurationDeleteWhereFilterFromWorkspace)[]|null
+     * @return (MappingFromConfigurationDeleteWhereFilterFromSet|MappingFromConfigurationDeleteWhereFilterFromWorkspace|MappingFromConfigurationDeleteWhereFilterFromStorage)[]|null
      */
     public function getWhereFilters(): ?array
     {
@@ -43,10 +44,6 @@ class MappingFromConfigurationDeleteWhere
                     if (isset($filter[$key])) {
                         return new $filterClass($filter);
                     }
-                }
-
-                if (isset($filter['values_from_storage'])) {
-                    throw new InvalidOutputException('Where filter "values_from_storage" is not yet supported');
                 }
 
                 throw new InvalidOutputException('Invalid filter type specified');

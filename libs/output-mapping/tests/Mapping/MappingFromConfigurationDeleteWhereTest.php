@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping\Tests\Mapping;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromSet;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromStorage;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromWorkspace;
 use PHPUnit\Framework\TestCase;
 
@@ -97,16 +98,27 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
                         'column' => 'columnInWorkspace',
                     ],
                 ],
+                [
+                    'column' => 'columnName',
+                    'operator' => 'eq',
+                    'values_from_storage' => [
+                        'bucket_id' => 'in.c-bucket',
+                        'table' => 'tableInStorage',
+                        'column' => 'columnInStorage',
+                    ],
+                ],
             ],
         ]);
 
         $filters = $mapping->getWhereFilters();
         self::assertNotNull($filters);
-        self::assertCount(2, $filters);
+        self::assertCount(3, $filters);
         self::assertInstanceOf(MappingFromConfigurationDeleteWhereFilterFromSet::class, $filters[0]);
         self::assertWhereFilterFromSet($filters[0]);
         self::assertInstanceOf(MappingFromConfigurationDeleteWhereFilterFromWorkspace::class, $filters[1]);
         self::assertWhereFilterFromWorkspace($filters[1]);
+        self::assertInstanceOf(MappingFromConfigurationDeleteWhereFilterFromStorage::class, $filters[2]);
+        self::assertWhereFilterFromStorage($filters[2]);
     }
 
     public function testInvalidFilterType(): void
@@ -125,7 +137,7 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
         $mapping->getWhereFilters();
     }
 
-    public function testUnsupportedValuesFromStorage(): void
+    public function testMappingWithValuesFromStorage(): void
     {
         $mapping = new MappingFromConfigurationDeleteWhere([
             'where_filters' => [
@@ -134,16 +146,20 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
                     'operator' => 'eq',
                     'values_from_storage' => [
                         'bucket_id' => 'in.c-bucket',
-                        'table' => 'tableName',
-                        'column' => 'columnName',
+                        'table' => 'tableInStorage',
+                        'column' => 'columnInStorage',
                     ],
                 ],
             ],
         ]);
 
-        $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Where filter "values_from_storage" is not yet supported');
-        $mapping->getWhereFilters();
+        $filters = $mapping->getWhereFilters();
+        self::assertNotNull($filters);
+        self::assertCount(1, $filters);
+
+        $filter = $filters[0];
+        self::assertInstanceOf(MappingFromConfigurationDeleteWhereFilterFromStorage::class, $filter);
+        self::assertWhereFilterFromStorage($filter);
     }
 
     private static function assertWhereFilterFromSet(MappingFromConfigurationDeleteWhereFilterFromSet $filter): void
@@ -161,5 +177,15 @@ class MappingFromConfigurationDeleteWhereTest extends TestCase
         self::assertSame('123', $filter->getWorkspaceId());
         self::assertSame('tableInWorkspace', $filter->getWorkspaceTable());
         self::assertSame('columnInWorkspace', $filter->getWorkspaceColumn());
+    }
+
+    private static function assertWhereFilterFromStorage(
+        MappingFromConfigurationDeleteWhereFilterFromStorage $filter,
+    ): void {
+        self::assertSame('columnName', $filter->getColumn());
+        self::assertSame('eq', $filter->getOperator());
+        self::assertSame('in.c-bucket', $filter->getStorageBucketId());
+        self::assertSame('tableInStorage', $filter->getStorageTable());
+        self::assertSame('columnInStorage', $filter->getStorageColumn());
     }
 }

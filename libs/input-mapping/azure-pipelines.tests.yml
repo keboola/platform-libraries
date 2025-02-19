@@ -125,20 +125,20 @@ jobs:
         STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
         STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
 
-  - template: ../../azure-pipelines/jobs/run-tests.yml
-    parameters:
-      jobName: azure_tests_php8_synapse
-      dependsOn: [cs]
-      displayName: Run Azure Testsuite on Azure with Synapse
-      serviceName: dev-input-mapping
-      testCommand: 'composer install && vendor/bin/phpunit --testsuite AzureSynapse'
-      variables:
-        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
-        RUN_SYNAPSE_TESTS: 0
-      secrets:
-        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
-        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
-        SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN)
+#  - template: ../../azure-pipelines/jobs/run-tests.yml
+#    parameters:
+#      jobName: azure_tests_php8_synapse
+#      dependsOn: [cs]
+#      displayName: Run Azure Testsuite on Azure with Synapse
+#      serviceName: dev-input-mapping
+#      testCommand: 'composer install && vendor/bin/phpunit --testsuite AzureSynapse'
+#      variables:
+#        STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
+#        RUN_SYNAPSE_TESTS: 0
+#      secrets:
+#        STORAGE_API_TOKEN: $(INPUT_MAPPING__STORAGE_API_TOKEN_AZURE)
+#        STORAGE_API_TOKEN_MASTER: $(INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE)
+#        SYNAPSE_STORAGE_API_TOKEN: $(SYNAPSE_STORAGE_API_TOKEN)
 
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:

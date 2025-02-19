@@ -63,6 +63,13 @@ class LoadTypeDecider
         ) {
             return false;
         }
+
+        if (array_key_exists('hasExternalSchema', $tableInfo['bucket'])
+            && $tableInfo['bucket']['hasExternalSchema'] === true
+        ) {
+            // clone is not allowed for buckets with external schema
+            return false;
+        }
         return true;
     }
 
@@ -70,7 +77,18 @@ class LoadTypeDecider
         array $tableInfo,
         string $workspaceType,
     ): bool {
-        if ($tableInfo['bucket']['backend'] === $workspaceType && $workspaceType === 'bigquery') {
+        $backend = $tableInfo['bucket']['backend'];
+        $isBackendMatch = $backend === $workspaceType;
+        if ($isBackendMatch && $workspaceType === 'bigquery') {
+            return true;
+        }
+
+        if ($isBackendMatch
+            && $backend === 'snowflake'
+            && array_key_exists('hasExternalSchema', $tableInfo['bucket'])
+            && $tableInfo['bucket']['hasExternalSchema'] === true
+        ) {
+            // allow view for buckets with external schema
             return true;
         }
 

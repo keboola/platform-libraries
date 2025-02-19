@@ -123,6 +123,17 @@ class LoadTypeDeciderTest extends TestCase
             ['overwrite' => false],
             false,
         ];
+        yield 'snowflake external bucket' => [
+            [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'snowflake', 'hasExternalSchema' => true],
+                'isAlias' => false,
+            ],
+            'snowflake',
+            ['overwrite' => false],
+            false,
+        ];
     }
 
     /**
@@ -177,6 +188,28 @@ class LoadTypeDeciderTest extends TestCase
                 'id' => 'foo.bar',
                 'name' => 'bar',
                 'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'snowflake',
+            'expected' => false,
+        ];
+
+        yield 'Snowflake external bucket' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'snowflake', 'hasExternalSchema' => true],
+                'isAlias' => false,
+            ],
+            'workspaceType' => 'snowflake',
+            'expected' => true,
+        ];
+
+        yield 'Snowflake normal bucket' => [
+            'tableInfo' => [
+                'id' => 'foo.bar',
+                'name' => 'bar',
+                'bucket' => ['backend' => 'snowflake', 'hasExternalSchema' => false],
                 'isAlias' => false,
             ],
             'workspaceType' => 'snowflake',

@@ -8,4 +8,5 @@ enum Feature: string
 {
     case QUEUE_V2 = 'queuev2';
     case PROTECTED_DEFAULT_BRANCH = 'protected-default-branch';
+    case AI_AUTOMATIONS = 'ai-automations';
 }

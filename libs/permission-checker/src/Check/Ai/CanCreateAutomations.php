@@ -14,10 +14,6 @@ class CanCreateAutomations implements PermissionCheckInterface
 {
     public function checkPermissions(StorageApiToken $token): void
     {
-        if (!$token->hasFeature(Feature::AI_AUTOMATIONS)) {
-            throw PermissionDeniedException::missingFeature(Feature::AI_AUTOMATIONS);
-        }
-
         if ($token->hasFeature(Feature::PROTECTED_DEFAULT_BRANCH)) {
             throw new PermissionDeniedException(sprintf(
                 'Role "%s" is not allowed to create AI automations on branch protected projects',

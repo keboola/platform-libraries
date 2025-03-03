@@ -17,127 +17,89 @@ class CanCreateConversationsTest extends TestCase
     public static function provideValidPermissionsCheckData(): iterable
     {
         yield 'simple token' => [
-            'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(),
         ];
 
         yield 'admin token' => [
-            'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(
                 role: Role::ADMIN->value,
             ),
         ];
 
         yield 'share token' => [
-            'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(
                 role: Role::SHARE->value,
-            ),
-        ];
-
-        yield 'token with protected default branch - developer on dev branch' => [
-            'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(
-                features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
-                role: Role::DEVELOPER->value,
-            ),
-        ];
-
-        yield 'token with protected default branch - reviewer on dev branch' => [
-            'branchType' => BranchType::DEV,
-            'token' => new StorageApiToken(
-                features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
-                role: Role::REVIEWER->value,
             ),
         ];
     }
 
     /** @dataProvider provideValidPermissionsCheckData */
     public function testValidPermissionsCheck(
-        BranchType $branchType,
         StorageApiToken $token,
     ): void {
         $this->expectNotToPerformAssertions();
 
-        $checker = new CanCreateConversations($branchType);
+        $checker = new CanCreateConversations();
         $checker->checkPermissions($token);
     }
 
     public static function provideInvalidPermissionsCheckData(): iterable
     {
         yield 'read-only role' => [
-            'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(
                 role: Role::READ_ONLY->value,
             ),
             'error' => PermissionDeniedException::roleDenied(Role::READ_ONLY, 'create AI conversations'),
         ];
 
-        yield 'production manager on dev branch of protected default branch project' => [
-            'branchType' => BranchType::DEV,
+        yield 'token with protected default branch' => [
+            'token' => new StorageApiToken(
+                features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
+            ),
+            'error' => new PermissionDeniedException(
+                'Role "none" is not allowed to create AI conversations on protected branch projects',
+            ),
+        ];
+
+        yield 'production manager with protected default branch' => [
             'token' => new StorageApiToken(
                 features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
                 role: Role::PRODUCTION_MANAGER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "productionManager" is not allowed to create AI conversations on dev branch',
+                'Role "productionManager" is not allowed to create AI conversations on protected branch projects',
             ),
         ];
 
-        yield 'token with protected default branch - production manager on default branch' => [
-            'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(
-                features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
-                role: Role::PRODUCTION_MANAGER->value,
-            ),
-            'error' => new PermissionDeniedException(
-                'Role "productionManager" is not allowed to create AI conversations on default branch',
-            ),
-        ];
-
-        yield 'developer on default branch of protected default branch project' => [
-            'branchType' => BranchType::DEFAULT,
+        yield 'developer with protected default branch' => [
             'token' => new StorageApiToken(
                 features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
                 role: Role::DEVELOPER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "developer" is not allowed to create AI conversations on default branch',
+                'Role "developer" is not allowed to create AI conversations on protected branch projects',
             ),
         ];
 
-        yield 'reviewer on default branch of protected default branch project' => [
-            'branchType' => BranchType::DEFAULT,
+        yield 'reviewer with protected default branch' => [
             'token' => new StorageApiToken(
                 features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
                 role: Role::REVIEWER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "reviewer" is not allowed to create AI conversations on default branch',
-            ),
-        ];
-
-        yield 'none role on protected default branch project' => [
-            'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(
-                features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
-                role: Role::NONE->value,
-            ),
-            'error' => new PermissionDeniedException(
-                'Role "none" is not allowed to create AI conversations on default branch',
+                'Role "reviewer" is not allowed to create AI conversations on protected branch projects',
             ),
         ];
     }
 
     /** @dataProvider provideInvalidPermissionsCheckData */
     public function testInvalidPermissionsCheck(
-        BranchType $branchType,
         StorageApiToken $token,
         PermissionDeniedException $error,
     ): void {
         $this->expectExceptionObject($error);
 
-        $checker = new CanCreateConversations($branchType);
+        $checker = new CanCreateConversations();
         $checker->checkPermissions($token);
     }
 }

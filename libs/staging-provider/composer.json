@@ -32,7 +32,7 @@
         "keboola/input-mapping": "*@dev",
         "keboola/output-mapping": "*@dev",
         "keboola/slicer": "*@dev",
-        "keboola/storage-api-client": "^15.1",
+        "keboola/storage-api-client": "^15.5",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0"
     },
     "require-dev": {

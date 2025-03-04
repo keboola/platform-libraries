@@ -10,7 +10,7 @@ use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 
-class CanCreateConversations implements PermissionCheckInterface
+class CanModifyConversations implements PermissionCheckInterface
 {
     public function checkPermissions(StorageApiToken $token): void
     {

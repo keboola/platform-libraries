@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\PermissionChecker\Tests\Check\Ai;
 
-use Keboola\PermissionChecker\Check\Ai\CanCreateAutomations;
+use Keboola\PermissionChecker\Check\Ai\CanModifyAutomations;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 
-class CanCreateAutomationsTest extends TestCase
+class CanModifyAutomationsTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
@@ -38,7 +38,7 @@ class CanCreateAutomationsTest extends TestCase
     ): void {
         $this->expectNotToPerformAssertions();
 
-        $checker = new CanCreateAutomations();
+        $checker = new CanModifyAutomations();
         $checker->checkPermissions($token);
     }
 
@@ -98,7 +98,7 @@ class CanCreateAutomationsTest extends TestCase
     ): void {
         $this->expectExceptionObject($error);
 
-        $checker = new CanCreateAutomations();
+        $checker = new CanModifyAutomations();
         $checker->checkPermissions($token);
     }
 }

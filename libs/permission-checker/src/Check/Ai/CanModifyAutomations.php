@@ -10,7 +10,7 @@ use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 
-class CanCreateAutomations implements PermissionCheckInterface
+class CanModifyAutomations implements PermissionCheckInterface
 {
     public function checkPermissions(StorageApiToken $token): void
     {

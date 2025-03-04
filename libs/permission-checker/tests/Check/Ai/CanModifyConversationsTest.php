@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Keboola\PermissionChecker\Tests\Check\Ai;
 
 use Keboola\PermissionChecker\BranchType;
-use Keboola\PermissionChecker\Check\Ai\CanCreateConversations;
+use Keboola\PermissionChecker\Check\Ai\CanModifyConversations;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 
-class CanCreateConversationsTest extends TestCase
+class CanModifyConversationsTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
@@ -39,7 +39,7 @@ class CanCreateConversationsTest extends TestCase
     ): void {
         $this->expectNotToPerformAssertions();
 
-        $checker = new CanCreateConversations();
+        $checker = new CanModifyConversations();
         $checker->checkPermissions($token);
     }
 
@@ -99,7 +99,7 @@ class CanCreateConversationsTest extends TestCase
     ): void {
         $this->expectExceptionObject($error);
 
-        $checker = new CanCreateConversations();
+        $checker = new CanModifyConversations();
         $checker->checkPermissions($token);
     }
 }

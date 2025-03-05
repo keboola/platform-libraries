@@ -34,7 +34,7 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
         $manageApiClient = $this->manageApiClientFactory->getClient($token);
 
         try {
-            $tokenData = (array) $manageApiClient->verifyToken();
+            $tokenData = $manageApiClient->verifyToken();
         } catch (ManageApiClientException $e) {
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }

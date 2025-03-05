@@ -20,8 +20,7 @@ class ManageApiTokenTest extends TestCase
             'isSessionToken' => false,
             'isExpired' => false,
             'isDisabled' => false,
-            'scopes' => [
-            ],
+            'scopes' => [],
             'type' => 'admin',
             'creator' => [
                 'id' => 3801,
@@ -32,6 +31,7 @@ class ManageApiTokenTest extends TestCase
                 'name' => 'John Doe',
                 'email' => 'john.doe@example.com',
                 'mfaEnabled' => true,
+                'features' => [],
                 'canAccessLogs' => true,
                 'isSuperAdmin' => true,
             ],
@@ -55,13 +55,20 @@ class ManageApiTokenTest extends TestCase
             'isSessionToken' => false,
             'isExpired' => false,
             'isDisabled' => false,
-            'scopes' => [
-                'some:scope',
-            ],
+            'scopes' => ['some:scope'],
             'type' => 'super',
             'creator' => [
                 'id' => 3801,
                 'name' => 'John Doe',
+            ],
+            'user' => [
+                'id' => 3801,
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
+                'mfaEnabled' => true,
+                'features' => [],
+                'isSuperAdmin' => false,
+                'canAccessLogs' => true,
             ],
         ]);
 
@@ -83,14 +90,18 @@ class ManageApiTokenTest extends TestCase
             'isDisabled' => false,
             'scopes' => [],
             'type' => 'super',
+            'creator' => [
+                'id' => 3801,
+                'name' => 'John Doe',
+            ],
             'user' => [
                 'id' => 3801,
                 'name' => 'John Doe',
                 'email' => 'john.doe@example.com',
-                'features' => [
-                    'feat-1',
-                    'feat-2',
-                ],
+                'mfaEnabled' => true,
+                'features' => ['feat-1', 'feat-2'],
+                'isSuperAdmin' => false,
+                'canAccessLogs' => true,
             ],
         ]);
 

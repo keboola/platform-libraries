@@ -17,38 +17,44 @@ class ManageApiToken implements TokenInterface
     ) {
     }
 
+    /**
+     * Structure of the token verification response from Manage API
+     *
+     * @param array{
+     *     id: int,
+     *     description: string,
+     *     created: string,
+     *     lastUsed: string|null,
+     *     expires: string|null,
+     *     isSessionToken: bool,
+     *     isExpired: bool,
+     *     isDisabled: bool,
+     *     scopes: list<string>,
+     *     type: string,
+     *     creator: array{
+     *         id: int|string,
+     *         name: string
+     *     },
+     *     user?: array{
+     *         id: int,
+     *         name: string,
+     *         email: string,
+     *         mfaEnabled: bool,
+     *         features: list<string>,
+     *         canAccessLogs: bool,
+     *         isSuperAdmin: bool
+     *     }
+     * } $data
+     * @return self
+     */
     public static function fromVerifyResponse(array $data): self
     {
-        assert(is_scalar($data['id']), 'Token ID must be an integer');
-        assert(is_scalar($data['description']), 'Token description must be a string');
-        assert(is_array($data['scopes']), 'Token scopes must be an array');
-        $userData = $data['user'] ?? [];
-        assert(
-            is_array($userData),
-            'Token user data must be an array',
-        );
-        $features = $userData['features'] ?? [];
-        assert(
-            is_array($features),
-            'Token features must be an array if present',
-        );
-        assert(
-            !isset($userData['isSuperAdmin']) || is_scalar($userData['isSuperAdmin']),
-            'Token isSuperAdmin must be a scalar if present',
-        );
-
         return new self(
             (int) $data['id'],
             (string) $data['description'],
-            array_values(array_map(function ($scope) {
-                assert(is_string($scope));
-                return (string) $scope;
-            }, $data['scopes'])),
-            array_values(array_map(function ($feature) {
-                assert(is_string($feature));
-                return (string) $feature;
-            }, $features)),
-            (bool) ($userData['isSuperAdmin'] ?? false),
+            $data['scopes'],
+            $data['user']['features'] ?? [],
+            (bool) ($data['user']['isSuperAdmin'] ?? false),
         );
     }
 

@@ -174,6 +174,32 @@ class StorageApiWorkspaceTest extends TestCase
                 'account' => 'some-host',
             ],
         ];
+        yield 'snowflake-sso' => [
+            'input' => [
+                'id' => '123456',
+                'backendSize' => 'small',
+                'connection' => [
+                    'backend' => 'snowflake',
+                    'host' => 'some-host',
+                    'warehouse' => 'some-warehouse',
+                    'database' => 'some-database',
+                    'user' => 'some-user',
+                    'schema' => 'some-schema',
+                ],
+            ],
+            'expectedId' => '123456',
+            'expectedBackend' => 'snowflake',
+            'expectedBackendSize' => 'small',
+            'expectedCredentials' => [
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => null,
+                'account' => 'some-host',
+            ],
+        ];
         yield 'synapse' => [
             'input' => [
                 'id' => '123456',

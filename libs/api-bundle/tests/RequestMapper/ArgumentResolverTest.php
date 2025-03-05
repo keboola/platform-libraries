@@ -10,6 +10,7 @@ use Keboola\ApiBundle\RequestMapper\Attribute\RequestPayloadObject;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestQueryObject;
 use Keboola\ApiBundle\RequestMapper\DataMapper;
 use Keboola\ApiBundle\RequestMapper\Exception\RequestMapperException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -89,7 +90,7 @@ class ArgumentResolverTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideInvalidArguments */
+    #[DataProvider('provideInvalidArguments')]
     public function testInvalidArguments(object $controller, string $error): void
     {
         $dataMapper = $this->createMock(DataMapper::class);
@@ -101,6 +102,7 @@ class ArgumentResolverTest extends TestCase
         $this->expectExceptionMessage($error);
 
         $result = $resolver->resolve(new Request(), $this->createArgumentMetadataForController($controller, 'data'));
+        // @phpstan-ignore-next-line
         [...$result];
     }
 
@@ -128,7 +130,7 @@ class ArgumentResolverTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideInvalidPayloads */
+    #[DataProvider('provideInvalidPayloads')]
     public function testInvalidPayloadRequest(Request $request, int $errorCode, string $errorMessage): void
     {
         $controller = new class {
@@ -146,6 +148,7 @@ class ArgumentResolverTest extends TestCase
         $error = null;
         try {
             $result = $resolver->resolve($request, $this->createArgumentMetadataForController($controller, 'data'));
+            // @phpstan-ignore-next-line
             [...$result];
         } catch (HttpException $error) {
             // error is checked below
@@ -179,7 +182,7 @@ class ArgumentResolverTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideValidPayloadAttributesTestData */
+    #[DataProvider('provideValidPayloadAttributesTestData')]
     public function testValidPayloadRequest(object $controller, bool $extraKeysEnabled): void
     {
         $request = new Request(
@@ -236,7 +239,7 @@ class ArgumentResolverTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideValidQueryAttributesTestData */
+    #[DataProvider('provideValidQueryAttributesTestData')]
     public function testValidQueryRequest(
         object $controller,
         bool $extraKeysEnabled,

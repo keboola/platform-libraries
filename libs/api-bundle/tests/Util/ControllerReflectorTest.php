@@ -7,6 +7,7 @@ namespace Keboola\ApiBundle\Tests\Util;
 use Keboola\ApiBundle\Tests\Util\DummyClassicController;
 use Keboola\ApiBundle\Tests\Util\DummyInvokeController;
 use Keboola\ApiBundle\Util\ControllerReflector;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Symfony\Component\DependencyInjection\Container;
@@ -15,8 +16,8 @@ class ControllerReflectorTest extends TestCase
 {
     /**
      * @param null|array{string, string} $expectedMethod
-     * @dataProvider provideControllerData
      */
+    #[DataProvider('provideControllerData')]
     public function testControllerMethodResolving(mixed $controller, mixed $expectedMethod): void
     {
         $container = new Container();
@@ -29,36 +30,36 @@ class ControllerReflectorTest extends TestCase
         self::assertEquals($expectedMethod, $result);
     }
 
-    public function provideControllerData(): iterable
+    public static function provideControllerData(): iterable
     {
         yield 'app.invoke_controller' => [
             'controller' => 'app.invoke_controller',
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield '[app.invoke_controller]' => [
             'controller' => ['app.invoke_controller'],
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield 'app.invoke_controller::__invoke' => [
             'controller' => 'app.invoke_controller::__invoke',
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield '[app.invoke_controller, __invoke]' => [
             'controller' => ['app.invoke_controller', '__invoke'],
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield 'app.classic_controller::handleRequest' => [
             'controller' => 'app.classic_controller::handleRequest',
-            'result' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
+            'expectedMethod' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
         ];
 
         yield '[app.classic_controller, handleRequest]' => [
             'controller' => ['app.classic_controller', 'handleRequest'],
-            'result' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
+            'expectedMethod' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
         ];
 
 //        $functionController = function () {
@@ -70,17 +71,17 @@ class ControllerReflectorTest extends TestCase
 
         yield 'new DummyInvokeController()' => [
             'controller' => new DummyInvokeController(),
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield '[new DummyInvokeController()]' => [
             'controller' => [new DummyInvokeController()],
-            'result' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
+            'expectedMethod' => new ReflectionMethod(DummyInvokeController::class, '__invoke'),
         ];
 
         yield '[new DummyClassicController(), handleRequest]' => [
             'controller' => [new DummyClassicController(), 'handleRequest'],
-            'result' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
+            'expectedMethod' => new ReflectionMethod(DummyClassicController::class, 'handleRequest'),
         ];
     }
 }

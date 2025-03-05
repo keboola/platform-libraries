@@ -9,14 +9,13 @@ use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiToken;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class ManageApiTokenAuthenticatorTest extends TestCase
 {
-    /**
-     * @dataProvider provideAuthorizeTokenSuccessData
-     */
+    #[DataProvider('provideAuthorizeTokenSuccessData')]
     public function testAuthorizeTokenSuccess(ManageApiTokenAuth $authAttribute, ManageApiToken $token): void
     {
 
@@ -29,9 +28,7 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * @dataProvider provideAuthorizeTokenExceptionsData
-     */
+    #[DataProvider('provideAuthorizeTokenExceptionsData')]
     public function testAuthorizeTokenExceptions(
         ManageApiTokenAuth $authAttribute,
         ManageApiToken $token,
@@ -47,14 +44,34 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         $authenticator->authorizeToken($authAttribute, $token);
     }
 
-    public function provideAuthorizeTokenSuccessData(): Generator
+    public static function provideAuthorizeTokenSuccessData(): Generator
     {
         yield 'scope needed and provided' => [
             new ManageApiTokenAuth(scopes: ['some:scope']),
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => ['some:scope'],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
         ];
 
@@ -63,12 +80,27 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
+                'scopes' => [],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
                 'user' => [
                     'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
                     'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
                     'isSuperAdmin' => true,
                 ],
-                'scopes' => [],
             ]),
         ];
 
@@ -77,28 +109,88 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => [],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
         ];
 
         yield 'two scopes needed and both provided' => [
-                new ManageApiTokenAuth(scopes: ['some:scope', 'some:other-scope']),
-                ManageApiToken::fromVerifyResponse([
-                    'id' => 123,
-                    'description' => 'some-description',
-                    'scopes' => ['some:scope', 'some:other-scope'],
-                ]),
+            new ManageApiTokenAuth(scopes: ['some:scope', 'some:other-scope']),
+            ManageApiToken::fromVerifyResponse([
+                'id' => 123,
+                'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
+                'scopes' => ['some:scope', 'some:other-scope'],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
+            ]),
         ];
     }
 
-    public function provideAuthorizeTokenExceptionsData(): Generator
+    public static function provideAuthorizeTokenExceptionsData(): Generator
     {
         yield 'scope needed and not provided' => [
             new ManageApiTokenAuth(scopes: ['some:scope']),
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => [],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
             'Authentication token is valid but missing following scopes: some:scope',
         ];
@@ -108,7 +200,27 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => ['some:other-scope'],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
             'Authentication token is valid but missing following scopes: some:scope',
         ];
@@ -118,7 +230,27 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => ['some:scope'],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
             'Authentication token is valid but missing following scopes: some:other-scope',
         ];
@@ -128,7 +260,27 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => [],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
+                'user' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
+                    'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
+                    'isSuperAdmin' => false,
+                ],
             ]),
             'Authentication token is not super admin',
         ];
@@ -138,10 +290,25 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ManageApiToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
+                'created' => '2024-03-21T12:26:43+0100',
+                'lastUsed' => '2024-03-21T12:26:54+0100',
+                'expires' => '2024-03-21T13:26:43+0100',
+                'isSessionToken' => false,
+                'isExpired' => false,
+                'isDisabled' => false,
                 'scopes' => ['some:scope'],
+                'type' => 'admin',
+                'creator' => [
+                    'id' => 3801,
+                    'name' => 'John Doe',
+                ],
                 'user' => [
                     'id' => 3801,
+                    'name' => 'John Doe',
+                    'email' => 'john.doe@example.com',
                     'mfaEnabled' => true,
+                    'features' => [],
+                    'canAccessLogs' => true,
                     'isSuperAdmin' => true,
                 ],
             ]),

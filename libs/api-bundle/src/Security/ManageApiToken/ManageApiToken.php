@@ -17,14 +17,44 @@ class ManageApiToken implements TokenInterface
     ) {
     }
 
+    /**
+     * Structure of the token verification response from Manage API
+     *
+     * @param array{
+     *     id: int,
+     *     description: string,
+     *     created: string,
+     *     lastUsed: string|null,
+     *     expires: string|null,
+     *     isSessionToken: bool,
+     *     isExpired: bool,
+     *     isDisabled: bool,
+     *     scopes: list<string>,
+     *     type: string,
+     *     creator: array{
+     *         id: int|string,
+     *         name: string
+     *     },
+     *     user?: array{
+     *         id: int,
+     *         name: string,
+     *         email: string,
+     *         mfaEnabled: bool,
+     *         features: list<string>,
+     *         canAccessLogs: bool,
+     *         isSuperAdmin: bool
+     *     }
+     * } $data
+     * @return self
+     */
     public static function fromVerifyResponse(array $data): self
     {
         return new self(
-            $data['id'],
-            $data['description'],
+            (int) $data['id'],
+            (string) $data['description'],
             $data['scopes'],
             $data['user']['features'] ?? [],
-            $data['user']['isSuperAdmin'] ?? false,
+            (bool) ($data['user']['isSuperAdmin'] ?? false),
         );
     }
 

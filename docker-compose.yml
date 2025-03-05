@@ -37,8 +37,19 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  dev83: &dev83
+    <<: *dev
+    image: keboola/php-dev83
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.3"
+        XDEBUG_VERSION: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   dev-api-bundle:
-    <<: *dev82
+    <<: *dev83
     image: keboola/api-bundle
     working_dir: /code/libs/api-bundle
 

@@ -45,6 +45,8 @@ class ControllerReflector
             }
 
             try {
+                assert(is_string($controllerClass) || is_object($controllerClass));
+                assert(is_string($controllerMethod));
                 return new ReflectionMethod($controllerClass, $controllerMethod);
             } catch (ReflectionException) {
                 // In case we can't reflect the controller, we just ignore the route

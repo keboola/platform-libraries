@@ -9,14 +9,13 @@ use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiToken;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class ManageApiTokenAuthenticatorTest extends TestCase
 {
-    /**
-     * @dataProvider provideAuthorizeTokenSuccessData
-     */
+    #[DataProvider('provideAuthorizeTokenSuccessData')]
     public function testAuthorizeTokenSuccess(ManageApiTokenAuth $authAttribute, ManageApiToken $token): void
     {
 
@@ -29,9 +28,7 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * @dataProvider provideAuthorizeTokenExceptionsData
-     */
+    #[DataProvider('provideAuthorizeTokenExceptionsData')]
     public function testAuthorizeTokenExceptions(
         ManageApiTokenAuth $authAttribute,
         ManageApiToken $token,
@@ -47,7 +44,7 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         $authenticator->authorizeToken($authAttribute, $token);
     }
 
-    public function provideAuthorizeTokenSuccessData(): Generator
+    public static function provideAuthorizeTokenSuccessData(): Generator
     {
         yield 'scope needed and provided' => [
             new ManageApiTokenAuth(scopes: ['some:scope']),
@@ -91,7 +88,7 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         ];
     }
 
-    public function provideAuthorizeTokenExceptionsData(): Generator
+    public static function provideAuthorizeTokenExceptionsData(): Generator
     {
         yield 'scope needed and not provided' => [
             new ManageApiTokenAuth(scopes: ['some:scope']),

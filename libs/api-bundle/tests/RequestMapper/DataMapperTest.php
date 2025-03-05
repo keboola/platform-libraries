@@ -7,12 +7,13 @@ namespace Keboola\ApiBundle\Tests\RequestMapper;
 use CuyZ\Valinor\MapperBuilder;
 use Keboola\ApiBundle\RequestMapper\DataMapper;
 use Keboola\ApiBundle\RequestMapper\Exception\InvalidPayloadException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Validation;
 
 class DataMapperTest extends TestCase
 {
-    public function provideValidData(): iterable
+    public static function provideValidData(): iterable
     {
         yield 'valid data' => [
             'data' => [
@@ -81,7 +82,7 @@ class DataMapperTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideValidData */
+    #[DataProvider('provideValidData')]
     public function testMapValidData(
         array $data,
         bool $enableFlexibleCasting,
@@ -171,7 +172,7 @@ class DataMapperTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideErroneousData */
+    #[DataProvider('provideErroneousData')]
     public function testMapErroneousData(
         array $data,
         bool $enableFlexibleCasting,

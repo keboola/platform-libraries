@@ -1,9 +1,14 @@
 parameters:
     level: max
-    checkMissingIterableValueType: false
     paths:
         - src
         - tests
+
+    ignoreErrors:
+        - identifier: missingType.iterableValue
+        # from strict rules
+        - identifier: function.alreadyNarrowedType
+        - identifier: instanceof.alwaysTrue
 
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

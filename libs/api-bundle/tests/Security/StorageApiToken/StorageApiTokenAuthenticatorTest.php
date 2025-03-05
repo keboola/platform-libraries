@@ -13,6 +13,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\MaintenanceException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -51,9 +52,9 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideExceptionData
      * @param class-string<Exception> $expectedExceptionClass
      */
+    #[DataProvider('provideExceptionData')]
     public function testAuthenticateTokenFailure(
         ClientException $clientException,
         string $expectedExceptionClass,
@@ -88,7 +89,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token');
     }
 
-    public function provideExceptionData(): Generator
+    public static function provideExceptionData(): Generator
     {
         yield 'user exception' => [
             'clientException' => new ClientException('Invalid access token', 401),

@@ -10,6 +10,7 @@ use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ApiBundle\Util\ControllerReflector;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,7 +54,7 @@ class AttributeAuthenticatorTest extends TestCase
         ];
     }
 
-    /** @dataProvider provideSupportsRequestTestData */
+    #[DataProvider('provideSupportsRequestTestData')]
     public function testSupportsRequest(object $controller, bool $supports): void
     {
         $authenticators = [];
@@ -275,6 +276,7 @@ class AttributeAuthenticatorTest extends TestCase
 
         $authenticatorsContainer = new Container();
         foreach ($authenticators as $attribute => $authenticator) {
+            self::assertIsObject($authenticator);
             $authenticatorsContainer->set($attribute, $authenticator);
         }
 

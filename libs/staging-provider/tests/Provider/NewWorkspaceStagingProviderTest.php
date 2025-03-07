@@ -9,6 +9,7 @@ use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +27,12 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->with(
                 'test-component',
                 'test-config',
-                ['backend' => 'snowflake', 'backendSize' => $backendSize, 'networkPolicy' => 'user'],
+                [
+                    'backend' => 'snowflake',
+                    'backendSize' => $backendSize,
+                    'networkPolicy' => 'user',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
+                ],
                 true,
             )
             ->willReturn([
@@ -54,6 +60,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 $backendSize,
                 null,
                 NetworkPolicy::USER,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             'test-config',
@@ -95,6 +102,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                     'backendSize' => $backendSize,
                     'readOnlyStorageAccess' => true,
                     'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
                 ],
                 true,
             )
@@ -120,6 +128,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 $backendSize,
                 true,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             null,
@@ -152,7 +161,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->with(
                 'test-component',
                 'test-config',
-                ['backend' => 'abs', 'networkPolicy' => 'system'],
+                ['backend' => 'abs', 'networkPolicy' => 'system', 'loginType' => WorkspaceLoginType::DEFAULT],
                 true,
             )
             ->willReturn([
@@ -176,6 +185,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             'test-config',
@@ -208,6 +218,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'large',
                 null,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             'test-config',
@@ -255,6 +266,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'so-so',
                 null,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             'test-config',
@@ -283,6 +295,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'so-so',
                 null,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
             ),
             'test-component',
             'test-config',
@@ -324,6 +337,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 'so-so',
                 null,
                 NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::SNOWFLAKE_PERSON_SSO,
             ),
             'test-component',
             'test-config',

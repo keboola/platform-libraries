@@ -17,6 +17,7 @@ use Keboola\StagingProvider\Provider\LocalStagingProvider;
 use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -56,6 +57,7 @@ class CombinedProviderInitializerTest extends TestCase
                     null,
                     null,
                     NetworkPolicy::SYSTEM,
+                    WorkspaceLoginType::SNOWFLAKE_LEGACY_SERVICE_PASSWORD,
                 ),
                 $componentId,
                 $configId,

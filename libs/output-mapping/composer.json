@@ -33,7 +33,7 @@
         "keboola/php-file-storage-utils": "^0.2",
         "keboola/sanitizer": "^0.1.1",
         "keboola/slicer": "*@dev",
-        "keboola/storage-api-client": "^15.0",
+        "keboola/storage-api-client": "^15.0|^16.0|^17.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "microsoft/azure-storage-blob": "^1.5",
         "monolog/monolog": "^1.25.5|^2.0",

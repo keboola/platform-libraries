@@ -6,6 +6,7 @@ namespace Keboola\StagingProvider\Provider\Configuration;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StorageApi\WorkspaceLoginType;
 
 readonly class WorkspaceBackendConfig
 {
@@ -14,6 +15,7 @@ readonly class WorkspaceBackendConfig
         private ?string $size,
         private ?bool $useReadonlyRole,
         private NetworkPolicy $networkPolicy,
+        private ?WorkspaceLoginType $loginType,
     ) {
     }
 
@@ -49,5 +51,10 @@ readonly class WorkspaceBackendConfig
     public function getNetworkPolicy(): string
     {
         return $this->networkPolicy->value;
+    }
+
+    public function getLoginType(): ?WorkspaceLoginType
+    {
+        return $this->loginType;
     }
 }

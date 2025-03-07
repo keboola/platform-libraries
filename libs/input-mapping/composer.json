@@ -13,7 +13,7 @@
         "php": ">=8.2",
         "ext-json": "*",
         "keboola/php-file-storage-utils": "^0.2",
-        "keboola/storage-api-client": "^15.0",
+        "keboola/storage-api-client": "^15.0|^16.0|^17.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "symfony/config": "^5.4|^6.0",
         "symfony/finder": "^5.4|^6.0",

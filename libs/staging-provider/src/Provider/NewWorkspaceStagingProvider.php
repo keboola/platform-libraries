@@ -34,6 +34,9 @@ class NewWorkspaceStagingProvider extends AbstractWorkspaceProvider
             if ($this->workspaceBackendConfig->getUseReadonlyRole() !== null) {
                 $options['readOnlyStorageAccess'] = $this->workspaceBackendConfig->getUseReadonlyRole();
             }
+            if ($this->workspaceBackendConfig->getLoginType() !== null) {
+                $options['loginType'] = $this->workspaceBackendConfig->getLoginType();
+            }
 
             if ($this->configId !== null) {
                 // workspace tied to a component and configuration

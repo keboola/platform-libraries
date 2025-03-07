@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ServiceClient\Tests;
 
+use InvalidArgumentException;
+use Keboola\ServiceClient\Service;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +45,31 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_SYNC_ACTIONS_SERVICE = 'http://runner-sync-api.default.svc.cluster.local';
     private const INTERNAL_TEMPLATES = 'http://templates-api.templates-api.svc.cluster.local';
     private const INTERNAL_VAULT = 'http://vault-api.default.svc.cluster.local';
+
+    public function testConstructWithoutHostnameSuffixAndWithPublicDnsFails(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Hostname suffix must be provided when using public DNS type.');
+        new ServiceClient(null, ServiceDnsType::PUBLIC);
+    }
+
+    public function testConstructWithDnsTypeAsString(): void
+    {
+        $client = new ServiceClient(null, 'internal');
+
+        self::assertEquals(
+            new ServiceClient(null, ServiceDnsType::INTERNAL),
+            $client,
+        );
+    }
+
+    public function testConstructWithInvalidDnsTypeStringFails(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"foo" is not valid service DNS type');
+
+        new ServiceClient(null, 'foo');
+    }
 
     public function testGetExplicitPublicUrlMethods(): void
     {
@@ -96,6 +123,16 @@ class ServiceClientTest extends TestCase
         $this->expectExceptionMessage('Job queue internal API does not have public DNS');
 
         $client->getQueueInternalApiUrl(ServiceDnsType::PUBLIC);
+    }
+
+    public function testGetExplicitPublicUrlOfServiceFailsIfHostnameSuffixWasNotConfigured(): void
+    {
+        $client = new ServiceClient(null, ServiceDnsType::INTERNAL);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Can\'t get URL for public DNS type, hostname suffix was not configured.');
+
+        $client->getConnectionServiceUrl(ServiceDnsType::PUBLIC);
     }
 
     public function testGetDefaultPublicUrlOfServiceWithoutPublicDns(): void
@@ -153,5 +190,70 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
+    }
+
+    public function testFromServicePublicUrlCreatesClient(): void
+    {
+        $client = ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'https://connection.north-europe.azure.keboola.com',
+        );
+
+        self::assertEquals(
+            new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC),
+            $client,
+        );
+    }
+
+    public function testFromServicePublicUrlFailsWithInvalidUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid URL "not-an-url"');
+
+        ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'not-an-url',
+        );
+    }
+
+    public function testFromServicePublicUrlFailsForInvalidSubdomain(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"https://billing.north-europe.azure.keboola.com" is not CONNECTION service URL');
+
+        ServiceClient::fromServicePublicUrl(
+            Service::CONNECTION,
+            'https://billing.north-europe.azure.keboola.com',
+        );
+    }
+
+    /**
+     * @runInSeparateProcess because we override ENV
+     */
+    public function testGetServiceUrlOverridenByEnv(): void
+    {
+        $serviceClient = new ServiceClient('keboola.com', ServiceDnsType::PUBLIC);
+
+        putenv('KBC_CONNECTION_SERVICE_URL=https://connection.example.com');
+
+        // check both PUBLIC and INTERNAL dns is overridden
+        self::assertSame(
+            'https://connection.example.com',
+            $serviceClient->getConnectionServiceUrl(ServiceDnsType::PUBLIC),
+        );
+        self::assertSame(
+            'https://connection.example.com',
+            $serviceClient->getConnectionServiceUrl(ServiceDnsType::INTERNAL),
+        );
+
+        // check other services are unaffected
+        self::assertSame(
+            'https://queue.keboola.com',
+            $serviceClient->getQueueUrl(ServiceDnsType::PUBLIC),
+        );
+        self::assertSame(
+            'http://job-queue-api.default.svc.cluster.local',
+            $serviceClient->getQueueUrl(ServiceDnsType::INTERNAL),
+        );
     }
 }

@@ -25,11 +25,11 @@ class DownloadTablesSynapseTest extends AbstractTestCase
 
     public function setUp(): void
     {
-        parent::setUp();
         $this->runSynapseTests = (bool) getenv('RUN_SYNAPSE_TESTS');
         if (!$this->runSynapseTests) {
             return;
         }
+        parent::setUp();
         try {
             $this->clientWrapper->getTableAndFileStorageClient()->dropBucket(
                 'in.c-docker-test-synapse',

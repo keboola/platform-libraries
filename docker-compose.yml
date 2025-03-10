@@ -57,6 +57,8 @@ services:
       - STORAGE_API_TOKEN
       - STORAGE_API_TOKEN_MASTER
       - STORAGE_API_URL
+    depends_on:
+      - mockserver
 
   dev-input-mapping:
     <<: *dev82

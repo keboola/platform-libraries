@@ -259,7 +259,6 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
                 ],
                 'birthweight' => [
                     'type' => Bigquery::TYPE_NUMERIC,
-                    'length' => '38,9',
                     'nullable' => true,
                 ],
                 'created' => [

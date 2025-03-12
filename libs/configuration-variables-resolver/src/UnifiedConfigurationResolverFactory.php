@@ -10,12 +10,12 @@ use Keboola\VaultApiClient\ApiClientConfiguration as VaultVariablesApiClientConf
 use Keboola\VaultApiClient\Variables\VariablesApiClient;
 use Psr\Log\LoggerInterface;
 
-readonly class UnifiedConfigurationResolverFactory
+class UnifiedConfigurationResolverFactory
 {
     public function __construct(
-        private ServiceClient $serviceClient,
-        private VaultVariablesApiClientConfiguration $vaultVariablesApiClientConfiguration,
-        private LoggerInterface $logger,
+        private readonly ServiceClient $serviceClient,
+        private readonly VaultVariablesApiClientConfiguration $vaultVariablesApiClientConfiguration,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

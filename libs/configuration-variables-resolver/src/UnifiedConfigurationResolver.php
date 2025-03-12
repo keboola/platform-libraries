@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\ConfigurationVariablesResolver;
 
-readonly class UnifiedConfigurationResolver
+class UnifiedConfigurationResolver
 {
     /**
      * @param non-empty-string $branchId
      * @param non-empty-string|null $variableValuesId
      */
     public function __construct(
-        private SharedCodeResolver $sharedCodeResolver,
-        private VariablesResolver $variablesResolver,
-        private string $branchId,
-        private ?string $variableValuesId = null,
-        private ?array $variableValuesData = null,
+        private readonly SharedCodeResolver $sharedCodeResolver,
+        private readonly VariablesResolver $variablesResolver,
+        private readonly string $branchId,
+        private readonly ?string $variableValuesId = null,
+        private readonly ?array $variableValuesData = null,
     ) {
     }
 

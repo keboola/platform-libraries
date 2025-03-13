@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ServiceClient;
 
+use InvalidArgumentException;
+use RuntimeException;
+use ValueError;
+
 class ServiceClient
 {
     private const K8S_SUFFIX = 'svc.cluster.local';
@@ -11,17 +15,60 @@ class ServiceClient
     private readonly ServiceDnsType $defaultDnsType;
 
     /**
-     * @param non-empty-string $hostnameSuffix
+     * @param non-empty-string|null $hostnameSuffix
      */
     public function __construct(
-        private readonly string $hostnameSuffix,
+        private readonly ?string $hostnameSuffix,
         ServiceDnsType|string $defaultDnsType = ServiceDnsType::PUBLIC,
     ) {
         if (is_string($defaultDnsType)) {
-            $defaultDnsType = ServiceDnsType::from($defaultDnsType);
+            try {
+                $defaultDnsType = ServiceDnsType::from($defaultDnsType);
+            } catch (ValueError $e) {
+                throw new InvalidArgumentException(
+                    sprintf('"%s" is not valid service DNS type', $defaultDnsType),
+                    $e->getCode(),
+                    $e,
+                );
+            }
+        }
+
+        if ($this->hostnameSuffix === null && $defaultDnsType === ServiceDnsType::PUBLIC) {
+            throw new InvalidArgumentException('Hostname suffix must be provided when using public DNS type.');
         }
 
         $this->defaultDnsType = $defaultDnsType;
+    }
+
+    /**
+     * Creates ServiceClient with hostnameSuffix configured same as existing service URL. Always configures
+     * ServiceContainer to use PUBLIC Dns type.
+     */
+    public static function fromServicePublicUrl(Service $service, string $url): self
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host === false || $host === null || $host === '') {
+            throw new InvalidArgumentException(sprintf('Invalid URL "%s"', $url));
+        }
+
+        $serviceSubdomain = $service->getPublicSubdomain();
+        $hostPrefix = $serviceSubdomain . '.';
+
+        if (!str_starts_with($host, $serviceSubdomain)) {
+            throw new InvalidArgumentException(sprintf(
+                '"%s" is not %s service URL',
+                $url,
+                $service->name,
+            ));
+        }
+
+        $hostSuffix = substr($host, strlen($hostPrefix));
+
+        // this is always true, because $hostPrefix always ends with dot, and $host never ends with dot
+        // (otherwise parse_url would fail)
+        assert(strlen($hostSuffix) > 0);
+
+        return new self($hostSuffix, ServiceDnsType::PUBLIC);
     }
 
     /**
@@ -29,10 +76,22 @@ class ServiceClient
      */
     public function getServiceUrl(Service $service, ?ServiceDnsType $dnsType = null): string
     {
-        return match ($dnsType ?? $this->defaultDnsType) {
-            ServiceDnsType::INTERNAL => sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX),
-            ServiceDnsType::PUBLIC => sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix),
-        };
+        $serviceUrlEnvName = sprintf('KBC_%s_SERVICE_URL', $service->getServiceEnvPrefix());
+        $serviceUrl = getenv($serviceUrlEnvName);
+        if ($serviceUrl !== false && $serviceUrl !== '') {
+            return $serviceUrl;
+        }
+
+        $dnsType ??= $this->defaultDnsType;
+        if ($dnsType === ServiceDnsType::INTERNAL) {
+            return sprintf('http://%s.%s', $service->getInternalServiceName(), self::K8S_SUFFIX);
+        }
+
+        if ($this->hostnameSuffix === null) {
+            throw new RuntimeException('Can\'t get URL for public DNS type, hostname suffix was not configured.');
+        }
+
+        return sprintf('https://%s.%s', $service->getPublicSubdomain(), $this->hostnameSuffix);
     }
 
     /**

@@ -13,7 +13,7 @@ class DevBranchDeletedEvent implements EventInterface
     public const NAME = 'storage.devBranchDeleted';
 
     public function __construct(
-        public readonly int $id,
+        public readonly string $uuid,
         public readonly int $projectId,
 
         public readonly int $accessTokenId,
@@ -40,7 +40,7 @@ class DevBranchDeletedEvent implements EventInterface
         }
 
         return new self(
-            $data['idEvent'],
+            $data['uuid'],
             $data['idProject'],
             $data['idAccessToken'],
             $data['accessTokenName'],
@@ -56,7 +56,7 @@ class DevBranchDeletedEvent implements EventInterface
     {
         return [
             'name' => self::NAME,
-            'idEvent' => $this->id,
+            'uuid' => $this->uuid,
             'idProject' => $this->projectId,
             'idAccessToken' => $this->accessTokenId,
             'accessTokenName' => $this->accessTokenName,
@@ -70,7 +70,7 @@ class DevBranchDeletedEvent implements EventInterface
 
     public function getId(): string
     {
-        return (string) $this->id;
+        return (string) $this->uuid;
     }
 
     public function getEventName(): string

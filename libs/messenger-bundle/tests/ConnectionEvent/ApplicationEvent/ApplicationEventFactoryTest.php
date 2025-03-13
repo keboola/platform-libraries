@@ -45,7 +45,7 @@ class ApplicationEventFactoryTest extends TestCase
         $this->expectException(EventFactoryException::class);
         $this->expectExceptionMessage(
             'Failed to create Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\GenericApplicationEvent ' .
-            'from event data: Event is missing property "idEvent"',
+            'from event data: Event is missing property "uuid"',
         );
 
         $factory->createEventFromArray([
@@ -64,7 +64,7 @@ class ApplicationEventFactoryTest extends TestCase
             'created' => '2023-10-18T16:08:48+02:00',
             'data' => [
                 'name' => 'storage.devBranchCreated',
-                'idEvent' => 20224549,
+                'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
                 'idProject' => 34,
                 'idAccessToken' => 107,
                 'accessTokenName' => 'josef.martinec@keboolaconnection.onmicrosoft.com',
@@ -79,7 +79,7 @@ class ApplicationEventFactoryTest extends TestCase
         ]);
 
         self::assertInstanceOf(DevBranchCreatedEvent::class, $event);
-        self::assertSame(20224549, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
     }
 
     public function testCreateGenericEvent(): void
@@ -96,7 +96,7 @@ class ApplicationEventFactoryTest extends TestCase
                 'params' => [
                     'task' => 'file-import',
                 ],
-                'idEvent' => 20219944,
+                'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
                 'type' => 'info',
             ],
         ]);
@@ -106,7 +106,7 @@ class ApplicationEventFactoryTest extends TestCase
         self::assertSame('', $event->objectId);
         self::assertSame(18, $event->idProject);
         self::assertSame(['task' => 'file-import'], $event->params);
-        self::assertSame(20219944, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
         self::assertSame('info', $event->type);
     }
 }

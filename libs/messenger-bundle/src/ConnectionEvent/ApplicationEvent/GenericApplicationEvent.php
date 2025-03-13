@@ -14,7 +14,7 @@ class GenericApplicationEvent implements EventInterface
 {
     public function __construct(
         public readonly string $name,
-        public readonly int $id,
+        public readonly string $uuid,
         public readonly string $type,
 
         // identification
@@ -59,8 +59,8 @@ class GenericApplicationEvent implements EventInterface
             throw new InvalidArgumentException('Event is missing property "name"');
         }
 
-        if (empty($data['idEvent'])) {
-            throw new InvalidArgumentException('Event is missing property "idEvent"');
+        if (empty($data['uuid'])) {
+            throw new InvalidArgumentException('Event is missing property "uuid"');
         }
 
         if (empty($data['type'])) {
@@ -69,7 +69,7 @@ class GenericApplicationEvent implements EventInterface
 
         return new self(
             $data['name'],
-            $data['idEvent'],
+            $data['uuid'],
             $data['type'],
             isset($data['idAdmin']) ? (int) $data['idAdmin'] : null,
             isset($data['idProject']) ? (int) $data['idProject'] : null,
@@ -102,7 +102,7 @@ class GenericApplicationEvent implements EventInterface
     {
         return [
             'name' => $this->name,
-            'idEvent' => $this->id,
+            'uuid' => $this->uuid,
             'type' => $this->type,
 
             'idAdmin' => $this->idAdmin,
@@ -139,7 +139,7 @@ class GenericApplicationEvent implements EventInterface
 
     public function getId(): string
     {
-        return (string) $this->id;
+        return (string) $this->uuid;
     }
 
     public function getEventName(): string

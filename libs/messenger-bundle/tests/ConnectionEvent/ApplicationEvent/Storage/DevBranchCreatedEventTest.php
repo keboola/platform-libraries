@@ -14,7 +14,7 @@ class DevBranchCreatedEventTest extends TestCase
     private const EVENT_MESSAGE_DATA = [
         'data' => [
             'name' => 'storage.devBranchCreated',
-            'idEvent' => 123,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'idProject' => 456,
             'idAccessToken' => 789,
             'accessTokenName' => 'test@example.com',
@@ -32,14 +32,14 @@ class DevBranchCreatedEventTest extends TestCase
         $event = $eventFactory->createEventFromArray(self::EVENT_MESSAGE_DATA);
 
         self::assertInstanceOf(DevBranchCreatedEvent::class, $event);
-        self::assertSame(123, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
     }
 
     public function testCreateFromArray(): void
     {
         $event = DevBranchCreatedEvent::fromArray(self::EVENT_MESSAGE_DATA['data']);
 
-        self::assertSame(123, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
         self::assertSame(456, $event->projectId);
         self::assertSame(789, $event->accessTokenId);
         self::assertSame('test@example.com', $event->accessTokenName);
@@ -66,7 +66,7 @@ class DevBranchCreatedEventTest extends TestCase
     public function testToArray(): void
     {
         $event = new DevBranchCreatedEvent(
-            id: 123,
+            uuid: '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             projectId: 456,
             accessTokenId: 789,
             accessTokenName: 'test@example.com',
@@ -79,7 +79,7 @@ class DevBranchCreatedEventTest extends TestCase
 
         self::assertSame([
             'name' => 'storage.devBranchCreated',
-            'idEvent' => 123,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'idProject' => 456,
             'idAccessToken' => 789,
             'accessTokenName' => 'test@example.com',

@@ -14,12 +14,12 @@ class ApplicationEventTest extends TestCase
     {
         $event = GenericApplicationEvent::fromArray([
             'name' => 'ext.keboola.keboola-buffer.',
-            'idEvent' => 20219944,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'type' => 'info',
         ]);
 
         self::assertSame('ext.keboola.keboola-buffer.', $event->name);
-        self::assertSame(20219944, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
         self::assertSame('info', $event->type);
         self::assertNull($event->idAdmin);
         self::assertNull($event->idProject);
@@ -69,7 +69,7 @@ class ApplicationEventTest extends TestCase
             'performance' => [
                 'foo' => 'bar',
             ],
-            'idEvent' => 20219944,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'type' => 'info',
             'description' => 'event description',
             'context' => [
@@ -110,7 +110,7 @@ class ApplicationEventTest extends TestCase
         self::assertSame('object-name', $event->objectName);
         self::assertSame(['task' => 'file-import'], $event->params);
         self::assertSame(['foo' => 'bar'], $event->performance);
-        self::assertSame(20219944, $event->id);
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->uuid);
         self::assertSame('info', $event->type);
         self::assertSame('event description', $event->description);
         self::assertSame([
@@ -140,24 +140,24 @@ class ApplicationEventTest extends TestCase
     {
         yield 'missing name' => [
             'data' => [
-                'idEvent' => 20219944,
+                'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
                 'type' => 'info',
             ],
             'error' => 'Event is missing property "name"',
         ];
 
-        yield 'missing idEvent' => [
+        yield 'missing uuid' => [
             'data' => [
                 'name' => 'ext.keboola.keboola-buffer.',
                 'type' => 'info',
             ],
-            'error' => 'Event is missing property "idEvent"',
+            'error' => 'Event is missing property "uuid"',
         ];
 
         yield 'missing type' => [
             'data' => [
                 'name' => 'ext.keboola.keboola-buffer.',
-                'idEvent' => 20219944,
+                'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             ],
             'error' => 'Event is missing property "type"',
         ];
@@ -176,13 +176,13 @@ class ApplicationEventTest extends TestCase
     {
         $event = new GenericApplicationEvent(
             name: 'ext.keboola.keboola-buffer.',
-            id: 20219944,
+            uuid: '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             type: 'info',
         );
 
         self::assertSame([
             'name' => 'ext.keboola.keboola-buffer.',
-            'idEvent' => 20219944,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'type' => 'info',
             'idAdmin' => null,
             'idProject' => null,
@@ -215,7 +215,7 @@ class ApplicationEventTest extends TestCase
     {
         $event = new GenericApplicationEvent(
             name: 'ext.keboola.keboola-buffer.',
-            id: 20219944,
+            uuid: '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             type: 'info',
             idAdmin: 19,
             idProject: 18,
@@ -261,7 +261,7 @@ class ApplicationEventTest extends TestCase
 
         self::assertSame([
             'name' => 'ext.keboola.keboola-buffer.',
-            'idEvent' => 20219944,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'type' => 'info',
             'idAdmin' => 19,
             'idProject' => 18,
@@ -310,11 +310,11 @@ class ApplicationEventTest extends TestCase
     {
         $event = GenericApplicationEvent::fromArray([
             'name' => 'ext.keboola.keboola-buffer.',
-            'idEvent' => 20219944,
+            'uuid' => '01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d',
             'type' => 'info',
         ]);
 
         self::assertSame('ext.keboola.keboola-buffer.', $event->getEventName());
-        self::assertSame('20219944', $event->getId());
+        self::assertSame('01958fcb-6cf6-778b-ac16-fb7cd4f9ab3d', $event->getId());
     }
 }

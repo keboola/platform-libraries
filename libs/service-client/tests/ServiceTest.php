@@ -72,4 +72,28 @@ class ServiceTest extends TestCase
     {
         self::assertSame($expectedValue, $service->getInternalServiceName());
     }
+
+    public function provideServiceEnvPrefixes(): iterable
+    {
+        yield 'ai' => [Service::AI, 'AI'];
+        yield 'billing' => [Service::BILLING, 'BILLING'];
+        yield 'buffer' => [Service::BUFFER, 'BUFFER'];
+        yield 'connection' => [Service::CONNECTION, 'CONNECTION'];
+        yield 'data-science' => [Service::SANDBOXES_SERVICE, 'SANDBOXES_SERVICE'];
+        yield 'encryption' => [Service::ENCRYPTION, 'ENCRYPTION'];
+        yield 'import' => [Service::IMPORT, 'IMPORT'];
+        yield 'notification' => [Service::NOTIFICATION, 'NOTIFICATION'];
+        yield 'oauth' => [Service::OAUTH, 'OAUTH'];
+        yield 'queue' => [Service::QUEUE, 'QUEUE'];
+        yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'QUEUE_INTERNAL_API'];
+        yield 'sandboxes' => [Service::SANDBOXES_API, 'SANDBOXES_API'];
+        yield 'scheduler' => [Service::SCHEDULER, 'SCHEDULER'];
+        yield 'sync-actions' => [Service::SYNC_ACTIONS, 'SYNC_ACTIONS'];
+    }
+
+    /** @dataProvider provideServiceEnvPrefixes */
+    public function testGetServiceEnvPrefix(Service $service, string $expectedValue): void
+    {
+        self::assertSame($expectedValue, $service->getServiceEnvPrefix());
+    }
 }

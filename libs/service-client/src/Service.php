@@ -68,4 +68,26 @@ enum Service
             self::VAULT => 'vault-api.default',
         };
     }
+
+    public function getServiceEnvPrefix(): string
+    {
+        return match ($this) {
+            self::AI => 'AI',
+            self::BILLING => 'BILLING',
+            self::BUFFER => 'BUFFER',
+            self::CONNECTION => 'CONNECTION',
+            self::ENCRYPTION => 'ENCRYPTION',
+            self::IMPORT => 'IMPORT',
+            self::NOTIFICATION => 'NOTIFICATION',
+            self::OAUTH => 'OAUTH',
+            self::QUEUE => 'QUEUE',
+            self::QUEUE_INTERNAL_API => 'QUEUE_INTERNAL_API',
+            self::SANDBOXES_API => 'SANDBOXES_API',
+            self::SANDBOXES_SERVICE => 'SANDBOXES_SERVICE',
+            self::SCHEDULER => 'SCHEDULER',
+            self::SYNC_ACTIONS => 'SYNC_ACTIONS',
+            self::TEMPLATES => 'TEMPLATES',
+            self::VAULT => 'VAULT',
+        };
+    }
 }

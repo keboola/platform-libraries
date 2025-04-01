@@ -18,6 +18,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ArgumentResolver implements ValueResolverInterface
 {
+    public const DATA_MAPPER_ERROR_MESSAGE = 'Request contents is not valid';
+    public const DATA_MAPPER_ERROR_CODE = Response::HTTP_UNPROCESSABLE_ENTITY;
+
     public function __construct(
         private readonly DataMapper $dataMapper,
     ) {
@@ -94,8 +97,8 @@ class ArgumentResolver implements ValueResolverInterface
         return $this->dataMapper->mapData(
             $argumentType,
             $data,
-            'Request contents is not valid',
-            Response::HTTP_UNPROCESSABLE_ENTITY,
+            self::DATA_MAPPER_ERROR_MESSAGE,
+            self::DATA_MAPPER_ERROR_CODE,
             enableExtraKeys: $attribute->allowExtraKeys,
         );
     }

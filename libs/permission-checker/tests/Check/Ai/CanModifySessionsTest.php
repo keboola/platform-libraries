@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\PermissionChecker\Tests\Check\Ai;
 
-use Keboola\PermissionChecker\Check\Ai\CanModifyConversations;
+use Keboola\PermissionChecker\Check\Ai\CanModifySessions;
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 
-class CanModifyConversationsTest extends TestCase
+class CanModifySessionsTest extends TestCase
 {
     public static function provideValidPermissionsCheckData(): iterable
     {
@@ -38,7 +38,7 @@ class CanModifyConversationsTest extends TestCase
     ): void {
         $this->expectNotToPerformAssertions();
 
-        $checker = new CanModifyConversations();
+        $checker = new CanModifySessions();
         $checker->checkPermissions($token);
     }
 
@@ -48,7 +48,7 @@ class CanModifyConversationsTest extends TestCase
             'token' => new StorageApiToken(
                 role: Role::READ_ONLY->value,
             ),
-            'error' => PermissionDeniedException::roleDenied(Role::READ_ONLY, 'create AI conversations'),
+            'error' => PermissionDeniedException::roleDenied(Role::READ_ONLY, 'create AI sessions'),
         ];
 
         yield 'token with protected default branch' => [
@@ -56,7 +56,7 @@ class CanModifyConversationsTest extends TestCase
                 features: [Feature::PROTECTED_DEFAULT_BRANCH->value],
             ),
             'error' => new PermissionDeniedException(
-                'Role "none" is not allowed to create AI conversations on protected branch projects',
+                'Role "none" is not allowed to create AI sessions on protected branch projects',
             ),
         ];
 
@@ -66,7 +66,7 @@ class CanModifyConversationsTest extends TestCase
                 role: Role::PRODUCTION_MANAGER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "productionManager" is not allowed to create AI conversations on protected branch projects',
+                'Role "productionManager" is not allowed to create AI sessions on protected branch projects',
             ),
         ];
 
@@ -76,7 +76,7 @@ class CanModifyConversationsTest extends TestCase
                 role: Role::DEVELOPER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "developer" is not allowed to create AI conversations on protected branch projects',
+                'Role "developer" is not allowed to create AI sessions on protected branch projects',
             ),
         ];
 
@@ -86,7 +86,7 @@ class CanModifyConversationsTest extends TestCase
                 role: Role::REVIEWER->value,
             ),
             'error' => new PermissionDeniedException(
-                'Role "reviewer" is not allowed to create AI conversations on protected branch projects',
+                'Role "reviewer" is not allowed to create AI sessions on protected branch projects',
             ),
         ];
     }
@@ -98,7 +98,7 @@ class CanModifyConversationsTest extends TestCase
     ): void {
         $this->expectExceptionObject($error);
 
-        $checker = new CanModifyConversations();
+        $checker = new CanModifySessions();
         $checker->checkPermissions($token);
     }
 }

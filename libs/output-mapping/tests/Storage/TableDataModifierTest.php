@@ -292,7 +292,7 @@ class TableDataModifierTest extends AbstractTestCase
 
         $expectedMessage = 'Cannot delete rows ' .
             'from table "in.c-TableDataModifierTest_testDeleteTableRowsWithUnexistColumn.test1" ' .
-            'in Storage: Cannot filter by column "UnexistColumn", column does not exist';
+            'in Storage: Filter validation: Cannot filter by column "UnexistColumn", column does not exist';
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage($expectedMessage);

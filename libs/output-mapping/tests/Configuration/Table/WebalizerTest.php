@@ -10,10 +10,10 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Monolog\Handler\TestHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Test;
-use Psr\Log\Test\TestLogger;
 
 class WebalizerTest extends TestCase
 {
@@ -29,8 +29,10 @@ class WebalizerTest extends TestCase
     /** @dataProvider webalizeDataProvider */
     public function testWebalize(array $config, array $expectedConfig, int $expectsApiCalls): void
     {
+        $logger = new Logger('test');
+
         // test webalized column names
-        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), new TestLogger(), true);
+        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $logger, true);
         $webalizedColumnNames = $webalizator->webalize($config);
         self::assertEquals($expectedConfig, $webalizedColumnNames);
 
@@ -46,7 +48,7 @@ class WebalizerTest extends TestCase
                 ),
             );
 
-        $webalizator = new Webalizer($clientMock, new TestLogger(), true);
+        $webalizator = new Webalizer($clientMock, $logger, true);
         self::assertIsArray($webalizator->webalize($config));
     }
 
@@ -56,14 +58,16 @@ class WebalizerTest extends TestCase
         $clientMock = self::createMock(Client::class);
         $clientMock->expects(self::never())->method('webalizeColumnNames');
 
-        $webalizator = new Webalizer($clientMock, new TestLogger(), false);
+        $webalizator = new Webalizer($clientMock, new Logger('test'), false);
         self::assertEquals($expectedConfig, $webalizator->webalize($config));
     }
 
     public function testLoggingWebalizedColumnNames(): void
     {
-        $testLogger = new TestLogger();
-        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $testLogger, true);
+        $logsHandler = new TestHandler();
+        $logger = new Logger('test', [$logsHandler]);
+
+        $webalizator = new Webalizer($this->clientWrapper->getBranchClient(), $logger, true);
         $webalizator->webalize([
             'columns' => ['ěščřžýáíéúů'],
             'primary_key' => ['éíěčíáčšžášřýšěí'],
@@ -82,26 +86,26 @@ class WebalizerTest extends TestCase
                 ],
             ],
         ]);
-        self::assertCount(4, $testLogger->records);
-        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[0]['level']));
-        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[1]['level']));
-        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[2]['level']));
-        self::assertEquals(Logger::getLevelName(Logger::WARNING), strtoupper($testLogger->records[3]['level']));
-        self::assertEquals(
+        self::assertCount(4, $logsHandler->getRecords());
+        self::assertSame(Level::Warning, $logsHandler->getRecords()[0]->level);
+        self::assertSame(Level::Warning, $logsHandler->getRecords()[1]->level);
+        self::assertSame(Level::Warning, $logsHandler->getRecords()[2]->level);
+        self::assertSame(Level::Warning, $logsHandler->getRecords()[3]->level);
+        self::assertSame(
             'Column name "ěščřžýáíéúů" was webalized to "escrzyaieuu"',
-            $testLogger->records[0]['message'],
+            $logsHandler->getRecords()[0]->message,
         );
-        self::assertEquals(
+        self::assertSame(
             'Column name "éíěčíáčšžášřýšěí" was webalized to "eieciacszasrysei"',
-            $testLogger->records[1]['message'],
+            $logsHandler->getRecords()[1]->message,
         );
-        self::assertEquals(
+        self::assertSame(
             'Column name "webalize | test 😁" was webalized to "webalize_test"',
-            $testLogger->records[2]['message'],
+            $logsHandler->getRecords()[2]->message,
         );
-        self::assertEquals(
+        self::assertSame(
             'Column name "    webalize spaces  " was webalized to "webalize_spaces"',
-            $testLogger->records[3]['message'],
+            $logsHandler->getRecords()[3]->message,
         );
     }
 

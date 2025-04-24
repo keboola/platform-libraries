@@ -133,7 +133,6 @@ class SlicerDeciderTest extends TestCase
         ];
 
         $logger = new Logger('test');
-        ;
         $slicerDecider = new SlicerDecider($logger);
 
         $this->expectException(InvalidOutputException::class);

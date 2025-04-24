@@ -9,8 +9,9 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class SlicerDeciderTest extends TestCase
 {
@@ -45,8 +46,8 @@ class SlicerDeciderTest extends TestCase
             $mock2,
         ];
 
-        $testLogger = new TestLogger();
-        $slicerDecider = new SlicerDecider($testLogger);
+        $logger = new Logger('test');
+        $slicerDecider = new SlicerDecider($logger);
         $result = $slicerDecider->decideSliceFiles($combinedSources);
 
         $this->assertCount(2, $result);
@@ -64,8 +65,8 @@ class SlicerDeciderTest extends TestCase
             $mock1,
         ];
 
-        $testLogger = new TestLogger();
-        $slicerDecider = new SlicerDecider($testLogger);
+        $logger = new Logger('test');
+        $slicerDecider = new SlicerDecider($logger);
         $result = $slicerDecider->decideSliceFiles($combinedSources);
 
         $this->assertCount(0, $result);
@@ -84,7 +85,7 @@ class SlicerDeciderTest extends TestCase
             $mock1,
         ];
 
-        $testLogger = new TestLogger();
+        $testLogger = new Logger('test');
         $slicerDecider = new SlicerDecider($testLogger);
 
         $this->expectException(InvalidOutputException::class);
@@ -105,13 +106,14 @@ class SlicerDeciderTest extends TestCase
             $mock1,
         ];
 
-        $testLogger = new TestLogger();
-        $slicerDecider = new SlicerDecider($testLogger);
+        $logsHandler = new TestHandler();
+        $logger = new Logger('test', [$logsHandler]);
+        $slicerDecider = new SlicerDecider($logger);
 
         $result = $slicerDecider->decideSliceFiles($combinedSources);
 
         self::assertCount(0, $result);
-        self::assertTrue($testLogger->hasWarningThatContains(
+        self::assertTrue($logsHandler->hasWarningThatContains(
             'Sliced files without manifest are not supported. Skipping file "file1"',
         ));
     }
@@ -130,8 +132,9 @@ class SlicerDeciderTest extends TestCase
             $mock1,
         ];
 
-        $testLogger = new TestLogger();
-        $slicerDecider = new SlicerDecider($testLogger);
+        $logger = new Logger('test');
+        ;
+        $slicerDecider = new SlicerDecider($logger);
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(

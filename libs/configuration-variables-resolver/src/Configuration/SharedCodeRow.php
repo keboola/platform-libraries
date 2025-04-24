@@ -8,7 +8,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 class SharedCodeRow extends AbstractConfiguration
 {
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('configuration');
         $rootNode = $treeBuilder->getRootNode();

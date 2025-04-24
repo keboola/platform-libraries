@@ -3,8 +3,8 @@
     "description": "Keboola Logging Bundle",
     "type": "symfony-bundle",
     "require": {
-        "monolog/monolog": "^2.0",
-        "symfony/dependency-injection": "^5.4|^6.0|^7.0",
+        "monolog/monolog": "^3.0",
+        "symfony/dependency-injection": "^6.0|^7.0",
         "symfony/monolog-bundle": "^3.8"
     },
     "require-dev": {
@@ -13,8 +13,8 @@
         "phpstan/phpstan-phpunit": "^1.1",
         "phpunit/phpunit": "^9.5",
         "sempro/phpunit-pretty-print": "^1.4",
-        "symfony/framework-bundle": "^5.4|^6.0",
-        "symfony/yaml": "^5.4|^6.0"
+        "symfony/framework-bundle": "^6.0|^7.0",
+        "symfony/yaml": "^6.0|^7.0"
     },
     "license": "MIT",
     "autoload": {
@@ -53,6 +53,10 @@
         "ci": [
             "@composer validate --no-check-all --strict",
             "@build"
-        ]
+        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        }
     }
 }

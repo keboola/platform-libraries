@@ -37,10 +37,10 @@
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "microsoft/azure-storage-blob": "^1.5",
         "psr/log": "^2.0|^3.0",
-        "symfony/config": "^5.4|^6.0",
-        "symfony/finder": "^5.4|^6.0",
-        "symfony/serializer": "^5.4|^6.0",
-        "symfony/yaml": "^5.4|^6.0"
+        "symfony/config": "^5.4|^6.0|^7.0",
+        "symfony/finder": "^5.4|^6.0|^7.0",
+        "symfony/serializer": "^5.4|^6.0|^7.0",
+        "symfony/yaml": "^5.4|^6.0|^7.0"
     },
     "require-dev": {
         "brianium/paratest": "^6.11",
@@ -52,7 +52,7 @@
         "phpstan/phpstan-symfony": "^1.2",
         "phpunit/phpunit": "^9.5",
         "sempro/phpunit-pretty-print": "^1.4",
-        "symfony/dotenv": "^5.4|^6.0"
+        "symfony/dotenv": "^5.4|^6.0|^7.0"
     },
     "scripts": {
         "pre-autoload-dump": [

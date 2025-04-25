@@ -25,7 +25,7 @@ resources:
     - repository: doctrine-retry-bundle
       type: github
       endpoint: keboola
-      name: keboola/doctrine-retry-bundle      
+      name: keboola/doctrine-retry-bundle
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -34,6 +34,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/k8s-client
+    - repository: php-key-generator
+      type: github
+      endpoint: keboola
+      name: keboola/php-key-generator
     - repository: logging-bundle
       type: github
       endpoint: keboola
@@ -65,7 +69,7 @@ resources:
     - repository: slicer
       type: github
       endpoint: keboola
-      name: keboola/slicer      
+      name: keboola/slicer
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -95,6 +99,7 @@ stages:
                 doctrineRetryBundle:libs/doctrine-retry-bundle \
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
+                keyGenerator:libs/key-generator \
                 loggingBundle:libs/logging-bundle \
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
@@ -168,6 +173,14 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_k8sClient'])
     jobs:
       - template: libs/k8s-client/azure-pipelines.tests.yml
+
+  - stage: tests_keyGenerator
+    displayName: Tests - Key Generator
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_keyGenerator'])
+    jobs:
+      - template: libs/key-generator/azure-pipelines.tests.yml
 
   - stage: tests_loggingBundle
     displayName: Tests - Logging Bundle
@@ -259,6 +272,7 @@ stages:
       - tests_doctrineRetryBundle
       - tests_inputMapping
       - tests_k8sClient
+      - tests_keyGenerator
       - tests_loggingBundle
       - tests_messengerBundle
       - tests_outputMapping
@@ -277,6 +291,7 @@ stages:
         in(dependencies.tests_doctrineRetryBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_inputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_keyGenerator.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
@@ -345,6 +360,14 @@ stages:
           targetRepo: k8s-client
           libraryPath: libs/k8s-client
           tagPrefix: k8s-client/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_keyGenerator'])
+          sourceRepo: platform-libraries
+          targetRepo: php-key-generator
+          libraryPath: libs/key-generator
+          tagPrefix: key-generator/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

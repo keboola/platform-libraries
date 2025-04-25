@@ -1,0 +1,8 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: keyGenerator_tests
+      displayName: Key Generator Tests
+      serviceName: dev-key-generator
+      testCommand: bash -c 'composer install && composer ci'

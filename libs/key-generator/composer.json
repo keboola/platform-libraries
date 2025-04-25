@@ -14,6 +14,11 @@
             "Keboola\\KeyGenerator\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\KeyGenerator\\Tests\\": "tests/"
+        }
+    },
     "require": {
         "php": ">=8.2",
         "ext-openssl": "*"

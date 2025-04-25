@@ -15,7 +15,8 @@
         }
     },
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "ext-openssl": "*"
     },
     "require-dev": {
         "keboola/coding-standard": "^15.0.1",

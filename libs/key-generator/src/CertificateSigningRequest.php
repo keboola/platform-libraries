@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Keboola\KeyGenerator;
 
-class CertificateSigningRequest
+readonly class CertificateSigningRequest
 {
     public function __construct(
-        private readonly string $countryName,
-        private readonly string $stateOrProvinceName,
-        private readonly string $localityName,
-        private readonly string $organizationName,
-        private readonly string $commonName,
-        private readonly string $emailAddress,
-        private readonly string $businessCategory,
-        private readonly string $jurisdictionCountryName,
-        private readonly string $jurisdictionStateOrProvinceName,
-        private readonly string $serialNumber,
+        private string $countryName,
+        private string $stateOrProvinceName,
+        private string $localityName,
+        private string $organizationName,
+        private string $commonName,
+        private string $emailAddress,
+        private string $businessCategory,
+        private string $jurisdictionCountryName,
+        private string $jurisdictionStateOrProvinceName,
+        private string $serialNumber,
     ) {
     }
 

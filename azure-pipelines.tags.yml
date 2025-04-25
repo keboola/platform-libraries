@@ -25,7 +25,7 @@ resources:
     - repository: doctrine-retry-bundle
       type: github
       endpoint: keboola
-      name: keboola/doctrine-retry-bundle    
+      name: keboola/doctrine-retry-bundle
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -34,6 +34,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/k8s-client
+    - repository: php-key-generator
+      type: github
+      endpoint: keboola
+      name: keboola/php-key-generator
     - repository: logging-bundle
       type: github
       endpoint: keboola
@@ -65,7 +69,7 @@ resources:
     - repository: slicer
       type: github
       endpoint: keboola
-      name: keboola/slicer      
+      name: keboola/slicer
     - repository: staging-provider
       type: github
       endpoint: keboola
@@ -127,6 +131,14 @@ jobs:
       targetRepo: k8s-client
       libraryPath: libs/k8s-client
       tagPrefix: k8s-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/key-generator/')
+      sourceRepo: platform-libraries
+      targetRepo: php-key-generator
+      libraryPath: libs/key-generator
+      tagPrefix: key-generator/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

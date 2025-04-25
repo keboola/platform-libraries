@@ -88,6 +88,11 @@ services:
     image: keboola/k8s-client
     working_dir: /code/libs/k8s-client
 
+  dev-key-generator:
+    <<: *dev82
+    image: keboola/key-generator
+    working_dir: /code/libs/key-generator
+
   dev-messenger-bundle:
     <<: *dev82
     working_dir: /code/libs/messenger-bundle
@@ -170,7 +175,7 @@ services:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 60s
       retries: 10
-  
+
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy
     depends_on:
@@ -186,7 +191,7 @@ services:
       toxiproxy:
         condition: service_started
       mysql:
-        condition: service_healthy        
+        condition: service_healthy
 
 volumes:
   mysql_data:

@@ -1,0 +1,59 @@
+{
+    "name": "keboola/key-generator",
+    "license": "MIT",
+    "type": "library",
+    "description": "Service Client provides easy way to get Keboola services URLs",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\KeyGenerator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\KeyGenerator\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "ext-openssl": "*"
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^15.0.1",
+        "phpstan/phpstan": "^2.1.12",
+        "phpunit/phpunit": "^9.6.22",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/dotenv": "^7.0"
+    },
+    "scripts": {
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
+        ],
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "build": [
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "lock": false,
+        "process-timeout": 3600,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

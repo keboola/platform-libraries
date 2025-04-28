@@ -938,6 +938,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         $record = $records[0];
         self::assertEquals(400, $record['level']);
         self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertIsArray($record['context']);
         self::assertArrayHasKey('exception', $record['context']);
         self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
         self::assertSame('Config map delete failed', $record['context']['exception']->getMessage());
@@ -945,6 +946,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         $record = $records[1];
         self::assertEquals(400, $record['level']);
         self::assertEquals('DeleteCollection request has failed', $record['message']);
+        self::assertIsArray($record['context']);
         self::assertArrayHasKey('exception', $record['context']);
         self::assertInstanceOf(RuntimeException::class, $record['context']['exception']);
         self::assertSame('Pod delete failed', $record['context']['exception']->getMessage());

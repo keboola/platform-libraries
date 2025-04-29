@@ -88,6 +88,7 @@ class Sandbox
         self::TYPE_R,
         self::TYPE_TEST,
         self::TYPE_STREAMLIT,
+        self::TYPE_SNOWFLAKE,
     ];
 
     /**

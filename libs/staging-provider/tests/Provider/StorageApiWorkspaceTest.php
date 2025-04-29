@@ -144,6 +144,7 @@ class StorageApiWorkspaceTest extends TestCase
                 'schema' => 'some-schema',
                 'user' => 'some-user',
                 'password' => 'some-secret',
+                'privateKey' => null,
                 'account' => 'some-host',
             ],
         ];
@@ -171,6 +172,7 @@ class StorageApiWorkspaceTest extends TestCase
                 'schema' => 'some-schema',
                 'user' => 'some-user',
                 'password' => 'some-secret',
+                'privateKey' => null,
                 'account' => 'some-host',
             ],
         ];
@@ -197,6 +199,7 @@ class StorageApiWorkspaceTest extends TestCase
                 'schema' => 'some-schema',
                 'user' => 'some-user',
                 'password' => null,
+                'privateKey' => null,
                 'account' => 'some-host',
             ],
         ];

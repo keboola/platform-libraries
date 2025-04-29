@@ -41,6 +41,9 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
         if ($this->workspaceBackendConfig->getLoginType() !== null) {
             $options['loginType'] = $this->workspaceBackendConfig->getLoginType();
         }
+        if ($this->workspaceBackendConfig->getPublicKey() !== null) {
+            $options['publicKey'] = $this->workspaceBackendConfig->getPublicKey();
+        }
 
         if ($this->configId !== null) {
             // workspace tied to a component and configuration

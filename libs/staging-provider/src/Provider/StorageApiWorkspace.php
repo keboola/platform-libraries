@@ -20,6 +20,7 @@ readonly class StorageApiWorkspace
          *     schema?: string,
          *     user?: string,
          *     password?: string|null,
+         *     privateKey?: string|null,
          *     account?: string,
          *     container?: string,
          *     connectionString?: string
@@ -53,6 +54,7 @@ readonly class StorageApiWorkspace
                     'schema' => $data['connection']['schema'],
                     'user' => $data['connection']['user'],
                     'password' => $data['connection']['password'] ?? null,
+                    'privateKey' => $data['connection']['privateKey'] ?? null,
                     'account' => self::parseSnowflakeAccount($data['connection']['host']),
                 ],
                 'abs' => [

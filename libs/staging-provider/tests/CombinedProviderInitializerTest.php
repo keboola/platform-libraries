@@ -58,6 +58,7 @@ class CombinedProviderInitializerTest extends TestCase
                     null,
                     NetworkPolicy::SYSTEM,
                     WorkspaceLoginType::SNOWFLAKE_LEGACY_SERVICE_PASSWORD,
+                    null,
                 ),
                 $componentId,
                 $configId,

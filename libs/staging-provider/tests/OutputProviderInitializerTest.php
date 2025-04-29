@@ -16,7 +16,7 @@ use Keboola\StagingProvider\OutputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -40,11 +40,11 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
-                AbstractStrategyFactory::LOCAL,
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
@@ -85,7 +85,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -145,7 +145,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -205,7 +205,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -288,7 +288,7 @@ class OutputProviderInitializerTest extends TestCase
         $configuration->setComponentId('keboola.runner-workspace-abs-test');
         $components->addConfiguration($configuration);
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -349,7 +349,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -410,7 +410,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -472,7 +472,7 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(

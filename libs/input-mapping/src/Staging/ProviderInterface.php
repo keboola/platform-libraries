@@ -19,7 +19,7 @@ interface ProviderInterface
      *      database?: string,
      *      schema?: string,
      *      user?: string,
-     *      password?: string,
+     *      password?: string|null,
      *      account?: string,
      *      credentials?: array,
      * }

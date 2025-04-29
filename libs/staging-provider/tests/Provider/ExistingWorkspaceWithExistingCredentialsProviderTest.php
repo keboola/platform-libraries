@@ -52,6 +52,7 @@ class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
                 'schema' => 'some-schema',
                 'user' => 'some-user',
                 'password' => 'test',
+                'privateKey' => null,
                 'account' => 'some-host',
             ],
             $workspaceProvider->getCredentials(),

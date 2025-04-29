@@ -19,6 +19,7 @@ readonly class WorkspaceBackendConfig
         private ?bool $useReadonlyRole,
         private NetworkPolicy $networkPolicy,
         private ?WorkspaceLoginType $loginType,
+        private ?string $publicKey,
     ) {
     }
 
@@ -64,5 +65,10 @@ readonly class WorkspaceBackendConfig
     public function getLoginType(): ?WorkspaceLoginType
     {
         return $this->loginType;
+    }
+
+    public function getPublicKey(): ?string
+    {
+        return $this->publicKey;
     }
 }

@@ -20,6 +20,7 @@ interface ProviderInterface
      *      schema?: string,
      *      user?: string,
      *      password?: string|null,
+     *      privateKey?: string|null,
      *      account?: string,
      *      credentials?: array,
      * }

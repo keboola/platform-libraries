@@ -19,11 +19,12 @@ readonly class StorageApiWorkspace
          *     database?: string,
          *     schema?: string,
          *     user?: string,
-         *     password?: string,
+         *     password?: string|null,
          *     account?: string,
          *     container?: string,
-         *     connectionString?: string} $connection
-         * */
+         *     connectionString?: string
+         * } $credentials
+         */
         public array $credentials,
     ) {
     }

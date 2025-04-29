@@ -7,13 +7,13 @@ namespace Keboola\StagingProvider\Tests\Provider;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
-use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
 
-class NewWorkspaceStagingProviderTest extends TestCase
+class NewWorkspaceProviderTest extends TestCase
 {
     public function testWorkspaceGetters(): void
     {
@@ -52,7 +52,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -120,7 +120,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
                 ],
             ]);
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -177,7 +177,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -202,7 +202,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
         );
     }
 
-    public function testPathThrowsExceptionOnRemoteProvider(): void
+    public function testPathThrowsException(): void
     {
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
@@ -210,7 +210,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -258,7 +258,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->method('deleteWorkspace')
             ->with($workspaceId, [], true);
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -287,7 +287,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
             ->expects(self::never())
             ->method('deleteWorkspace');
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -306,15 +306,15 @@ class NewWorkspaceStagingProviderTest extends TestCase
     public function testWorkspaceStagingIsCreatedLazilyAndCached(): void
     {
         $workspaceId = '123456';
+        $backendSize = 'xsmall';
 
-        $matcher = self::once();
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
-            ->expects($matcher)
+            ->expects(self::once())
             ->method('createConfigurationWorkspace')
             ->willReturn([
                 'id' => $workspaceId,
-                'backendSize' => 'so-so',
+                'backendSize' => $backendSize,
                 'connection' => [
                     'backend' => 'snowflake',
                     'host' => 'some-host',
@@ -329,7 +329,7 @@ class NewWorkspaceStagingProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $workspaceProvider = new NewWorkspaceStagingProvider(
+        $workspaceProvider = new NewWorkspaceProvider(
             $workspacesApiClient,
             $componentsApiClient,
             new WorkspaceBackendConfig(
@@ -343,11 +343,10 @@ class NewWorkspaceStagingProviderTest extends TestCase
             'test-config',
         );
 
-        self::assertSame(0, $matcher->getInvocationCount());
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(1, $matcher->getInvocationCount());
+        // first call should create the workspace
+        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
 
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(1, $matcher->getInvocationCount());
+        // second call should use cached workspace
+        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
     }
 }

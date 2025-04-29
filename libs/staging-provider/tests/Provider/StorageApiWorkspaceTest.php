@@ -309,6 +309,7 @@ class StorageApiWorkspaceTest extends TestCase
         ];
 
         $workspace = StorageApiWorkspace::fromDataArray($input);
+        self::assertArrayHasKey('account', $workspace->credentials);
         self::assertSame($expectedAccount, $workspace->credentials['account']);
     }
 

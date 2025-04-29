@@ -14,7 +14,7 @@ use Keboola\StagingProvider\OutputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\WorkspaceLoginType;
@@ -49,7 +49,7 @@ class CombinedProviderInitializerTest extends TestCase
         $workspacesApi = new Workspaces($clientWrapper->getBasicClient());
 
         try {
-            $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+            $workspaceStagingProvider = new NewWorkspaceProvider(
                 $workspacesApi,
                 $componentsApi,
                 new WorkspaceBackendConfig(

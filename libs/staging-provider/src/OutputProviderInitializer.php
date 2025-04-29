@@ -7,14 +7,14 @@ namespace Keboola\StagingProvider;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
-use Keboola\StagingProvider\Provider\AbstractWorkspaceProvider;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
+use Keboola\StagingProvider\Provider\WorkspaceProviderInterface;
 
 class OutputProviderInitializer extends AbstractProviderInitializer
 {
     public function __construct(
         OutputStrategyFactory $stagingFactory, // This is just to make sure the correct StrategyFactory is injected
-        private readonly AbstractWorkspaceProvider $workspaceStagingProvider,
+        private readonly WorkspaceProviderInterface $workspaceStagingProvider,
         private readonly LocalStagingProvider $localStagingProvider,
     ) {
         parent::__construct(

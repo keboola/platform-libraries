@@ -25,7 +25,7 @@ use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
@@ -47,11 +47,11 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
-                AbstractStrategyFactory::LOCAL,
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
@@ -110,7 +110,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -181,7 +181,7 @@ class InputProviderInitializerTest extends TestCase
             new NullLogger(),
             'json',
         );
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -253,7 +253,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -329,7 +329,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -398,7 +398,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -471,7 +471,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(
@@ -549,7 +549,7 @@ class InputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
             new WorkspaceBackendConfig(

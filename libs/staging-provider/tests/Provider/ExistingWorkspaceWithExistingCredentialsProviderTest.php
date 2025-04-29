@@ -6,11 +6,11 @@ namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Credentials\DatabaseWorkspaceCredentials;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\ExistingWorkspaceWithExistingCredentialsProvider;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
 
-class ExistingWorkspaceStagingProviderTest extends TestCase
+class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
 {
     public function testWorkspaceGetters(): void
     {
@@ -35,7 +35,7 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
                 ],
             ]);
 
-        $workspaceProvider = new ExistingWorkspaceStagingProvider(
+        $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
             DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
@@ -58,21 +58,23 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
         );
     }
 
-    public function testPathThrowsExceptionOnRemoteProvider(): void
+    public function testPathThrowsException(): void
     {
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient
             ->expects(self::never())
             ->method('getWorkspace');
 
-        $workspaceProvider = new ExistingWorkspaceStagingProvider(
+        $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             '123456',
             DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
         );
 
         $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Workspace staging provider does not support path.');
+        $this->expectExceptionMessage(
+            ExistingWorkspaceWithExistingCredentialsProvider::class . ' does not support path',
+        );
         $workspaceProvider->getPath();
     }
 
@@ -86,23 +88,10 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
             ->method('deleteWorkspace')
             ->with($workspaceId, [], true);
         $workspacesApiClient
-            ->expects(self::once())
-            ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => 'large',
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                ],
-            ]);
+            ->expects(self::never())
+            ->method('getWorkspace');
 
-        $workspaceProvider = new ExistingWorkspaceStagingProvider(
+        $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
             DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
@@ -111,50 +100,14 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
         $workspaceProvider->cleanup();
     }
 
-    public function testCleanupDeletedWorkspaceStagingNotInitialized(): void
-    {
-        $workspaceId = '1';
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('deleteWorkspace')
-            ->with($workspaceId, [], true);
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => 'large',
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                ],
-            ]);
-
-        $workspaceProvider = new ExistingWorkspaceStagingProvider(
-            $workspacesApiClient,
-            $workspaceId,
-            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
-        );
-        // the workspace is cleaned even if "not initialized" (no getWorkspaceId called)
-        $workspaceProvider->cleanup();
-    }
-
     public function testWorkspaceStagingIsCreatedLazilyAndCached(): void
     {
         $workspaceId = '123456';
         $backendSize = 'large';
 
-        $matcher = self::once();
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient
-            ->expects($matcher)
+            ->expects(self::once())
             ->method('getWorkspace')
             ->with($workspaceId)
             ->willReturn([
@@ -170,17 +123,16 @@ class ExistingWorkspaceStagingProviderTest extends TestCase
                 ],
             ]);
 
-        $workspaceProvider = new ExistingWorkspaceStagingProvider(
+        $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
             DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
         );
 
-        self::assertSame(0, $matcher->getInvocationCount());
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(1, $matcher->getInvocationCount());
+        // first call should create the workspace
+        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
 
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(1, $matcher->getInvocationCount());
+        // second call should use cached workspace
+        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
     }
 }

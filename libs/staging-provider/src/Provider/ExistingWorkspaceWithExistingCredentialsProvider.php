@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Credentials\CredentialsInterface;
+use Keboola\StagingProvider\Provider\Configuration\WorkspaceCredentials;
 use Keboola\StorageApi\Workspaces;
 
 class ExistingWorkspaceWithExistingCredentialsProvider implements WorkspaceProviderInterface
@@ -15,7 +15,7 @@ class ExistingWorkspaceWithExistingCredentialsProvider implements WorkspaceProvi
     public function __construct(
         private readonly Workspaces $workspacesApiClient,
         private readonly string $workspaceId,
-        private readonly CredentialsInterface $credentials,
+        private readonly WorkspaceCredentials $userProvidedCredentials,
     ) {
     }
 
@@ -26,9 +26,11 @@ class ExistingWorkspaceWithExistingCredentialsProvider implements WorkspaceProvi
         }
 
         $workspaceData = $this->workspacesApiClient->getWorkspace((int) $this->workspaceId);
-        $credentials = $this->credentials->toArray();
 
-        $workspaceData['connection'] = array_merge($workspaceData['connection'], $credentials);
+        $workspaceData['connection'] = array_merge(
+            $workspaceData['connection'],
+            $this->userProvidedCredentials->credentials,
+        );
         return $this->workspace = StorageApiWorkspace::fromDataArray($workspaceData);
     }
 

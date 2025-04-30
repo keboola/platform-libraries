@@ -47,8 +47,10 @@ class ExistingWorkspaceWithCredentialsResetProvider implements WorkspaceProvider
         }
 
         // getWorkspace returns workspace without credentials, these are supplied from the outside and merged
-        $workspaceData['connection'] = array_merge($workspaceData['connection'], $credentials);
-
+        $workspaceData['connection'] = array_merge(
+            $workspaceData['connection'],
+            $credentials,
+        );
         return $this->workspace = StorageApiWorkspace::fromDataArray($workspaceData);
     }
 

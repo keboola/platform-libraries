@@ -12,17 +12,17 @@ interface ProviderInterface
 
     /**
      * @return array{
-     *      container?: string,
-     *      connectionString?: string,
-     *      host?: string,
-     *      warehouse?: string,
-     *      database?: string,
-     *      schema?: string,
-     *      user?: string,
+     *      container?: string|null,
+     *      connectionString?: string|null,
+     *      host?: string|null,
+     *      warehouse?: string|null,
+     *      database?: string|null,
+     *      schema?: string|null,
+     *      user?: string|null,
      *      password?: string|null,
      *      privateKey?: string|null,
-     *      account?: string,
-     *      credentials?: array,
+     *      account?: string|null,
+     *      credentials?: array|null,
      * }
      */
     public function getCredentials(): array;

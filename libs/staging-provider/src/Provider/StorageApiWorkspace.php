@@ -14,16 +14,17 @@ readonly class StorageApiWorkspace
         public string $backend,
         public ?string $backendSize,
         /** @var array{
-         *     host?: string,
-         *     warehouse?: string,
-         *     database?: string,
-         *     schema?: string,
-         *     user?: string,
+         *     host?: string|null,
+         *     warehouse?: string|null,
+         *     database?: string|null,
+         *     schema?: string|null,
+         *     user?: string|null,
          *     password?: string|null,
          *     privateKey?: string|null,
-         *     account?: string,
-         *     container?: string,
-         *     connectionString?: string
+         *     account?: string|null,
+         *     container?: string|null,
+         *     connectionString?: string|null,
+         *     credentials?: array|null,
          * } $credentials
          */
         public array $credentials,

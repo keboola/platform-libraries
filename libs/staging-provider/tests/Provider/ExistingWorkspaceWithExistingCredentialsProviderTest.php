@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Credentials\DatabaseWorkspaceCredentials;
+use Keboola\StagingProvider\Provider\Configuration\WorkspaceCredentials;
 use Keboola\StagingProvider\Provider\ExistingWorkspaceWithExistingCredentialsProvider;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +38,7 @@ class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
         $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
-            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
+            new WorkspaceCredentials(['password' => 'test']),
         );
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
@@ -69,7 +69,7 @@ class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
         $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             '123456',
-            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
+            new WorkspaceCredentials(['password' => 'test']),
         );
 
         $this->expectException(StagingProviderException::class);
@@ -95,7 +95,7 @@ class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
         $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
-            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
+            new WorkspaceCredentials(['password' => 'test']),
         );
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
         $workspaceProvider->cleanup();
@@ -127,7 +127,7 @@ class ExistingWorkspaceWithExistingCredentialsProviderTest extends TestCase
         $workspaceProvider = new ExistingWorkspaceWithExistingCredentialsProvider(
             $workspacesApiClient,
             $workspaceId,
-            DatabaseWorkspaceCredentials::fromPasswordResetArray(['password' => 'test']),
+            new WorkspaceCredentials(['password' => 'test']),
         );
 
         // first call should create the workspace

@@ -42,12 +42,6 @@ abstract class BaseWorkspaceProvider implements WorkspaceProviderInterface
 
     public function resetCredentials(array $params): void
     {
-        $credentialsData = $this->doCredentials($params);
-        $this->getWorkspace()->setCredentialsFromData($credentialsData);
-    }
-
-    private function doCredentials(array $params): array
-    {
         $workspace = $this->getWorkspace();
 
         switch ($workspace->getLoginType()) {
@@ -57,11 +51,17 @@ abstract class BaseWorkspaceProvider implements WorkspaceProviderInterface
                     throw new StagingProviderException('Invalid parameters for key-pair authentication');
                 }
 
-                // TODO finish once Connection endpoint is implemented
-                return [];
+                // TODO pass public key to Storage API once API endpoint is ready
+
+                // we don't know the private key, so we don't have complete credentials
+                $credentialsData = null;
+                break;
 
             default:
-                return $this->workspacesApiClient->resetWorkspacePassword((int) $workspace->getId());
+                $credentialsData = $this->workspacesApiClient->resetWorkspacePassword((int) $workspace->getId());
+                break;
         }
+
+        $workspace->setCredentialsFromData($credentialsData);
     }
 }

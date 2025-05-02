@@ -258,7 +258,10 @@ class WorkspaceTest extends TestCase
         ]);
 
         $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Invalid credentials data: Keboola\StagingProvider\Provider\Workspace::parseSnowflakeAccount(): Argument #1 ($host) must be of type string, null given');
+        $this->expectExceptionMessage(
+            'Invalid credentials data: Keboola\StagingProvider\Provider\Workspace::parseSnowflakeAccount(): ' .
+            'Argument #1 ($host) must be of type string, null given',
+        );
 
         // Override all connection data with invalid data
         $workspace->setCredentialsFromData([

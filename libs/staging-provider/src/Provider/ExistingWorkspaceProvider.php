@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
+use Keboola\StagingProvider\Provider\Credentials\ExistingWorkspaceCredentialsProviderInterface;
 use Keboola\StorageApi\Workspaces;
+use LogicException;
 
-abstract class BaseExistingWorkspaceProvider extends BaseWorkspaceProvider
+class ExistingWorkspaceProvider extends BaseWorkspaceProvider
 {
     private ?Workspace $workspace = null;
 
     public function __construct(
         private readonly Workspaces $workspacesApiClient,
         private readonly string $workspaceId,
+        private readonly ExistingWorkspaceCredentialsProviderInterface $credentialsProvider,
     ) {
         parent::__construct($workspacesApiClient);
     }
@@ -37,11 +40,13 @@ abstract class BaseExistingWorkspaceProvider extends BaseWorkspaceProvider
         $workspace = $this->getWorkspace();
 
         if (!$workspace->hasCredentials()) {
-            $this->provideCredentials($workspace);
+            $this->credentialsProvider->provideCredentials($this, $workspace);
+        }
+
+        if (!$workspace->hasCredentials()) {
+            throw new LogicException('Credentials provider did not configure workspace credentials.');
         }
 
         return $workspace->getCredentials();
     }
-
-    abstract protected function provideCredentials(Workspace $workspace): void;
 }

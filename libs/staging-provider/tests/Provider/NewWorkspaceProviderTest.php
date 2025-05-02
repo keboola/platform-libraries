@@ -13,7 +13,6 @@ use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StagingProvider\Provider\Workspace;
 use PHPUnit\Framework\TestCase;
 
 class NewWorkspaceProviderTest extends TestCase

@@ -78,8 +78,13 @@ class Workspace
         return $this->credentials;
     }
 
-    public function setCredentialsFromData(array $data): void
+    public function setCredentialsFromData(?array $data): void
     {
+        if ($data === null) {
+            $this->credentials = null;
+            return;
+        }
+
         $connectionData = array_merge(
             $this->connectionData,
             $data,

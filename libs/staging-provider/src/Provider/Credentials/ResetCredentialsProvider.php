@@ -2,22 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider;
+namespace Keboola\StagingProvider\Provider\Credentials;
 
+use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
+use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
+use Keboola\StagingProvider\Provider\Workspace;
 use Keboola\StorageApi\WorkspaceLoginType;
-use Keboola\StorageApi\Workspaces;
 
-class ExistingWorkspaceWithCredentialsResetProvider extends BaseExistingWorkspaceProvider
+class ResetCredentialsProvider implements ExistingWorkspaceCredentialsProviderInterface
 {
     public function __construct(
-        Workspaces $workspacesApiClient,
         private readonly SnowflakeKeypairGenerator $snowflakeKeypairGenerator,
-        string $workspaceId,
     ) {
-        parent::__construct($workspacesApiClient, $workspaceId);
     }
 
-    protected function provideCredentials(Workspace $workspace): void
+    public function provideCredentials(ExistingWorkspaceProvider $workspaceProvider, Workspace $workspace): void
     {
         if (in_array($workspace->getLoginType(), [
             WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
@@ -25,14 +24,14 @@ class ExistingWorkspaceWithCredentialsResetProvider extends BaseExistingWorkspac
         ], true)) {
             $keyPair = $this->snowflakeKeypairGenerator->generateKeyPair();
 
-            $this->resetCredentials([
+            $workspaceProvider->resetCredentials([
                 'publicKey' => $keyPair->publicKey,
             ]);
             $workspace->setCredentialsFromData([
                 'privateKey' => $keyPair->privateKey,
             ]);
         } else {
-            $this->resetCredentials([]);
+            $workspaceProvider->resetCredentials([]);
         }
     }
 }

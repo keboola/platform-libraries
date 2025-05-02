@@ -21,11 +21,13 @@ use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
 use Keboola\InputMapping\Table\Strategy\Teradata as InputTableTeradata;
+use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
 use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
+use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
@@ -50,12 +52,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -114,12 +116,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_REDSHIFT,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -186,13 +188,13 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
                 WorkspaceLoginType::SNOWFLAKE_LEGACY_SERVICE_PASSWORD,
-                null,
             ),
             'my-test-component',
             'my-test-config',
@@ -259,12 +261,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_SYNAPSE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -336,12 +338,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_ABS,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -406,12 +408,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_EXASOL,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -480,12 +482,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_TERADATA,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',
@@ -559,12 +561,12 @@ class InputProviderInitializerTest extends TestCase
         $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_BIGQUERY,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
-                null,
                 null,
             ),
             'my-test-component',

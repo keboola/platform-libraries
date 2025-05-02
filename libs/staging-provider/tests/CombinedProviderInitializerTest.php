@@ -8,6 +8,7 @@ use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\OutputProviderInitializer;
@@ -15,6 +16,7 @@ use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
 use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
+use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\WorkspaceLoginType;
@@ -52,13 +54,13 @@ class CombinedProviderInitializerTest extends TestCase
             $workspaceStagingProvider = new NewWorkspaceProvider(
                 $workspacesApi,
                 $componentsApi,
+                new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
                 new WorkspaceBackendConfig(
                     AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                     null,
                     null,
                     NetworkPolicy::SYSTEM,
                     WorkspaceLoginType::SNOWFLAKE_LEGACY_SERVICE_PASSWORD,
-                    null,
                 ),
                 $componentId,
                 $configId,

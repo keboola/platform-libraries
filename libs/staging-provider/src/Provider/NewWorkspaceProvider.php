@@ -7,6 +7,7 @@ namespace Keboola\StagingProvider\Provider;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 
 class NewWorkspaceProvider implements WorkspaceProviderInterface
@@ -16,6 +17,7 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
     public function __construct(
         private readonly Workspaces $workspacesApiClient,
         private readonly Components $componentsApiClient,
+        private readonly SnowflakeKeypairGenerator $snowflakeKeypairGenerator,
         private readonly WorkspaceBackendConfig $workspaceBackendConfig,
         private readonly string $componentId,
         private readonly ?string $configId = null,
@@ -38,11 +40,18 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
         if ($this->workspaceBackendConfig->getUseReadonlyRole() !== null) {
             $options['readOnlyStorageAccess'] = $this->workspaceBackendConfig->getUseReadonlyRole();
         }
-        if ($this->workspaceBackendConfig->getLoginType() !== null) {
-            $options['loginType'] = $this->workspaceBackendConfig->getLoginType();
-        }
-        if ($this->workspaceBackendConfig->getPublicKey() !== null) {
-            $options['publicKey'] = $this->workspaceBackendConfig->getPublicKey();
+
+        $loginType = $this->workspaceBackendConfig->getLoginType();
+        if ($loginType !== null) {
+            $options['loginType'] = $loginType;
+
+            if (in_array($loginType, [
+                WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+                WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR,
+            ], true)) {
+                $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
+                $options['publicKey'] = $keypair->publicKey;
+            }
         }
 
         if ($this->configId !== null) {
@@ -56,6 +65,10 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
         } else {
             // workspace without associated configuration (workspace result is same, it's just different API call)
             $data = $this->workspacesApiClient->createWorkspace($options, true);
+        }
+
+        if (isset($keypair)) {
+            $data['connection']['privateKey'] = $keypair->privateKey;
         }
 
         return $this->workspace = StorageApiWorkspace::fromDataArray($data);

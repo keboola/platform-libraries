@@ -13,8 +13,9 @@ class ExistingWorkspaceWithCredentialsResetProvider implements WorkspaceProvider
     private ?StorageApiWorkspace $workspace = null;
 
     public function __construct(
-        public readonly Workspaces $workspacesApiClient,
-        public readonly string $workspaceId,
+        private readonly Workspaces $workspacesApiClient,
+        private readonly SnowflakeKeypairGenerator $snowflakeKeypairGenerator,
+        private readonly string $workspaceId,
     ) {
     }
 
@@ -33,6 +34,15 @@ class ExistingWorkspaceWithCredentialsResetProvider implements WorkspaceProvider
             // key-pair auth
             case WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR:
             case WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR:
+                $keyPair = $this->snowflakeKeypairGenerator->generateKeyPair();
+
+                $credentials = [
+                    'privateKey' => $keyPair->privateKey,
+                ];
+
+                // TODO finish once Connection endpoint is implemented
+                // it's expected the endpoint will require just workspaceId + publicKey and response is not useful
+                // as credentials (privateKey) are generated locally
                 throw new StagingProviderException('Credentials reset for key-pair auth is not supported yet');
 
             // password-based auth

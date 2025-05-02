@@ -22,7 +22,6 @@ class WorkspaceBackendConfigTest extends TestCase
             true,
             NetworkPolicy::SYSTEM,
             WorkspaceLoginType::SNOWFLAKE_PERSON_SSO,
-            null,
         );
 
         self::assertSame('workspace-snowflake', $config->getStagingType());
@@ -31,7 +30,6 @@ class WorkspaceBackendConfigTest extends TestCase
         self::assertSame(true, $config->getUseReadonlyRole());
         self::assertSame('system', $config->getNetworkPolicy());
         self::assertSame(WorkspaceLoginType::SNOWFLAKE_PERSON_SSO, $config->getLoginType());
-        self::assertNull($config->getPublicKey());
 
         $config = new WorkspaceBackendConfig(
             'workspace-snowflake',
@@ -39,7 +37,6 @@ class WorkspaceBackendConfigTest extends TestCase
             null,
             NetworkPolicy::USER,
             WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR,
-            'public-key',
         );
 
         self::assertSame('workspace-snowflake', $config->getStagingType());
@@ -48,7 +45,6 @@ class WorkspaceBackendConfigTest extends TestCase
         self::assertSame(null, $config->getUseReadonlyRole());
         self::assertSame('user', $config->getNetworkPolicy());
         self::assertSame(WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR, $config->getLoginType());
-        self::assertSame('public-key', $config->getPublicKey());
     }
 
     /**
@@ -62,7 +58,6 @@ class WorkspaceBackendConfigTest extends TestCase
             null,
             null,
             NetworkPolicy::SYSTEM,
-            null,
             null,
         );
 
@@ -88,7 +83,6 @@ class WorkspaceBackendConfigTest extends TestCase
             null,
             null,
             NetworkPolicy::SYSTEM,
-            null,
             null,
         );
 

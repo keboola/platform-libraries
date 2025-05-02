@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Tests\Provider;
 
+use Keboola\KeyGenerator\PemKeyCertificatePair;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\ExistingWorkspaceWithCredentialsResetProvider;
+use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -44,8 +46,12 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
                 'password' => 'new-password',
             ]);
 
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
+            $snowflakeKeypairGenerator,
             $workspaceId,
         );
 
@@ -94,8 +100,18 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
             ->expects(self::never())
             ->method('resetWorkspacePassword');
 
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::once())
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: 'private-key',
+                publicKey: 'public-key',
+            ))
+        ;
+
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
+            $snowflakeKeypairGenerator,
             $workspaceId,
         );
 
@@ -111,8 +127,12 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
             ->expects(self::never())
             ->method('getWorkspace');
 
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
+            $snowflakeKeypairGenerator,
             '123456',
         );
 
@@ -136,8 +156,12 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
             ->expects(self::never())
             ->method('getWorkspace');
 
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
+            $snowflakeKeypairGenerator,
             $workspaceId,
         );
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
@@ -176,8 +200,12 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
                 'password' => 'new-password',
             ]);
 
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
+            $snowflakeKeypairGenerator,
             $workspaceId,
         );
 

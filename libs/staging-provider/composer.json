@@ -30,6 +30,7 @@
         "php": ">=8.2",
         "ext-json": "*",
         "keboola/input-mapping": "*@dev",
+        "keboola/key-generator": "*@dev",
         "keboola/output-mapping": "*@dev",
         "keboola/slicer": "*@dev",
         "keboola/storage-api-client": "^18.0",

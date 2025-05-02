@@ -43,6 +43,11 @@ class InvalidWorkspaceProvider implements WorkspaceProviderInterface
         $this->throwError();
     }
 
+    public function resetCredentials(array $params): void
+    {
+        $this->throwError();
+    }
+
     private function throwError(): never
     {
         throw new StagingProviderException(sprintf(

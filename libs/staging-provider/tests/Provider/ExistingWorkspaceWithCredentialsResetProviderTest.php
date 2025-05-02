@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Tests\Provider;
 
-use Keboola\KeyGenerator\PemKeyCertificatePair;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\ExistingWorkspaceWithCredentialsResetProvider;
 use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
@@ -76,38 +75,30 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
     public function testKeyPairAuthNotSupported(): void
     {
         $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'test',
+                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
+            ],
+        ];
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient
             ->expects(self::once())
             ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => 'large',
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
-                ],
-            ]);
-
-        $workspacesApiClient
-            ->expects(self::never())
-            ->method('resetWorkspacePassword');
+            ->with((int) $workspaceId)
+            ->willReturn($workspaceData);
 
         $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::once())
-            ->method('generateKeyPair')
-            ->willReturn(new PemKeyCertificatePair(
-                privateKey: 'private-key',
-                publicKey: 'public-key',
-            ))
-        ;
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
 
         $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
             $workspacesApiClient,
@@ -116,8 +107,8 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
         );
 
         $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Credentials reset for key-pair auth is not supported yet');
-        $workspaceProvider->getCredentials();
+        $this->expectExceptionMessage('Invalid parameters for key-pair authentication');
+        $workspaceProvider->resetCredentials([]);
     }
 
     public function testPathThrowsException(): void
@@ -171,32 +162,38 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
     public function testWorkspaceStagingIsCreatedLazilyAndCached(): void
     {
         $workspaceId = '123456';
-        $backendSize = 'large';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'test',
+                'loginType' => WorkspaceLoginType::DEFAULT->value,
+            ],
+        ];
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient
             ->expects(self::once())
             ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => $backendSize,
-                'connection' => [
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'loginType' => WorkspaceLoginType::SNOWFLAKE_LEGACY_SERVICE_PASSWORD->value,
-                ],
-            ]);
+            ->with((int) $workspaceId)
+            ->willReturn($workspaceData);
 
         $workspacesApiClient
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('resetWorkspacePassword')
-            ->with($workspaceId)
+            ->with((int) $workspaceId)
             ->willReturn([
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
                 'password' => 'new-password',
             ]);
 
@@ -209,10 +206,74 @@ class ExistingWorkspaceWithCredentialsResetProviderTest extends TestCase
             $workspaceId,
         );
 
-        // first call should create the workspace
-        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        // Get initial credentials
+        $credentials = $workspaceProvider->getCredentials();
+        self::assertArrayHasKey('password', $credentials);
 
-        // second call should use cached workspace
-        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        // Reset credentials
+        $workspaceProvider->resetCredentials([]);
+
+        // Get updated credentials
+        $credentials = $workspaceProvider->getCredentials();
+        self::assertSame('new-password', $credentials['password']);
+    }
+
+    public function testResetCredentialsWithPassword(): void
+    {
+        $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'test',
+                'loginType' => WorkspaceLoginType::DEFAULT->value,
+            ],
+        ];
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient
+            ->expects(self::once())
+            ->method('getWorkspace')
+            ->with((int) $workspaceId)
+            ->willReturn($workspaceData);
+
+        $workspacesApiClient
+            ->expects(self::exactly(2))
+            ->method('resetWorkspacePassword')
+            ->with((int) $workspaceId)
+            ->willReturn([
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'new-password',
+            ]);
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
+        $workspaceProvider = new ExistingWorkspaceWithCredentialsResetProvider(
+            $workspacesApiClient,
+            $snowflakeKeypairGenerator,
+            $workspaceId,
+        );
+
+        // Get initial credentials
+        $credentials = $workspaceProvider->getCredentials();
+        self::assertArrayHasKey('password', $credentials);
+
+        // Reset credentials
+        $workspaceProvider->resetCredentials([]);
+
+        // Get updated credentials
+        $credentials = $workspaceProvider->getCredentials();
+        self::assertSame('new-password', $credentials['password']);
     }
 }

@@ -13,6 +13,7 @@ use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StagingProvider\Provider\Workspace;
 use PHPUnit\Framework\TestCase;
 
 class NewWorkspaceProviderTest extends TestCase
@@ -165,6 +166,15 @@ class NewWorkspaceProviderTest extends TestCase
     public function testWorkspaceAbs(): void
     {
         $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'abs',
+                'container' => 'some-container',
+                'connectionString' => 'some-string',
+            ],
+        ];
 
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
@@ -173,18 +183,15 @@ class NewWorkspaceProviderTest extends TestCase
             ->with(
                 'test-component',
                 'test-config',
-                ['backend' => 'abs', 'networkPolicy' => 'system', 'loginType' => WorkspaceLoginType::DEFAULT],
+                [
+                    'backend' => 'abs',
+                    'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
+                    'backendSize' => 'small',
+                ],
                 true,
             )
-            ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => null,
-                'connection' => [
-                    'backend' => 'abs',
-                    'container' => 'some-container',
-                    'connectionString' => 'some-string',
-                ],
-            ]);
+            ->willReturn($workspaceData);
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
@@ -198,7 +205,7 @@ class NewWorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
             new WorkspaceBackendConfig(
                 'workspace-abs',
-                null,
+                'small',
                 null,
                 NetworkPolicy::SYSTEM,
                 WorkspaceLoginType::DEFAULT,
@@ -208,7 +215,6 @@ class NewWorkspaceProviderTest extends TestCase
         );
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(null, $workspaceProvider->getBackendSize());
         self::assertSame(
             [
                 'container' => 'some-container',
@@ -220,22 +226,17 @@ class NewWorkspaceProviderTest extends TestCase
 
     public function testPathThrowsException(): void
     {
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::never())->method(self::anything());
+        $workspaces = $this->createMock(Workspaces::class);
+        $components = $this->createMock(Components::class);
+        $keypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
 
-        $componentsApiClient = $this->createMock(Components::class);
-        $componentsApiClient->expects(self::never())->method(self::anything());
-
-        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
-
-        $workspaceProvider = new NewWorkspaceProvider(
-            $workspacesApiClient,
-            $componentsApiClient,
-            $snowflakeKeypairGenerator,
+        $provider = new NewWorkspaceProvider(
+            $workspaces,
+            $components,
+            $keypairGenerator,
             new WorkspaceBackendConfig(
                 'workspace-snowflake',
-                'large',
+                'small',
                 null,
                 NetworkPolicy::SYSTEM,
                 WorkspaceLoginType::DEFAULT,
@@ -245,9 +246,9 @@ class NewWorkspaceProviderTest extends TestCase
         );
 
         $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Workspace staging provider does not support path.');
+        $this->expectExceptionMessage('NewWorkspaceProvider does not support path');
 
-        $workspaceProvider->getPath();
+        $provider->getPath();
     }
 
     public function testCleanupDeletedWorkspaceStaging(): void
@@ -468,5 +469,138 @@ class NewWorkspaceProviderTest extends TestCase
             ],
             $workspaceProvider->getCredentials(),
         );
+    }
+
+    public function testResetCredentials(): void
+    {
+        $workspaceId = '123456';
+        $workspaceData = [
+            'id' => $workspaceId,
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+            ],
+        ];
+
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient->expects(self::never())->method(self::anything());
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient
+            ->expects(self::once())
+            ->method('createWorkspace')
+            ->with(
+                [
+                    'backend' => 'snowflake',
+                    'backendSize' => 'small',
+                    'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
+                ],
+                true,
+            )
+            ->willReturn($workspaceData);
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
+        $workspaceProvider = new NewWorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'small',
+                null,
+                NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
+            ),
+            'test-component',
+            null,
+        );
+
+        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
+        self::assertSame(
+            [
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+                'privateKey' => null,
+                'account' => 'some-host',
+            ],
+            $workspaceProvider->getCredentials(),
+        );
+    }
+
+    public function testResetCredentialsWithKeyPair(): void
+    {
+        $workspaces = $this->createMock(Workspaces::class);
+        $components = $this->createMock(Components::class);
+        $keypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+
+        $workspaceData = [
+            'id' => '123456',
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
+            ],
+        ];
+
+        $components->expects(self::once())
+            ->method('createConfigurationWorkspace')
+            ->with(
+                'test-component',
+                'test-config',
+                [
+                    'backend' => 'snowflake',
+                    'backendSize' => 'small',
+                    'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+                    'publicKey' => 'public-key',
+                ],
+                true,
+            )
+            ->willReturn($workspaceData);
+
+        $keypairGenerator->expects(self::once())
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: 'private-key',
+                publicKey: 'public-key',
+            ));
+
+        $provider = new NewWorkspaceProvider(
+            $workspaces,
+            $components,
+            $keypairGenerator,
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'small',
+                null,
+                NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            ),
+            'test-component',
+            'test-config',
+        );
+
+        $this->expectException(StagingProviderException::class);
+        $this->expectExceptionMessage('Invalid parameters for key-pair authentication');
+
+        $provider->resetCredentials([]);
     }
 }

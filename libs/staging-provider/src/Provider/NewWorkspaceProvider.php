@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
-use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 
-class NewWorkspaceProvider implements WorkspaceProviderInterface
+class NewWorkspaceProvider extends BaseWorkspaceProvider
 {
-    private ?StorageApiWorkspace $workspace = null;
+    private ?Workspace $workspace = null;
 
     public function __construct(
         private readonly Workspaces $workspacesApiClient,
@@ -22,9 +21,10 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
         private readonly string $componentId,
         private readonly ?string $configId = null,
     ) {
+        parent::__construct($workspacesApiClient);
     }
 
-    private function getWorkspace(): StorageApiWorkspace
+    protected function getWorkspace(): Workspace
     {
         if ($this->workspace !== null) {
             return $this->workspace;
@@ -56,7 +56,7 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
 
         if ($this->configId !== null) {
             // workspace tied to a component and configuration
-            $data = $this->componentsApiClient->createConfigurationWorkspace(
+            $workspaceData = $this->componentsApiClient->createConfigurationWorkspace(
                 $this->componentId,
                 $this->configId,
                 $options,
@@ -64,48 +64,36 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
             );
         } else {
             // workspace without associated configuration (workspace result is same, it's just different API call)
-            $data = $this->workspacesApiClient->createWorkspace($options, true);
+            $workspaceData = $this->workspacesApiClient->createWorkspace($options, true);
         }
 
         if (isset($keypair)) {
-            $data['connection']['privateKey'] = $keypair->privateKey;
+            $workspaceData['connection']['privateKey'] = $keypair->privateKey;
         }
 
-        return $this->workspace = StorageApiWorkspace::fromDataArray($data);
+        $this->workspace = Workspace::createFromData($workspaceData);
+        $this->workspace->setCredentialsFromData($workspaceData['connection']);
+
+        return $this->workspace;
     }
 
     public function getWorkspaceId(): string
     {
-        return $this->getWorkspace()->id;
+        return $this->getWorkspace()->getId();
     }
 
     public function getCredentials(): array
     {
-        return $this->getWorkspace()->credentials;
-    }
-
-    public function getPath(): string
-    {
-        throw new StagingProviderException('Workspace staging provider does not support path.');
-    }
-
-    public function getBackendSize(): ?string
-    {
-        return $this->getWorkspace()->backendSize;
-    }
-
-    public function getBackendType(): string
-    {
-        return $this->getWorkspace()->backend;
+        return $this->getWorkspace()->getCredentials();
     }
 
     public function cleanup(): void
     {
-        // only cleanup if a workspace was created before
+        // only cleanup if a workspace was created yet
         if ($this->workspace === null) {
             return;
         }
 
-        $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);
+        parent::cleanup();
     }
 }

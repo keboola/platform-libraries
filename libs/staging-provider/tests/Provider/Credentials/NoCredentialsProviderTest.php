@@ -16,16 +16,25 @@ class NoCredentialsProviderTest extends TestCase
 {
     public function testCredentialsThrowsExceptionByDefault(): void
     {
-        $workspaceProvider = $this->createMock(ExistingWorkspaceProvider::class);
-        $workspaceProvider->expects(self::never())->method(self::anything());
+        $workspaceData = [
+            'id' => '123456',
+            'backendSize' => 'small',
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'loginType' => WorkspaceLoginType::DEFAULT->value,
+            ],
+        ];
 
-        $workspace = $this->createMock(Workspace::class);
-        $workspace->expects(self::never())->method('setCredentialsFromData');
+        $workspace = Workspace::createFromData($workspaceData);
+        $provider = new NoCredentialsProvider();
 
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage('Credentials are not available');
-
-        $provider = new NoCredentialsProvider();
-        $provider->provideCredentials($workspaceProvider, $workspace);
+        $provider->provideCredentials($workspace);
     }
 }

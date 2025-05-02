@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Provider\Credentials;
 
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceCredentials;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
 use Keboola\StagingProvider\Provider\Workspace;
 
 class ExistingCredentialsProvider implements ExistingWorkspaceCredentialsProviderInterface
@@ -15,8 +14,8 @@ class ExistingCredentialsProvider implements ExistingWorkspaceCredentialsProvide
     ) {
     }
 
-    public function provideCredentials(ExistingWorkspaceProvider $workspaceProvider, Workspace $workspace): void
+    public function provideCredentials(Workspace $workspace): ?array
     {
-        $workspace->setCredentialsFromData($this->userProvidedCredentials->credentials);
+        return $this->userProvidedCredentials->credentials;
     }
 }

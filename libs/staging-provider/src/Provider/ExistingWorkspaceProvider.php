@@ -40,7 +40,8 @@ class ExistingWorkspaceProvider extends BaseWorkspaceProvider
         $workspace = $this->getWorkspace();
 
         if (!$workspace->hasCredentials()) {
-            $this->credentialsProvider->provideCredentials($this, $workspace);
+            $credentials = $this->credentialsProvider->provideCredentials($workspace);
+            $workspace->setCredentialsFromData($credentials);
         }
 
         if (!$workspace->hasCredentials()) {

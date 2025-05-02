@@ -31,26 +31,15 @@ class ExistingCredentialsProviderTest extends TestCase
 
         $workspace = Workspace::createFromData($workspaceData);
 
-        $workspaceProvider = $this->createMock(ExistingWorkspaceProvider::class);
-        $workspaceProvider->expects(self::never())->method(self::anything());
-
         $credentials = new WorkspaceCredentials([
             'password' => 'password-value',
         ]);
 
         $provider = new ExistingCredentialsProvider($credentials);
-        $provider->provideCredentials($workspaceProvider, $workspace);
+        $result = $provider->provideCredentials($workspace);
 
-        self::assertTrue($workspace->hasCredentials());
         self::assertSame([
-            'host' => 'some-host',
-            'warehouse' => 'some-warehouse',
-            'database' => 'some-database',
-            'schema' => 'some-schema',
-            'user' => 'some-user',
             'password' => 'password-value',
-            'privateKey' => null,
-            'account' => 'some-host',
-        ], $workspace->getCredentials());
+        ], $result);
     }
 }

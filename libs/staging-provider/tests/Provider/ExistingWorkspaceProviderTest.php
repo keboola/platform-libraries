@@ -120,107 +120,6 @@ class ExistingWorkspaceProviderTest extends TestCase
         self::assertSame('small', $provider->getBackendSize());
     }
 
-    public function testResetCredentialsWithPassword(): void
-    {
-        $workspaceId = '123456';
-        $workspaceData = [
-            'id' => $workspaceId,
-            'backendSize' => 'small',
-            'connection' => [
-                'backend' => 'snowflake',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'test',
-                'loginType' => WorkspaceLoginType::DEFAULT->value,
-            ],
-        ];
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn($workspaceData);
-
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('resetWorkspacePassword')
-            ->with($workspaceId)
-            ->willReturn([
-                'password' => 'new-password',
-            ]);
-
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
-        $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
-        $provider->resetCredentials([]);
-    }
-
-    public function testResetCredentialsWithKeyPair(): void
-    {
-        $workspaceId = '123456';
-        $workspaceData = [
-            'id' => $workspaceId,
-            'backendSize' => 'small',
-            'connection' => [
-                'backend' => 'snowflake',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'test',
-                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
-            ],
-        ];
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn($workspaceData);
-
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
-        $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
-
-        $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('Invalid parameters for key-pair authentication');
-        $provider->resetCredentials([]);
-    }
-
-    public function testResetCredentialsWithKeyPairAndPublicKey(): void
-    {
-        $workspaceId = '123456';
-        $workspaceData = [
-            'id' => $workspaceId,
-            'backendSize' => 'small',
-            'connection' => [
-                'backend' => 'snowflake',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'test',
-                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
-            ],
-        ];
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient
-            ->expects(self::once())
-            ->method('getWorkspace')
-            ->with($workspaceId)
-            ->willReturn($workspaceData);
-
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
-        $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
-        $provider->resetCredentials(['publicKey' => 'public-key']);
-    }
-
     public function testInvalidWorkspaceId(): void
     {
         $workspacesApiClient = $this->createMock(Workspaces::class);
@@ -291,57 +190,6 @@ class ExistingWorkspaceProviderTest extends TestCase
         $provider->getCredentials();
     }
 
-    public function testConcurrentAccess(): void
-    {
-        $workspaceId = '123456';
-        $workspaceData = [
-            'id' => $workspaceId,
-            'backendSize' => 'small',
-            'connection' => [
-                'backend' => 'snowflake',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'test',
-                'loginType' => WorkspaceLoginType::DEFAULT->value,
-            ],
-        ];
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient
-            ->expects($this->once())
-            ->method('getWorkspace')
-            ->willReturn($workspaceData);
-
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
-        $credentialsProvider
-            ->expects($this->exactly(1))
-            ->method('provideCredentials')
-            ->willReturnCallback(function ($provider, $workspace) {
-                $workspace->setCredentialsFromData([
-                    'backend' => 'snowflake',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
-                    'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'password' => 'test',
-                ]);
-            });
-
-        $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
-
-        // Simulate concurrent access
-        $backendSize = $provider->getBackendSize();
-        $backendType = $provider->getBackendType();
-        $provider->getCredentials();
-
-        self::assertSame('small', $backendSize);
-        self::assertSame('snowflake', $backendType);
-    }
-
     public function testCleanupWithNonExistentWorkspace(): void
     {
         $workspaceId = '123456';
@@ -404,10 +252,15 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->willReturn($workspaceData);
 
         $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider
+            ->expects(self::once())
+            ->method('provideCredentials')
+            ->willThrowException(new StagingProviderException('Invalid parameters for key-pair authentication'));
+
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
 
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage('Invalid parameters for key-pair authentication');
-        $provider->resetCredentials(['invalid' => 'param']);
+        $provider->getCredentials();
     }
 }

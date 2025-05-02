@@ -18,7 +18,7 @@ class Workspace
     private function __construct(
         private readonly string $id,
         private readonly string $backendType,
-        private readonly string $backendSize,
+        private readonly ?string $backendSize,
         private readonly WorkspaceLoginType $loginType,
         private readonly array $connectionData,
     ) {
@@ -30,7 +30,7 @@ class Workspace
             return new self(
                 id: (string) $workspaceData['id'],
                 backendType: $workspaceData['connection']['backend'],
-                backendSize: $workspaceData['backendSize'],
+                backendSize: $workspaceData['backendSize'] ?? null,
                 loginType: WorkspaceLoginType::from(
                     $workspaceData['connection']['loginType'] ?? WorkspaceLoginType::DEFAULT->value,
                 ),
@@ -54,7 +54,7 @@ class Workspace
         return $this->backendType;
     }
 
-    public function getBackendSize(): string
+    public function getBackendSize(): ?string
     {
         return $this->backendSize;
     }

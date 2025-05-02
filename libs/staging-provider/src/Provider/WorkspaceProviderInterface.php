@@ -11,6 +11,4 @@ interface WorkspaceProviderInterface extends ProviderInterface
     public function getBackendSize(): ?string;
 
     public function getBackendType(): string;
-
-    public function resetCredentials(array $params): void;
 }

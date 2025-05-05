@@ -16,7 +16,7 @@ Typical use-case can be set up a `Reader` instance to access some data:
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\WorkspaceProviderFactory\ExistingDatabaseWorkspaceProviderFactory;
+use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -30,13 +30,17 @@ $strategyFactory = new InputStrategyFactory($storageApiClientWrapper, $logger, '
 $tokenInfo = $storageApiClient->verifyToken();
 $dataDir = '/data';
 
-$workspaceProviderFactory = new ExistingDatabaseWorkspaceProviderFactory(
+$workspaceProvider = new ExistingWorkspaceProvider(
     new Workspaces($storageApiClient),
     'my-workspace', // workspace ID
-    'abcd1234'      // workspace password
+    new Credentials\ExistingCredentialsProvider(
+        new Configuration\WorkspaceCredentials([
+            'password' => 'abcd1234' // workspace password
+        ]),
+    ),
 );
 
-$providerInitializer = new InputProviderInitializer($strategyFactory, $workspaceProviderFactory, $dataDir);
+$providerInitializer = new InputProviderInitializer($strategyFactory, $workspaceProvider, $dataDir);
 $providerInitializer->initializeProviders(
     InputStrategyFactory::WORKSPACE_SNOWFLAKE,
     $tokenInfo
@@ -50,11 +54,11 @@ We start by creating a `StrategyFactory` needed by the reader. The strategy itse
 should be used with each staging type. This is what provider initializer does - configure the `StrategyFactory` for
 a specific type of staging.
 
-To create a provider initializer we pass it:
+To create a provider initializer, we pass it:
 * the `StrategyFactory` to initialize
-* a workspace provider factory - used to access workspace information for workspace staging
-  * `ExistingWorkspaceProviderFactory` in case we want to re-use existing workspace
-  * `ComponentWorkspaceProviderFactory` in case we want a new workspace to be created (based on a component configuration)
+* a workspace provider, used to access workspace information for workspace staging
+  * `ExistingWorkspaceProvider` in case we want to re-use existing workspace
+  * `NewWorkspaceProvider` in case we want a new workspace to be created (based on a component configuration)
 * a data directory path used for local staging
 
 Then we call `initializeProviders` method to configure the `StrategyFactory` for specific staging type.  It's up to the
@@ -71,27 +75,37 @@ The main objective of the library is to configure `StrategyFactory` so it knows 
 use with each kind of storage.
 
 ### Staging
-Generally there are two kind of staging:
+Generally, there are two kinds of staging:
 * local staging - used to store data locally on filesystem, represented by `LocalStaging` class
 * workspace staging - used to store data in a workspace, represented by `WorkspaceStagingInterface`
 
 ### Provider (staging provider)
 The `StrategyFactory` does not use a staging directly but rather through a provider (`ProviderInterface`) so there is
 a provider implementation for each kind:
-* `LocalStagingProvider`
-* `WorkspaceStagingProvider`
+* `LocalStagingProvider` - for local filesystem staging
+* `WorkspaceProviderInterface` - for Connection workspace staging
   
 The main reason the `StrategyFactory` does not use the staging directly is to achieve lazy initialization of the staging -
 provider instance is created during bootstrap, but the staging instance is only created when really used.
 
 ### Workspace provider factory
-Local staging is pretty simple, it contains just the path to data directory, provided by the caller. On the other hand
-things gets a bit more complicated with workspace staging as the provider may represent an already existing workspace or
-a configuration for creating a new workspace. To achieve this, caller must provide a `WorkspaceProviderFactoryInterface`.
-Currently there are 2 implementations:
-* `ExistingWorkspaceProviderFactory` which creates a provider working with an existing workspace
-* `ComponentWorkspaceProviderFactory` which creates a provider that creates a new workspace based on a component
-  configuration
+Local staging is pretty simple. It contains just the path to the data directory, provided by the caller. On the other hand,
+things get a bit more complicated with workspace staging as the provider may represent an already existing workspace or
+a configuration for creating a new workspace. To achieve this, caller must provide a `WorkspaceProviderInterface`.
+Currently, there are 2 implementations:
+* `NewWorkspaceProvider` which creates a provider that creates a new workspace based on a component configuration
+* `ExistingWorkspaceProvider` which creates a provider working with an existing workspace
+
+When using `ExistingWorkspaceProvider`, a developer is responsible for providing workspace credentials. Depending on the
+situation, the following options are available:
+* `ExistingCredentialsProvider` for situation when we know the exact workspace credentials. For example, when working with
+  a workspace for which the end user provides credentials, like SQL sandbox. Credentials are in the form of a free array,
+  and it's the caller's responsibility to provide correct credentials properties (password, private key, etc.).
+* `ResetCredentialsProvider` for situation nobody else accesses the workspace, and we can safely generate new credentials.
+  This is typical when working with a staging workspace, which is accessed only through code (nobody has stored the credentials
+  anywhere).
+* `NoCredentialsProvider` for situations when we need to just work with the workspace indirectly (through Connection API)
+  and don't need credentials. When something tries to access the credentials, the provider throws an exception.
   
 ## Development
 First start with creating `.env` file from `.env.dist`.

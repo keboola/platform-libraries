@@ -33,7 +33,7 @@
         "keboola/key-generator": "*@dev",
         "keboola/output-mapping": "*@dev",
         "keboola/slicer": "*@dev",
-        "keboola/storage-api-client": "^18.0",
+        "keboola/storage-api-client": "dev-pepa_PAT-258_keyPair as 18.1.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0"
     },
     "require-dev": {

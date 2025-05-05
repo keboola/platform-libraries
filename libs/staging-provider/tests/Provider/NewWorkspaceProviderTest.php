@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Tests\Provider;
 
+use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\KeyGenerator\PemKeyCertificatePair;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
@@ -464,6 +465,237 @@ class NewWorkspaceProviderTest extends TestCase
                 'user' => 'some-user',
                 'password' => null,
                 'privateKey' => 'private-key',
+                'account' => 'some-host',
+            ],
+            $workspaceProvider->getCredentials(),
+        );
+    }
+
+    public static function provideDefaultLoginTypeCases(): iterable
+    {
+// TODO enable once key-pair auth is default for Snowflake
+//        yield 'snowflake workspace defaults to service keypair' => [
+//            'workspaceType' => 'workspace-snowflake',
+//            'expectedLoginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+//            'expectedWorkspaceRequest' => [
+//                'backend' => 'snowflake',
+//                'backendSize' => 'small',
+//                'networkPolicy' => 'system',
+//                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+//                'publicKey' => 'public-key',
+//            ],
+//            'workspaceResponse' => [
+//                'id' => '123456',
+//                'backendSize' => 'small',
+//                'connection' => [
+//                    'backend' => 'snowflake',
+//                    'host' => 'some-host',
+//                    'warehouse' => 'some-warehouse',
+//                    'database' => 'some-database',
+//                    'schema' => 'some-schema',
+//                    'user' => 'some-user',
+//                ],
+//            ],
+//            'expectedCredentials' => [
+//                'host' => 'some-host',
+//                'warehouse' => 'some-warehouse',
+//                'database' => 'some-database',
+//                'schema' => 'some-schema',
+//                'user' => 'some-user',
+//                'password' => null,
+//                'privateKey' => 'private-key',
+//                'account' => 'some-host',
+//            ],
+//        ];
+
+        yield 'abs workspace defaults to default login type' => [
+            'workspaceType' => 'workspace-abs',
+            'expectedLoginType' => WorkspaceLoginType::DEFAULT,
+            'expectedWorkspaceRequest' => [
+                'backend' => 'abs',
+                'backendSize' => 'small',
+                'networkPolicy' => 'system',
+                'loginType' => WorkspaceLoginType::DEFAULT,
+            ],
+            'workspaceResponse' => [
+                'id' => '123456',
+                'backendSize' => 'small',
+                'connection' => [
+                    'backend' => 'abs',
+                    'container' => 'some-container',
+                    'connectionString' => 'some-string',
+                ],
+            ],
+            'expectedCredentials' => [
+                'container' => 'some-container',
+                'connectionString' => 'some-string',
+            ],
+        ];
+
+        yield 'redshift workspace defaults to default login type' => [
+            'workspaceType' => 'workspace-redshift',
+            'expectedLoginType' => WorkspaceLoginType::DEFAULT,
+            'expectedWorkspaceRequest' => [
+                'backend' => 'redshift',
+                'backendSize' => 'small',
+                'networkPolicy' => 'system',
+                'loginType' => WorkspaceLoginType::DEFAULT,
+            ],
+            'workspaceResponse' => [
+                'id' => '123456',
+                'backendSize' => 'small',
+                'connection' => [
+                    'backend' => 'redshift',
+                    'host' => 'some-host',
+                    'warehouse' => 'some-warehouse',
+                    'database' => 'some-database',
+                    'schema' => 'some-schema',
+                    'user' => 'some-user',
+                    'password' => 'secret',
+                ],
+            ],
+            'expectedCredentials' => [
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+            ],
+        ];
+    }
+
+    /**
+     * @param value-of<AbstractStrategyFactory::WORKSPACE_TYPES> $workspaceType
+     * @dataProvider provideDefaultLoginTypeCases
+     */
+    public function testDefaultLoginTypeConfiguration(
+        string $workspaceType,
+        WorkspaceLoginType $expectedLoginType,
+        array $expectedWorkspaceRequest,
+        array $workspaceResponse,
+        array $expectedCredentials,
+    ): void {
+        $workspaceId = '123456';
+        $backendSize = 'small';
+
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient
+            ->expects(self::once())
+            ->method('createConfigurationWorkspace')
+            ->with(
+                'test-component',
+                'test-config',
+                $expectedWorkspaceRequest,
+                true,
+            )
+            ->willReturn($workspaceResponse);
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::never())->method(self::anything());
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: 'private-key',
+                publicKey: 'public-key',
+            ))
+        ;
+
+        $workspaceProvider = new NewWorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+            new WorkspaceBackendConfig(
+                $workspaceType,
+                $backendSize,
+                null,
+                NetworkPolicy::SYSTEM,
+                null, // Explicitly set to null to test default behavior
+            ),
+            'test-component',
+            'test-config',
+        );
+
+        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
+        self::assertSame($expectedCredentials, $workspaceProvider->getCredentials());
+    }
+
+    public function testPublicAndPrivateKeysAreGeneratedForKeyPairLoginType(): void
+    {
+        $workspaceId = '123456';
+        $backendSize = 'small';
+        $publicKey = 'public-key';
+        $privateKey = 'private-key';
+
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient
+            ->expects(self::once())
+            ->method('createConfigurationWorkspace')
+            ->with(
+                'test-component',
+                'test-config',
+                [
+                    'backend' => 'snowflake',
+                    'backendSize' => $backendSize,
+                    'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+                    'publicKey' => $publicKey,
+                ],
+                true,
+            )
+            ->willReturn([
+                'id' => $workspaceId,
+                'backendSize' => $backendSize,
+                'connection' => [
+                    'backend' => 'snowflake',
+                    'host' => 'some-host',
+                    'warehouse' => 'some-warehouse',
+                    'database' => 'some-database',
+                    'schema' => 'some-schema',
+                    'user' => 'some-user',
+                ],
+            ]);
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::never())->method(self::anything());
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator
+            ->expects(self::once())
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: $privateKey,
+                publicKey: $publicKey,
+            ))
+        ;
+
+        $workspaceProvider = new NewWorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                $backendSize,
+                null,
+                NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            ),
+            'test-component',
+            'test-config',
+        );
+
+        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
+        self::assertSame(
+            [
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => null,
+                'privateKey' => $privateKey,
                 'account' => 'some-host',
             ],
             $workspaceProvider->getCredentials(),

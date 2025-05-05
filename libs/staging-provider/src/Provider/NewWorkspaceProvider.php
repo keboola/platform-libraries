@@ -30,28 +30,32 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
             return $this->workspace;
         }
 
+        $defaultLoginType = match ($this->workspaceBackendConfig->getStagingType()) {
+// TODO enable once key-pair auth is default for Snowflake
+//            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            default => WorkspaceLoginType::DEFAULT,
+        };
+        $loginType = $this->workspaceBackendConfig->getLoginType() ?? $defaultLoginType;
+
         $options = [
             'backend' => $this->workspaceBackendConfig->getStorageApiWorkspaceType(),
             'networkPolicy' => $this->workspaceBackendConfig->getNetworkPolicy(),
+            'loginType' => $loginType,
         ];
+
         if ($this->workspaceBackendConfig->getStorageApiWorkspaceSize() !== null) {
             $options['backendSize'] = $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
         }
+
         if ($this->workspaceBackendConfig->getUseReadonlyRole() !== null) {
             $options['readOnlyStorageAccess'] = $this->workspaceBackendConfig->getUseReadonlyRole();
         }
 
-        $loginType = $this->workspaceBackendConfig->getLoginType();
-        if ($loginType !== null) {
-            $options['loginType'] = $loginType;
-
-            if (in_array($loginType, [
-                WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
-                WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR,
-            ], true)) {
-                $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
-                $options['publicKey'] = $keypair->publicKey;
-            }
+        $privateKey = null;
+        if ($loginType->isKeyPairLogin()) {
+            $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
+            $options['publicKey'] = $keypair->publicKey;
+            $privateKey = $keypair->privateKey;
         }
 
         if ($this->configId !== null) {
@@ -67,8 +71,8 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
             $workspaceData = $this->workspacesApiClient->createWorkspace($options, true);
         }
 
-        if (isset($keypair)) {
-            $workspaceData['connection']['privateKey'] = $keypair->privateKey;
+        if ($privateKey !== null) {
+            $workspaceData['connection']['privateKey'] = $privateKey;
         }
 
         $this->workspace = Workspace::createFromData($workspaceData);

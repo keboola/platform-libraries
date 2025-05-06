@@ -34,7 +34,6 @@ class NewWorkspaceProviderTest extends TestCase
                     'backend' => 'snowflake',
                     'backendSize' => $backendSize,
                     'networkPolicy' => 'user',
-                    'loginType' => WorkspaceLoginType::DEFAULT,
                 ],
                 true,
             )
@@ -110,7 +109,6 @@ class NewWorkspaceProviderTest extends TestCase
                     'backendSize' => $backendSize,
                     'readOnlyStorageAccess' => true,
                     'networkPolicy' => 'system',
-                    'loginType' => WorkspaceLoginType::DEFAULT,
                 ],
                 true,
             )
@@ -186,7 +184,6 @@ class NewWorkspaceProviderTest extends TestCase
                 [
                     'backend' => 'abs',
                     'networkPolicy' => 'system',
-                    'loginType' => WorkspaceLoginType::DEFAULT,
                     'backendSize' => 'small',
                 ],
                 true,
@@ -515,7 +512,6 @@ class NewWorkspaceProviderTest extends TestCase
                 'backend' => 'abs',
                 'backendSize' => 'small',
                 'networkPolicy' => 'system',
-                'loginType' => WorkspaceLoginType::DEFAULT,
             ],
             'workspaceResponse' => [
                 'id' => '123456',
@@ -539,7 +535,6 @@ class NewWorkspaceProviderTest extends TestCase
                 'backend' => 'redshift',
                 'backendSize' => 'small',
                 'networkPolicy' => 'system',
-                'loginType' => WorkspaceLoginType::DEFAULT,
             ],
             'workspaceResponse' => [
                 'id' => '123456',

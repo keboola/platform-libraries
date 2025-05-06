@@ -43,6 +43,11 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
             'loginType' => $loginType,
         ];
 
+        // temporary workaround until https://github.com/keboola/connection/pull/5714 is released
+        if ($options['loginType'] === WorkspaceLoginType::DEFAULT) {
+            unset($options['loginType']);
+        }
+
         if ($this->workspaceBackendConfig->getStorageApiWorkspaceSize() !== null) {
             $options['backendSize'] = $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
         }

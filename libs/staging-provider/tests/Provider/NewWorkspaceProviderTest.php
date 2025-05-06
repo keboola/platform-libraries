@@ -74,6 +74,7 @@ class NewWorkspaceProviderTest extends TestCase
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
         self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        self::assertSame('snowflake', $workspaceProvider->getBackendType());
         self::assertSame(
             [
                 'host' => 'some-host',
@@ -146,6 +147,7 @@ class NewWorkspaceProviderTest extends TestCase
 
         self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
         self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        self::assertSame('snowflake', $workspaceProvider->getBackendType());
         self::assertSame(
             [
                 'host' => 'some-host',
@@ -219,6 +221,38 @@ class NewWorkspaceProviderTest extends TestCase
             ],
             $workspaceProvider->getCredentials(),
         );
+    }
+
+    public function testBackendSizeAndTypeGettersDoesNotInitializeWorkspace(): void
+    {
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient
+            ->expects(self::never())
+            ->method('createConfigurationWorkspace');
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::never())->method('createWorkspace');
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
+        $workspaceProvider = new NewWorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+            new WorkspaceBackendConfig(
+                'workspace-snowflake',
+                'small',
+                true,
+                NetworkPolicy::SYSTEM,
+                WorkspaceLoginType::DEFAULT,
+            ),
+            'test-component',
+            null,
+        );
+
+        self::assertSame('small', $workspaceProvider->getBackendSize());
+        self::assertSame('snowflake', $workspaceProvider->getBackendType());
     }
 
     public function testPathThrowsException(): void
@@ -364,7 +398,7 @@ class NewWorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
             new WorkspaceBackendConfig(
                 'workspace-snowflake',
-                'so-so',
+                $backendSize,
                 null,
                 NetworkPolicy::SYSTEM,
                 WorkspaceLoginType::SNOWFLAKE_PERSON_SSO,
@@ -374,10 +408,10 @@ class NewWorkspaceProviderTest extends TestCase
         );
 
         // first call should create the workspace
-        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        $credentials = $workspaceProvider->getCredentials();
 
         // second call should use cached workspace
-        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
+        self::assertSame($credentials, $workspaceProvider->getCredentials());
     }
 
     public static function provideSnowflakeKeyPairTypes(): iterable

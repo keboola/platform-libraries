@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
+use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 
-class NewWorkspaceProvider extends BaseWorkspaceProvider
+class NewWorkspaceProvider implements WorkspaceProviderInterface
 {
     private ?Workspace $workspace = null;
 
@@ -21,7 +22,6 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
         private readonly string $componentId,
         private readonly ?string $configId = null,
     ) {
-        parent::__construct($workspacesApiClient);
     }
 
     protected function getWorkspace(): Workspace
@@ -91,6 +91,24 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
         return $this->getWorkspace()->getId();
     }
 
+    public function getBackendSize(): ?string
+    {
+        return $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
+    }
+
+    public function getBackendType(): string
+    {
+        return $this->workspaceBackendConfig->getStorageApiWorkspaceType();
+    }
+
+    public function getPath(): string
+    {
+        throw new StagingProviderException(sprintf(
+            '%s does not support path',
+            static::class,
+        ));
+    }
+
     public function getCredentials(): array
     {
         return $this->getWorkspace()->getCredentials();
@@ -103,6 +121,6 @@ class NewWorkspaceProvider extends BaseWorkspaceProvider
             return;
         }
 
-        parent::cleanup();
+        $this->workspacesApiClient->deleteWorkspace((int) $this->getWorkspaceId(), [], true);
     }
 }

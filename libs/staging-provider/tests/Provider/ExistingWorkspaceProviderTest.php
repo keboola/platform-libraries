@@ -15,17 +15,6 @@ use Throwable;
 
 class ExistingWorkspaceProviderTest extends TestCase
 {
-    public function testGetWorkspaceIdDoesNotInitializeWorkspace(): void
-    {
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::never())->method(self::anything());
-
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
-        $provider = new ExistingWorkspaceProvider($workspacesApiClient, '123456', $credentialsProvider);
-
-        self::assertSame('123456', $provider->getWorkspaceId());
-    }
-
     public function testWorkspaceGetters(): void
     {
         $workspaceId = '123456';
@@ -51,10 +40,38 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->willReturn($workspaceData);
 
         $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider->expects(self::once())
+            ->method('provideCredentials')
+            ->willReturn([
+                'password' => 'test',
+            ]);
+
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
 
+        self::assertSame($workspaceId, $provider->getWorkspaceId());
         self::assertSame('small', $provider->getBackendSize());
         self::assertSame('snowflake', $provider->getBackendType());
+        self::assertSame([
+            'host' => 'some-host',
+            'warehouse' => 'some-warehouse',
+            'database' => 'some-database',
+            'schema' => 'some-schema',
+            'user' => 'some-user',
+            'password' => 'test',
+            'privateKey' => null,
+            'account' => 'some-host',
+        ], $provider->getCredentials());
+    }
+
+    public function testGetWorkspaceIdDoesNotInitializeWorkspace(): void
+    {
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::never())->method(self::anything());
+
+        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $provider = new ExistingWorkspaceProvider($workspacesApiClient, '123456', $credentialsProvider);
+
+        self::assertSame('123456', $provider->getWorkspaceId());
     }
 
     public function testPathThrowsException(): void

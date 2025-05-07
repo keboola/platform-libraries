@@ -21,6 +21,16 @@ abstract class AbstractStrategyFactory
     public const WORKSPACE_TERADATA = 'workspace-teradata';
     public const WORKSPACE_BIGQUERY = 'workspace-bigquery';
 
+    public const WORKSPACE_TYPES = [
+        self::WORKSPACE_ABS,
+        self::WORKSPACE_REDSHIFT,
+        self::WORKSPACE_SNOWFLAKE,
+        self::WORKSPACE_SYNAPSE,
+        self::WORKSPACE_EXASOL,
+        self::WORKSPACE_TERADATA,
+        self::WORKSPACE_BIGQUERY,
+    ];
+
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,

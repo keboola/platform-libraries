@@ -10,6 +10,9 @@ use Keboola\StorageApi\WorkspaceLoginType;
 
 readonly class WorkspaceBackendConfig
 {
+    /**
+     * @param value-of<AbstractStrategyFactory::WORKSPACE_TYPES> $stagingType
+     */
     public function __construct(
         private string $stagingType,
         private ?string $size,
@@ -19,6 +22,9 @@ readonly class WorkspaceBackendConfig
     ) {
     }
 
+    /**
+     * @return value-of<AbstractStrategyFactory::WORKSPACE_TYPES> $stagingType
+     */
     public function getStagingType(): string
     {
         return $this->stagingType;
@@ -34,6 +40,8 @@ readonly class WorkspaceBackendConfig
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => 'snowflake',
             AbstractStrategyFactory::WORKSPACE_SYNAPSE => 'synapse',
             AbstractStrategyFactory::WORKSPACE_TERADATA => 'teradata',
+
+            // @phpstan-ignore-next-line phpdoc is not reliable, stagingType can be any string
             default => throw new StagingProviderException(sprintf('Unknown staging type "%s"', $this->stagingType)),
         };
     }

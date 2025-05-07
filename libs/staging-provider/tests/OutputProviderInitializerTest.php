@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
@@ -16,7 +17,8 @@ use Keboola\StagingProvider\OutputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
 use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
 use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceStagingProvider;
+use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
+use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -40,11 +42,12 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
-                AbstractStrategyFactory::LOCAL,
+                AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
                 null,
                 NetworkPolicy::SYSTEM,
@@ -85,9 +88,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_REDSHIFT,
                 null,
@@ -145,9 +149,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
                 null,
@@ -205,9 +210,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_SYNAPSE,
                 null,
@@ -288,9 +294,10 @@ class OutputProviderInitializerTest extends TestCase
         $configuration->setComponentId('keboola.runner-workspace-abs-test');
         $components->addConfiguration($configuration);
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_ABS,
                 null,
@@ -349,9 +356,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_EXASOL,
                 null,
@@ -410,9 +418,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_TERADATA,
                 null,
@@ -472,9 +481,10 @@ class OutputProviderInitializerTest extends TestCase
             'json',
         );
 
-        $workspaceStagingProvider = new NewWorkspaceStagingProvider(
+        $workspaceStagingProvider = new NewWorkspaceProvider(
             new Workspaces($clientWrapper->getBasicClient()),
             new Components($clientWrapper->getBasicClient()),
+            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
             new WorkspaceBackendConfig(
                 AbstractStrategyFactory::WORKSPACE_BIGQUERY,
                 null,

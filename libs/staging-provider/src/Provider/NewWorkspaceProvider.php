@@ -93,12 +93,12 @@ class NewWorkspaceProvider implements WorkspaceProviderInterface
 
     public function getBackendSize(): ?string
     {
-        return $this->workspaceBackendConfig->getStorageApiWorkspaceSize();
+        return $this->getWorkspace()->getBackendSize();
     }
 
     public function getBackendType(): string
     {
-        return $this->workspaceBackendConfig->getStorageApiWorkspaceType();
+        return $this->getWorkspace()->getBackendType();
     }
 
     public function getPath(): string

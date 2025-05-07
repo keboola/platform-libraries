@@ -8,7 +8,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
@@ -34,9 +34,7 @@ class ReaderTest extends AbstractTestCase
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockLocal = $this->getMockBuilder(NullProvider::class)
-            ->onlyMethods(['getPath'])
-            ->getMock();
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();

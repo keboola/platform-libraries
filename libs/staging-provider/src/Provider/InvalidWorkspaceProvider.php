@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 
-class InvalidWorkspaceProvider implements WorkspaceProviderInterface
+class InvalidWorkspaceProvider implements WorkspaceStagingInterface
 {
     public function __construct(
         private readonly string $stagingType,

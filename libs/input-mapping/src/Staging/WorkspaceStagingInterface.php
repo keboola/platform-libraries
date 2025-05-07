@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Staging;
 
-interface ProviderInterface
+interface WorkspaceStagingInterface extends StagingInterface
 {
     public function getWorkspaceId(): string;
-
-    public function cleanup(): void;
 
     /**
      * @return array{
@@ -27,5 +25,5 @@ interface ProviderInterface
      */
     public function getCredentials(): array;
 
-    public function getPath(): string;
+    public function cleanup(): void;
 }

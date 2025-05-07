@@ -6,23 +6,27 @@ namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
 
+/**
+ * @template T_TABLE_STAGING of object
+ * @template T_FILE_STAGING of object
+ */
 abstract class AbstractStagingDefinition
 {
     public const STAGING_FILE = 'file';
     public const STAGING_TABLE = 'table';
 
     /**
-     * @param class-string $fileStagingClass
-     * @param class-string $tableStagingClass
+     * @param class-string<T_FILE_STAGING> $fileStagingClass
+     * @param class-string<T_TABLE_STAGING> $tableStagingClass
      */
     public function __construct(
         protected readonly string $name,
-        protected string $fileStagingClass,
-        protected string $tableStagingClass,
-        protected ?ProviderInterface $fileDataProvider = null,
-        protected ?ProviderInterface $fileMetadataProvider = null,
-        protected ?ProviderInterface $tableDataProvider = null,
-        protected ?ProviderInterface $tableMetadataProvider = null,
+        protected readonly string $fileStagingClass,
+        protected readonly string $tableStagingClass,
+        protected ?StagingInterface $fileDataStaging = null,
+        protected ?StagingInterface $fileMetadataStaging = null,
+        protected ?StagingInterface $tableDataStaging = null,
+        protected ?StagingInterface $tableMetadataStaging = null,
     ) {
     }
 
@@ -32,78 +36,77 @@ abstract class AbstractStagingDefinition
     }
 
     /**
-     * @return class-string
+     * @return class-string<T_FILE_STAGING>
      */
     abstract public function getFileStagingClass(): string;
 
     /**
-     * @return class-string
+     * @return class-string<T_TABLE_STAGING>
      */
     abstract public function getTableStagingClass(): string;
 
-    public function getFileDataProvider(): ?ProviderInterface
+    public function getFileDataStaging(): ?StagingInterface
     {
-        return $this->fileDataProvider;
+        return $this->fileDataStaging;
     }
 
-    public function setFileDataProvider(?ProviderInterface $fileDataProvider): void
+    public function setFileDataStaging(?StagingInterface $fileDataProvider): void
     {
-        $this->fileDataProvider = $fileDataProvider;
+        $this->fileDataStaging = $fileDataProvider;
     }
 
-    public function getFileMetadataProvider(): ?ProviderInterface
+    public function getFileMetadataStaging(): ?StagingInterface
     {
-        return $this->fileMetadataProvider;
+        return $this->fileMetadataStaging;
     }
 
-    public function setFileMetadataProvider(?ProviderInterface $fileMetadataProvider): AbstractStagingDefinition
+    public function setFileMetadataStaging(?StagingInterface $fileMetadataProvider): void
     {
-        $this->fileMetadataProvider = $fileMetadataProvider;
-        return $this;
+        $this->fileMetadataStaging = $fileMetadataProvider;
     }
 
-    public function getTableDataProvider(): ?ProviderInterface
+    public function getTableDataStaging(): ?StagingInterface
     {
-        return $this->tableDataProvider;
+        return $this->tableDataStaging;
     }
 
-    public function setTableDataProvider(?ProviderInterface $tableDataProvider): void
+    public function setTableDataStaging(?StagingInterface $tableDataProvider): void
     {
-        $this->tableDataProvider = $tableDataProvider;
+        $this->tableDataStaging = $tableDataProvider;
     }
 
-    public function getTableMetadataProvider(): ?ProviderInterface
+    public function getTableMetadataStaging(): ?StagingInterface
     {
-        return $this->tableMetadataProvider;
+        return $this->tableMetadataStaging;
     }
 
-    public function setTableMetadataProvider(ProviderInterface $tableMetadataProvider): void
+    public function setTableMetadataStaging(StagingInterface $tableMetadataProvider): void
     {
-        $this->tableMetadataProvider = $tableMetadataProvider;
+        $this->tableMetadataStaging = $tableMetadataProvider;
     }
 
     public function validateFor(string $stagingType): void
     {
         switch ($stagingType) {
             case self::STAGING_FILE:
-                if (empty($this->fileDataProvider)) {
+                if (empty($this->fileDataStaging)) {
                     throw new StagingException(
                         sprintf('Undefined file data provider in "%s" staging.', $this->name),
                     );
                 }
-                if (empty($this->fileMetadataProvider)) {
+                if (empty($this->fileMetadataStaging)) {
                     throw new StagingException(
                         sprintf('Undefined file metadata provider in "%s" staging.', $this->name),
                     );
                 }
                 break;
             case self::STAGING_TABLE:
-                if (empty($this->tableDataProvider)) {
+                if (empty($this->tableDataStaging)) {
                     throw new StagingException(
                         sprintf('Undefined table data provider in "%s" staging.', $this->name),
                     );
                 }
-                if (empty($this->tableMetadataProvider)) {
+                if (empty($this->tableMetadataStaging)) {
                     throw new StagingException(
                         sprintf('Undefined table metadata provider in "%s" staging.', $this->name),
                     );

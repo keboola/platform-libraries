@@ -7,37 +7,29 @@ namespace Keboola\InputMapping\Staging;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 
+/**
+ * @extends AbstractStagingDefinition<TableStrategyInterface, FileStrategyInterface>
+ */
 class InputMappingStagingDefinition extends AbstractStagingDefinition
 {
-    /** @var class-string<FileStrategyInterface> */
-    protected string $fileStagingClass;
-    /** @var class-string<TableStrategyInterface> */
-    protected string $tableStagingClass;
-
-    /**
-     * @param class-string<FileStrategyInterface> $fileStagingClass
-     * @param class-string<TableStrategyInterface> $tableStagingClass
-     */
     public function __construct(
         string $name,
         string $fileStagingClass,
         string $tableStagingClass,
-        ?ProviderInterface $fileDataProvider = null,
-        ?ProviderInterface $fileMetadataProvider = null,
-        ?ProviderInterface $tableDataProvider = null,
-        ?ProviderInterface $tableMetadataProvider = null,
+        ?StagingInterface $fileDataStaging = null,
+        ?StagingInterface $fileMetadataStaging = null,
+        ?StagingInterface $tableDataStaging = null,
+        ?StagingInterface $tableMetadataStaging = null,
     ) {
         parent::__construct(
             $name,
             $fileStagingClass,
             $tableStagingClass,
-            $fileDataProvider,
-            $fileMetadataProvider,
-            $tableDataProvider,
-            $tableMetadataProvider,
+            $fileDataStaging,
+            $fileMetadataStaging,
+            $tableDataStaging,
+            $tableMetadataStaging,
         );
-        $this->fileStagingClass = $fileStagingClass;
-        $this->tableStagingClass = $tableStagingClass;
     }
 
     /**

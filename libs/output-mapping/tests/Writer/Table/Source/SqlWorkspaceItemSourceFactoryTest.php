@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Source;
 
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\OutputMapping\Writer\Table\Source\SqlWorkspaceItemSourceFactory;
 use PHPUnit\Framework\TestCase;
 
@@ -12,7 +12,7 @@ class SqlWorkspaceItemSourceFactoryTest extends TestCase
 {
     public function testCreateSource(): void
     {
-        $stagingProviderMock = $this->createMock(ProviderInterface::class);
+        $stagingProviderMock = $this->createMock(WorkspaceStagingInterface::class);
         $stagingProviderMock->expects(self::once())
             ->method('getWorkspaceId')
             ->willReturn('123456')

@@ -7,7 +7,7 @@ namespace Keboola\OutputMapping\Tests\Staging;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
@@ -68,7 +68,7 @@ class StrategyFactoryTest extends TestCase
             'json',
         );
         $factory->addProvider(
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
             [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])],
         );
         self::assertInstanceOf(
@@ -107,7 +107,7 @@ class StrategyFactoryTest extends TestCase
             'json',
         );
         $factory->addProvider(
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
             [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
         );
         self::assertInstanceOf(
@@ -130,7 +130,10 @@ class StrategyFactoryTest extends TestCase
         );
         self::expectException(StagingException::class);
         self::expectExceptionMessage('Staging "0" is unknown. Known types are "local, ');
-        $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
+        $factory->addProvider(
+            $this->createMock(FileStagingInterface::class),
+            [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
+        );
     }
 
     public function testGetTableStrategyInvalid(): void

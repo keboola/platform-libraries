@@ -15,5 +15,6 @@ interface StrategyInterface
         string $destinationPath,
         bool $overwrite,
     ): void;
+
     public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList;
 }

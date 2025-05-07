@@ -5,16 +5,23 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\Scope;
-use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\WorkspaceProviderInterface;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 
+/**
+ * @template T_TABLE_STAGING of object
+ * @template T_FILE_STAGING of object
+ */
 abstract class AbstractProviderInitializer
 {
+    /**
+     * @param AbstractStrategyFactory<T_TABLE_STAGING, T_FILE_STAGING> $stagingFactory
+     */
     public function __construct(
         private readonly AbstractStrategyFactory $stagingFactory,
-        private readonly WorkspaceProviderInterface $workspaceStagingProvider,
-        private readonly LocalStagingProvider $localStagingProvider,
+        private readonly WorkspaceStagingInterface $workspaceStaging,
+        private readonly FileStagingInterface $localStaging,
     ) {
     }
 
@@ -25,7 +32,7 @@ abstract class AbstractProviderInitializer
      */
     protected function addWorkspaceProvider(array $scopes): void
     {
-        $this->stagingFactory->addProvider($this->workspaceStagingProvider, $scopes);
+        $this->stagingFactory->addProvider($this->workspaceStaging, $scopes);
     }
 
     /**
@@ -33,7 +40,7 @@ abstract class AbstractProviderInitializer
      */
     protected function addLocalProvider(array $scopes): void
     {
-        $this->stagingFactory->addProvider($this->localStagingProvider, $scopes);
+        $this->stagingFactory->addProvider($this->localStaging, $scopes);
     }
 
     protected function addWorkspaceProviders(string $stagingType, array $tokenInfo): void

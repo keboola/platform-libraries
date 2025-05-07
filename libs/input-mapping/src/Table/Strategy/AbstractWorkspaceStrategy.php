@@ -4,16 +4,42 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
-use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
+use Keboola\InputMapping\Staging\FileStagingInterface;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
+use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 
-abstract class AbstractDatabaseStrategy extends AbstractStrategy
+abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 {
     private const LOAD_TYPE_CLONE = 'clone';
     private const LOAD_TYPE_COPY = 'copy';
     private const LOAD_TYPE_VIEW = 'view';
+
+    /**
+     * @param Adapter::FORMAT_* $format
+     */
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        protected readonly WorkspaceStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
+        InputTableStateList $tablesState,
+        string $destination,
+        string $format = 'json',
+    ) {
+        parent::__construct(
+            $clientWrapper,
+            $logger,
+            $tablesState,
+            $destination,
+            $format,
+        );
+    }
 
     abstract protected function getWorkspaceType(): string;
 

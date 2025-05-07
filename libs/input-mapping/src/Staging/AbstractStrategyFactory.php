@@ -8,6 +8,10 @@ use Keboola\InputMapping\Exception\StagingException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @template T_TABLE_STAGING of object
+ * @template T_FILE_STAGING of object
+ */
 abstract class AbstractStrategyFactory
 {
     public const ABS = 'abs';
@@ -30,14 +34,14 @@ abstract class AbstractStrategyFactory
     }
 
     /**
-     * @return AbstractStagingDefinition[]
+     * @return AbstractStagingDefinition<T_TABLE_STAGING, T_FILE_STAGING>[]
      */
     abstract public function getStrategyMap(): array;
 
     /**
      * @param Scope[] $scopes
      */
-    public function addProvider(ProviderInterface $provider, array $scopes): void
+    public function addProvider(StagingInterface $staging, array $scopes): void
     {
         foreach ($scopes as $stagingType => $scope) {
             if (!isset($this->getStrategyMap()[$stagingType])) {
@@ -47,20 +51,20 @@ abstract class AbstractStrategyFactory
                     implode(', ', array_keys($this->getStrategyMap())),
                 ));
             }
-            $staging = $this->getStrategyMap()[$stagingType];
+            $stagingDefinition = $this->getStrategyMap()[$stagingType];
             foreach ($scope->getScopeTypes() as $scopeType) {
                 switch ($scopeType) {
                     case Scope::TABLE_DATA:
-                        $staging->setTableDataProvider($provider);
+                        $stagingDefinition->setTableDataStaging($staging);
                         break;
                     case Scope::TABLE_METADATA:
-                        $staging->setTableMetadataProvider($provider);
+                        $stagingDefinition->setTableMetadataStaging($staging);
                         break;
                     case Scope::FILE_DATA:
-                        $staging->setFileDataProvider($provider);
+                        $stagingDefinition->setFileDataStaging($staging);
                         break;
                     case Scope::FILE_METADATA:
-                        $staging->setFileMetadataProvider($provider);
+                        $stagingDefinition->setFileMetadataStaging($staging);
                         break;
                     default:
                         throw new StagingException(sprintf('Invalid scope type: "%s". ', $scopeType));
@@ -79,5 +83,8 @@ abstract class AbstractStrategyFactory
         return $this->clientWrapper;
     }
 
+    /**
+     * @return AbstractStagingDefinition<T_TABLE_STAGING, T_FILE_STAGING>
+     */
     abstract protected function getStagingDefinition(string $stagingType): AbstractStagingDefinition;
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
+use Keboola\InputMapping\Staging\FileStagingInterface;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -18,6 +20,8 @@ use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -26,6 +30,30 @@ use Throwable;
 
 class LocalTableStrategy extends AbstractTableStrategy
 {
+    /**
+     * @param Adapter::FORMAT_* $format
+     */
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        protected readonly FileStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
+        string $format,
+        bool $isFailedJob = false,
+    ) {
+        parent::__construct($clientWrapper, $logger, $format, $isFailedJob);
+    }
+
+    public function getDataStorage(): FileStagingInterface
+    {
+        return $this->dataStorage;
+    }
+
+    public function getMetadataStorage(): FileStagingInterface
+    {
+        return $this->metadataStorage;
+    }
+
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
         $loadOptions = [

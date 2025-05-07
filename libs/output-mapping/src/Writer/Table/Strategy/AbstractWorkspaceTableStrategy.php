@@ -6,6 +6,9 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
 use InvalidArgumentException;
+use Keboola\InputMapping\Staging\FileStagingInterface;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
+use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -17,6 +20,8 @@ use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -24,6 +29,30 @@ use Throwable;
 
 abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
 {
+    /**
+     * @param Adapter::FORMAT_* $format
+     */
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        protected readonly WorkspaceStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
+        string $format,
+        bool $isFailedJob = false,
+    ) {
+        parent::__construct($clientWrapper, $logger, $format, $isFailedJob);
+    }
+
+    public function getDataStorage(): WorkspaceStagingInterface
+    {
+        return $this->dataStorage;
+    }
+
+    public function getMetadataStorage(): FileStagingInterface
+    {
+        return $this->metadataStorage;
+    }
+
     /**
      * @return array {
      *      dataWorkspaceId: string,

@@ -5,43 +5,44 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\File\Strategy\Local as LocalFile;
+use Keboola\InputMapping\File\Strategy\Local as LocalFileStrategy;
 use Keboola\InputMapping\Staging\AbstractStagingDefinition;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\InputMappingStagingDefinition;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
+use Keboola\InputMapping\Table\Strategy\Local as LocalTableStrategy;
 use PHPUnit\Framework\TestCase;
 
 class InputMappingStagingDefinitionTest extends TestCase
 {
     public function testAccessors(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', LocalFile::class, LocalTable::class);
+        $definition = new InputMappingStagingDefinition('foo', LocalFileStrategy::class, LocalTableStrategy::class);
         self::assertSame('foo', $definition->getName());
-        self::assertSame(LocalFile::class, $definition->getFileStagingClass());
-        self::assertSame(LocalTable::class, $definition->getTableStagingClass());
-        self::assertNull($definition->getFileDataProvider());
-        self::assertNull($definition->getFileMetadataProvider());
-        self::assertNull($definition->getTableDataProvider());
-        self::assertNull($definition->getTableMetadataProvider());
-        $definition->setFileDataProvider(new NullProvider());
-        $definition->setFileMetadataProvider(new NullProvider());
-        $definition->setTableDataProvider(new NullProvider());
-        $definition->setTableMetadataProvider(new NullProvider());
-        self::assertNotNull($definition->getFileDataProvider());
-        self::assertNotNull($definition->getFileMetadataProvider());
-        self::assertNotNull($definition->getTableDataProvider());
-        self::assertNotNull($definition->getTableMetadataProvider());
+        self::assertSame(LocalFileStrategy::class, $definition->getFileStagingClass());
+        self::assertSame(LocalTableStrategy::class, $definition->getTableStagingClass());
+        self::assertNull($definition->getFileDataStaging());
+        self::assertNull($definition->getFileMetadataStaging());
+        self::assertNull($definition->getTableDataStaging());
+        self::assertNull($definition->getTableMetadataStaging());
+        $definition->setFileDataStaging($this->createMock(FileStagingInterface::class));
+        $definition->setFileMetadataStaging($this->createMock(FileStagingInterface::class));
+        $definition->setTableDataStaging($this->createMock(WorkspaceStagingInterface::class));
+        $definition->setTableMetadataStaging($this->createMock(WorkspaceStagingInterface::class));
+        self::assertNotNull($definition->getFileDataStaging());
+        self::assertNotNull($definition->getFileMetadataStaging());
+        self::assertNotNull($definition->getTableDataStaging());
+        self::assertNotNull($definition->getTableMetadataStaging());
     }
 
     public function testFileValidationInvalidData(): void
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
             null,
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
             null,
             null,
         );
@@ -54,9 +55,9 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
-            new NullProvider(),
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
+            $this->createMock(FileStagingInterface::class),
             null,
             null,
             null,
@@ -70,10 +71,10 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
-            new NullProvider(),
-            new NullProvider(),
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             null,
             null,
         );
@@ -85,12 +86,12 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
             null,
             null,
             null,
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage('Undefined table data provider in "foo" staging.');
@@ -101,11 +102,11 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
             null,
             null,
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
             null,
         );
         $this->expectException(StagingException::class);
@@ -117,12 +118,12 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
             null,
             null,
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(WorkspaceStagingInterface::class),
         );
         $definition->validateFor(AbstractStagingDefinition::STAGING_TABLE);
         self::assertTrue(true);
@@ -132,11 +133,11 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            LocalFile::class,
-            LocalTable::class,
+            LocalFileStrategy::class,
+            LocalTableStrategy::class,
             null,
             null,
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
             null,
         );
         $this->expectException(StagingException::class);

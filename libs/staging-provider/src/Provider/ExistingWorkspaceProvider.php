@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Provider;
 
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Credentials\ExistingWorkspaceCredentialsProviderInterface;
 use Keboola\StorageApi\Workspaces;
 use LogicException;
 
-class ExistingWorkspaceProvider implements WorkspaceProviderInterface
+class ExistingWorkspaceProvider implements WorkspaceStagingInterface
 {
     private ?Workspace $workspace = null;
 

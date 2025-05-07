@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\OutputMapping\Staging\StrategyFactory as OutputStrategyFactory;
@@ -100,8 +100,9 @@ class CombinedProviderInitializerTest extends TestCase
             );
             $reflection = new ReflectionProperty($inputStrategy, 'dataStorage');
             $reflection->setAccessible(true);
-            /** @var ProviderInterface $dataStorage */
+
             $dataStorage = $reflection->getValue($inputStrategy);
+            self::assertInstanceOf(WorkspaceStagingInterface::class, $dataStorage);
             $workspaceId1 = $dataStorage->getWorkspaceId();
 
             $outputStrategy = $outputStagingFactory->getTableOutputStrategy(
@@ -109,8 +110,9 @@ class CombinedProviderInitializerTest extends TestCase
             );
             $reflection = new ReflectionProperty($outputStrategy, 'dataStorage');
             $reflection->setAccessible(true);
-            /** @var ProviderInterface $dataStorage */
+
             $dataStorage = $reflection->getValue($outputStrategy);
+            self::assertInstanceOf(WorkspaceStagingInterface::class, $dataStorage);
             $workspaceId2 = $dataStorage->getWorkspaceId();
 
             self::assertEquals($workspaceId1, $workspaceId2);

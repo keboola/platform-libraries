@@ -8,8 +8,9 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\Local as LocalFile;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\Scope;
+use Keboola\InputMapping\Staging\StagingInterface;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
@@ -63,7 +64,7 @@ class StrategyFactoryTest extends TestCase
             'json',
         );
         $factory->addProvider(
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
             [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])],
         );
         self::assertInstanceOf(
@@ -99,7 +100,7 @@ class StrategyFactoryTest extends TestCase
             'json',
         );
         $factory->addProvider(
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
             [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
         );
         self::assertInstanceOf(
@@ -121,7 +122,10 @@ class StrategyFactoryTest extends TestCase
         $this->expectExceptionMessage(
             'Staging "0" is unknown. Known types are "abs, local, s3, workspace-snowflake, workspace-bigquery',
         );
-        $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
+        $factory->addProvider(
+            $this->createMock(StagingInterface::class),
+            [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
+        );
     }
 
     public function testGetTableStrategyInvalid(): void

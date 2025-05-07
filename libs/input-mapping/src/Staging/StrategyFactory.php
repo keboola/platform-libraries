@@ -17,6 +17,9 @@ use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 
+/**
+ * @extends AbstractStrategyFactory<TableStrategyInterface, FileStrategyInterface>
+ */
 class StrategyFactory extends AbstractStrategyFactory
 {
     /** @var InputMappingStagingDefinition[] */
@@ -90,8 +93,8 @@ class StrategyFactory extends AbstractStrategyFactory
         return new $className(
             $this->clientWrapper,
             $this->logger,
-            $stagingDefinition->getFileDataProvider(),
-            $stagingDefinition->getFileMetadataProvider(),
+            $stagingDefinition->getFileDataStaging(),
+            $stagingDefinition->getFileMetadataStaging(),
             $fileStateList,
             $this->format,
         );
@@ -117,8 +120,8 @@ class StrategyFactory extends AbstractStrategyFactory
         return new $className(
             $this->clientWrapper,
             $this->logger,
-            $stagingDefinition->getTableDataProvider(),
-            $stagingDefinition->getTableMetadataProvider(),
+            $stagingDefinition->getTableDataStaging(),
+            $stagingDefinition->getTableMetadataStaging(),
             $tablesState,
             $destination,
             $this->format,

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -172,9 +172,7 @@ abstract class AbstractTestCase extends TestCase
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockWorkspace = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId'])
-            ->getMock();
+        $mockWorkspace = $this->createMock(WorkspaceStagingInterface::class);
         $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
             function () use ($backend, $clientWrapper) {
                 if (!$this->workspaceId) {
@@ -187,16 +185,13 @@ abstract class AbstractTestCase extends TestCase
                 return $this->workspaceId;
             },
         );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
             },
         );
-        /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspace */
+
         $stagingFactory->addProvider(
             $mockLocal,
             [
@@ -222,15 +217,13 @@ abstract class AbstractTestCase extends TestCase
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
             },
         );
-        /** @var ProviderInterface $mockLocal */
+
         $stagingFactory->addProvider(
             $mockLocal,
             [

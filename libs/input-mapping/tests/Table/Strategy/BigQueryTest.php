@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Staging\NullProvider;
+use Keboola\InputMapping\Staging\FileStagingInterface;
+use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\BigQuery;
@@ -23,8 +24,8 @@ class BigQueryTest extends AbstractTestCase
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
         );
@@ -66,8 +67,8 @@ class BigQueryTest extends AbstractTestCase
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
         );

@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
 use Generator;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -20,14 +19,13 @@ use Symfony\Component\Yaml\Yaml;
 
 class LocalTest extends AbstractTestCase
 {
-    private function getProvider(): ProviderInterface
+    private function getProvider(): FileStagingInterface
     {
-        $mockLocal = self::createMock(NullProvider::class);
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
+            fn() => $this->temp->getTmpFolder(),
         );
+
         return $mockLocal;
     }
 

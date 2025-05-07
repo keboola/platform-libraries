@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Staging;
 
 use Keboola\InputMapping\Staging\AbstractStagingDefinition;
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\StagingInterface;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
+/**
+ * @extends AbstractStagingDefinition<TableStrategyInterface, FileStrategyInterface>
+ */
 class OutputMappingStagingDefinition extends AbstractStagingDefinition
 {
-    /** @var class-string<FileStrategyInterface> */
-    protected string $fileStagingClass;
-    /** @var class-string<TableStrategyInterface> */
-    protected string $tableStagingClass;
-
     /**
      * @param class-string<FileStrategyInterface> $fileStagingClass
      * @param class-string<TableStrategyInterface> $tableStagingClass
@@ -24,10 +22,10 @@ class OutputMappingStagingDefinition extends AbstractStagingDefinition
         string $name,
         string $fileStagingClass,
         string $tableStagingClass,
-        ?ProviderInterface $fileDataProvider = null,
-        ?ProviderInterface $fileMetadataProvider = null,
-        ?ProviderInterface $tableDataProvider = null,
-        ?ProviderInterface $tableMetadataProvider = null,
+        ?StagingInterface $fileDataProvider = null,
+        ?StagingInterface $fileMetadataProvider = null,
+        ?StagingInterface $tableDataProvider = null,
+        ?StagingInterface $tableMetadataProvider = null,
     ) {
         parent::__construct(
             $name,
@@ -38,8 +36,6 @@ class OutputMappingStagingDefinition extends AbstractStagingDefinition
             $tableDataProvider,
             $tableMetadataProvider,
         );
-        $this->fileStagingClass = $fileStagingClass;
-        $this->tableStagingClass = $tableStagingClass;
     }
 
     /**

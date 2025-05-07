@@ -10,7 +10,7 @@ use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -28,8 +28,8 @@ abstract class AbstractStrategy implements StrategyInterface
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
-        protected readonly ProviderInterface $dataStorage,
-        protected readonly ProviderInterface $metadataStorage,
+        protected readonly FileStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
         protected readonly InputFileStateList $fileStateList,
         protected readonly string $format = Adapter::FORMAT_JSON,
     ) {

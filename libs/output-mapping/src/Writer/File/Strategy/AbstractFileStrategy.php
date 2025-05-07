@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -12,13 +12,13 @@ use Psr\Log\LoggerInterface;
 class AbstractFileStrategy
 {
     /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
+     * @param Adapter::FORMAT_* $format
      */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
-        protected readonly ProviderInterface $dataStorage,
-        protected readonly ProviderInterface $metadataStorage,
+        protected readonly FileStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
         protected readonly string $format,
     ) {
     }

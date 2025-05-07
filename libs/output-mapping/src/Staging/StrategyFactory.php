@@ -15,6 +15,9 @@ use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 
+/**
+ * @extends AbstractStrategyFactory<TableStrategyInterface, FileStrategyInterface>
+ */
 class StrategyFactory extends AbstractStrategyFactory
 {
     /** @var OutputMappingStagingDefinition[] */
@@ -78,8 +81,8 @@ class StrategyFactory extends AbstractStrategyFactory
         return new $className(
             $this->clientWrapper,
             $this->logger,
-            $stagingDefinition->getFileDataProvider(),
-            $stagingDefinition->getFileMetadataProvider(),
+            $stagingDefinition->getFileDataStaging(),
+            $stagingDefinition->getFileMetadataStaging(),
             $this->format,
         );
     }
@@ -101,8 +104,8 @@ class StrategyFactory extends AbstractStrategyFactory
         return new $className(
             $this->clientWrapper,
             $this->logger,
-            $stagingDefinition->getTableDataProvider(),
-            $stagingDefinition->getTableMetadataProvider(),
+            $stagingDefinition->getTableDataStaging(),
+            $stagingDefinition->getTableMetadataStaging(),
             $this->format,
             $isFailedJob,
         );

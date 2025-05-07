@@ -18,11 +18,39 @@ use PHPUnit\Framework\TestCase;
 
 class NewWorkspaceProviderTest extends TestCase
 {
-    public function testWorkspaceGetters(): void
+    public static function provideWorkspaceInitializingGetters(): iterable
     {
-        $workspaceId = '123456';
-        $backendSize = 'large';
+        yield 'getWorkspaceId' => [
+            'method' => 'getWorkspaceId',
+            'expectedValue' => 'actual-id',
+        ];
 
+        yield 'getBackendSize' => [
+            'method' => 'getBackendSize',
+            'expectedValue' => 'actual-size',
+        ];
+
+        yield 'getBackendType' => [
+            'method' => 'getBackendType',
+            'expectedValue' => 'redshift',
+        ];
+
+        yield 'getCredentials' => [
+            'method' => 'getCredentials',
+            'expectedValue' => [
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'secret',
+            ],
+        ];
+    }
+
+    /** @dataProvider provideWorkspaceInitializingGetters */
+    public function testWorkspaceGetters(string $method, mixed $expectedValue): void
+    {
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
             ->expects(self::once())
@@ -32,16 +60,17 @@ class NewWorkspaceProviderTest extends TestCase
                 'test-config',
                 [
                     'backend' => 'snowflake',
-                    'backendSize' => $backendSize,
+                    'backendSize' => 'large',
                     'networkPolicy' => 'user',
                 ],
                 true,
             )
             ->willReturn([
-                'id' => $workspaceId,
-                'backendSize' => $backendSize,
+                // return different id, backendSize and backend to validate getters are returning real values
+                'id' => 'actual-id',
+                'backendSize' => 'actual-size',
                 'connection' => [
-                    'backend' => 'snowflake',
+                    'backend' => 'redshift',
                     'host' => 'some-host',
                     'warehouse' => 'some-warehouse',
                     'database' => 'some-database',
@@ -63,7 +92,7 @@ class NewWorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
             new WorkspaceBackendConfig(
                 'workspace-snowflake',
-                $backendSize,
+                'large',
                 null,
                 NetworkPolicy::USER,
                 WorkspaceLoginType::DEFAULT,
@@ -72,22 +101,7 @@ class NewWorkspaceProviderTest extends TestCase
             'test-config',
         );
 
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame($backendSize, $workspaceProvider->getBackendSize());
-        self::assertSame('snowflake', $workspaceProvider->getBackendType());
-        self::assertSame(
-            [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'secret',
-                'privateKey' => null,
-                'account' => 'some-host',
-            ],
-            $workspaceProvider->getCredentials(),
-        );
+        self::assertSame($expectedValue, $workspaceProvider->$method());
     }
 
     public function testWorkspaceWithoutConfiguration(): void
@@ -221,38 +235,6 @@ class NewWorkspaceProviderTest extends TestCase
             ],
             $workspaceProvider->getCredentials(),
         );
-    }
-
-    public function testBackendSizeAndTypeGettersDoesNotInitializeWorkspace(): void
-    {
-        $componentsApiClient = $this->createMock(Components::class);
-        $componentsApiClient
-            ->expects(self::never())
-            ->method('createConfigurationWorkspace');
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::never())->method('createWorkspace');
-
-        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
-
-        $workspaceProvider = new NewWorkspaceProvider(
-            $workspacesApiClient,
-            $componentsApiClient,
-            $snowflakeKeypairGenerator,
-            new WorkspaceBackendConfig(
-                'workspace-snowflake',
-                'small',
-                true,
-                NetworkPolicy::SYSTEM,
-                WorkspaceLoginType::DEFAULT,
-            ),
-            'test-component',
-            null,
-        );
-
-        self::assertSame('small', $workspaceProvider->getBackendSize());
-        self::assertSame('snowflake', $workspaceProvider->getBackendType());
     }
 
     public function testPathThrowsException(): void

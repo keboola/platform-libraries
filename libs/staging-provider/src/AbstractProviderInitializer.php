@@ -45,22 +45,16 @@ abstract class AbstractProviderInitializer
 
     protected function addWorkspaceProviders(string $stagingType, array $tokenInfo): void
     {
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_SNOWFLAKE &&
-            $tokenInfo['owner']['hasSnowflake']
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::TABLE_DATA]),
-                ],
-            );
-        }
+        $tokenHasConfiguredBackend = match ($stagingType) {
+            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => $tokenInfo['owner']['hasSnowflake'],
+            AbstractStrategyFactory::WORKSPACE_BIGQUERY => $tokenInfo['owner']['hasBigquery'],
+            default => false,
+        };
 
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_BIGQUERY &&
-            $tokenInfo['owner']['hasBigquery']
-        ) {
+        if ($tokenHasConfiguredBackend) {
             $this->addWorkspaceProvider(
                 [
-                    AbstractStrategyFactory::WORKSPACE_BIGQUERY => new Scope([Scope::TABLE_DATA]),
+                    $stagingType => new Scope([Scope::TABLE_DATA]),
                 ],
             );
         }

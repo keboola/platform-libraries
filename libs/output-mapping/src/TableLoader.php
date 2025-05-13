@@ -36,11 +36,12 @@ class TableLoader
     }
 
     public function uploadTables(
-        string $outputStaging,
         OutputMappingSettings $configuration,
         SystemMetadata $systemMetadata,
     ): LoadTableQueue {
-        $strategy = $this->strategyFactory->getTableOutputStrategy($outputStaging, $configuration->isFailedJob());
+        $strategy = $this->strategyFactory->getTableOutputStrategy(
+            $configuration->isFailedJob(),
+        );
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {

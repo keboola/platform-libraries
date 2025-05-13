@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Tests\Provider\Credentials;
 
-use Keboola\StagingProvider\Provider\Configuration\WorkspaceCredentials;
-use Keboola\StagingProvider\Provider\Credentials\ExistingCredentialsProvider;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
-use Keboola\StagingProvider\Provider\Workspace;
+use Keboola\StagingProvider\Workspace\Configuration\WorkspaceCredentials;
+use Keboola\StagingProvider\Workspace\Credentials\CredentialsProvider;
+use Keboola\StagingProvider\Workspace\ExistingWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\Workspace;
 use Keboola\StorageApi\WorkspaceLoginType;
 use PHPUnit\Framework\TestCase;
 
@@ -35,7 +35,7 @@ class ExistingCredentialsProviderTest extends TestCase
             'password' => 'password-value',
         ]);
 
-        $provider = new ExistingCredentialsProvider($credentials);
+        $provider = new CredentialsProvider($credentials);
         $result = $provider->provideCredentials($workspace);
 
         self::assertSame([

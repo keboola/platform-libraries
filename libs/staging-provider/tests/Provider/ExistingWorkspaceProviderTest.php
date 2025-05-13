@@ -6,8 +6,8 @@ namespace Keboola\StagingProvider\Tests\Provider;
 
 use Exception;
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Credentials\ExistingWorkspaceCredentialsProviderInterface;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\Credentials\WorkspaceCredentialsProviderInterface;
+use Keboola\StagingProvider\Workspace\ExistingWorkspaceProvider;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +39,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->with($workspaceId)
             ->willReturn($workspaceData);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $credentialsProvider->expects(self::once())
             ->method('provideCredentials')
             ->willReturn([
@@ -68,7 +68,7 @@ class ExistingWorkspaceProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, '123456', $credentialsProvider);
 
         self::assertSame('123456', $provider->getWorkspaceId());
@@ -79,7 +79,7 @@ class ExistingWorkspaceProviderTest extends TestCase
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, '123456', $credentialsProvider);
 
         $this->expectException(StagingProviderException::class);
@@ -97,7 +97,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->method('deleteWorkspace')
             ->with($workspaceId, [], true);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
         $provider->cleanup();
     }
@@ -127,7 +127,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->with($workspaceId)
             ->willReturn($workspaceData);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
 
         // First call should fetch the workspace
@@ -145,7 +145,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->method('getWorkspace')
             ->willThrowException(new Exception('Workspace not found'));
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, 'invalid-id', $credentialsProvider);
 
         $this->expectException(Throwable::class);
@@ -164,7 +164,7 @@ class ExistingWorkspaceProviderTest extends TestCase
                 // Missing required fields
             ]);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, '123456', $credentialsProvider);
 
         $this->expectException(StagingProviderException::class);
@@ -195,7 +195,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->with($workspaceId)
             ->willReturn($workspaceData);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $credentialsProvider
             ->method('provideCredentials')
             ->willThrowException(new Exception('Failed to provide credentials'));
@@ -236,7 +236,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->with($workspaceId, [], true)
             ->willThrowException(new Exception('Workspace not found'));
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $provider = new ExistingWorkspaceProvider($workspacesApiClient, $workspaceId, $credentialsProvider);
 
         $this->expectException(Throwable::class);
@@ -268,7 +268,7 @@ class ExistingWorkspaceProviderTest extends TestCase
             ->with($workspaceId)
             ->willReturn($workspaceData);
 
-        $credentialsProvider = $this->createMock(ExistingWorkspaceCredentialsProviderInterface::class);
+        $credentialsProvider = $this->createMock(WorkspaceCredentialsProviderInterface::class);
         $credentialsProvider
             ->expects(self::once())
             ->method('provideCredentials')

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider\Configuration;
+namespace Keboola\StagingProvider\Workspace\Configuration;
 
 use SensitiveParameter;
 

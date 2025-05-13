@@ -6,10 +6,10 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
-use Keboola\InputMapping\Staging\FileStagingInterface;
-use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;

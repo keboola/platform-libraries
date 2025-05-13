@@ -2,19 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider\Configuration;
+namespace Keboola\StagingProvider\Workspace\Configuration;
 
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\WorkspaceLoginType;
 
 readonly class WorkspaceBackendConfig
 {
-    /**
-     * @param value-of<AbstractStrategyFactory::WORKSPACE_TYPES> $stagingType
-     */
     public function __construct(
-        private string $stagingType,
+        private StagingType $stagingType,
         private ?string $size,
         private ?bool $useReadonlyRole,
         private NetworkPolicy $networkPolicy,
@@ -22,10 +19,7 @@ readonly class WorkspaceBackendConfig
     ) {
     }
 
-    /**
-     * @return value-of<AbstractStrategyFactory::WORKSPACE_TYPES> $stagingType
-     */
-    public function getStagingType(): string
+    public function getStagingType(): StagingType
     {
         return $this->stagingType;
     }
@@ -33,8 +27,8 @@ readonly class WorkspaceBackendConfig
     public function getStorageApiWorkspaceType(): string
     {
         return match ($this->stagingType) {
-            AbstractStrategyFactory::WORKSPACE_BIGQUERY => 'bigquery',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => 'snowflake',
+            StagingType::WorkspaceBigquery => 'bigquery',
+            StagingType::WorkspaceSnowflake => 'snowflake',
 
             // @phpstan-ignore-next-line phpdoc is not reliable, stagingType can be any string
             default => throw new StagingProviderException(sprintf('Unknown staging type "%s"', $this->stagingType)),

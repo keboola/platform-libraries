@@ -2,18 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider;
+namespace Keboola\StagingProvider\Staging\Workspace;
 
-use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 
-class InvalidWorkspaceProvider implements WorkspaceStagingInterface
+class NullWorkspaceStaging implements WorkspaceStagingInterface
 {
-    public function __construct(
-        private readonly string $stagingType,
-    ) {
-    }
-
     public function getWorkspaceId(): never
     {
         $this->throwError();
@@ -25,11 +19,6 @@ class InvalidWorkspaceProvider implements WorkspaceStagingInterface
     }
 
     public function getCredentials(): never
-    {
-        $this->throwError();
-    }
-
-    public function getPath(): never
     {
         $this->throwError();
     }
@@ -51,9 +40,6 @@ class InvalidWorkspaceProvider implements WorkspaceStagingInterface
 
     private function throwError(): never
     {
-        throw new StagingProviderException(sprintf(
-            'No workspace provider is available for staging type "%s"',
-            $this->stagingType,
-        ));
+        throw new StagingProviderException('Workspace staging is not available');
     }
 }

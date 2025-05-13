@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Keboola\InputMapping\Staging;
+namespace Keboola\StagingProvider\Workspace;
 
-interface WorkspaceStagingInterface extends StagingInterface
+use Keboola\StagingProvider\Staging\StagingInterface;
+
+interface WorkspaceInterface extends StagingInterface
 {
     public function getWorkspaceId(): string;
+
+    public function getBackendType(): string;
+
+    public function getBackendSize(): ?string;
 
     /**
      * @return array{
@@ -24,6 +30,4 @@ interface WorkspaceStagingInterface extends StagingInterface
      * }
      */
     public function getCredentials(): array;
-
-    public function cleanup(): void;
 }

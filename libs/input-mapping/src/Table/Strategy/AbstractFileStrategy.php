@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Configuration\Adapter;
-use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\InputMapping\State\InputTableStateList;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 

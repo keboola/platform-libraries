@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
-use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\OutputMapping\Configuration\Adapter;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 

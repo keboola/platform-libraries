@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider\Credentials;
 
 use Keboola\KeyGenerator\PemKeyCertificatePair;
-use Keboola\StagingProvider\Provider\Credentials\ResetCredentialsProvider;
-use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
-use Keboola\StagingProvider\Provider\Workspace;
+use Keboola\StagingProvider\Workspace\Credentials\ResetCredentialsProvider;
+use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
+use Keboola\StagingProvider\Workspace\Workspace;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use PHPUnit\Framework\TestCase;

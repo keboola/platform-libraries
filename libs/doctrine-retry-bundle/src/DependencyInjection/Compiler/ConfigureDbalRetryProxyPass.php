@@ -21,7 +21,11 @@ class ConfigureDbalRetryProxyPass implements CompilerPassInterface
     {
         $connections = (array) $container->getParameter('doctrine.connections');
         foreach ($connections as $serviceName) {
+            assert(is_string($serviceName));
             $connectionParams = $this->getConnectionParams($container, $serviceName);
+            assert(is_array($connectionParams['driverOptions']));
+            assert(is_scalar($connectionParams['driverOptions'][self::CONFIG_OPTION_RETRIES])
+                || !isset($connectionParams['driverOptions'][self::CONFIG_OPTION_RETRIES]));
             $retries = (int) ($connectionParams['driverOptions'][self::CONFIG_OPTION_RETRIES] ?? 0);
 
             if ($retries === 0) {
@@ -67,6 +71,9 @@ class ConfigureDbalRetryProxyPass implements CompilerPassInterface
                 continue;
             }
 
+            assert(is_array($arguments));
+            assert(count($arguments) > 0);
+            assert(is_array($arguments[0]));
             return $arguments[0];
         }
 

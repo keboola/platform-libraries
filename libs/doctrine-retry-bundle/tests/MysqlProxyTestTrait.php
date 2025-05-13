@@ -8,7 +8,6 @@ use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware as LoggingMiddleware;
-use Ihsw\Toxiproxy\Proxy;
 use Ihsw\Toxiproxy\Toxiproxy;
 use Keboola\DoctrineRetryBundle\Database\Retry\Middleware as RetryMiddleware;
 use Monolog\Handler\TestHandler;
@@ -26,18 +25,22 @@ trait MysqlProxyTestTrait
 
     private FailingRetryProxy $mysqlRetryProxy;
 
-    protected function setUpMysqlProxy(string $mysqlUrl, TestHandler $logsHandler): Connection
-    {
-        $toxiproxy = new Toxiproxy('http://toxiproxy:8474');
+    protected function setUpMysqlProxy(
+        string $mysqlHost,
+        int $mysqlPort,
+        string $mysqlUser,
+        string $mysqlPassword,
+        string $mysqlDb,
+        string $proxyHost,
+        TestHandler $logsHandler,
+    ): Connection {
+        $toxiproxy = new Toxiproxy(sprintf('http://%s:8474', $proxyHost));
         foreach ($toxiproxy->getAll() as $proxy) {
             $toxiproxy->delete($proxy);
         }
         $toxiproxy->reset();
 
-        $realMysqlHostPort = $this->resolveRealMysqlHostPort($mysqlUrl);
-
-        $mysqlProxy = $toxiproxy->create('mysql', $realMysqlHostPort);
-        $proxyMysqlHostPort = $this->resolveProxyMysqlHostPort($mysqlUrl, $mysqlProxy);
+        $mysqlProxy = $toxiproxy->create('mysql', sprintf('%s:%s', $mysqlHost, $mysqlPort));
 
         $this->mysqlRetryProxy = new FailingRetryProxy(
             new RetryProxy(
@@ -58,22 +61,13 @@ trait MysqlProxyTestTrait
         ]);
 
         return DriverManager::getConnection([
-            'url' => $proxyMysqlHostPort,
+            'driver' => 'pdo_mysql',
+            'host' => $proxyHost,
+            'port' => (int) $mysqlProxy->getListenPort(),
+            'user' => $mysqlUser,
+            'password' => $mysqlPassword,
+            'dbname' => $mysqlDb,
         ], $configuration);
-    }
-
-    private function resolveRealMysqlHostPort(string $mysqlUrl): string
-    {
-        $urlParts = (array) parse_url($mysqlUrl);
-        return sprintf('%s:%s', $urlParts['host'] ?? '', $urlParts['port'] ?? '');
-    }
-
-    private function resolveProxyMysqlHostPort(string $mysqlUrl, Proxy $mysqlProxy): string
-    {
-        $realHostPort = $this->resolveRealMysqlHostPort($mysqlUrl);
-        $proxyHostPort = sprintf('%s:%s', 'toxiproxy', $mysqlProxy->getListenPort());
-
-        return str_replace($realHostPort, $proxyHostPort, $mysqlUrl);
     }
 
     /**

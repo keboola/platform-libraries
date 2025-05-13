@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider;
+namespace Keboola\StagingProvider\Staging\File;
 
-use Keboola\InputMapping\Staging\FileStagingInterface;
-
-readonly class LocalStagingProvider implements FileStagingInterface
+readonly class LocalStaging implements FileStagingInterface
 {
     public function __construct(
         private string $path,

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider;
+namespace Keboola\StagingProvider\Workspace;
 
 use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\KeyGenerator\PemKeyCertificatePair;

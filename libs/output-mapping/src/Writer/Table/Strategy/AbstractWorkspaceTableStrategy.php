@@ -6,8 +6,6 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
 use InvalidArgumentException;
-use Keboola\InputMapping\Staging\FileStagingInterface;
-use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -20,6 +18,8 @@ use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;

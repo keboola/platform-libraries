@@ -12,11 +12,12 @@ use Keboola\OutputMapping\Writer\File\Strategy\Local as OutputFileLocal;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StagingProvider\OutputProviderInitializer;
-use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
-use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
-use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
-use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
+use Keboola\StagingProvider\Staging\File\LocalStaging;
+use Keboola\StagingProvider\Workspace\Configuration\NetworkPolicy;
+use Keboola\StagingProvider\Workspace\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Workspace\NewWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
@@ -52,7 +53,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
@@ -98,7 +99,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
@@ -157,7 +158,7 @@ class OutputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new OutputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(

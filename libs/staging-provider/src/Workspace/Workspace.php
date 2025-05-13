@@ -2,20 +2,38 @@
 
 declare(strict_types=1);
 
-namespace Keboola\StagingProvider\Provider;
+namespace Keboola\StagingProvider\Workspace;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Workspace\Credentials\WorkspaceCredentialsProviderInterface;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Throwable;
 
 /**
  * @internal
+ * @phpstan-type CredentialsArray array{
+ *       container?: string|null,
+ *       connectionString?: string|null,
+ *       host?: string|null,
+ *       warehouse?: string|null,
+ *       database?: string|null,
+ *       schema?: string|null,
+ *       user?: string|null,
+ *       password?: string|null,
+ *       privateKey?: string|null,
+ *       account?: string|null,
+ *       credentials?: array|null,
+ *  }
  */
-class Workspace
+class Workspace implements WorkspaceInterface
 {
+    /**
+     * @return null|CredentialsArray
+     */
     private ?array $credentials = null;
 
     private function __construct(
+        private readonly WorkspaceCredentialsProviderInterface $credentialsProvider,
         private readonly string $id,
         private readonly string $backendType,
         private readonly ?string $backendSize,
@@ -24,10 +42,13 @@ class Workspace
     ) {
     }
 
-    public static function createFromData(array $workspaceData): self
-    {
+    public static function createFromData(
+        WorkspaceCredentialsProviderInterface $credentialsProvider,
+        array $workspaceData,
+    ): self {
         try {
             return new self(
+                credentialsProvider: $credentialsProvider,
                 id: (string) $workspaceData['id'],
                 backendType: $workspaceData['connection']['backend'],
                 backendSize: $workspaceData['backendSize'] ?? null,
@@ -44,7 +65,7 @@ class Workspace
         }
     }
 
-    public function getId(): string
+    public function getWorkspaceId(): string
     {
         return $this->id;
     }
@@ -72,19 +93,17 @@ class Workspace
     public function getCredentials(): array
     {
         if ($this->credentials === null) {
-            throw new StagingProviderException('Credentials are not available');
+            $this->setCredentialsFromData($this->credentialsProvider->provideCredentials($this));
         }
 
         return $this->credentials;
     }
 
-    public function setCredentialsFromData(?array $data): void
+    /**
+     * @phpstan-assert CredentialsArray $this->credentials
+     */
+    private function setCredentialsFromData(array $data): void
     {
-        if ($data === null) {
-            $this->credentials = null;
-            return;
-        }
-
         $connectionData = array_merge(
             $this->connectionData,
             $data,

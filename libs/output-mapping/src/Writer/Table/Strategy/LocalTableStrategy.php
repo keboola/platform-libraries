@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
-use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -19,6 +18,7 @@ use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;

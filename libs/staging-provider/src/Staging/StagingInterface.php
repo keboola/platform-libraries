@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\InputMapping\Staging;
+namespace Keboola\StagingProvider\Staging;
 
 interface StagingInterface
 {

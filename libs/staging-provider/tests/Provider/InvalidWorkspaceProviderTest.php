@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\InvalidWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\InvalidWorkspaceProvider;
 use PHPUnit\Framework\TestCase;
 
 class InvalidWorkspaceProviderTest extends TestCase

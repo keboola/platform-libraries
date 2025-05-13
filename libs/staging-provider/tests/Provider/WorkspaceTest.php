@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Workspace;
+use Keboola\StagingProvider\Workspace\Workspace;
 use Keboola\StorageApi\WorkspaceLoginType;
 use PHPUnit\Framework\TestCase;
 

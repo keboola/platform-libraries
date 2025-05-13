@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
-use Keboola\InputMapping\Staging\FileStagingInterface;
-use Keboola\InputMapping\Staging\StagingInterface;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingInterface;
 
 interface StrategyInterface
 {

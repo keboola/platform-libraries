@@ -6,8 +6,8 @@ namespace Keboola\StagingProvider\Tests\Provider\Configuration;
 
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
-use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Workspace\Configuration\NetworkPolicy;
+use Keboola\StagingProvider\Workspace\Configuration\WorkspaceBackendConfig;
 use Keboola\StorageApi\WorkspaceLoginType;
 use PHPUnit\Framework\TestCase;
 

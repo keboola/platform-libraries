@@ -17,11 +17,11 @@ use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
 use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
-use Keboola\StagingProvider\Provider\Configuration\WorkspaceBackendConfig;
-use Keboola\StagingProvider\Provider\LocalStagingProvider;
-use Keboola\StagingProvider\Provider\NewWorkspaceProvider;
-use Keboola\StagingProvider\Provider\SnowflakeKeypairGenerator;
+use Keboola\StagingProvider\Staging\File\LocalStaging;
+use Keboola\StagingProvider\Workspace\Configuration\NetworkPolicy;
+use Keboola\StagingProvider\Workspace\Configuration\WorkspaceBackendConfig;
+use Keboola\StagingProvider\Workspace\NewWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
@@ -57,7 +57,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(AbstractStrategyFactory::LOCAL, []);
@@ -120,7 +120,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(
@@ -191,7 +191,7 @@ class InputProviderInitializerTest extends TestCase
             'my-test-component',
             'my-test-config',
         );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
+        $localStagingProvider = new LocalStaging('/tmp/random/data');
         $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
 
         $init->initializeProviders(

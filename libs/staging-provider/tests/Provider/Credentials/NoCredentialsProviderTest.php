@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Provider\Credentials;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Provider\Configuration\WorkspaceCredentials;
-use Keboola\StagingProvider\Provider\Credentials\NoCredentialsProvider;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
-use Keboola\StagingProvider\Provider\Workspace;
+use Keboola\StagingProvider\Workspace\Configuration\WorkspaceCredentials;
+use Keboola\StagingProvider\Workspace\Credentials\NoCredentialsProvider;
+use Keboola\StagingProvider\Workspace\ExistingWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\Workspace;
 use Keboola\StorageApi\WorkspaceLoginType;
 use PHPUnit\Framework\TestCase;
 

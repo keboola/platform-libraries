@@ -16,7 +16,7 @@ Typical use-case can be set up a `Reader` instance to access some data:
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\Provider\ExistingWorkspaceProvider;
+use Keboola\StagingProvider\Workspace\ExistingWorkspaceProvider;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;

@@ -23,32 +23,37 @@ class ConnectionWithRetryTest extends TestCase
 
         $this->logsHandler = new TestHandler();
         $this->dbConnection = $this->setUpMysqlProxy(
-            (string) getenv('TEST_DATABASE_URL'),
+            (string) getenv('TEST_DATABASE_HOST'),
+            (int) getenv('TEST_DATABASE_PORT'),
+            (string) getenv('TEST_DATABASE_USER'),
+            (string) getenv('TEST_DATABASE_PASSWORD'),
+            (string) getenv('TEST_DATABASE_DB'),
+            (string) getenv('TEST_PROXY_HOST'),
             $this->logsHandler,
         );
     }
 
     public function testConnectWithoutRetry(): void
     {
-        $return = $this->dbConnection->connect();
+        $return = $this->dbConnection->executeQuery('SELECT 1')->fetchFirstColumn();
 
-        self::assertTrue($return);
+        self::assertEquals([1], $return);
 
-        self::assertCount(1, $this->logsHandler->getRecords());
-        self::assertTrue($this->logsHandler->hasInfo('Connecting with parameters {params}'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Connecting with parameters {params}'));
     }
 
     public function testConnectWithRetry(): void
     {
         $this->startFailingMysql(1);
 
-        $return = $this->dbConnection->connect();
+        $return = $this->dbConnection->executeQuery('SELECT 1')->fetchFirstColumn();
 
-        self::assertTrue($return);
+        self::assertEquals([1], $return);
 
-        self::assertCount(2, $this->logsHandler->getRecords());
-        self::assertTrue($this->logsHandler->hasInfo('Connecting with parameters {params}'));
-        self::assertTrue($this->logsHandler->hasInfo('SQLSTATE[HY000] [2002] Connection refused. Retrying... [1x]'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Connecting with parameters {params}'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains(
+            'SQLSTATE[HY000] [2002] Connection refused. Retrying... [1x]',
+        ));
     }
 
     public function testConnectWithTooManyRetries(): void
@@ -56,18 +61,21 @@ class ConnectionWithRetryTest extends TestCase
         $this->startFailingMysql(self::$MAX_DB_RETRIES + 1);
 
         try {
-            $this->dbConnection->connect();
-            $this->fail('Connect should fail');
+            $this->dbConnection->executeQuery('SELECT 1')->fetchFirstColumn();
+            self::fail('Connect should fail');
         } catch (DbalException $e) {
-            $this->assertSame(
+            self::assertSame(
                 'An exception occurred in the driver: SQLSTATE[HY000] [2002] Connection refused',
                 $e->getMessage(),
             );
         }
 
-        self::assertCount(3, $this->logsHandler->getRecords());
-        self::assertTrue($this->logsHandler->hasInfo('Connecting with parameters {params}'));
-        self::assertTrue($this->logsHandler->hasInfo('SQLSTATE[HY000] [2002] Connection refused. Retrying... [1x]'));
-        self::assertTrue($this->logsHandler->hasInfo('SQLSTATE[HY000] [2002] Connection refused. Retrying... [2x]'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains('Connecting with parameters {params}'));
+        self::assertTrue($this->logsHandler->hasInfoThatContains(
+            'SQLSTATE[HY000] [2002] Connection refused. Retrying... [1x]',
+        ));
+        self::assertTrue($this->logsHandler->hasInfoThatContains(
+            'SQLSTATE[HY000] [2002] Connection refused. Retrying... [2x]',
+        ));
     }
 }

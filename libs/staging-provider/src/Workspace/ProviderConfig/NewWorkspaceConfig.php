@@ -59,11 +59,11 @@ readonly class NewWorkspaceConfig implements WorkspaceConfigInterface
 
     private function doesTokenHaveStagingConfigured(StorageApiToken $storageApiToken): bool
     {
-        $tokenInfo = $storageApiToken->getTokenInfo();
+        $tokenOwnerInfo = $storageApiToken->getTokenInfo()['owner'] ?? [];
 
         return match ($this->stagingType) {
-            StagingType::WorkspaceSnowflake => $tokenInfo['owner']['hasSnowflake'],
-            StagingType::WorkspaceBigquery => $tokenInfo['owner']['hasBigquery'],
+            StagingType::WorkspaceSnowflake => $tokenOwnerInfo['hasSnowflake'] ?? false,
+            StagingType::WorkspaceBigquery => $tokenOwnerInfo['hasBigquery'] ?? false,
             default => false,
         };
     }

@@ -32,18 +32,17 @@ class NewWorkspaceProviderTest extends TestCase
 
         yield 'getBackendType' => [
             'method' => 'getBackendType',
-            'expectedValue' => 'redshift',
+            'expectedValue' => 'bigquery',
         ];
 
         yield 'getCredentials' => [
             'method' => 'getCredentials',
             'expectedValue' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
                 'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'secret',
+                'region' => 'eu-central1',
+                'credentials' => [
+                    'foo' => 'bar',
+                ],
             ],
         ];
     }
@@ -70,13 +69,13 @@ class NewWorkspaceProviderTest extends TestCase
                 'id' => 'actual-id',
                 'backendSize' => 'actual-size',
                 'connection' => [
-                    'backend' => 'redshift',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
+                    'backend' => 'bigquery',
                     'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'password' => 'secret',
+                    'region' => 'eu-central1',
+                    'credentials' => [
+                        'foo' => 'bar',
+                    ],
+                    'extraKey' => 'extraValue',
                 ],
             ]);
 
@@ -172,66 +171,6 @@ class NewWorkspaceProviderTest extends TestCase
                 'password' => 'secret',
                 'privateKey' => null,
                 'account' => 'some-host',
-            ],
-            $workspaceProvider->getCredentials(),
-        );
-    }
-
-    public function testWorkspaceAbs(): void
-    {
-        $workspaceId = '123456';
-        $workspaceData = [
-            'id' => $workspaceId,
-            'backendSize' => 'small',
-            'connection' => [
-                'backend' => 'abs',
-                'container' => 'some-container',
-                'connectionString' => 'some-string',
-            ],
-        ];
-
-        $componentsApiClient = $this->createMock(Components::class);
-        $componentsApiClient
-            ->expects(self::once())
-            ->method('createConfigurationWorkspace')
-            ->with(
-                'test-component',
-                'test-config',
-                [
-                    'backend' => 'abs',
-                    'networkPolicy' => 'system',
-                    'backendSize' => 'small',
-                ],
-                true,
-            )
-            ->willReturn($workspaceData);
-
-        $workspacesApiClient = $this->createMock(Workspaces::class);
-        $workspacesApiClient->expects(self::never())->method(self::anything());
-
-        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
-
-        $workspaceProvider = new NewWorkspaceProvider(
-            $workspacesApiClient,
-            $componentsApiClient,
-            $snowflakeKeypairGenerator,
-            new WorkspaceBackendConfig(
-                'workspace-abs',
-                'small',
-                null,
-                NetworkPolicy::SYSTEM,
-                WorkspaceLoginType::DEFAULT,
-            ),
-            'test-component',
-            'test-config',
-        );
-
-        self::assertSame($workspaceId, $workspaceProvider->getWorkspaceId());
-        self::assertSame(
-            [
-                'container' => 'some-container',
-                'connectionString' => 'some-string',
             ],
             $workspaceProvider->getCredentials(),
         );
@@ -521,11 +460,11 @@ class NewWorkspaceProviderTest extends TestCase
 //            ],
 //        ];
 
-        yield 'abs workspace defaults to default login type' => [
-            'workspaceType' => 'workspace-abs',
+        yield 'bigquery workspace defaults to default login type' => [
+            'workspaceType' => 'workspace-bigquery',
             'expectedLoginType' => WorkspaceLoginType::DEFAULT,
             'expectedWorkspaceRequest' => [
-                'backend' => 'abs',
+                'backend' => 'bigquery',
                 'backendSize' => 'small',
                 'networkPolicy' => 'system',
             ],
@@ -533,45 +472,20 @@ class NewWorkspaceProviderTest extends TestCase
                 'id' => '123456',
                 'backendSize' => 'small',
                 'connection' => [
-                    'backend' => 'abs',
-                    'container' => 'some-container',
-                    'connectionString' => 'some-string',
-                ],
-            ],
-            'expectedCredentials' => [
-                'container' => 'some-container',
-                'connectionString' => 'some-string',
-            ],
-        ];
-
-        yield 'redshift workspace defaults to default login type' => [
-            'workspaceType' => 'workspace-redshift',
-            'expectedLoginType' => WorkspaceLoginType::DEFAULT,
-            'expectedWorkspaceRequest' => [
-                'backend' => 'redshift',
-                'backendSize' => 'small',
-                'networkPolicy' => 'system',
-            ],
-            'workspaceResponse' => [
-                'id' => '123456',
-                'backendSize' => 'small',
-                'connection' => [
-                    'backend' => 'redshift',
-                    'host' => 'some-host',
-                    'warehouse' => 'some-warehouse',
-                    'database' => 'some-database',
+                    'backend' => 'bigquery',
                     'schema' => 'some-schema',
-                    'user' => 'some-user',
-                    'password' => 'secret',
+                    'region' => 'eu-central1',
+                    'credentials' => [
+                        'foo' => 'bar',
+                    ],
                 ],
             ],
             'expectedCredentials' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
                 'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'secret',
+                'region' => 'eu-central1',
+                'credentials' => [
+                    'foo' => 'bar',
+                ],
             ],
         ];
     }

@@ -9,10 +9,8 @@ use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\Writer\File\Strategy\ABSWorkspace;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
-use Keboola\OutputMapping\Writer\Table\Strategy\AbsWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
@@ -34,33 +32,8 @@ class StrategyFactory extends AbstractStrategyFactory
                     Local::class,
                     LocalTableStrategy::class,
                 ),
-                self::WORKSPACE_ABS => new OutputMappingStagingDefinition(
-                    self::WORKSPACE_ABS,
-                    ABSWorkspace::class,
-                    AbsWorkspaceTableStrategy::class,
-                ),
-                self::WORKSPACE_REDSHIFT => new OutputMappingStagingDefinition(
-                    self::WORKSPACE_REDSHIFT,
-                    Local::class,
-                    SqlWorkspaceTableStrategy::class,
-                ),
                 self::WORKSPACE_SNOWFLAKE => new OutputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
-                    Local::class,
-                    SqlWorkspaceTableStrategy::class,
-                ),
-                self::WORKSPACE_SYNAPSE => new OutputMappingStagingDefinition(
-                    self::WORKSPACE_SYNAPSE,
-                    Local::class,
-                    SqlWorkspaceTableStrategy::class,
-                ),
-                self::WORKSPACE_EXASOL => new OutputMappingStagingDefinition(
-                    self::WORKSPACE_EXASOL,
-                    Local::class,
-                    SqlWorkspaceTableStrategy::class,
-                ),
-                self::WORKSPACE_TERADATA => new OutputMappingStagingDefinition(
-                    self::WORKSPACE_TERADATA,
                     Local::class,
                     SqlWorkspaceTableStrategy::class,
                 ),

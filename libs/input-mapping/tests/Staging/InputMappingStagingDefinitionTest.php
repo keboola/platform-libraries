@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Staging;
 
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\File\Strategy\ABSWorkspace;
+use Keboola\InputMapping\File\Strategy\Local as LocalFile;
 use Keboola\InputMapping\Staging\AbstractStagingDefinition;
 use Keboola\InputMapping\Staging\InputMappingStagingDefinition;
 use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Table\Strategy\Local;
+use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
 use PHPUnit\Framework\TestCase;
 
 class InputMappingStagingDefinitionTest extends TestCase
 {
     public function testAccessors(): void
     {
-        $definition = new InputMappingStagingDefinition('foo', ABSWorkspace::class, Local::class);
+        $definition = new InputMappingStagingDefinition('foo', LocalFile::class, LocalTable::class);
         self::assertSame('foo', $definition->getName());
-        self::assertSame(ABSWorkspace::class, $definition->getFileStagingClass());
-        self::assertSame(Local::class, $definition->getTableStagingClass());
+        self::assertSame(LocalFile::class, $definition->getFileStagingClass());
+        self::assertSame(LocalTable::class, $definition->getTableStagingClass());
         self::assertNull($definition->getFileDataProvider());
         self::assertNull($definition->getFileMetadataProvider());
         self::assertNull($definition->getTableDataProvider());
@@ -38,8 +38,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             null,
             new NullProvider(),
             null,
@@ -54,8 +54,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             new NullProvider(),
             null,
             null,
@@ -70,8 +70,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             new NullProvider(),
             new NullProvider(),
             null,
@@ -85,8 +85,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             null,
             null,
             null,
@@ -101,8 +101,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             null,
             null,
             new NullProvider(),
@@ -117,8 +117,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             null,
             null,
             new NullProvider(),
@@ -132,8 +132,8 @@ class InputMappingStagingDefinitionTest extends TestCase
     {
         $definition = new InputMappingStagingDefinition(
             'foo',
-            ABSWorkspace::class,
-            Local::class,
+            LocalFile::class,
+            LocalTable::class,
             null,
             null,
             new NullProvider(),

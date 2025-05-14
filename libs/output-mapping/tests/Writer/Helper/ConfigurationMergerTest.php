@@ -145,7 +145,7 @@ class ConfigurationMergerTest extends TestCase
                                 'snowflake' => [
                                     'type' => 'DATE',
                                 ],
-                                'exasol' => [
+                                'bigquery' => [
                                     'type' => 'INT',
                                     'length' => 35,
                                 ],
@@ -172,8 +172,8 @@ class ConfigurationMergerTest extends TestCase
                                     'type' => 'VARCHAR',
                                     'length' => 255,
                                 ],
-                                'synapse' => [
-                                    'type' => 'NVARCHAR',
+                                'bigquery' => [
+                                    'type' => 'INT',
                                     'length' => 35,
                                 ],
                             ],
@@ -197,12 +197,8 @@ class ConfigurationMergerTest extends TestCase
                                 'snowflake' => [
                                     'type' => 'DATE',
                                 ],
-                                'exasol' => [
+                                'bigquery' => [
                                     'type' => 'INT',
-                                    'length' => 35,
-                                ],
-                                'synapse' => [
-                                    'type' => 'NVARCHAR',
                                     'length' => 35,
                                 ],
                             ],

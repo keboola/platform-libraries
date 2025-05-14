@@ -108,7 +108,7 @@ class ReaderTest extends AbstractTestCase
 
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, workspace-abs,',
+            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, ',
         );
         $reader->downloadTables(
             $configuration,

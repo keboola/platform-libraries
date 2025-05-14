@@ -33,8 +33,7 @@ class StrategyFactoryTest extends TestCase
         self::assertSame($clientWrapper, $factory->getClientWrapper());
         self::assertSame($logger, $factory->getLogger());
         self::assertEquals(
-            ['local', 'workspace-abs', 'workspace-redshift', 'workspace-snowflake', 'workspace-synapse',
-                'workspace-exasol', 'workspace-teradata', 'workspace-bigquery'],
+            ['local', 'workspace-snowflake', 'workspace-bigquery'],
             array_keys($factory->getStrategyMap()),
         );
     }
@@ -130,7 +129,7 @@ class StrategyFactoryTest extends TestCase
             'json',
         );
         self::expectException(StagingException::class);
-        self::expectExceptionMessage('Staging "0" is unknown. Known types are "local, workspace-abs, ');
+        self::expectExceptionMessage('Staging "0" is unknown. Known types are "local, ');
         $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
     }
 

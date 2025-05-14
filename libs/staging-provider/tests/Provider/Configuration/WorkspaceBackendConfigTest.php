@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Tests\Provider\Configuration;
 
-use Generator;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
@@ -65,15 +64,10 @@ class WorkspaceBackendConfigTest extends TestCase
         self::assertSame($expectedWorkspaceType, $config->getStorageApiWorkspaceType());
     }
 
-    public function stagingTypeProvider(): Generator
+    public function stagingTypeProvider(): iterable
     {
-        yield ['workspace-abs', 'abs'];
         yield ['workspace-bigquery', 'bigquery'];
-        yield ['workspace-exasol', 'exasol'];
-        yield ['workspace-redshift', 'redshift'];
         yield ['workspace-snowflake', 'snowflake'];
-        yield ['workspace-synapse', 'synapse'];
-        yield ['workspace-teradata', 'teradata'];
     }
 
     public function testGetInvalidStorageApiWorkspaceType(): void

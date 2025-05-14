@@ -23,16 +23,9 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
                 'length' => '2',
                 'default' => 'defaultSnowflake',
             ],
-            'exasol' => [
-                'type' => 'TEXT',
-                'length' => '3',
-            ],
             'bigquery' => [
                 'type' => 'DATETIME',
                 'default' => 'defaultBigQuery',
-            ],
-            'teradata' => [
-                'type' => 'VARCHAR',
             ],
         ];
 
@@ -46,17 +39,9 @@ class MappingFromConfigurationSchemaDataTypeTest extends TestCase
         self::assertEquals('2', $mapping->getBackendLength('snowflake'));
         self::assertEquals('defaultSnowflake', $mapping->getBackendDefaultValue('snowflake'));
 
-        self::assertEquals('TEXT', $mapping->getBackendTypeName('exasol'));
-        self::assertEquals('3', $mapping->getBackendLength('exasol'));
-        self::assertNull($mapping->getBackendDefaultValue('exasol'));
-
         self::assertEquals('DATETIME', $mapping->getBackendTypeName('bigquery'));
         self::assertNull($mapping->getBackendLength('bigquery'));
         self::assertEquals('defaultBigQuery', $mapping->getBackendDefaultValue('bigquery'));
-
-        self::assertEquals('VARCHAR', $mapping->getBackendTypeName('teradata'));
-        self::assertNull($mapping->getBackendLength('teradata'));
-        self::assertNull($mapping->getBackendDefaultValue('teradata'));
 
         self::assertTrue($mapping->hasBackendType('snowflake'));
     }

@@ -97,17 +97,6 @@ class Workspace
                     'region' => $connectionData['region'],
                     'credentials' => $connectionData['credentials'],
                 ],
-                'exasol',
-                'redshift',
-                'synapse',
-                'teradata' => [
-                    'host' => $connectionData['host'],
-                    'warehouse' => $connectionData['warehouse'],
-                    'database' => $connectionData['database'],
-                    'schema' => $connectionData['schema'],
-                    'user' => $connectionData['user'],
-                    'password' => $connectionData['password'],
-                ],
                 'snowflake' => [
                     'host' => $connectionData['host'],
                     'warehouse' => $connectionData['warehouse'],
@@ -117,10 +106,6 @@ class Workspace
                     'password' => $connectionData['password'] ?? null,
                     'privateKey' => $connectionData['privateKey'] ?? null,
                     'account' => self::parseSnowflakeAccount($connectionData['host']),
-                ],
-                'abs' => [
-                    'container' => $connectionData['container'],
-                    'connectionString' => $connectionData['connectionString'],
                 ],
                 default => throw new StagingProviderException(sprintf('Unsupported backend "%s"', $this->backendType)),
             };

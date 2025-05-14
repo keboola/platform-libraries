@@ -31,10 +31,7 @@ class StrategyFactoryTest extends TestCase
         self::assertSame($clientWrapper, $factory->getClientWrapper());
         self::assertSame($logger, $factory->getLogger());
         self::assertEquals(
-            ['abs', 'local', 's3', 'workspace-abs', 'workspace-redshift',
-                'workspace-snowflake', 'workspace-synapse', 'workspace-exasol', 'workspace-teradata',
-                'workspace-bigquery',
-            ],
+            ['abs', 'local', 's3', 'workspace-snowflake', 'workspace-bigquery'],
             array_keys($factory->getStrategyMap()),
         );
     }
@@ -122,9 +119,7 @@ class StrategyFactoryTest extends TestCase
         );
         $this->expectException(StagingException::class);
         $this->expectExceptionMessage(
-            'Staging "0" is unknown. Known types are "abs, local, s3, workspace-abs, ' .
-            'workspace-redshift, workspace-snowflake, workspace-synapse, workspace-exasol, workspace-teradata, ' .
-            'workspace-bigquery',
+            'Staging "0" is unknown. Known types are "abs, local, s3, workspace-snowflake, workspace-bigquery',
         );
         $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
     }

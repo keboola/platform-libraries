@@ -12,8 +12,6 @@ Create `.env.local` file from this `.env` template and fill the missing envs:
 cp .env .env.local
 ```
 
-To run Synapse tests, set `RUN_SYNAPSE_TESTS=1` and supply a Storage API token to a project with [Synapse backend](https://keboola.atlassian.net/browse/PS-707). Synapse tests are by default skipped (unless the above env is set).
-
 Run test suite:
 
 ```

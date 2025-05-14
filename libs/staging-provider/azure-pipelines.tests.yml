@@ -8,7 +8,5 @@ jobs:
       testCommand: bash -c 'composer install && composer ci'
       variables:
         STORAGE_API_URL: $(STORAGE_API_URL_AWS)
-        SYNAPSE_STORAGE_API_URL: $(STORAGE_API_URL_AZURE)
       secrets:
         STORAGE_API_TOKEN: $(STAGING_PROVIDER__STORAGE_API_TOKEN_AWS)
-        SYNAPSE_STORAGE_API_TOKEN: $(STAGING_PROVIDER__SYNAPSE_STORAGE_API_TOKEN)

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 
 use Generator;
+use Keboola\Datatype\Definition\Bigquery;
 use Keboola\Datatype\Definition\GenericStorage;
-use Keboola\Datatype\Definition\Synapse;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\NativeTableDefinitionColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
@@ -47,15 +47,15 @@ class TableDefinitionTest extends TestCase
             'tableMetadata' => [
                 [
                     'key' => 'KBC.datatype.backend',
-                    'value' => 'synapse',
+                    'value' => 'bigquery',
                 ],
             ],
             'columnName' => 'testColumn',
-            'columnMetadata' => (new Synapse('varchar', ['length' => '25']))->toMetadata(),
-            'backendType' => 'synapse',
+            'columnMetadata' => (new Bigquery('STRING', ['length' => '25']))->toMetadata(),
+            'backendType' => 'bigquery',
             'expectedColumn' => new NativeTableDefinitionColumn(
                 'testColumn',
-                new Synapse('varchar', ['length' => '25']),
+                new Bigquery('STRING', ['length' => '25']),
             ),
         ];
 
@@ -63,11 +63,11 @@ class TableDefinitionTest extends TestCase
             'tableMetadata' => [
                 [
                     'key' => 'KBC.datatype.backend',
-                    'value' => 'synapse',
+                    'value' => 'bigquery',
                 ],
             ],
             'columnName' => 'testColumn',
-            'columnMetadata' => (new Synapse('varchar', ['length' => '25']))->toMetadata(),
+            'columnMetadata' => (new Bigquery('STRING', ['length' => '25']))->toMetadata(),
             'backendType' => 'snowflake',
             'expectedColumn' => new BaseTypeTableDefinitionColumn('testColumn', 'STRING'),
         ];

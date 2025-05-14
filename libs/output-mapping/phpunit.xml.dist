@@ -15,15 +15,11 @@
     <testsuites>
         <testsuite name="general-tests">
             <directory>tests</directory>
-            <exclude>tests/Writer/Redshift</exclude>
             <exclude>tests/Writer/Workspace</exclude>
             <exclude>tests/Writer/TableDefinitionTest.php</exclude>
             <exclude>tests/Writer/TableDefinitionV2Test.php</exclude>
             <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
             <exclude>tests/Writer/StorageApiHeadlessWriterTest.php</exclude>
-            <exclude>tests/Writer/File/Strategy/ABSWorkspaceTest.php</exclude>
-            <exclude>tests/Writer/Table/Source/AbsWorkspaceItemSourceFactoryTest.php</exclude>
-            <exclude>tests/Writer/Table/Strategy/AbsWorkspaceTableStrategyTest.php</exclude>
         </testsuite>
         <testsuite name="main-writer-tests-1">
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
@@ -35,7 +31,6 @@
             <exclude>tests/Writer/File</exclude>
             <exclude>tests/Writer/Helper</exclude>
             <exclude>tests/Writer/Table</exclude>
-            <exclude>tests/Writer/Redshift</exclude>
             <exclude>tests/Writer/Workspace</exclude>
             <exclude>tests/Writer/TableDefinitionTest.php</exclude>
             <exclude>tests/Writer/TableDefinitionV2Test.php</exclude>
@@ -45,13 +40,8 @@
             <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
             <exclude>tests/Writer/StorageApiSlicedWriterTest.php</exclude>
         </testsuite>
-        <testsuite name="redshift-writer-tests">
-            <directory>tests/Writer/Redshift</directory>
-        </testsuite>
         <testsuite name="workspace-writer-tests">
             <directory>tests/Writer/Workspace</directory>
-            <exclude>tests/Writer/Workspace/AbsWriterWorkspaceTest.php</exclude>
-            <exclude>tests/Writer/Workspace/SynapseWriterWorkspaceTest.php</exclude>
         </testsuite>
         <testsuite name="native-types">
             <file>tests/Writer/TableDefinitionTest.php</file>
@@ -63,15 +53,6 @@
             <directory>tests/Writer/Table</directory>
             <file>tests/Writer/StorageApiLocalTableWriterTest.php</file>
             <file>tests/Writer/StorageApiSlicedWriterTest.php</file>
-            <exclude>tests/Writer/Table/Source/AbsWorkspaceItemSourceFactoryTest.php</exclude>
-            <exclude>tests/Writer/Table/Strategy/AbsWorkspaceTableStrategyTest.php</exclude>
-        </testsuite>
-        <testsuite name="synapse-writer-tests">
-            <file>tests/Writer/File/Strategy/ABSWorkspaceTest.php</file>
-            <file>tests/Writer/Table/Source/AbsWorkspaceItemSourceFactoryTest.php</file>
-            <file>tests/Writer/Table/Strategy/AbsWorkspaceTableStrategyTest.php</file>
-            <file>tests/Writer/Workspace/AbsWriterWorkspaceTest.php</file>
-            <file>tests/Writer/Workspace/SynapseWriterWorkspaceTest.php</file>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">

@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -17,22 +16,26 @@ use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
-use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\StorageApiBranch\Branch;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class DownloadTablesDefaultTest extends AbstractTestCase
 {
     #[NeedsTestTables(2)]
     public function testReadTablesDefaultBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $this->initClient(),
-            logger: $this->testLogger,
-        ));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -48,7 +51,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -76,7 +78,13 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesEmptyDaysFilter(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -89,7 +97,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertCSVEquals(
@@ -102,7 +109,13 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesEmptyChangedSinceFilter(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -115,7 +128,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertCSVEquals(
@@ -156,7 +168,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $columnMetadata,
             ),
         );
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -168,7 +185,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -222,7 +238,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $metadata->postTableMetadataWithColumns(
             new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata),
         );
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source_search' => [
@@ -237,7 +258,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -294,7 +314,12 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 $columnMetadata,
             ),
         );
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -307,7 +332,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -358,7 +382,13 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTableColumnsDataTypes(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -380,7 +410,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -436,7 +465,11 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             new Branch('123', 'main', true, null),
         );
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -456,7 +489,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
     }
@@ -464,11 +496,16 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesDevBucket(): void
     {
-        $clientWrapper  = $this->initClient();
-        $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -496,7 +533,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(false),
         );
 
@@ -513,7 +549,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
     }
@@ -524,7 +559,15 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         $clientWrapper = new ClientWrapper(
             $this->initClient()->getClientOptionsReadOnly()->setUseBranchStorage(true),
         );
-        $reader = new Reader($this->getLocalStagingFactory(clientWrapper: $clientWrapper, logger: $this->testLogger));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -548,7 +591,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(false),
         );
 
@@ -557,7 +599,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertCount(1, $result->getTables());
@@ -572,7 +613,11 @@ class DownloadTablesDefaultTest extends AbstractTestCase
                 ->setBranchId($this->devBranchId),
         );
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -586,7 +631,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertCSVEquals(

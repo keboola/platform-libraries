@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\FileStagingInterface;
-use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StagingProvider\Exception\InvalidStagingConfiguration;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Staging\Workspace\NullWorkspaceStaging;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -24,32 +25,31 @@ use Symfony\Component\Finder\Finder;
 
 class ReaderTest extends AbstractTestCase
 {
+    use ReflectionPropertyAccessTestCase;
+
     private function getStagingFactory(
         ClientWrapper $clientWrapper,
+        StagingType $stagingType = StagingType::Local,
         string $format = 'json',
         ?LoggerInterface $logger = null,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper,
-            $logger ?: new NullLogger(),
-            $format,
-        );
-        $mockLocal = $this->createMock(FileStagingInterface::class);
-        $mockLocal->method('getPath')->willReturnCallback(
+        $localStaging = $this->createMock(FileStagingInterface::class);
+        $localStaging->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
             },
         );
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([
-                    Scope::TABLE_DATA, Scope::TABLE_METADATA,
-                    Scope::FILE_DATA, Scope::FILE_METADATA,
-                ]),
-            ],
+
+        return new StrategyFactory(
+            new StagingProvider(
+                $stagingType,
+                new NullWorkspaceStaging(),
+                $localStaging,
+            ),
+            $clientWrapper,
+            $logger ?: new NullLogger(),
+            $format,
         );
-        return $stagingFactory;
     }
 
     public function testParentId(): void
@@ -80,13 +80,17 @@ class ReaderTest extends AbstractTestCase
     public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         $finder = new Finder();
@@ -96,7 +100,23 @@ class ReaderTest extends AbstractTestCase
 
     public function testReadTablesDefaultBackend(): void
     {
-        $reader = new Reader($this->getStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $strategyFactory = $this->getStagingFactory(
+            clientWrapper: $clientWrapper,
+            stagingType: StagingType::WorkspaceBigquery,
+        );
+
+        // force strategy map initialization and adjust it to test potentially unsupported StagingType
+        $strategyFactory->getStagingDefinition(StagingType::Local);
+        $strategyMap = self::getPrivatePropertyValue($strategyFactory, 'strategyMap');
+        unset($strategyMap[StagingType::WorkspaceBigquery->value]); // @phpstan-ignore-line
+        self::setPrivatePropertyValue($strategyFactory, 'strategyMap', $strategyMap);
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $strategyFactory
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => 'not-needed.test',
@@ -104,15 +124,14 @@ class ReaderTest extends AbstractTestCase
             ],
         ]);
 
-        $this->expectException(InvalidInputException::class);
+        $this->expectException(InvalidStagingConfiguration::class);
         $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, ',
+            'Mapping on type "workspace-bigquery" is not supported. Supported types are "local, s3, abs, ',
         );
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            'invalid',
             new ReaderOptions(true),
         );
     }
@@ -168,7 +187,14 @@ class ReaderTest extends AbstractTestCase
             Client::STAGE_IN,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync($branchBucketId, 'test', $csvFile);
-        $reader = new Reader($this->getStagingFactory($this->initClient($this->devBranchId)));
+
+        $clientWrapper = $this->initClient($this->devBranchId);
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getStagingFactory($clientWrapper),
+        );
+
         $configuration = new InputTableOptionsList([
             [
                 'source' => $inBucketId . '.test',
@@ -186,7 +212,6 @@ class ReaderTest extends AbstractTestCase
             $configuration,
             $state,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertStringContainsString(

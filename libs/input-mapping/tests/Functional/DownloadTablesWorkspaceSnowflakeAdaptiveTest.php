@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -23,10 +22,14 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     public function testDownloadTablesDownloadsEmptyTable(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -46,7 +49,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $configuration,
             $inputTablesState,
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -78,10 +80,14 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -93,7 +99,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -123,7 +128,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $configuration,
             $firstTablesResult->getInputTableStateList(),
             'data/in/tables/',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -151,10 +155,15 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesInvalidDate(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $this->initClient(),
-            logger: $this->testLogger,
-        ));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -175,7 +184,6 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             $configuration,
             $inputTablesState,
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
     }

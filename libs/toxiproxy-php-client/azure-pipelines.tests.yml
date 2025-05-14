@@ -1,0 +1,7 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests
+      serviceName: dev-toxiproxy-php-client
+      testCommand: bash -c 'composer install && composer ci'
+      

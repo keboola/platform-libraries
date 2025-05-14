@@ -78,6 +78,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
+    - repository: toxiproxy-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/toxiproxy-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -262,6 +266,14 @@ stages:
     jobs:
       - template: libs/vault-api-client/azure-pipelines.tests.yml
 
+  - stage: tests_toxiproxyPhpClient
+    displayName: Tests - Toxiproxy PHP Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_toxiproxyPhpClient'])
+    jobs:
+      - template: libs/toxiproxy-php-client/azure-pipelines.tests.yml
+
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -283,6 +295,7 @@ stages:
       - tests_slicer
       - tests_stagingProvider
       - tests_vaultApiClient
+      - tests_toxiproxyPhpClient
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
@@ -301,7 +314,8 @@ stages:
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_toxiproxyPhpClient.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:
@@ -448,3 +462,11 @@ stages:
           targetRepo: vault-api-php-client
           libraryPath: libs/vault-api-client
           tagPrefix: vault-api-client/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_toxiproxyPhpClient'])
+          sourceRepo: platform-libraries
+          targetRepo: toxiproxy-php-client
+          libraryPath: libs/toxiproxy-php-client
+          tagPrefix: toxiproxy-php-client/

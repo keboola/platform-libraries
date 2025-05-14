@@ -1,0 +1,61 @@
+{
+  "name": "keboola/toxiproxy-php-client",
+  "type": "library",
+  "license": "MIT",
+  "description": "PHP client for shopify/toxiproxy",
+  "keywords": [
+    "toxiproxy",
+    "php",
+    "client"
+  ],
+  "authors": [
+    {
+      "name": "Keboola",
+      "email": "devel@keboola.com"
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "ext-json": "*",
+    "guzzlehttp/guzzle": "^7.9"
+  },
+  "require-dev": {
+    "keboola/coding-standard": "^15.1",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/phpstan-phpunit": "^2.0",
+    "phpunit/phpunit": "^12.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Keboola\\ToxiproxyPhpClient\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Keboola\\ToxiproxyPhpClient\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "ci": [
+      "@composer validate --no-check-publish --no-check-all",
+      "@phpcs",
+      "@phpstan",
+      "@phpunit"
+    ],
+    "phpcs": "phpcs -n --ignore=vendor,cache,Kernel.php --extensions=php .",
+    "phpcbf": "phpcbf --extensions=php src tests examples",
+    "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+    "phpunit": [
+      "@putenv XDEBUG_MODE=coverage",
+      "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
+    ]
+  },
+  "config": {
+    "lock": false,
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "infection/extension-installer": true
+    }
+  }
+}

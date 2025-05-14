@@ -162,6 +162,17 @@ services:
     image: keboola/vault-api-client
     working_dir: /code/libs/vault-api-client
 
+  dev-toxiproxy-php-client:
+    <<: *dev84
+    image: keboola/toxiproxy-php-client
+    working_dir: /code/libs/toxiproxy-php-client
+    depends_on:
+      toxiproxy:
+        condition: service_started
+    environment:
+      - TOXIPROXY_HOST: toxiproxy
+      - TOXIPROXY_PORT: 8474
+
   dev-slicer:
     <<: *dev
     image: keboola/slicer

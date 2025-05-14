@@ -1,0 +1,5 @@
+/vendor
+composer.lock
+/_reports
+/_docs
+/examples/vendor

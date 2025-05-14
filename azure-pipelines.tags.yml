@@ -78,6 +78,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
+    - repository: toxiproxy-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/toxiproxy-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -212,7 +216,6 @@ jobs:
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
 
-
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/vault-api-client/')
@@ -220,3 +223,11 @@ jobs:
       targetRepo: vault-api-php-client
       libraryPath: libs/vault-api-client
       tagPrefix: vault-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/toxiproxy-php-client/')
+      sourceRepo: platform-libraries
+      targetRepo: toxiproxy-php-client
+      libraryPath: libs/toxiproxy-php-client
+      tagPrefix: toxiproxy-php-client/

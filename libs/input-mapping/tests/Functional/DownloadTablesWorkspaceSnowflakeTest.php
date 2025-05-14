@@ -8,7 +8,6 @@ use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -28,10 +27,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         $runId = $clientWrapper->getBasicClient()->generateRunId();
         $clientWrapper->getBranchClient()->setRunId($runId);
 
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -55,7 +58,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -137,7 +139,13 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testTablesInvalidMapping(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -156,7 +164,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
     }
@@ -165,10 +172,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     public function testTablesAdaptiveChangedSince(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -196,7 +208,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             $tablesState,
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -234,10 +245,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     public function testTablesSnowflakeDataTypes(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -259,7 +275,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 
@@ -288,7 +303,13 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testTablesSnowflakeDataTypesInvalid(): void
     {
-        $reader = new Reader($this->getWorkspaceStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -313,7 +334,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
     }
@@ -322,10 +342,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
     public function testTablesSnowflakeOverwrite(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -337,7 +362,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
         $configuration = new InputTableOptionsList([
@@ -354,7 +378,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
         $adapter = new Adapter();
@@ -390,7 +413,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
         $adapter = new Adapter();
@@ -427,10 +449,16 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
         }
 
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $this->initClient(),
-            logger: $this->testLogger,
-        ));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -449,7 +477,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
     }
@@ -461,10 +488,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         // first we create the workspace and load there some data.
         // then we will do a new load with preserve=false to make sure that the old data was removed
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -479,7 +510,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
         $configuration = new InputTableOptionsList([
@@ -499,7 +529,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true, false),
         );
         // the initial_table should not be present in the workspace anymore
@@ -589,10 +618,14 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             'out',
         );
 
-        $reader = new Reader($this->getWorkspaceStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [ // cloned table from production
                 'source' => $this->firstTableId,
@@ -624,7 +657,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             new ReaderOptions(true),
         );
 

@@ -8,7 +8,6 @@ use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\Settle\SettleFactory;
@@ -19,7 +18,7 @@ use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-class DownloadFilesTest extends DownloadFilesTestAbstract
+class DownloadFilesTest extends AbstractDownloadFilesTest
 {
     public function testReadFiles(): void
     {
@@ -38,15 +37,18 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
 
@@ -85,13 +87,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(3);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         // download files for the first time
         $configuration = [['tags' => [$this->testFileTag], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
@@ -101,7 +106,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id1 . '_upload'));
@@ -113,7 +117,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
     }
@@ -123,7 +126,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $clientWrapper = $this->initClient();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1']);
@@ -161,7 +169,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -174,7 +181,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $clientWrapper = $this->initClient();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1', 'tag-3']);
@@ -216,7 +228,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertTrue(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -229,7 +240,12 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $clientWrapper = $this->initClient();
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload', 'test');
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
 
         $file1 = new FileUploadOptions();
         $file1->setTags(['tag-1', 'tag-2']);
@@ -264,7 +280,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -305,34 +320,44 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
 
         // valid configuration, but does nothing
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
+
         // invalid configuration
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [[]];
         try {
             $reader->downloadFiles(
                 $configuration,
                 'download',
-                AbstractStrategyFactory::LOCAL,
                 new InputFileStateList([]),
             );
             self::fail('Invalid configuration should fail.');
         } catch (InvalidInputException) {
         }
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [['query' => 'id:>0 AND (NOT tags:table-export)', 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $finder = new Finder();
@@ -341,12 +366,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
 
         $fs = new Filesystem();
         $fs->remove($this->temp->getTmpFolder());
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'limit' => 102, 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $finder = new Finder();
@@ -363,13 +392,16 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         sleep(2);
         $fileId = $table['file']['id'];
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [['query' => 'id: ' . $fileId, 'overwrite' => true]];
 
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
 
@@ -409,7 +441,11 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $uploadFileId = $clientWrapper->getTableAndFileStorageClient()->uploadSlicedFile([], $fileUploadOptions);
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [
             [
                 'query' => 'id:' . $uploadFileId,
@@ -419,7 +455,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $adapter = new Adapter();
@@ -443,7 +478,14 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'yaml'));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                format: 'yaml',
+            ),
+        );
         $configuration = [[
             'tags' => [$this->testFileTag],
             'overwrite' => true,
@@ -451,7 +493,6 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id . '_upload'));
@@ -482,15 +523,18 @@ class DownloadFilesTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $clientWrapper,
-            logger: $this->testLogger,
-        ));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $configuration = [['file_ids' => [$id1, $id2], 'overwrite' => true]];
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
 

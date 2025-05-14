@@ -7,22 +7,28 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\StagingType;
 
 class DownloadTablesS3DefaultTest extends AbstractTestCase
 {
     #[NeedsTestTables(2)]
     public function testReadTablesS3DefaultBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory(
-            clientWrapper: $this->initClient(),
-            logger:  $this->testLogger,
-        ));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger:  $this->testLogger,
+                stagingType: StagingType::S3,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -38,7 +44,6 @@ class DownloadTablesS3DefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::S3,
             new ReaderOptions(true),
         );
 
@@ -57,7 +62,15 @@ class DownloadTablesS3DefaultTest extends AbstractTestCase
     #[NeedsTestTables(2)]
     public function testReadTablesABSUnsupportedBackend(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                stagingType: StagingType::Abs,
+            ),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -75,7 +88,6 @@ class DownloadTablesS3DefaultTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::ABS,
             new ReaderOptions(true),
         );
     }

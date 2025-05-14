@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -23,7 +22,13 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testReadTablesBigQuery(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -35,7 +40,6 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -116,7 +120,13 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
             $options,
         );
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $tableId,
@@ -128,7 +138,6 @@ class DownloadTablesBigQueryTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         $file = file_get_contents($this->temp->getTmpFolder() . '/download/empty.csv');

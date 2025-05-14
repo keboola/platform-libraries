@@ -113,7 +113,8 @@ stages:
                 settle:libs/settle \
                 slicer:libs/slicer \
                 stagingProvider:libs/staging-provider \
-                vaultApiClient:libs/vault-api-client
+                vaultApiClient:libs/vault-api-client \
+                toxiproxyPhpClient:libs/toxiproxy-php-client
             displayName: 'Find changes'
             name: findChanges
 

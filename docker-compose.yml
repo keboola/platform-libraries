@@ -170,8 +170,8 @@ services:
       toxiproxy:
         condition: service_started
     environment:
-      - TOXIPROXY_HOST: toxiproxy
-      - TOXIPROXY_PORT: 8474
+      TOXIPROXY_HOST: toxiproxy
+      TOXIPROXY_PORT: 8474
 
   dev-slicer:
     <<: *dev

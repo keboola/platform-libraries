@@ -32,7 +32,7 @@ abstract class BaseTestCase extends TestCase
     protected function createToxiproxy(?array $mockResponses = null): Toxiproxy
     {
         if ($mockResponses === null) {
-            return new Toxiproxy(sprintf('http://%s:8474', $this->getToxiproxyHost()));
+            return new Toxiproxy(sprintf('http://%s:%s', $this->getToxiproxyHost(), $this->getToxiproxyPort()));
         }
 
         $toxiproxy = new Toxiproxy('');
@@ -44,6 +44,12 @@ abstract class BaseTestCase extends TestCase
     {
         return (string) getenv('TOXIPROXY_HOST');
     }
+
+    private function getToxiproxyPort(): string
+    {
+        return (string) getenv('TOXIPROXY_PORT');
+    }
+
 
     protected function getListen(int $listen = 34343): string
     {

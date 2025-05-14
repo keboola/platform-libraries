@@ -2,38 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy\Test;
+namespace Keboola\Toxiproxy\Tests;
 
-use GuzzleHttp\Client as HttpClient;
-use Ihsw\Toxiproxy\Exception\InvalidProxyException;
-use Ihsw\Toxiproxy\Exception\NotFoundException;
-use Ihsw\Toxiproxy\Exception\ProxyExistsException;
-use Ihsw\Toxiproxy\Exception\UnexpectedStatusCodeException;
-use Ihsw\Toxiproxy\Proxy;
-use Ihsw\Toxiproxy\Test\Test\BaseTestCase;
-use Ihsw\Toxiproxy\ToxicTypes;
-use Ihsw\Toxiproxy\Toxiproxy;
+use Keboola\Toxiproxy\Exception\InvalidProxyException;
+use Keboola\Toxiproxy\Exception\NotFoundException;
+use Keboola\Toxiproxy\Exception\ProxyExistsException;
+use Keboola\Toxiproxy\Exception\UnexpectedStatusCodeException;
+use Keboola\Toxiproxy\Proxy;
+use Keboola\Toxiproxy\Tests\Test\BaseTestCase;
+use Keboola\Toxiproxy\ToxicTypes;
 
 class ToxiproxyTest extends BaseTestCase
 {
-    public function testConstructor(): void
-    {
-        $toxiproxy = $this->createToxiproxy();
-        self::assertInstanceOf(Toxiproxy::class, $toxiproxy);
-    }
-
-    public function testGetHttpClient(): void
-    {
-        $toxiproxy = $this->createToxiproxy();
-        self::assertInstanceOf(HttpClient::class, $toxiproxy->getHttpClient());
-    }
-
     public function testCreate(): void
     {
         $toxiproxy = $this->createToxiproxy();
         $listen = $this->getListen();
         $proxy = $toxiproxy->create(self::PROXY_NAME, self::TEST_UPSTREAM, $listen);
-        self::assertInstanceOf(Proxy::class, $proxy);
 
         self::assertEquals(self::PROXY_NAME, $proxy->getName());
         self::assertEquals(self::TEST_UPSTREAM, $proxy->getUpstream());
@@ -117,7 +102,7 @@ class ToxiproxyTest extends BaseTestCase
 
         self::assertEquals(
             $proxy->getName(),
-            $toxiproxy->get($proxy->getName())->getName(),
+            $toxiproxy->get($proxy->getName())?->getName(),
         );
     }
 
@@ -149,7 +134,7 @@ class ToxiproxyTest extends BaseTestCase
         $receivedProxy = $toxiproxy->get($proxy->getName());
         self::assertSame(
             $toxics[0]->jsonSerialize(),
-            $receivedProxy->getToxics()[0]->jsonSerialize(),
+            $receivedProxy?->getToxics()[0]->jsonSerialize(),
         );
     }
 
@@ -177,8 +162,6 @@ class ToxiproxyTest extends BaseTestCase
         );
 
         $this->expectException(UnexpectedStatusCodeException::class);
-        ;
-        ;
         $toxiproxy->getAll();
     }
 
@@ -186,10 +169,8 @@ class ToxiproxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy();
         self::assertCount(0, $toxiproxy->getAll());
-        ;
         $toxiproxy->delete($this->createProxy($toxiproxy));
         self::assertCount(0, $toxiproxy->getAll());
-        ;
     }
 
     public function testDeleteNotFound(): void
@@ -199,7 +180,6 @@ class ToxiproxyTest extends BaseTestCase
         $toxiproxy->delete($proxy);
 
         $this->expectException(NotFoundException::class);
-        ;
         $toxiproxy->delete($proxy);
     }
 
@@ -281,6 +261,7 @@ class ToxiproxyTest extends BaseTestCase
 
         // checking that this proxy is now re-enabled
         $proxy = $toxiproxy->get($proxy->getName());
+        self::assertNotNull($proxy);
         self::assertTrue($proxy->isEnabled());
 
         // checking that this proxy has no toxics

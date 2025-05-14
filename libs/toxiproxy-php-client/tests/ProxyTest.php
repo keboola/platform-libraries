@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy\Test;
+namespace Keboola\Toxiproxy\Tests;
 
-use Ihsw\Toxiproxy\Exception\NotFoundException;
-use Ihsw\Toxiproxy\Exception\ToxicExistsException;
-use Ihsw\Toxiproxy\Exception\UnexpectedStatusCodeException;
-use Ihsw\Toxiproxy\Proxy;
-use Ihsw\Toxiproxy\StreamDirections;
-use Ihsw\Toxiproxy\Test\Test\BaseTestCase;
-use Ihsw\Toxiproxy\Toxic;
-use Ihsw\Toxiproxy\ToxicTypes;
+use Keboola\Toxiproxy\Exception\NotFoundException;
+use Keboola\Toxiproxy\Exception\ToxicExistsException;
+use Keboola\Toxiproxy\Exception\UnexpectedStatusCodeException;
+use Keboola\Toxiproxy\Proxy;
+use Keboola\Toxiproxy\StreamDirections;
+use Keboola\Toxiproxy\Tests\Test\BaseTestCase;
+use Keboola\Toxiproxy\Toxic;
+use Keboola\Toxiproxy\ToxicTypes;
 
 class ProxyTest extends BaseTestCase
 {
@@ -35,23 +35,22 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy();
         $proxy = $this->createProxy($toxiproxy);
-        $toxic = $this->createToxic(
-            $proxy,
-            ToxicTypes::LATENCY->value,
-            [
-            'latency' => 1000,
-            'jitter' => 500,
-            ],
-        );
-
-        $this->expectException(ToxicExistsException::class);
-        ;
         $this->createToxic(
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
+            ],
+        );
+
+        $this->expectException(ToxicExistsException::class);
+        $this->createToxic(
+            $proxy,
+            ToxicTypes::LATENCY->value,
+            [
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
     }
@@ -60,12 +59,11 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy(
             [
-            self::httpResponseFactory(418, ''),
+                self::httpResponseFactory(418, ''),
             ],
         );
 
         $this->expectException(UnexpectedStatusCodeException::class);
-        ;
         $this->createToxic(new Proxy($toxiproxy, ''), '', []);
     }
 
@@ -77,8 +75,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
 
@@ -90,7 +88,7 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy(
             [
-            self::httpResponseFactory(418, ''),
+                self::httpResponseFactory(418, ''),
             ],
         );
 
@@ -107,8 +105,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
 
@@ -128,7 +126,7 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy(
             [
-            self::httpResponseFactory(418, ''),
+                self::httpResponseFactory(418, ''),
             ],
         );
 
@@ -145,8 +143,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
 
@@ -164,8 +162,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
 
@@ -178,7 +176,7 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy(
             [
-            self::httpResponseFactory(418, ''),
+                self::httpResponseFactory(418, ''),
             ],
         );
 
@@ -195,8 +193,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
         self::assertCount(1, $toxiproxy->getAll());
@@ -214,8 +212,8 @@ class ProxyTest extends BaseTestCase
             $proxy,
             ToxicTypes::LATENCY->value,
             [
-            'latency' => 1000,
-            'jitter' => 500,
+                'latency' => 1000,
+                'jitter' => 500,
             ],
         );
 
@@ -228,7 +226,7 @@ class ProxyTest extends BaseTestCase
     {
         $toxiproxy = $this->createToxiproxy(
             [
-            self::httpResponseFactory(418, ''),
+                self::httpResponseFactory(418, ''),
             ],
         );
 

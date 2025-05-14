@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy\Exception;
+namespace Keboola\Toxiproxy\Exception;
 
 class ProxyExistsException extends Exception
 {

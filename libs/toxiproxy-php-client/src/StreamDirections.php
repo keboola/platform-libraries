@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy;
+namespace Keboola\Toxiproxy;
 
 enum StreamDirections: string
 {

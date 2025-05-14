@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy\Exception;
-
-use Ihsw\Toxiproxy\Exception\Exception;
+namespace Keboola\Toxiproxy\Exception;
 
 class NotFoundException extends Exception
 {

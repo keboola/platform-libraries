@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy;
+namespace Keboola\Toxiproxy;
 
 use JsonSerializable;
 
@@ -43,6 +43,11 @@ class Toxic implements JsonSerializable
     public function getToxicity(): float
     {
         return $this->toxicity;
+    }
+
+    public function getProxy(): Proxy
+    {
+        return $this->proxy;
     }
 
     public function setToxicity(float $toxicity): self

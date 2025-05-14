@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy\Test\Test;
+namespace Keboola\Toxiproxy\Tests\Test;
 
-use Ihsw\Toxiproxy\Proxy;
-use Ihsw\Toxiproxy\StreamDirections;
-use Ihsw\Toxiproxy\Toxic;
-use Ihsw\Toxiproxy\Toxiproxy;
+use Keboola\Toxiproxy\Proxy;
+use Keboola\Toxiproxy\StreamDirections;
+use Keboola\Toxiproxy\Toxic;
+use Keboola\Toxiproxy\Toxiproxy;
 use PHPUnit\Framework\TestCase;
 
 abstract class BaseTestCase extends TestCase
@@ -26,6 +26,9 @@ abstract class BaseTestCase extends TestCase
         }
     }
 
+    /**
+     * @param array<int,mixed>|null $mockResponses
+     */
     protected function createToxiproxy(?array $mockResponses = null): Toxiproxy
     {
         if ($mockResponses === null) {
@@ -47,11 +50,10 @@ abstract class BaseTestCase extends TestCase
         return sprintf('%s:%s', '127.0.0.1', $listen);
     }
 
-    protected function createProxy(Toxiproxy $toxiproxy): ?Proxy
+    protected function createProxy(Toxiproxy $toxiproxy): Proxy
     {
         return $toxiproxy->create(self::PROXY_NAME, self::TEST_UPSTREAM, $this->getListen());
     }
-
 
     protected function createToxic(Proxy $proxy, string $type, array $attr): Toxic
     {

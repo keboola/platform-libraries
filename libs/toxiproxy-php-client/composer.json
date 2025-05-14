@@ -27,12 +27,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Keboola\\ToxiproxyPhpClient\\": "src/"
+      "Keboola\\Toxiproxy\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Keboola\\ToxiproxyPhpClient\\Tests\\": "tests/"
+      "Keboola\\Toxiproxy\\Tests\\": "tests/"
     }
   },
   "scripts": {

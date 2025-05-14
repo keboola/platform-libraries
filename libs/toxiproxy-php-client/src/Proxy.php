@@ -2,19 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Ihsw\Toxiproxy;
+namespace Keboola\Toxiproxy;
 
 use GuzzleHttp\Client;
-use Ihsw\Toxiproxy\Exception\NotFoundException;
-use Ihsw\Toxiproxy\Exception\ToxicExistsException;
-use Ihsw\Toxiproxy\Exception\UnexpectedStatusCodeException;
 use JsonSerializable;
+use Keboola\Toxiproxy\Exception\NotFoundException;
+use Keboola\Toxiproxy\Exception\ToxicExistsException;
+use Keboola\Toxiproxy\Exception\UnexpectedStatusCodeException;
 use Psr\Http\Message\ResponseInterface;
 
 class Proxy implements JsonSerializable
 {
     use UrlHelpers;
-    use ListenHelpers;
 
     private Toxiproxy $toxiproxy;
     private string $name;
@@ -26,6 +25,15 @@ class Proxy implements JsonSerializable
      */
     private array $toxics;
 
+    /**
+     * @param array{
+     *     name: string,
+     *     type: string,
+     *     stream: string,
+     *     toxicity: float,
+     *     attributes: array<string, mixed>
+     * }[] $toxicContents
+     */
     public function __construct(Toxiproxy $toxiproxy, string $name, array $toxicContents = [])
     {
         $this->toxiproxy = $toxiproxy;
@@ -99,9 +107,28 @@ class Proxy implements JsonSerializable
 
     private function responseToToxic(ResponseInterface $response): Toxic
     {
-        return $this->contentsToToxic(json_decode($response->getBody(), true));
+        /**
+         * @var array{
+         *     name: string,
+         *     type: string,
+         *     stream: string,
+         *     toxicity: float,
+         *     attributes: array<string, mixed>
+         * } $toxicContents
+         */
+        $toxicContents = (array) json_decode((string) $response->getBody(), true);
+        return $this->contentsToToxic($toxicContents);
     }
 
+    /**
+     * @param array{
+     *     name: string,
+     *     type: string,
+     *     stream: string,
+     *     toxicity: float,
+     *     attributes: array<string, mixed>
+     * } $contents
+     */
     private function contentsToToxic(array $contents): Toxic
     {
         $toxic = new Toxic(
@@ -127,10 +154,19 @@ class Proxy implements JsonSerializable
     public function getAll(): array
     {
         $route = $this->getToxicsRoute($this);
-        $response = $this->getHttpClient()->request($route['method'], $route['uri']);
+        $response = $this->getHttpClient()->request((string) $route['method'], (string) $route['uri']);
         switch ($response->getStatusCode()) {
             case StatusCodes::OK->value:
-                $body = json_decode($response->getBody(), true);
+                /**
+                 * @var array{
+                 *     name: string,
+                 *     type: string,
+                 *     stream: string,
+                 *     toxicity: float,
+                 *     attributes: array<string, mixed>
+                 * }[] $body
+                 */
+                $body = (array) json_decode((string) $response->getBody(), true);
 
                 return array_map(
                     function ($contents) {
@@ -161,8 +197,8 @@ class Proxy implements JsonSerializable
     ): Toxic {
         $route = $this->createToxicRoute($this);
         $response = $this->getHttpClient()->request(
-            $route['method'],
-            $route['uri'],
+            (string) $route['method'],
+            (string) $route['uri'],
             [
             'body' => json_encode(
                 [
@@ -180,7 +216,7 @@ class Proxy implements JsonSerializable
             case StatusCodes::NO_CONTENT->value:
                 return $this->responseToToxic($response);
             case StatusCodes::CONFLICT->value:
-                throw new ToxicExistsException($response->getBody());
+                throw new ToxicExistsException((string) $response->getBody());
             default:
                 throw new UnexpectedStatusCodeException(
                     sprintf(
@@ -198,7 +234,7 @@ class Proxy implements JsonSerializable
     public function get(string $name): ?Toxic
     {
         $route = $this->getToxicRoute($this, $name);
-        $response = $this->getHttpClient()->request($route['method'], $route['uri']);
+        $response = $this->getHttpClient()->request((string) $route['method'], (string) $route['uri']);
         switch ($response->getStatusCode()) {
             case StatusCodes::OK->value:
                 return $this->responseToToxic($response);
@@ -222,15 +258,15 @@ class Proxy implements JsonSerializable
     {
         $route = $this->updateToxicRoute($this, $toxic);
         $response = $this->getHttpClient()->request(
-            $route['method'],
-            $route['uri'],
+            (string) $route['method'],
+            (string) $route['uri'],
             ['body' => json_encode($toxic)],
         );
         switch ($response->getStatusCode()) {
             case StatusCodes::OK->value:
                 return $this->responseToToxic($response);
             case StatusCodes::NOT_FOUND->value:
-                throw new NotFoundException($response->getBody());
+                throw new NotFoundException((string) $response->getBody());
             default:
                 throw new UnexpectedStatusCodeException(
                     sprintf(
@@ -248,12 +284,12 @@ class Proxy implements JsonSerializable
     public function delete(Toxic $toxic): void
     {
         $route = $this->deleteToxicRoute($this, $toxic);
-        $response = $this->getHttpClient()->request($route['method'], $route['uri']);
+        $response = $this->getHttpClient()->request((string) $route['method'], (string) $route['uri']);
         switch ($response->getStatusCode()) {
             case StatusCodes::NO_CONTENT->value:
                 return;
             case StatusCodes::NOT_FOUND->value:
-                throw new NotFoundException($response->getBody());
+                throw new NotFoundException((string) $response->getBody());
             default:
                 throw new UnexpectedStatusCodeException(
                     sprintf(

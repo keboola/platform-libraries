@@ -10,21 +10,27 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "doctrine/dbal": "^3.3",
+        "php": "^8.4",
+        "doctrine/dbal": "^4.2",
         "doctrine/doctrine-bundle": "^2.1",
         "keboola/retry": "^0.5.0",
         "symfony/dependency-injection": "^7.0|^6.4",
         "symfony/http-kernel": "^7.0|^6.4"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/keboola/toxiproxy-php-client"
+        }
+    ],
     "require-dev": {
         "ext-pdo": "*",
-        "ihsw/toxiproxy-php-client": "^2.0",
-        "keboola/coding-standard": "^15.0",
-        "monolog/monolog": "^2.3",
-        "phpstan/phpstan": "^1.4",
-        "phpstan/phpstan-phpunit": "^1.0",
-        "phpunit/phpunit": "^9.5"
+        "ihsw/toxiproxy-php-client": "dev-odin-odin-KAB-1029",
+        "keboola/coding-standard": "dev-odin-KAB-1029",
+        "monolog/monolog": "^3.9",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^12.1"
     },
     "autoload": {
         "psr-4": {

@@ -8,7 +8,7 @@ use Retry\RetryProxyInterface;
 
 /**
  * RetryProxy wrapper that allows putting a callback before each call. The callback is supposed to enable/disable
- * some low-level functionality (for example a network proxy to external service) to simulate service failures.
+ * some low-level functionality (for example, a network proxy to external service) to simulate service failures.
  */
 class FailingRetryProxy implements RetryProxyInterface
 {

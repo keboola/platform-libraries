@@ -57,20 +57,6 @@ class WorkspaceTest extends TestCase
 
     public static function provideCredentialsData(): iterable
     {
-        yield 'abs' => [
-            'backendType' => 'abs',
-            'loginType' => WorkspaceLoginType::DEFAULT,
-            'connectionData' => [
-                'backend' => 'abs',
-                'container' => 'some-host',
-                'connectionString' => 'some-warehouse',
-            ],
-            'expectedCredentials' => [
-                'container' => 'some-host',
-                'connectionString' => 'some-warehouse',
-            ],
-        ];
-
         yield 'bigquery' => [
             'backendType' => 'bigquery',
             'loginType' => WorkspaceLoginType::DEFAULT,
@@ -86,50 +72,6 @@ class WorkspaceTest extends TestCase
                 'schema' => 'some-schema',
                 'region' => 'some-region',
                 'credentials' => 'some-credentials',
-            ],
-        ];
-
-        yield 'exasol' => [
-            'backendType' => 'exasol',
-            'loginType' => WorkspaceLoginType::DEFAULT,
-            'connectionData' => [
-                'backend' => 'exasol',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'user' => 'some-user',
-                'schema' => 'some-schema',
-                'password' => 'some-secret',
-            ],
-            'expectedCredentials' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'some-secret',
-            ],
-        ];
-
-        yield 'redshift' => [
-            'backendType' => 'redshift',
-            'loginType' => WorkspaceLoginType::DEFAULT,
-            'connectionData' => [
-                'backend' => 'redshift',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'user' => 'some-user',
-                'schema' => 'some-schema',
-                'password' => 'some-secret',
-            ],
-            'expectedCredentials' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'some-secret',
             ],
         ];
 
@@ -177,50 +119,6 @@ class WorkspaceTest extends TestCase
                 'password' => null,
                 'privateKey' => null,
                 'account' => 'some-host',
-            ],
-        ];
-
-        yield 'synapse' => [
-            'backendType' => 'synapse',
-            'loginType' => WorkspaceLoginType::DEFAULT,
-            'connectionData' => [
-                'backend' => 'synapse',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'user' => 'some-user',
-                'schema' => 'some-schema',
-                'password' => 'some-secret',
-            ],
-            'expectedCredentials' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'some-secret',
-            ],
-        ];
-
-        yield 'teradata' => [
-            'backendType' => 'teradata',
-            'loginType' => WorkspaceLoginType::DEFAULT,
-            'connectionData' => [
-                'backend' => 'teradata',
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'user' => 'some-user',
-                'schema' => 'some-schema',
-                'password' => 'some-secret',
-            ],
-            'expectedCredentials' => [
-                'host' => 'some-host',
-                'warehouse' => 'some-warehouse',
-                'database' => 'some-database',
-                'schema' => 'some-schema',
-                'user' => 'some-user',
-                'password' => 'some-secret',
             ],
         ];
     }

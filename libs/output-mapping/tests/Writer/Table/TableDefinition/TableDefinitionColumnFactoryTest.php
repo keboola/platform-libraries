@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinition;
 use Generator;
 use Keboola\Datatype\Definition\Bigquery;
 use Keboola\Datatype\Definition\Common;
-use Keboola\Datatype\Definition\Exasol;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\BaseTypeTableDefinitionColumn;
@@ -159,28 +158,6 @@ class TableDefinitionColumnFactoryTest extends TestCase
                 'name' => 'testTime',
                 'definition' => [
                     'type' => 'TIME',
-                    'length' => null,
-                    'nullable' => true,
-                ],
-            ],
-            'expectedTabeDefinitionColumnClass' => NativeTableDefinitionColumn::class,
-        ];
-
-        yield 'exasol native' => [
-            'columnName' => 'testTime',
-            'columnMetadata' => (new Exasol('TIMESTAMP'))->toMetadata(),
-            'tableMetadata' => [
-                [
-                    'key' => 'KBC.datatype.backend',
-                    'value' => 'exasol',
-                ],
-            ],
-            'backendType' => 'exasol',
-            'enforceBaseTypes' => false,
-            'expectedSerialisation' => [
-                'name' => 'testTime',
-                'definition' => [
-                    'type' => 'TIMESTAMP',
                     'length' => null,
                     'nullable' => true,
                 ],

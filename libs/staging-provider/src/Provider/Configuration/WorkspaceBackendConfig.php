@@ -33,13 +33,8 @@ readonly class WorkspaceBackendConfig
     public function getStorageApiWorkspaceType(): string
     {
         return match ($this->stagingType) {
-            AbstractStrategyFactory::WORKSPACE_ABS => 'abs',
             AbstractStrategyFactory::WORKSPACE_BIGQUERY => 'bigquery',
-            AbstractStrategyFactory::WORKSPACE_EXASOL => 'exasol',
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT => 'redshift',
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => 'snowflake',
-            AbstractStrategyFactory::WORKSPACE_SYNAPSE => 'synapse',
-            AbstractStrategyFactory::WORKSPACE_TERADATA => 'teradata',
 
             // @phpstan-ignore-next-line phpdoc is not reliable, stagingType can be any string
             default => throw new StagingProviderException(sprintf('Unknown staging type "%s"', $this->stagingType)),

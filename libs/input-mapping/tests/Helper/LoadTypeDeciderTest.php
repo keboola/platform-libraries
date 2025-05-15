@@ -29,7 +29,7 @@ class LoadTypeDeciderTest extends TestCase
             [
                 'id' => 'foo.bar',
                 'name' => 'bar',
-                'bucket' => ['backend' => 'redshift'],
+                'bucket' => ['backend' => 'bigquery'],
                 'isAlias' => false,
             ],
             'snowflake',
@@ -43,7 +43,7 @@ class LoadTypeDeciderTest extends TestCase
                 'bucket' => ['backend' => 'snowflake'],
                 'isAlias' => false,
             ],
-            'redshift',
+            'bigquery',
             [],
             false,
         ];
@@ -70,17 +70,6 @@ class LoadTypeDeciderTest extends TestCase
             'snowflake',
             ['overwrite' => false],
             true,
-        ];
-        yield 'redshift' => [
-            [
-                'id' => 'foo.bar',
-                'name' => 'bar',
-                'bucket' => ['backend' => 'redshift'],
-                'isAlias' => false,
-            ],
-            'redshift',
-            [],
-            false,
         ];
         yield 'alias table' => [
             [

@@ -13,20 +13,13 @@
     <testsuites>
         <testsuite name="CommonPart1">
             <directory>tests</directory>
-            <exclude>tests/Functional/DownloadFilesAbsWorkspaceTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesAdaptiveTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesBranchTest.php</exclude>
             <exclude>tests/Functional/DownloadFilesAdaptiveBranchTest.php</exclude>
-            <exclude>tests/Functional/DownloadFilesRedshiftTest.php</exclude>
-            <exclude>tests/Functional/DownloadTablesRedshiftTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesDefaultTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesS3DefaultTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesABSDefaultTest.php</exclude>
-            <exclude>tests/Functional/DownloadTablesWorkspaceAbsTest.php</exclude>
-            <exclude>tests/Functional/DownloadTablesWorkspaceRedshiftTest.php</exclude>
-            <exclude>tests/Functional/DownloadTablesSynapseTest.php</exclude>
-            <exclude>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesBigQueryTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesWorkspaceBigQueryTest.php</exclude>
             <exclude>tests/Table/Strategy/BigQueryTest.php</exclude>
@@ -41,19 +34,10 @@
             <file>tests/Functional/DownloadFilesAdaptiveBranchTest.php</file>
         </testsuite>
         <testsuite name="Aws">
-            <file>tests/Functional/DownloadFilesRedshiftTest.php</file>
-            <file>tests/Functional/DownloadTablesRedshiftTest.php</file>
-            <file>tests/Functional/DownloadTablesWorkspaceRedshiftTest.php</file>
             <file>tests/Functional/DownloadTablesS3DefaultTest.php</file>
         </testsuite>
         <testsuite name="Azure">
             <file>tests/Functional/DownloadTablesABSDefaultTest.php</file>
-        </testsuite>
-        <testsuite name="AzureSynapse">
-            <file>tests/Functional/DownloadTablesSynapseTest.php</file>
-            <file>tests/Functional/DownloadTablesWorkspaceSynapseTest.php</file>
-            <file>tests/Functional/DownloadTablesWorkspaceAbsTest.php</file>
-            <file>tests/Functional/DownloadFilesAbsWorkspaceTest.php</file>
         </testsuite>
         <testsuite name="BigQuery">
             <file>tests/Table/Strategy/BigQueryTest.php</file>

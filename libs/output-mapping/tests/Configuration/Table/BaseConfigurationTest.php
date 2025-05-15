@@ -276,19 +276,10 @@ class BaseConfigurationTest extends TestCase
                         'base' => [
                             'type' => 'string',
                         ],
-                        'redshift' => [
-                            'type' => 'string',
-                        ],
                         'snowflake' => [
                             'type' => 'string',
                         ],
-                        'synapse' => [
-                            'type' => 'string',
-                        ],
                         'bigquery' => [
-                            'type' => 'string',
-                        ],
-                        'exasol' => [
                             'type' => 'string',
                         ],
                     ],
@@ -337,19 +328,10 @@ class BaseConfigurationTest extends TestCase
                         'base' => [
                             'type' => 'string',
                         ],
-                        'redshift' => [
-                            'type' => 'string',
-                        ],
                         'snowflake' => [
                             'type' => 'string',
                         ],
-                        'synapse' => [
-                            'type' => 'string',
-                        ],
                         'bigquery' => [
-                            'type' => 'string',
-                        ],
-                        'exasol' => [
                             'type' => 'string',
                         ],
                     ],

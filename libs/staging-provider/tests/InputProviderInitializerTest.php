@@ -5,22 +5,16 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\File\Strategy\ABSWorkspace as InputFileABSWorkspace;
 use Keboola\InputMapping\File\Strategy\Local as InputFileLocal;
 use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as InputAbs;
-use Keboola\InputMapping\Table\Strategy\ABSWorkspace as InputTableABSWorkspace;
 use Keboola\InputMapping\Table\Strategy\BigQuery as InputTableBigQuery;
-use Keboola\InputMapping\Table\Strategy\Exasol as InputTableExasol;
 use Keboola\InputMapping\Table\Strategy\Local as InputTableLocal;
-use Keboola\InputMapping\Table\Strategy\Redshift as InputTableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as InputS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as InputTableSnowflake;
-use Keboola\InputMapping\Table\Strategy\Synapse as InputTableSynapse;
-use Keboola\InputMapping\Table\Strategy\Teradata as InputTableTeradata;
 use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\StagingProvider\InputProviderInitializer;
 use Keboola\StagingProvider\Provider\Configuration\NetworkPolicy;
@@ -93,83 +87,10 @@ class InputProviderInitializerTest extends TestCase
             $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::S3, '', new InputTableStateList([])),
         );
 
-        $this->expectExceptionMessage('The project does not support "workspace-redshift" table input backend.');
+        $this->expectExceptionMessage('The project does not support "workspace-bigquery" table input backend.');
         $this->expectException(InvalidInputException::class);
         $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            '',
-            new InputTableStateList([]),
-        );
-    }
-
-    public function testInitializeInputRedshift(): void
-    {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $stagingFactory = new InputStrategyFactory(
-            $clientWrapper,
-            new NullLogger(),
-            'json',
-        );
-
-        $workspaceStagingProvider = new NewWorkspaceProvider(
-            new Workspaces($clientWrapper->getBasicClient()),
-            new Components($clientWrapper->getBasicClient()),
-            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
-            new WorkspaceBackendConfig(
-                AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-                null,
-                null,
-                NetworkPolicy::SYSTEM,
-                null,
-            ),
-            'my-test-component',
-            'my-test-config',
-        );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
-        $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
-
-        $init->initializeProviders(
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'aws',
-                ],
-            ],
-        );
-
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::LOCAL, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([])),
-        );
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-                new InputFileStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputTableRedshift::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
-        $this->expectException(InvalidInputException::class);
-        $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_BIGQUERY,
             '',
             new InputTableStateList([]),
         );
@@ -206,8 +127,6 @@ class InputProviderInitializerTest extends TestCase
             AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
             [
                 'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
                     'hasSnowflake' => true,
                     'fileStorageProvider' => 'aws',
                 ],
@@ -238,310 +157,10 @@ class InputProviderInitializerTest extends TestCase
             ),
         );
 
-        $this->expectExceptionMessage('The project does not support "workspace-redshift" table input backend.');
+        $this->expectExceptionMessage('The project does not support "workspace-bigquery" table input backend.');
         $this->expectException(InvalidInputException::class);
         $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_REDSHIFT,
-            '',
-            new InputTableStateList([]),
-        );
-    }
-
-    public function testInitializeInputSynapse(): void
-    {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $stagingFactory = new InputStrategyFactory(
-            $clientWrapper,
-            new NullLogger(),
-            'json',
-        );
-
-        $workspaceStagingProvider = new NewWorkspaceProvider(
-            new Workspaces($clientWrapper->getBasicClient()),
-            new Components($clientWrapper->getBasicClient()),
-            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
-            new WorkspaceBackendConfig(
-                AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-                null,
-                null,
-                NetworkPolicy::SYSTEM,
-                null,
-            ),
-            'my-test-component',
-            'my-test-config',
-        );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
-        $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
-
-        $init->initializeProviders(
-            AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-        );
-
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::LOCAL, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::LOCAL,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-                new InputFileStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputTableSynapse::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_SYNAPSE,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
-        $this->expectException(InvalidInputException::class);
-        $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            '',
-            new InputTableStateList([]),
-        );
-    }
-
-    public function testInitializeInputAbs(): void
-    {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $stagingFactory = new InputStrategyFactory(
-            $clientWrapper,
-            new NullLogger(),
-            'json',
-        );
-
-        $workspaceStagingProvider = new NewWorkspaceProvider(
-            new Workspaces($clientWrapper->getBasicClient()),
-            new Components($clientWrapper->getBasicClient()),
-            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
-            new WorkspaceBackendConfig(
-                AbstractStrategyFactory::WORKSPACE_ABS,
-                null,
-                null,
-                NetworkPolicy::SYSTEM,
-                null,
-            ),
-            'my-test-component',
-            'my-test-config',
-        );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
-        $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
-
-        $init->initializeProviders(
-            AbstractStrategyFactory::WORKSPACE_ABS,
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-        );
-
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::LOCAL, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([])),
-        );
-        self::assertInstanceOf(
-            InputFileABSWorkspace::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::WORKSPACE_ABS, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableABSWorkspace::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_ABS,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
-        $this->expectException(InvalidInputException::class);
-        $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            '',
-            new InputTableStateList([]),
-        );
-    }
-
-    public function testInitializeInputExasol(): void
-    {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $stagingFactory = new InputStrategyFactory(
-            $clientWrapper,
-            new NullLogger(),
-            'json',
-        );
-
-        $workspaceStagingProvider = new NewWorkspaceProvider(
-            new Workspaces($clientWrapper->getBasicClient()),
-            new Components($clientWrapper->getBasicClient()),
-            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
-            new WorkspaceBackendConfig(
-                AbstractStrategyFactory::WORKSPACE_EXASOL,
-                null,
-                null,
-                NetworkPolicy::SYSTEM,
-                null,
-            ),
-            'my-test-component',
-            'my-test-config',
-        );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
-        $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
-
-        $init->initializeProviders(
-            AbstractStrategyFactory::WORKSPACE_EXASOL,
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'hasExasol' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-        );
-
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::LOCAL, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, '', new InputTableStateList([])),
-        );
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_EXASOL,
-                new InputFileStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputTableExasol::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_EXASOL,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
-        $this->expectException(InvalidInputException::class);
-        $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-            '',
-            new InputTableStateList([]),
-        );
-    }
-
-    public function testInitializeInputTeradata(): void
-    {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-        );
-        $stagingFactory = new InputStrategyFactory(
-            $clientWrapper,
-            new NullLogger(),
-            'json',
-        );
-
-        $workspaceStagingProvider = new NewWorkspaceProvider(
-            new Workspaces($clientWrapper->getBasicClient()),
-            new Components($clientWrapper->getBasicClient()),
-            new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
-            new WorkspaceBackendConfig(
-                AbstractStrategyFactory::WORKSPACE_TERADATA,
-                null,
-                null,
-                NetworkPolicy::SYSTEM,
-                null,
-            ),
-            'my-test-component',
-            'my-test-config',
-        );
-        $localStagingProvider = new LocalStagingProvider('/tmp/random/data');
-        $init = new InputProviderInitializer($stagingFactory, $workspaceStagingProvider, $localStagingProvider);
-
-        $init->initializeProviders(
-            AbstractStrategyFactory::WORKSPACE_TERADATA,
-            [
-                'owner' => [
-                    'hasSynapse' => true,
-                    'hasRedshift' => true,
-                    'hasSnowflake' => true,
-                    'hasExasol' => true,
-                    'hasTeradata' => true,
-                    'fileStorageProvider' => 'azure',
-                ],
-            ],
-        );
-
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(AbstractStrategyFactory::LOCAL, new InputFileStateList([])),
-        );
-        self::assertInstanceOf(
-            InputTableLocal::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::LOCAL,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputFileLocal::class,
-            $stagingFactory->getFileInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_TERADATA,
-                new InputFileStateList([]),
-            ),
-        );
-        self::assertInstanceOf(
-            InputTableTeradata::class,
-            $stagingFactory->getTableInputStrategy(
-                AbstractStrategyFactory::WORKSPACE_TERADATA,
-                '',
-                new InputTableStateList([]),
-            ),
-        );
-
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table input backend.');
-        $this->expectException(InvalidInputException::class);
-        $stagingFactory->getTableInputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            AbstractStrategyFactory::WORKSPACE_BIGQUERY,
             '',
             new InputTableStateList([]),
         );

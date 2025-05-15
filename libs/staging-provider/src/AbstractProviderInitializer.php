@@ -38,64 +38,12 @@ abstract class AbstractProviderInitializer
 
     protected function addWorkspaceProviders(string $stagingType, array $tokenInfo): void
     {
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_REDSHIFT &&
-            $tokenInfo['owner']['hasRedshift']
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_REDSHIFT => new Scope([Scope::TABLE_DATA]),
-                ],
-            );
-        }
-
         if ($stagingType === AbstractStrategyFactory::WORKSPACE_SNOWFLAKE &&
             $tokenInfo['owner']['hasSnowflake']
         ) {
             $this->addWorkspaceProvider(
                 [
                     AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope([Scope::TABLE_DATA]),
-                ],
-            );
-        }
-
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_SYNAPSE &&
-            $tokenInfo['owner']['hasSynapse']
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_SYNAPSE => new Scope([Scope::TABLE_DATA]),
-                ],
-            );
-        }
-
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_ABS &&
-            $tokenInfo['owner']['fileStorageProvider'] === 'azure'
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_ABS => new Scope(
-                        [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA],
-                    ),
-                ],
-            );
-        }
-
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_EXASOL &&
-            $tokenInfo['owner']['hasExasol']
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_EXASOL => new Scope([Scope::TABLE_DATA]),
-                ],
-            );
-        }
-
-        if ($stagingType === AbstractStrategyFactory::WORKSPACE_TERADATA &&
-            $tokenInfo['owner']['hasTeradata']
-        ) {
-            $this->addWorkspaceProvider(
-                [
-                    AbstractStrategyFactory::WORKSPACE_TERADATA => new Scope([Scope::TABLE_DATA]),
                 ],
             );
         }

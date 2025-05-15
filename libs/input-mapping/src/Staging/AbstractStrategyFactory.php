@@ -13,21 +13,12 @@ abstract class AbstractStrategyFactory
     public const ABS = 'abs';
     public const LOCAL = 'local';
     public const S3 = 's3';
-    public const WORKSPACE_ABS = 'workspace-abs';
-    public const WORKSPACE_REDSHIFT = 'workspace-redshift';
+
     public const WORKSPACE_SNOWFLAKE = 'workspace-snowflake';
-    public const WORKSPACE_SYNAPSE = 'workspace-synapse';
-    public const WORKSPACE_EXASOL = 'workspace-exasol';
-    public const WORKSPACE_TERADATA = 'workspace-teradata';
     public const WORKSPACE_BIGQUERY = 'workspace-bigquery';
 
     public const WORKSPACE_TYPES = [
-        self::WORKSPACE_ABS,
-        self::WORKSPACE_REDSHIFT,
         self::WORKSPACE_SNOWFLAKE,
-        self::WORKSPACE_SYNAPSE,
-        self::WORKSPACE_EXASOL,
-        self::WORKSPACE_TERADATA,
         self::WORKSPACE_BIGQUERY,
     ];
 

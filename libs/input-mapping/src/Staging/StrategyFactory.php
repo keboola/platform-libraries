@@ -6,21 +6,15 @@ namespace Keboola\InputMapping\Staging;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\File\Strategy\ABSWorkspace as FileABSWorkspace;
 use Keboola\InputMapping\File\Strategy\Local as FileLocal;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Strategy\ABS as TableABS;
-use Keboola\InputMapping\Table\Strategy\ABSWorkspace as TableABSWorkspace;
 use Keboola\InputMapping\Table\Strategy\BigQuery as TableBigQuery;
-use Keboola\InputMapping\Table\Strategy\Exasol as TableExasol;
 use Keboola\InputMapping\Table\Strategy\Local as TableLocal;
-use Keboola\InputMapping\Table\Strategy\Redshift as TableRedshift;
 use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
-use Keboola\InputMapping\Table\Strategy\Synapse as TableSynapse;
-use Keboola\InputMapping\Table\Strategy\Teradata as TableTeradata;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 
 class StrategyFactory extends AbstractStrategyFactory
@@ -50,35 +44,10 @@ class StrategyFactory extends AbstractStrategyFactory
                     FileLocal::class,
                     TableS3::class,
                 ),
-                self::WORKSPACE_ABS => new InputMappingStagingDefinition(
-                    self::WORKSPACE_ABS,
-                    FileABSWorkspace::class,
-                    TableABSWorkspace::class,
-                ),
-                self::WORKSPACE_REDSHIFT => new InputMappingStagingDefinition(
-                    self::WORKSPACE_REDSHIFT,
-                    FileLocal::class,
-                    TableRedshift::class,
-                ),
                 self::WORKSPACE_SNOWFLAKE => new InputMappingStagingDefinition(
                     self::WORKSPACE_SNOWFLAKE,
                     FileLocal::class,
                     TableSnowflake::class,
-                ),
-                self::WORKSPACE_SYNAPSE => new InputMappingStagingDefinition(
-                    self::WORKSPACE_SYNAPSE,
-                    FileLocal::class,
-                    TableSynapse::class,
-                ),
-                self::WORKSPACE_EXASOL => new InputMappingStagingDefinition(
-                    self::WORKSPACE_EXASOL,
-                    FileLocal::class,
-                    TableExasol::class,
-                ),
-                self::WORKSPACE_TERADATA => new InputMappingStagingDefinition(
-                    self::WORKSPACE_TERADATA,
-                    FileLocal::class,
-                    TableTeradata::class,
                 ),
                 self::WORKSPACE_BIGQUERY => new InputMappingStagingDefinition(
                     self::WORKSPACE_BIGQUERY,

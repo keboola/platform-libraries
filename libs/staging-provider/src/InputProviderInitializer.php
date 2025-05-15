@@ -40,22 +40,7 @@ class InputProviderInitializer extends AbstractProviderInitializer
                 AbstractStrategyFactory::ABS => new Scope(
                     [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_DATA, Scope::TABLE_METADATA],
                 ),
-                AbstractStrategyFactory::WORKSPACE_REDSHIFT => new Scope(
-                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA],
-                ),
-                AbstractStrategyFactory::WORKSPACE_SYNAPSE => new Scope(
-                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA],
-                ),
                 AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => new Scope(
-                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA],
-                ),
-                AbstractStrategyFactory::WORKSPACE_ABS => new Scope(
-                    [Scope::TABLE_METADATA],
-                ),
-                AbstractStrategyFactory::WORKSPACE_EXASOL => new Scope(
-                    [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA],
-                ),
-                AbstractStrategyFactory::WORKSPACE_TERADATA => new Scope(
                     [Scope::FILE_DATA, Scope::FILE_METADATA, Scope::TABLE_METADATA],
                 ),
                 AbstractStrategyFactory::WORKSPACE_BIGQUERY => new Scope(

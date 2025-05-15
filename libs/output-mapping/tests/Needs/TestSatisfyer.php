@@ -137,8 +137,6 @@ class TestSatisfyer
      * @return array{
      *      emptyOutputBucketId: ?string,
      *      emptyInputBucketId: ?string,
-     *      emptyRedshiftOutputBucketId: ?string,
-     *      emptyRedshiftInputBucketId: ?string,
      *      testBucketId: ?string,
      *      firstTableId: ?string,
      *      secondTableId: ?string,
@@ -154,20 +152,10 @@ class TestSatisfyer
     ): array {
         $emptyOutputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyOutputBucket::class);
         $emptyInputBucket = self::getAttribute($reflection, $methodName, NeedsEmptyInputBucket::class);
-        $emptyRedshiftOutputBucket = self::getAttribute(
-            $reflection,
-            $methodName,
-            NeedsEmptyRedshiftOutputBucket::class,
-        );
         $emptyBigqueryOutputBucket = self::getAttribute(
             $reflection,
             $methodName,
             NeedsEmptyBigqueryOutputBucket::class,
-        );
-        $emptyRedshiftInputBucket = self::getAttribute(
-            $reflection,
-            $methodName,
-            NeedsEmptyRedshiftInputBucket::class,
         );
 
         $removeBucket = self::getAttribute($reflection, $methodName, NeedsRemoveBucket::class);
@@ -197,30 +185,12 @@ class TestSatisfyer
             $emptyInputBucketId = self::ensureEmptyBucket($clientWrapper, $testResourceName, Client::STAGE_IN);
         }
 
-        if ($emptyRedshiftOutputBucket !== null) {
-            $emptyRedshiftOutputBucketId = self::ensureEmptyBucket(
-                $clientWrapper,
-                $testResourceName,
-                Client::STAGE_OUT,
-                'redshift',
-            );
-        }
-
         if ($emptyBigqueryOutputBucket !== null) {
             $emptyBigqueryOutputBucketId = self::ensureEmptyBucket(
                 $clientWrapper,
                 $testResourceName,
                 Client::STAGE_OUT,
                 'bigquery',
-            );
-        }
-
-        if ($emptyRedshiftInputBucket !== null) {
-            $emptyRedshiftInputBucketId = self::ensureEmptyBucket(
-                $clientWrapper,
-                $testResourceName,
-                Client::STAGE_IN,
-                'redshift',
             );
         }
 
@@ -299,14 +269,8 @@ class TestSatisfyer
         return [
             'emptyOutputBucketId' => !empty($emptyOutputBucketId) ? (string) $emptyOutputBucketId : null,
             'emptyInputBucketId' => !empty($emptyInputBucketId) ? (string) $emptyInputBucketId : null,
-            'emptyRedshiftOutputBucketId' => !empty($emptyRedshiftOutputBucketId) ?
-                (string) $emptyRedshiftOutputBucketId :
-                null,
             'emptyBigqueryOutputBucketId' => !empty($emptyBigqueryOutputBucketId) ?
                 (string) $emptyBigqueryOutputBucketId :
-                null,
-            'emptyRedshiftInputBucketId' => !empty($emptyRedshiftInputBucketId) ?
-                (string) $emptyRedshiftInputBucketId :
                 null,
             'testBucketId' => !empty($testBucketId) ? $testBucketId : null,
             'firstTableId' => !empty($tableIds[0]) ? (string) $tableIds[0] : null,

@@ -17,11 +17,8 @@ abstract class BaseConfiguration extends Configuration
 
     private const ALLOWED_DATA_TYPES_BACKEND = [
         'base',
-        'redshift',
         'snowflake',
-        'synapse',
         'bigquery',
-        'exasol',
     ];
 
     private const ALLOWED_DELETE_WHERE_OPERATORS = ['eq', 'ne'];

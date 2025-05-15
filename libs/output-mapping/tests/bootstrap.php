@@ -17,12 +17,3 @@ foreach ($requiredEnvs as $env) {
         throw new Exception(sprintf('Environment variable "%s" is empty', $env));
     }
 }
-
-if (getenv('RUN_SYNAPSE_TESTS')) {
-    if (empty(getenv('SYNAPSE_STORAGE_API_TOKEN'))) {
-        throw new Exception('SYNAPSE_STORAGE_API_TOKEN must be set for synapse tests');
-    }
-    if (empty(getenv('SYNAPSE_STORAGE_API_URL'))) {
-        throw new Exception('SYNAPSE_STORAGE_API_URL must be set for synapse tests');
-    }
-}

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Table;
 
-use Generator;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Table\Result\Metrics;
 
@@ -21,13 +20,11 @@ class Result
     }
 
     /**
-     * @return Generator<TableInfo>
+     * @return TableInfo[]
      */
-    public function getTables(): Generator
+    public function getTables(): array
     {
-        foreach ($this->tables as $table) {
-            yield $table;
-        }
+        return $this->tables;
     }
 
     public function setMetrics(Metrics $metrics): void

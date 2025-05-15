@@ -56,6 +56,9 @@ class TableInfo
         return $this->sourceTableId;
     }
 
+    /**
+     * @return Column[]
+     */
     public function getColumns(): array
     {
         return $this->columns;

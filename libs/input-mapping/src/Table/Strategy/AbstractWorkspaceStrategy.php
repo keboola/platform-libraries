@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
+use InvalidArgumentException;
 use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
+use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -20,25 +23,27 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     private const LOAD_TYPE_COPY = 'copy';
     private const LOAD_TYPE_VIEW = 'view';
 
+    protected readonly WorkspaceStagingInterface $dataStorage;
+    protected readonly ManifestCreator $manifestCreator;
+
     /**
      * @param Adapter::FORMAT_* $format
      */
     public function __construct(
-        ClientWrapper $clientWrapper,
-        LoggerInterface $logger,
-        protected readonly WorkspaceStagingInterface $dataStorage,
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        StagingInterface $dataStorage,
         protected readonly FileStagingInterface $metadataStorage,
-        InputTableStateList $tablesState,
-        string $destination,
-        string $format = 'json',
+        protected readonly InputTableStateList $tablesState,
+        protected readonly string $destination,
+        protected readonly string $format = 'json',
     ) {
-        parent::__construct(
-            $clientWrapper,
-            $logger,
-            $tablesState,
-            $destination,
-            $format,
-        );
+        if (!$dataStorage instanceof WorkspaceStagingInterface) {
+            throw new InvalidArgumentException('Data storage must be instance of WorkspaceStagingInterface');
+        }
+
+        $this->dataStorage = $dataStorage;
+        $this->manifestCreator = new ManifestCreator();
     }
 
     abstract protected function getWorkspaceType(): string;

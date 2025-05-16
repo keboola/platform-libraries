@@ -18,7 +18,9 @@ use Keboola\OutputMapping\SourcesValidator\WorkspaceSourcesValidator;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -27,20 +29,26 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
 
-abstract class AbstractWorkspaceTableStrategy extends AbstractTableStrategy
+abstract class AbstractWorkspaceTableStrategy implements StrategyInterface
 {
+    protected readonly WorkspaceStagingInterface $dataStorage;
+
     /**
      * @param Adapter::FORMAT_* $format
      */
     public function __construct(
-        ClientWrapper $clientWrapper,
-        LoggerInterface $logger,
-        protected readonly WorkspaceStagingInterface $dataStorage,
+        protected readonly ClientWrapper $clientWrapper,
+        protected readonly LoggerInterface $logger,
+        StagingInterface $dataStorage,
         protected readonly FileStagingInterface $metadataStorage,
-        string $format,
-        bool $isFailedJob = false,
+        protected readonly string $format,
+        protected readonly bool $isFailedJob = false,
     ) {
-        parent::__construct($clientWrapper, $logger, $format, $isFailedJob);
+        if (!$dataStorage instanceof WorkspaceStagingInterface) {
+            throw new InvalidArgumentException('Data storage must be instance of WorkspaceStagingInterface');
+        }
+
+        $this->dataStorage = $dataStorage;
     }
 
     public function getDataStorage(): WorkspaceStagingInterface

@@ -73,9 +73,8 @@ class StrategyFactory extends AbstractStrategyMap
         $stagingType = $this->stagingProvider->getStagingType();
         $strategyConfiguration = $this->getStagingDefinition($stagingType);
         $this->logger->info(sprintf('Using "%s" file input staging.', $strategyConfiguration->type->value));
-        $className = $strategyConfiguration->fileStrategyClass;
 
-        return new $className(
+        return new ($strategyConfiguration->fileStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getFileDataStaging(),
@@ -92,9 +91,8 @@ class StrategyFactory extends AbstractStrategyMap
         $stagingType = $this->stagingProvider->getStagingType();
         $strategyConfiguration = $this->getStagingDefinition($stagingType);
         $this->logger->info(sprintf('Using "%s" table input staging.', $strategyConfiguration->type->value));
-        $className = $strategyConfiguration->tableStrategyClass;
 
-        return new $className(
+        return new ($strategyConfiguration->tableStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getTableDataStaging(),

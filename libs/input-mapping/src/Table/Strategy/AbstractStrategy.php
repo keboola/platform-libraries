@@ -4,33 +4,17 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
-use Keboola\InputMapping\Configuration\Adapter;
-use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\InputMapping\Table\StrategyInterface;
-use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
-    protected ManifestCreator $manifestCreator;
-
-    /**
-     * @param Adapter::FORMAT_* $format
-     */
-    public function __construct(
-        protected readonly ClientWrapper $clientWrapper,
-        protected readonly LoggerInterface $logger,
-        protected readonly InputTableStateList $tablesState,
-        protected readonly string $destination,
-        protected readonly string $format = 'json',
-    ) {
-        $this->manifestCreator = new ManifestCreator();
-    }
+    protected readonly LoggerInterface $logger; // @phpstan-ignore-line initialized in child classes
 
     protected function ensurePathDelimiter(string $path): string
     {

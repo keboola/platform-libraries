@@ -4,66 +4,56 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Staging;
 
-use InvalidArgumentException;
-use Keboola\OutputMapping\Writer\File\Strategy\Local;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Writer\File\Strategy\Local as FileLocal;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 use Keboola\StagingProvider\Mapping\AbstractStrategyMap;
-use Keboola\StagingProvider\Mapping\StagingDefinition;
 use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingClass;
-use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-/**
- * @extends AbstractStrategyMap<FileStrategyInterface, TableStrategyInterface>
- */
 class StrategyFactory extends AbstractStrategyMap
 {
     public function __construct(
-        private readonly StagingProvider $stagingProvider,
+        StagingType $stagingType,
+        ?WorkspaceStagingInterface $stagingWorkspace,
+        ?FileStagingInterface $localStaging,
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
         private readonly FileFormat $format,
     ) {
-    }
-
-    protected function provideStagingDefinitions(): iterable
-    {
-        yield new StagingDefinition(
-            type: StagingType::Local,
-            fileStrategyClass: Local::class,
-            tableStrategyClass: LocalTableStrategy::class,
+        parent::__construct(
+            $stagingType,
+            $stagingWorkspace,
+            $localStaging,
         );
 
-        yield new StagingDefinition(
-            type: StagingType::WorkspaceSnowflake,
-            fileStrategyClass: Local::class,
-            tableStrategyClass: SqlWorkspaceTableStrategy::class,
-        );
-
-        yield new StagingDefinition(
-            type: StagingType::WorkspaceBigquery,
-            fileStrategyClass: Local::class,
-            tableStrategyClass: SqlWorkspaceTableStrategy::class,
-        );
+        if ($stagingType->getStagingClass() === StagingClass::File &&
+            $stagingType !== StagingType::Local
+        ) {
+            throw new InvalidOutputException(sprintf(
+                'Staging type "%s" is not supported for table output.',
+                $stagingType->value,
+            ));
+        }
     }
 
     public function getFileOutputStrategy(): FileStrategyInterface
     {
-        $stagingType = $this->stagingProvider->getStagingType();
-        $stagingDefinition = $this->getStagingDefinition($stagingType);
-        $this->logger->info(sprintf('Using "%s" file output staging.', $stagingDefinition->type->value));
+        $this->logger->info(sprintf('Using "%s" file output staging.', $this->stagingType->value));
 
-        return new ($stagingDefinition->fileStrategyClass)(
+        return new ($this->resolveFileStrategyClass())(
             $this->clientWrapper,
             $this->logger,
-            $this->stagingProvider->getFileDataStaging(),
-            $this->stagingProvider->getFileMetadataStaging(),
+            $this->getFileDataStaging(),
+            $this->getFileMetadataStaging(),
             $this->format,
         );
     }
@@ -71,24 +61,49 @@ class StrategyFactory extends AbstractStrategyMap
     public function getTableOutputStrategy(
         bool $isFailedJob = false,
     ): TableStrategyInterface {
-        $stagingType = $this->stagingProvider->getStagingType();
-        if ($stagingType->getStagingClass() === StagingClass::File && $stagingType !== StagingType::Local) {
-            throw new InvalidArgumentException(sprintf(
-                'Staging type "%s" is not supported for table output.',
-                $stagingType->value,
-            ));
-        }
+        $this->logger->info(sprintf('Using "%s" table output staging.', $this->stagingType->value));
 
-        $stagingDefinition = $this->getStagingDefinition($stagingType);
-        $this->logger->info(sprintf('Using "%s" table output staging.', $stagingDefinition->type->value));
-
-        return new ($stagingDefinition->tableStrategyClass)(
+        return new ($this->resolveTableStrategyClass())(
             $this->clientWrapper,
             $this->logger,
-            $this->stagingProvider->getTableDataStaging(),
-            $this->stagingProvider->getTableMetadataStaging(),
+            $this->getTableDataStaging(),
+            $this->getTableMetadataStaging(),
             $this->format,
             $isFailedJob,
         );
+    }
+
+    /**
+     * @return class-string<FileStrategyInterface>
+     */
+    private function resolveFileStrategyClass(): string
+    {
+        return match ($this->stagingType) {
+            StagingType::Local,
+            StagingType::WorkspaceSnowflake,
+            StagingType::WorkspaceBigquery => FileLocal::class,
+
+            default => throw new InvalidOutputException(sprintf(
+                'Output mapping on type "%s" is not supported.',
+                $this->stagingType->value,
+            )),
+        };
+    }
+
+    /**
+     * @return class-string<TableStrategyInterface>
+     */
+    public function resolveTableStrategyClass(): string
+    {
+        return match ($this->stagingType) {
+            StagingType::Local => LocalTableStrategy::class,
+            StagingType::WorkspaceSnowflake => SqlWorkspaceTableStrategy::class,
+            StagingType::WorkspaceBigquery => SqlWorkspaceTableStrategy::class,
+
+            default => throw new InvalidOutputException(sprintf(
+                'Output mapping on type "%s" is not supported.',
+                $this->stagingType->value,
+            )),
+        };
     }
 }

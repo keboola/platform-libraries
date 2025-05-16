@@ -4,49 +4,74 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Mapping;
 
-use Keboola\StagingProvider\Exception\InvalidStagingConfiguration;
+use Keboola\StagingProvider\Exception\NoStagingAvailableException;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingClass;
+use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 
-/**
- * @template-covariant T_FILE_STRATEGY of object
- * @template-covariant T_TABLE_STRATEGY of object
- */
 abstract class AbstractStrategyMap
 {
-    private ?array $strategyMap = null;
+    private readonly StagingInterface $tableDataStaging;
 
-    /**
-     * @return iterable<StagingDefinition<T_FILE_STRATEGY, T_TABLE_STRATEGY>>
-     */
-    abstract protected function provideStagingDefinitions(): iterable;
-
-    /**
-     * @return array<non-empty-string, StagingDefinition<T_FILE_STRATEGY, T_TABLE_STRATEGY>>
-     */
-    public function getStrategyMap(): array
-    {
-        if ($this->strategyMap === null) {
-            $this->strategyMap = [];
-            foreach ($this->provideStagingDefinitions() as $definition) {
-                $this->strategyMap[$definition->type->value] = $definition;
-            }
-        }
-
-        return $this->strategyMap;
+    public function __construct(
+        protected readonly StagingType $stagingType,
+        ?WorkspaceStagingInterface $stagingWorkspace,
+        private readonly ?FileStagingInterface $localStaging,
+    ) {
+        $this->tableDataStaging = match ($stagingType->getStagingClass()) {
+            // TABLE_DATA for ABS and S3 is bound to LocalProvider because it requires no provider at all
+            StagingClass::File => $localStaging,
+            StagingClass::Workspace => $stagingWorkspace,
+        };
     }
 
-    /**
-     * @param StagingType $stagingType
-     * @return StagingDefinition<T_FILE_STRATEGY, T_TABLE_STRATEGY>
-     */
-    public function getStagingDefinition(StagingType $stagingType): StagingDefinition
+    public function getFileDataStaging(): StagingInterface
     {
-        return $this->getStrategyMap()[$stagingType->value] ?? throw new InvalidStagingConfiguration(
-            sprintf(
-                'Mapping on type "%s" is not supported. Supported types are "%s".',
-                $stagingType->value,
-                implode(', ', array_keys($this->getStrategyMap())),
-            ),
-        );
+        if ($this->localStaging === null) {
+            throw new NoStagingAvailableException(sprintf(
+                'Undefined file data provider in "%s" staging.',
+                $this->stagingType->name,
+            ));
+        }
+
+        return $this->localStaging;
+    }
+
+    public function getFileMetadataStaging(): StagingInterface
+    {
+        if ($this->localStaging === null) {
+            throw new NoStagingAvailableException(sprintf(
+                'Undefined file metadata provider in "%s" staging.',
+                $this->stagingType->name,
+            ));
+        }
+
+        return $this->localStaging;
+    }
+
+    public function getTableDataStaging(): StagingInterface
+    {
+        if ($this->tableDataStaging === null) {
+            throw new NoStagingAvailableException(sprintf(
+                'Undefined table data provider in "%s" staging.',
+                $this->stagingType->name,
+            ));
+        }
+
+        return $this->tableDataStaging;
+    }
+
+    public function getTableMetadataStaging(): StagingInterface
+    {
+        if ($this->localStaging === null) {
+            throw new NoStagingAvailableException(sprintf(
+                'Undefined table metadata provider in "%s" staging.',
+                $this->stagingType->name,
+            ));
+        }
+
+        return $this->localStaging;
     }
 }

@@ -10,17 +10,17 @@ use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 
 class StagingProvider
 {
-    private ?StagingInterface $tableDataStaging;
+    private readonly ?StagingInterface $tableDataStaging;
 
     public function __construct(
         private readonly StagingType $stagingType,
-        ?WorkspaceStagingInterface $stagingWorkspace,
+        ?WorkspaceStagingInterface $workspaceStaging,
         private readonly ?FileStagingInterface $localStaging,
     ) {
         $this->tableDataStaging = match ($stagingType->getStagingClass()) {
             // TABLE_DATA for ABS and S3 is bound to LocalProvider because it requires no provider at all
             StagingClass::File => $localStaging,
-            StagingClass::Workspace => $stagingWorkspace,
+            StagingClass::Workspace => $workspaceStaging,
         };
     }
 
@@ -75,10 +75,5 @@ class StagingProvider
         }
 
         return $this->localStaging;
-    }
-
-    public function getWorkspaceStaging(): ?WorkspaceStagingInterface
-    {
-        return $this->tableDataStaging instanceof WorkspaceStagingInterface ? $this->tableDataStaging : null;
     }
 }

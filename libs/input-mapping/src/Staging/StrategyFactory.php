@@ -15,41 +15,33 @@ use Keboola\InputMapping\Table\Strategy\Local as TableLocal;
 use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
 use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\StagingProvider\Mapping\AbstractStrategyMap;
 use Keboola\StagingProvider\Staging\File\FileFormat;
-use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class StrategyFactory extends AbstractStrategyMap
+class StrategyFactory
 {
     public function __construct(
-        StagingType $stagingType,
-        ?WorkspaceStagingInterface $stagingWorkspace,
-        ?FileStagingInterface $localStaging,
+        private readonly StagingProvider $stagingProvider,
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
         private readonly FileFormat $format,
     ) {
-        parent::__construct(
-            $stagingType,
-            $stagingWorkspace,
-            $localStaging,
-        );
     }
 
     public function getFileInputStrategy(
         InputFileStateList $fileStateList,
     ): FileStrategyInterface {
-        $this->logger->info(sprintf('Using "%s" file input staging.', $this->stagingType->value));
+        $stagingType = $this->stagingProvider->getStagingType();
+        $this->logger->info(sprintf('Using "%s" file input staging.', $stagingType->value));
 
-        return new ($this->resolveFileStrategyClass())(
+        return new ($this->resolveFileStrategyClass($stagingType))(
             $this->clientWrapper,
             $this->logger,
-            $this->getFileDataStaging(),
-            $this->getFileMetadataStaging(),
+            $this->stagingProvider->getFileDataStaging(),
+            $this->stagingProvider->getFileMetadataStaging(),
             $fileStateList,
             $this->format,
         );
@@ -59,13 +51,14 @@ class StrategyFactory extends AbstractStrategyMap
         string $destination,
         InputTableStateList $tablesState,
     ): TableStrategyInterface {
-        $this->logger->info(sprintf('Using "%s" table input staging.', $this->stagingType->value));
+        $stagingType = $this->stagingProvider->getStagingType();
+        $this->logger->info(sprintf('Using "%s" table input staging.', $stagingType->value));
 
-        return new ($this->resolveTableStrategyClass())(
+        return new ($this->resolveTableStrategyClass($stagingType))(
             $this->clientWrapper,
             $this->logger,
-            $this->getTableDataStaging(),
-            $this->getTableMetadataStaging(),
+            $this->stagingProvider->getTableDataStaging(),
+            $this->stagingProvider->getTableMetadataStaging(),
             $tablesState,
             $destination,
             $this->format,
@@ -75,19 +68,19 @@ class StrategyFactory extends AbstractStrategyMap
     /**
      * @return class-string<FileStrategyInterface>
      */
-    private function resolveFileStrategyClass(): string
+    private function resolveFileStrategyClass(StagingType $stagingType): string
     {
-        return match ($this->stagingType) {
+        return match ($stagingType) {
             StagingType::Local,
             StagingType::S3,
             StagingType::Abs,
             StagingType::WorkspaceSnowflake,
             StagingType::WorkspaceBigquery => FileLocal::class,
 
-            // @phpstan-ignore-next-line - keep the "default" eve though all staging types are covered
+            // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
             default => throw new InvalidInputException(sprintf(
                 'Input mapping on type "%s" is not supported.',
-                $this->stagingType->value,
+                $stagingType->value,
             )),
         };
     }
@@ -95,19 +88,19 @@ class StrategyFactory extends AbstractStrategyMap
     /**
      * @return class-string<TableStrategyInterface>
      */
-    public function resolveTableStrategyClass(): string
+    public function resolveTableStrategyClass(StagingType $stagingType): string
     {
-        return match ($this->stagingType) {
+        return match ($stagingType) {
             StagingType::Local => TableLocal::class,
             StagingType::S3 => TableS3::class,
             StagingType::Abs => TableABS::class,
             StagingType::WorkspaceSnowflake => TableSnowflake::class,
             StagingType::WorkspaceBigquery => TableBigQuery::class,
 
-            // @phpstan-ignore-next-line - keep the "default" eve though all staging types are covered
+            // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
             default => throw new InvalidInputException(sprintf(
                 'Input mapping on type "%s" is not supported.',
-                $this->stagingType->value,
+                $stagingType->value,
             )),
         };
     }

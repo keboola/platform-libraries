@@ -10,31 +10,22 @@ use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
-use Keboola\StagingProvider\Mapping\AbstractStrategyMap;
 use Keboola\StagingProvider\Staging\File\FileFormat;
-use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingClass;
+use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
-class StrategyFactory extends AbstractStrategyMap
+class StrategyFactory
 {
     public function __construct(
-        StagingType $stagingType,
-        ?WorkspaceStagingInterface $stagingWorkspace,
-        ?FileStagingInterface $localStaging,
+        private readonly StagingProvider $stagingProvider,
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
         private readonly FileFormat $format,
     ) {
-        parent::__construct(
-            $stagingType,
-            $stagingWorkspace,
-            $localStaging,
-        );
-
+        $stagingType = $this->stagingProvider->getStagingType();
         if ($stagingType->getStagingClass() === StagingClass::File &&
             $stagingType !== StagingType::Local
         ) {
@@ -47,13 +38,14 @@ class StrategyFactory extends AbstractStrategyMap
 
     public function getFileOutputStrategy(): FileStrategyInterface
     {
-        $this->logger->info(sprintf('Using "%s" file output staging.', $this->stagingType->value));
+        $stagingType = $this->stagingProvider->getStagingType();
+        $this->logger->info(sprintf('Using "%s" file output staging.', $stagingType->value));
 
-        return new ($this->resolveFileStrategyClass())(
+        return new ($this->resolveFileStrategyClass($stagingType))(
             $this->clientWrapper,
             $this->logger,
-            $this->getFileDataStaging(),
-            $this->getFileMetadataStaging(),
+            $this->stagingProvider->getFileDataStaging(),
+            $this->stagingProvider->getFileMetadataStaging(),
             $this->format,
         );
     }
@@ -61,13 +53,14 @@ class StrategyFactory extends AbstractStrategyMap
     public function getTableOutputStrategy(
         bool $isFailedJob = false,
     ): TableStrategyInterface {
-        $this->logger->info(sprintf('Using "%s" table output staging.', $this->stagingType->value));
+        $stagingType = $this->stagingProvider->getStagingType();
+        $this->logger->info(sprintf('Using "%s" table output staging.', $stagingType->value));
 
-        return new ($this->resolveTableStrategyClass())(
+        return new ($this->resolveTableStrategyClass($stagingType))(
             $this->clientWrapper,
             $this->logger,
-            $this->getTableDataStaging(),
-            $this->getTableMetadataStaging(),
+            $this->stagingProvider->getTableDataStaging(),
+            $this->stagingProvider->getTableMetadataStaging(),
             $this->format,
             $isFailedJob,
         );
@@ -76,16 +69,16 @@ class StrategyFactory extends AbstractStrategyMap
     /**
      * @return class-string<FileStrategyInterface>
      */
-    private function resolveFileStrategyClass(): string
+    private function resolveFileStrategyClass(StagingType $stagingType): string
     {
-        return match ($this->stagingType) {
+        return match ($stagingType) {
             StagingType::Local,
             StagingType::WorkspaceSnowflake,
             StagingType::WorkspaceBigquery => FileLocal::class,
 
             default => throw new InvalidOutputException(sprintf(
                 'Output mapping on type "%s" is not supported.',
-                $this->stagingType->value,
+                $stagingType->value,
             )),
         };
     }
@@ -93,16 +86,17 @@ class StrategyFactory extends AbstractStrategyMap
     /**
      * @return class-string<TableStrategyInterface>
      */
-    public function resolveTableStrategyClass(): string
+    public function resolveTableStrategyClass(StagingType $stagingType): string
     {
-        return match ($this->stagingType) {
+        return match ($stagingType) {
             StagingType::Local => LocalTableStrategy::class,
-            StagingType::WorkspaceSnowflake => SqlWorkspaceTableStrategy::class,
+
+            StagingType::WorkspaceSnowflake,
             StagingType::WorkspaceBigquery => SqlWorkspaceTableStrategy::class,
 
             default => throw new InvalidOutputException(sprintf(
                 'Output mapping on type "%s" is not supported.',
-                $this->stagingType->value,
+                $stagingType->value,
             )),
         };
     }

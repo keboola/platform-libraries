@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use Exception;
 use InvalidArgumentException;
-use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -19,6 +18,7 @@ use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
@@ -33,15 +33,12 @@ abstract class AbstractWorkspaceTableStrategy implements StrategyInterface
 {
     protected readonly WorkspaceStagingInterface $dataStorage;
 
-    /**
-     * @param Adapter::FORMAT_* $format
-     */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
         StagingInterface $dataStorage,
         protected readonly FileStagingInterface $metadataStorage,
-        protected readonly string $format,
+        protected readonly FileFormat $format,
         protected readonly bool $isFailedJob = false,
     ) {
         if (!$dataStorage instanceof WorkspaceStagingInterface) {
@@ -105,7 +102,7 @@ abstract class AbstractWorkspaceTableStrategy implements StrategyInterface
                 sprintf(
                     'Failed to parse manifest file "%s" as "%s": %s',
                     $manifestFile,
-                    $this->format,
+                    $this->format->value,
                     $e->getMessage(),
                 ),
                 $e->getCode(),

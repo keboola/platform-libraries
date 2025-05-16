@@ -11,6 +11,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StorageApi\ClientException;
 use Monolog\Logger;
 use stdClass;
@@ -375,15 +376,14 @@ class LocalTest extends AbstractTestCase
 
     public function provideReadFileManifestInvalid(): Generator
     {
-        yield 'json' => ['json'];
-        yield 'yaml' => ['yaml'];
+        yield 'json' => [FileFormat::Json];
+        yield 'yaml' => [FileFormat::Yaml];
     }
 
     /**
-     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      * @dataProvider provideReadFileManifestInvalid
      */
-    public function testReadFileManifestInvalid(string $format): void
+    public function testReadFileManifestInvalid(FileFormat $format): void
     {
         $strategy = new Local(
             $this->clientWrapper,

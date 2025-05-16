@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table;
 
-use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Table\Source\SourceInterface;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -18,15 +18,12 @@ use Psr\Log\LoggerInterface;
 
 interface StrategyInterface
 {
-    /**
-     * @param Adapter::FORMAT_* $format
-     */
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
         StagingInterface $dataStorage,
         FileStagingInterface $metadataStorage,
-        string $format,
+        FileFormat $format,
         bool $isFailedJob,
     );
 

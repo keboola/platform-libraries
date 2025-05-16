@@ -13,6 +13,7 @@ use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StagingProvider\Exception\InvalidStagingConfiguration;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
@@ -30,7 +31,7 @@ class ReaderTest extends AbstractTestCase
     private function getStagingFactory(
         ClientWrapper $clientWrapper,
         StagingType $stagingType = StagingType::Local,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
     ): StrategyFactory {
         $localStaging = $this->createMock(FileStagingInterface::class);
@@ -115,7 +116,7 @@ class ReaderTest extends AbstractTestCase
         $reader = new Reader(
             $clientWrapper,
             $this->testLogger,
-            $strategyFactory
+            $strategyFactory,
         );
         $configuration = new InputTableOptionsList([
             [

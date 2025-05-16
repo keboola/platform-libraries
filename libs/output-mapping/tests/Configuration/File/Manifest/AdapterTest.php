@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Configuration\File\Manifest;
 
 use Generator;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use PHPUnit\Framework\TestCase;
 
 class AdapterTest extends TestCase
@@ -13,21 +14,18 @@ class AdapterTest extends TestCase
     public function provideReadFileManifestInvalid(): Generator
     {
         yield 'json' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'expectedFileExtension' => '.json',
         ];
         yield 'format' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'expectedFileExtension' => '.yml',
         ];
     }
 
-    /**
-     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     * @dataProvider provideReadFileManifestInvalid
-     */
+    /** @dataProvider provideReadFileManifestInvalid */
     public function testAccessors(
-        string $format,
+        FileFormat $format,
         string $expectedFileExtension,
     ): void {
         $adapter = new Adapter($format);

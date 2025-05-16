@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\File;
 
-use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\State\InputFileStateList;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -18,7 +18,7 @@ interface StrategyInterface
         FileStagingInterface $dataStorage,
         FileStagingInterface $metadataStorage,
         InputFileStateList $fileStateList,
-        string $format = Adapter::FORMAT_JSON,
+        FileFormat $format,
     );
 
     public function downloadFile(

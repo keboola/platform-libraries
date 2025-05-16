@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Tests;
 use InvalidArgumentException;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
@@ -165,7 +166,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function getWorkspaceStagingFactory(
         ClientWrapper $clientWrapper,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
         StagingType $stagingType = StagingType::WorkspaceSnowflake,
     ): StrategyFactory {
@@ -174,7 +175,7 @@ abstract class AbstractTestCase extends TestCase
             function () use ($stagingType, $clientWrapper) {
                 if (!$this->workspaceId) {
                     $workspaces = new Workspaces($clientWrapper->getBranchClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => match($stagingType) {
+                    $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
                         StagingType::WorkspaceSnowflake => 'snowflake',
                         StagingType::WorkspaceBigquery => 'bigquery',
                         default => throw new InvalidArgumentException(sprintf(
@@ -211,7 +212,7 @@ abstract class AbstractTestCase extends TestCase
 
     protected function getLocalStagingFactory(
         ClientWrapper $clientWrapper,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
         StagingType $stagingType = StagingType::Local,
     ): StrategyFactory {

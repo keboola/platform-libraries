@@ -16,6 +16,7 @@ use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
 use Keboola\InputMapping\Table\StrategyInterface as TableStrategyInterface;
 use Keboola\StagingProvider\Mapping\AbstractStrategyMap;
 use Keboola\StagingProvider\Mapping\StagingDefinition;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -30,7 +31,7 @@ class StrategyFactory extends AbstractStrategyMap
         private readonly StagingProvider $stagingProvider,
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
-        private readonly string $format,
+        private readonly FileFormat $format,
     ) {
     }
 

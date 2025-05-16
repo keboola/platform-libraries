@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Helper;
 
-use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 
 class ManifestCreator
 {
-    /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     */
     public function writeTableManifest(
         array $tableInfo,
         string $destination,
         array $columns,
-        string $format = Adapter::FORMAT_JSON,
+        FileFormat $format,
     ): void {
         $manifest = [
             'id' => $tableInfo['id'],

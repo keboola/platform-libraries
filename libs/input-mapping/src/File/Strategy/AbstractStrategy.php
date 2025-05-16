@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\File\Strategy;
 
-use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputFileStateList;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -22,16 +22,13 @@ abstract class AbstractStrategy implements StrategyInterface
     protected string $destination;
     protected ManifestCreator $manifestCreator;
 
-    /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
         protected readonly FileStagingInterface $dataStorage,
         protected readonly FileStagingInterface $metadataStorage,
         protected readonly InputFileStateList $fileStateList,
-        protected readonly string $format = Adapter::FORMAT_JSON,
+        protected readonly FileFormat $format,
     ) {
         $this->manifestCreator = new ManifestCreator();
     }

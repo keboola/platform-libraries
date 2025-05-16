@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\Strategy;
 
 use InvalidArgumentException;
-use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
@@ -19,6 +18,7 @@ use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -34,15 +34,12 @@ class LocalTableStrategy implements StrategyInterface
 {
     private readonly FileStagingInterface $dataStorage;
 
-    /**
-     * @param Adapter::FORMAT_* $format
-     */
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
         StagingInterface $dataStorage,
         private readonly FileStagingInterface $metadataStorage,
-        private readonly string $format,
+        private readonly FileFormat $format,
         private readonly bool $isFailedJob = false,
     ) {
         if (!$dataStorage instanceof FileStagingInterface) {
@@ -139,7 +136,7 @@ class LocalTableStrategy implements StrategyInterface
                 sprintf(
                     'Failed to parse manifest file "%s" as "%s": %s',
                     $manifestFile,
-                    $this->format,
+                    $this->format->value,
                     $e->getMessage(),
                 ),
                 $e->getCode(),

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Helper;
 
-use Generator;
-use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\Helper\ManifestCreator;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\TestCase;
 
 class ManifestCreatorTest extends TestCase
 {
-    public function createFileManifestData(): Generator
+    public function createFileManifestData(): iterable
     {
         yield 'only isPublic' => [
             'isPublic' => true,
@@ -78,10 +77,10 @@ class ManifestCreatorTest extends TestCase
         self::assertSame($fileInfo['sizeBytes'], $manifest['size_bytes']);
     }
 
-    public function writeTableManifestData(): Generator
+    public function writeTableManifestData(): iterable
     {
         yield 'json format' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'columns' => [],
             'expectedData' => <<<'EOF'
 {
@@ -138,7 +137,7 @@ class ManifestCreatorTest extends TestCase
 EOF,
         ];
         yield 'json format with columns override' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'columns' => ['Name'],
             'expectedData' => <<<'EOF'
 {
@@ -181,7 +180,7 @@ EOF,
 EOF,
         ];
         yield 'yaml format' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'columns' => [],
             'expectedData' => <<<'EOF'
 id: in.c-docker-test.test
@@ -227,7 +226,7 @@ column_metadata:
 EOF,
         ];
         yield 'yaml format with columns override' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'columns' => ['Name'],
             'expectedData' => <<<'EOF'
 id: in.c-docker-test.test
@@ -264,10 +263,9 @@ EOF,
 
     /**
      * @dataProvider writeTableManifestData
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      */
     public function testWriteTableManifest(
-        string $format,
+        FileFormat $format,
         array $columns,
         string $expectedData,
     ): void {

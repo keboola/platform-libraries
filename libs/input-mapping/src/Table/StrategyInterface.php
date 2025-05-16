@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table;
 
-use Keboola\InputMapping\Configuration\Adapter;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -14,9 +14,6 @@ use Psr\Log\LoggerInterface;
 
 interface StrategyInterface
 {
-    /**
-     * @param Adapter::FORMAT_* $format
-     */
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
@@ -24,7 +21,7 @@ interface StrategyInterface
         FileStagingInterface $metadataStorage,
         InputTableStateList $tablesState,
         string $destination,
-        string $format = 'json',
+        FileFormat $format,
     );
 
     public function downloadTable(RewrittenInputTableOptions $table): array;

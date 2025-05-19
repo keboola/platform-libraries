@@ -22,7 +22,6 @@ readonly class NewWorkspaceConfig implements WorkspaceConfigInterface
         public ?bool $useReadonlyRole,
         public NetworkPolicy $networkPolicy,
         public ?WorkspaceLoginType $loginType,
-        public bool $isReusable = false,
     ) {
         if ($this->stagingType->getStagingClass() !== StagingClass::Workspace) {
             throw new StagingProviderException(sprintf(
@@ -37,11 +36,6 @@ readonly class NewWorkspaceConfig implements WorkspaceConfigInterface
                 $this->stagingType->value,
             ));
         }
-    }
-
-    public function isReusable(): bool
-    {
-        return $this->isReusable;
     }
 
     public function getStorageApiWorkspaceType(): string

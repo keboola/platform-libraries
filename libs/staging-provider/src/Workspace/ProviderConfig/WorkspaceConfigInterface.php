@@ -6,5 +6,4 @@ namespace Keboola\StagingProvider\Workspace\ProviderConfig;
 
 interface WorkspaceConfigInterface
 {
-    public function isReusable(): bool;
 }

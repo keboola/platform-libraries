@@ -108,6 +108,13 @@ class WorkspaceProvider
     {
         $workspaceData = $this->workspacesApiClient->getWorkspace((int) $config->workspaceId);
 
-        return Workspace::createFromData($workspaceData);
+        if ($config->credentials === null) {
+            return Workspace::createFromData($workspaceData);
+        } else {
+            return WorkspaceWithCredentials::createFromData(
+                $config->credentials,
+                $workspaceData,
+            );
+        }
     }
 }

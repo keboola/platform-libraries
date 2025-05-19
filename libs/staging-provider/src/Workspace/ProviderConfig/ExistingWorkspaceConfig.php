@@ -10,7 +10,7 @@ readonly class ExistingWorkspaceConfig implements WorkspaceConfigInterface
 {
     public function __construct(
         public string $workspaceId,
-        public WorkspaceCredentialsProviderInterface $credentials,
+        public ?WorkspaceCredentialsProviderInterface $credentials = null,
     ) {
     }
 }

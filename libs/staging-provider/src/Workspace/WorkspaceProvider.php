@@ -24,7 +24,7 @@ class WorkspaceProvider
     ) {
     }
 
-    public function getWorkspace(WorkspaceConfigInterface $config): Workspace
+    public function getWorkspace(WorkspaceConfigInterface $config): WorkspaceInterface
     {
         return match (true) {
             $config instanceof NewWorkspaceConfig => $this->createNewWorkspace($config),
@@ -46,7 +46,7 @@ class WorkspaceProvider
         }
     }
 
-    private function createNewWorkspace(NewWorkspaceConfig $config): Workspace
+    private function createNewWorkspace(NewWorkspaceConfig $config): WorkspaceWithCredentialsInterface
     {
         $defaultLoginType = match ($config->stagingType) {
 // TODO enable once key-pair auth is default for Snowflake
@@ -98,19 +98,16 @@ class WorkspaceProvider
             $workspaceData['connection']['privateKey'] = $privateKey;
         }
 
-        return Workspace::createFromData(
+        return WorkspaceWithCredentials::createFromData(
             new CredentialsProvider(new WorkspaceCredentials($workspaceData['connection'])),
             $workspaceData,
         );
     }
 
-    private function getExistingWorkspace(ExistingWorkspaceConfig $config): Workspace
+    private function getExistingWorkspace(ExistingWorkspaceConfig $config): WorkspaceInterface
     {
         $workspaceData = $this->workspacesApiClient->getWorkspace((int) $config->workspaceId);
 
-        return Workspace::createFromData(
-            $config->credentials,
-            $workspaceData,
-        );
+        return Workspace::createFromData($workspaceData);
     }
 }

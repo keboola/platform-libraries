@@ -9,5 +9,4 @@ use Keboola\StagingProvider\Workspace\WorkspaceInterface;
 
 interface WorkspaceStagingInterface extends WorkspaceInterface, StagingInterface
 {
-
 }

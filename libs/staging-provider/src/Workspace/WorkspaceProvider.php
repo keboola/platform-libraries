@@ -8,7 +8,6 @@ use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\StagingClass;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StagingProvider\Workspace\Configuration\NewWorkspaceConfig;
-use Keboola\StagingProvider\Workspace\Configuration\WorkspaceCredentials;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
@@ -110,14 +109,26 @@ class WorkspaceProvider
         return WorkspaceWithCredentials::createFromData($workspaceData);
     }
 
-    public function getExistingWorkspace(string $workspaceId): WorkspaceInterface
+    /**
+     * @phpstan-return ($credentialsData is null ? WorkspaceInterface : WorkspaceWithCredentialsInterface)
+     */
+    public function getExistingWorkspace(string $workspaceId, ?array $credentialsData): WorkspaceInterface
     {
         $workspaceData = $this->workspacesApiClient->getWorkspace((int) $workspaceId);
 
-        return Workspace::createFromData($workspaceData);
+        if ($credentialsData === null) {
+            return Workspace::createFromData($workspaceData);
+        }
+
+        $workspaceData['connection'] = [
+            ...$credentialsData,
+            ...$workspaceData['connection'],
+        ];
+
+        return WorkspaceWithCredentials::createFromData($workspaceData);
     }
 
-    public function resetWorkspaceCredentials(WorkspaceInterface $workspace): WorkspaceCredentials
+    public function resetWorkspaceCredentials(WorkspaceInterface $workspace): array
     {
         if (in_array($workspace->getLoginType(), [
             WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
@@ -142,7 +153,7 @@ class WorkspaceProvider
             );
         }
 
-        return new WorkspaceCredentials($credentials);
+        return $credentials;
     }
 
     public function cleanupWorkspace(string $workspaceId): void

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Workspace;
 
 use Keboola\StagingProvider\Exception\StagingProviderException;
-use Keboola\StagingProvider\Workspace\Configuration\WorkspaceCredentials;
 use Keboola\StorageApi\WorkspaceLoginType;
 use SensitiveParameter;
 use Throwable;
@@ -29,7 +28,7 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
 {
     public function __construct(
         private readonly WorkspaceInterface $workspace,
-        private readonly WorkspaceCredentials $credentials,
+        #[SensitiveParameter] private readonly array $credentials,
     ) {
     }
 
@@ -39,7 +38,7 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
         try {
             return new self(
                 workspace: Workspace::createFromData($workspaceData),
-                credentials: WorkspaceCredentials::fromData($workspaceData['connection']),
+                credentials: self::parseCredentialsData($workspaceData['connection']),
             );
         } catch (Throwable $e) {
             throw new StagingProviderException(
@@ -71,6 +70,52 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
 
     public function getCredentials(): array
     {
-        return $this->credentials->toArray();
+        return $this->credentials;
+    }
+
+    public static function parseCredentialsData(
+        #[SensitiveParameter] array $data,
+    ): array {
+        $backend = $data['backend'];
+
+        return match ($backend) {
+            'bigquery' => [
+                'schema' => $data['schema'],
+                'region' => $data['region'],
+                'credentials' => $data['credentials'],
+            ],
+            'snowflake' => [
+                'host' => $data['host'],
+                'warehouse' => $data['warehouse'],
+                'database' => $data['database'],
+                'schema' => $data['schema'],
+                'user' => $data['user'],
+                'password' => $data['password'] ?? null,
+                'privateKey' => $data['privateKey'] ?? null,
+                'account' => self::parseSnowflakeAccount($data['host']),
+            ],
+            default => throw new StagingProviderException(sprintf('Unsupported backend "%s"', $backend)),
+        };
+    }
+
+    /**
+     * Parses `account` from `host`
+     *
+     * Based on how Snowflake Python Connector handles account resolution.
+     * https://github.com/snowflakedb/snowflake-connector-python/blob/main/src/snowflake/connector/util_text.py#L242
+     */
+    private static function parseSnowflakeAccount(string $host): string
+    {
+        $hostParts = explode('.', $host);
+
+        if (count($hostParts) <= 1) {
+            return $host;
+        }
+
+        if ($hostParts[1] !== 'global') {
+            return $hostParts[0];
+        }
+
+        return substr($hostParts[0], 0, (int) strrpos($hostParts[0], '-'));
     }
 }

@@ -7,6 +7,7 @@ namespace Keboola\StagingProvider\Staging\Workspace;
 use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StagingProvider\Workspace\WorkspaceInterface;
 
-interface WorkspaceStagingInterface extends WorkspaceInterface, StagingInterface
+interface WorkspaceStagingInterface extends StagingInterface
 {
+    public function getWorkspaceId(): string;
 }

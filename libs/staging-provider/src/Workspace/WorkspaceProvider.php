@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Workspace;
 
-use InvalidArgumentException;
+use Keboola\StagingProvider\Exception\StagingProviderException;
+use Keboola\StagingProvider\Staging\StagingClass;
+use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Workspace\Configuration\NewWorkspaceConfig;
 use Keboola\StagingProvider\Workspace\Configuration\WorkspaceCredentials;
-use Keboola\StagingProvider\Workspace\Credentials\CredentialsProvider;
-use Keboola\StagingProvider\Workspace\ProviderConfig\ExistingWorkspaceConfig;
-use Keboola\StagingProvider\Workspace\ProviderConfig\NewWorkspaceConfig;
-use Keboola\StagingProvider\Workspace\ProviderConfig\WorkspaceConfigInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\StorageApiToken;
 
 class WorkspaceProvider
 {
@@ -24,31 +24,32 @@ class WorkspaceProvider
     ) {
     }
 
-    public function getWorkspace(WorkspaceConfigInterface $config): WorkspaceInterface
-    {
-        return match (true) {
-            $config instanceof NewWorkspaceConfig => $this->createNewWorkspace($config),
-            $config instanceof ExistingWorkspaceConfig => $this->getExistingWorkspace($config),
-            default => throw new InvalidArgumentException(sprintf('Unsupported config type "%s"', $config::class)),
-        };
-    }
+    public function createNewWorkspace(
+        StorageApiToken $storageApiToken,
+        NewWorkspaceConfig $config,
+    ): WorkspaceWithCredentialsInterface {
+        $stagingType = $config->stagingType;
 
-    public function cleanupWorkspace(string $workspaceId): void
-    {
-        try {
-            $this->workspacesApiClient->deleteWorkspace((int) $workspaceId, [], true);
-        } catch (ClientException $e) {
-            if ($e->getCode() !== 404) {
-                throw $e;
-            }
-
-            // workspace does not exist, nothing to clean up
+        if ($stagingType->getStagingClass() !== StagingClass::Workspace) {
+            throw new StagingProviderException(sprintf(
+                'Can\'t create workspace for staging %s',
+                $stagingType->value,
+            ));
         }
-    }
 
-    private function createNewWorkspace(NewWorkspaceConfig $config): WorkspaceWithCredentialsInterface
-    {
-        $defaultLoginType = match ($config->stagingType) {
+        $tokenOwnerInfo = $storageApiToken->getTokenInfo()['owner'] ?? [];
+        if (!match ($stagingType) {
+            StagingType::WorkspaceSnowflake => $tokenOwnerInfo['hasSnowflake'] ?? false,
+            StagingType::WorkspaceBigquery => $tokenOwnerInfo['hasBigquery'] ?? false,
+            default => false,
+        }) {
+            throw new StagingProviderException(sprintf(
+                'The project does not support "%s" table backend.',
+                $stagingType->value,
+            ));
+        }
+
+        $defaultLoginType = match ($stagingType) {
 // TODO enable once key-pair auth is default for Snowflake
 //            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
             default => WorkspaceLoginType::DEFAULT,
@@ -56,7 +57,15 @@ class WorkspaceProvider
         $loginType = $config->loginType ?? $defaultLoginType;
 
         $options = [
-            'backend' => $config->getStorageApiWorkspaceType(),
+            'backend' => match ($stagingType) {
+                StagingType::WorkspaceBigquery => 'bigquery',
+                StagingType::WorkspaceSnowflake => 'snowflake',
+
+                default => throw new StagingProviderException(sprintf(
+                    'Unknown staging type "%s"',
+                    $stagingType->value,
+                )),
+            },
             'networkPolicy' => $config->networkPolicy->value,
             'loginType' => $loginType,
         ];
@@ -98,23 +107,54 @@ class WorkspaceProvider
             $workspaceData['connection']['privateKey'] = $privateKey;
         }
 
-        return WorkspaceWithCredentials::createFromData(
-            new CredentialsProvider(new WorkspaceCredentials($workspaceData['connection'])),
-            $workspaceData,
-        );
+        return WorkspaceWithCredentials::createFromData($workspaceData);
     }
 
-    private function getExistingWorkspace(ExistingWorkspaceConfig $config): WorkspaceInterface
+    public function getExistingWorkspace(string $workspaceId): WorkspaceInterface
     {
-        $workspaceData = $this->workspacesApiClient->getWorkspace((int) $config->workspaceId);
+        $workspaceData = $this->workspacesApiClient->getWorkspace((int) $workspaceId);
 
-        if ($config->credentials === null) {
-            return Workspace::createFromData($workspaceData);
-        } else {
-            return WorkspaceWithCredentials::createFromData(
-                $config->credentials,
-                $workspaceData,
+        return Workspace::createFromData($workspaceData);
+    }
+
+    public function resetWorkspaceCredentials(WorkspaceInterface $workspace): WorkspaceCredentials
+    {
+        if (in_array($workspace->getLoginType(), [
+            WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR,
+        ], true)) {
+            $keyPair = $this->snowflakeKeypairGenerator->generateKeyPair();
+
+            $this->workspacesApiClient->resetCredentials(
+                $workspace->getWorkspaceId(),
+                new Workspaces\ResetCredentialsRequest(
+                    publicKey: $keyPair->publicKey,
+                ),
             );
+
+            $credentials = [
+                'privateKey' => $keyPair->privateKey,
+            ];
+        } else {
+            $credentials = $this->workspacesApiClient->resetCredentials(
+                $workspace->getWorkspaceId(),
+                new Workspaces\ResetCredentialsRequest(),
+            );
+        }
+
+        return new WorkspaceCredentials($credentials);
+    }
+
+    public function cleanupWorkspace(string $workspaceId): void
+    {
+        try {
+            $this->workspacesApiClient->deleteWorkspace((int) $workspaceId, [], true);
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+
+            // workspace does not exist, nothing to clean up
         }
     }
 }

@@ -10,7 +10,7 @@ use Throwable;
 
 class Workspace implements WorkspaceInterface
 {
-    private function __construct(
+    public function __construct(
         private readonly string $id,
         private readonly string $backendType,
         private readonly ?string $backendSize,

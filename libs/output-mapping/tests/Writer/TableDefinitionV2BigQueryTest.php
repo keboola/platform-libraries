@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Generator;
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\Datatype\Definition\Bigquery;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -61,11 +59,10 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'authoritative',
             ),
@@ -168,11 +165,10 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
 
         // První nahrání
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'authoritative',
             ),
@@ -183,11 +179,10 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
 
         // Druhé nahrání
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'authoritative',
             ),
@@ -202,7 +197,7 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
         self::assertNotEmpty($jobIds[0]);
     }
 
-    public function configProvider(): Generator
+    public function configProvider(): iterable
     {
         yield 'base types' => [
             [

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -71,12 +70,13 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'branchId' => '1234',
         ];
 
-        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getWorkspaceStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -113,12 +113,13 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getWorkspaceStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -160,11 +161,10 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         $systemMetadata = ['componentId' => 'testComponent'];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -230,12 +230,13 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
             'configurationRowId' => 'row-1',
         ];
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: '/upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -273,12 +274,13 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         self::assertEquals($expectedColumnMetadata, $this->getMetadataValues($idColMetadata));
 
         // check metadata update
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: '/upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),

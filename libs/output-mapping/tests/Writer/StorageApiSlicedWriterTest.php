@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -34,11 +33,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -75,6 +73,8 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteTableTagStagingFile(): void
     {
+        $this->initWorkspace();
+
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
         file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
@@ -102,6 +102,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
                 return $feature === 'tag-staging-files';
             })
         ;
+        $token->method('getProjectBackend')->willReturn($this->clientWrapper->getToken()->getProjectBackend());
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getToken')->willReturn($token);
@@ -112,13 +113,17 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             $this->clientWrapper->getBranchClient(),
         );
 
-        $stagingFactory = $this->getWorkspaceStagingFactory($clientWrapper);
-        $tableQueue = $this->getTableLoader($stagingFactory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+        $stagingFactory = $this->getWorkspaceStagingFactory(
+            clientWrapper: $clientWrapper,
+        );
+        $tableQueue = $this->getTableLoader(
+            clientWrapper: $clientWrapper,
+            strategyFactory: $stagingFactory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $stagingFactory->getClientWrapper()->getToken(),
+                storageApiToken: $clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -170,11 +175,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -219,11 +223,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -261,11 +264,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -312,11 +314,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -355,11 +356,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Sliced file "table" columns specification missing.');
         $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -396,11 +396,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -461,11 +460,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -521,11 +519,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -581,11 +578,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -643,11 +639,10 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
-use Generator;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
@@ -81,7 +79,7 @@ class TableDataModifierTest extends AbstractTestCase
         );
     }
 
-    public static function provideDeleteTableRowsFromDeleteWhereConfig(): Generator
+    public static function provideDeleteTableRowsFromDeleteWhereConfig(): iterable
     {
         yield 'single delete where' => [
             'deleteWhere' => [
@@ -318,7 +316,7 @@ class TableDataModifierTest extends AbstractTestCase
         $this->assertEquals(3, $newTable['rowsCount']);
     }
 
-    public static function provideDeleteTableRowsFromDeleteWhereConfigWithWorkspace(): Generator
+    public static function provideDeleteTableRowsFromDeleteWhereConfigWithWorkspace(): iterable
     {
         yield 'normal situation' => [
             'deleteFilterForTableInWorkspace' => [
@@ -349,9 +347,7 @@ class TableDataModifierTest extends AbstractTestCase
         int $expectedRowsCount,
         int $expectedDeletedRowsCount,
     ): void {
-        $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        );
+        $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy();
         self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $workspace);
 
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());

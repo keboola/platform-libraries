@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Generator;
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
@@ -57,15 +56,16 @@ class TableDefinitionTest extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: 'local',
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: [
                     'typedTableEnabled' => true,
                     'mapping' => [$config],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -99,15 +99,16 @@ class TableDefinitionTest extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: 'local',
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: [
                     'typedTableEnabled' => true,
                     'mapping' => [$config],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -124,7 +125,7 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
     }
 
-    public function configProvider(): Generator
+    public function configProvider(): iterable
     {
         yield 'base types' => [
             [
@@ -270,15 +271,16 @@ class TableDefinitionTest extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: 'local',
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: [
                     'typedTableEnabled' => true,
                     'mapping' => [$config],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -405,15 +407,16 @@ class TableDefinitionTest extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: 'local',
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: [
                     'typedTableEnabled' => true,
                     'mapping' => [$config],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -478,7 +481,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
     }
 
-    public function writerUpdateTableDefinitionWithUnknownDataTypesProvider(): Generator
+    public function writerUpdateTableDefinitionWithUnknownDataTypesProvider(): iterable
     {
         yield 'incremental load with any column metadata' => [true, null];
         yield 'full load with any column metadata' => [false, null];
@@ -570,15 +573,16 @@ class TableDefinitionTest extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory())->uploadTables(
-            outputStaging: 'local',
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getLocalStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: [
                     'typedTableEnabled' => true,
                     'mapping' => [$config],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),

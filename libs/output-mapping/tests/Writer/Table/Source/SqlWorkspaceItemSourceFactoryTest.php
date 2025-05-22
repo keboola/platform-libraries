@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Source;
 
-use Keboola\InputMapping\Staging\WorkspaceStagingInterface;
 use Keboola\OutputMapping\Writer\Table\Source\SqlWorkspaceItemSourceFactory;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use PHPUnit\Framework\TestCase;
 
 class SqlWorkspaceItemSourceFactoryTest extends TestCase

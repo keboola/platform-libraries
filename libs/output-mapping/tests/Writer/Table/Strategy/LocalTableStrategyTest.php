@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
-use Keboola\InputMapping\Staging\FileStagingInterface;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
@@ -48,7 +49,7 @@ class LocalTableStrategyTest extends AbstractTestCase
             new NullLogger(),
             $this->createMock(FileStagingInterface::class),
             $this->createMock(FileStagingInterface::class),
-            'json',
+            FileFormat::Json,
             false,
         );
 
@@ -86,7 +87,7 @@ class LocalTableStrategyTest extends AbstractTestCase
             new NullLogger(),
             $this->createMock(FileStagingInterface::class),
             $this->createMock(FileStagingInterface::class),
-            'json',
+            FileFormat::Json,
             false,
         );
 

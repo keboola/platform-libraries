@@ -50,7 +50,7 @@ services:
 
   dev84: &dev84
     <<: *dev
-    image: keboola/php-dev83
+    image: keboola/php-dev84
     build:
       <<: *dev-build
       args:

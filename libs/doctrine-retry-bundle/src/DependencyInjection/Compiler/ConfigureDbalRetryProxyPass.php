@@ -72,9 +72,9 @@ class ConfigureDbalRetryProxyPass implements CompilerPassInterface
             }
 
             assert(is_array($arguments));
-            assert(count($arguments) > 0);
-            assert(is_array($arguments[0]));
-            return $arguments[0];
+            $config = $arguments[0] ?? null;
+            assert(is_array($config));
+            return $config;
         }
 
         return [];

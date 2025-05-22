@@ -17,16 +17,10 @@
         "symfony/dependency-injection": "^7.0|^6.4",
         "symfony/http-kernel": "^7.0|^6.4"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/keboola/toxiproxy-php-client"
-        }
-    ],
     "require-dev": {
         "ext-pdo": "*",
-        "ihsw/toxiproxy-php-client": "dev-odin-odin-KAB-1029",
-        "keboola/coding-standard": "dev-odin-KAB-1029",
+        "ihsw/toxiproxy-php-client": "^3.0",
+        "keboola/coding-standard": "^15.1",
         "monolog/monolog": "^3.9",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",

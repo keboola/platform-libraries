@@ -63,7 +63,7 @@ trait MysqlProxyTestTrait
         return DriverManager::getConnection([
             'driver' => 'pdo_mysql',
             'host' => $proxyHost,
-            'port' => (int) $mysqlProxy->getListenPort(),
+            'port' => (int) $mysqlProxy->getListen(),
             'user' => $mysqlUser,
             'password' => $mysqlPassword,
             'dbname' => $mysqlDb,

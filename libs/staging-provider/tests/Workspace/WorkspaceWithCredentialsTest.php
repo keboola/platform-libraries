@@ -18,7 +18,7 @@ class WorkspaceWithCredentialsTest extends TestCase
         string $expectedBackendType,
         string $expectedSize,
         WorkspaceLoginType $expectedLoginType,
-        array $expectedCredentials
+        array $expectedCredentials,
     ): void {
         $workspace = WorkspaceWithCredentials::createFromData($data);
 
@@ -208,5 +208,4 @@ class WorkspaceWithCredentialsTest extends TestCase
         self::assertSame('some-private-key', $workspace->getCredentials()['privateKey'] ?? null);
         self::assertNull($workspace->getCredentials()['password'] ?? null);
     }
-
 }

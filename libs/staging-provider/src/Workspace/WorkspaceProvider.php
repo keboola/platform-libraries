@@ -130,10 +130,7 @@ class WorkspaceProvider
 
     public function resetWorkspaceCredentials(WorkspaceInterface $workspace): array
     {
-        if (in_array($workspace->getLoginType(), [
-            WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
-            WorkspaceLoginType::SNOWFLAKE_PERSON_KEYPAIR,
-        ], true)) {
+        if ($workspace->getLoginType()->isKeyPairLogin()) {
             $keyPair = $this->snowflakeKeypairGenerator->generateKeyPair();
 
             $this->workspacesApiClient->resetCredentials(

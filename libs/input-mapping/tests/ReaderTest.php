@@ -12,12 +12,10 @@ use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
-use Keboola\StagingProvider\Exception\InvalidStagingConfiguration;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\NullWorkspaceStaging;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -43,9 +41,9 @@ class ReaderTest extends AbstractTestCase
 
         return new StrategyFactory(
             new StagingProvider(
-                $stagingType,
-                new NullWorkspaceStaging(),
-                $localStaging,
+                stagingType: $stagingType,
+                workspaceStaging: null,
+                localStaging: $localStaging,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),
@@ -97,44 +95,6 @@ class ReaderTest extends AbstractTestCase
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);
-    }
-
-    public function testReadTablesDefaultBackend(): void
-    {
-        $clientWrapper = $this->initClient();
-        $strategyFactory = $this->getStagingFactory(
-            clientWrapper: $clientWrapper,
-            stagingType: StagingType::WorkspaceBigquery,
-        );
-
-        // force strategy map initialization and adjust it to test potentially unsupported StagingType
-        $strategyFactory->getStagingDefinition(StagingType::Local);
-        $strategyMap = self::getPrivatePropertyValue($strategyFactory, 'strategyMap');
-        unset($strategyMap[StagingType::WorkspaceBigquery->value]); // @phpstan-ignore-line
-        self::setPrivatePropertyValue($strategyFactory, 'strategyMap', $strategyMap);
-
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $strategyFactory,
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => 'not-needed.test',
-                'destination' => 'test.csv',
-            ],
-        ]);
-
-        $this->expectException(InvalidStagingConfiguration::class);
-        $this->expectExceptionMessage(
-            'Mapping on type "workspace-bigquery" is not supported. Supported types are "local, s3, abs, ',
-        );
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
     }
 
     #[NeedsDevBranch]

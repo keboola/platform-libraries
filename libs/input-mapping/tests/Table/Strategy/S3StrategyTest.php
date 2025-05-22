@@ -9,6 +9,7 @@ use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\S3;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
 
@@ -24,6 +25,7 @@ class S3StrategyTest extends AbstractTestCase
             $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             '.',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -68,6 +70,7 @@ class S3StrategyTest extends AbstractTestCase
             $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             '.',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [

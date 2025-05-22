@@ -12,6 +12,7 @@ use Keboola\InputMapping\Table\Strategy\BigQuery;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Psr\Log\NullLogger;
@@ -29,6 +30,7 @@ class BigQueryTest extends AbstractTestCase
             $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
+            FileFormat::Json,
         );
         $result = $strategy->downloadTable(new RewrittenInputTableOptions(
             [
@@ -72,6 +74,7 @@ class BigQueryTest extends AbstractTestCase
             $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
+            FileFormat::Json,
         );
 
         $aliasId = $this->clientWrapper->getBasicClient()->createAliasTable(

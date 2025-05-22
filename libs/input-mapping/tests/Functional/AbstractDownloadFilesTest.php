@@ -6,7 +6,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Tests\AbstractTestCase;
 
-class AbstractDownloadFilesTest extends AbstractTestCase
+abstract class AbstractDownloadFilesTest extends AbstractTestCase
 {
     protected string $testFileTag;
     protected string $testFileTagForBranch;

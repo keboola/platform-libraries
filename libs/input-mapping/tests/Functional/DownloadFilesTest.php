@@ -11,6 +11,7 @@ use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\Settle\SettleFactory;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Psr\Log\NullLogger;
@@ -483,7 +484,7 @@ class DownloadFilesTest extends AbstractDownloadFilesTest
             $this->testLogger,
             $this->getLocalStagingFactory(
                 clientWrapper: $clientWrapper,
-                format: 'yaml',
+                format: FileFormat::Yaml,
             ),
         );
         $configuration = [[
@@ -497,7 +498,7 @@ class DownloadFilesTest extends AbstractDownloadFilesTest
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $id . '_upload'));
 
-        $adapter = new Adapter('yaml');
+        $adapter = new Adapter(FileFormat::Yaml);
         $manifest = $adapter->readFromFile($root . '/download/' . $id . '_upload.manifest');
         self::assertArrayHasKey('id', $manifest);
         self::assertArrayHasKey('name', $manifest);

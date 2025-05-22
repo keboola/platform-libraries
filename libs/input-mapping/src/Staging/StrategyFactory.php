@@ -88,7 +88,7 @@ class StrategyFactory
     /**
      * @return class-string<TableStrategyInterface>
      */
-    public function resolveTableStrategyClass(StagingType $stagingType): string
+    private function resolveTableStrategyClass(StagingType $stagingType): string
     {
         return match ($stagingType) {
             StagingType::Local => TableLocal::class,

@@ -11,7 +11,6 @@ use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\NullWorkspaceStaging;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -225,9 +224,9 @@ abstract class AbstractTestCase extends TestCase
 
         return new StrategyFactory(
             new StagingProvider(
-                $stagingType,
-                new NullWorkspaceStaging(),
-                $fileStaging,
+                stagingType: $stagingType,
+                workspaceStaging: null,
+                localStaging: $fileStaging,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),

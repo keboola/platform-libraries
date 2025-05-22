@@ -9,6 +9,7 @@ use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
 
@@ -34,6 +35,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             new InputTableStateList([]),
             'boo',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -70,6 +72,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             new InputTableStateList([]),
             'boo',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [

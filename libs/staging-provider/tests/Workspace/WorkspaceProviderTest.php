@@ -289,6 +289,40 @@ class WorkspaceProviderTest extends TestCase
         );
     }
 
+    public function testCreateNewWorkspaceForNonWorkspaceStagingThrowsError(): void
+    {
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient->expects(self::never())->method(self::anything());
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::never())->method(self::anything());
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
+        $workspaceProvider = new WorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+        );
+
+        $this->expectException(StagingProviderException::class);
+        $this->expectExceptionMessage('Can\'t create workspace for staging type "local"');
+
+        $workspaceProvider->createNewWorkspace(
+            $this->createMock(StorageApiToken::class),
+            new NewWorkspaceConfig(
+                stagingType: StagingType::Local,
+                componentId: 'test-component',
+                configId: null,
+                size: null,
+                useReadonlyRole: null,
+                networkPolicy: NetworkPolicy::SYSTEM,
+                loginType: null,
+            ),
+        );
+    }
+
     public function testCreateNewWorkspaceWithUnsupportedBackend(): void
     {
         $componentsApiClient = $this->createMock(Components::class);
@@ -306,7 +340,7 @@ class WorkspaceProviderTest extends TestCase
             ->method('getTokenInfo')
             ->willReturn([
                 'owner' => [
-                    'hasSnowflake' => false,
+                    // no hasSnowflake/hasBigquery
                 ],
             ]);
 
@@ -328,6 +362,7 @@ class WorkspaceProviderTest extends TestCase
 
         $this->expectException(StagingProviderException::class);
         $this->expectExceptionMessage('The project does not support "workspace-snowflake" table backend.');
+
         $workspaceProvider->createNewWorkspace($storageApiToken, $config);
     }
 

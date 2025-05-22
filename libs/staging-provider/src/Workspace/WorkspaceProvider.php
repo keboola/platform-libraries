@@ -31,7 +31,7 @@ class WorkspaceProvider
 
         if ($stagingType->getStagingClass() !== StagingClass::Workspace) {
             throw new StagingProviderException(sprintf(
-                'Can\'t create workspace for staging %s',
+                'Can\'t create workspace for staging type "%s"',
                 $stagingType->value,
             ));
         }

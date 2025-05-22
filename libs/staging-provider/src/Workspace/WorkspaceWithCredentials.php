@@ -68,6 +68,9 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
         return $this->workspace->getLoginType();
     }
 
+    /**
+     * @return CredentialsArray
+     */
     public function getCredentials(): array
     {
         return $this->credentials;

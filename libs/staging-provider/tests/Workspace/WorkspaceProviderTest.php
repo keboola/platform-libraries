@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\StagingProvider\Tests\Workspace;
 
 use Keboola\KeyGenerator\PemKeyCertificatePair;
+use Keboola\StagingProvider\Exception\StagingNotSupportedByProjectException;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StagingProvider\Workspace\Configuration\NetworkPolicy;
@@ -362,8 +363,8 @@ class WorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
         );
 
-        $this->expectException(StagingProviderException::class);
-        $this->expectExceptionMessage('The project does not support "workspace-snowflake" table backend.');
+        $this->expectException(StagingNotSupportedByProjectException::class);
+        $this->expectExceptionMessage('The project does not support "workspace-snowflake" staging.');
 
         $workspaceProvider->createNewWorkspace($storageApiToken, $config);
     }

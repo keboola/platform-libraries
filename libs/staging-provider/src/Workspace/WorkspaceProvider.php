@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Workspace;
 
+use Keboola\StagingProvider\Exception\StagingNotSupportedByProjectException;
 use Keboola\StagingProvider\Exception\StagingProviderException;
 use Keboola\StagingProvider\Staging\StagingClass;
 use Keboola\StagingProvider\Staging\StagingType;
@@ -124,8 +125,8 @@ class WorkspaceProvider
             StagingType::WorkspaceBigquery => $tokenOwnerInfo['hasBigquery'] ?? false,
             default => false,
         }) {
-            throw new StagingProviderException(sprintf(
-                'The project does not support "%s" table backend.',
+            throw new StagingNotSupportedByProjectException(sprintf(
+                'The project does not support "%s" staging.',
                 $stagingType->value,
             ));
         }

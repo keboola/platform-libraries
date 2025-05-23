@@ -40,6 +40,7 @@ class WorkspaceProviderTest extends TestCase
                     'backend' => 'snowflake',
                     'backendSize' => $backendSize,
                     'networkPolicy' => 'user',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
                 ],
                 true,
             )
@@ -129,6 +130,7 @@ class WorkspaceProviderTest extends TestCase
                     'backendSize' => $backendSize,
                     'readOnlyStorageAccess' => true,
                     'networkPolicy' => 'system',
+                    'loginType' => WorkspaceLoginType::DEFAULT,
                 ],
                 true,
             )

@@ -69,11 +69,6 @@ class WorkspaceProvider
             'loginType' => $loginType,
         ];
 
-        // temporary workaround until https://github.com/keboola/connection/pull/5714 is released
-        if ($options['loginType'] === WorkspaceLoginType::DEFAULT) {
-            unset($options['loginType']);
-        }
-
         if ($config->size !== null) {
             $options['backendSize'] = $config->size;
         }

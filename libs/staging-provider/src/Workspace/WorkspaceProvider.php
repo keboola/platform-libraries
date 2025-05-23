@@ -29,60 +29,8 @@ class WorkspaceProvider
     ): WorkspaceWithCredentialsInterface {
         $stagingType = $config->stagingType;
 
-        if ($stagingType->getStagingClass() !== StagingClass::Workspace) {
-            throw new StagingProviderException(sprintf(
-                'Can\'t create workspace for staging type "%s"',
-                $stagingType->value,
-            ));
-        }
-
-        $tokenOwnerInfo = $storageApiToken->getTokenInfo()['owner'] ?? [];
-        if (!match ($stagingType) {
-            StagingType::WorkspaceSnowflake => $tokenOwnerInfo['hasSnowflake'] ?? false,
-            StagingType::WorkspaceBigquery => $tokenOwnerInfo['hasBigquery'] ?? false,
-            default => false,
-        }) {
-            throw new StagingProviderException(sprintf(
-                'The project does not support "%s" table backend.',
-                $stagingType->value,
-            ));
-        }
-
-        $defaultLoginType = match ($stagingType) {
-// TODO enable once key-pair auth is default for Snowflake
-//            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
-            default => WorkspaceLoginType::DEFAULT,
-        };
-        $loginType = $config->loginType ?? $defaultLoginType;
-
-        $options = [
-            'backend' => match ($stagingType) {
-                StagingType::WorkspaceBigquery => 'bigquery',
-                StagingType::WorkspaceSnowflake => 'snowflake',
-
-                default => throw new StagingProviderException(sprintf(
-                    'Unknown staging type "%s"',
-                    $stagingType->value,
-                )),
-            },
-            'networkPolicy' => $config->networkPolicy->value,
-            'loginType' => $loginType,
-        ];
-
-        if ($config->size !== null) {
-            $options['backendSize'] = $config->size;
-        }
-
-        if ($config->useReadonlyRole !== null) {
-            $options['readOnlyStorageAccess'] = $config->useReadonlyRole;
-        }
-
-        $privateKey = null;
-        if ($loginType->isKeyPairLogin()) {
-            $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
-            $options['publicKey'] = $keypair->publicKey;
-            $privateKey = $keypair->privateKey;
-        }
+        $this->validateStagingSupport($stagingType, $storageApiToken);
+        [$options, $privateKey] = $this->prepareNewWorkspaceOptions($stagingType, $config);
 
         if ($config->configId !== null) {
             // workspace tied to a component and configuration
@@ -159,5 +107,70 @@ class WorkspaceProvider
 
             // workspace does not exist, nothing to clean up
         }
+    }
+
+    private function validateStagingSupport(StagingType $stagingType, StorageApiToken $storageApiToken): void
+    {
+        if ($stagingType->getStagingClass() !== StagingClass::Workspace) {
+            throw new StagingProviderException(sprintf(
+                'Can\'t create workspace for staging type "%s"',
+                $stagingType->value,
+            ));
+        }
+
+        $tokenOwnerInfo = $storageApiToken->getTokenInfo()['owner'] ?? [];
+        if (!match ($stagingType) {
+            StagingType::WorkspaceSnowflake => $tokenOwnerInfo['hasSnowflake'] ?? false,
+            StagingType::WorkspaceBigquery => $tokenOwnerInfo['hasBigquery'] ?? false,
+            default => false,
+        }) {
+            throw new StagingProviderException(sprintf(
+                'The project does not support "%s" table backend.',
+                $stagingType->value,
+            ));
+        }
+    }
+
+    /**
+     * @return array{array, ?string}
+     */
+    private function prepareNewWorkspaceOptions(StagingType $stagingType, NewWorkspaceConfig $config): array
+    {
+        $defaultLoginType = match ($stagingType) {
+// TODO enable once key-pair auth is default for Snowflake
+//            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            default => WorkspaceLoginType::DEFAULT,
+        };
+        $loginType = $config->loginType ?? $defaultLoginType;
+
+        $options = [
+            'backend' => match ($stagingType) {
+                StagingType::WorkspaceBigquery => 'bigquery',
+                StagingType::WorkspaceSnowflake => 'snowflake',
+                default => throw new StagingProviderException(sprintf(
+                    'Unknown staging type "%s"',
+                    $stagingType->value,
+                )),
+            },
+            'networkPolicy' => $config->networkPolicy->value,
+            'loginType' => $loginType,
+        ];
+
+        if ($config->size !== null) {
+            $options['backendSize'] = $config->size;
+        }
+
+        if ($config->useReadonlyRole !== null) {
+            $options['readOnlyStorageAccess'] = $config->useReadonlyRole;
+        }
+
+        $privateKey = null;
+        if ($loginType->isKeyPairLogin()) {
+            $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
+            $options['publicKey'] = $keypair->publicKey;
+            $privateKey = $keypair->privateKey;
+        }
+
+        return [$options, $privateKey];
     }
 }

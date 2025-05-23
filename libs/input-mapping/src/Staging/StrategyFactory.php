@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Staging;
 
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\Strategy\Local as FileLocal;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
 use Keboola\InputMapping\State\InputFileStateList;
@@ -23,12 +22,35 @@ use Psr\Log\LoggerInterface;
 
 class StrategyFactory
 {
+    /** @var class-string<FileStrategyInterface> */
+    private readonly string $fileStrategyClass;
+
+    /** @var class-string<TableStrategyInterface>  */
+    private readonly string $tableStrategyClass;
+
     public function __construct(
         private readonly StagingProvider $stagingProvider,
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
         private readonly FileFormat $format,
     ) {
+        $stagingType = $this->stagingProvider->getStagingType();
+
+        $this->fileStrategyClass = match ($stagingType) {
+            StagingType::Local,
+            StagingType::S3,
+            StagingType::Abs,
+            StagingType::WorkspaceSnowflake,
+            StagingType::WorkspaceBigquery => FileLocal::class,
+        };
+
+        $this->tableStrategyClass = match ($stagingType) {
+            StagingType::Local => TableLocal::class,
+            StagingType::S3 => TableS3::class,
+            StagingType::Abs => TableABS::class,
+            StagingType::WorkspaceSnowflake => TableSnowflake::class,
+            StagingType::WorkspaceBigquery => TableBigQuery::class,
+        };
     }
 
     public function getFileInputStrategy(
@@ -37,7 +59,7 @@ class StrategyFactory
         $stagingType = $this->stagingProvider->getStagingType();
         $this->logger->info(sprintf('Using "%s" file input staging.', $stagingType->value));
 
-        return new ($this->resolveFileStrategyClass($stagingType))(
+        return new ($this->fileStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getFileDataStaging(),
@@ -54,7 +76,7 @@ class StrategyFactory
         $stagingType = $this->stagingProvider->getStagingType();
         $this->logger->info(sprintf('Using "%s" table input staging.', $stagingType->value));
 
-        return new ($this->resolveTableStrategyClass($stagingType))(
+        return new ($this->tableStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getTableDataStaging(),
@@ -63,45 +85,5 @@ class StrategyFactory
             $destination,
             $this->format,
         );
-    }
-
-    /**
-     * @return class-string<FileStrategyInterface>
-     */
-    private function resolveFileStrategyClass(StagingType $stagingType): string
-    {
-        return match ($stagingType) {
-            StagingType::Local,
-            StagingType::S3,
-            StagingType::Abs,
-            StagingType::WorkspaceSnowflake,
-            StagingType::WorkspaceBigquery => FileLocal::class,
-
-            // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
-            default => throw new InvalidInputException(sprintf(
-                'File input mapping is not supported for "%s" staging.',
-                $stagingType->value,
-            )),
-        };
-    }
-
-    /**
-     * @return class-string<TableStrategyInterface>
-     */
-    private function resolveTableStrategyClass(StagingType $stagingType): string
-    {
-        return match ($stagingType) {
-            StagingType::Local => TableLocal::class,
-            StagingType::S3 => TableS3::class,
-            StagingType::Abs => TableABS::class,
-            StagingType::WorkspaceSnowflake => TableSnowflake::class,
-            StagingType::WorkspaceBigquery => TableBigQuery::class,
-
-            // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
-            default => throw new InvalidInputException(sprintf(
-                'Table input mapping is not supported for "%s" staging.',
-                $stagingType->value,
-            )),
-        };
     }
 }

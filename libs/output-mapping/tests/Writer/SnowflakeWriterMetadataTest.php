@@ -71,7 +71,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
         ];
 
         $tableQueue = $this->getTableLoader(
-            strategyFactory: $this->getWorkspaceStagingFactory(),
+            strategyFactory: $this->getLocalStagingFactory(),
         )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,
@@ -114,7 +114,7 @@ class SnowflakeWriterMetadataTest extends BaseWriterMetadataTest
 
         // check metadata update
         $tableQueue = $this->getTableLoader(
-            strategyFactory: $this->getWorkspaceStagingFactory(),
+            strategyFactory: $this->getLocalStagingFactory(),
         )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: $config,

@@ -74,6 +74,12 @@ class WorkspaceProviderFunctionalTest extends TestCase
                     $configuration->getComponentId(),
                     $configuration->getConfigurationId(),
                 );
+
+                // double-delete to remove from trash
+                $this->componentsApiClient->deleteConfiguration(
+                    $configuration->getComponentId(),
+                    $configuration->getConfigurationId(),
+                );
             } catch (ClientException $e) {
                 if ($e->getCode() !== 404) {
                     throw $e;

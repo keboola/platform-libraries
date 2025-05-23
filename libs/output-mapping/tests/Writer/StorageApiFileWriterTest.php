@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -63,13 +62,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $writer->uploadFiles(
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -135,13 +137,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $writer->uploadFiles(
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
             [],
             true,
         );
@@ -166,13 +171,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $writer->uploadFiles(
             '/upload',
             ['mapping' => $configs],
             [],
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -212,7 +220,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $systemMetadata = [
             'componentId' => 'testComponent',
@@ -226,7 +238,6 @@ class StorageApiFileWriterTest extends AbstractTestCase
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -282,7 +293,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         ];
 
         // pass the special client wrapper to the factory
-        $writer = new FileWriter($this->getLocalStagingFactory($this->clientWrapper));
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $systemMetadata = [
             'componentId' => 'testComponent',
@@ -296,7 +311,6 @@ class StorageApiFileWriterTest extends AbstractTestCase
             '/upload',
             ['mapping' => $configs],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -345,12 +359,15 @@ class StorageApiFileWriterTest extends AbstractTestCase
             ],
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $writer->uploadFiles(
             'upload',
             ['mapping' => $configs],
             ['componentId' => 'foo'],
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -390,7 +407,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
                 'is_public' => false,
             ],
         ];
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("File 'file2' not found");
         $this->expectExceptionCode(404);
@@ -398,7 +419,6 @@ class StorageApiFileWriterTest extends AbstractTestCase
             'upload',
             ['mapping' => $configs],
             [],
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -411,14 +431,17 @@ class StorageApiFileWriterTest extends AbstractTestCase
             $root . '/upload/file1.manifest',
             '{"tags": ["' . $this->testFileTag . '-xxx"],"is_public": true}',
         );
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage("Found orphaned file manifest: 'file1.manifest'");
         $writer->uploadFiles(
             '/upload',
             [],
             [],
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -426,14 +449,17 @@ class StorageApiFileWriterTest extends AbstractTestCase
 
     public function testWriteFilesNoComponentId(): void
     {
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('Component Id must be set');
         $writer->uploadFiles(
             '/upload',
             [],
             ['configurationId' => '123'],
-            AbstractStrategyFactory::LOCAL,
             [],
             false,
         );
@@ -454,7 +480,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         );
         sleep(1);
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -479,9 +509,15 @@ class StorageApiFileWriterTest extends AbstractTestCase
         );
         sleep(1);
 
-        $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
+        $clientWrapper = new ClientWrapper(
             $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
-        )));
+        );
+
+        $writer = new FileWriter(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(clientWrapper: $clientWrapper),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -509,7 +545,11 @@ class StorageApiFileWriterTest extends AbstractTestCase
         // set it to use a branch
         $this->initClient($this->devBranchId);
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -539,9 +579,15 @@ class StorageApiFileWriterTest extends AbstractTestCase
         // set it to use a branch
         $this->initClient($this->devBranchId);
 
-        $writer = new FileWriter($this->getLocalStagingFactory(new ClientWrapper(
+        $clientWrapper = new ClientWrapper(
             $this->clientWrapper->getClientOptionsReadOnly()->setUseBranchStorage(true),
-        )));
+        );
+
+        $writer = new FileWriter(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(clientWrapper: $clientWrapper),
+        );
         $configuration = [['tags' => [$this->testFileTag], 'processed_tags' => ['downloaded']]];
         $writer->tagFiles($configuration);
 
@@ -573,13 +619,16 @@ class StorageApiFileWriterTest extends AbstractTestCase
             'is_permanent' => true,
         ];
 
-        $writer = new FileWriter($this->getLocalStagingFactory());
+        $writer = new FileWriter(
+            $this->clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(),
+        );
 
         $writer->uploadFiles(
             '/upload',
             [],
             $systemMetadata,
-            AbstractStrategyFactory::LOCAL,
             $tableFiles,
             false,
         );

@@ -4,30 +4,27 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Configuration\File\Manifest;
 
-use Generator;
 use Keboola\OutputMapping\Configuration\File\Manifest\Adapter;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use PHPUnit\Framework\TestCase;
 
 class AdapterTest extends TestCase
 {
-    public function provideReadFileManifestInvalid(): Generator
+    public function provideReadFileManifestInvalid(): iterable
     {
         yield 'json' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'expectedFileExtension' => '.json',
         ];
         yield 'format' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'expectedFileExtension' => '.yml',
         ];
     }
 
-    /**
-     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     * @dataProvider provideReadFileManifestInvalid
-     */
+    /** @dataProvider provideReadFileManifestInvalid */
     public function testAccessors(
-        string $format,
+        FileFormat $format,
         string $expectedFileExtension,
     ): void {
         $adapter = new Adapter($format);
@@ -50,7 +47,7 @@ class AdapterTest extends TestCase
 
     public function testDeserializeJson(): void
     {
-        $adapter = new Adapter('json');
+        $adapter = new Adapter(FileFormat::Json);
         $data = $adapter->deserialize('{"is_permanent": false}');
         self::assertEquals(
             [
@@ -66,7 +63,7 @@ class AdapterTest extends TestCase
 
     public function testDeserializeYaml(): void
     {
-        $adapter = new Adapter('yaml');
+        $adapter = new Adapter(FileFormat::Yaml);
         $data = $adapter->deserialize('is_permanent: true');
         self::assertEquals(
             [

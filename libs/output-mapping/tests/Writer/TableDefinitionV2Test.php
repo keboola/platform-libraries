@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Generator;
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\Datatype\Definition\GenericStorage;
 use Keboola\Datatype\Definition\Snowflake;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -87,11 +85,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         $this->expectExceptionMessage($expectedErrorMessage);
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [array_merge($baseConfig, $config)]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -158,11 +155,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -196,11 +192,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'authoritative',
             ),
@@ -287,11 +282,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'authoritative',
             ),
@@ -312,7 +306,7 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
     }
 
-    public function configProvider(): Generator
+    public function configProvider(): iterable
     {
         yield 'base types' => [
             [
@@ -532,11 +526,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -593,11 +586,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
             ),
@@ -692,11 +684,10 @@ class TableDefinitionV2Test extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
             ),
@@ -799,14 +790,16 @@ class TableDefinitionV2Test extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+        $tableQueue = $this->getTableLoader(
             logger: $this->testLogger,
-        ))->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+            strategyFactory: $this->getLocalStagingFactory(
+                logger: $this->testLogger,
+            ),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS,
             ),
@@ -834,7 +827,6 @@ class TableDefinitionV2Test extends AbstractTestCase
         file_put_contents($root . '/upload/table14.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: [
                     'mapping' => [
@@ -846,7 +838,7 @@ class TableDefinitionV2Test extends AbstractTestCase
                     ],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -860,7 +852,6 @@ class TableDefinitionV2Test extends AbstractTestCase
         $this->assertEquals(['Id', 'Name'], $tableInfo['primaryKey']);
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: [
                     'mapping' => [
@@ -872,7 +863,7 @@ class TableDefinitionV2Test extends AbstractTestCase
                     ],
                 ],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -926,14 +917,16 @@ class TableDefinitionV2Test extends AbstractTestCase
             'primary_key' => ['Id'],
         ];
 
-        $tableQueue = $this->getTableLoader($this->getLocalStagingFactory(
+        $tableQueue = $this->getTableLoader(
             logger: $this->testLogger,
-        ))->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
+            strategyFactory: $this->getLocalStagingFactory(
+                logger: $this->testLogger,
+            ),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$baseConfig]],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -969,11 +962,10 @@ class TableDefinitionV2Test extends AbstractTestCase
 
         try {
             $tableQueue = $this->getTableLoader()->uploadTables(
-                outputStaging: AbstractStrategyFactory::LOCAL,
                 configuration: new OutputMappingSettings(
                     configuration: [],
                     sourcePathPrefix: 'upload',
-                    storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                    storageApiToken: $this->clientWrapper->getToken(),
                     isFailedJob: false,
                     dataTypeSupport: 'none',
                 ),
@@ -990,7 +982,7 @@ class TableDefinitionV2Test extends AbstractTestCase
         }
     }
 
-    public function conflictsConfigurationWithManifestProvider(): Generator
+    public function conflictsConfigurationWithManifestProvider(): iterable
     {
         yield 'conflict-columns' => [
             [

@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
-class ABS extends AbstractStrategy
+class ABS extends AbstractFileStrategy
 {
-
     public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
@@ -37,7 +35,7 @@ class ABS extends AbstractStrategy
 
         foreach ($exports as $export) {
             /** @var RewrittenInputTableOptions $table */
-            list ($jobId, $table) = $export;
+            [$jobId, $table] = $export;
             $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
                 $this->getDestinationFilePath($this->destination, $table) . '.manifest';
             $tableInfo = $table->getTableInfo();

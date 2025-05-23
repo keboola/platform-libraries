@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\File\Strategy;
 
-use Generator;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\OutputMapping\Configuration\Adapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\File\Strategy\Local;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApi\ClientException;
 use Monolog\Logger;
 use stdClass;
@@ -20,14 +18,13 @@ use Symfony\Component\Yaml\Yaml;
 
 class LocalTest extends AbstractTestCase
 {
-    private function getProvider(): ProviderInterface
+    private function getProvider(): FileStagingInterface
     {
-        $mockLocal = self::createMock(NullProvider::class);
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
+            fn() => $this->temp->getTmpFolder(),
         );
+
         return $mockLocal;
     }
 
@@ -38,7 +35,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $files = $strategy->listFiles('');
         self::assertSame([], $files);
@@ -51,7 +48,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
@@ -65,7 +62,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -112,7 +109,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $this->expectException(OutputOperationException::class);
         $this->expectExceptionMessage('non-existent-directory/and-file" directory does not exist.".');
@@ -126,7 +123,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -173,7 +170,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -208,7 +205,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -252,7 +249,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -268,7 +265,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -301,7 +298,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'yaml',
+            FileFormat::Yaml,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -334,7 +331,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -364,7 +361,7 @@ class LocalTest extends AbstractTestCase
             new Logger('testLogger'),
             $this->getProvider(),
             $this->getProvider(),
-            'json',
+            FileFormat::Json,
         );
         $fs = new Filesystem();
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
@@ -375,17 +372,16 @@ class LocalTest extends AbstractTestCase
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 
-    public function provideReadFileManifestInvalid(): Generator
+    public function provideReadFileManifestInvalid(): iterable
     {
-        yield 'json' => ['json'];
-        yield 'yaml' => ['yaml'];
+        yield 'json' => [FileFormat::Json];
+        yield 'yaml' => [FileFormat::Yaml];
     }
 
     /**
-     * @phpstan-param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
      * @dataProvider provideReadFileManifestInvalid
      */
-    public function testReadFileManifestInvalid(string $format): void
+    public function testReadFileManifestInvalid(FileFormat $format): void
     {
         $strategy = new Local(
             $this->clientWrapper,
@@ -398,10 +394,10 @@ class LocalTest extends AbstractTestCase
         $fs->mkdir($this->temp->getTmpFolder() . '/data/out/files');
         file_put_contents(
             $this->temp->getTmpFolder() . '/data/out/files/my-file_one.manifest',
-            sprintf('not a valid %s', $format),
+            sprintf('not a valid %s', $format->value),
         );
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage(sprintf('data/out/files/my-file_one.manifest" as "%s":', $format));
+        $this->expectExceptionMessage(sprintf('data/out/files/my-file_one.manifest" as "%s":', $format->value));
         $strategy->readFileManifest('data/out/files/my-file_one.manifest');
     }
 }

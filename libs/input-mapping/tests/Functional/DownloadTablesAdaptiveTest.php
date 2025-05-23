@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
@@ -21,7 +20,11 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     public function testDownloadTablesDownloadsEmptyTable(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -40,7 +43,6 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $configuration,
             $inputTablesState,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -59,7 +61,11 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     public function testDownloadTablesDownloadsOnlyNewRows(): void
     {
         $clientWrapper = $this->initClient();
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -71,7 +77,6 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -90,7 +95,6 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $configuration,
             $firstTablesResult->getInputTableStateList(),
             'data/in/tables/',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
 
@@ -108,7 +112,12 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
     #[NeedsTestTables]
     public function testDownloadTablesInvalidDate(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -130,7 +139,6 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
             $configuration,
             $inputTablesState,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
     }

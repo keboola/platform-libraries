@@ -4,139 +4,173 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Staging;
 
-use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Exception\StagingException;
-use Keboola\InputMapping\File\Strategy\Local as LocalFile;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\Scope;
+use Keboola\InputMapping\File\Strategy\Local as FileLocal;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Strategy\Local as LocalTable;
+use Keboola\InputMapping\Table\Strategy\ABS as TableAbs;
+use Keboola\InputMapping\Table\Strategy\BigQuery as TableBigquery;
+use Keboola\InputMapping\Table\Strategy\Local as TableLocal;
+use Keboola\InputMapping\Table\Strategy\S3 as TableS3;
+use Keboola\InputMapping\Table\Strategy\Snowflake as TableSnowflake;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 
 class StrategyFactoryTest extends TestCase
 {
-    public function testAccessors(): void
+    private const STAGING_MAP = [
+        StagingType::Local->value => [
+            'fileStrategy' => FileLocal::class,
+            'tableStrategy' => TableLocal::class,
+            'tableDataStagingClass' => FileStagingInterface::class,
+        ],
+        StagingType::S3->value => [
+            'fileStrategy' => FileLocal::class,
+            'tableStrategy' => TableS3::class,
+            'tableDataStagingClass' => FileStagingInterface::class,
+        ],
+        StagingType::Abs->value => [
+            'fileStrategy' => FileLocal::class,
+            'tableStrategy' => TableAbs::class,
+            'tableDataStagingClass' => FileStagingInterface::class,
+        ],
+        StagingType::WorkspaceSnowflake->value => [
+            'fileStrategy' => FileLocal::class,
+            'tableStrategy' => TableSnowflake::class,
+            'tableDataStagingClass' => WorkspaceStagingInterface::class,
+        ],
+        StagingType::WorkspaceBigquery->value => [
+            'fileStrategy' => FileLocal::class,
+            'tableStrategy' => TableBigquery::class,
+            'tableDataStagingClass' => WorkspaceStagingInterface::class,
+        ],
+    ];
+
+    public function testAllStagingTypesAreCovered(): void
     {
-        $clientWrapper = new ClientWrapper(
-            new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
+        $missingStagingTypes = array_diff(
+            array_map(fn(StagingType $t) => $t->value, StagingType::cases()),
+            array_keys(self::STAGING_MAP),
         );
-        $logger = new NullLogger();
-        $factory = new StrategyFactory($clientWrapper, $logger, 'json');
-        self::assertSame($clientWrapper, $factory->getClientWrapper());
-        self::assertSame($logger, $factory->getLogger());
+
+        self::assertSame([], $missingStagingTypes, 'Not all staging types are covered by the test');
+    }
+
+    public static function provideFileInputStrategyMapping(): iterable
+    {
+        foreach (self::STAGING_MAP as $stagingType => $strategyConfig) {
+            yield $stagingType => [
+                'stagingType' => StagingType::from($stagingType),
+                'expectedStrategyClass' => $strategyConfig['fileStrategy'],
+            ];
+        }
+    }
+
+    /**
+     * @param class-string $expectedStrategyClass
+     * @dataProvider provideFileInputStrategyMapping
+     */
+    public function testGetFileInputStrategy(StagingType $stagingType, string $expectedStrategyClass): void
+    {
+        $dataStaging = $this->createMock(FileStagingInterface::class);
+        $metadataStaging = $this->createMock(FileStagingInterface::class);
+
+        $stagingProvider = $this->createMock(StagingProvider::class);
+        $stagingProvider->method('getStagingType')->willReturn($stagingType);
+        $stagingProvider->expects(self::once())->method('getFileDataStaging')->willReturn($dataStaging);
+        $stagingProvider->expects(self::once())->method('getFileMetadataStaging')->willReturn($metadataStaging);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $fileFormat = FileFormat::Yaml;
+
+        $fileStateList = new InputFileStateList([]);
+
+        $factory = new StrategyFactory(
+            $stagingProvider,
+            $clientWrapper,
+            $logger,
+            $fileFormat,
+        );
+
+        $strategy = $factory->getFileInputStrategy($fileStateList);
+
+        self::assertInstanceOf($expectedStrategyClass, $strategy);
         self::assertEquals(
-            ['abs', 'local', 's3', 'workspace-snowflake', 'workspace-bigquery'],
-            array_keys($factory->getStrategyMap()),
+            new $expectedStrategyClass(
+                $clientWrapper,
+                $logger,
+                $dataStaging,
+                $metadataStaging,
+                $fileStateList,
+                $fileFormat,
+            ),
+            $strategy,
         );
     }
 
-    public function testGetFileStrategyFail(): void
+    public static function provideTableInputStrategyMapping(): iterable
     {
-        $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-            ),
-            new NullLogger(),
-            'json',
-        );
-        $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage('The project does not support "local" file input backend.');
-        $factory->getFileInputStrategy(
-            AbstractStrategyFactory::LOCAL,
-            new InputFileStateList([]),
-        );
+        foreach (self::STAGING_MAP as $stagingType => $strategyConfig) {
+            yield $stagingType => [
+                'stagingType' => StagingType::from($stagingType),
+                'expectedDataStagingClass' => $strategyConfig['tableDataStagingClass'],
+                'expectedStrategyClass' => $strategyConfig['tableStrategy'],
+            ];
+        }
     }
 
-    public function testGetFileStrategySuccess(): void
-    {
-        $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-            ),
-            new NullLogger(),
-            'json',
-        );
-        $factory->addProvider(
-            new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA])],
-        );
-        self::assertInstanceOf(
-            LocalFile::class,
-            $factory->getFileInputStrategy(
-                AbstractStrategyFactory::LOCAL,
-                new InputFileStateList([]),
-            ),
-        );
-    }
+    /**
+     * @param class-string $expectedDataStagingClass
+     * @param class-string $expectedStrategyClass
+     * @dataProvider provideTableInputStrategyMapping
+     */
+    public function testGetTableInputStrategy(
+        StagingType $stagingType,
+        string $expectedDataStagingClass,
+        string $expectedStrategyClass,
+    ): void {
+        $dataStaging = $this->createMock($expectedDataStagingClass);
+        $metadataStaging = $this->createMock(FileStagingInterface::class);
 
-    public function testGetTableStrategyFail(): void
-    {
-        $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-            ),
-            new NullLogger(),
-            'json',
-        );
-        $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage('The project does not support "local" table input backend.');
-        $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([]));
-    }
+        $stagingProvider = $this->createMock(StagingProvider::class);
+        $stagingProvider->method('getStagingType')->willReturn($stagingType);
+        $stagingProvider->expects(self::once())->method('getTableDataStaging')->willReturn($dataStaging);
+        $stagingProvider->expects(self::once())->method('getTableMetadataStaging')->willReturn($metadataStaging);
 
-    public function testGetTableStrategySuccess(): void
-    {
-        $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-            ),
-            new NullLogger(),
-            'json',
-        );
-        $factory->addProvider(
-            new NullProvider(),
-            [AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])],
-        );
-        self::assertInstanceOf(
-            LocalTable::class,
-            $factory->getTableInputStrategy(AbstractStrategyFactory::LOCAL, 'test', new InputTableStateList([])),
-        );
-    }
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $fileFormat = FileFormat::Yaml;
 
-    public function testAddProviderInvalidStaging(): void
-    {
-        $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
-            ),
-            new NullLogger(),
-            'json',
-        );
-        $this->expectException(StagingException::class);
-        $this->expectExceptionMessage(
-            'Staging "0" is unknown. Known types are "abs, local, s3, workspace-snowflake, workspace-bigquery',
-        );
-        $factory->addProvider(new NullProvider(), [new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA])]);
-    }
+        $tableStateList = new InputTableStateList([]);
 
-    public function testGetTableStrategyInvalid(): void
-    {
         $factory = new StrategyFactory(
-            new ClientWrapper(
-                new ClientOptions((string) getenv('STORAGE_API_URL'), (string) getenv('STORAGE_API_TOKEN')),
+            $stagingProvider,
+            $clientWrapper,
+            $logger,
+            $fileFormat,
+        );
+
+        $strategy = $factory->getTableInputStrategy('destination', $tableStateList);
+
+        self::assertInstanceOf($expectedStrategyClass, $strategy);
+        self::assertEquals(
+            new $expectedStrategyClass(
+                $clientWrapper,
+                $logger,
+                $dataStaging,
+                $metadataStaging,
+                $tableStateList,
+                'destination',
+                $fileFormat,
             ),
-            new NullLogger(),
-            'json',
+            $strategy,
         );
-        $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local,',
-        );
-        $factory->getTableInputStrategy('invalid', 'test', new InputTableStateList([]));
     }
 }

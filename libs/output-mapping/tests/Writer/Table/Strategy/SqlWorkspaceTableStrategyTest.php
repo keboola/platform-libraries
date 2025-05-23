@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 
 class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCase
@@ -13,8 +12,11 @@ class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCa
     {
         parent::setUp();
         $this->strategy = $this
-            ->getWorkspaceStagingFactory($this->clientWrapper)
-            ->getTableOutputStrategy(AbstractStrategyFactory::WORKSPACE_SNOWFLAKE);
+            ->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                workspaceId: 'fake-workspace-id',
+            )
+            ->getTableOutputStrategy();
 
         self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $this->strategy);
     }

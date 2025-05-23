@@ -6,7 +6,6 @@ namespace Keboola\OutputMapping\Tests\Writer\Workspace;
 
 use Keboola\Datatype\Definition\Common;
 use Keboola\Datatype\Definition\Snowflake;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -21,11 +20,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMapping(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
 
@@ -58,12 +54,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -105,6 +102,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testTableOutputMappingMissing(): void
     {
+        $this->initWorkspace();
+
         $root = $this->temp->getTmpFolder();
         $configs = [
             [
@@ -125,12 +124,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             '.table1a": Table "table1a" not found in schema "WORKSPACE_',
         );
 
-        $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $this->getWorkspaceStagingFactory(),
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -142,6 +142,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testTableOutputMappingMissingManifest(): void
     {
+        $this->initWorkspace();
+
         $configs = [
             [
                 'source' => 'table1a',
@@ -149,12 +151,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         ];
         try {
-            $tableQueue = $this->getTableLoader($this->getWorkspaceStagingFactory())->uploadTables(
-                outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+            $tableQueue = $this->getTableLoader(
+                strategyFactory: $this->getWorkspaceStagingFactory(),
+            )->uploadTables(
                 configuration: new OutputMappingSettings(
                     configuration: ['mapping' => $configs],
                     sourcePathPrefix: '/',
-                    storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                    storageApiToken: $this->clientWrapper->getToken(),
                     isFailedJob: false,
                     dataTypeSupport: 'none',
                 ),
@@ -173,17 +176,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testMappingMerge(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
@@ -221,12 +215,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -255,17 +250,9 @@ class WriterWorkspaceTest extends AbstractTestCase
 
     public function testTableOutputMappingMissingDestinationManifest(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
+
         $root = $this->temp->getTmpFolder();
         $configs = [
             [
@@ -284,12 +271,13 @@ class WriterWorkspaceTest extends AbstractTestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Failed to resolve destination for output table "table1a".');
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -300,17 +288,9 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputBucketNoDestination(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
+
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -328,12 +308,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -358,18 +339,9 @@ class WriterWorkspaceTest extends AbstractTestCase
     public function testWriteTableOutputMappingDevMode(): void
     {
         $this->initClient($this->devBranchId);
+        $this->initWorkspace();
 
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTables($this->testBucketId);
         $configs = [
@@ -398,12 +370,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -431,17 +404,9 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeMultipleMappingOfSameSource(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
+
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -459,12 +424,13 @@ class WriterWorkspaceTest extends AbstractTestCase
         ];
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -499,17 +465,9 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testWriteOnlyOnJobFailure(): void
     {
-        $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
-        $factory = $this->getWorkspaceStagingFactory(
-            null,
-            'json',
-            null,
-            [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, $tokenInfo['owner']['defaultBackend']],
-        );
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
+
         $root = $this->temp->getTmpFolder();
         // because of https://keboola.atlassian.net/browse/KBC-228 we need to use default backend (or create the
         // target bucket with the same backend)
@@ -530,12 +488,13 @@ class WriterWorkspaceTest extends AbstractTestCase
         file_put_contents($root . '/table1a.manifest', json_encode(['columns' => ['Id', 'Name']]));
         file_put_contents($root . '/table2a.manifest', json_encode(['columns' => ['Id', 'Name']]));
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: true,
                 dataTypeSupport: 'none',
             ),
@@ -555,11 +514,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testManifestWithoutConfiguration(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId, 'output');
 
@@ -577,12 +533,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ]),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs, 'bucket' => $this->emptyOutputBucketId],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -603,11 +560,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testConfigurationWithoutManifestAndDatafile(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
 
@@ -619,12 +573,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         ];
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -645,11 +600,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
 
@@ -693,12 +645,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ),
         );
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -749,11 +702,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeWriteAlwaysIsFailedJob(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
-        // initialize the workspace mock
-        $factory->getTableOutputStrategy(
-            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
-        )->getDataStorage()->getWorkspaceId();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
 
@@ -772,12 +722,13 @@ class WriterWorkspaceTest extends AbstractTestCase
             ],
         ];
 
-        $tableQueue = $this->getTableLoader($factory)->uploadTables(
-            outputStaging: AbstractStrategyFactory::WORKSPACE_SNOWFLAKE,
+        $tableQueue = $this->getTableLoader(
+            strategyFactory: $factory,
+        )->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: '/',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: true,
                 dataTypeSupport: 'none',
             ),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Configuration;
 
 use Keboola\InputMapping\Exception\InputOperationException;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -12,21 +13,13 @@ use Symfony\Component\Yaml\Yaml;
 
 abstract class Adapter
 {
-    public const FORMAT_YAML = 'yaml';
-    public const FORMAT_JSON = 'json';
-
     private ?array $config = null;
-    private string $format;
     /** @var class-string<Configuration> */
     protected string $configClass;
 
-    /**
-     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
-     */
-    public function __construct(string $format = self::FORMAT_JSON)
-    {
-        $this->validateFormat($format);
-        $this->format = $format;
+    public function __construct(
+        private readonly FileFormat $format = FileFormat::Json,
+    ) {
     }
 
     public function getConfig(): ?array
@@ -34,39 +27,14 @@ abstract class Adapter
         return $this->config;
     }
 
-    public function getFormat(): string
+    public function getFormat(): FileFormat
     {
         return $this->format;
     }
 
-    /**
-     * Get configuration file suffix.
-     */
     public function getFileExtension(): string
     {
-        switch ($this->format) {
-            case self::FORMAT_YAML:
-                return '.yml';
-            case self::FORMAT_JSON:
-                return '.json';
-            default:
-                throw $this->getInvalidConfigurationFormatException();
-        }
-    }
-
-    private function getInvalidConfigurationFormatException(): InputOperationException
-    {
-        return new InputOperationException("Invalid configuration format {$this->format}.");
-    }
-
-    /**
-     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
-     */
-    private function validateFormat(string $format): void
-    {
-        if (!in_array($format, [self::FORMAT_YAML, self::FORMAT_JSON])) {
-            throw new InputOperationException("Configuration format '{$format}' not supported");
-        }
+        return $this->format->getFileExtension();
     }
 
     public function setConfig(array $config): self
@@ -78,22 +46,10 @@ abstract class Adapter
 
     public function serialize(): string
     {
-        if ($this->isYamlFormat()) {
-            $serialized = Yaml::dump($this->getConfig(), 10);
-            if ($serialized === 'null') {
-                $serialized = '{}';
-            }
-        } elseif ($this->isJsonFormat()) {
-            $encoder = new JsonEncoder();
-            $serialized = $encoder->encode(
-                $this->getConfig(),
-                $encoder::FORMAT,
-                ['json_encode_options' => JSON_PRETTY_PRINT],
-            );
-        } else {
-            throw $this->getInvalidConfigurationFormatException();
-        }
-        return $serialized;
+        return match ($this->format) {
+            FileFormat::Yaml => $this->serializeYaml($this->getConfig()),
+            FileFormat::Json => $this->serializeJson($this->getConfig()),
+        };
     }
 
     /**
@@ -108,14 +64,10 @@ abstract class Adapter
 
         $serialized = $this->getContents($file);
 
-        if ($this->isYamlFormat()) {
-            $data = Yaml::parse($serialized);
-        } elseif ($this->isJsonFormat()) {
-            $encoder = new JsonEncoder();
-            $data = $encoder->decode($serialized, $encoder::FORMAT);
-        } else {
-            throw $this->getInvalidConfigurationFormatException();
-        }
+        $data = match ($this->format) {
+            FileFormat::Yaml => Yaml::parse($serialized),
+            FileFormat::Json => (new JsonEncoder())->decode($serialized, JsonEncoder::FORMAT),
+        };
         $this->setConfig((array) $data);
         return (array) $this->getConfig();
     }
@@ -125,23 +77,8 @@ abstract class Adapter
      */
     public function writeToFile(string $file): void
     {
-        if ($this->isYamlFormat()) {
-            $serialized = Yaml::dump($this->getConfig(), 10);
-            if ($serialized === 'null') {
-                $serialized = '{}';
-            }
-        } elseif ($this->isJsonFormat()) {
-            $encoder = new JsonEncoder();
-            $serialized = $encoder->encode(
-                $this->getConfig(),
-                $encoder::FORMAT,
-                ['json_encode_options' => JSON_PRETTY_PRINT],
-            );
-        } else {
-            throw $this->getInvalidConfigurationFormatException();
-        }
         $fs = new Filesystem();
-        $fs->dumpFile($file, $serialized);
+        $fs->dumpFile($file, $this->serialize());
     }
 
     public function getContents(string $file): string
@@ -152,13 +89,24 @@ abstract class Adapter
         return (new SplFileInfo($file, '', basename($file)))->getContents();
     }
 
-    private function isYamlFormat(): bool
+    private function serializeYaml(?array $data): string
     {
-        return $this->getFormat() === 'yaml';
+        $serialized = Yaml::dump($data, 10);
+
+        if ($serialized === 'null') {
+            $serialized = '{}';
+        }
+
+        return $serialized;
     }
 
-    private function isJsonFormat(): bool
+    private function serializeJson(?array $data): string
     {
-        return $this->getFormat() === 'json';
+        $encoder = new JsonEncoder();
+        return $encoder->encode(
+            $data,
+            JsonEncoder::FORMAT,
+            ['json_encode_options' => JSON_PRETTY_PRINT],
+        );
     }
 }

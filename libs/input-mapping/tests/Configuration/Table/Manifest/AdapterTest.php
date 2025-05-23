@@ -9,26 +9,23 @@ use Keboola\InputMapping\Configuration\Adapter as BaseAdapter;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Tests\Configuration\AbstractManifestAdapterTest;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\Temp\Temp;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class AdapterTest extends AbstractManifestAdapterTest
 {
-    /**
-     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
-     */
-    private function createAdapter(string $format): Adapter
+    private function createAdapter(FileFormat $format): Adapter
     {
         return new Adapter($format);
     }
 
     /**
-     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider initWithFormatData
      */
     public function testInitWithFormat(
-        string $format,
-        string $expectedFormat,
+        FileFormat $format,
+        FileFormat $expectedFormat,
         string $expectedExtension,
     ): void {
         $adapter = $this->createAdapter($format);
@@ -40,7 +37,7 @@ class AdapterTest extends AbstractManifestAdapterTest
     public function setConfigAndSerializeData(): Generator
     {
         yield 'json format' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'expectedData' => <<<'EOF'
 {
     "id": "in.c-bucket.test",
@@ -53,7 +50,7 @@ class AdapterTest extends AbstractManifestAdapterTest
 EOF,
         ];
         yield 'yaml format' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'expectedData' => <<<'EOF'
 id: in.c-bucket.test
 primary_key: {  }
@@ -67,11 +64,10 @@ EOF,
     }
 
     /**
-     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider setConfigAndSerializeData
      */
     public function testSetConfigAndSerialize(
-        string $format,
+        FileFormat $format,
         string $expectedData,
     ): void {
         $adapter = $this->createAdapter($format);
@@ -93,7 +89,7 @@ EOF,
     public function fileOperationsData(): Generator
     {
         yield 'json format' => [
-            'format' => 'json',
+            'format' => FileFormat::Json,
             'expectedData' => <<<'EOF'
 {
     "id": "in.c-bucket.test",
@@ -106,7 +102,7 @@ EOF,
 EOF,
         ];
         yield 'yaml format' => [
-            'format' => 'yaml',
+            'format' => FileFormat::Yaml,
             'expectedData' => <<<'EOF'
 id: in.c-bucket.test
 primary_key: {  }
@@ -120,11 +116,10 @@ EOF,
     }
 
     /**
-     * @param BaseAdapter::FORMAT_YAML | BaseAdapter::FORMAT_JSON $format
      * @dataProvider fileOperationsData
      */
     public function testFileOperations(
-        string $format,
+        FileFormat $format,
         string $expectedFilePathname,
     ): void {
         $temp = new Temp('docker');

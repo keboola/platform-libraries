@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StorageApi\Options\FileUploadOptions;
 
-class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
+class DownloadFilesAdaptiveTest extends AbstractDownloadFilesTest
 {
     public function testReadFilesAdaptiveWithTags(): void
     {
@@ -27,7 +26,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         sleep(2);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [
             [
                 'tags' => [$this->testFileTag, $this->testFileTag . '-adaptive'],
@@ -39,7 +42,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $outputStateList = $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $convertedTags = [
@@ -72,7 +74,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $newOutputStateList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',
-            AbstractStrategyFactory::LOCAL,
             $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($convertedTags);
@@ -109,7 +110,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         sleep(2);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $sourceConfigTags = [
             [
                 'name' => $this->testFileTag,
@@ -135,7 +140,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $outputStateList = $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $fileState = $outputStateList->getFile($sourceConfigTags);
@@ -162,7 +166,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $newOutputStateList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',
-            AbstractStrategyFactory::LOCAL,
             $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($sourceConfigTags);
@@ -182,7 +185,12 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
 
     public function testAdaptiveNoMatchingFiles(): void
     {
-        $reader = new Reader($this->getLocalStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [
             [
                 'tags' => [$this->testFileTag, $this->testFileTag . '-adaptive'],
@@ -194,7 +202,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $outputStateList = $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
 
@@ -217,7 +224,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         sleep(2);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [
             [
                 'tags' => [$this->testFileTag, $this->testFileTag . '-adaptive'],
@@ -229,7 +240,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $outputStateList = $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $convertedTags = [
@@ -251,7 +261,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $newOutputStateList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',
-            AbstractStrategyFactory::LOCAL,
             $outputStateList,
         );
         $lastFileState = $newOutputStateList->getFile($convertedTags);
@@ -274,7 +283,11 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         );
         sleep(2);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = [
             [
                 'tags' => [$this->testFileTag, $this->testFileTag . '-adaptive'],
@@ -286,7 +299,6 @@ class DownloadFilesAdaptiveTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
 

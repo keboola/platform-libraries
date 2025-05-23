@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\TableExporter;
 
-class Local extends AbstractStrategy
+class Local extends AbstractFileStrategy
 {
     public const DEFAULT_MAX_EXPORT_SIZE_BYTES = 100000000000;
     public const EXPORT_SIZE_LIMIT_NAME = 'components.max_export_size_bytes';

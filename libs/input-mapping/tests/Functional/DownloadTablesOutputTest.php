@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -41,7 +40,11 @@ class DownloadTablesOutputTest extends AbstractTestCase
             ),
         );
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([
             [
                 'source' => $this->firstTableId,
@@ -57,7 +60,6 @@ class DownloadTablesOutputTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         $test1TableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);

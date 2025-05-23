@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
-use Keboola\InputMapping\Staging\NullProvider;
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\S3;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
 
 class S3StrategyTest extends AbstractTestCase
@@ -21,10 +21,11 @@ class S3StrategyTest extends AbstractTestCase
         $strategy = new S3(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             '.',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -65,10 +66,11 @@ class S3StrategyTest extends AbstractTestCase
         $strategy = new S3(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             '.',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [

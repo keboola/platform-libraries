@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
@@ -14,6 +13,7 @@ use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\ClientException;
 
 #[NeedsStorageBackend('bigquery')]
@@ -27,11 +27,12 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         $clientWrapper->getBranchClient()->setRunId($runId);
 
         $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
             $this->getWorkspaceStagingFactory(
-                $clientWrapper,
-                'json',
-                $this->testLogger,
-                [AbstractStrategyFactory::WORKSPACE_BIGQUERY, 'bigquery'],
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+                stagingType: StagingType::WorkspaceBigquery,
             ),
         );
         $configuration = new InputTableOptionsList([
@@ -45,7 +46,6 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::WORKSPACE_BIGQUERY,
             new ReaderOptions(true),
         );
 

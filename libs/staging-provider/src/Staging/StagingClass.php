@@ -6,6 +6,6 @@ namespace Keboola\StagingProvider\Staging;
 
 enum StagingClass
 {
-    case File;
+    case Disk;
     case Workspace;
 }

@@ -19,7 +19,7 @@ class StagingProvider
     ) {
         $this->tableDataStaging = match ($stagingType->getStagingClass()) {
             // TABLE_DATA for ABS and S3 is bound to LocalProvider because it requires no provider at all
-            StagingClass::File => $localStaging,
+            StagingClass::Disk => $localStaging,
             StagingClass::Workspace => $workspaceStaging,
         };
     }

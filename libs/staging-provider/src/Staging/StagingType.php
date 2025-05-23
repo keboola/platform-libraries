@@ -18,7 +18,7 @@ enum StagingType: string
         return match ($this) {
             self::Local,
             self::Abs,
-            self::S3 => StagingClass::File,
+            self::S3 => StagingClass::Disk,
 
             self::WorkspaceSnowflake,
             self::WorkspaceBigquery => StagingClass::Workspace,

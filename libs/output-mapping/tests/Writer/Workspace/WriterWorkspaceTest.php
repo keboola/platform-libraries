@@ -17,17 +17,10 @@ use Keboola\StorageApi\Metadata;
 
 class WriterWorkspaceTest extends AbstractTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        // all tests here requires existing workspace
-        $this->initWorkspace();
-    }
-
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMapping(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
@@ -109,6 +102,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testTableOutputMappingMissing(): void
     {
+        $this->initWorkspace();
+
         $root = $this->temp->getTmpFolder();
         $configs = [
             [
@@ -147,6 +142,8 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testTableOutputMappingMissingManifest(): void
     {
+        $this->initWorkspace();
+
         $configs = [
             [
                 'source' => 'table1a',
@@ -179,6 +176,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testMappingMerge(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
@@ -252,6 +250,7 @@ class WriterWorkspaceTest extends AbstractTestCase
 
     public function testTableOutputMappingMissingDestinationManifest(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
@@ -289,6 +288,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputBucketNoDestination(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
@@ -339,6 +339,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     public function testWriteTableOutputMappingDevMode(): void
     {
         $this->initClient($this->devBranchId);
+        $this->initWorkspace();
 
         $factory = $this->getWorkspaceStagingFactory();
 
@@ -403,6 +404,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeMultipleMappingOfSameSource(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
@@ -463,6 +465,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testWriteOnlyOnJobFailure(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $root = $this->temp->getTmpFolder();
@@ -511,6 +514,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testManifestWithoutConfiguration(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId, 'output');
@@ -556,6 +560,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testConfigurationWithoutManifestAndDatafile(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
@@ -595,6 +600,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeTableOutputMappingSkipsTimestampColumn(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);
@@ -696,6 +702,7 @@ class WriterWorkspaceTest extends AbstractTestCase
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
     public function testSnowflakeWriteAlwaysIsFailedJob(): void
     {
+        $this->initWorkspace();
         $factory = $this->getWorkspaceStagingFactory();
 
         $this->prepareWorkspaceWithTablesClone($this->testBucketId);

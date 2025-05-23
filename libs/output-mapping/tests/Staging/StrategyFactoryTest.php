@@ -178,7 +178,7 @@ class StrategyFactoryTest extends TestCase
 
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage(sprintf(
-            'Staging type "%s" is not supported for file output.',
+            'File output mapping is not supported for "%s" staging.',
             $stagingType->value,
         ));
 

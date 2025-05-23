@@ -30,7 +30,7 @@ class StrategyFactory
             $stagingType !== StagingType::Local
         ) {
             throw new InvalidOutputException(sprintf(
-                'Staging type "%s" is not supported for table output.',
+                'Staging type "%s" is not supported for file output.',
                 $stagingType->value,
             ));
         }

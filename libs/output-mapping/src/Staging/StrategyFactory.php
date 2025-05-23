@@ -26,9 +26,10 @@ class StrategyFactory
         private readonly FileFormat $format,
     ) {
         $stagingType = $this->stagingProvider->getStagingType();
-        if ($stagingType->getStagingClass() === StagingClass::File &&
-            $stagingType !== StagingType::Local
-        ) {
+        $isFileStaging = $stagingType->getStagingClass() === StagingClass::File;
+        $isNonLocalFileStaging = $isFileStaging && $stagingType !== StagingType::Local;
+
+        if ($isNonLocalFileStaging) {
             throw new InvalidOutputException(sprintf(
                 'Staging type "%s" is not supported for file output.',
                 $stagingType->value,

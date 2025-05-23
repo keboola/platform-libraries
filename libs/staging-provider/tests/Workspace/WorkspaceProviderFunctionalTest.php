@@ -34,7 +34,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
 
     private array $createdWorkspaceIds = [];
     /** @var Configuration[] */
-    private array $createdConfiguration = [];
+    private array $createdConfigurations = [];
 
     protected function setUp(): void
     {
@@ -68,7 +68,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
             }
         }
 
-        foreach ($this->createdConfiguration as $configuration) {
+        foreach ($this->createdConfigurations as $configuration) {
             try {
                 $this->componentsApiClient->deleteConfiguration(
                     $configuration->getComponentId(),
@@ -102,7 +102,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
         $configuration->setComponentId($componentId);
         $this->componentsApiClient->addConfiguration($configuration);
 
-        $this->createdConfiguration[] = $configuration;
+        $this->createdConfigurations[] = $configuration;
 
         return $configuration;
     }

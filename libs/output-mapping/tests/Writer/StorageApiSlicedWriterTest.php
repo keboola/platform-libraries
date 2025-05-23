@@ -73,8 +73,6 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testWriteTableTagStagingFile(): void
     {
-        $this->initWorkspace();
-
         $root = $this->temp->getTmpFolder();
         mkdir($root . '/upload/table.csv');
         file_put_contents($root . '/upload/table.csv/part1', "\"test\",\"test\"\n");
@@ -113,7 +111,7 @@ class StorageApiSlicedWriterTest extends AbstractTestCase
             $this->clientWrapper->getBranchClient(),
         );
 
-        $stagingFactory = $this->getWorkspaceStagingFactory(
+        $stagingFactory = $this->getLocalStagingFactory(
             clientWrapper: $clientWrapper,
         );
         $tableQueue = $this->getTableLoader(

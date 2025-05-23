@@ -11,7 +11,6 @@ use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface as TableStrategyInterface;
 use Keboola\StagingProvider\Staging\File\FileFormat;
-use Keboola\StagingProvider\Staging\StagingClass;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -19,6 +18,12 @@ use Psr\Log\LoggerInterface;
 
 class StrategyFactory
 {
+    /** @var class-string<FileStrategyInterface> */
+    private readonly string $fileStrategyClass;
+
+    /** @var class-string<TableStrategyInterface>  */
+    private readonly string $tableStrategyClass;
+
     public function __construct(
         private readonly StagingProvider $stagingProvider,
         private readonly ClientWrapper $clientWrapper,
@@ -26,15 +31,29 @@ class StrategyFactory
         private readonly FileFormat $format,
     ) {
         $stagingType = $this->stagingProvider->getStagingType();
-        $isFileStaging = $stagingType->getStagingClass() === StagingClass::File;
-        $isNonLocalFileStaging = $isFileStaging && $stagingType !== StagingType::Local;
 
-        if ($isNonLocalFileStaging) {
-            throw new InvalidOutputException(sprintf(
-                'Staging type "%s" is not supported for file output.',
+        $this->fileStrategyClass = match ($stagingType) {
+            StagingType::Local,
+            StagingType::WorkspaceSnowflake,
+            StagingType::WorkspaceBigquery => FileLocal::class,
+
+            default => throw new InvalidOutputException(sprintf(
+                'File output mapping is not supported for "%s" staging.',
                 $stagingType->value,
-            ));
-        }
+            )),
+        };
+
+        $this->tableStrategyClass = match ($stagingType) {
+            StagingType::Local => LocalTableStrategy::class,
+
+            StagingType::WorkspaceSnowflake,
+            StagingType::WorkspaceBigquery => SqlWorkspaceTableStrategy::class,
+
+            default => throw new InvalidOutputException(sprintf(
+                'Table output mapping is not supported for "%s" staging.',
+                $stagingType->value,
+            )),
+        };
     }
 
     public function getFileOutputStrategy(): FileStrategyInterface
@@ -42,7 +61,7 @@ class StrategyFactory
         $stagingType = $this->stagingProvider->getStagingType();
         $this->logger->info(sprintf('Using "%s" file output staging.', $stagingType->value));
 
-        return new ($this->resolveFileStrategyClass($stagingType))(
+        return new ($this->fileStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getFileDataStaging(),
@@ -57,7 +76,7 @@ class StrategyFactory
         $stagingType = $this->stagingProvider->getStagingType();
         $this->logger->info(sprintf('Using "%s" table output staging.', $stagingType->value));
 
-        return new ($this->resolveTableStrategyClass($stagingType))(
+        return new ($this->tableStrategyClass)(
             $this->clientWrapper,
             $this->logger,
             $this->stagingProvider->getTableDataStaging(),
@@ -65,40 +84,5 @@ class StrategyFactory
             $this->format,
             $isFailedJob,
         );
-    }
-
-    /**
-     * @return class-string<FileStrategyInterface>
-     */
-    private function resolveFileStrategyClass(StagingType $stagingType): string
-    {
-        return match ($stagingType) {
-            StagingType::Local,
-            StagingType::WorkspaceSnowflake,
-            StagingType::WorkspaceBigquery => FileLocal::class,
-
-            default => throw new InvalidOutputException(sprintf(
-                'File output mapping is not supported for "%s" staging.',
-                $stagingType->value,
-            )),
-        };
-    }
-
-    /**
-     * @return class-string<TableStrategyInterface>
-     */
-    public function resolveTableStrategyClass(StagingType $stagingType): string
-    {
-        return match ($stagingType) {
-            StagingType::Local => LocalTableStrategy::class,
-
-            StagingType::WorkspaceSnowflake,
-            StagingType::WorkspaceBigquery => SqlWorkspaceTableStrategy::class,
-
-            default => throw new InvalidOutputException(sprintf(
-                'Table output mapping is not supported for "%s" staging.',
-                $stagingType->value,
-            )),
-        };
     }
 }

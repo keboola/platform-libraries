@@ -79,7 +79,7 @@ class StrategyFactory
 
             // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
             default => throw new InvalidInputException(sprintf(
-                'Input mapping on type "%s" is not supported.',
+                'File input mapping is not supported for "%s" staging.',
                 $stagingType->value,
             )),
         };
@@ -99,7 +99,7 @@ class StrategyFactory
 
             // @phpstan-ignore-next-line - keep the "default" even though all staging types are covered
             default => throw new InvalidInputException(sprintf(
-                'Input mapping on type "%s" is not supported.',
+                'Table input mapping is not supported for "%s" staging.',
                 $stagingType->value,
             )),
         };

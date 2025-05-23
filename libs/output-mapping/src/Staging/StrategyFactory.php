@@ -77,7 +77,7 @@ class StrategyFactory
             StagingType::WorkspaceBigquery => FileLocal::class,
 
             default => throw new InvalidOutputException(sprintf(
-                'Output mapping on type "%s" is not supported.',
+                'File output mapping is not supported for "%s" staging.',
                 $stagingType->value,
             )),
         };
@@ -95,7 +95,7 @@ class StrategyFactory
             StagingType::WorkspaceBigquery => SqlWorkspaceTableStrategy::class,
 
             default => throw new InvalidOutputException(sprintf(
-                'Output mapping on type "%s" is not supported.',
+                'Table output mapping is not supported for "%s" staging.',
                 $stagingType->value,
             )),
         };

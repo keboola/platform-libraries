@@ -347,6 +347,7 @@ class TableDataModifierTest extends AbstractTestCase
         int $expectedRowsCount,
         int $expectedDeletedRowsCount,
     ): void {
+        $this->initWorkspace();
         $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy();
         self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $workspace);
 

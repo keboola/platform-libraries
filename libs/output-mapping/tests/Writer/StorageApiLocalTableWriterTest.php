@@ -1998,6 +1998,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
 
         $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
         $tableQueue = $this->getTableLoader(
+            logger: $this->testLogger,
             strategyFactory: $stagingFactory,
         )->uploadTables(
             configuration: new OutputMappingSettings(

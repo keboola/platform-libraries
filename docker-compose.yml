@@ -48,6 +48,17 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  dev84: &dev84
+    <<: *dev
+    image: keboola/php-dev84
+    build:
+      <<: *dev-build
+      args:
+        PHP_VERSION: "8.4"
+        XDEBUG_VERSION: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   dev-api-bundle:
     <<: *dev83
     image: keboola/api-bundle
@@ -173,11 +184,16 @@ services:
       - mysql
 
   dev-doctrine-retry-bundle:
-    <<: *dev82
+    <<: *dev84
     image: keboola/doctrine-retry-bundle
     working_dir: /code/libs/doctrine-retry-bundle
     environment:
-      TEST_DATABASE_URL: mysql://root:root@mysql:3306/testdatabase
+      TEST_DATABASE_HOST: mysql
+      TEST_DATABASE_USER: root
+      TEST_DATABASE_PASSWORD: root
+      TEST_DATABASE_PORT: 3306
+      TEST_DATABASE_DB: testdatabase
+      TEST_PROXY_HOST: toxiproxy
     depends_on:
       toxiproxy:
         condition: service_started

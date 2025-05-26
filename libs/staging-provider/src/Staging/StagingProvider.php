@@ -19,20 +19,26 @@ class StagingProvider
         string $localStagingPath,
         ?string $stagingWorkspaceId,
     ) {
-        $isWorkspaceStaging = $stagingType->getStagingClass() === StagingClass::Workspace;
-        $hasWorkspaceId = $stagingWorkspaceId !== null;
-        if ($isWorkspaceStaging !== $hasWorkspaceId) {
-            throw new InvalidArgumentException(
-                'Staging workspace ID must be configured (only) with workspace staging.',
-            );
-        }
-
         $this->stagingType = $stagingType;
         $this->localStaging = new LocalStaging($localStagingPath);
-        $this->tableDataStaging = match ($stagingType->getStagingClass()) {
-            StagingClass::Disk => $this->localStaging,
-            StagingClass::Workspace => new WorkspaceStaging($stagingWorkspaceId),
-        };
+
+        if ($stagingType->getStagingClass() === StagingClass::Workspace) {
+            if ($stagingWorkspaceId === null) {
+                throw new InvalidArgumentException(
+                    'Staging workspace ID must be configured (only) with workspace staging.',
+                );
+            }
+
+            $this->tableDataStaging = new WorkspaceStaging($stagingWorkspaceId);
+        } else {
+            if ($stagingWorkspaceId !== null) {
+                throw new InvalidArgumentException(
+                    'Staging workspace ID must be configured (only) with workspace staging.',
+                );
+            }
+
+            $this->tableDataStaging = $this->localStaging;
+        }
     }
 
     public function getStagingType(): StagingType

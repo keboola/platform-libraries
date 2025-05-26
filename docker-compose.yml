@@ -131,7 +131,7 @@ services:
       - mockserver
 
   dev-service-client:
-    <<: *dev81
+    <<: *dev83
     image: keboola/service-client
     working_dir: /code/libs/service-client
 

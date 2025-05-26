@@ -11,7 +11,6 @@ use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -169,39 +168,26 @@ abstract class AbstractTestCase extends TestCase
         ?LoggerInterface $logger = null,
         StagingType $stagingType = StagingType::WorkspaceSnowflake,
     ): StrategyFactory {
-        $workspaceStaging = $this->createMock(WorkspaceStagingInterface::class);
-        $workspaceStaging->method('getWorkspaceId')->willReturnCallback(
-            function () use ($stagingType, $clientWrapper) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($clientWrapper->getBranchClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
-                        StagingType::WorkspaceSnowflake => 'snowflake',
-                        StagingType::WorkspaceBigquery => 'bigquery',
-                        default => throw new InvalidArgumentException(sprintf(
-                            'Unknown staging %s',
-                            $stagingType->value,
-                        )),
-                    }], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                    $this->workspaceClient = $workspaces;
-                }
-                return $this->workspaceId;
-            },
-        );
-
-        $fileStaging = $this->createMock(FileStagingInterface::class);
-        $fileStaging->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
-        );
+        if (!$this->workspaceId) {
+            $workspaces = new Workspaces($clientWrapper->getBranchClient());
+            $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
+                StagingType::WorkspaceSnowflake => 'snowflake',
+                StagingType::WorkspaceBigquery => 'bigquery',
+                default => throw new InvalidArgumentException(sprintf(
+                    'Unknown staging %s',
+                    $stagingType->value,
+                )),
+            }], true);
+            $this->workspaceId = (string) $workspace['id'];
+            $this->workspaceCredentials = $workspace['connection'];
+            $this->workspaceClient = $workspaces;
+        }
 
         return new StrategyFactory(
             new StagingProvider(
-                $stagingType,
-                $workspaceStaging,
-                $fileStaging,
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: $this->workspaceId,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),
@@ -225,8 +211,8 @@ abstract class AbstractTestCase extends TestCase
         return new StrategyFactory(
             new StagingProvider(
                 stagingType: $stagingType,
-                workspaceStaging: null,
-                localStaging: $fileStaging,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),

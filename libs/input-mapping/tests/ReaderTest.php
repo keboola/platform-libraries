@@ -42,8 +42,8 @@ class ReaderTest extends AbstractTestCase
         return new StrategyFactory(
             new StagingProvider(
                 stagingType: $stagingType,
-                workspaceStaging: null,
-                localStaging: $localStaging,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),

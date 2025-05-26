@@ -10,11 +10,8 @@ use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
-use Keboola\StagingProvider\Staging\File\LocalStaging;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStaging;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
@@ -164,19 +161,14 @@ abstract class AbstractTestCase extends TestCase
 
         $stagingType = StagingType::from('workspace-' . $clientWrapper->getToken()->getProjectBackend());
 
-        $workspaceStaging = $this->createMock(WorkspaceStagingInterface::class);
-        $workspaceStaging->method('getWorkspaceId')->willReturnCallback(
-            fn() => $workspaceId ?? $this->workspaceId ??
-                throw new RuntimeException('Run initWorkspace before getWorkspaceStagingFactory'),
-        );
-
-        $fileStaging = new LocalStaging($this->temp->getTmpFolder());
+        $workspaceId ??= $this->workspaceId ??
+            throw new RuntimeException('Run initWorkspace before getWorkspaceStagingFactory');
 
         return new StrategyFactory(
             new StagingProvider(
-                $stagingType,
-                $workspaceStaging,
-                $fileStaging,
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: $workspaceId,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),
@@ -200,8 +192,8 @@ abstract class AbstractTestCase extends TestCase
         return new StrategyFactory(
             new StagingProvider(
                 stagingType: StagingType::Local,
-                workspaceStaging: null,
-                localStaging: $fileStaging,
+                localStagingPath: $stagingPath ?? $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
             ),
             $clientWrapper,
             $logger ?: new NullLogger(),

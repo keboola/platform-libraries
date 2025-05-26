@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Keboola\ServiceClient\Tests;
 
 use Keboola\ServiceClient\Service;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 class ServiceTest extends TestCase
 {
-    public function providePublicSubdomains(): iterable
+    public static function providePublicSubdomains(): iterable
     {
         yield 'ai' => [Service::AI, 'ai'];
         yield 'billing' => [Service::BILLING, 'billing'];
@@ -27,18 +28,18 @@ class ServiceTest extends TestCase
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'sync-actions'];
     }
 
-    /** @dataProvider providePublicSubdomains */
+    #[DataProvider('providePublicSubdomains')]
     public function testGetPublicSubdomain(Service $service, string $expectedValue): void
     {
         self::assertSame($expectedValue, $service->getPublicSubdomain());
     }
 
-    public function provideServicesWithoutPublicDns(): iterable
+    public static function provideServicesWithoutPublicDns(): iterable
     {
         yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'Job queue internal API does not have public DNS'];
     }
 
-    /** @dataProvider provideServicesWithoutPublicDns */
+    #[DataProvider('provideServicesWithoutPublicDns')]
     public function testGetPublicSubdomainThrowsExceptionForServiceWithoutPublicDns(
         Service $service,
         string $expectedError,
@@ -49,7 +50,7 @@ class ServiceTest extends TestCase
         $service->getPublicSubdomain();
     }
 
-    public function provideInternalServiceNames(): iterable
+    public static function provideInternalServiceNames(): iterable
     {
         yield 'ai' => [Service::AI, 'ai-service-api.default'];
         yield 'billing' => [Service::BILLING, 'billing-api.default'];
@@ -67,7 +68,7 @@ class ServiceTest extends TestCase
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];
     }
 
-    /** @dataProvider provideInternalServiceNames */
+    #[DataProvider('provideInternalServiceNames')]
     public function testGetInternalServiceName(Service $service, string $expectedValue): void
     {
         self::assertSame($expectedValue, $service->getInternalServiceName());

@@ -6,7 +6,7 @@ namespace Keboola\ServiceClient;
 
 class ServiceClient
 {
-    private const string K8S_SUFFIX = 'svc.cluster.local';
+    private const K8S_SUFFIX = 'svc.cluster.local';
 
     private readonly ServiceDnsType $defaultDnsType;
 

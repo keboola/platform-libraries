@@ -162,4 +162,12 @@ class ServiceClient
     {
         return $this->getServiceUrl(Service::VAULT, $dnsType);
     }
+
+    /**
+     * @return non-empty-string
+     */
+    public function getWaiiServiceUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::WAII, $dnsType);
+    }
 }

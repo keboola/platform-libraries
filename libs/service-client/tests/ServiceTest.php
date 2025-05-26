@@ -67,7 +67,7 @@ class ServiceTest extends TestCase
         yield 'sandboxes' => [Service::SANDBOXES_API, 'sandboxes-api.sandboxes']; // <-- custom namespace
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];
-        yield 'waii' => [Service::WAII, 'waii-api.default'];
+        yield 'waii' => [Service::WAII, 'waii-svc.waii'];
     }
 
     #[DataProvider('provideInternalServiceNames')]

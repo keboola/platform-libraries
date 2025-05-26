@@ -68,7 +68,7 @@ enum Service
             self::SYNC_ACTIONS => 'runner-sync-api.default',
             self::TEMPLATES => 'templates-api.templates-api',
             self::VAULT => 'vault-api.default',
-            self::WAII => 'waii-api.default',
+            self::WAII => 'waii-svc.waii',
         };
     }
 }

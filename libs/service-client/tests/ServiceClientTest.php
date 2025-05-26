@@ -44,7 +44,7 @@ class ServiceClientTest extends TestCase
     private const string INTERNAL_SYNC_ACTIONS_SERVICE = 'http://runner-sync-api.default.svc.cluster.local';
     private const string INTERNAL_TEMPLATES = 'http://templates-api.templates-api.svc.cluster.local';
     private const string INTERNAL_VAULT = 'http://vault-api.default.svc.cluster.local';
-    private const string INTERNAL_WAII_SERVICE = 'http://waii-api.default.svc.cluster.local';
+    private const string INTERNAL_WAII_SERVICE = 'http://waii-svc.waii.svc.cluster.local';
 
     public function testGetExplicitPublicUrlMethods(): void
     {

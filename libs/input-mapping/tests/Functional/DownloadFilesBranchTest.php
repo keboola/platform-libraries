@@ -7,14 +7,13 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\NullLogger;
 
-class DownloadFilesBranchTest extends DownloadFilesTestAbstract
+class DownloadFilesBranchTest extends AbstractDownloadFilesTest
 {
     #[NeedsDevBranch]
     public function testReadFilesIncludeAllTagsWithBranchOverwrite(): void
@@ -56,11 +55,17 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertFalse(file_exists($root . '/download/' . $id1 . '_upload'));
@@ -88,7 +93,11 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
     {
         $clientWrapper = $this->initClient($this->devBranchId);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
 
         $fileConfiguration = ['query' => 'tags: ' . $this->testFileTag];
 
@@ -96,7 +105,6 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
             $reader->downloadFiles(
                 [$fileConfiguration],
                 'dummy',
-                AbstractStrategyFactory::LOCAL,
                 new InputFileStateList([]),
             );
             self::fail('Must throw exception');
@@ -138,7 +146,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
 
         $configuration = [[
             'tags' => [$this->testFileTagForBranch],
@@ -147,7 +162,6 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
@@ -193,7 +207,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
 
         $configuration = [
             [
@@ -208,7 +229,6 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));
@@ -281,7 +301,14 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         );
         sleep(5);
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
 
         $configuration = [
             [
@@ -308,7 +335,6 @@ class DownloadFilesBranchTest extends DownloadFilesTestAbstract
         $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         self::assertEquals('test', file_get_contents($root . '/download/' . $file1Id . '_upload'));

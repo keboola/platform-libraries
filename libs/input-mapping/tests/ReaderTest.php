@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\Scope;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -24,34 +24,31 @@ use Symfony\Component\Finder\Finder;
 
 class ReaderTest extends AbstractTestCase
 {
+    use ReflectionPropertyAccessTestCase;
+
     private function getStagingFactory(
         ClientWrapper $clientWrapper,
-        string $format = 'json',
+        StagingType $stagingType = StagingType::Local,
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper,
-            $logger ?: new NullLogger(),
-            $format,
-        );
-        $mockLocal = $this->getMockBuilder(NullProvider::class)
-            ->onlyMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
+        $localStaging = $this->createMock(FileStagingInterface::class);
+        $localStaging->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
             },
         );
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([
-                    Scope::TABLE_DATA, Scope::TABLE_METADATA,
-                    Scope::FILE_DATA, Scope::FILE_METADATA,
-                ]),
-            ],
+
+        return new StrategyFactory(
+            new StagingProvider(
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
+            ),
+            $clientWrapper,
+            $logger ?: new NullLogger(),
+            $format,
         );
-        return $stagingFactory;
     }
 
     public function testParentId(): void
@@ -82,41 +79,22 @@ class ReaderTest extends AbstractTestCase
     public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored
-        $reader = new Reader($this->getStagingFactory($this->initClient()));
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getStagingFactory($clientWrapper),
+        );
         $configuration = new InputTableOptionsList([]);
         $reader->downloadTables(
             $configuration,
             new InputTableStateList([]),
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         $finder = new Finder();
         $files = $finder->files()->in($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download');
         self::assertEmpty($files);
-    }
-
-    public function testReadTablesDefaultBackend(): void
-    {
-        $reader = new Reader($this->getStagingFactory($this->initClient()));
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => 'not-needed.test',
-                'destination' => 'test.csv',
-            ],
-        ]);
-
-        $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage(
-            'Input mapping on type "invalid" is not supported. Supported types are "abs, local, s3, ',
-        );
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            'invalid',
-            new ReaderOptions(true),
-        );
     }
 
     #[NeedsDevBranch]
@@ -170,7 +148,14 @@ class ReaderTest extends AbstractTestCase
             Client::STAGE_IN,
         );
         $clientWrapper->getTableAndFileStorageClient()->createTableAsync($branchBucketId, 'test', $csvFile);
-        $reader = new Reader($this->getStagingFactory($this->initClient($this->devBranchId)));
+
+        $clientWrapper = $this->initClient($this->devBranchId);
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getStagingFactory($clientWrapper),
+        );
+
         $configuration = new InputTableOptionsList([
             [
                 'source' => $inBucketId . '.test',
@@ -188,7 +173,6 @@ class ReaderTest extends AbstractTestCase
             $configuration,
             $state,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new ReaderOptions(true),
         );
         self::assertStringContainsString(

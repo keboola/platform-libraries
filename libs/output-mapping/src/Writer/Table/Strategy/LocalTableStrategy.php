@@ -17,15 +17,48 @@ use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
 use Keboola\OutputMapping\Writer\FileItem;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Helper\SliceCommandBuilder;
+use Keboola\OutputMapping\Writer\Table\StrategyInterface;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class LocalTableStrategy extends AbstractTableStrategy
+class LocalTableStrategy implements StrategyInterface
 {
+    private readonly FileStagingInterface $dataStorage;
+
+    public function __construct(
+        private readonly ClientWrapper $clientWrapper,
+        private readonly LoggerInterface $logger,
+        StagingInterface $dataStorage,
+        private readonly FileStagingInterface $metadataStorage,
+        private readonly FileFormat $format,
+        private readonly bool $isFailedJob = false,
+    ) {
+        if (!$dataStorage instanceof FileStagingInterface) {
+            throw new InvalidArgumentException('Data storage must be instance of FileStagingInterface');
+        }
+
+        $this->dataStorage = $dataStorage;
+    }
+
+    public function getDataStorage(): FileStagingInterface
+    {
+        return $this->dataStorage;
+    }
+
+    public function getMetadataStorage(): FileStagingInterface
+    {
+        return $this->metadataStorage;
+    }
+
     public function prepareLoadTaskOptions(MappingFromProcessedConfiguration $source): array
     {
         $loadOptions = [
@@ -103,7 +136,7 @@ class LocalTableStrategy extends AbstractTableStrategy
                 sprintf(
                     'Failed to parse manifest file "%s" as "%s": %s',
                     $manifestFile,
-                    $this->format,
+                    $this->format->value,
                     $e->getMessage(),
                 ),
                 $e->getCode(),

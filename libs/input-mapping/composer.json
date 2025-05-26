@@ -9,10 +9,18 @@
             "email": "devel@keboola.com"
         }
     ],
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
     "require": {
         "php": ">=8.2",
         "ext-json": "*",
         "keboola/php-file-storage-utils": "^0.2",
+        "keboola/key-generator": "*@dev",
+        "keboola/staging-provider": "*@dev",
         "keboola/storage-api-client": "^18.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "symfony/config": "^5.4|^6.0|^7.0",
@@ -24,7 +32,7 @@
         "brianium/paratest": "^6.11",
         "keboola/coding-standard": ">=14.0",
         "keboola/php-temp": "^2.0",
-        "keboola/settle": "^1.0",
+        "keboola/settle": "*@dev",
         "monolog/monolog": "^3.0",
         "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-phpunit": "^1.3",

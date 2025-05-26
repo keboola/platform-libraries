@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
-class BigQuery extends AbstractDatabaseStrategy
+class BigQuery extends AbstractWorkspaceStrategy
 {
     protected function getWorkspaceType(): string
     {

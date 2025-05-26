@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\File\Strategy;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter as FileAdapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\StorageApi\Client;
 use Symfony\Component\Filesystem\Filesystem;
 
 class Local extends AbstractStrategy implements StrategyInterface

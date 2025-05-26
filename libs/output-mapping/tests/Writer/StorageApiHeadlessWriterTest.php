@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\TableExporter;
 
 class StorageApiHeadlessWriterTest extends AbstractTestCase
@@ -30,11 +28,10 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -75,11 +72,10 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -122,11 +118,10 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -166,11 +161,10 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         );
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: [],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -223,11 +217,10 @@ class StorageApiHeadlessWriterTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),

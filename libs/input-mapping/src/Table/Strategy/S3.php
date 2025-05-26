@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
-class S3 extends AbstractStrategy
+class S3 extends AbstractFileStrategy
 {
     public function downloadTable(RewrittenInputTableOptions $table): array
     {

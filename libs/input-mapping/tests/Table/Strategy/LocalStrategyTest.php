@@ -4,29 +4,24 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
 
 class LocalStrategyTest extends AbstractTestCase
 {
-    private function getProvider(): ProviderInterface
+    private function getProvider(): FileStagingInterface
     {
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
+        $mockLocal = $this->createMock(FileStagingInterface::class);
         $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
+            fn() => $this->temp->getTmpFolder(),
         );
-        /** @var ProviderInterface $mockLocal */
+
         return $mockLocal;
     }
 
@@ -40,6 +35,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             new InputTableStateList([]),
             'boo',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [
@@ -76,6 +72,7 @@ class LocalStrategyTest extends AbstractTestCase
             $this->getProvider(),
             new InputTableStateList([]),
             'boo',
+            FileFormat::Json,
         );
         $tableOptions = new RewrittenInputTableOptions(
             [

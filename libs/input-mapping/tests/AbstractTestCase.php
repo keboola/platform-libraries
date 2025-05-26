@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests;
 
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Scope;
+use InvalidArgumentException;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
@@ -163,89 +164,60 @@ abstract class AbstractTestCase extends TestCase
 
     protected function getWorkspaceStagingFactory(
         ClientWrapper $clientWrapper,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
-        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'],
+        StagingType $stagingType = StagingType::WorkspaceSnowflake,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
+        if (!$this->workspaceId) {
+            $workspaces = new Workspaces($clientWrapper->getBranchClient());
+            $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
+                StagingType::WorkspaceSnowflake => 'snowflake',
+                StagingType::WorkspaceBigquery => 'bigquery',
+                default => throw new InvalidArgumentException(sprintf(
+                    'Unknown staging %s',
+                    $stagingType->value,
+                )),
+            }], true);
+            $this->workspaceId = (string) $workspace['id'];
+            $this->workspaceCredentials = $workspace['connection'];
+            $this->workspaceClient = $workspaces;
+        }
+
+        return new StrategyFactory(
+            new StagingProvider(
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: $this->workspaceId,
+            ),
             $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockWorkspace = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId'])
-            ->getMock();
-        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend, $clientWrapper) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($clientWrapper->getBranchClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                    $this->workspaceClient = $workspaces;
-                }
-                return $this->workspaceId;
-            },
-        );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
-        );
-        /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspace */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                $backend[0] => new Scope([Scope::TABLE_METADATA]),
-            ],
-        );
-        $stagingFactory->addProvider(
-            $mockWorkspace,
-            [
-                $backend[0] => new Scope([Scope::TABLE_DATA]),
-            ],
-        );
-        return $stagingFactory;
     }
 
     protected function getLocalStagingFactory(
         ClientWrapper $clientWrapper,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
+        StagingType $stagingType = StagingType::Local,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper,
-            $logger ?: new NullLogger(),
-            $format,
-        );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
+        $fileStaging = $this->createMock(FileStagingInterface::class);
+        $fileStaging->method('getPath')->willReturnCallback(
             function () {
                 return $this->temp->getTmpFolder();
             },
         );
-        /** @var ProviderInterface $mockLocal */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-                AbstractStrategyFactory::ABS => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-                AbstractStrategyFactory::S3 => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-            ],
+
+        return new StrategyFactory(
+            new StagingProvider(
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
+            ),
+            $clientWrapper,
+            $logger ?: new NullLogger(),
+            $format,
         );
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ],
-        );
-        return $stagingFactory;
     }
 
     protected function clearFileUploads(array $tags): void

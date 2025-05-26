@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
-use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
-use Keboola\OutputMapping\Writer\TableWriter;
 use Keboola\StorageApi\Metadata;
 
 abstract class BaseWriterMetadataTest extends AbstractTestCase
@@ -19,8 +16,6 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
 
     /**
      * Transform metadata into a key-value array
-     * @param $metadata
-     * @return array
      */
     protected function getMetadataValues(array $metadata): array
     {
@@ -80,11 +75,10 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         $this->clientWrapper->getTableAndFileStorageClient()->setRunId($runId);
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -170,11 +164,10 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
         ];
 
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -244,11 +237,10 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ],
         ];
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),
@@ -329,11 +321,10 @@ abstract class BaseWriterMetadataTest extends AbstractTestCase
             ],
         ];
         $tableQueue = $this->getTableLoader()->uploadTables(
-            outputStaging: AbstractStrategyFactory::LOCAL,
             configuration: new OutputMappingSettings(
                 configuration: $config,
                 sourcePathPrefix: 'upload',
-                storageApiToken: $this->getLocalStagingFactory()->getClientWrapper()->getToken(),
+                storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
                 dataTypeSupport: 'none',
             ),

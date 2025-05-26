@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Table\Source;
 
-use Keboola\InputMapping\Staging\ProviderInterface;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 
 final class SqlWorkspaceItemSourceFactory implements WorkspaceItemSourceFactoryInterface
 {
-    public function __construct(private readonly ProviderInterface $dataStorage)
+    public function __construct(private readonly WorkspaceStagingInterface $dataStorage)
     {
     }
 

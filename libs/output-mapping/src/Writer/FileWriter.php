@@ -20,14 +20,11 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class FileWriter
 {
-    private readonly ClientWrapper $clientWrapper;
-    private readonly LoggerInterface $logger;
-
     public function __construct(
+        private readonly ClientWrapper $clientWrapper,
+        private readonly LoggerInterface $logger,
         private readonly StrategyFactory $strategyFactory,
     ) {
-        $this->clientWrapper = $strategyFactory->getClientWrapper();
-        $this->logger = $strategyFactory->getLogger();
     }
 
     /**
@@ -36,7 +33,6 @@ class FileWriter
      * @param string $source Source path.
      * @param array $configuration Upload configuration
      * @param array $systemMetadata Metadata identifying the source of the file
-     * @param string $storage Currently any storage that is not ABS workspaces defaults to local
      * @param array $tableFiles For the use file storage only case, tags etc are provided here
      * @param bool $isFailedJob Marks that the writer was called as part of a failed job and only
      *  write_always OM is to be processed. Since this flag is not currently implemented for files,
@@ -46,7 +42,6 @@ class FileWriter
         string $source,
         array $configuration,
         array $systemMetadata,
-        string $storage,
         array $tableFiles,
         bool $isFailedJob,
     ): void {
@@ -56,7 +51,7 @@ class FileWriter
         if (!empty($systemMetadata) && empty($systemMetadata[SystemMetadata::SYSTEM_KEY_COMPONENT_ID])) {
             throw new OutputOperationException('Component Id must be set');
         }
-        $strategy = $this->strategyFactory->getFileOutputStrategy($storage);
+        $strategy = $this->strategyFactory->getFileOutputStrategy();
         $files = $strategy->listFiles($source);
         $manifests = $strategy->listManifests($source);
 
@@ -171,7 +166,7 @@ class FileWriter
         }
         $prefix = null;
         if ($this->clientWrapper->isDevelopmentBranch()) {
-            $prefix = (string) $this->clientWrapper->getBranchId();
+            $prefix = $this->clientWrapper->getBranchId();
         }
         foreach ($configuration as $fileConfiguration) {
             if (!empty($fileConfiguration['processed_tags'])) {

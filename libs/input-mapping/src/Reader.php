@@ -22,31 +22,25 @@ use Psr\Log\LoggerInterface;
 
 class Reader
 {
-    protected ClientWrapper $clientWrapper;
-    private LoggerInterface $logger;
-    private StrategyFactory $strategyFactory;
-
-    public function __construct(StrategyFactory $strategyFactory)
-    {
-        $this->logger = $strategyFactory->getLogger();
-        $this->clientWrapper = $strategyFactory->getClientWrapper();
-        $this->strategyFactory = $strategyFactory;
+    public function __construct(
+        private readonly ClientWrapper $clientWrapper,
+        private readonly LoggerInterface $logger,
+        private readonly StrategyFactory $strategyFactory,
+    ) {
     }
 
     /**
      * @param $configuration array
      * @param $destination string Relative path to the destination directory
-     * @param $stagingType string
      * @param InputFileStateList $filesState list of input mapping file states
      * @return InputFileStateList
      */
     public function downloadFiles(
         array $configuration,
         string $destination,
-        string $stagingType,
         InputFileStateList $filesState,
     ): InputFileStateList {
-        $strategy = $this->strategyFactory->getFileInputStrategy($stagingType, $filesState);
+        $strategy = $this->strategyFactory->getFileInputStrategy($filesState);
         if (!$configuration) {
             return new InputFileStateList([]);
         }
@@ -57,7 +51,6 @@ class Reader
      * @param InputTableOptionsList $tablesDefinition list of input mappings
      * @param InputTableStateList $tablesState list of input mapping table states
      * @param string $destination destination folder
-     * @param string $stagingType
      * @param ReaderOptions $readerOptions
      * @return Result
      */
@@ -65,7 +58,6 @@ class Reader
         InputTableOptionsList $tablesDefinition,
         InputTableStateList $tablesState,
         string $destination,
-        string $stagingType,
         ReaderOptions $readerOptions,
     ): Result {
         $tableResolver = new TableDefinitionResolver(
@@ -80,7 +72,7 @@ class Reader
             $this->logger,
         );
         $tablesDefinition = $tableResolver->resolve($tablesDefinition);
-        $strategy = $this->strategyFactory->getTableInputStrategy($stagingType, $destination, $tablesState);
+        $strategy = $this->strategyFactory->getTableInputStrategy($destination, $tablesState);
         if ($readerOptions->devInputsDisabled()
             && !$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()
         ) {

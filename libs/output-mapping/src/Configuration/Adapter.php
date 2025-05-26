@@ -5,23 +5,18 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Configuration;
 
 use Keboola\OutputMapping\Exception\OutputOperationException;
+use Keboola\StagingProvider\Staging\File\FileFormat;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Yaml\Yaml;
 
 class Adapter
 {
-    public const FORMAT_YAML = 'yaml';
-    public const FORMAT_JSON = 'json';
-
     protected ?array $config = null;
     /** @var class-string<Configuration> */
     protected string $configClass;
 
-    /**
-     * @param self::FORMAT_YAML | self::FORMAT_JSON $format
-     */
     public function __construct(
-        protected readonly string $format = 'json',
+        protected readonly FileFormat $format = FileFormat::Json,
     ) {
     }
 
@@ -30,24 +25,14 @@ class Adapter
         return $this->config;
     }
 
-    /**
-     * @return self::FORMAT_YAML | self::FORMAT_JSON
-     */
-    public function getFormat(): string
+    public function getFormat(): FileFormat
     {
         return $this->format;
     }
 
     public function getFileExtension(): string
     {
-        switch ($this->format) {
-            case self::FORMAT_YAML:
-                return '.yml';
-            case self::FORMAT_JSON:
-                return '.json';
-            default:
-                throw new OutputOperationException("Invalid configuration format {$this->format}.");
-        }
+        return $this->format->getFileExtension();
     }
 
     public function setConfig(array $config): static
@@ -65,14 +50,11 @@ class Adapter
      */
     public function deserialize(string $serialized): array
     {
-        if ($this->getFormat() === self::FORMAT_YAML) {
-            $data = Yaml::parse($serialized);
-        } elseif ($this->getFormat() === self::FORMAT_JSON) {
-            $encoder = new JsonEncoder();
-            $data = $encoder->decode($serialized, $encoder::FORMAT);
-        } else {
-            throw new OutputOperationException(sprintf('Invalid configuration format "%s".', $this->format));
-        }
+        $data = match ($this->format) {
+            FileFormat::Yaml => Yaml::parse($serialized),
+            FileFormat::Json => (new JsonEncoder)->decode($serialized, JsonEncoder::FORMAT),
+        };
+
         $this->setConfig((array) $data);
         return (array) $this->getConfig();
     }

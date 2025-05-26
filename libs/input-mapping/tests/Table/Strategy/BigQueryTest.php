@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Staging\NullProvider;
+
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\BigQuery;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Psr\Log\NullLogger;
 
 #[NeedsStorageBackend('bigquery')]
@@ -23,10 +26,11 @@ class BigQueryTest extends AbstractTestCase
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
+            FileFormat::Json,
         );
         $result = $strategy->downloadTable(new RewrittenInputTableOptions(
             [
@@ -66,10 +70,11 @@ class BigQueryTest extends AbstractTestCase
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),
-            new NullProvider(),
-            new NullProvider(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
             new InputTableStateList([]),
             'test',
+            FileFormat::Json,
         );
 
         $aliasId = $this->clientWrapper->getBasicClient()->createAliasTable(

@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\File\Strategy;
 
-use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\OutputMapping\Configuration\Adapter;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
 class AbstractFileStrategy
 {
-    /**
-     * @param Adapter::FORMAT_YAML | Adapter::FORMAT_JSON $format
-     */
     public function __construct(
         protected readonly ClientWrapper $clientWrapper,
         protected readonly LoggerInterface $logger,
-        protected readonly ProviderInterface $dataStorage,
-        protected readonly ProviderInterface $metadataStorage,
-        protected readonly string $format,
+        protected readonly FileStagingInterface $dataStorage,
+        protected readonly FileStagingInterface $metadataStorage,
+        protected readonly FileFormat $format,
     ) {
     }
 

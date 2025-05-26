@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests;
 
-use Generator;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
-use Keboola\InputMapping\Staging\NullProvider;
-use Keboola\InputMapping\Staging\ProviderInterface;
-use Keboola\InputMapping\Staging\Scope;
+use InvalidArgumentException;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\Workspaces;
@@ -25,6 +25,7 @@ use PHPUnit\Util\Test;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionObject;
+use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 
 abstract class AbstractTestCase extends TestCase
@@ -127,136 +128,96 @@ abstract class AbstractTestCase extends TestCase
         parent::tearDown();
     }
 
+    protected function initWorkspace(): void
+    {
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
+
+        if ($this->workspaceId) {
+            $workspaces->deleteWorkspace((int) $this->workspaceId, async: true);
+        }
+
+        $stagingType = StagingType::from('workspace-' . $this->clientWrapper->getToken()->getProjectBackend());
+
+        $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
+            StagingType::WorkspaceSnowflake => 'snowflake',
+            StagingType::WorkspaceBigquery => 'bigquery',
+            default => throw new InvalidArgumentException(sprintf(
+                'Unknown staging %s',
+                $stagingType->value,
+            )),
+        }], true);
+
+        $this->workspaceId = (string) $workspace['id'];
+        $this->workspaceCredentials = $workspace['connection'];
+    }
+
     protected function getWorkspaceStagingFactory(
         ?ClientWrapper $clientWrapper = null,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
-        array $backend = [AbstractStrategyFactory::WORKSPACE_SNOWFLAKE, 'snowflake'],
+        ?string $workspaceId = null,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+        $clientWrapper ??= $this->clientWrapper;
+
+        $stagingType = StagingType::from('workspace-' . $clientWrapper->getToken()->getProjectBackend());
+
+        $workspaceId ??= $this->workspaceId ??
+            throw new RuntimeException('Run initWorkspace before getWorkspaceStagingFactory');
+
+        return new StrategyFactory(
+            new StagingProvider(
+                stagingType: $stagingType,
+                localStagingPath: $this->temp->getTmpFolder(),
+                stagingWorkspaceId: $workspaceId,
+            ),
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockWorkspace = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getWorkspaceId', 'getCredentials'])
-            ->getMock();
-        $mockWorkspace->method('getWorkspaceId')->willReturnCallback(
-            function () use ($backend) {
-                if (!$this->workspaceId) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceId;
-            },
-        );
-        $mockWorkspace->method('getCredentials')->willReturnCallback(
-            function () use ($backend) {
-                if (!$this->workspaceCredentials) {
-                    $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
-                    $workspace = $workspaces->createWorkspace(['backend' => $backend[1]], true);
-                    $this->workspaceId = (string) $workspace['id'];
-                    $this->workspaceCredentials = $workspace['connection'];
-                }
-                return $this->workspaceCredentials;
-            },
-        );
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
-        );
-        /** @var ProviderInterface $mockLocal */
-        /** @var ProviderInterface $mockWorkspace */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                $backend[0] => new Scope([Scope::FILE_METADATA, Scope::TABLE_METADATA]),
-            ],
-        );
-        $stagingFactory->addProvider(
-            $mockWorkspace,
-            [
-                $backend[0] => new Scope([Scope::FILE_DATA, Scope::TABLE_DATA]),
-            ],
-        );
-
-        $mockLocal = self::getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () {
-                return $this->temp->getTmpFolder();
-            },
-        );
-        /** @var ProviderInterface $mockLocal */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-            ],
-        );
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ],
-        );
-        return $stagingFactory;
     }
 
     protected function getLocalStagingFactory(
         ?ClientWrapper $clientWrapper = null,
-        string $format = 'json',
+        FileFormat $format = FileFormat::Json,
         ?LoggerInterface $logger = null,
         ?string $stagingPath = null,
     ): StrategyFactory {
-        $stagingFactory = new StrategyFactory(
-            $clientWrapper ?: $this->clientWrapper,
+        $clientWrapper ??= $this->clientWrapper;
+
+        $fileStaging = $this->createMock(FileStagingInterface::class);
+        $fileStaging->method('getPath')->willReturnCallback(
+            fn() => $stagingPath ?? $this->temp->getTmpFolder(),
+        );
+
+        return new StrategyFactory(
+            new StagingProvider(
+                stagingType: StagingType::Local,
+                localStagingPath: $stagingPath ?? $this->temp->getTmpFolder(),
+                stagingWorkspaceId: null,
+            ),
+            $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
         );
-        $mockLocal = $this->getMockBuilder(NullProvider::class)
-            ->setMethods(['getPath'])
-            ->getMock();
-        $mockLocal->method('getPath')->willReturnCallback(
-            function () use ($stagingPath) {
-                return $stagingPath ?: $this->temp->getTmpFolder();
-            },
-        );
-        /** @var ProviderInterface $mockLocal */
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::TABLE_DATA, Scope::TABLE_METADATA]),
-            ],
-        );
-        $stagingFactory->addProvider(
-            $mockLocal,
-            [
-                AbstractStrategyFactory::LOCAL => new Scope([Scope::FILE_DATA, Scope::FILE_METADATA]),
-            ],
-        );
-        return $stagingFactory;
     }
 
-    public function getTableLoader(?StrategyFactory $strategyFactory = null): TableLoader
-    {
-        if ($strategyFactory === null) {
-            $strategyFactory = $this->getLocalStagingFactory();
-        }
-        $tableLoader = new TableLoader(
-            $strategyFactory->getLogger(),
-            $strategyFactory->getClientWrapper(),
-            $strategyFactory,
+    public function getTableLoader(
+        ?ClientWrapper $clientWrapper = null,
+        ?LoggerInterface $logger = null,
+        ?StrategyFactory $strategyFactory = null,
+    ): TableLoader {
+        $clientWrapper ??= $this->clientWrapper;
+        $logger ??= new NullLogger();
+        $strategyFactory ??= $this->getLocalStagingFactory(
+            clientWrapper: $clientWrapper,
+            logger: $logger,
         );
 
-        return $tableLoader;
+        return new TableLoader(
+            $logger,
+            $clientWrapper,
+            $strategyFactory,
+        );
     }
 
     protected function assertTablesExists(string $bucketId, array $expectedTables): void
@@ -318,7 +279,7 @@ abstract class AbstractTestCase extends TestCase
         self::assertArrayNotHasKey('definition', $jobData['operationParams']);
     }
 
-    public function incrementalFlagProvider(): Generator
+    public function incrementalFlagProvider(): iterable
     {
         yield 'incremental load' => [true];
         yield 'full load' => [false];

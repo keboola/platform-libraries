@@ -6,12 +6,11 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\AbstractStrategyFactory;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\StorageApi\Options\FileUploadOptions;
 
-class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
+class DownloadFilesAdaptiveBranchTest extends AbstractDownloadFilesTest
 {
     #[NeedsDevBranch]
     public function testReadFilesAdaptiveWithBranch(): void
@@ -41,7 +40,14 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
             ],
         ];
 
-        $reader = new Reader($this->getLocalStagingFactory($clientWrapper, 'json', $this->testLogger));
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
 
         $configuration = [
             [
@@ -53,7 +59,6 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         $outputStateFileList = $reader->downloadFiles(
             $configuration,
             'download',
-            AbstractStrategyFactory::LOCAL,
             new InputFileStateList([]),
         );
         $lastFileState = $outputStateFileList->getFile($convertedTags);
@@ -87,7 +92,6 @@ class DownloadFilesAdaptiveBranchTest extends DownloadFilesTestAbstract
         $newOutputStateFileList = $reader->downloadFiles(
             $configuration,
             'download-adaptive',
-            AbstractStrategyFactory::LOCAL,
             $outputStateFileList,
         );
         $lastFileState = $newOutputStateFileList->getFile($convertedTags);

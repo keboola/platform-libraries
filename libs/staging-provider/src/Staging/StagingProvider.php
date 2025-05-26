@@ -4,22 +4,34 @@ declare(strict_types=1);
 
 namespace Keboola\StagingProvider\Staging;
 
-use Keboola\StagingProvider\Exception\NoStagingAvailableException;
-use Keboola\StagingProvider\Staging\File\FileStagingInterface;
-use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
+use InvalidArgumentException;
+use Keboola\StagingProvider\Staging\File\LocalStaging;
+use Keboola\StagingProvider\Staging\Workspace\WorkspaceStaging;
 
 class StagingProvider
 {
-    private readonly ?StagingInterface $tableDataStaging;
+    private readonly StagingType $stagingType;
+    private readonly LocalStaging $localStaging;
+    private readonly LocalStaging|WorkspaceStaging $tableDataStaging;
 
     public function __construct(
-        private readonly StagingType $stagingType,
-        ?WorkspaceStagingInterface $workspaceStaging,
-        private readonly ?FileStagingInterface $localStaging,
+        StagingType $stagingType,
+        string $localStagingPath,
+        ?string $stagingWorkspaceId,
     ) {
+        $isWorkspaceStaging = $stagingType->getStagingClass() === StagingClass::Workspace;
+        $hasWorkspaceId = $stagingWorkspaceId !== null;
+        if ($isWorkspaceStaging !== $hasWorkspaceId) {
+            throw new InvalidArgumentException(
+                'Staging workspace ID must be configured (only) with workspace staging.',
+            );
+        }
+
+        $this->stagingType = $stagingType;
+        $this->localStaging = new LocalStaging($localStagingPath);
         $this->tableDataStaging = match ($stagingType->getStagingClass()) {
-            StagingClass::Disk => $localStaging,
-            StagingClass::Workspace => $workspaceStaging,
+            StagingClass::Disk => $this->localStaging,
+            StagingClass::Workspace => new WorkspaceStaging($stagingWorkspaceId),
         };
     }
 
@@ -30,49 +42,21 @@ class StagingProvider
 
     public function getFileDataStaging(): StagingInterface
     {
-        if ($this->localStaging === null) {
-            throw new NoStagingAvailableException(sprintf(
-                'Undefined file data provider in "%s" staging.',
-                $this->stagingType->name,
-            ));
-        }
-
         return $this->localStaging;
     }
 
     public function getFileMetadataStaging(): StagingInterface
     {
-        if ($this->localStaging === null) {
-            throw new NoStagingAvailableException(sprintf(
-                'Undefined file metadata provider in "%s" staging.',
-                $this->stagingType->name,
-            ));
-        }
-
         return $this->localStaging;
     }
 
     public function getTableDataStaging(): StagingInterface
     {
-        if ($this->tableDataStaging === null) {
-            throw new NoStagingAvailableException(sprintf(
-                'Undefined table data provider in "%s" staging.',
-                $this->stagingType->name,
-            ));
-        }
-
         return $this->tableDataStaging;
     }
 
     public function getTableMetadataStaging(): StagingInterface
     {
-        if ($this->localStaging === null) {
-            throw new NoStagingAvailableException(sprintf(
-                'Undefined table metadata provider in "%s" staging.',
-                $this->stagingType->name,
-            ));
-        }
-
         return $this->localStaging;
     }
 }

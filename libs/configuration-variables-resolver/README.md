@@ -5,3 +5,4 @@ values from `keboola.variables` and `keboola.shared-code` components.
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.
+

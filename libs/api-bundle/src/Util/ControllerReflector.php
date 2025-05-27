@@ -45,7 +45,7 @@ class ControllerReflector
             }
 
             try {
-                assert(is_string($controllerClass) || is_object($controllerClass));
+                assert(is_object($controllerClass));
                 assert(is_string($controllerMethod));
                 return new ReflectionMethod($controllerClass, $controllerMethod);
             } catch (ReflectionException) {

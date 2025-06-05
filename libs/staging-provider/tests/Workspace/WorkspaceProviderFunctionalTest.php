@@ -269,12 +269,16 @@ class WorkspaceProviderFunctionalTest extends TestCase
         ]);
         $workspaceId = (string) $workspaceData['id'];
 
-        // fetch the workspace through the workspace provider, as any client would do
-        $workspace = $this->workspaceProvider->getExistingWorkspace($workspaceId, null);
-        $newCredentials = $this->workspaceProvider->resetWorkspaceCredentials($workspace);
+        $workspace = $this->workspaceProvider->resetWorkspaceCredentials($workspaceId);
+        $workspaceCredentials = $workspace->getCredentials();
 
-        self::assertArrayHasKey('privateKey', $newCredentials);
-        self::assertStringStartsWith('-----BEGIN PRIVATE KEY-----', $newCredentials['privateKey']);
+        // validate private key is present
+        self::assertArrayHasKey('privateKey', $workspaceCredentials);
+        self::assertStringStartsWith('-----BEGIN PRIVATE KEY-----', $workspaceCredentials['privateKey'] ?? '');
+
+        // validate other connection parameters are present
+        self::assertArrayHasKey('host', $workspaceCredentials);
+        self::assertArrayHasKey('account', $workspaceCredentials);
     }
 
     public function testResetWorkspaceCredentialsWithPassword(): void
@@ -286,12 +290,16 @@ class WorkspaceProviderFunctionalTest extends TestCase
         $workspaceId = (string) $workspaceData['id'];
         $originalPassword = $workspaceData['connection']['password'];
 
-        // fetch the workspace through the workspace provider, as any client would do
-        $workspace = $this->workspaceProvider->getExistingWorkspace($workspaceId, null);
-        $newCredentials = $this->workspaceProvider->resetWorkspaceCredentials($workspace);
+        $workspace = $this->workspaceProvider->resetWorkspaceCredentials($workspaceId);
+        $workspaceCredentials = $workspace->getCredentials();
 
-        self::assertArrayHasKey('password', $newCredentials);
-        self::assertNotSame($originalPassword, $newCredentials['password']);
+        // validate password is present
+        self::assertArrayHasKey('password', $workspaceCredentials);
+        self::assertNotSame($originalPassword, $workspaceCredentials['password']);
+
+        // validate other connection parameters are present
+        self::assertArrayHasKey('host', $workspaceCredentials);
+        self::assertArrayHasKey('account', $workspaceCredentials);
     }
 
     public function testCleanupExistingWorkspace(): void

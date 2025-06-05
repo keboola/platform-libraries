@@ -72,8 +72,11 @@ class WorkspaceProvider
         return WorkspaceWithCredentials::createFromData($workspaceData);
     }
 
-    public function resetWorkspaceCredentials(WorkspaceInterface $workspace): array
+    public function resetWorkspaceCredentials(string $workspaceId): WorkspaceWithCredentials
     {
+        $workspaceData = $this->workspacesApiClient->getWorkspace((int) $workspaceId);
+        $workspace = Workspace::createFromData($workspaceData);
+
         if ($workspace->getLoginType()->isKeyPairLogin()) {
             $keyPair = $this->snowflakeKeypairGenerator->generateKeyPair();
 
@@ -84,17 +87,22 @@ class WorkspaceProvider
                 ),
             );
 
-            $credentials = [
+            $credentialsData = [
                 'privateKey' => $keyPair->privateKey,
             ];
         } else {
-            $credentials = $this->workspacesApiClient->resetCredentials(
+            $credentialsData = $this->workspacesApiClient->resetCredentials(
                 $workspace->getWorkspaceId(),
                 new Workspaces\ResetCredentialsRequest(),
             );
         }
 
-        return $credentials;
+        $workspaceData['connection'] = [
+            ...$credentialsData,
+            ...$workspaceData['connection'],
+        ];
+
+        return WorkspaceWithCredentials::createFromData($workspaceData);
     }
 
     public function cleanupWorkspace(string $workspaceId): void

@@ -76,7 +76,7 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
         return $this->credentials;
     }
 
-    public static function parseCredentialsData(
+    private static function parseCredentialsData(
         #[SensitiveParameter] array $data,
     ): array {
         $backend = $data['backend'];

@@ -475,27 +475,32 @@ class WorkspaceProviderTest extends TestCase
     public function testResetWorkspaceCredentials(): void
     {
         $workspaceId = '123456';
-        $resetCredentials = [
-            'password' => 'new-password',
-            'user' => 'new-user',
+        $workspaceData = [
+            'id' => (int) $workspaceId,
+            'connection' => [
+                'backend' => 'snowflake',
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+            ],
         ];
-
-        $workspace = $this->createMock(WorkspaceInterface::class);
-        $workspace->expects(self::once())
-            ->method('getWorkspaceId')
-            ->willReturn($workspaceId);
-        $workspace->expects(self::once())
-            ->method('getLoginType')
-            ->willReturn(WorkspaceLoginType::DEFAULT);
+        $resetCredentialsData = [
+            'password' => '<PASSWORD>',
+        ];
 
         $workspacesApiClient = $this->createMock(Workspaces::class);
         $workspacesApiClient->expects(self::once())
+            ->method('getWorkspace')
+            ->with((int) $workspaceId)
+            ->willReturn($workspaceData)
+        ;
+        $workspacesApiClient->expects(self::once())
             ->method('resetCredentials')
-            ->with(
-                $workspaceId,
-                new ResetCredentialsRequest(),
-            )
-            ->willReturn($resetCredentials);
+            ->with($workspaceId, new ResetCredentialsRequest())
+            ->willReturn($resetCredentialsData)
+        ;
 
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient->expects(self::never())->method(self::anything());
@@ -509,26 +514,44 @@ class WorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
         );
 
-        $credentials = $workspaceProvider->resetWorkspaceCredentials($workspace);
+        $returnedWorkspace = $workspaceProvider->resetWorkspaceCredentials($workspaceId);
 
-        self::assertSame($resetCredentials, $credentials);
+        $workspaceData['connection'] = [
+            ...$workspaceData['connection'],
+            ...$resetCredentialsData,
+        ];
+
+        self::assertEquals(
+            WorkspaceWithCredentials::createFromData($workspaceData),
+            $returnedWorkspace,
+        );
     }
 
     public function testResetWorkspaceCredentialsWithKeyPair(): void
     {
         $workspaceId = '123456';
+        $workspaceData = [
+            'id' => (int) $workspaceId,
+            'connection' => [
+                'backend' => 'snowflake',
+                'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
+                'host' => 'some-host',
+                'warehouse' => 'some-warehouse',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+            ],
+        ];
+
         $publicKey = 'new-public-key';
         $privateKey = 'new-private-key';
 
-        $workspace = $this->createMock(WorkspaceInterface::class);
-        $workspace->expects(self::once())
-            ->method('getWorkspaceId')
-            ->willReturn($workspaceId);
-        $workspace->expects(self::once())
-            ->method('getLoginType')
-            ->willReturn(WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR);
-
         $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient->expects(self::once())
+            ->method('getWorkspace')
+            ->with((int) $workspaceId)
+            ->willReturn($workspaceData)
+        ;
         $workspacesApiClient->expects(self::once())
             ->method('resetCredentials')
             ->with(
@@ -555,9 +578,17 @@ class WorkspaceProviderTest extends TestCase
             $snowflakeKeypairGenerator,
         );
 
-        $credentials = $workspaceProvider->resetWorkspaceCredentials($workspace);
+        $returnedWorkspace = $workspaceProvider->resetWorkspaceCredentials($workspaceId);
 
-        self::assertSame(['privateKey' => $privateKey], $credentials);
+        $workspaceData['connection'] = [
+            ...$workspaceData['connection'],
+            'privateKey' => $privateKey,
+        ];
+
+        self::assertEquals(
+            WorkspaceWithCredentials::createFromData($workspaceData),
+            $returnedWorkspace,
+        );
     }
 
     public function testCleanupWorkspace(): void

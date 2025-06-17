@@ -95,15 +95,7 @@ class BucketCreator
                 $destination->getBucketStage(),
             );
         } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot create bucket "%s" in Storage API: %s',
-                    $destination->getBucketName(),
-                    json_encode((array) $e->getContextParams()),
-                ),
-                $e->getCode(),
-                $e,
-            );
+            $this->handleCreateBucketError($e, $destination);
         }
 
         $metadataClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
@@ -111,6 +103,33 @@ class BucketCreator
             $destination->getBucketId(),
             SystemMetadata::SYSTEM_METADATA_PROVIDER,
             $systemMetadata->getCreatedMetadata(),
+        );
+    }
+
+    private function handleCreateBucketError(ClientException $e, MappingDestination $destination): void
+    {
+        // Handle race condition when multiple parallel processes try to create the same bucket
+        if ($e->getCode() === 400) {
+            try {
+                $this->clientWrapper->getTableAndFileStorageClient()->getBucket(
+                    $destination->getBucketId(),
+                );
+
+                return;
+            } catch (ClientException $getBucketException) {
+                // If getBucket fails, the original createBucket error was not about bucket existing
+                // Fall through to throw InvalidOutputException below
+            }
+        }
+
+        throw new InvalidOutputException(
+            sprintf(
+                'Cannot create bucket "%s" in Storage API: %s',
+                $destination->getBucketName(),
+                json_encode((array) $e->getContextParams()),
+            ),
+            $e->getCode(),
+            $e,
         );
     }
 }

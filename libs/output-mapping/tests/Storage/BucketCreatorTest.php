@@ -11,6 +11,8 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyInputBucket;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
+use ReflectionClass;
+use Throwable;
 
 class BucketCreatorTest extends AbstractTestCase
 {
@@ -55,6 +57,47 @@ class BucketCreatorTest extends AbstractTestCase
         // Second call - bucket already exists
         $bucketInfo = $bucketCreator->ensureDestinationBucket($destination, $systemMetadata);
         $this->assertEquals($this->emptyInputBucketId, $bucketInfo->id);
+    }
+
+    #[NeedsEmptyInputBucket]
+    public function testCreateDestinationBucketRaceCondition(): void
+    {
+        $this->clientWrapper->getTableAndFileStorageClient()->dropBucket($this->emptyInputBucketId);
+
+        $destination = new MappingDestination($this->emptyInputBucketId . '.testTable');
+        $systemMetadata = new SystemMetadata([
+            'runId' => '123',
+            'componentId' => 'test',
+            'configurationId' => '456',
+        ]);
+
+        // Create the bucket first to simulate race condition
+        $this->clientWrapper->getTableAndFileStorageClient()->createBucket(
+            $destination->getBucketName(),
+            $destination->getBucketStage(),
+        );
+
+        $bucketCreator = new BucketCreator($this->clientWrapper);
+
+        // Use reflection to call private createDestinationBucket method directly
+        $reflection = new ReflectionClass($bucketCreator);
+        $createMethod = $reflection->getMethod('createDestinationBucket');
+        $createMethod->setAccessible(true);
+
+        // This should NOT throw exception even though bucket already exists (race condition)
+        // The race condition handling should catch the 400 error and verify bucket exists
+        try {
+            $createMethod->invokeArgs($bucketCreator, [$destination, $systemMetadata]);
+
+            // If we get here, race condition was handled correctly
+            $this->assertTrue(true, 'Race condition was handled correctly');
+
+            // Verify bucket still exists and has metadata
+            $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyInputBucketId);
+            $this->assertEquals($this->emptyInputBucketId, $bucket['id']);
+        } catch (Throwable $e) {
+            $this->fail('Race condition handling failed: ' . $e->getMessage());
+        }
     }
 
     #[NeedsEmptyInputBucket, NeedsDevBranch]

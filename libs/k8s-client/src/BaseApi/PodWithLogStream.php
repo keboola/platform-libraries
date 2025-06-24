@@ -7,6 +7,7 @@ namespace Keboola\K8sClient\BaseApi;
 use Keboola\K8sClient\BaseApi\Data\WatchEvent;
 use Keboola\K8sClient\Util\StreamResponse;
 use Kubernetes\API\Pod;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use Psr\Http\Message\ResponseInterface;
 
 class PodWithLogStream extends Pod
@@ -29,10 +30,7 @@ class PodWithLogStream extends Pod
         return $this->parseResponse($response, 'readCoreV1NamespacedPodLog');
     }
 
-    /**
-     * @return (null|WatchEvent)[]
-     */
-    public function watch(string $namespace, string $name, array $queries = []): iterable
+    public function watch(string $namespace, string $name, array $queries = []): mixed
     {
         $readWaitTimeout = $queries['read_wait_timeout'] ?? 30;
         unset($queries['read_wait_timeout']);
@@ -51,6 +49,11 @@ class PodWithLogStream extends Pod
             return $this->parseResponse($response, 'watchCoreV1NamespacedPod');
         }
 
+        return $this->processWatch($response, $readWaitTimeout);
+    }
+
+    private function processWatch(ResponseInterface $response, int $readWaitTimeout): iterable
+    {
         foreach (StreamResponse::chunkStreamResponse($response, $readWaitTimeout) as $chunk) {
             if ($chunk === null) {
                 yield null;

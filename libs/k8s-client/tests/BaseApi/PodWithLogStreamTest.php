@@ -12,6 +12,7 @@ use Keboola\K8sClient\BaseApi\Data\WatchEventType;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\Tests\ReflectionPropertyAccessTestCase;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\Client;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
@@ -110,6 +111,7 @@ class PodWithLogStreamTest extends TestCase
         fwrite($stream, <<<EOF
           {"type":"ADDED","object":{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}}
           {"type":"MODIFIED","object":{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}}
+          
         EOF);
         rewind($stream);
 
@@ -132,7 +134,9 @@ class PodWithLogStreamTest extends TestCase
         $podWithLogStream = new PodWithLogStream($namespace);
         self::setPrivatePropertyValue($podWithLogStream, 'client', $clientMock);
 
-        $events = [...$podWithLogStream->watch($namespace, $podName, $queries)];
+        $events = $podWithLogStream->watch($namespace, $podName, $queries);
+        self::assertInstanceOf(Generator::class, $events);
+        $events = [...$events];
 
         $this->assertCount(2, $events);
         $this->assertInstanceOf(WatchEvent::class, $events[0]);
@@ -180,6 +184,7 @@ class PodWithLogStreamTest extends TestCase
         // the first event should be produced normally
         fwrite($writeStream, <<<EOF
           {"type":"ADDED","object":{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}}
+        
         EOF);
 
         $event = $events->current();
@@ -200,6 +205,7 @@ class PodWithLogStreamTest extends TestCase
         // a new event is produced again after timeout
         fwrite($writeStream, <<<EOF
           {"type":"MODIFIED","object":{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}}
+        
         EOF);
         $events->next();
 
@@ -237,7 +243,7 @@ class PodWithLogStreamTest extends TestCase
         $testPodWithLogStream = new class($namespace) extends PodWithLogStream {
             public function parseResponse($response, $operation)
             {
-                return 'parsed response';
+                return new Status();
             }
         };
 
@@ -245,6 +251,6 @@ class PodWithLogStreamTest extends TestCase
 
         $result = $testPodWithLogStream->watch($namespace, $podName, $queries);
 
-        $this->assertEquals('parsed response', $result);
+        $this->assertEquals(new Status(), $result);
     }
 }

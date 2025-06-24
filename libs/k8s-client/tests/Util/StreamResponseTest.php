@@ -16,28 +16,52 @@ class StreamResponseTest extends TestCase
     public static function provideJsonToChunk(): iterable
     {
         yield 'simple json objects' => [
-            'jsonContent' => '{"key1":"value1"}{"key2":"value2"}',
-            'expectedChunks' => ['{"key1":"value1"}', '{"key2":"value2"}'],
+            'jsonContent' => <<<EOF
+                {"key1":"value1"}
+                {"key2":"value2"}
+                
+            EOF,
+            'expectedChunks' => [
+                '{"key1":"value1"}',
+                '{"key2":"value2"}',
+            ],
         ];
 
-        yield 'nested json objects' => [
-            'jsonContent' => '{"key1":{"nested":"value"}}{"key2":"value2"}',
-            'expectedChunks' => ['{"key1":{"nested":"value"}}', '{"key2":"value2"}'],
+        yield 'extra empty lines in between json objects' => [
+            'jsonContent' => <<<EOF
+                {"key1":"value1"}
+                
+                {"key2":"value2"}
+                
+            EOF,
+            'expectedChunks' => [
+                '{"key1":"value1"}',
+                '{"key2":"value2"}',
+            ],
         ];
 
-        yield 'json objects with whitespace' => [
-            'jsonContent' => '{"key1":"value1"} {"key2":"value2"}',
-            'expectedChunks' => ['{"key1":"value1"}', '{"key2":"value2"}'],
+        yield 'extra empty lines at the end' => [
+            'jsonContent' => <<<EOF
+                {"key1":"value1"}
+                {"key2":"value2"}
+                
+                
+                
+            EOF,
+            'expectedChunks' => [
+                '{"key1":"value1"}',
+                '{"key2":"value2"}',
+            ],
         ];
 
-        yield 'complex json objects' => [
-            'jsonContent' => '{"key1":{"nested":{"deep":"value"}}}{"key2":[1,2,3]}',
-            'expectedChunks' => ['{"key1":{"nested":{"deep":"value"}}}', '{"key2":[1,2,3]}'],
-        ];
-
-        yield 'empty json objects' => [
-            'jsonContent' => '{}{}',
-            'expectedChunks' => ['{}', '{}'],
+        yield 'missing new line at the end' => [
+            'jsonContent' => <<<EOF
+                {"key1":"value1"}
+                {"key2":"value2"}
+            EOF,
+            'expectedChunks' => [
+                '{"key1":"value1"}',
+            ],
         ];
     }
 
@@ -80,10 +104,13 @@ class StreamResponseTest extends TestCase
 
     public function testStreamIsClosedWhenGeneratorIsClosed(): void
     {
-        $jsonContent = '{"key1":"value1"}{"key2":"value2"}{"key3":"value3"}';
         $stream = fopen('php://memory', 'r+');
         self::assertIsResource($stream);
-        fwrite($stream, $jsonContent);
+        fwrite($stream, <<<EOF
+            {"key1":"value1"}
+            {"key2":"value2"}
+            {"key3":"value3"}    
+        EOF);
         rewind($stream);
 
         $response = new Response(

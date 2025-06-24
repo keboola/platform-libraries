@@ -38,15 +38,13 @@ class StreamResponse
      */
     private static function chunkJsonStream($stream, int $readWaitTimeout): iterable
     {
-        $buffer = '';
-        $openBracketCounter = 0;
-
         if ($readWaitTimeout > 0) {
             stream_set_timeout($stream, $readWaitTimeout);
         }
 
+        $buffer = '';
         while (!feof($stream)) {
-            $chunk = fread($stream, 1024);
+            $chunk = fgets($stream, 4096);
             if ($chunk === false) {
                 if (stream_get_meta_data($stream)['timed_out']) {
                     yield null;
@@ -56,30 +54,22 @@ class StreamResponse
                 throw new RuntimeException('Failed to read from response stream');
             }
 
-            $bufferFromOffset = 0;
-            for ($i = 0, $len = strlen($chunk); $i < $len; $i++) {
-                $char = $chunk[$i];
-                match ($char) {
-                    '{' => ++$openBracketCounter,
-                    '}' => --$openBracketCounter,
-                    default => null,
-                };
-
-                if ($openBracketCounter !== 0) {
-                    continue;
+            $buffer .= $chunk;
+            if (str_ends_with($buffer, "\n")) {
+                $buffer = trim($buffer);
+                if ($buffer !== '') {
+                    yield $buffer;
                 }
 
-                if (ctype_space($char)) {
-                    $bufferFromOffset = $i + 1;
-                    continue;
-                }
-
-                yield $buffer . substr($chunk, $bufferFromOffset, $i + 1 - $bufferFromOffset);
                 $buffer = '';
-                $bufferFromOffset = $i + 1;
             }
+        }
 
-            $buffer .= substr($chunk, $bufferFromOffset);
+        if (str_ends_with($buffer, "\n")) {
+            $buffer = trim($buffer);
+            if ($buffer !== '') {
+                yield $buffer;
+            }
         }
     }
 

@@ -120,4 +120,44 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         $noPods = [...$this->apiClient->listMatching(Pod::class, ['labelSelector' => 'foo=bar'])];
         self::assertCount(0, $noPods);
     }
+
+    public function testWatch(): void
+    {
+        $this->apiClient->pods()->create(new Pod([
+            'metadata' => [
+                'name' => 'watch-test',
+                'labels' => [
+                    'app' => 'KubernetesApiClientFacadeFunctionalTest',
+                ],
+            ],
+            'spec' => [
+                'containers' => [
+                    [
+                        'name' => 'nginx-1',
+                        'image' => 'nginx',
+                    ],
+                    [
+                        'name' => 'nginx-2',
+                        'image' => 'nginx',
+                    ],
+                    [
+                        'name' => 'bash',
+                        'image' => 'debian',
+                        'command' => ['bash', '-c', 'sleep 10000'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $result = $this->apiClient->pods()->watch('watch-test');
+
+        $x = 0;
+        foreach ($result as $item) {
+            $x += 1;
+
+            if ($x > 5) {
+                break;
+            }
+        }
+    }
 }

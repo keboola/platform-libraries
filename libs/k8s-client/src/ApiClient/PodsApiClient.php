@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ApiClient;
 
+use Generator;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\KubernetesApiClient;
-use Kubernetes\API\Pod as PodsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
 use Psr\Http\Message\StreamInterface;
 
 /**
- * @template-extends BaseNamespaceApiClient<PodsApi, PodList, Pod>
+ * @template-extends BaseNamespaceApiClient<PodWithLogStream, PodList, Pod>
  */
 class PodsApiClient extends BaseNamespaceApiClient
 {
@@ -42,5 +42,16 @@ class PodsApiClient extends BaseNamespaceApiClient
         );
 
         return $response;
+    }
+
+    public function watch(string $name, array $queries = []): iterable
+    {
+        yield from $this->apiClient->request(
+            $this->baseApi,
+            'watch',
+            Generator::class,
+            $name,
+            $queries,
+        );
     }
 }

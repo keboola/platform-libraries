@@ -4,24 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests;
 
-use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ApiClient\PodsApiClient;
-use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
-use Keboola\K8sClient\Exception\ResourceNotFoundException;
-use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Keboola\K8sClient\RetryProxyFactory;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\PodList;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 class KubernetesApiClientFacadeFunctionalTest extends TestCase
 {

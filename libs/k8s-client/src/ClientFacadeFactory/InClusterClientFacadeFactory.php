@@ -24,6 +24,19 @@ class InClusterClientFacadeFactory
         $this->credentialsPath = $credentialsPath;
     }
 
+    public function isAvailable(?string $namespace = null): bool
+    {
+        try {
+            $this->findInClusterConfigFile('token');
+            $this->findInClusterConfigFile('ca.crt');
+            $namespace ?? $this->findInClusterConfigFile('namespace');
+
+            return true;
+        } catch (ConfigurationException) {
+            return false;
+        }
+    }
+
     public function createClusterClient(?string $namespace = null): KubernetesApiClientFacade
     {
         return $this->genericFactory->createClusterClient(

@@ -6,6 +6,7 @@ namespace Keboola\StagingProvider\Staging;
 
 enum StagingType: string
 {
+    case None = 'none';
     case Local = 'local';
     case Abs = 'abs';
     case S3 = 's3';
@@ -16,6 +17,8 @@ enum StagingType: string
     public function getStagingClass(): StagingClass
     {
         return match ($this) {
+            self::None => StagingClass::None,
+
             self::Local,
             self::Abs,
             self::S3 => StagingClass::Disk,

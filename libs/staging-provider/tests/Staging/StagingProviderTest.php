@@ -117,4 +117,16 @@ class StagingProviderTest extends TestCase
             null,
         );
     }
+
+    public function testErrorWhenUnsupportedStagingTypeProvided(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stating type "none" is not supported.');
+
+        new StagingProvider(
+            StagingType::None,
+            '/tmp/random/data',
+            null,
+        );
+    }
 }

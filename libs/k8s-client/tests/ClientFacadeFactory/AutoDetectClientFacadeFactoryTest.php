@@ -5,190 +5,108 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ClientFacadeFactory;
 
 use Keboola\K8sClient\ClientFacadeFactory\AutoDetectClientFacadeFactory;
-use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
+use Keboola\K8sClient\ClientFacadeFactory\EnvVariablesClientFacadeFactory;
 use Keboola\K8sClient\ClientFacadeFactory\InClusterClientFacadeFactory;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
-/** @runTestsInSeparateProcesses */
 class AutoDetectClientFacadeFactoryTest extends TestCase
 {
-    private const ENV_VARS = [
-        'K8S_HOST' => 'https://k8s.example.com',
-        'K8S_TOKEN' => 'test-token',
-        'K8S_CA_CERT_PATH' => '/path/to/ca.crt',
-        'K8S_NAMESPACE' => 'test-namespace',
-    ];
+    private readonly LoggerInterface $logger;
+    private readonly TestHandler $logsHandler;
 
-    public function testCreateClientWithEnvVars(): void
+    protected function setUp(): void
     {
-        foreach (self::ENV_VARS as $key => $value) {
-            putenv(sprintf('%s=%s', $key, $value));
-        }
+        parent::setUp();
 
-        $createdClient = $this->createMock(KubernetesApiClientFacade::class);
-
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::once())
-            ->method('createClusterClient')
-            ->with(
-                self::ENV_VARS['K8S_HOST'],
-                self::ENV_VARS['K8S_TOKEN'],
-                self::ENV_VARS['K8S_CA_CERT_PATH'],
-                self::ENV_VARS['K8S_NAMESPACE'],
-            )
-            ->willReturn($createdClient);
-
-        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::never())
-            ->method('createClusterClient');
-
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
-        $result = $factory->createClusterClient();
-        self::assertSame($createdClient, $result);
+        $this->logsHandler = new TestHandler();
+        $this->logger = new Logger('test', [$this->logsHandler]);
     }
 
-    public function testCreateClientWithEnvVarsAndCustomNamespace(): void
+    public static function provideCustomNamespaceValue(): iterable
     {
-        foreach (self::ENV_VARS as $key => $value) {
-            putenv("$key=$value");
-        }
-
-        $createdClient = $this->createMock(KubernetesApiClientFacade::class);
-
-        // Mock the GenericClientFacadeFactory
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::once())
-            ->method('createClusterClient')
-            ->with(
-                self::ENV_VARS['K8S_HOST'],
-                self::ENV_VARS['K8S_TOKEN'],
-                self::ENV_VARS['K8S_CA_CERT_PATH'],
-                'custom-namespace',
-            )
-            ->willReturn($createdClient);
-
-        // Mock the InClusterClientFacadeFactory
-        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::never())
-            ->method('createClusterClient');
-
-        // Create the factory with mocked dependencies
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
-
-        $result = $factory->createClusterClient('custom-namespace');
-        self::assertSame($createdClient, $result);
-    }
-
-    public function testCreateClientWithInClusterAuth(): void
-    {
-        foreach (array_keys(self::ENV_VARS) as $key) {
-            putenv($key);
-        }
-
-        $createdClient = $this->createMock(KubernetesApiClientFacade::class);
-
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::never())
-            ->method('createClusterClient');
-
-        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::once())
-            ->method('createClusterClient')
-            ->with(null)
-            ->willReturn($createdClient);
-
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
-        $result = $factory->createClusterClient();
-        self::assertSame($createdClient, $result);
-    }
-
-    public function testCreateClientWithInClusterAuthAndCustomNamespace(): void
-    {
-        foreach (array_keys(self::ENV_VARS) as $key) {
-            putenv($key);
-        }
-
-        $createdClient = $this->createMock(KubernetesApiClientFacade::class);
-
-        // Mock the GenericClientFacadeFactory
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::never())
-            ->method('createClusterClient');
-
-        // Mock the InClusterClientFacadeFactory
-        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::once())
-            ->method('createClusterClient')
-            ->with('custom-namespace')
-            ->willReturn($createdClient);
-
-        // Create the factory with mocked dependencies
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
-
-        $result = $factory->createClusterClient('custom-namespace');
-        self::assertSame($createdClient, $result);
-    }
-
-    public static function provideEnvToUnset(): iterable
-    {
-        yield 'no K8S_HOST' => [
-            'env' => 'K8S_HOST',
+        yield 'default namespace' => [
+            'customNamespace' => null,
         ];
 
-        yield 'no K8S_TOKEN' => [
-            'env' => 'K8S_TOKEN',
-        ];
-
-        yield 'no K8S_CA_CERT_PATH' => [
-            'env' => 'K8S_CA_CERT_PATH',
+        yield 'custom namespace' => [
+            'customNamespace' => 'custom-namespace',
         ];
     }
 
-    /** @dataProvider provideEnvToUnset */
-    public function testInClusterClientIsUsedWhenSomeEnvIsMissing(string $env): void
+    /** @dataProvider provideCustomNamespaceValue */
+    public function testCreateClientWithEnvVars(?string $customNamespace): void
     {
-        // set all ENVs but one
-        foreach (self::ENV_VARS as $key => $value) {
-            putenv("$key=$value");
-        }
-        putenv($env); // clear single ENV
-
         $createdClient = $this->createMock(KubernetesApiClientFacade::class);
 
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::never())
-            ->method('createClusterClient');
-
-        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::once())
+        $envVariablesFactory = $this->createMock(EnvVariablesClientFacadeFactory::class);
+        $envVariablesFactory->expects(self::once())->method('isAvailable')->willReturn(true);
+        $envVariablesFactory->expects(self::once())
             ->method('createClusterClient')
-            ->with(null)
+            ->with($customNamespace)
             ->willReturn($createdClient);
 
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
+        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
+        $inClusterFactory->expects(self::never())->method('isAvailable');
+        $inClusterFactory->expects(self::never())->method('createClusterClient');
 
-        $result = $factory->createClusterClient();
+        $factory = new AutoDetectClientFacadeFactory(
+            $envVariablesFactory,
+            $inClusterFactory,
+            $this->logger,
+        );
+        $result = $factory->createClusterClient($customNamespace);
+
         self::assertSame($createdClient, $result);
+        self::assertTrue($this->logsHandler->hasDebugThatContains('Using ENV variables configuration for K8S client.'));
+    }
+
+    /** @dataProvider provideCustomNamespaceValue */
+    public function testCreateClientWithInClusterAuth(?string $customNamespace): void
+    {
+        $createdClient = $this->createMock(KubernetesApiClientFacade::class);
+
+        $envVariablesFactory = $this->createMock(EnvVariablesClientFacadeFactory::class);
+        $envVariablesFactory->expects(self::once())->method('isAvailable')->willReturn(false);
+        $envVariablesFactory->expects(self::never())->method('createClusterClient');
+
+        $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
+        $inClusterFactory->expects(self::once())->method('isAvailable')->willReturn(true);
+        $inClusterFactory->expects(self::once())
+            ->method('createClusterClient')
+            ->with($customNamespace)
+            ->willReturn($createdClient);
+
+        $factory = new AutoDetectClientFacadeFactory(
+            $envVariablesFactory,
+            $inClusterFactory,
+            $this->logger,
+        );
+        $result = $factory->createClusterClient($customNamespace);
+
+        self::assertSame($createdClient, $result);
+        self::assertTrue($this->logsHandler->hasDebugThatContains('Using in-cluster configuration for K8S client.'));
     }
 
     public function testCreateClusterClientWithNoCredentialsFound(): void
     {
-        foreach (array_keys(self::ENV_VARS) as $key) {
-            putenv($key);
-        }
-
-        $genericFactory = $this->createMock(GenericClientFacadeFactory::class);
-        $genericFactory->expects(self::never())
-            ->method('createClusterClient');
+        $envVariablesFactory = $this->createMock(EnvVariablesClientFacadeFactory::class);
+        $envVariablesFactory->expects(self::once())->method('isAvailable')->willReturn(false);
+        $envVariablesFactory->expects(self::never())->method('createClusterClient');
 
         $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
-        $inClusterFactory->expects(self::once())
-            ->method('createClusterClient')
-            ->willThrowException(new ConfigurationException('In-cluster configuration failed'));
+        $inClusterFactory->expects(self::once())->method('isAvailable')->willReturn(false);
+        $inClusterFactory->expects(self::never())->method('createClusterClient');
 
-        $factory = new AutoDetectClientFacadeFactory($genericFactory, $inClusterFactory);
+        $factory = new AutoDetectClientFacadeFactory(
+            $envVariablesFactory,
+            $inClusterFactory,
+            $this->logger,
+        );
 
         $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage('No valid K8S client configuration found.');

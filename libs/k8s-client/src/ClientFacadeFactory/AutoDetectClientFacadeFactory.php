@@ -6,12 +6,14 @@ namespace Keboola\K8sClient\ClientFacadeFactory;
 
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use Psr\Log\LoggerInterface;
 
 class AutoDetectClientFacadeFactory
 {
     public function __construct(
-        private readonly GenericClientFacadeFactory $genericFactory,
+        private readonly EnvVariablesClientFacadeFactory $envVariablesFactory,
         private readonly InClusterClientFacadeFactory $inClusterFactory,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -26,33 +28,21 @@ class AutoDetectClientFacadeFactory
 
     private function tryCreateClientFromEnv(?string $namespace): ?KubernetesApiClientFacade
     {
-        $k8sHost = self::getEnv('K8S_HOST');
-        $k8sToken = self::getEnv('K8S_TOKEN');
-        $k8sCaCertPath = self::getEnv('K8S_CA_CERT_PATH');
-        $k8sNamespace = $namespace ?? self::getEnv('K8S_NAMESPACE');
-
-        if ($k8sHost === null || $k8sToken === null || $k8sCaCertPath === null || $k8sNamespace === null) {
+        if (!$this->envVariablesFactory->isAvailable($namespace)) {
             return null;
         }
 
-        return $this->genericFactory->createClusterClient($k8sHost, $k8sToken, $k8sCaCertPath, $k8sNamespace);
+        $this->logger->debug('Using ENV variables configuration for K8S client.');
+        return $this->envVariablesFactory->createClusterClient($namespace);
     }
 
     private function tryCreateClientFromInCluster(?string $namespace): ?KubernetesApiClientFacade
     {
-        try {
-            return $this->inClusterFactory->createClusterClient($namespace);
-        } catch (ConfigurationException) {
+        if (!$this->inClusterFactory->isAvailable()) {
             return null;
         }
-    }
 
-    /**
-     * @param non-empty-string $envName
-     * @return non-empty-string|null
-     */
-    private static function getEnv(string $envName): ?string
-    {
-        return ((string) getenv($envName)) ?: null;
+        $this->logger->debug('Using in-cluster configuration for K8S client.');
+        return $this->inClusterFactory->createClusterClient($namespace);
     }
 }

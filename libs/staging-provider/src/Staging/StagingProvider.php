@@ -22,22 +22,32 @@ class StagingProvider
         $this->stagingType = $stagingType;
         $this->localStaging = new LocalStaging($localStagingPath);
 
-        if ($stagingType->getStagingClass() === StagingClass::Workspace) {
-            if ($stagingWorkspaceId === null) {
-                throw new InvalidArgumentException(
-                    'Staging workspace ID must be configured (only) with workspace staging.',
-                );
-            }
+        switch ($stagingType->getStagingClass()) {
+            case StagingClass::Workspace:
+                if ($stagingWorkspaceId === null) {
+                    throw new InvalidArgumentException(
+                        'Staging workspace ID must be configured (only) with workspace staging.',
+                    );
+                }
 
-            $this->tableDataStaging = new WorkspaceStaging($stagingWorkspaceId);
-        } else {
-            if ($stagingWorkspaceId !== null) {
-                throw new InvalidArgumentException(
-                    'Staging workspace ID must be configured (only) with workspace staging.',
-                );
-            }
+                $this->tableDataStaging = new WorkspaceStaging($stagingWorkspaceId);
+                break;
 
-            $this->tableDataStaging = $this->localStaging;
+            case StagingClass::Disk:
+                if ($stagingWorkspaceId !== null) {
+                    throw new InvalidArgumentException(
+                        'Staging workspace ID must be configured (only) with workspace staging.',
+                    );
+                }
+
+                $this->tableDataStaging = $this->localStaging;
+                break;
+
+            default:
+                throw new InvalidArgumentException(sprintf(
+                    'Stating type "%s" is not supported.',
+                    $stagingType->value,
+                ));
         }
     }
 

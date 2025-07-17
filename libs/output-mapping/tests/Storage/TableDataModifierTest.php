@@ -12,7 +12,10 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Workspaces;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class TableDataModifierTest extends AbstractTestCase
 {
@@ -436,6 +439,128 @@ class TableDataModifierTest extends AbstractTestCase
             ],
             $jobs[0],
         );
+    }
+
+    #[NeedsTestTables(count: 1)]
+    public function testDeleteTableRowsErrorInDevBranchByValuesFromWorkspace(): void
+    {
+        $clientOptions = $this->createMock(ClientOptions::class);
+        $clientOptions->expects(self::once())
+            ->method('useBranchStorage')
+            ->willReturn(false)
+        ;
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects(self::once())
+            ->method('isDevelopmentBranch')
+            ->willReturn(true)
+        ;
+        $clientWrapper->expects(self::never())
+            ->method('getTableAndFileStorageClient')
+        ;
+        $clientWrapper->expects(self::once())
+            ->method('getClientOptionsReadOnly')
+            ->willReturn($clientOptions)
+        ;
+        $tableDataModifier = new TableDataModifier($clientWrapper);
+
+        $destination = new MappingDestination($this->firstTableId);
+
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::exactly(1))
+            ->method('getDeleteWhere')->willReturn([
+                new MappingFromConfigurationDeleteWhere([
+                    'where_filters' => [
+                        [
+                            'column' => 'Id',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'workspace_id' => '123',
+                                'table' => 'someTable',
+                                'column' => 'someColumn',
+                            ],
+                        ],
+                    ],
+                ]),
+            ])
+        ;
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
+            'Using "values_from_workspace" as a delete filter is not supported in development branches.',
+        );
+
+        $tableDataModifier->updateTableData($source, $destination);
+    }
+
+    #[NeedsTestTables(count: 1)]
+    public function testDeleteTableRowsInDevBranchByValuesFromWorkspace(): void
+    {
+        $clientOptions = $this->createMock(ClientOptions::class);
+        $clientOptions->expects(self::once())
+            ->method('useBranchStorage')
+            ->willReturn(true)
+        ;
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects(self::never())
+            ->method('isDevelopmentBranch')
+        ;
+
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects(self::once())
+            ->method('deleteTableRows')
+            ->with(
+                $this->firstTableId,
+                [
+                    'whereFilters' => [
+                        [
+                            'column' => 'Id',
+                            'operator' => 'eq',
+                            'valuesByTableInWorkspace' => [
+                                'table' => 'someTable',
+                                'column' => 'someColumn',
+                                'workspaceId' => '123',
+                            ],
+                        ],
+                    ],
+                ],
+            )
+        ;
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects(self::once())
+            ->method('getTableAndFileStorageClient')
+            ->willReturn($branchClient)
+        ;
+        $clientWrapper->expects(self::once())
+            ->method('getClientOptionsReadOnly')
+            ->willReturn($clientOptions)
+        ;
+        $tableDataModifier = new TableDataModifier($clientWrapper);
+
+        $destination = new MappingDestination($this->firstTableId);
+
+        $source = $this->createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::exactly(1))
+            ->method('getDeleteWhere')->willReturn([
+                new MappingFromConfigurationDeleteWhere([
+                    'where_filters' => [
+                        [
+                            'column' => 'Id',
+                            'operator' => 'eq',
+                            'values_from_workspace' => [
+                                'workspace_id' => '123',
+                                'table' => 'someTable',
+                                'column' => 'someColumn',
+                            ],
+                        ],
+                    ],
+                ]),
+            ])
+        ;
+
+        $tableDataModifier->updateTableData($source, $destination);
     }
 
     private static function assertJobParams(array $expectedJobParams, array $actualJobParams): void

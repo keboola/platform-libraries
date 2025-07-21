@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Storage;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhereFilterFromWorkspace;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\ClientException;
@@ -42,13 +43,15 @@ class TableDataModifier
 
     private function prepareDeleteOptionsList(MappingFromProcessedConfiguration $source): array
     {
-        if ($source->getDeleteWhere() !== null) {
+        $deleteWhere = $source->getDeleteWhere();
+        if ($deleteWhere !== null) {
+            $this->validateDeleteWhereFilters($deleteWhere);
             return array_filter(
                 array_map(
                     function (MappingFromConfigurationDeleteWhere $deleteWhere) {
                         return DeleteTableRowsOptionsFactory::createFromDeleteWhere($deleteWhere);
                     },
-                    $source->getDeleteWhere(),
+                    $deleteWhere,
                 ),
             );
         }
@@ -63,5 +66,28 @@ class TableDataModifier
         }
 
         return [];
+    }
+
+    /**
+     * @param MappingFromConfigurationDeleteWhere[] $deleteWhereList
+     */
+    private function validateDeleteWhereFilters(array $deleteWhereList): void
+    {
+        foreach ($deleteWhereList as $deleteWhere) {
+            if ($deleteWhere->getWhereFilters()) {
+                foreach ($deleteWhere->getWhereFilters() as $filter) {
+                    if ($filter instanceof MappingFromConfigurationDeleteWhereFilterFromWorkspace) {
+                        // Only real branch storage allows 'values_from_workspace' delete filter in development branches
+                        if (!$this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage()
+                            && $this->clientWrapper->isDevelopmentBranch()) {
+                            throw new InvalidOutputException(
+                                'Using "values_from_workspace" as a delete filter'
+                                    . ' is not supported in development branches.',
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 }

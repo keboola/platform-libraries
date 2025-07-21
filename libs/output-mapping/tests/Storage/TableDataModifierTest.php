@@ -448,7 +448,7 @@ class TableDataModifierTest extends AbstractTestCase
     }
 
     #[NeedsTestTables(count: 1)]
-    public function testDeleteTableRowsErrorInDevBranchByValuesFromWorkspace(): void
+    public function testDeleteTableRowsInFakeDevBranchByValuesFromWorkspace(): void
     {
         $clientOptions = $this->createMock(ClientOptions::class);
         $clientOptions->expects(self::once())

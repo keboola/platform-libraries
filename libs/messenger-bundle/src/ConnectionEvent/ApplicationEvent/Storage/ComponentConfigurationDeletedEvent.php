@@ -80,4 +80,14 @@ class ComponentConfigurationDeletedEvent implements EventInterface
     {
         return self::NAME;
     }
+
+    public function getComponent(): string
+    {
+        return $this->params['component'];
+    }
+
+    public function getConfigurationId(): string
+    {
+        return $this->params['configurationId'];
+    }
 }

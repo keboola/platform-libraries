@@ -60,6 +60,8 @@ class ComponentConfigurationPurgedEventTest extends TestCase
             'version' => 6,
         ], $event->params);
         self::assertSame(789, $event->idBranch);
+        self::assertSame('keboola.wr-kafka', $event->getComponent());
+        self::assertSame('01k0vea53rhcw3anmg57w2k2aj', $event->getConfigurationId());
     }
 
     public function testCreateFromArrayWithInvalidName(): void

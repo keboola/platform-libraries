@@ -24,6 +24,8 @@ class ComponentConfigurationPurgedEvent implements EventInterface
 
         public readonly string $message,
         public readonly array $params,
+
+        public readonly int $idBranch,
     ) {
     }
 
@@ -48,6 +50,7 @@ class ComponentConfigurationPurgedEvent implements EventInterface
             $data['objectName'],
             $data['message'],
             $data['params'],
+            $data['idBranch'],
         );
     }
 
@@ -64,6 +67,7 @@ class ComponentConfigurationPurgedEvent implements EventInterface
             'objectName' => $this->objectName,
             'message' => $this->message,
             'params' => $this->params,
+            'idBranch' => $this->idBranch,
         ];
     }
 

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\ConnectionEvent\AuditLog;
 
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\OrganizationDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\ProjectCreatedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureAddedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectFeatureRemovedEvent;
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectPurgedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Project\ProjectUndeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\EventFactoryInterface;
 use Keboola\MessengerBundle\ConnectionEvent\EventInterface;
@@ -19,10 +21,12 @@ class AuditEventFactory implements EventFactoryInterface
 {
     /** @var array<string, class-string<EventInterface>> */
     private const EVENTS = [
+        OrganizationDeletedEvent::NAME => OrganizationDeletedEvent::class,
         ProjectCreatedEvent::NAME => ProjectCreatedEvent::class,
         ProjectDeletedEvent::NAME => ProjectDeletedEvent::class,
         ProjectFeatureAddedEvent::NAME => ProjectFeatureAddedEvent::class,
         ProjectFeatureRemovedEvent::NAME => ProjectFeatureRemovedEvent::class,
+        ProjectPurgedEvent::NAME => ProjectPurgedEvent::class,
         ProjectUndeletedEvent::NAME => ProjectUndeletedEvent::class,
     ];
 

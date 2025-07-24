@@ -28,6 +28,7 @@ class ComponentConfigurationPurgedEventTest extends TestCase
                 'name' => 'My Kafka Data Destination',
                 'version' => 6,
             ],
+            'idBranch' => 789,
         ],
     ];
 
@@ -58,6 +59,7 @@ class ComponentConfigurationPurgedEventTest extends TestCase
             'name' => 'My Kafka Data Destination',
             'version' => 6,
         ], $event->params);
+        self::assertSame(789, $event->idBranch);
     }
 
     public function testCreateFromArrayWithInvalidName(): void
@@ -93,6 +95,7 @@ class ComponentConfigurationPurgedEventTest extends TestCase
                 'name' => 'My Kafka Data Destination',
                 'version' => 6,
             ],
+            'idBranch' => 789,
         ], $event->toArray());
     }
 }

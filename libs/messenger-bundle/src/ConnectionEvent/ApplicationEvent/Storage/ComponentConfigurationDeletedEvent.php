@@ -26,6 +26,8 @@ class ComponentConfigurationDeletedEvent implements EventInterface
         public readonly array $params,
 
         public readonly int $idBranch,
+        public readonly string $component,
+        public readonly string $configurationId,
     ) {
     }
 
@@ -51,6 +53,8 @@ class ComponentConfigurationDeletedEvent implements EventInterface
             $data['message'],
             $data['params'],
             $data['idBranch'],
+            $data['params']['component'],
+            $data['params']['configurationId'],
         );
     }
 
@@ -79,15 +83,5 @@ class ComponentConfigurationDeletedEvent implements EventInterface
     public function getEventName(): string
     {
         return self::NAME;
-    }
-
-    public function getComponent(): string
-    {
-        return $this->params['component'];
-    }
-
-    public function getConfigurationId(): string
-    {
-        return $this->params['configurationId'];
     }
 }

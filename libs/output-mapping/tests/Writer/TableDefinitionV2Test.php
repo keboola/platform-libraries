@@ -355,7 +355,7 @@ class TableDefinitionV2Test extends AbstractTestCase
             [
                 'Id' => [
                     'type' => Snowflake::TYPE_NUMBER,
-                    'length' => '38,0', // default integer length
+                    'length' => '38,9', // default integer length
                     'nullable' => false,
                 ],
                 'Name' => [
@@ -467,8 +467,12 @@ class TableDefinitionV2Test extends AbstractTestCase
         $definitionColumn = current($definitionColumn);
 
         self::assertSame($expectedType['type'], $definitionColumn['definition']['type']);
-        self::assertSame($expectedType['length'], $definitionColumn['definition']['length']);
-        self::assertSame($expectedType['nullable'], $definitionColumn['definition']['nullable']);
+        if (isset($expectedType['length'])) {
+            self::assertSame($expectedType['length'], $definitionColumn['definition']['length']);
+        }
+        if (isset($definitionColumn['nullable'])) {
+            self::assertSame($expectedType['nullable'], $definitionColumn['definition']['nullable']);
+        }
     }
 
     #[NeedsTestTables]

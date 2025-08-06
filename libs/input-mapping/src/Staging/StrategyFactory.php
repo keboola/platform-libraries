@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Staging;
 
+use Keboola\InputMapping\Exception\StagingException;
 use Keboola\InputMapping\File\Strategy\Local as FileLocal;
 use Keboola\InputMapping\File\StrategyInterface as FileStrategyInterface;
 use Keboola\InputMapping\State\InputFileStateList;
@@ -42,6 +43,9 @@ class StrategyFactory
             StagingType::Abs,
             StagingType::WorkspaceSnowflake,
             StagingType::WorkspaceBigquery => FileLocal::class,
+            StagingType::None => throw new StagingException(
+                'Staging type "none" is not supported.',
+            ),
         };
 
         $this->tableStrategyClass = match ($stagingType) {
@@ -50,6 +54,9 @@ class StrategyFactory
             StagingType::Abs => TableABS::class,
             StagingType::WorkspaceSnowflake => TableSnowflake::class,
             StagingType::WorkspaceBigquery => TableBigQuery::class,
+            StagingType::None => throw new StagingException(
+                'Staging type "none" is not supported.',
+            ),
         };
     }
 

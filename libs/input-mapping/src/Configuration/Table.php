@@ -75,6 +75,15 @@ class Table extends Configuration
                 ->booleanNode('overwrite')->defaultValue(false)->end()
                 ->booleanNode('use_view')->defaultValue(false)->end()
                 ->booleanNode('keep_internal_timestamp_column')->defaultValue(true)->end()
+                ->scalarNode('file_type')->end()
+            ->end()
+            ->validate()
+            ->always(function ($v) {
+                if (empty($v['file_type'])) {
+                    unset($v['file_type']);
+                }
+                return $v;
+            })
             ->end()
             ->validate()
                 ->ifTrue(function ($v) {

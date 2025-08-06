@@ -21,7 +21,7 @@
         "keboola/php-file-storage-utils": "^0.2",
         "keboola/key-generator": "*@dev",
         "keboola/staging-provider": "*@dev",
-        "keboola/storage-api-client": "^18.0",
+        "keboola/storage-api-client": "dev-zajca/dmd-289/parquet as v18.3.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "symfony/config": "^5.4|^6.0|^7.0",
         "symfony/finder": "^5.4|^6.0|^7.0",

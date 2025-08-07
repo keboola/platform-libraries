@@ -108,4 +108,103 @@ class DownloadTablesOutputTest extends AbstractTestCase
         self::assertSame('someProvider', $metadata[0]->getProvider());
         self::assertNotEmpty($metadata[0]->getTimestamp());
     }
+
+    #[NeedsTestTables(2)]
+    public function testDownloadTablesParquetResult(): void
+    {
+        $clientWrapper = $this->initClient();
+        $metadataApi = new Metadata($clientWrapper->getTableAndFileStorageClient());
+        $metadataApi->postTableMetadataWithColumns(
+            new TableMetadataUpdateOptions(
+                $this->firstTableId,
+                'someProvider',
+                [[
+                    'key' => 'foo',
+                    'value' => 'bar',
+                ]],
+                [
+                    'Id' => [[
+                        'key' => 'someKey',
+                        'value' => 'someValue',
+                    ]],
+                ],
+            ),
+        );
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getLocalStagingFactory($clientWrapper),
+        );
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'test.parquet',
+                'file_type' => 'parquet',
+            ],
+            [
+                'source' => $this->secondTableId,
+                'destination' => 'test2.parquet',
+                'file_type' => 'parquet',
+            ],
+        ]);
+
+        $tablesResult = $reader->downloadTables(
+            $configuration,
+            new InputTableStateList([]),
+            'download',
+            new ReaderOptions(true),
+        );
+        $test1TableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->firstTableId);
+        $test2TableInfo = $clientWrapper->getTableAndFileStorageClient()->getTable($this->secondTableId);
+        self::assertEquals(
+            $test1TableInfo['lastImportDate'],
+            $tablesResult->getInputTableStateList()->getTable($this->firstTableId)->getLastImportDate(),
+        );
+        self::assertEquals(
+            $test2TableInfo['lastImportDate'],
+            $tablesResult->getInputTableStateList()->getTable($this->secondTableId)->getLastImportDate(),
+        );
+        self::assertParquetEquals(
+            [
+                ['Id' => 'id1', 'Name' => 'name1', 'foo' => 'foo1', 'bar' => 'bar1'],
+                ['Id' => 'id2', 'Name' => 'name2', 'foo' => 'foo2', 'bar' => 'bar2'],
+                ['Id' => 'id3', 'Name' => 'name3', 'foo' => 'foo3', 'bar' => 'bar3'],
+            ],
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test.parquet',
+        );
+        self::assertParquetEquals(
+            [
+                ['Id' => 'id1', 'Name' => 'name1', 'foo' => 'foo1', 'bar' => 'bar1'],
+                ['Id' => 'id2', 'Name' => 'name2', 'foo' => 'foo2', 'bar' => 'bar2'],
+                ['Id' => 'id3', 'Name' => 'name3', 'foo' => 'foo3', 'bar' => 'bar3'],
+            ],
+            $this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'download/test2.parquet',
+        );
+        self::assertCount(2, $tablesResult->getInputTableStateList()->jsonSerialize());
+        $tableMetrics = $tablesResult->getMetrics()?->getTableMetrics();
+        self::assertNotNull($tableMetrics);
+        self::assertEquals($this->firstTableId, $tableMetrics[0]->getTableId());
+        self::assertEquals($this->secondTableId, $tableMetrics[1]->getTableId());
+        self::assertSame(0, $tableMetrics[0]->getUncompressedBytes());
+        self::assertGreaterThan(0, $tableMetrics[0]->getCompressedBytes());
+        /** @var TableInfo[] $tables */
+        $tables = $tablesResult->getTables();
+        self::assertSame($this->firstTableId, $tables[0]->getId());
+        self::assertSame($this->secondTableId, $tables[1]->getId());
+        self::assertSame('test1', $tables[0]->getName());
+        self::assertSame('test1', $tables[0]->getDisplayName());
+        self::assertNull($tables[0]->getSourceTableId());
+        self::assertSame($test1TableInfo['lastImportDate'], $tables[0]->getLastImportDate());
+        self::assertSame($test1TableInfo['lastChangeDate'], $tables[0]->getLastChangeDate());
+        /** @var Column[] $columns */
+        $columns = $tables[0]->getColumns();
+        self::assertSame('Id', $columns[0]->getName());
+        /** @var MetadataItem[] $metadata */
+        $metadata = $columns[0]->getMetadata();
+        self::assertSame('someKey', $metadata[0]->getKey());
+        self::assertSame('someValue', $metadata[0]->getValue());
+        self::assertSame('someProvider', $metadata[0]->getProvider());
+        self::assertNotEmpty($metadata[0]->getTimestamp());
+    }
 }

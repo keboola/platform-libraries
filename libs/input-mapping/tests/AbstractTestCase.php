@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests;
 
+use DateTimeInterface;
+use Flow\Parquet\Reader;
 use InvalidArgumentException;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
@@ -160,6 +162,35 @@ abstract class AbstractTestCase extends TestCase
         for ($i = 1; $i < count($expectedArray); $i++) {
             self::assertTrue(in_array($expectedArray[$i], $actualArrayWithoutHeader));
         }
+    }
+
+    public static function assertParquetEquals(array $expectedArray, string $path): void
+    {
+        $files = glob($path . '/*');
+        self::assertIsArray($files, 'No files found in path: ' . $path);
+        self::assertSame($expectedArray, self::getParquetContent($files));
+    }
+
+    /**
+     * @param string[] $files
+     * @return array<int<0, max>, array<string, mixed>>
+     */
+    private static function getParquetContent(array $files): array
+    {
+        $content = [];
+        $reader = new Reader();
+        foreach ($files as $tmpFile) {
+            $file = $reader->read($tmpFile);
+            foreach ($file->values() as $row) {
+                foreach ($row as $column => &$value) {
+                    if ($value instanceof DateTimeInterface) {
+                        $row[$column] = $value->format(DateTimeInterface::ATOM);
+                    }
+                }
+                $content[] = $row;
+            }
+        }
+        return $content;
     }
 
     protected function getWorkspaceStagingFactory(

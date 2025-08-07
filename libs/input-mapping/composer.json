@@ -21,7 +21,7 @@
         "keboola/php-file-storage-utils": "^0.2",
         "keboola/key-generator": "*@dev",
         "keboola/staging-provider": "*@dev",
-        "keboola/storage-api-client": "dev-zajca/dmd-289/parquet as v18.3.0",
+        "keboola/storage-api-client": "^18.3.0",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "symfony/config": "^5.4|^6.0|^7.0",
         "symfony/finder": "^5.4|^6.0|^7.0",
@@ -30,6 +30,9 @@
     },
     "require-dev": {
         "brianium/paratest": "^6.11",
+        "flow-php/filesystem": "^0.22.0",
+        "flow-php/parquet": "^0.22.0",
+        "flow-php/types": "^0.22.0",
         "keboola/coding-standard": ">=14.0",
         "keboola/php-temp": "^2.0",
         "keboola/settle": "*@dev",

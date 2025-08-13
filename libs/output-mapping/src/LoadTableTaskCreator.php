@@ -154,6 +154,10 @@ class LoadTableTaskCreator
             $loadOptions['treatValuesAsNull'] = $treatValuesAsNullConfiguration;
         }
 
+        if ($source->getDeduplicationStrategy() !== null) {
+            $loadOptions['deduplicationStrategy'] = $source->getDeduplicationStrategy();
+        }
+
         return array_merge(
             $loadOptions,
             $strategy->prepareLoadTaskOptions($source),

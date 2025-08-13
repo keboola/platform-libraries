@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping;
 
 use Generator;
+use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
@@ -536,6 +537,22 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                 'columns' => ['col1', 'col2'],
                 'primaryKey' => 'col1',
                 'incremental' => false,
+            ],
+        ];
+
+        yield 'deduplication strategy not null' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'deduplication_strategy' => 'insert',
+            ],
+            'didTableExistBefore' => false,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => '',
+                'incremental' => false,
+                'deduplicationStrategy' => DeduplicationStrategy::INSERT,
             ],
         ];
     }

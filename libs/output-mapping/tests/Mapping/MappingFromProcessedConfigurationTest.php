@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Mapping;
 
 use Generator;
+use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
@@ -304,5 +305,26 @@ class MappingFromProcessedConfigurationTest extends TestCase
 
         self::assertSame('-7 days', $deleteWhere[0]->getChangedSince());
         self::assertSame('-2 days', $deleteWhere[1]->getChangedUntil());
+    }
+
+    /**
+     * @dataProvider deduplicationStrategyProvider
+     */
+    public function testDeduplicationStrategy(array $mapping, ?DeduplicationStrategy $expected): void
+    {
+        $mapping += ['destination' => 'in.c-main.table'];
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            $mapping,
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        self::assertEquals($expected, $mappingFromProcessedConfiguration->getDeduplicationStrategy());
+    }
+
+    public function deduplicationStrategyProvider(): Generator
+    {
+        yield [[], null];
+        yield [['deduplication_strategy' => 'insert'], DeduplicationStrategy::INSERT];
+        yield [['deduplication_strategy' => 'upsert'], DeduplicationStrategy::UPSERT];
     }
 }

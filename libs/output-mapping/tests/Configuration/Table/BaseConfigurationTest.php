@@ -1096,6 +1096,56 @@ class BaseConfigurationTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider deduplicationStrategiesProvider
+     */
+    public function testDeduplicationStrategySuccess(string $input, Table\DeduplicationStrategy $expected): void
+    {
+        $config = [
+            'deduplication_strategy' => $input,
+        ];
+
+        $manifest = (new Table\Manifest())->parse(['config' => $config]);
+        $this->assertArrayHasKey('deduplication_strategy', $manifest);
+        $this->assertSame($expected, $manifest['deduplication_strategy']);
+
+        $configuration = (new Table\Configuration())->parse(['config' => $config]);
+        $this->assertArrayHasKey('deduplication_strategy', $configuration);
+        $this->assertSame($expected, $configuration['deduplication_strategy']);
+    }
+
+    public function deduplicationStrategiesProvider(): Generator
+    {
+        yield ['insert', Table\DeduplicationStrategy::INSERT];
+        yield ['upsert', Table\DeduplicationStrategy::UPSERT];
+    }
+
+    public function testDeduplicationStrategyFail(): void
+    {
+        $config = [
+            'deduplication_strategy' => 'explode',
+        ];
+
+        try {
+            (new Table\Manifest())->parse(['config' => $config]);
+            $this->fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertEquals(
+                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: "insert", "upsert".', // phpcs:ignore
+                $e->getMessage(),
+            );
+        }
+
+        try {
+            (new Table\Configuration())->parse(['config' => $config]);
+            $this->fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertEquals(
+                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: "insert", "upsert".', // phpcs:ignore
+                $e->getMessage(),
+            );
+        }
+    }
 
     private function testManifestAndConfig(
         array $config,

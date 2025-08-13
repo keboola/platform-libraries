@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
+use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
@@ -224,5 +225,10 @@ class MappingFromProcessedConfiguration
             },
             $this->mapping['delete_where'],
         );
+    }
+
+    public function getDeduplicationStrategy(): ?DeduplicationStrategy
+    {
+        return $this->mapping['deduplication_strategy'] ?? null;
     }
 }

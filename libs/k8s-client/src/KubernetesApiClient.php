@@ -7,7 +7,6 @@ namespace Keboola\K8sClient;
 use Keboola\K8sClient\Exception\KubernetesResponseException;
 use Keboola\K8sClient\Exception\ResourceAlreadyExistsException;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
-use Keboola\K8sClient\Exception\UnauthorizedException;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractAPI;
 use Retry\RetryProxy;

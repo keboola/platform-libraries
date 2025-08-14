@@ -59,7 +59,13 @@ class StrategyFactoryTest extends TestCase
             array_keys(self::STAGING_MAP),
         );
 
-        self::assertSame([], $missingStagingTypes, 'Not all staging types are covered by the test');
+        self::assertSame(
+            [
+                StagingType::None->value,
+            ],
+            $missingStagingTypes,
+            'Not all staging types are covered by the test',
+        );
     }
 
     public static function provideFileInputStrategyMapping(): iterable

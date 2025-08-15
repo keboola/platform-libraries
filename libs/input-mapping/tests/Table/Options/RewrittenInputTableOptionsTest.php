@@ -7,7 +7,6 @@ namespace Keboola\InputMapping\Tests\Table\Options;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
-use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use PHPUnit\Framework\TestCase;
 
 class RewrittenInputTableOptionsTest extends TestCase
@@ -18,6 +17,7 @@ class RewrittenInputTableOptionsTest extends TestCase
             [
                 'source' => 'test',
                 'source_branch_id' => 123,
+                'file_type' => 'csv',
             ],
             'source',
             24,
@@ -26,6 +26,7 @@ class RewrittenInputTableOptionsTest extends TestCase
         self::assertSame('source', $definition->getSource());
         self::assertSame(24, $definition->getSourceBranchId());
         self::assertSame(['a' => 'b'], $definition->getTableInfo());
+        self::assertSame('csv', $definition->getFileType());
     }
 
 

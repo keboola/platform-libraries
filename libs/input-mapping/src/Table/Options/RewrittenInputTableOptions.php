@@ -26,6 +26,7 @@ class RewrittenInputTableOptions extends InputTableOptions
 
     /**
      * @return array{
+     *     sourceBranchId?: int,
      *     columns?: array<string>,
      *     changedSince?: string,
      *     whereColumn?: string,
@@ -33,6 +34,7 @@ class RewrittenInputTableOptions extends InputTableOptions
      *     whereOperator?: string,
      *     limit?: integer,
      *     overwrite?: bool,
+     *     fileType?: string,
      * }
      */
     public function getStorageApiExportOptions(InputTableStateList $states): array
@@ -69,6 +71,9 @@ class RewrittenInputTableOptions extends InputTableOptions
         }
         if (isset($this->definition['limit'])) {
             $exportOptions['limit'] = (int) $this->definition['limit'];
+        }
+        if ($this->getFileType() !== null) {
+            $exportOptions['fileType'] = $this->getFileType();
         }
         $exportOptions['overwrite'] = (bool) $this->definition['overwrite'];
         return $exportOptions;

@@ -385,6 +385,43 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
+            'FileType' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'file_type' => 'parquet',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                    'file_type' => 'parquet',
+                ],
+            ],
+            'FileTypeEmpty' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'file_type' => '',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'source_branch_id' => null,
+                    'where_values' => [],
+                    'columns' => [],
+                    'column_types' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
         ];
     }
 

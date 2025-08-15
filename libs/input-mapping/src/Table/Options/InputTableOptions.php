@@ -17,7 +17,7 @@ use Keboola\InputMapping\State\InputTableStateList;
  *     nullable?: bool,
  *     convertEmptyValuesToNull?: bool,
  * }
-*/
+ */
 class InputTableOptions
 {
     public const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
@@ -197,5 +197,10 @@ class InputTableOptions
     public function getSourceBranchId(): ?int
     {
         return isset($this->definition['source_branch_id']) ? (int) $this->definition['source_branch_id'] : null;
+    }
+
+    public function getFileType(): ?string
+    {
+        return isset($this->definition['file_type']) ? (string) $this->definition['file_type'] : null;
     }
 }

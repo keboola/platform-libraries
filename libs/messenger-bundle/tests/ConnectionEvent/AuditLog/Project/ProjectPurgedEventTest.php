@@ -17,11 +17,7 @@ class ProjectPurgedEventTest extends TestCase
             'id' => 1234,
             'operation' => 'auditLog.project.purged',
             'auditLogEventCreatedAt' => '2022-03-03T12:00:00Z',
-            'admin' => [
-                'id' => 456,
-                'name' => 'admin-name',
-                'email' => 'admin@example.com',
-            ],
+            'admin' => null,
 
             'context' => [
                 'project' => [
@@ -48,9 +44,9 @@ class ProjectPurgedEventTest extends TestCase
         self::assertSame('1234', $event->getId());
         self::assertEquals(new DateTimeImmutable('2022-03-03T12:00:00Z'), $event->getCreatedAt());
 
-        self::assertSame('456', $event->getAdminId());
-        self::assertSame('admin-name', $event->getAdminName());
-        self::assertSame('admin@example.com', $event->getAdminEmail());
+        self::assertNull($event->getAdminId());
+        self::assertNull($event->getAdminName());
+        self::assertNull($event->getAdminEmail());
 
         self::assertSame('4321', $event->getProjectId());
         self::assertSame('project-name', $event->getProjectName());
@@ -77,12 +73,7 @@ class ProjectPurgedEventTest extends TestCase
             'id' => '1234',
             'operation' => 'auditLog.project.purged',
             'auditLogEventCreatedAt' => '2022-03-03T12:00:00+0000',
-            'admin' => [
-                'id' => '456',
-                'name' => 'admin-name',
-                'email' => 'admin@example.com',
-            ],
-
+            'admin' => null,
             'context' => [
                 'project' => [
                     'id' => '4321',

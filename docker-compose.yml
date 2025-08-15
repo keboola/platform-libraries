@@ -10,14 +10,6 @@ services:
     volumes:
       - .:/code
 
-  dev74:
-    <<: *dev
-    image: keboola/php-dev74
-    build:
-      <<: *dev-build
-      args:
-        PHP_VERSION: "7.4"
-
   dev81: &dev81
     <<: *dev
     image: keboola/php-dev81

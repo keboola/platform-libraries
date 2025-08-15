@@ -3,7 +3,7 @@
 ARG PHP_VERSION=8.1
 ARG XDEBUG_VERSION="-3.1.6"
 
-FROM php:${PHP_VERSION}-cli as dev
+FROM php:${PHP_VERSION}-cli-bookworm as dev
 
 ARG DEBIAN_FRONTEND=noninteractivef
 ARG XDEBUG_VERSION

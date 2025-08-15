@@ -22,7 +22,7 @@
     "require": {
         "php": "^8.2",
         "keboola/retry": "^0.5.1",
-        "kubernetes/php-client": "1.26.10",
+        "kubernetes/php-client": "1.26.10-patch.1",
         "kubernetes/php-runtime": "^1.0.12"
     },
     "require-dev": {

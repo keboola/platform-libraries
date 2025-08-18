@@ -34,7 +34,11 @@ abstract class BaseConfiguration extends Configuration
                 ->scalarNode('destination')->end()
                 ->booleanNode('incremental')->defaultValue(false)->end()
                 ->enumNode(self::FIELD_DEDUPLICATION_STRATEGY)
-                    ->enumFqcn(DeduplicationStrategy::class)
+                    ->values([
+                        DeduplicationStrategy::INSERT->value,
+                        DeduplicationStrategy::UPSERT->value,
+                    ])
+                    ->validate()->always(fn(string $value) => DeduplicationStrategy::from($value))->end()
                 ->end()
                 ->arrayNode('primary_key')
                     ->prototype('scalar')

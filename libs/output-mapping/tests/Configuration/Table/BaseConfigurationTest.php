@@ -1131,7 +1131,7 @@ class BaseConfigurationTest extends TestCase
             $this->fail('Exception should be thrown');
         } catch (InvalidConfigurationException $e) {
             self::assertEquals(
-                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: insert, upsert (cases of the "Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy" enum).', // phpcs:ignore
+                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: "insert", "upsert".', // phpcs:ignore
                 $e->getMessage(),
             );
         }
@@ -1141,7 +1141,7 @@ class BaseConfigurationTest extends TestCase
             $this->fail('Exception should be thrown');
         } catch (InvalidConfigurationException $e) {
             self::assertEquals(
-                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: insert, upsert (cases of the "Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy" enum).', // phpcs:ignore
+                'The value "explode" is not allowed for path "table.deduplication_strategy". Permissible values: "insert", "upsert".', // phpcs:ignore
                 $e->getMessage(),
             );
         }

@@ -134,6 +134,14 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
+    public function getQueryServiceUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::QUERY, $dnsType);
+    }
+
+    /**
+     * @return non-empty-string
+     */
     public function getQueueUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::QUEUE, $dnsType);

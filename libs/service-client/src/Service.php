@@ -16,6 +16,7 @@ enum Service
     case IMPORT;
     case NOTIFICATION;
     case OAUTH;
+    case QUERY;
     case QUEUE;
     case QUEUE_INTERNAL_API;
     case SANDBOXES_API;
@@ -37,6 +38,7 @@ enum Service
             self::IMPORT => 'import',
             self::NOTIFICATION => 'notification',
             self::OAUTH => 'oauth',
+            self::QUERY => 'query',
             self::QUEUE => 'queue',
             self::QUEUE_INTERNAL_API => throw new RuntimeException('Job queue internal API does not have public DNS'),
             self::SANDBOXES_API => 'sandboxes',
@@ -60,6 +62,7 @@ enum Service
             self::IMPORT => 'sapi-importer.default',
             self::NOTIFICATION => 'notification-api.default',
             self::OAUTH => 'oauth-api.default',
+            self::QUERY => 'query-service-api.query-service',
             self::QUEUE => 'job-queue-api.default',
             self::QUEUE_INTERNAL_API => 'job-queue-internal-api.default',
             self::SANDBOXES_API => 'sandboxes-api.sandboxes',

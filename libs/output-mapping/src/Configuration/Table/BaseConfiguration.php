@@ -13,6 +13,8 @@ abstract class BaseConfiguration extends Configuration
 {
     public const DEFAULT_DELIMITER = ',';
     public const DEFAULT_ENCLOSURE = '"';
+    public const FIELD_DEDUPLICATION_STRATEGY = 'deduplication_strategy';
+
     private const DEFAULT_DELETE_WHERE_OPERATOR = 'eq';
 
     private const ALLOWED_DATA_TYPES_BACKEND = [
@@ -31,6 +33,13 @@ abstract class BaseConfiguration extends Configuration
             ->children()
                 ->scalarNode('destination')->end()
                 ->booleanNode('incremental')->defaultValue(false)->end()
+                ->enumNode(self::FIELD_DEDUPLICATION_STRATEGY)
+                    ->values([
+                        DeduplicationStrategy::INSERT->value,
+                        DeduplicationStrategy::UPSERT->value,
+                    ])
+                    ->validate()->always(fn(string $value) => DeduplicationStrategy::from($value))->end()
+                ->end()
                 ->arrayNode('primary_key')
                     ->prototype('scalar')
                         // TODO: turn this on when all manifests will not produce array with an empty string

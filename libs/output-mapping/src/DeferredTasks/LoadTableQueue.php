@@ -131,4 +131,8 @@ class LoadTableQueue
     {
         return $this->tableResult;
     }
+
+    public function getLoadTableTasks(): array
+    {
+    }
 }

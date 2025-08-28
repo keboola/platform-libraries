@@ -22,6 +22,27 @@ use Psr\Log\NullLogger;
 
 class LoadTableQueueTest extends TestCase
 {
+    public function testGetLoadTableTasks(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
+        $loadTask1 = $this->createMock(LoadTableTask::class);
+        $loadTask2 = $this->createMock(LoadTableTask::class);
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new NullLogger(),
+            [
+                $loadTask1,
+                $loadTask2,
+            ],
+        );
+
+        self::assertSame([$loadTask1, $loadTask2], $loadQueue->getLoadTableTasks());
+    }
+
     public function testTaskCount(): void
     {
         $clientWrapperMock = $this->createMock(ClientWrapper::class);

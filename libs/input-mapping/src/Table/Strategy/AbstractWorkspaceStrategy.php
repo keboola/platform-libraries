@@ -43,7 +43,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         $this->manifestCreator = new ManifestCreator();
     }
 
-    abstract protected function getWorkspaceType(): string;
+    abstract public function getWorkspaceType(): string;
 
     public function downloadTable(RewrittenInputTableOptions $table): array
     {

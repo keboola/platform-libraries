@@ -10,18 +10,22 @@ use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\InputMapping\Table\StrategyInterface;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
     protected readonly LoggerInterface $logger; // @phpstan-ignore-line initialized in child classes
 
+    abstract protected function getMetadataStorage(): FileStagingInterface;
+    abstract protected function getDestination(): string;
+
     protected function ensurePathDelimiter(string $path): string
     {
         return $this->ensureNoPathDelimiter($path) . '/';
     }
 
-    protected function ensureNoPathDelimiter(string $path): string
+    private function ensureNoPathDelimiter(string $path): string
     {
         return rtrim($path, '\\/');
     }
@@ -60,5 +64,11 @@ abstract class AbstractStrategy implements StrategyInterface
         } else {
             return $destination . '/' . $table->getDestination();
         }
+    }
+
+    protected function getManifestPath(InputTableOptions $table): string
+    {
+        return $this->ensurePathDelimiter($this->getMetadataStorage()->getPath()) .
+            $this->getDestinationFilePath($this->getDestination(), $table) . '.manifest';
     }
 }

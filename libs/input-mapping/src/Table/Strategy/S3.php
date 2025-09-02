@@ -35,8 +35,7 @@ class S3 extends AbstractFileStrategy
 
         foreach ($exports as $export) {
             $table = $export['table'];
-            $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
+            $manifestPath = $this->getManifestPath($table);
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$export['jobId']]['results']['file']['id'],

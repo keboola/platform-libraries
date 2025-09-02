@@ -154,6 +154,15 @@ services:
     <<: *dev
     working_dir: /code/libs/logging-bundle
 
+  dev-query-service-api-client:
+    <<: *dev84
+    image: keboola/query-service-api-client
+    working_dir: /code/libs/query-service-api-client
+    environment:
+      - QUERY_API_URL
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+
   mysql:
     platform: linux/x86_64
     image: mysql:8.0

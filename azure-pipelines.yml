@@ -315,7 +315,7 @@ stages:
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped')
       )
     jobs:

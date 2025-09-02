@@ -1,0 +1,51 @@
+{
+    "name": "keboola/query-api-php-client",
+    "description": "Keboola Query Service API PHP Client",
+    "homepage": "https://keboola.com",
+    "license": "MIT",
+    "config": {
+        "lock": false,
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Keboola\\QueryApi\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\QueryApi\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.4",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "~7.0",
+        "psr/log": "^1.0|^2.0|^3.0"
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^16.0",
+        "keboola/storage-api-client": "^18.0",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-phpunit": "^1.1",
+        "phpunit/phpunit": "^9.5",
+        "squizlabs/php_codesniffer": "^3",
+        "symfony/dotenv": "^6.0"
+    },
+    "scripts": {
+        "phpcs": "phpcs -n src tests",
+        "phpcbf": "phpcbf -n src tests",
+        "phpstan": "phpstan analyse --no-progress --level=max src tests -c phpstan.neon",
+        "tests": "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml",
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ]
+    }
+}

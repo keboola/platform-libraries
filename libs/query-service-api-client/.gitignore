@@ -1,0 +1,25 @@
+# Dependencies
+/vendor/
+
+# Environment files (contains sensitive information)
+.env
+.env.local
+
+# PHPUnit
+.phpunit.result.cache
+/build
+
+# Coverage reports
+/coverage/
+
+# IDE files
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

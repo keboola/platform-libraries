@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: query-service-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/query-service-api-php-client
     - repository: sandboxes-service-api-php-client
       type: github
       endpoint: keboola
@@ -78,10 +82,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
-    - repository: query-service-api-php-client
-      type: github
-      endpoint: keboola
-      name: keboola/query-service-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -108,13 +108,13 @@ stages:
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
+                queryServiceApiClient:libs/query-service-api-client \
                 sandboxesServiceApiClient:libs/sandboxes-service-api-client \
                 serviceClient:libs/service-client \
                 settle:libs/settle \
                 slicer:libs/slicer \
                 stagingProvider:libs/staging-provider \
-                vaultApiClient:libs/vault-api-client \
-                queryServiceApiClient:libs/query-service-api-client
+                vaultApiClient:libs/vault-api-client
             displayName: 'Find changes'
             name: findChanges
 
@@ -219,6 +219,14 @@ stages:
     jobs:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
+  - stage: tests_queryServiceApiClient
+    displayName: Tests - Query Service API Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_queryServiceApiClient'])
+    jobs:
+      - template: libs/query-service-api-client/azure-pipelines.tests.yml
+
   - stage: tests_sandboxesServiceApiClient
     displayName: Tests - Sandboxes Service API Client
     lockBehavior: sequential
@@ -267,14 +275,6 @@ stages:
     jobs:
       - template: libs/vault-api-client/azure-pipelines.tests.yml
 
-  - stage: tests_queryServiceApiClient
-    displayName: Tests - Query Service API Client
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_queryServiceApiClient'])
-    jobs:
-      - template: libs/query-service-api-client/azure-pipelines.tests.yml
-
   - stage: testsResults
     displayName: Wait for tests results
     dependsOn:
@@ -290,13 +290,13 @@ stages:
       - tests_messengerBundle
       - tests_outputMapping
       - tests_permissionChecker
+      - tests_queryServiceApiClient
       - tests_sandboxesServiceApiClient
       - tests_serviceClient
       - tests_settle
       - tests_slicer
       - tests_stagingProvider
       - tests_vaultApiClient
-      - tests_queryServiceApiClient
     condition: |
       and(
         in(dependencies.tests_apiBundle.result, 'Succeeded', 'Skipped'),
@@ -308,15 +308,15 @@ stages:
         in(dependencies.tests_keyGenerator.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_loggingBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),        
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_serviceClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped')
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')        
       )
     jobs:
       - job:
@@ -418,6 +418,14 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_queryServiceApiClient'])
+          sourceRepo: platform-libraries
+          targetRepo: query-service-api-php-client
+          libraryPath: libs/query-service-api-client
+          tagPrefix: query-service-api-client/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_sandboxesServiceApiClient'])
           sourceRepo: platform-libraries
           targetRepo: sandboxes-service-api-php-client
@@ -463,11 +471,3 @@ stages:
           targetRepo: vault-api-php-client
           libraryPath: libs/vault-api-client
           tagPrefix: vault-api-client/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_queryServiceApiClient'])
-          sourceRepo: platform-libraries
-          targetRepo: query-service-api-php-client
-          libraryPath: libs/query-service-api-client
-          tagPrefix: query-service-api-client/

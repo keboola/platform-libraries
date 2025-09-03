@@ -92,13 +92,13 @@ class AbstractStrategyTest extends TestCase
             FileFormat::Json,
         ) extends AbstractStrategy {
             public function __construct(
-                ClientWrapper $clientWrapper,
-                LoggerInterface $logger,
-                StagingInterface $dataStorage,
-                private readonly FileStagingInterface $metadataStorage,
-                InputTableStateList $tablesState,
-                private readonly string $destination,
-                FileFormat $format,
+                protected readonly ClientWrapper $clientWrapper,
+                protected readonly LoggerInterface $logger,
+                protected readonly StagingInterface $dataStorage,
+                protected readonly FileStagingInterface $metadataStorage,
+                protected readonly InputTableStateList $tablesState,
+                protected readonly string $destination,
+                protected readonly FileFormat $format,
             ) {
             }
 

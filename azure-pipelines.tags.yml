@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: query-service-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/query-service-api-php-client
     - repository: sandboxes-service-api-php-client
       type: github
       endpoint: keboola
@@ -78,10 +82,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/vault-api-php-client
-    - repository: query-service-api-php-client
-      type: github
-      endpoint: keboola
-      name: keboola/query-service-api-php-client
 
 variables:
   DOCKER_BUILDKIT: 1
@@ -178,6 +178,14 @@ jobs:
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/query-service-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: query-service-api-php-client
+      libraryPath: libs/query-service-api-client
+      tagPrefix: query-service-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/sandboxes-service-api-client/')
       sourceRepo: platform-libraries
       targetRepo: sandboxes-service-api-php-client
@@ -223,11 +231,3 @@ jobs:
       targetRepo: vault-api-php-client
       libraryPath: libs/vault-api-client
       tagPrefix: vault-api-client/
-
-  - template: azure-pipelines/jobs/split-library.yml
-    parameters:
-      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/query-service-api-client/')
-      sourceRepo: platform-libraries
-      targetRepo: query-service-api-php-client
-      libraryPath: libs/query-service-api-client
-      tagPrefix: query-service-api-client/

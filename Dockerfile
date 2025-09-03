@@ -19,7 +19,7 @@ RUN apt update -q \
  && apt-get remove --autoremove -y libzip-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
-git config --global --add safe.directory /code
+RUN git config --global --add safe.directory /code
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer \
  && composer global config allow-plugins.symfony/flex true \

@@ -113,8 +113,8 @@ stages:
                 settle:libs/settle \
                 slicer:libs/slicer \
                 stagingProvider:libs/staging-provider \
-                vaultApiClient:libs/vault-api-client \ 
-                queryServiceApiClient:libs/query-service-api-client \
+                vaultApiClient:libs/vault-api-client \
+                queryServiceApiClient:libs/query-service-api-client
             displayName: 'Find changes'
             name: findChanges
 

@@ -19,10 +19,6 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 {
-    private const LOAD_TYPE_CLONE = 'clone';
-    private const LOAD_TYPE_COPY = 'copy';
-    private const LOAD_TYPE_VIEW = 'view';
-
     protected readonly WorkspaceStagingInterface $dataStorage;
     protected readonly ManifestCreator $manifestCreator;
 
@@ -69,7 +65,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return [
                 'table' => $table,
-                'type' => self::LOAD_TYPE_CLONE,
+                'type' => WorkspaceLoadType::CLONE->value,
             ];
         }
         if (LoadTypeDecider::canUseView(
@@ -79,13 +75,13 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return [
                 'table' => [$table, $loadOptions],
-                'type' => self::LOAD_TYPE_VIEW,
+                'type' => WorkspaceLoadType::VIEW->value,
             ];
         }
         $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
         return [
             'table' => [$table, $loadOptions],
-            'type' => self::LOAD_TYPE_COPY,
+            'type' => WorkspaceLoadType::COPY->value,
         ];
     }
 
@@ -96,7 +92,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         $workspaceTables = [];
 
         foreach ($exports as $export) {
-            if ($export['type'] === self::LOAD_TYPE_CLONE) {
+            if ($export['type'] === WorkspaceLoadType::CLONE->value) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
                 $cloneInput = [
@@ -114,7 +110,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                 $cloneInputs[] = $cloneInput;
                 $workspaceTables[] = $table;
             }
-            if (in_array($export['type'], [self::LOAD_TYPE_COPY, self::LOAD_TYPE_VIEW], true)) {
+            if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
                 [$table, $exportOptions] = $export['table'];
                 if ($table->getSourceBranchId() !== null) {
                     // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
@@ -129,7 +125,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                     $exportOptions,
                 );
 
-                if ($table->isUseView() || $export['type'] === self::LOAD_TYPE_VIEW) {
+                if ($table->isUseView() || $export['type'] === WorkspaceLoadType::VIEW->value) {
                     $copyInput['useView'] = true;
                 }
 
@@ -191,5 +187,55 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             );
         }
         return $jobResults;
+    }
+
+    /**
+     * Phase 1: Prepare - Analyze tables and create workspace load instructions
+     * Determines how each table from Table Storage should be loaded into Workspace
+     *
+     * @param RewrittenInputTableOptions[] $tables
+     * @return WorkspaceTableLoadInstruction[]
+     */
+    public function prepareTableLoadsToWorkspace(array $tables): array
+    {
+        $instructions = [];
+
+        foreach ($tables as $table) {
+            $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
+
+            // Validate that table can be loaded to this workspace type
+            LoadTypeDecider::checkViableLoadMethod(
+                $table->getTableInfo(),
+                $this->getWorkspaceType(),
+                $loadOptions,
+                $this->clientWrapper->getToken()->getProjectId(),
+            );
+
+            // Determine optimal load method from Table Storage to Workspace
+            if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
+                $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
+                $instructions[] = new WorkspaceTableLoadInstruction(
+                    WorkspaceLoadType::CLONE,
+                    $table,
+                    null,
+                );
+            } elseif (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType())) {
+                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+                $instructions[] = new WorkspaceTableLoadInstruction(
+                    WorkspaceLoadType::VIEW,
+                    $table,
+                    $loadOptions,
+                );
+            } else {
+                $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+                $instructions[] = new WorkspaceTableLoadInstruction(
+                    WorkspaceLoadType::COPY,
+                    $table,
+                    $loadOptions,
+                );
+            }
+        }
+
+        return $instructions;
     }
 }

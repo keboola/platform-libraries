@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use InvalidArgumentException;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
@@ -210,6 +211,44 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be copied.'));
+    }
+
+    public function testPrepareTableLoadsToWorkspaceChecksViableLoadMethod(): void
+    {
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345],
+                ],
+                'my-secret-token',
+            ))
+        ;
+
+        $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
+
+        // Create a table that will cause checkViableLoadMethod to throw an exception
+        // (BigQuery workspace with alias table from the same project)
+        $tableOptions = new RewrittenInputTableOptions(
+            ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
+            'in.c-test-bucket.table1',
+            123,
+            [
+                'id' => 'in.c-test-bucket.table1',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+                'sourceTable' => ['project' => ['id' => 12345]], // Same project ID
+            ],
+        );
+
+        // This should throw an InvalidInputException because checkViableLoadMethod is called
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-test-bucket.table1" is an alias, which is not supported when loading Bigquery tables.',
+        );
+
+        $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
     }
 
     private function createTestStrategy(

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping;
 
+use InvalidArgumentException;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\Options\InputFileOptions;
 use Keboola\InputMapping\File\Options\RewrittenInputFileOptions;
 use Keboola\InputMapping\Helper\InputBucketValidator;
@@ -17,6 +19,8 @@ use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Strategy\AbstractStrategy as TableAbstractStrategy;
+use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
+use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -113,6 +117,45 @@ class Reader
 
         /** @var TableAbstractStrategy $strategy */
         return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
+    }
+
+    /**
+     * Execute only prepare and execute phases for workspace table loading
+     * Returns WorkspaceLoadQueue for later completion with waitForTableLoadCompletion()
+     *
+     * @param InputTableOptionsList $tablesDefinition list of input mappings
+     * @param InputTableStateList $tablesState list of input mapping table states
+     * @param string $destination destination folder
+     * @param ReaderOptions $readerOptions
+     * @return WorkspaceLoadQueue
+     * @throws InvalidArgumentException if strategy is not workspace-based
+     */
+    public function prepareAndExecuteTableLoads(
+        InputTableOptionsList $tablesDefinition,
+        InputTableStateList $tablesState,
+        string $destination,
+        ReaderOptions $readerOptions,
+    ): WorkspaceLoadQueue {
+        $tablesState = $this->rewriteTableStatesDestinations($tablesState);
+
+        $tablesDefinition = $this->createTableResolver()->resolve($tablesDefinition);
+        $strategy = $this->strategyFactory->getTableInputStrategy($destination, $tablesState);
+
+        // Ensure we have a workspace strategy. For file this method is not yet implemented.
+        if (!$strategy instanceof AbstractWorkspaceStrategy) {
+            throw new InputOperationException(
+                'prepareAndExecuteTableLoads() can only be used with workspace strategies',
+            );
+        }
+
+        $tablesDefinition = $this->validateAndRewriteDevBuckets($tablesDefinition, $readerOptions);
+
+        // Execute only Phase 1 & 2: Prepare and Execute
+        // Let the strategy handle the planning internally
+        return $strategy->prepareAndExecuteTableLoads(
+            $tablesDefinition->getTables(),
+            $readerOptions->preserveWorkspace(),
+        );
     }
 
     /**

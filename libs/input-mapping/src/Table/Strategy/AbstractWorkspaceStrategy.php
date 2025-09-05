@@ -9,6 +9,8 @@ use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Result;
+use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
@@ -269,6 +271,60 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         }
 
         return $jobResults;
+    }
+
+    /**
+     * New three-phase public method that can be used instead of downloadTables workflow
+     *
+     * @param RewrittenInputTableOptions[] $tables
+     */
+    public function downloadTablesThreePhase(array $tables, bool $preserve): Result
+    {
+        // Phase 1: Prepare
+        $instructions = $this->prepareTableLoadsToWorkspace($tables);
+        $plan = new WorkspaceLoadPlan(
+            $instructions,
+            $preserve,
+        );
+
+        // Phase 2: Execute
+        $loadQueue = $this->executeTableLoadsToWorkspace($plan);
+
+        // Phase 3: Wait
+        $jobResults = $this->waitForTableLoadCompletion($loadQueue);
+
+        // Build final result compatible with existing Result interface
+        $outputStateConfiguration = [];
+        $result = new Result();
+        foreach ($tables as $table) {
+            $outputStateConfiguration[] = [
+                'source' => $table->getSource(),
+                'lastImportDate' => $table->getTableInfo()['lastImportDate'],
+            ];
+            $result->addTable(new TableInfo($table->getTableInfo()));
+        }
+
+        $result->setMetrics($jobResults);
+        $result->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
+        $this->logger->info('All tables were fetched.');
+
+        return $result;
+    }
+
+    /**
+     * Override parent's downloadTables to optionally use three-phase approach
+     * For now, keeps using the existing method for backward compatibility
+     * In the future, this can be switched to use downloadTablesThreePhase()
+     *
+     * @param RewrittenInputTableOptions[] $tables
+     */
+    public function downloadTables(array $tables, bool $preserve): Result
+    {
+        // Option 1: Use new three-phase approach (uncomment to enable)
+        // return $this->downloadTablesThreePhase($tables, $preserve);
+
+        // Option 2: Use existing approach (current default for backward compatibility)
+        return parent::downloadTables($tables, $preserve);
     }
 
     /**

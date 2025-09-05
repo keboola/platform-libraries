@@ -102,6 +102,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                     'overwrite' => $table->getOverwrite(),
                     'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
                 ];
+                // ?????? sourceBranchId is alreeady set above and from same method, why check again?
                 if ($table->getSourceBranchId() !== null) {
                     // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
                     // and passing null causes application error in connection, so here is a useless condition.
@@ -331,6 +332,27 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         }
 
         return new WorkspaceLoadQueue($jobs);
+    }
+
+    /**
+     * Execute only Phase 1 & 2: Prepare and Execute workspace table loading
+     * Returns WorkspaceLoadQueue for later completion with waitForTableLoadCompletion()
+     *
+     * @param RewrittenInputTableOptions[] $tables
+     * @param bool $preserve
+     * @return WorkspaceLoadQueue
+     */
+    public function prepareAndExecuteTableLoads(array $tables, bool $preserve): WorkspaceLoadQueue
+    {
+        // Phase 1: Prepare
+        $instructions = $this->prepareTableLoadsToWorkspace($tables);
+        $plan = new WorkspaceLoadPlan(
+            $instructions,
+            $preserve,
+        );
+
+        // Phase 2: Execute
+        return $this->executeTableLoadsToWorkspace($plan);
     }
 
     protected function createWorkspaces(): Workspaces

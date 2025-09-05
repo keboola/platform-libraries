@@ -321,10 +321,10 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     public function downloadTables(array $tables, bool $preserve): Result
     {
         // Option 1: Use new three-phase approach (uncomment to enable)
-        // return $this->downloadTablesThreePhase($tables, $preserve);
+        return $this->downloadTablesThreePhase($tables, $preserve);
 
         // Option 2: Use existing approach (current default for backward compatibility)
-        return parent::downloadTables($tables, $preserve);
+        //return parent::downloadTables($tables, $preserve);
     }
 
     /**

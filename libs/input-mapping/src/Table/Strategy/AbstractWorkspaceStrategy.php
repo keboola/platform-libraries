@@ -245,6 +245,33 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     }
 
     /**
+     * Phase 3: Wait - Wait for table loading jobs to complete and create manifests
+     * This phase handles job completion and prepares metadata
+     */
+    public function waitForTableLoadCompletion(WorkspaceLoadQueue $loadQueue): array
+    {
+        // Wait for all table loading jobs to complete
+        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks(
+            $loadQueue->getJobIds(),
+        );
+
+        $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
+
+        // Create manifests for tables now available in Workspace for SQL analysis
+        foreach ($loadQueue->getAllTables() as $table) {
+            $manifestPath = $this->getManifestPath($table);
+            $this->manifestCreator->writeTableManifest(
+                $table->getTableInfo(),
+                $manifestPath,
+                $table->getColumnNamesFromTypes(),
+                $this->format,
+            );
+        }
+
+        return $jobResults;
+    }
+
+    /**
      * Execute only Phase 1 & 2: Prepare and Execute workspace table loading
      * Returns WorkspaceLoadQueue for later completion with waitForTableLoadCompletion()
      *

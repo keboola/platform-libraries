@@ -36,8 +36,7 @@ class ABS extends AbstractFileStrategy
         foreach ($exports as $export) {
             /** @var RewrittenInputTableOptions $table */
             [$jobId, $table] = $export;
-            $manifestPath = $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . '.manifest';
+            $manifestPath = $this->getManifestPath($table);
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],

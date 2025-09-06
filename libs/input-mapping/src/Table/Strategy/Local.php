@@ -21,8 +21,7 @@ class Local extends AbstractFileStrategy
             $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];
         }
 
-        $file = $this->ensurePathDelimiter($this->dataStorage->getPath()) .
-            $this->getDestinationFilePath($this->destination, $table);
+        $file = $this->getDataFilePath($table);
         $tableInfo = $table->getTableInfo();
         if ($tableInfo['dataSizeBytes'] > $exportLimit) {
             throw new InvalidInputException(sprintf(
@@ -36,8 +35,7 @@ class Local extends AbstractFileStrategy
 
         $this->manifestCreator->writeTableManifest(
             $tableInfo,
-            $this->ensurePathDelimiter($this->metadataStorage->getPath()) .
-                $this->getDestinationFilePath($this->destination, $table) . '.manifest',
+            $this->getManifestPath($table),
             $table->getColumnNamesFromTypes(),
             $this->format,
         );
@@ -53,5 +51,11 @@ class Local extends AbstractFileStrategy
         $tableExporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $this->logger->info('Processing ' . count($exports) . ' local table exports.');
         return $tableExporter->exportTables($exports);
+    }
+
+    protected function getDataFilePath(RewrittenInputTableOptions $table): string
+    {
+        return $this->ensurePathDelimiter($this->dataStorage->getPath()) .
+            $this->getDestinationFilePath($this->destination, $table);
     }
 }

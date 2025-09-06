@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests;
 
+use Generator;
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
+use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
 use Keboola\StagingProvider\Staging\File\FileFormat;
@@ -18,6 +22,7 @@ use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
@@ -182,5 +187,79 @@ class ReaderTest extends AbstractTestCase
         $data = $result->getInputTableStateList()->jsonSerialize();
         self::assertEquals(sprintf('%s.test', $branchBucketId), $data[0]['source']);
         self::assertArrayHasKey('lastImportDate', $data[0]);
+    }
+
+    public function testPrepareAndExecuteTableLoadsWithNonWorkspaceStrategy(): void
+    {
+        $clientWrapper = $this->initClient();
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getStagingFactory($clientWrapper, StagingType::Local),
+        );
+
+        $configuration = new InputTableOptionsList([]);
+        $state = new InputTableStateList([]);
+
+        $this->expectException(InputOperationException::class);
+        $this->expectExceptionMessage('prepareAndExecuteTableLoads() can only be used with workspace strategies');
+
+        $reader->prepareAndExecuteTableLoads(
+            $configuration,
+            $state,
+            'destination',
+            new ReaderOptions(true),
+        );
+    }
+
+    /**
+     * @dataProvider preserveFlagProvider
+     */
+    public function testPrepareAndExecuteTableLoadsDelegatesToWorkspaceStrategy(bool $preserveFlag): void
+    {
+        // Arrange
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+        $clientWrapper->method('getClientOptionsReadOnly')
+            ->willReturn($this->createMock(ClientOptions::class));
+
+        $expectedQueue = new WorkspaceLoadQueue([]);
+
+        $workspaceStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
+        $workspaceStrategy
+            ->expects(self::once())
+            ->method('prepareAndExecuteTableLoads')
+            ->with([], $preserveFlag)
+            ->willReturn($expectedQueue);
+
+        $strategyFactory = $this->createMock(StrategyFactory::class);
+        $strategyFactory
+            ->expects(self::once())
+            ->method('getTableInputStrategy')
+            ->willReturn($workspaceStrategy);
+
+        // Act
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $strategyFactory,
+        );
+
+        $result = $reader->prepareAndExecuteTableLoads(
+            new InputTableOptionsList([]),
+            new InputTableStateList([]),
+            'destination',
+            new ReaderOptions(false, $preserveFlag),
+        );
+
+        // Assert
+        self::assertSame($expectedQueue, $result);
+    }
+
+    public function preserveFlagProvider(): Generator
+    {
+        yield 'with preserve enabled' => [true];
+        yield 'with preserve disabled' => [false];
     }
 }

@@ -79,20 +79,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             if ($export['type'] === WorkspaceLoadType::CLONE->value) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
-                $cloneInput = [
-                    'source' => $table->getSource(),
-                    'destination' => $table->getDestination(),
-                    'sourceBranchId' => $table->getSourceBranchId(),
-                    'overwrite' => $table->getOverwrite(),
-                    'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
-                ];
-                // ?????? sourceBranchId is alreeady set above and from same method, why check again?
-                if ($table->getSourceBranchId() !== null) {
-                    // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
-                    // and passing null causes application error in connection, so here is a useless condition.
-                    $cloneInput['sourceBranchId'] = $table->getSourceBranchId();
-                }
-                $cloneInputs[] = $cloneInput;
+                $cloneInputs[] = $this->buildCloneInput($table);
                 $workspaceTables[] = $table;
             }
             if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
@@ -231,18 +218,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $cloneTables = [];
 
             foreach ($cloneInstructions as $instruction) {
-                $cloneInput = [
-                    'source' => $instruction->table->getSource(),
-                    'destination' => $instruction->table->getDestination(),
-                    'overwrite' => $instruction->table->getOverwrite(),
-                    'dropTimestampColumn' => !$instruction->table->keepInternalTimestampColumn(),
-                ];
-
-                if ($instruction->table->getSourceBranchId() !== null) {
-                    $cloneInput['sourceBranchId'] = $instruction->table->getSourceBranchId();
-                }
-
-                $cloneInputs[] = $cloneInput;
+                $cloneInputs[] = $this->buildCloneInput($instruction->table);
                 $cloneTables[] = $instruction->table;
             }
 
@@ -313,6 +289,25 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         // Phase 2: Execute
         return $this->executeTableLoadsToWorkspace($plan);
+    }
+
+    private function buildCloneInput(RewrittenInputTableOptions $table): array
+    {
+        $cloneInput = [
+            'source' => $table->getSource(),
+            'destination' => $table->getDestination(),
+            'sourceBranchId' => $table->getSourceBranchId(),
+            'overwrite' => $table->getOverwrite(),
+            'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
+        ];
+        // ?????? sourceBranchId is alreeady set above and from same method, why check again?
+        if ($table->getSourceBranchId() !== null) {
+            // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
+            // and passing null causes application error in connection, so here is a useless condition.
+            $cloneInput['sourceBranchId'] = $table->getSourceBranchId();
+        }
+
+        return $cloneInput;
     }
 
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType

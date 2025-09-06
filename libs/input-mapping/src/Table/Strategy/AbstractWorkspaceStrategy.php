@@ -84,25 +84,9 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             }
             if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
                 [$table, $exportOptions] = $export['table'];
-                if ($table->getSourceBranchId() !== null) {
-                    // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
-                    // and passing null causes application error in connection, so here is a useless condition.
-                    $exportOptions['sourceBranchId'] = $table->getSourceBranchId();
-                }
-                $copyInput = array_merge(
-                    [
-                        'source' => $table->getSource(),
-                        'destination' => $table->getDestination(),
-                    ],
-                    $exportOptions,
-                );
-
-                if ($table->isUseView() || $export['type'] === WorkspaceLoadType::VIEW->value) {
-                    $copyInput['useView'] = true;
-                }
-
+                $loadType = WorkspaceLoadType::from($export['type']);
+                $copyInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
                 $workspaceTables[] = $table;
-                $copyInputs[] = $copyInput;
             }
         }
 
@@ -239,21 +223,11 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $copyTables = [];
 
             foreach ($copyInstructions as $instruction) {
-                $copyInput = array_merge([
-                    'source' => $instruction->table->getSource(),
-                    'destination' => $instruction->table->getDestination(),
-                ], $instruction->loadOptions ?? []);
-
-                if ($instruction->table->getSourceBranchId() !== null) {
-                    $copyInput['sourceBranchId'] = $instruction->table->getSourceBranchId();
-                }
-
-                // Views point to Table Storage, copies transfer data to Workspace
-                if ($instruction->loadType === WorkspaceLoadType::VIEW || $instruction->table->isUseView()) {
-                    $copyInput['useView'] = true;
-                }
-
-                $copyInputs[] = $copyInput;
+                $copyInputs[] = $this->buildCopyInput(
+                    $instruction->table,
+                    $instruction->loadOptions ?? [],
+                    $instruction->loadType,
+                );
                 $copyTables[] = $instruction->table;
             }
 
@@ -289,6 +263,31 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         // Phase 2: Execute
         return $this->executeTableLoadsToWorkspace($plan);
+    }
+
+    private function buildCopyInput(
+        RewrittenInputTableOptions $table,
+        array $loadOptions,
+        WorkspaceLoadType $loadType,
+    ): array {
+        // Add sourceBranchId to loadOptions first (preserving handleExports behavior)
+        if ($table->getSourceBranchId() !== null) {
+            // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
+            // and passing null causes application error in connection, so here is a useless condition.
+            $loadOptions['sourceBranchId'] = $table->getSourceBranchId();
+        }
+
+        $copyInput = array_merge([
+            'source' => $table->getSource(),
+            'destination' => $table->getDestination(),
+        ], $loadOptions);
+
+        // Views point to Table Storage, copies transfer data to Workspace
+        if ($loadType === WorkspaceLoadType::VIEW || $table->isUseView()) {
+            $copyInput['useView'] = true;
+        }
+
+        return $copyInput;
     }
 
     private function buildCloneInput(RewrittenInputTableOptions $table): array

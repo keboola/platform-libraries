@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
@@ -20,15 +19,6 @@ abstract class AbstractStrategy implements StrategyInterface
     abstract protected function getMetadataStorage(): FileStagingInterface;
     abstract protected function getDestination(): string;
 
-    protected function ensurePathDelimiter(string $path): string
-    {
-        return $this->ensureNoPathDelimiter($path) . '/';
-    }
-
-    private function ensureNoPathDelimiter(string $path): string
-    {
-        return rtrim($path, '\\/');
-    }
 
     /**
      * @param RewrittenInputTableOptions[] $tables
@@ -55,20 +45,5 @@ abstract class AbstractStrategy implements StrategyInterface
         $this->logger->info('All tables were fetched.');
 
         return $result;
-    }
-
-    protected function getDestinationFilePath(string $destination, InputTableOptions $table): string
-    {
-        if (!$table->getDestination()) {
-            return $destination . '/' . $table->getSource();
-        } else {
-            return $destination . '/' . $table->getDestination();
-        }
-    }
-
-    protected function getManifestPath(InputTableOptions $table): string
-    {
-        return $this->ensurePathDelimiter($this->getMetadataStorage()->getPath()) .
-            $this->getDestinationFilePath($this->getDestination(), $table) . '.manifest';
     }
 }

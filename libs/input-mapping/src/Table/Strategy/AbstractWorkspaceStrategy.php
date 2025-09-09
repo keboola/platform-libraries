@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Table\Strategy;
 use InvalidArgumentException;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Helper\ManifestCreator;
+use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StagingProvider\Staging\File\FileFormat;
@@ -134,7 +135,11 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
 
         foreach ($workspaceTables as $table) {
-            $manifestPath = $this->getManifestPath($table);
+            $manifestPath = PathHelper::getManifestPath(
+                $this->getMetadataStorage(),
+                $this->getDestination(),
+                $table,
+            );
             $this->manifestCreator->writeTableManifest(
                 $table->getTableInfo(),
                 $manifestPath,

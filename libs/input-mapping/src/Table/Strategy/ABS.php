@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
@@ -36,7 +37,11 @@ class ABS extends AbstractFileStrategy
         foreach ($exports as $export) {
             /** @var RewrittenInputTableOptions $table */
             [$jobId, $table] = $export;
-            $manifestPath = $this->getManifestPath($table);
+            $manifestPath = PathHelper::getManifestPath(
+                $this->getMetadataStorage(),
+                $this->getDestination(),
+                $table,
+            );
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],

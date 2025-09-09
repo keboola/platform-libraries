@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\TableExporter;
 
@@ -21,7 +22,11 @@ class Local extends AbstractFileStrategy
             $exportLimit = $tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME]['value'];
         }
 
-        $file = $this->getDataFilePath($table);
+        $file = PathHelper::getDataFilePath(
+            $this->dataStorage,
+            $this->destination,
+            $table,
+        );
         $tableInfo = $table->getTableInfo();
         if ($tableInfo['dataSizeBytes'] > $exportLimit) {
             throw new InvalidInputException(sprintf(
@@ -35,7 +40,11 @@ class Local extends AbstractFileStrategy
 
         $this->manifestCreator->writeTableManifest(
             $tableInfo,
-            $this->getManifestPath($table),
+            PathHelper::getManifestPath(
+                $this->getMetadataStorage(),
+                $this->getDestination(),
+                $table,
+            ),
             $table->getColumnNamesFromTypes(),
             $this->format,
         );
@@ -51,11 +60,5 @@ class Local extends AbstractFileStrategy
         $tableExporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $this->logger->info('Processing ' . count($exports) . ' local table exports.');
         return $tableExporter->exportTables($exports);
-    }
-
-    protected function getDataFilePath(RewrittenInputTableOptions $table): string
-    {
-        return $this->ensurePathDelimiter($this->dataStorage->getPath()) .
-            $this->getDestinationFilePath($this->destination, $table);
     }
 }

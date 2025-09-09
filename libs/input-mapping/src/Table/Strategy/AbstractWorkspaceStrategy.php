@@ -292,21 +292,13 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     private function buildCloneInput(RewrittenInputTableOptions $table): array
     {
-        $cloneInput = [
+        return [
             'source' => $table->getSource(),
             'destination' => $table->getDestination(),
             'sourceBranchId' => $table->getSourceBranchId(),
             'overwrite' => $table->getOverwrite(),
             'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
         ];
-        // ?????? sourceBranchId is alreeady set above and from same method, why check again?
-        if ($table->getSourceBranchId() !== null) {
-            // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
-            // and passing null causes application error in connection, so here is a useless condition.
-            $cloneInput['sourceBranchId'] = $table->getSourceBranchId();
-        }
-
-        return $cloneInput;
     }
 
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType

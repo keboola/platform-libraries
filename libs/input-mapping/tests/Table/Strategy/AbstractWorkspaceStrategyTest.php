@@ -9,7 +9,6 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
-use Keboola\InputMapping\Table\Strategy\WorkspaceJobType;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadPlan;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadType;
@@ -484,11 +483,11 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertCount(2, $result->jobs);
 
         $cloneJob = $result->jobs[0];
-        self::assertSame(WorkspaceJobType::CLONE, $cloneJob->jobType);
+        self::assertSame(WorkspaceLoadType::CLONE, $cloneJob->jobType);
         self::assertSame([$cloneTableOptions1, $cloneTableOptions2], $cloneJob->tables);
 
         $loadJob = $result->jobs[1];
-        self::assertSame(WorkspaceJobType::LOAD, $loadJob->jobType);
+        self::assertSame(WorkspaceLoadType::COPY, $loadJob->jobType);
         self::assertSame([$copyTableOptions, $viewTableOptions], $loadJob->tables);
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Cleaning workspace before loading tables.'));
@@ -675,12 +674,12 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         // Verify clone job
         $cloneJob = $result->jobs[0];
-        self::assertSame(WorkspaceJobType::CLONE, $cloneJob->jobType);
+        self::assertSame(WorkspaceLoadType::CLONE, $cloneJob->jobType);
         self::assertSame([$cloneTable], $cloneJob->tables);
 
         // Verify load job
         $loadJob = $result->jobs[1];
-        self::assertSame(WorkspaceJobType::LOAD, $loadJob->jobType);
+        self::assertSame(WorkspaceLoadType::COPY, $loadJob->jobType);
         self::assertSame([$copyTable], $loadJob->tables);
     }
 

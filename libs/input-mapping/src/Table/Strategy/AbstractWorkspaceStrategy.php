@@ -213,7 +213,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                 'input' => $cloneInputs,
                 'preserve' => 1,
             ]);
-            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceJobType::CLONE, $cloneTables);
+            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::CLONE, $cloneTables);
         }
 
         // Step 3: Submit copy/load operations (after workspace is clean)
@@ -238,7 +238,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                 'input' => $copyInputs,
                 'preserve' => 1,
             ]);
-            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceJobType::LOAD, $copyTables);
+            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::COPY, $copyTables);
         }
 
         return new WorkspaceLoadQueue($jobs);

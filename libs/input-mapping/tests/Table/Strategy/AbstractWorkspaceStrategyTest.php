@@ -525,7 +525,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         ClientWrapper $clientWrapper,
         string $workspaceType,
     ): TestWorkspaceStrategy {
-        $stragegy = new TestWorkspaceStrategy(
+        $strategy = new TestWorkspaceStrategy(
             $clientWrapper,
             $this->testLogger,
             $this->createMock(WorkspaceStagingInterface::class),
@@ -534,8 +534,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
             'destination',
             FileFormat::Json,
         );
-        $stragegy->setWorkspaceType($workspaceType);
-        return $stragegy;
+        $strategy->setWorkspaceType($workspaceType);
+        return $strategy;
     }
 
     private function createTestStrategyWithDataStorage(
@@ -543,7 +543,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         string $workspaceType,
         WorkspaceStagingInterface $dataStorage,
     ): TestWorkspaceStrategy {
-        $stragegy = new TestWorkspaceStrategy(
+        $strategy = new TestWorkspaceStrategy(
             $clientWrapper,
             $this->testLogger,
             $dataStorage,
@@ -552,8 +552,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
             'destination',
             FileFormat::Json,
         );
-        $stragegy->setWorkspaceType($workspaceType);
-        return $stragegy;
+        $strategy->setWorkspaceType($workspaceType);
+        return $strategy;
     }
 
     public function testPrepareAndExecuteTableLoadsEmpty(): void

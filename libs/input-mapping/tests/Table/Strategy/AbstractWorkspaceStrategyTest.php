@@ -689,38 +689,47 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $branchClient = $this->createMock(BranchAwareClient::class);
 
         // Expect clean operation followed by clone operation
+        $expectedApiCalls = [
+            [
+                'endpoint' => 'workspaces/456/load-clone',
+                'data' => [
+                    'input' => [], // clean operation
+                    'preserve' => 0,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 100], // clean job
+            ],
+            [
+                'endpoint' => 'workspaces/456/load-clone',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'overwrite' => false,
+                            'dropTimestampColumn' => false,
+                            'sourceBranchId' => 123,
+                        ],
+                    ],
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 789], // clone job
+            ],
+        ];
+
         $branchClient->expects($this->exactly(2))
             ->method('apiPostJson')
-            ->withConsecutive(
-                [
-                    'workspaces/456/load-clone',
-                    [
-                        'input' => [], // clean operation
-                        'preserve' => 0,
-                    ],
-                    false,
-                ],
-                [
-                    'workspaces/456/load-clone',
-                    [
-                        'input' => [
-                            [
-                                'source' => 'in.c-test-bucket.table1',
-                                'destination' => 'table1',
-                                'overwrite' => false,
-                                'dropTimestampColumn' => false,
-                                'sourceBranchId' => 123,
-                            ],
-                        ],
-                        'preserve' => 1,
-                    ],
-                    false,
-                ],
-            )
-            ->willReturnOnConsecutiveCalls(
-                ['id' => 100], // clean job
-                ['id' => 789], // clone job
-            );
+            ->willReturnCallback(function (string $endpoint, array $data, bool $async) use (&$expectedApiCalls) {
+                $expectedCall = array_shift($expectedApiCalls);
+                self::assertNotNull($expectedCall);
+
+                self::assertSame($expectedCall['endpoint'], $endpoint);
+                self::assertEquals($expectedCall['data'], $data);
+                self::assertSame($expectedCall['async'], $async);
+
+                return $expectedCall['returnValue'];
+            });
 
         // Clean job completion
         $branchClient->expects($this->once())

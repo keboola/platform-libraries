@@ -14,7 +14,6 @@ use Keboola\StagingProvider\Staging\StagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
 
 class AbstractFileStrategyTest extends TestCase
 {
@@ -42,41 +41,5 @@ class AbstractFileStrategyTest extends TestCase
                 return [];
             }
         };
-    }
-
-    public function testGetters(): void
-    {
-        $metadataStorage = $this->createMock(FileStagingInterface::class);
-        $destination = 'test-destination';
-
-        $strategy = new class(
-            $this->createMock(ClientWrapper::class),
-            $this->createMock(LoggerInterface::class),
-            $this->createMock(FileStagingInterface::class),
-            $metadataStorage,
-            $this->createMock(InputTableStateList::class),
-            $destination,
-            FileFormat::Json,
-        ) extends AbstractFileStrategy {
-            public function downloadTable(RewrittenInputTableOptions $table): array
-            {
-                return [];
-            }
-
-            public function handleExports(array $exports, bool $preserve): array
-            {
-                return [];
-            }
-        };
-
-        $reflection = new ReflectionClass($strategy);
-
-        $getMetadataStorageMethod = $reflection->getMethod('getMetadataStorage');
-        $getMetadataStorageMethod->setAccessible(true);
-        self::assertSame($metadataStorage, $getMetadataStorageMethod->invoke($strategy));
-
-        $getDestinationMethod = $reflection->getMethod('getDestination');
-        $getDestinationMethod->setAccessible(true);
-        self::assertSame($destination, $getDestinationMethod->invoke($strategy));
     }
 }

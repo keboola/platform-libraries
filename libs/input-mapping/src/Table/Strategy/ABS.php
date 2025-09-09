@@ -38,8 +38,8 @@ class ABS extends AbstractFileStrategy
             /** @var RewrittenInputTableOptions $table */
             [$jobId, $table] = $export;
             $manifestPath = PathHelper::getManifestPath(
-                $this->getMetadataStorage(),
-                $this->getDestination(),
+                $this->metadataStorage,
+                $this->destination,
                 $table,
             );
             $tableInfo = $table->getTableInfo();

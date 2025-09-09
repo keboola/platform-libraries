@@ -9,16 +9,11 @@ use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\InputMapping\Table\StrategyInterface;
-use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\LoggerInterface;
 
 abstract class AbstractStrategy implements StrategyInterface
 {
     protected readonly LoggerInterface $logger; // @phpstan-ignore-line initialized in child classes
-
-    abstract protected function getMetadataStorage(): FileStagingInterface;
-    abstract protected function getDestination(): string;
-
 
     /**
      * @param RewrittenInputTableOptions[] $tables

@@ -42,16 +42,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     abstract public function getWorkspaceType(): string;
 
-    protected function getMetadataStorage(): FileStagingInterface
-    {
-        return $this->metadataStorage;
-    }
-
-    protected function getDestination(): string
-    {
-        return $this->destination;
-    }
-
     public function downloadTable(RewrittenInputTableOptions $table): array
     {
         $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
@@ -136,8 +126,8 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         foreach ($workspaceTables as $table) {
             $manifestPath = PathHelper::getManifestPath(
-                $this->getMetadataStorage(),
-                $this->getDestination(),
+                $this->metadataStorage,
+                $this->destination,
                 $table,
             );
             $this->manifestCreator->writeTableManifest(

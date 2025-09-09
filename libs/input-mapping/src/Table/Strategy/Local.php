@@ -41,8 +41,8 @@ class Local extends AbstractFileStrategy
         $this->manifestCreator->writeTableManifest(
             $tableInfo,
             PathHelper::getManifestPath(
-                $this->getMetadataStorage(),
-                $this->getDestination(),
+                $this->metadataStorage,
+                $this->destination,
                 $table,
             ),
             $table->getColumnNamesFromTypes(),

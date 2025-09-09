@@ -34,14 +34,4 @@ abstract class AbstractFileStrategy extends AbstractStrategy
         $this->dataStorage = $dataStorage;
         $this->manifestCreator = new ManifestCreator();
     }
-
-    protected function getMetadataStorage(): FileStagingInterface
-    {
-        return $this->metadataStorage;
-    }
-
-    protected function getDestination(): string
-    {
-        return $this->destination;
-    }
 }

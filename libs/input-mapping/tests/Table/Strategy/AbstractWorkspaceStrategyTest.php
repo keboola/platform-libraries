@@ -502,7 +502,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $branchClient->expects(self::never())->method(self::anything());
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects(self::once())
+        $clientWrapper->expects($this->once())
             ->method('getBranchClient')
             ->willReturn($branchClient)
         ;

@@ -73,10 +73,10 @@ class AbstractFileStrategyTest extends TestCase
 
         $getMetadataStorageMethod = $reflection->getMethod('getMetadataStorage');
         $getMetadataStorageMethod->setAccessible(true);
-        $this->assertSame($metadataStorage, $getMetadataStorageMethod->invoke($strategy));
+        self::assertSame($metadataStorage, $getMetadataStorageMethod->invoke($strategy));
 
         $getDestinationMethod = $reflection->getMethod('getDestination');
         $getDestinationMethod->setAccessible(true);
-        $this->assertSame($destination, $getDestinationMethod->invoke($strategy));
+        self::assertSame($destination, $getDestinationMethod->invoke($strategy));
     }
 }

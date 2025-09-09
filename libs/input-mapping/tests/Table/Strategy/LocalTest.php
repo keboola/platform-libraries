@@ -95,6 +95,6 @@ class LocalTest extends TestCase
 
         $result = $method->invoke($local, $tableOptions);
 
-        $this->assertSame($expected, $result);
+        self::assertSame($expected, $result);
     }
 }

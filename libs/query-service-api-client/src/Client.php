@@ -28,6 +28,7 @@ class Client
     private string $tokenString;
     private int $backoffMaxTries;
     private string $userAgent;
+    private ?string $runId;
     private GuzzleClient $client;
 
     /**
@@ -36,6 +37,7 @@ class Client
      *     token: string,
      *     backoffMaxTries?: int,
      *     userAgent?: string,
+     *     runId?: string,
      *     handler?: HandlerStack,
      * } $config
      */
@@ -52,6 +54,7 @@ class Client
         $this->tokenString = $config['token'];
         $this->backoffMaxTries = $config['backoffMaxTries'] ?? self::DEFAULT_BACKOFF_RETRIES;
         $this->userAgent = self::DEFAULT_USER_AGENT;
+        $this->runId = isset($config['runId']) ? (string) $config['runId'] : null;
 
         if (isset($config['userAgent'])) {
             $this->userAgent .= ' ' . $config['userAgent'];
@@ -129,6 +132,11 @@ class Client
         // Skip authentication for health-check endpoints
         if (str_contains($path, '/health-check')) {
             return $baseRequest;
+        }
+
+        // Add runId header if configured
+        if ($this->runId !== null) {
+            $baseRequest = $baseRequest->withHeader('X-KBC-RunId', $this->runId);
         }
 
         // Add Storage API token for all other endpoints that require authentication

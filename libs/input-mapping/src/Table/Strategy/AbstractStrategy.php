@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\InputTableOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Result\TableInfo;
@@ -15,16 +14,6 @@ use Psr\Log\LoggerInterface;
 abstract class AbstractStrategy implements StrategyInterface
 {
     protected readonly LoggerInterface $logger; // @phpstan-ignore-line initialized in child classes
-
-    protected function ensurePathDelimiter(string $path): string
-    {
-        return $this->ensureNoPathDelimiter($path) . '/';
-    }
-
-    protected function ensureNoPathDelimiter(string $path): string
-    {
-        return rtrim($path, '\\/');
-    }
 
     /**
      * @param RewrittenInputTableOptions[] $tables
@@ -51,14 +40,5 @@ abstract class AbstractStrategy implements StrategyInterface
         $this->logger->info('All tables were fetched.');
 
         return $result;
-    }
-
-    protected function getDestinationFilePath(string $destination, InputTableOptions $table): string
-    {
-        if (!$table->getDestination()) {
-            return $destination . '/' . $table->getSource();
-        } else {
-            return $destination . '/' . $table->getDestination();
-        }
     }
 }

@@ -98,4 +98,19 @@ class BigQueryTest extends AbstractTestCase
             $this->clientWrapper->getBasicClient()->getTable($aliasId),
         ));
     }
+
+    public function testGetWorkspaceType(): void
+    {
+        $strategy = new BigQuery(
+            $this->initClient(),
+            new NullLogger(),
+            $this->createMock(WorkspaceStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
+            new InputTableStateList([]),
+            'test',
+            FileFormat::Json,
+        );
+
+        self::assertEquals('bigquery', $strategy->getWorkspaceType());
+    }
 }

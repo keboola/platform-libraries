@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Tests;
 
+use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
@@ -144,6 +145,107 @@ class ClientTest extends TestCase
 
         self::assertEquals('query', $result['service']);
         self::assertEquals('ok', $result['status']);
+    }
+
+    /**
+     * @param array{
+     *     url: string,
+     *     token: string,
+     *     backoffMaxTries?: int,
+     *     userAgent?: string,
+     *     runId?: string,
+     *     handler?: HandlerStack,
+     * } $clientConfig
+     * @param array<string, array<string>> $expectedHeaders
+     * @dataProvider requestHeadersDataProvider
+     */
+    public function testRequestHeaders(
+        array $clientConfig,
+        string $method,
+        ?string $jobId,
+        array $expectedHeaders,
+    ): void {
+        $requestHeaders = [];
+        $mockHandler = new MockHandler([new Response(200, [], '{}')]);
+
+        // Create handler stack without custom middleware first
+        $handlerStack = HandlerStack::create($mockHandler);
+
+        $config = array_merge([
+            'url' => 'https://query.test.keboola.com',
+            'handler' => $handlerStack,
+        ], $clientConfig);
+
+        $client = new Client($config);
+
+        // Add middleware after client is created to capture headers after Client's middleware runs
+        $handlerStack->push(function (callable $handler) use (&$requestHeaders) {
+            return function ($request, array $options) use ($handler, &$requestHeaders) {
+                $requestHeaders = $request->getHeaders();
+                return $handler($request, $options);
+            };
+        });
+
+        match ($method) {
+            'healthCheck' => $client->healthCheck(),
+            'getJobStatus' => $client->getJobStatus($jobId),
+            default => throw new InvalidArgumentException("Unknown method: $method")
+        };
+
+        self::assertSame(
+            $expectedHeaders,
+            $requestHeaders,
+        );
+    }
+
+    public static function requestHeadersDataProvider(): Generator
+    {
+        yield 'health-check includes base headers only' => [
+            'clientConfig' => ['token' => 'test-token'],
+            'method' => 'healthCheck',
+            'jobId' => null,
+            'expectedHeaders' => [
+                'Host' => ['query.test.keboola.com'],
+                'User-Agent' => ['Keboola Query API PHP Client'],
+                'Content-Type' => ['application/json'],
+            ],
+        ];
+
+        yield 'authenticated endpoint includes auth token' => [
+            'clientConfig' => ['token' => 'auth-token-123'],
+            'method' => 'getJobStatus',
+            'jobId' => 'job-123',
+            'expectedHeaders' => [
+                'Host' => ['query.test.keboola.com'],
+                'User-Agent' => ['Keboola Query API PHP Client'],
+                'Content-Type' => ['application/json'],
+                'X-StorageAPI-Token' => ['auth-token-123'],
+            ],
+        ];
+
+        yield 'runId header included when configured' => [
+            'clientConfig' => ['token' => 'test-token', 'runId' => 'run-456'],
+            'method' => 'getJobStatus',
+            'jobId' => 'job-123',
+            'expectedHeaders' => [
+                'Host' => ['query.test.keboola.com'],
+                'User-Agent' => ['Keboola Query API PHP Client'],
+                'Content-Type' => ['application/json'],
+                'X-KBC-RunId' => ['run-456'],
+                'X-StorageAPI-Token' => ['test-token'],
+            ],
+        ];
+
+        yield 'custom userAgent properly appended' => [
+            'clientConfig' => ['token' => 'test-token', 'userAgent' => 'MyApp/2.0'],
+            'method' => 'healthCheck',
+            'jobId' => null,
+            'expectedHeaders' => [
+                'Host' => ['query.test.keboola.com'],
+                'User-Agent' => ['Keboola Query API PHP Client MyApp/2.0'],
+                'Content-Type' => ['application/json'],
+            ],
+        ];
     }
 
     private function createClientWithMockHandler(MockHandler $mockHandler): Client

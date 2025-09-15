@@ -74,6 +74,23 @@ services:
     depends_on:
       - mockserver
 
+  dev-doctrine-retry-bundle:
+    <<: *dev84
+    image: keboola/doctrine-retry-bundle
+    working_dir: /code/libs/doctrine-retry-bundle
+    environment:
+      TEST_DATABASE_HOST: mysql
+      TEST_DATABASE_USER: root
+      TEST_DATABASE_PASSWORD: root
+      TEST_DATABASE_PORT: 3306
+      TEST_DATABASE_DB: testdatabase
+      TEST_PROXY_HOST: toxiproxy
+    depends_on:
+      toxiproxy:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+
   dev-input-mapping:
     <<: *dev82
     image: keboola/input-mapping
@@ -92,6 +109,10 @@ services:
     <<: *dev82
     image: keboola/key-generator
     working_dir: /code/libs/key-generator
+
+  dev-logging-bundle:
+    <<: *dev
+    working_dir: /code/libs/logging-bundle
 
   dev-messenger-bundle:
     <<: *dev82
@@ -115,6 +136,20 @@ services:
     image: keboola/permission-checker
     working_dir: /code/libs/permission-checker
 
+  dev-php-test-utils:
+    <<: *dev
+    image: keboola/php-test-utils
+    working_dir: /code/libs/php-test-utils
+
+  dev-query-service-api-client:
+    <<: *dev84
+    image: keboola/query-service-api-client
+    working_dir: /code/libs/query-service-api-client
+    environment:
+      - QUERY_API_URL
+      - STORAGE_API_TOKEN
+      - STORAGE_API_URL
+
   dev-sandboxes-service-api-client:
     <<: *dev82
     image: keboola/sandboxes-service-api-client
@@ -132,6 +167,11 @@ services:
     image: keboola/settle
     working_dir: /code/libs/settle
 
+  dev-slicer:
+    <<: *dev
+    image: keboola/slicer
+    working_dir: /code/libs/slicer
+
   dev-staging-provider:
     <<: *dev82
     image: keboola/staging-provider
@@ -144,24 +184,6 @@ services:
     <<: *dev82
     image: keboola/vault-api-client
     working_dir: /code/libs/vault-api-client
-
-  dev-slicer:
-    <<: *dev
-    image: keboola/slicer
-    working_dir: /code/libs/slicer
-
-  dev-logging-bundle:
-    <<: *dev
-    working_dir: /code/libs/logging-bundle
-
-  dev-query-service-api-client:
-    <<: *dev84
-    image: keboola/query-service-api-client
-    working_dir: /code/libs/query-service-api-client
-    environment:
-      - QUERY_API_URL
-      - STORAGE_API_TOKEN
-      - STORAGE_API_URL
 
   mysql:
     platform: linux/x86_64
@@ -183,23 +205,6 @@ services:
     image: ghcr.io/shopify/toxiproxy
     depends_on:
       - mysql
-
-  dev-doctrine-retry-bundle:
-    <<: *dev84
-    image: keboola/doctrine-retry-bundle
-    working_dir: /code/libs/doctrine-retry-bundle
-    environment:
-      TEST_DATABASE_HOST: mysql
-      TEST_DATABASE_USER: root
-      TEST_DATABASE_PASSWORD: root
-      TEST_DATABASE_PORT: 3306
-      TEST_DATABASE_DB: testdatabase
-      TEST_PROXY_HOST: toxiproxy
-    depends_on:
-      toxiproxy:
-        condition: service_started
-      mysql:
-        condition: service_healthy
 
 volumes:
   mysql_data:

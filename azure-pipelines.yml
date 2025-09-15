@@ -34,10 +34,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/k8s-client
-    - repository: php-key-generator
-      type: github
-      endpoint: keboola
-      name: keboola/php-key-generator
     - repository: logging-bundle
       type: github
       endpoint: keboola
@@ -54,6 +50,14 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: php-key-generator
+      type: github
+      endpoint: keboola
+      name: keboola/php-key-generator
+    - repository: php-test-utils
+      type: github
+      endpoint: keboola
+      name: keboola/php-test-utils
     - repository: query-service-api-php-client
       type: github
       endpoint: keboola
@@ -108,6 +112,7 @@ stages:
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
+                phpTestUtils:libs/php-test-utils \
                 queryServiceApiClient:libs/query-service-api-client \
                 sandboxesServiceApiClient:libs/sandboxes-service-api-client \
                 serviceClient:libs/service-client \
@@ -219,6 +224,14 @@ stages:
     jobs:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
+  - stage: tests_phpTestUtils
+    displayName: Tests - PHP Test Utils
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_phpTestUtils'])
+    jobs:
+      - template: libs/php-test-utils/azure-pipelines.tests.yml
+
   - stage: tests_queryServiceApiClient
     displayName: Tests - Query Service API Client
     lockBehavior: sequential
@@ -290,6 +303,7 @@ stages:
       - tests_messengerBundle
       - tests_outputMapping
       - tests_permissionChecker
+      - tests_phpTestUtils
       - tests_queryServiceApiClient
       - tests_sandboxesServiceApiClient
       - tests_serviceClient
@@ -310,6 +324,7 @@ stages:
         in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),        
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_phpTestUtils.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_serviceClient.result, 'Succeeded', 'Skipped'),
@@ -378,14 +393,6 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_keyGenerator'])
-          sourceRepo: platform-libraries
-          targetRepo: php-key-generator
-          libraryPath: libs/key-generator
-          tagPrefix: key-generator/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_loggingBundle'])
           sourceRepo: platform-libraries
           targetRepo: logging-bundle
@@ -415,6 +422,22 @@ stages:
           targetRepo: permission-checker
           libraryPath: libs/permission-checker
           tagPrefix: permission-checker/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_keyGenerator'])
+          sourceRepo: platform-libraries
+          targetRepo: php-key-generator
+          libraryPath: libs/key-generator
+          tagPrefix: key-generator/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_phpTestUtils'])
+          sourceRepo: platform-libraries
+          targetRepo: php-test-utils
+          libraryPath: libs/php-test-utils
+          tagPrefix: php-test-utils/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

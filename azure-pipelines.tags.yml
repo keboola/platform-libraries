@@ -178,6 +178,14 @@ jobs:
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-test-utils/')
+      sourceRepo: platform-libraries
+      targetRepo: php-test-utils
+      libraryPath: libs/php-test-utils
+      tagPrefix: php-test-utils/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/query-service-api-client/')
       sourceRepo: platform-libraries
       targetRepo: query-service-api-php-client

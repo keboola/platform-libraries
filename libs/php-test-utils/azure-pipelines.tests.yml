@@ -1,0 +1,10 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: php_test_utils_tests
+      displayName: PHP Test Utils Tests
+      serviceName: dev-php-test-utils
+      testCommand: bash -c 'composer install && composer ci'
+
+

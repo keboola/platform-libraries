@@ -54,7 +54,7 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
-    - repositorie: php-test-utils
+    - repository: php-test-utils
       type: github
       endpoint: keboola
       name: keboola/php-test-utils

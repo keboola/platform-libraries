@@ -137,7 +137,7 @@ services:
     working_dir: /code/libs/permission-checker
 
   dev-php-test-utils:
-    <<: &dev84
+    <<: *dev84
     image: keboola/php-test-utils
     working_dir: /code/libs/php-test-utils
 

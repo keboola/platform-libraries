@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repositorie: php-test-utils
+      type: github
+      endpoint: keboola
+      name: keboola/php-test-utils
     - repository: query-service-api-php-client
       type: github
       endpoint: keboola

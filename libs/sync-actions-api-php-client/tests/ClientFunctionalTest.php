@@ -75,8 +75,8 @@ class ClientFunctionalTest extends TestCase
     private function getClient(): Client
     {
         return new Client(
-            (string) getenv('KBC_SYNC_ACTIONS_URL'),
-            (string) getenv('KBC_TOKEN'),
+            (string) 'https://sync-actions.' . getenv('HOSTNAME_SUFFIX'),
+            (string) getenv('STORAGE_API_TOKEN'),
         );
     }
 }

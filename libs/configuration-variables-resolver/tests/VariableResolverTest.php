@@ -399,7 +399,7 @@ class VariableResolverTest extends TestCase
         $variableResolver = $this->getVariablesResolver();
         $this->expectException(UserException::class);
         $this->expectExceptionMessage(
-            'Variable configuration cannot be read: Configuration non-existent not found',
+            'Variable configuration cannot be read: Configuration "non-existent" not found',
         );
         $variableResolver->resolveVariables($configuration, self::BRANCH_ID, 'non-existent', null);
     }

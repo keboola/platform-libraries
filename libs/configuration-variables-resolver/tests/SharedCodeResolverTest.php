@@ -249,7 +249,7 @@ class SharedCodeResolverTest extends TestCase
         $sharedCodeResolver = $this->getSharedCodeResolver();
         self::expectException(UserException::class);
         self::expectExceptionMessage(
-            'Shared code configuration cannot be read: Configuration non-existent not found',
+            'Shared code configuration cannot be read: Configuration "non-existent" not found',
         );
         $sharedCodeResolver->resolveSharedCode($configuration);
     }

@@ -10,7 +10,7 @@ if (file_exists(dirname(__DIR__).'/.env.local')) {
     (new Dotenv())->usePutenv(true)->bootEnv(dirname(__DIR__).'/.env.local', 'dev', []);
 }
 
-$requiredEnvs = ['KBC_SYNC_ACTIONS_URL', 'KBC_TOKEN'];
+$requiredEnvs = ['STORAGE_API_TOKEN', 'HOSTNAME_SUFFIX'];
 
 foreach ($requiredEnvs as $env) {
     if (empty(getenv($env))) {

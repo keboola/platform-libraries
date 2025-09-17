@@ -37,8 +37,8 @@ docker-compose run --rm dev composer install --no-scripts
 Create `.env.local` file with following contents:
 
 ```shell
-KBC_SYNC_ACTIONS_URL=https://sync-actions.keboola.com/
-KBC_TOKEN=xxx-xxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+HOSTNAME_SUFFIX=keboola.com
+STORAGE_API_TOKEN=xxx-xxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 Run the test suite using this command:

@@ -1,0 +1,6 @@
+vendor/
+/.env.*.local
+/.env.local
+/build/logs
+/infection.log
+/.phpunit.result.cache

@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: php-test-utils
+      type: github
+      endpoint: keboola
+      name: keboola/php-test-utils
     - repository: query-service-api-php-client
       type: github
       endpoint: keboola
@@ -175,6 +179,14 @@ jobs:
       targetRepo: permission-checker
       libraryPath: libs/permission-checker
       tagPrefix: permission-checker/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-test-utils/')
+      sourceRepo: platform-libraries
+      targetRepo: php-test-utils
+      libraryPath: libs/php-test-utils
+      tagPrefix: php-test-utils/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

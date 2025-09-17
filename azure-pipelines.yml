@@ -85,7 +85,7 @@ resources:
     - repository: sync-actions-api-php-client
       type: github
       endpoint: keboola
-      name: keboola/sync-actions-api-php-client      
+      name: keboola/sync-actions-api-php-client
     - repository: vault-api-php-client
       type: github
       endpoint: keboola
@@ -98,7 +98,7 @@ variables:
 stages:
   - stage: build
     displayName: Build
-    dependsOn: []
+    dependsOn: [ ]
     jobs:
       - job: checkChanges
         displayName: 'Check changes'
@@ -346,7 +346,7 @@ stages:
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_syncActionsApiPhpClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')        
+        in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')
       )
     jobs:
       - job:

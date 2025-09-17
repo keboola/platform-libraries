@@ -5,7 +5,4 @@
         <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint"/>
         <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint"/>
     </rule>
-    <exclude-pattern>*/src/Kernel.php</exclude-pattern>
 </ruleset>
-
-

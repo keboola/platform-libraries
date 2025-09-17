@@ -141,6 +141,11 @@ services:
     image: keboola/php-test-utils
     working_dir: /code/libs/php-test-utils
 
+  dev-sync-actions-api-php-client:
+    <<: *dev82
+    image: keboola/sync-actions-api-php-client
+    working_dir: /code/libs/sync-actions-api-php-client
+
   dev-query-service-api-client:
     <<: *dev84
     image: keboola/query-service-api-client

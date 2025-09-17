@@ -1,0 +1,72 @@
+{
+    "name": "keboola/sync-actions-api-php-client",
+    "license": "MIT",
+    "type": "library",
+    "description": "Sync Actions API PHP Client skeleton.",
+    "keywords": [
+        "keboola",
+        "sync-actions",
+        "api",
+        "client"
+    ],
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\SyncActionsApiClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\SyncActionsApiClient\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-json": "*",
+        "psr/log": "^1.1|^2.0|^3.0"
+    },
+    "require-dev": {
+        "infection/infection": "^0.26",
+        "keboola/coding-standard": ">=14.0.0",
+        "phpstan/phpstan": "^1.9",
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "symfony/dotenv": "^6.2|^7.0"
+    },
+    "scripts": {
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml"
+        ],
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "infection": "infection --threads=2 --min-covered-msi=90 --coverage=build/logs",
+        "build": [
+            "@phpcs",
+            "@phpstan",
+            "@tests",
+            "@infection"
+        ],
+        "ci": [
+            "@composer validate --no-check-all --strict",
+            "@build"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "lock": false,
+        "process-timeout": 3600,
+        "allow-plugins": {
+            "infection/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
+
+

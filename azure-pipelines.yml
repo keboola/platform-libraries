@@ -82,6 +82,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
+    - repository: sync-actions-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/sync-actions-api-php-client      
     - repository: vault-api-php-client
       type: github
       endpoint: keboola
@@ -119,6 +123,7 @@ stages:
                 settle:libs/settle \
                 slicer:libs/slicer \
                 stagingProvider:libs/staging-provider \
+                syncActionsApiPhpClient:libs/sync-actions-api-php-client \
                 vaultApiClient:libs/vault-api-client
             displayName: 'Find changes'
             name: findChanges
@@ -280,6 +285,14 @@ stages:
     jobs:
       - template: libs/staging-provider/azure-pipelines.tests.yml
 
+  - stage: tests_syncActionsApiPhpClient
+    displayName: Tests - Sync Actions API PHP Client
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_syncActionsApiPhpClient'])
+    jobs:
+      - template: libs/sync-actions-api-php-client/azure-pipelines.tests.yml
+
   - stage: tests_vaultApiClient
     displayName: Tests - Vault API Client
     lockBehavior: sequential
@@ -310,6 +323,7 @@ stages:
       - tests_settle
       - tests_slicer
       - tests_stagingProvider
+      - tests_syncActionsApiPhpClient
       - tests_vaultApiClient
     condition: |
       and(
@@ -331,6 +345,7 @@ stages:
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_stagingProvider.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_syncActionsApiPhpClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_vaultApiClient.result, 'Succeeded', 'Skipped')        
       )
     jobs:
@@ -486,6 +501,14 @@ stages:
           targetRepo: staging-provider
           libraryPath: libs/staging-provider
           tagPrefix: staging-provider/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_syncActionsApiPhpClient'])
+          sourceRepo: platform-libraries
+          targetRepo: sync-actions-api-php-client
+          libraryPath: libs/sync-actions-api-php-client
+          tagPrefix: sync-actions-api-php-client/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

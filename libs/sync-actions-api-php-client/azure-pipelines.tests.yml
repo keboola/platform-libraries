@@ -1,0 +1,10 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: sync_actions_api_php_client_tests
+      displayName: Sync Actions API PHP Client Tests
+      serviceName: dev-sync-actions-api-php-client
+      testCommand: bash -c 'composer install && composer ci'
+
+

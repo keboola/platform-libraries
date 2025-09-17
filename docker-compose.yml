@@ -147,7 +147,7 @@ services:
     working_dir: /code/libs/sync-actions-api-php-client
     environment:
       - STORAGE_API_TOKEN
-      - STORAGE_API_URL
+      - HOSTNAME_SUFFIX
 
   dev-query-service-api-client:
     <<: *dev84

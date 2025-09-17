@@ -1,0 +1,13 @@
+
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      jobName: sync_actions_api_php_client_tests
+      displayName: Sync Actions API PHP Client Tests
+      serviceName: dev-sync-actions-api-php-client
+      testCommand: bash -c 'composer install && composer ci'
+      variables:
+        HOSTNAME_SUFFIX: $(HOSTNAME_SUFFIX_GCP)
+      secrets:
+        STORAGE_API_TOKEN: $(SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP)
+

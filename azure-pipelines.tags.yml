@@ -34,10 +34,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/k8s-client
-    - repository: php-key-generator
-      type: github
-      endpoint: keboola
-      name: keboola/php-key-generator
     - repository: logging-bundle
       type: github
       endpoint: keboola
@@ -54,6 +50,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/permission-checker
+    - repository: php-key-generator
+      type: github
+      endpoint: keboola
+      name: keboola/php-key-generator
     - repository: php-test-utils
       type: github
       endpoint: keboola
@@ -82,6 +82,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/staging-provider
+    - repository: sync-actions-api-php-client
+      type: github
+      endpoint: keboola
+      name: keboola/sync-actions-api-php-client
     - repository: vault-api-php-client
       type: github
       endpoint: keboola
@@ -235,6 +239,14 @@ jobs:
       targetRepo: staging-provider
       libraryPath: libs/staging-provider
       tagPrefix: staging-provider/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/sync-actions-api-php-client/')
+      sourceRepo: platform-libraries
+      targetRepo: sync-actions-api-php-client
+      libraryPath: libs/sync-actions-api-php-client
+      tagPrefix: sync-actions-api-php-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

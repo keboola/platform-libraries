@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\SyncActionsClient;
 
-class ActionData
+readonly class ActionData
 {
     private string $componentId;
     private string $action;

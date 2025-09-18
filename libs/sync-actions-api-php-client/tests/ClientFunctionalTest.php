@@ -11,62 +11,62 @@ use PHPUnit\Framework\TestCase;
 
 class ClientFunctionalTest extends TestCase
 {
-    private const COMPONENT_ID = 'keboola.ex-db-snowflake';
-    private const COMPONENT_ID_2 = 'keboola.ex-onedrive';
+    private const string COMPONENT_ID = 'keboola.runner-config-test';
 
     public function testGetActions(): void
     {
         $client = $this->getClient();
 
         $actions = $client->getActions(self::COMPONENT_ID);
-        self::assertEquals([
-            'actions' => [
-                'testConnection',
-                'getTables',
+        self::assertSame(
+            [
+                'dumpConfig',
+                'dumpEnv',
+                'timeout',
+                'emptyJsonArray',
+                'emptyJsonObject',
+                'invalidJson',
+                'noResponse',
+                'userError',
+                'applicationError',
+                'printLogs',
             ],
-        ], $actions);
-
-        $actions = $client->getActions(self::COMPONENT_ID_2);
-        self::assertEquals([
-            'actions' => [
-                'search',
-                'getWorksheets',
-            ],
-        ], $actions);
+            $actions->actions,
+        );
     }
 
     public function testCallAction(): void
     {
         $client = $this->getClient();
         $response = $client->callAction(new ActionData(
-            'keboola.ex-currency',
-            'list',
+            'keboola.runner-config-test',
+            'dumpConfig',
             [
                 'parameters' => [
-                    'dataset' => 'in.c-ex-currency-test',
+                    'arbitrary' => 'bar',
                 ],
             ],
         ));
 
-        self::assertArrayHasKey('datasets', $response);
+        self::assertObjectHasProperty('parameters', $response->data);
     }
 
     public function testInvalidComponent(): void
     {
         $client = $this->getClient();
 
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('Component \"non-existent-component\" not found');
-        $client->callAction(new ActionData('non-existent-component', 'unexistAction', []));
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('Component "non-existent-component" not found');
+        $client->callAction(new ActionData('non-existent-component', 'non-existent-action', []));
     }
 
     public function testInvalidAction(): void
     {
         $client = $this->getClient();
 
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage(sprintf(
-            'Action \"non-existent-action\" not defined for component \"%s\".',
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Action "non-existent-action" not defined for component "%s".',
             self::COMPONENT_ID,
         ));
         $client->callAction(new ActionData(self::COMPONENT_ID, 'non-existent-action', []));
@@ -75,7 +75,7 @@ class ClientFunctionalTest extends TestCase
     private function getClient(): Client
     {
         return new Client(
-            (string) 'https://sync-actions.' . getenv('HOSTNAME_SUFFIX'),
+            sprintf('https://sync-actions.%s', getenv('HOSTNAME_SUFFIX')),
             (string) getenv('STORAGE_API_TOKEN'),
         );
     }

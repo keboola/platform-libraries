@@ -10,33 +10,21 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\SyncActionsClient\ActionData;
+use Keboola\SyncActionsClient\ApiClientConfiguration;
 use Keboola\SyncActionsClient\Client;
 use Keboola\SyncActionsClient\Exception\ClientException;
-use Keboola\SyncActionsClient\Exception\ResponseException;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
 
 class ClientTest extends TestCase
 {
-    private function getClient(array $options): Client
+    private function getClient(ApiClientConfiguration $options): Client
     {
         return new Client(
             'http://example.com/',
             'testToken',
             $options,
-        );
-    }
-
-    public function testCreateClientInvalidBackoff(): void
-    {
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(
-            'Invalid parameters when creating client: Value "abc" is invalid: This value should be a valid number',
-        );
-        new Client(
-            'http://example.com/',
-            'testToken',
-            ['backoffMaxTries' => 'abc'],
         );
     }
 
@@ -49,7 +37,8 @@ class ClientTest extends TestCase
         new Client(
             'http://example.com/',
             'testToken',
-            ['backoffMaxTries' => -1],
+            // @phpstan-ignore-next-line
+            new ApiClientConfiguration(backoffMaxTries: -1),
         );
     }
 
@@ -62,7 +51,7 @@ class ClientTest extends TestCase
         new Client(
             'http://example.com/',
             'testToken',
-            ['backoffMaxTries' => 101],
+            new ApiClientConfiguration(backoffMaxTries: 101),
         );
     }
 
@@ -110,11 +99,13 @@ class ClientTest extends TestCase
         $history = Middleware::history($requestHistory);
         $stack = HandlerStack::create($mock);
         $stack->push($history);
-        $client = $this->getClient(['handler' => $stack]);
-        $job = $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
-        self::assertEquals('bar', $job['foo']);
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $stack(...)));
+
+        $job = $client->callAction(new ActionData('keboola.runner-config-test', '123'));
+
+        self::assertEquals('bar', $job->data->foo);
+        /** @var array<array{request: Request}> $requestHistory */
         self::assertCount(1, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('http://example.com/actions', $request->getUri()->__toString());
         self::assertEquals('POST', $request->getMethod());
@@ -135,13 +126,15 @@ class ClientTest extends TestCase
         // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $client = $this->getClient(['handler' => $stack]);
+        $requestHandler = HandlerStack::create($mock);
+        $requestHandler->push($history);
+
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $requestHandler(...)));
+
+        $res = fopen(sys_get_temp_dir() . '/touch', 'w');
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('Invalid job data: Type is not supported');
-        $res = fopen(sys_get_temp_dir() . '/touch', 'w');
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123', ['foo' => $res]));
+        $client->callAction(new ActionData('keboola.runner-config-test', '123', ['foo' => $res]));
     }
 
     public function testClientExceptionIsThrownWhenGuzzleRequestErrorOccurs(): void
@@ -154,11 +147,14 @@ class ClientTest extends TestCase
             ),
         ]);
 
-        $client = $this->getClient(['handler' => $requestHandler, 'backoffMaxTries' => 0]);
+        $client = $this->getClient(new ApiClientConfiguration(
+            backoffMaxTries: 0,
+            requestHandler: $requestHandler(...),
+        ));
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('Error on server');
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
     }
 
     public function testClientExceptionIsThrownForResponseWithInvalidJson(): void
@@ -171,11 +167,11 @@ class ClientTest extends TestCase
             ),
         ]);
 
-        $client = $this->getClient(['handler' => $requestHandler]);
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $requestHandler(...)));
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Unable to parse response body into JSON: ');
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+        $this->expectExceptionMessage('Response is not a valid JSON: Syntax error');
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
     }
 
     public function testRequestExceptionIsThrownForValidErrorResponse(): void
@@ -188,11 +184,11 @@ class ClientTest extends TestCase
             ),
         ]);
 
-        $client = $this->getClient(['handler' => $requestHandler]);
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $requestHandler(...)));
 
-        $this->expectException(ResponseException::class);
-        $this->expectExceptionMessage('400 Bad Request');
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('Response is not a valid error response: []');
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
     }
 
     public function testRequestExceptionIsThrownForErrorResponseWithErrorCode(): void
@@ -209,13 +205,14 @@ class ClientTest extends TestCase
             ),
         ]);
 
-        $client = $this->getClient(['handler' => $requestHandler]);
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $requestHandler(...)));
 
-        try {
-            $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
-        } catch (ResponseException $e) {
-            self::assertTrue($e->isErrorCode('some.error'));
-        }
+        $this->expectExceptionMessageMatches(
+            '#Client error: `POST http:\/\/example\.com\/actions` resulted in a `400 Bad Request`'
+            . ' response:.*{"context":{"errorCode":"some\.error"}}#s',
+        );
+        $this->expectException(ClientException::class);
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
     }
 
     public function testLogger(): void
@@ -232,16 +229,24 @@ class ClientTest extends TestCase
         // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $logger = new TestLogger();
-        $client = $this->getClient(['handler' => $stack, 'logger' => $logger, 'userAgent' => 'test agent']);
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
-        /** @var Request $request */
+        $requestHandler = HandlerStack::create($mock);
+        $requestHandler->push($history);
+        $logHandler = new TestHandler();
+        $logger = new Logger(name: 'test', handlers: [$logHandler]);
+
+        $client = $this->getClient(new ApiClientConfiguration(
+            userAgent: 'test agent',
+            requestHandler: $requestHandler(...),
+            logger: $logger,
+        ));
+
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
+
+        /** @var array<array{request: Request}> $requestHistory */
         $request = $requestHistory[0]['request'];
-        self::assertEquals('test agent', $request->getHeader('User-Agent')[0]);
-        self::assertTrue($logger->hasInfoThatContains('"POST  /1.1" 200 '));
-        self::assertTrue($logger->hasInfoThatContains('test agent'));
+        self::assertEquals('Sync Actions PHP Client - test agent', $request->getHeader('User-Agent')[0]);
+        self::assertTrue($logHandler->hasInfoThatContains('"POST  /1.1" 200 '));
+        self::assertTrue($logHandler->hasInfoThatContains('test agent'));
     }
 
     public function testRetrySuccess(): void
@@ -268,13 +273,15 @@ class ClientTest extends TestCase
         // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $client = $this->getClient(['handler' => $stack]);
-        $job = $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
-        self::assertEquals('bar', $job['foo']);
+        $requestHandler = HandlerStack::create($mock);
+        $requestHandler->push($history);
+        $client = $this->getClient(new ApiClientConfiguration(requestHandler: $requestHandler(...)));
+
+        $job = $client->callAction(new ActionData('keboola.runner-config-test', '123'));
+
+        self::assertEquals('bar', $job->data->foo);
+        /** @var array<array{request: Request}> $requestHistory */
         self::assertCount(3, $requestHistory);
-        /** @var Request $request */
         $request = $requestHistory[0]['request'];
         self::assertEquals('http://example.com/actions', $request->getUri()->__toString());
         $request = $requestHistory[1]['request'];
@@ -294,19 +301,22 @@ class ClientTest extends TestCase
             );
         }
         $mock = new MockHandler($responses);
-        // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $client = $this->getClient(['handler' => $stack, 'backoffMaxTries' => 1]);
+        $requestStack = HandlerStack::create($mock);
+        $requestStack->push($history);
+        $client = $this->getClient(new ApiClientConfiguration(
+            backoffMaxTries: 1,
+            requestHandler: $requestStack(...),
+        ));
+
         try {
-            $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+            $client->callAction(new ActionData('keboola.runner-config-test', '123'));
             self::fail('Must throw exception');
         } catch (ClientException $e) {
             self::assertStringContainsString('500 Internal Server Error', $e->getMessage());
         }
-        self::assertCount(2, $requestHistory);
+        self::assertCount(2, (array) $requestHistory);
     }
 
     public function testRetryFailureReducedBackoff(): void
@@ -323,16 +333,20 @@ class ClientTest extends TestCase
         // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $client = $this->getClient(['handler' => $stack, 'backoffMaxTries' => 3]);
+        $requestStack = HandlerStack::create($mock);
+        $requestStack->push($history);
+        $client = $this->getClient(new ApiClientConfiguration(
+            backoffMaxTries: 3,
+            requestHandler: $requestStack(...),
+        ));
+
         try {
-            $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+            $client->callAction(new ActionData('keboola.runner-config-test', '123'));
             self::fail('Must throw exception');
         } catch (ClientException $e) {
             self::assertStringContainsString('500 Internal Server Error', $e->getMessage());
         }
-        self::assertCount(4, $requestHistory);
+        self::assertCount(4, (array) $requestHistory);
     }
 
     public function testNoRetry(): void
@@ -347,12 +361,15 @@ class ClientTest extends TestCase
         // Add the history middleware to the handler stack.
         $requestHistory = [];
         $history = Middleware::history($requestHistory);
-        $stack = HandlerStack::create($mock);
-        $stack->push($history);
-        $client = $this->getClient(['handler' => $stack]);
+        $requestStack = HandlerStack::create($mock);
+        $requestStack->push($history);
+        $client = $this->getClient(new ApiClientConfiguration(
+            requestHandler: $requestStack(...),
+        ));
+
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('{"message": "Unauthorized"}');
-        $client->callAction(new ActionData('keboola.ex-db-storage', '123'));
+        $client->callAction(new ActionData('keboola.runner-config-test', '123'));
     }
 
     public function testGetActions(): void
@@ -361,13 +378,39 @@ class ClientTest extends TestCase
             new Response(
                 200,
                 ['Content-Type' => 'application/json'],
-                '["action1", "action2"]',
+                '{"actions": ["action1", "action2"]}',
             ),
         ]);
+        $requestStack = HandlerStack::create($mock);
 
-        $client = $this->getClient(['handler' => $mock]);
-        $actions = $client->getActions('keboola.ex-db-storage');
+        $client = $this->getClient(new ApiClientConfiguration(
+            backoffMaxTries: 3,
+            requestHandler: $requestStack(...),
+        ));
+        $actions = $client->getActions('keboola.runner-config-test');
 
-        self::assertEquals(['action1', 'action2'], $actions);
+        self::assertEquals(['action1', 'action2'], $actions->actions);
+    }
+
+
+    public function testGetActionsInvalidResponse(): void
+    {
+        $mock = new MockHandler([
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                '{"broken": ["action1", "action2"]}',
+            ),
+        ]);
+        $requestStack = HandlerStack::create($mock);
+
+        $client = $this->getClient(new ApiClientConfiguration(
+            backoffMaxTries: 3,
+            requestHandler: $requestStack(...),
+        ));
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('Failed to parse response');
+        $client->getActions('keboola.runner-config-test');
     }
 }

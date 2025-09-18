@@ -142,7 +142,7 @@ services:
     working_dir: /code/libs/php-test-utils
 
   dev-sync-actions-api-php-client:
-    <<: *dev82
+    <<: *dev84
     image: keboola/sync-actions-api-php-client
     working_dir: /code/libs/sync-actions-api-php-client
     environment:

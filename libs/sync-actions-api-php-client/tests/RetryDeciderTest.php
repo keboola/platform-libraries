@@ -18,8 +18,8 @@ use RuntimeException;
 
 class RetryDeciderTest extends TestCase
 {
-    private readonly LoggerInterface $logger;
-    private readonly TestHandler $logsHandler;
+    private LoggerInterface $logger;
+    private TestHandler $logsHandler;
 
     protected function setUp(): void
     {

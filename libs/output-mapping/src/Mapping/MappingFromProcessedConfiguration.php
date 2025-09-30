@@ -229,6 +229,10 @@ class MappingFromProcessedConfiguration
 
     public function getDeduplicationStrategy(): ?DeduplicationStrategy
     {
-        return $this->mapping['deduplication_strategy'] ?? null;
+        $value = $this->mapping['deduplication_strategy'] ?? null;
+
+        return $value !== null
+            ? DeduplicationStrategy::from($value)
+            : null;
     }
 }

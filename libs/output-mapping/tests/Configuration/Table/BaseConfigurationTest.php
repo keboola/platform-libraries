@@ -1099,7 +1099,7 @@ class BaseConfigurationTest extends TestCase
     /**
      * @dataProvider deduplicationStrategiesProvider
      */
-    public function testDeduplicationStrategySuccess(string $input, Table\DeduplicationStrategy $expected): void
+    public function testDeduplicationStrategySuccess(string $input, string $expected): void
     {
         $config = [
             'deduplication_strategy' => $input,
@@ -1116,8 +1116,8 @@ class BaseConfigurationTest extends TestCase
 
     public function deduplicationStrategiesProvider(): Generator
     {
-        yield ['insert', Table\DeduplicationStrategy::INSERT];
-        yield ['upsert', Table\DeduplicationStrategy::UPSERT];
+        yield ['insert', Table\DeduplicationStrategy::INSERT->value];
+        yield ['upsert', Table\DeduplicationStrategy::UPSERT->value];
     }
 
     public function testDeduplicationStrategyFail(): void

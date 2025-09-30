@@ -38,7 +38,6 @@ abstract class BaseConfiguration extends Configuration
                         DeduplicationStrategy::INSERT->value,
                         DeduplicationStrategy::UPSERT->value,
                     ])
-                    ->validate()->always(fn(string $value) => DeduplicationStrategy::from($value))->end()
                 ->end()
                 ->arrayNode('primary_key')
                     ->prototype('scalar')

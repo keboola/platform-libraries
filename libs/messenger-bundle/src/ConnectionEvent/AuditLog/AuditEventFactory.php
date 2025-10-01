@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\MessengerBundle\ConnectionEvent\AuditLog;
 
+use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Admin\AdminDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\GenericAuditLogEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\OrganizationDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\AuditLog\Organization\ProjectCreatedEvent;
@@ -28,6 +29,7 @@ class AuditEventFactory implements EventFactoryInterface
         ProjectFeatureRemovedEvent::NAME => ProjectFeatureRemovedEvent::class,
         ProjectPurgedEvent::NAME => ProjectPurgedEvent::class,
         ProjectUndeletedEvent::NAME => ProjectUndeletedEvent::class,
+        AdminDeletedEvent::NAME => AdminDeletedEvent::class,
     ];
 
     public function createEventFromArray(array $data): EventInterface

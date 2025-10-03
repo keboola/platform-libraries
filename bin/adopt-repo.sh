@@ -51,7 +51,7 @@ return b'refs/tags/${TAG_PREFIX}' + refname[len(b'refs/tags/'):]
 echo "=> Merging to monorepo"
 git remote add "${REPO_NAME}" "${REPO_PATH}"
 git fetch "${REPO_NAME}"
-git merge --allow-unrelated-histories -m "Merge ${REPO_NAME} to monorepo" "${REPO_NAME}/master"
+git merge --allow-unrelated-histories -m "Merge ${REPO_NAME} to monorepo" "${REPO_NAME}/main"
 
 echo "=> Clean-up"
 rm -rf "${REPO_PATH}"

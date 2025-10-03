@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/php-key-generator
+    - repository: php-storage-names-sanitizer
+      type: github
+      endpoint: keboola
+      name: keboola/php-storage-names-sanitizer
     - repository: php-test-utils
       type: github
       endpoint: keboola
@@ -183,6 +187,14 @@ jobs:
       targetRepo: permission-checker
       libraryPath: libs/permission-checker
       tagPrefix: permission-checker/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-storage-names-sanitizer/')
+      sourceRepo: platform-libraries
+      targetRepo: php-storage-names-sanitizer
+      libraryPath: libs/php-storage-names-sanitizer
+      tagPrefix: php-storage-names-sanitizer/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

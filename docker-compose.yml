@@ -136,6 +136,11 @@ services:
     image: keboola/permission-checker
     working_dir: /code/libs/permission-checker
 
+  dev-php-storage-names-sanitizer:
+    <<: *dev82
+    image: keboola/php-storage-names-sanitizer
+    working_dir: /code/libs/php-storage-names-sanitizer
+
   dev-php-test-utils:
     <<: *dev84
     image: keboola/php-test-utils
@@ -167,11 +172,6 @@ services:
     working_dir: /code/libs/sandboxes-service-api-client
     depends_on:
       - mockserver
-
-  dev-sanitizer:
-    <<: *dev82
-    image: keboola/sanitizer
-    working_dir: /code/libs/php-storage-names-sanitizer
 
   dev-service-client:
     <<: *dev83

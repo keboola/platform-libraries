@@ -171,7 +171,7 @@ services:
   dev-sanitizer:
     <<: *dev82
     image: keboola/sanitizer
-    working_dir: /code/libs/sanitizer
+    working_dir: /code/libs/php-storage-names-sanitizer
 
   dev-service-client:
     <<: *dev83

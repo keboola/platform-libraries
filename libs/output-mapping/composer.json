@@ -32,7 +32,7 @@
         "keboola/key-generator": "*@dev",
         "keboola/php-datatypes": "^8.0",
         "keboola/php-file-storage-utils": "^0.2",
-        "keboola/sanitizer": "*@dev",
+        "keboola/php-storage-names-sanitizer": "*@dev",
         "keboola/slicer": "*@dev",
         "keboola/staging-provider": "*@dev",
         "keboola/storage-api-client": "^18.0",

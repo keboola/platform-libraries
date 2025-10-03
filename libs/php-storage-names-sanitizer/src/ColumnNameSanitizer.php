@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\Utils\Sanitizer;
+namespace Keboola\StorageNamesSanitizer;
 
 class ColumnNameSanitizer
 {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\Utils\Sanitizer\Test;
+namespace Keboola\StorageNamesSanitizer\Test;
 
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
+use Keboola\StorageNamesSanitizer\ColumnNameSanitizer;
 use PHPUnit\Framework\TestCase;
 
 class ColumnNameSanitizerTest extends TestCase

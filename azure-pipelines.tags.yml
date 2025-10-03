@@ -66,6 +66,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/sandboxes-service-api-php-client
+    - repository: sanitizer
+      type: github
+      endpoint: keboola
+      name: keboola/sanitizer
     - repository: service-client
       type: github
       endpoint: keboola
@@ -207,6 +211,14 @@ jobs:
       targetRepo: sandboxes-service-api-php-client
       libraryPath: libs/sandboxes-service-api-client
       tagPrefix: sandboxes-service-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/sanitizer/')
+      sourceRepo: platform-libraries
+      targetRepo: sanitizer
+      libraryPath: libs/sanitizer
+      tagPrefix: sanitizer/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

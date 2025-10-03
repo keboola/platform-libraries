@@ -168,6 +168,11 @@ services:
     depends_on:
       - mockserver
 
+  dev-sanitizer:
+    <<: *dev82
+    image: keboola/sanitizer
+    working_dir: /code/libs/sanitizer
+
   dev-service-client:
     <<: *dev83
     image: keboola/service-client

@@ -176,10 +176,10 @@ class WebalizerTest extends TestCase
                 ],
             ],
             [
-                'columns' => ['escrzyaieuu', 'webalize_test'],
+                'columns' => ['escrzyaieuu', 'webalize_test_D'],
                 'primary_key' => ['escrzyaieuu'],
                 'column_metadata' => [
-                    'webalize_test' => [
+                    'webalize_test_D' => [
                         'key' => 'key1',
                         'val' => 'val1',
                     ],
@@ -190,7 +190,7 @@ class WebalizerTest extends TestCase
                 ],
                 'schema' => [
                     [
-                        'name' => 'webalize_test',
+                        'name' => 'webalize_test_D',
                     ],
                     [
                         'name' => 'escrzyaieuu',

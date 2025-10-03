@@ -123,7 +123,7 @@ stages:
                 phpStorageNamesSanitizer:libs/php-storage-names-sanitizer \
                 phpTestUtils:libs/php-test-utils \
                 queryServiceApiClient:libs/query-service-api-client \
-                sandboxesServiceApiClient:libs/sandboxes-service-api-client \                
+                sandboxesServiceApiClient:libs/sandboxes-service-api-client \
                 serviceClient:libs/service-client \
                 settle:libs/settle \
                 slicer:libs/slicer \
@@ -355,7 +355,7 @@ stages:
         in(dependencies.tests_phpStorageNamesSanitizer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_phpTestUtils.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),        
+        in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_serviceClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),

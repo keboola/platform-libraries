@@ -1,6 +1,6 @@
 {
-    "name": "keboola/sanitizer",
-    "description": "Column name sanitizer",
+    "name": "keboola/php-storage-names-sanitizer",
+    "description": "Storage column name sanitizer",
     "minimum-stability": "stable",
     "license": "MIT",
     "authors": [
@@ -11,12 +11,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "Keboola\\Utils\\Sanitizer\\": "src/"
+            "Keboola\\StorageNamesSanitizer\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Keboola\\Utils\\Sanitizer\\Tests\\": "tests"
+            "Keboola\\StorageNamesSanitizer\\Tests\\": "tests"
         }
     },
     "require": {

@@ -8,15 +8,7 @@
             "name": "Keboola",
             "email": "devel@keboola.com"
         }
-    ],    
-    "require": {
-        "php": ">=5.6"
-    },
-    "require-dev": {
-        "jakub-onderka/php-parallel-lint": "^1.0",
-        "squizlabs/php_codesniffer": "^3.4",
-        "phpunit/phpunit": "^5.7"
-    },
+    ],
     "autoload": {
         "psr-4": {
             "Keboola\\Utils\\Sanitizer\\": "src/"
@@ -27,22 +19,42 @@
             "Keboola\\Utils\\Sanitizer\\Tests\\": "tests"
         }
     },
+    "require": {
+        "php": "^8.2",
+        "symfony/string": "^6.4"
+    },
+    "require-dev": {
+        "keboola/coding-standard": ">=16.0",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^11.5"
+    },
+
     "scripts": {
-        "tests-phpunit": "phpunit  --coverage-clover ./build/logs/clover.xml",
-        "phplint": "parallel-lint -j 10 --exclude vendor .",
-        "phpcs": "phpcs --standard=psr2 -n --ignore=vendor --extensions=php .",
-        "build": [
-            "@phplint",
-            "@phpcs",            
-            "@tests-phpunit"
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml"
+        ],
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "check": [
+            "@composer validate --no-check-all --strict",
+            "@phpcs",
+            "@phpstan"
         ],
         "ci": [
-            "@composer validate --no-check-publish --no-check-all",
-            "@build"
+            "@check",
+            "@tests"
         ]
     },
     "config": {
         "sort-packages": true,
-        "optimize-autoloader": true
+        "process-timeout": 3600,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }

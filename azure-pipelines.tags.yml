@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/php-key-generator
+    - repository: php-storage-names-sanitizer
+      type: github
+      endpoint: keboola
+      name: keboola/php-storage-names-sanitizer
     - repository: php-test-utils
       type: github
       endpoint: keboola
@@ -66,10 +70,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/sandboxes-service-api-php-client
-    - repository: php-storage-names-sanitizer
-      type: github
-      endpoint: keboola
-      name: keboola/php-storage-names-sanitizer
     - repository: service-client
       type: github
       endpoint: keboola
@@ -190,6 +190,14 @@ jobs:
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-storage-names-sanitizer/')
+      sourceRepo: platform-libraries
+      targetRepo: php-storage-names-sanitizer
+      libraryPath: libs/php-storage-names-sanitizer
+      tagPrefix: php-storage-names-sanitizer/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
       condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-test-utils/')
       sourceRepo: platform-libraries
       targetRepo: php-test-utils
@@ -211,14 +219,6 @@ jobs:
       targetRepo: sandboxes-service-api-php-client
       libraryPath: libs/sandboxes-service-api-client
       tagPrefix: sandboxes-service-api-client/
-
-  - template: azure-pipelines/jobs/split-library.yml
-    parameters:
-      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-storage-names-sanitizer/')
-      sourceRepo: platform-libraries
-      targetRepo: php-storage-names-sanitizer
-      libraryPath: libs/php-storage-names-sanitizer
-      tagPrefix: php-storage-names-sanitizer/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

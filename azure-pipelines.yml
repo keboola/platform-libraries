@@ -54,6 +54,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/php-key-generator
+    - repository: php-storage-names-sanitizer
+      type: github
+      endpoint: keboola
+      name: keboola/php-storage-names-sanitizer
     - repository: php-test-utils
       type: github
       endpoint: keboola
@@ -66,10 +70,6 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/sandboxes-service-api-php-client
-    - repository: php-storage-names-sanitizer
-      type: github
-      endpoint: keboola
-      name: keboola/php-storage-names-sanitizer
     - repository: service-client
       type: github
       endpoint: keboola
@@ -120,10 +120,10 @@ stages:
                 messengerBundle:libs/messenger-bundle \
                 outputMapping:libs/output-mapping \
                 permissionChecker:libs/permission-checker \
+                phpStorageNamesSanitizer:libs/php-storage-names-sanitizer \
                 phpTestUtils:libs/php-test-utils \
                 queryServiceApiClient:libs/query-service-api-client \
-                sandboxesServiceApiClient:libs/sandboxes-service-api-client \
-                phpStorageNamesSanitizer:libs/php-storage-names-sanitizer \
+                sandboxesServiceApiClient:libs/sandboxes-service-api-client \                
                 serviceClient:libs/service-client \
                 settle:libs/settle \
                 slicer:libs/slicer \
@@ -234,6 +234,14 @@ stages:
     jobs:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
+  - stage: tests_phpStorageNamesSanitizer
+    displayName: Tests - Sanitizer
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_phpStorageNamesSanitizer'])
+    jobs:
+      - template: libs/php-storage-names-sanitizer/azure-pipelines.tests.yml
+
   - stage: tests_phpTestUtils
     displayName: Tests - PHP Test Utils
     lockBehavior: sequential
@@ -257,14 +265,6 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_sandboxesServiceApiClient'])
     jobs:
       - template: libs/sandboxes-service-api-client/azure-pipelines.tests.yml
-
-  - stage: tests_phpStorageNamesSanitizer
-    displayName: Tests - Sanitizer
-    lockBehavior: sequential
-    dependsOn: build
-    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_phpStorageNamesSanitizer'])
-    jobs:
-      - template: libs/php-storage-names-sanitizer/azure-pipelines.tests.yml
 
   - stage: tests_serviceClient
     displayName: Tests - Service Client
@@ -329,10 +329,10 @@ stages:
       - tests_messengerBundle
       - tests_outputMapping
       - tests_permissionChecker
+      - tests_phpStorageNamesSanitizer
       - tests_phpTestUtils
       - tests_queryServiceApiClient
       - tests_sandboxesServiceApiClient
-      - tests_phpStorageNamesSanitizer
       - tests_serviceClient
       - tests_settle
       - tests_slicer
@@ -352,10 +352,10 @@ stages:
         in(dependencies.tests_messengerBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_outputMapping.result, 'Succeeded', 'Skipped'),        
         in(dependencies.tests_permissionChecker.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_phpStorageNamesSanitizer.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_phpTestUtils.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_queryServiceApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),
-        in(dependencies.tests_phpStorageNamesSanitizer.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_sandboxesServiceApiClient.result, 'Succeeded', 'Skipped'),        
         in(dependencies.tests_serviceClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_settle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_slicer.result, 'Succeeded', 'Skipped'),
@@ -463,6 +463,14 @@ stages:
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:
+          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_phpStorageNamesSanitizer'])
+          sourceRepo: platform-libraries
+          targetRepo: php-storage-names-sanitizer
+          libraryPath: libs/php-storage-names-sanitizer
+          tagPrefix: php-storage-names-sanitizer/
+
+      - template: azure-pipelines/jobs/split-library.yml
+        parameters:
           condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_phpTestUtils'])
           sourceRepo: platform-libraries
           targetRepo: php-test-utils
@@ -484,14 +492,6 @@ stages:
           targetRepo: sandboxes-service-api-php-client
           libraryPath: libs/sandboxes-service-api-client
           tagPrefix: sandboxes-service-api-client/
-
-      - template: azure-pipelines/jobs/split-library.yml
-        parameters:
-          condition: and(succeeded(), stageDependencies.build.checkChanges.outputs['findChanges.changedProjects_phpStorageNamesSanitizer'])
-          sourceRepo: platform-libraries
-          targetRepo: php-storage-names-sanitizer
-          libraryPath: libs/php-storage-names-sanitizer
-          tagPrefix: php-storage-names-sanitizer/
 
       - template: azure-pipelines/jobs/split-library.yml
         parameters:

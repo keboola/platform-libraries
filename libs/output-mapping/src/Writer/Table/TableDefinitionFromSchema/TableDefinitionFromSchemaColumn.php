@@ -39,10 +39,7 @@ class TableDefinitionFromSchemaColumn
             //    $definition['default'] = $dataType->getDefaultValue($this->backend);
             // }
 
-            if ($definition && !isset($definition['type'])) {
-                $definition['type'] = $dataType->getTypeName($this->backend);
-            }
-            if ($definition) {
+            if (isset($definition['type'])) {
                 $data['definition'] = $definition;
             }
         }

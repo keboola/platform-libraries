@@ -17,6 +17,18 @@ final class WorkspaceLoadQueue
     }
 
     /**
+     * @return string[]
+     */
+    public function getJobIds(): array
+    {
+        $jobIds = [];
+        foreach ($this->jobs as $job) {
+            $jobIds[] = $job->jobId;
+        }
+        return $jobIds;
+    }
+
+    /**
      * @return RewrittenInputTableOptions[]
      */
     public function getAllTables(): array

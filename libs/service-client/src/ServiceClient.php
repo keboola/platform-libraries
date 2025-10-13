@@ -78,10 +78,19 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
+    public function getEditorServiceUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::EDITOR, $dnsType);
+    }
+
+    /**
+     * @return non-empty-string
+     */
     public function getEncryptionServiceUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::ENCRYPTION, $dnsType);
     }
+
 
     /**
      * @return non-empty-string

@@ -18,6 +18,7 @@ class ServiceTest extends TestCase
         yield 'buffer' => [Service::BUFFER, 'buffer'];
         yield 'connection' => [Service::CONNECTION, 'connection'];
         yield 'data-science' => [Service::SANDBOXES_SERVICE, 'data-science'];
+        yield 'editor' => [Service::EDITOR, 'editor'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption'];
         yield 'import' => [Service::IMPORT, 'import'];
         yield 'notification' => [Service::NOTIFICATION, 'notification'];
@@ -58,6 +59,7 @@ class ServiceTest extends TestCase
         yield 'buffer' => [Service::BUFFER, 'buffer-api.buffer']; // <-- custom namespace
         yield 'connection' => [Service::CONNECTION, 'connection-api.connection']; // <-- custom namespace
         yield 'data-science' => [Service::SANDBOXES_SERVICE, 'sandboxes-service-api.default'];
+        yield 'editor' => [Service::EDITOR, 'editor-api.editor-service'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption-api.default'];
         yield 'import' => [Service::IMPORT, 'sapi-importer.default'];
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];

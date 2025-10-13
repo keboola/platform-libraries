@@ -16,6 +16,7 @@ class ServiceClientTest extends TestCase
     private const PUBLIC_BUFFER_SERVICE = 'https://buffer.north-europe.azure.keboola.com';
     private const PUBLIC_CONNECTION_SERVICE = 'https://connection.north-europe.azure.keboola.com';
     private const PUBLIC_DATA_SCIENCE_SERVICE = 'https://data-science.north-europe.azure.keboola.com';
+    private const PUBLIC_EDITOR_SERVICE = 'https://editor.north-europe.azure.keboola.com';
     private const PUBLIC_ENCRYPTION_SERVICE = 'https://encryption.north-europe.azure.keboola.com';
     private const PUBLIC_IMPORT_SERVICE = 'https://import.north-europe.azure.keboola.com';
     private const PUBLIC_NOTIFICATION_SERVICE = 'https://notification.north-europe.azure.keboola.com';
@@ -34,6 +35,7 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_BUFFER_SERVICE = 'http://buffer-api.buffer.svc.cluster.local';
     private const INTERNAL_CONNECTION_SERVICE = 'http://connection-api.connection.svc.cluster.local';
     private const INTERNAL_DATA_SCIENCE_SERVICE = 'http://sandboxes-service-api.default.svc.cluster.local';
+    private const INTERNAL_EDITOR_SERVICE = 'http://editor-api.editor-service.svc.cluster.local';
     private const INTERNAL_ENCRYPTION_SERVICE = 'http://encryption-api.default.svc.cluster.local';
     private const INTERNAL_IMPORT_SERVICE = 'http://sapi-importer.default.svc.cluster.local';
     private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification-api.default.svc.cluster.local';
@@ -58,6 +60,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_EDITOR_SERVICE, $client->getEditorServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_IMPORT_SERVICE, $client->getImportServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::PUBLIC));
@@ -81,6 +84,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl());
         self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl());
         self::assertSame(self::PUBLIC_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl());
+        self::assertSame(self::PUBLIC_EDITOR_SERVICE, $client->getEditorServiceUrl());
         self::assertSame(self::PUBLIC_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl());
         self::assertSame(self::PUBLIC_IMPORT_SERVICE, $client->getImportServiceUrl());
         self::assertSame(self::PUBLIC_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());
@@ -127,6 +131,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_BUFFER_SERVICE, $client->getBufferServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_CONNECTION_SERVICE, $client->getConnectionServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_EDITOR_SERVICE, $client->getEditorServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::INTERNAL));
@@ -152,6 +157,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_BUFFER_SERVICE, $client->getBufferServiceUrl());
         self::assertSame(self::INTERNAL_CONNECTION_SERVICE, $client->getConnectionServiceUrl());
         self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl());
+        self::assertSame(self::INTERNAL_EDITOR_SERVICE, $client->getEditorServiceUrl());
         self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl());
         self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl());
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());

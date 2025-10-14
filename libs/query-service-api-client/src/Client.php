@@ -146,7 +146,7 @@ class Client
     /**
      * Submit a new query job
      *
-     * @param array{statements: string[], transactional?: bool} $requestBody
+     * @param array<string, mixed> $requestBody
      * @return array<string, mixed>
      */
     public function submitQueryJob(string $branchId, string $workspaceId, array $requestBody): array
@@ -201,7 +201,7 @@ class Client
     /**
      * Execute a workspace query and wait for results
      *
-     * @param array{statements: string[], transactional?: bool} $requestBody
+     * @param array<string, mixed> $requestBody
      * @return array{
      *     queryJobId: string,
      *     status: string,

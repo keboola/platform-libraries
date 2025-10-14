@@ -12,6 +12,7 @@ enum Service
     case BILLING;
     case BUFFER;
     case CONNECTION;
+    case EDITOR;
     case ENCRYPTION;
     case IMPORT;
     case NOTIFICATION;
@@ -34,6 +35,7 @@ enum Service
             self::BILLING => 'billing',
             self::BUFFER => 'buffer',
             self::CONNECTION => 'connection',
+            self::EDITOR => 'editor',
             self::ENCRYPTION => 'encryption',
             self::IMPORT => 'import',
             self::NOTIFICATION => 'notification',
@@ -58,6 +60,7 @@ enum Service
             self::BILLING => 'billing-api.default',
             self::BUFFER => 'buffer-api.buffer',
             self::CONNECTION => 'connection-api.connection',
+            self::EDITOR => 'editor-api.editor-service',
             self::ENCRYPTION => 'encryption-api.default',
             self::IMPORT => 'sapi-importer.default',
             self::NOTIFICATION => 'notification-api.default',

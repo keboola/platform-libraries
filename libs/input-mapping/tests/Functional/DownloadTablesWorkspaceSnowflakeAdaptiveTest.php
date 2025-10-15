@@ -179,7 +179,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid column definition: Invalid "changedSince" parameter');
+        $this->expectExceptionMessage('This value should be of type numeric|string');
         $reader->downloadTables(
             $configuration,
             $inputTablesState,

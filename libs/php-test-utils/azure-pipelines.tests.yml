@@ -6,7 +6,7 @@ jobs:
       displayName: PHP Test Utils Tests
       serviceName: dev-php-test-utils
       testCommand: bash -c 'composer install && composer ci'
-    variables:
-      HOSTNAME_SUFFIX: $(HOSTNAME_SUFFIX_GCP)
-    secrets:
-      TEST_STORAGE_API_TOKEN_SNOWFLAKE: $(PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE)
+      variables:
+        HOSTNAME_SUFFIX: $(HOSTNAME_SUFFIX_GCP)
+      secrets:
+        TEST_STORAGE_API_TOKEN_SNOWFLAKE: $(PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE)

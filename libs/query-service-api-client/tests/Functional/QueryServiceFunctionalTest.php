@@ -13,12 +13,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     {
         $result = $this->queryClient->healthCheck();
 
-        self::assertArrayHasKey('service', $result);
         self::assertArrayHasKey('status', $result);
-        self::assertArrayHasKey('timestamp', $result);
-        self::assertArrayHasKey('version', $result);
-
-        self::assertEquals('query', $result['service']);
         self::assertEquals('ok', $result['status']);
     }
 

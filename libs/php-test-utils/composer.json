@@ -28,14 +28,21 @@
     "require": {
         "php": ">=8.4",
         "ext-json": "*",
-        "psr/log": "^3.0"
+        "doctrine/orm": "^3.5",
+        "keboola/service-client": "^1.4",
+        "keboola/settle": "^1.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^6.4",
+        "psr/log": "^3.0",
+        "symfony/framework-bundle": "^7.3",
+        "symfony/uid": "^v7.3"
     },
     "require-dev": {
         "infection/infection": "^0.31",
-        "keboola/coding-standard": ">=14.0.0",
+        "keboola/coding-standard": ">=16.0",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12.3",
-        "symfony/dotenv": "^7.0|^8.0"
+        "phpunit/phpunit": "^12.4",
+        "symfony/dotenv": "^v7.3",
+        "symfony/browser-kit": "^7.3"
     },
     "scripts": {
         "tests": [
@@ -67,5 +74,3 @@
         }
     }
 }
-
-

@@ -140,6 +140,9 @@ services:
     <<: *dev84
     image: keboola/php-test-utils
     working_dir: /code/libs/php-test-utils
+    environment:
+      - HOSTNAME_SUFFIX
+      - TEST_STORAGE_API_TOKEN_SNOWFLAKE
 
   dev-sync-actions-api-php-client:
     <<: *dev84

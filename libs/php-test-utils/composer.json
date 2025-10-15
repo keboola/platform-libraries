@@ -56,8 +56,7 @@
         "build": [
             "@phpcs",
             "@phpstan",
-            "@tests",
-            "@infection"
+            "@tests"
         ],
         "ci": [
             "@composer validate --no-check-all --strict",

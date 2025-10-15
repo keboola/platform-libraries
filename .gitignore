@@ -1,2 +1,6 @@
 .idea/
 .phpunit.result.cache
+
+# Environment files (contains sensitive information)
+.env
+.env.local

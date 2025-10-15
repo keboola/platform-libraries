@@ -36,12 +36,26 @@ A monorepo containing 20+ PHP libraries for the Keboola platform. All libraries 
 
 ### Environment Setup
 
-Some libraries require environment variables for testing. Create `.env.local` from `.env`:
+**IMPORTANT**: This monorepo currently requires TWO environment files with different names due to historical reasons. This will be unified in the future.
 
-```bash
-cp .env .env.local
-# Edit .env.local with your API tokens (STORAGE_API_URL, STORAGE_API_TOKEN, etc.)
-```
+You need to create both files in the repository root:
+1. **`.env`** - Required by some libraries' test bootstraps
+2. **`.env.local`** - Required by other libraries' test bootstraps
+
+Both files should contain the same environment variables. Each library that requires environment variables documents its specific requirements in its own README (`libs/<library-name>/README.md`).
+
+#### Docker Compose Environment Variables
+
+When running tests via Docker Compose (`docker compose run --rm dev-<library> bash`), environment variables from the root `.env` file are automatically passed to containers for libraries that need them (configured in `docker-compose.yml`).
+
+#### Current State Issues (TO BE FIXED)
+
+Due to inconsistent historical configuration:
+- Some libraries look for `.env` (e.g., input-mapping, query-service-api-client)
+- Others look for `.env.local` (e.g., output-mapping, staging-provider)
+- This requires maintaining both files with the same content
+
+**TODO**: Unify all libraries to use consistent env file naming convention.
 
 ### Running Tests for a Library
 

@@ -87,13 +87,11 @@ composer ci             # Full CI suite (check + tests)
 
 ### Environment Variables
 
-**IMPORTANT:** Due to historical inconsistency, this monorepo requires TWO environment files with different names:
-1. **`.env`** - Required by some libraries' test bootstraps
-2. **`.env.local`** - Required by other libraries' test bootstraps
+Before working on any library:
 
-Both files should contain the same environment variables. This will be unified in the future.
-
-Docker Compose automatically passes environment variables from the root `.env` file to containers for libraries that need them.
+- Open `libs/<library>/README.md` and note the required variables.
+- Create a `./.env` file in the repository root and define those variables there.
+- Docker Compose automatically passes environment variables from the root `.env` file to containers for libraries that need them.
 
 **When are these needed?** Environment variables are required for running functional/integration tests that interact with real Keboola services. Most libraries work without them for unit tests.
 

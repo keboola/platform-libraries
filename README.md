@@ -36,26 +36,13 @@ A monorepo containing 20+ PHP libraries for the Keboola platform. All libraries 
 
 ### Environment Setup
 
-**IMPORTANT**: This monorepo currently requires TWO environment files with different names due to historical reasons. This will be unified in the future.
-
-You need to create both files in the repository root:
-1. **`.env`** - Required by some libraries' test bootstraps
-2. **`.env.local`** - Required by other libraries' test bootstraps
-
-Both files should contain the same environment variables. Each library that requires environment variables documents its specific requirements in its own README (`libs/<library-name>/README.md`).
-
 #### Docker Compose Environment Variables
 
-When running tests via Docker Compose (`docker compose run --rm dev-<library> bash`), environment variables from the root `.env` file are automatically passed to containers for libraries that need them (configured in `docker-compose.yml`).
+Before working on any library:
 
-#### Current State Issues (TO BE FIXED)
-
-Due to inconsistent historical configuration:
-- Some libraries look for `.env` (e.g., input-mapping, query-service-api-client)
-- Others look for `.env.local` (e.g., output-mapping, staging-provider)
-- This requires maintaining both files with the same content
-
-**TODO**: Unify all libraries to use consistent env file naming convention.
+- Open `libs/<library>/README.md` and note the required variables.
+- Create a `./.env` file in the repository root and define those variables there.
+- Start the dev container for that library and follow its README commands (e.g., `docker compose run --rm dev-<library> bash`).
 
 ### Running Tests for a Library
 
@@ -63,7 +50,7 @@ Each library has a dedicated Docker Compose service. To work on a specific libra
 
 ```bash
 # Enter library container
-docker compose run --rm dev-input-mapping bash
+docker compose run --rm dev-<library> bash
 
 # Inside container - install dependencies and run tests
 composer install
@@ -109,4 +96,4 @@ This project uses [Conventional Commits v1.0.0](https://www.conventionalcommits.
 
 ## License
 
-MIT licensed, see [LICENSE](./LICENSE) file. 
+MIT licensed, see [LICENSE](./LICENSE) file.

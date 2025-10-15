@@ -26,7 +26,7 @@ class ConfigurationWithMappingFixture implements FixtureInterface
         $storageClient = $this->getStorageClientWrapper()->getClientForDefaultBranch();
         $this->bucketId = $storageClient->createBucket(uniqid('configuration-with-mapping-fixture', false), 'in');
 
-        $this->tableId1= $storageClient->createTableDefinition($this->bucketId, [
+        $this->tableId1 = $storageClient->createTableDefinition($this->bucketId, [
             'name' => 'customer1',
             'primaryKeysNames' => ['id'],
             'columns' => [

@@ -15,7 +15,7 @@ class SharedCodeFixture implements FixtureInterface
 {
     use StorageApiAwareTrait;
     use EntityManagerTrait;
-    private string $configrationId;
+    private string $configurationId;
     private string $configurationRowId;
 
     public function initialize(): void
@@ -41,19 +41,19 @@ class SharedCodeFixture implements FixtureInterface
         /** @var array{id: string} $configurationRow */
         $configurationRow = $componentsApi->addConfigurationRow($configRow);
 
-        $this->configrationId = $configuration['id'];
+        $this->configurationId = $configuration['id'];
         $this->configurationRowId = $configurationRow['id'];
     }
 
     public function cleanUp(): void
     {
         $componentsApi = new Components($this->getStorageClientWrapper()->getClientForDefaultBranch());
-        $componentsApi->deleteConfiguration('keboola.shared-code', $this->configrationId);
+        $componentsApi->deleteConfiguration('keboola.shared-code', $this->configurationId);
     }
 
     public function getConfigId(): string
     {
-        return $this->configrationId;
+        return $this->configurationId;
     }
 
     public function getConfigRowId(): string

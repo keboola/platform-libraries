@@ -9,7 +9,6 @@ use Keboola\PhpTestUtils\Fixtures\FixtureTraits\StorageApiAwareTrait;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
-use Throwable;
 
 class ConfigurationWithMappingAndTables implements FixtureInterface
 {

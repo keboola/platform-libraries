@@ -24,8 +24,8 @@ class ConfigurationWithRowFixture implements FixtureInterface
         $componentsApi = new Components($this->getStorageClientWrapper()->getClientForDefaultBranch());
         $config = (new Configuration)
             ->setComponentId(self::TEST_COMPONENT_ID)
-             ->setName(__CLASS__)
-           ->setConfiguration([
+            ->setName(__CLASS__)
+            ->setConfiguration([
                 'parameters' => [
                     'operation' => 'sleep',
                     'timeout' => 5,

@@ -62,67 +62,45 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     public function handleExports(array $exports, bool $preserve): array
     {
-        $cloneInputs = [];
-        $copyInputs = [];
+        $allInputs = [];
         $workspaceTables = [];
 
         foreach ($exports as $export) {
             if ($export['type'] === WorkspaceLoadType::CLONE->value) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
-                $cloneInputs[] = $this->buildCloneInput($table);
+                $allInputs[] = $this->buildCloneInput($table);
                 $workspaceTables[] = $table;
             }
             if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
                 [$table, $exportOptions] = $export['table'];
                 $loadType = WorkspaceLoadType::from($export['type']);
-                $copyInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
+                $allInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
                 $workspaceTables[] = $table;
             }
         }
 
-        $cloneJobResult = [];
-        $copyJobResult = [];
-        $hasBeenCleaned = false;
+        if (empty($allInputs)) {
+            return [];
+        }
 
         $workspaces = $this->createWorkspaces();
 
-        if ($cloneInputs) {
-            $this->logger->info(
-                sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
-            );
-            // here we are waiting for the jobs to finish. handleAsyncTask = true
-            // We need to process clone and copy jobs separately because there is no lock on the table and there
-            // is a race between the clone and copy jobs which can end in an error that the table already exists.
-            // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $jobId = $workspaces->queueWorkspaceCloneInto(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $cloneInputs,
-                    'preserve' => $preserve ? 1 : 0,
-                ],
-            );
-            $cloneJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-            if (!$preserve) {
-                $hasBeenCleaned = true;
-            }
-        }
+        $this->logger->info(sprintf(
+            'Loading %d tables to workspace%s.',
+            count($allInputs),
+            !$preserve ? ' with clean' : '',
+        ));
 
-        if ($copyInputs) {
-            $this->logger->info(
-                sprintf('Copying %s tables to workspace.', count($copyInputs)),
-            );
-            $jobId = $workspaces->queueWorkspaceLoadData(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $copyInputs,
-                    'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
-                ],
-            );
-            $copyJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-        }
-        $jobResults = array_merge($cloneJobResult, $copyJobResult);
-        $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
+        $jobId = $workspaces->queueWorkspaceLoadData(
+            (int) $this->dataStorage->getWorkspaceId(),
+            [
+                'input' => $allInputs,
+                'preserve' => $preserve ? 1 : 0,
+            ],
+        );
+
+        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
 
         foreach ($workspaceTables as $table) {
             $manifestPath = PathHelper::getManifestPath(

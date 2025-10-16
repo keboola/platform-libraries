@@ -50,4 +50,35 @@ final class WorkspaceLoadPlan
     {
         return !empty($this->getCopyInstructions());
     }
+
+    /**
+     * @return WorkspaceTableLoadInstruction[]
+     */
+    public function getAllInstructions(): array
+    {
+        return $this->instructions;
+    }
+
+    public function hasInstructions(): bool
+    {
+        return !empty($this->instructions);
+    }
+
+    /**
+     * @return array{clone: int, copy: int, view: int, total: int}
+     */
+    public function getStatistics(): array
+    {
+        $stats = ['clone' => 0, 'copy' => 0, 'view' => 0];
+
+        foreach ($this->instructions as $instruction) {
+            $type = strtolower($instruction->loadType->value);
+            if (isset($stats[$type])) {
+                $stats[$type]++;
+            }
+        }
+
+        $stats['total'] = count($this->instructions);
+        return $stats;
+    }
 }

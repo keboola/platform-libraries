@@ -189,6 +189,101 @@ class WorkspaceLoadPlanTest extends TestCase
         self::assertTrue($plan->preserve);
     }
 
+    public function testGetAllInstructionsReturnsAllInstructions(): void
+    {
+        $cloneInstruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::CLONE,
+            $this->createMockTableOptions('clone1'),
+            null,
+        );
+        $copyInstruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::COPY,
+            $this->createMockTableOptions('copy1'),
+            ['overwrite' => false],
+        );
+        $viewInstruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::VIEW,
+            $this->createMockTableOptions('view1'),
+            ['overwrite' => false],
+        );
+
+        $instructions = [$cloneInstruction, $copyInstruction, $viewInstruction];
+        $plan = new WorkspaceLoadPlan($instructions, false);
+
+        $allInstructions = $plan->getAllInstructions();
+
+        self::assertCount(3, $allInstructions);
+        self::assertSame($instructions, $allInstructions);
+    }
+
+    public function testHasInstructionsReturnsTrueWhenInstructionsExist(): void
+    {
+        $instruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::CLONE,
+            $this->createMockTableOptions('table1'),
+            null,
+        );
+
+        $plan = new WorkspaceLoadPlan([$instruction], false);
+
+        self::assertTrue($plan->hasInstructions());
+    }
+
+    public function testHasInstructionsReturnsFalseWhenNoInstructionsExist(): void
+    {
+        $plan = new WorkspaceLoadPlan([], false);
+
+        self::assertFalse($plan->hasInstructions());
+    }
+
+    public function testGetStatisticsReturnsCorrectCounts(): void
+    {
+        $cloneInstruction1 = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::CLONE,
+            $this->createMockTableOptions('clone1'),
+            null,
+        );
+        $cloneInstruction2 = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::CLONE,
+            $this->createMockTableOptions('clone2'),
+            null,
+        );
+        $copyInstruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::COPY,
+            $this->createMockTableOptions('copy1'),
+            ['overwrite' => false],
+        );
+        $viewInstruction = new WorkspaceTableLoadInstruction(
+            WorkspaceLoadType::VIEW,
+            $this->createMockTableOptions('view1'),
+            ['overwrite' => false],
+        );
+
+        $plan = new WorkspaceLoadPlan(
+            [$cloneInstruction1, $copyInstruction, $cloneInstruction2, $viewInstruction],
+            false,
+        );
+
+        $stats = $plan->getStatistics();
+
+        self::assertSame(2, $stats['clone']);
+        self::assertSame(1, $stats['copy']);
+        self::assertSame(1, $stats['view']);
+        self::assertSame(4, $stats['total']);
+    }
+
+    public function testGetStatisticsReturnsZeroForEmptyPlan(): void
+    {
+        $plan = new WorkspaceLoadPlan([], false);
+
+        $stats = $plan->getStatistics();
+
+        self::assertSame(0, $stats['clone']);
+        self::assertSame(0, $stats['copy']);
+        self::assertSame(0, $stats['view']);
+        self::assertSame(0, $stats['total']);
+    }
+
     private function createMockTableOptions(string $source): RewrittenInputTableOptions
     {
         return new RewrittenInputTableOptions(

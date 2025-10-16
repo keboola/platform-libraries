@@ -72,10 +72,7 @@ final class WorkspaceLoadPlan
         $stats = ['clone' => 0, 'copy' => 0, 'view' => 0];
 
         foreach ($this->instructions as $instruction) {
-            $type = strtolower($instruction->loadType->value);
-            if (isset($stats[$type])) {
-                $stats[$type]++;
-            }
+            $stats[strtolower($instruction->loadType->value)]++;
         }
 
         $stats['total'] = count($this->instructions);

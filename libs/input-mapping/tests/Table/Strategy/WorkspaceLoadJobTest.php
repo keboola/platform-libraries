@@ -38,6 +38,26 @@ class WorkspaceLoadJobTest extends TestCase
         new WorkspaceLoadJob('789', $jobType, [$tableOptions]);
     }
 
+    public function testConstructorWithNullJobType(): void
+    {
+        $tableOptions = $this->createMock(RewrittenInputTableOptions::class);
+        $job = new WorkspaceLoadJob('123', null, [$tableOptions]);
+
+        self::assertNull($job->jobType);
+        self::assertTrue($job->isMixedTypeJob());
+    }
+
+    public function testIsMixedTypeJobReturnsFalseForSpecificTypes(): void
+    {
+        $tableOptions = $this->createMock(RewrittenInputTableOptions::class);
+
+        $cloneJob = new WorkspaceLoadJob('123', WorkspaceLoadType::CLONE, [$tableOptions]);
+        self::assertFalse($cloneJob->isMixedTypeJob());
+
+        $copyJob = new WorkspaceLoadJob('456', WorkspaceLoadType::COPY, [$tableOptions]);
+        self::assertFalse($copyJob->isMixedTypeJob());
+    }
+
     public static function validJobTypeProvider(): Generator
     {
         yield 'CLONE job type' => [WorkspaceLoadType::CLONE];

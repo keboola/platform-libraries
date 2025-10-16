@@ -14,14 +14,18 @@ final class WorkspaceLoadJob
      */
     public function __construct(
         public readonly string $jobId,
-        public readonly WorkspaceLoadType $jobType,
+        public readonly ?WorkspaceLoadType $jobType,
         public readonly array $tables,
     ) {
-        // Guard: only CLONE or COPY allowed for job types
-        if (!in_array($jobType, [WorkspaceLoadType::CLONE, WorkspaceLoadType::COPY], true)) {
+        if ($jobType !== null && !in_array($jobType, [WorkspaceLoadType::CLONE, WorkspaceLoadType::COPY], true)) {
             throw new InputOperationException(
                 sprintf('Invalid job type "%s". Only CLONE and COPY are allowed for jobs.', $jobType->value),
             );
         }
+    }
+
+    public function isMixedTypeJob(): bool
+    {
+        return $this->jobType === null;
     }
 }

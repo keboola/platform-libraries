@@ -1,6 +1,6 @@
 {
     "name": "keboola/input-mapping",
-    "description": "Shared component for processing SAPI input mapping and exporting to files",
+    "description": "Input mapping library for downloading tables and files from Keboola Storage API with support for CSV and Parquet formats",
     "minimum-stability": "stable",
     "license": "MIT",
     "authors": [

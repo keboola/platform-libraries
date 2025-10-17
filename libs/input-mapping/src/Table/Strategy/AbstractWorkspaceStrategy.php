@@ -62,66 +62,62 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     public function handleExports(array $exports, bool $preserve): array
     {
-        $cloneInputs = [];
-        $copyInputs = [];
+        // Collect all inputs in order: CLONE operations first, then COPY/VIEW operations
+        $allInputs = [];
         $workspaceTables = [];
+        $cloneCount = 0;
+        $copyCount = 0;
 
+        // Step 1: Collect CLONE operations (must be first to maintain proper ordering)
         foreach ($exports as $export) {
             if ($export['type'] === WorkspaceLoadType::CLONE->value) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
-                $cloneInputs[] = $this->buildCloneInput($table);
+                $allInputs[] = $this->buildCloneInput($table);
                 $workspaceTables[] = $table;
+                $cloneCount++;
             }
+        }
+
+        // Step 2: Collect COPY/VIEW operations
+        foreach ($exports as $export) {
             if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
                 [$table, $exportOptions] = $export['table'];
                 $loadType = WorkspaceLoadType::from($export['type']);
-                $copyInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
+                $allInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
                 $workspaceTables[] = $table;
+                $copyCount++;
             }
         }
 
-        $cloneJobResult = [];
-        $copyJobResult = [];
-        $hasBeenCleaned = false;
+        // If no tables to load, return empty results
+        if (empty($allInputs)) {
+            return [];
+        }
 
         $workspaces = $this->createWorkspaces();
 
-        if ($cloneInputs) {
-            $this->logger->info(
-                sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
-            );
-            // here we are waiting for the jobs to finish. handleAsyncTask = true
-            // We need to process clone and copy jobs separately because there is no lock on the table and there
-            // is a race between the clone and copy jobs which can end in an error that the table already exists.
-            // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $jobId = $workspaces->queueWorkspaceLoadData(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $cloneInputs,
-                    'preserve' => $preserve ? 1 : 0,
-                ],
-            );
-            $cloneJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-            if (!$preserve) {
-                $hasBeenCleaned = true;
-            }
+        // Log operation summary
+        if (!$preserve) {
+            $this->logger->info('Cleaning workspace and loading tables.');
+        }
+        if ($cloneCount > 0) {
+            $this->logger->info(sprintf('Cloning %s tables to workspace.', $cloneCount));
+        }
+        if ($copyCount > 0) {
+            $this->logger->info(sprintf('Copying %s tables to workspace.', $copyCount));
         }
 
-        if ($copyInputs) {
-            $this->logger->info(
-                sprintf('Copying %s tables to workspace.', count($copyInputs)),
-            );
-            $jobId = $workspaces->queueWorkspaceLoadData(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $copyInputs,
-                    'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
-                ],
-            );
-            $copyJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-        }
-        $jobResults = array_merge($cloneJobResult, $copyJobResult);
+        // Single API call with all operations (preserve: 0 = clean + load, preserve: 1 = load only)
+        $jobId = $workspaces->queueWorkspaceLoadData(
+            (int) $this->dataStorage->getWorkspaceId(),
+            [
+                'input' => $allInputs,
+                'preserve' => $preserve ? 1 : 0,
+            ],
+        );
+
+        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
 
         foreach ($workspaceTables as $table) {
@@ -167,76 +163,66 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     }
 
     /**
-     * Phase 2: Execute - Submit async jobs to load tables from Table Storage into Workspace
-     * CLEAN jobs must complete before other jobs are submitted
+     * Phase 2: Execute - Submit single async job to load all tables from Table Storage into Workspace
+     * All operations (CLEAN, CLONE, COPY, VIEW) are batched into a single API call
      */
     public function executeTableLoadsToWorkspace(WorkspaceLoadPlan $plan): WorkspaceLoadQueue
     {
-        $jobs = [];
         $workspaces = $this->createWorkspaces();
         $workspaceId = (int) $this->dataStorage->getWorkspaceId();
 
-        // Step 1: Clean workspace if needed - MUST complete before other operations
-        if (!$plan->preserve) {
-            $this->logger->info('Cleaning workspace before loading tables.');
-            $cleanJobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
-                'input' => [], // workspace will be only cleaned
-                'preserve' => 0,
-            ]);
+        // Collect all inputs in order: CLONE operations first, then COPY/VIEW operations
+        $allInputs = [];
+        $allTables = [];
+        $cloneCount = 0;
+        $copyCount = 0;
 
-            // Wait for clean job to complete before proceeding
-            $this->clientWrapper->getBranchClient()->handleAsyncTasks([$cleanJobId]);
-
-            // Don't add CLEAN job to queue since it's already completed
-        }
-
-        // Step 2: Submit clone operations (after workspace is clean)
+        // Step 1: Add CLONE operations (must be first to maintain proper ordering)
         $cloneInstructions = $plan->getCloneInstructions();
-        if ($plan->hasCloneInstructions()) {
-            $cloneInputs = [];
-            $cloneTables = [];
-
-            foreach ($cloneInstructions as $instruction) {
-                $cloneInputs[] = $this->buildCloneInput($instruction->table);
-                $cloneTables[] = $instruction->table;
-            }
-
-            $this->logger->info(
-                sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
-            );
-            $jobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
-                'input' => $cloneInputs,
-                'preserve' => 1,
-            ]);
-            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::CLONE, $cloneTables);
+        foreach ($cloneInstructions as $instruction) {
+            $allInputs[] = $this->buildCloneInput($instruction->table);
+            $allTables[] = $instruction->table;
+            $cloneCount++;
         }
 
-        // Step 3: Submit copy/load operations (after workspace is clean)
+        // Step 2: Add COPY/VIEW operations
         $copyInstructions = $plan->getCopyInstructions();
-        if ($plan->hasCopyInstructions()) {
-            $copyInputs = [];
-            $copyTables = [];
-
-            foreach ($copyInstructions as $instruction) {
-                $copyInputs[] = $this->buildCopyInput(
-                    $instruction->table,
-                    $instruction->loadOptions ?? [],
-                    $instruction->loadType,
-                );
-                $copyTables[] = $instruction->table;
-            }
-
-            $this->logger->info(
-                sprintf('Copying %s tables to workspace.', count($copyInputs)),
+        foreach ($copyInstructions as $instruction) {
+            $allInputs[] = $this->buildCopyInput(
+                $instruction->table,
+                $instruction->loadOptions ?? [],
+                $instruction->loadType,
             );
-            $jobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
-                'input' => $copyInputs,
-                'preserve' => 1,
-            ]);
-            $jobs[] = new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::COPY, $copyTables);
+            $allTables[] = $instruction->table;
+            $copyCount++;
         }
 
-        return new WorkspaceLoadQueue($jobs);
+        // If no tables to load, return empty queue
+        if (empty($allInputs)) {
+            return new WorkspaceLoadQueue([]);
+        }
+
+        // Log operation summary
+        if (!$plan->preserve) {
+            $this->logger->info('Cleaning workspace and loading tables.');
+        }
+        if ($cloneCount > 0) {
+            $this->logger->info(sprintf('Cloning %s tables to workspace.', $cloneCount));
+        }
+        if ($copyCount > 0) {
+            $this->logger->info(sprintf('Copying %s tables to workspace.', $copyCount));
+        }
+
+        // Single API call with all operations (preserve: 0 = clean + load, preserve: 1 = load only)
+        $jobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
+            'input' => $allInputs,
+            'preserve' => $plan->preserve ? 1 : 0,
+        ]);
+
+        // Return single job with all tables
+        return new WorkspaceLoadQueue([
+            new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::COPY, $allTables),
+        ]);
     }
 
     /**

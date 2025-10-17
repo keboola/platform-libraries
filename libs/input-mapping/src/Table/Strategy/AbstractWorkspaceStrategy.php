@@ -95,7 +95,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             // We need to process clone and copy jobs separately because there is no lock on the table and there
             // is a race between the clone and copy jobs which can end in an error that the table already exists.
             // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $jobId = $workspaces->queueWorkspaceCloneInto(
+            $jobId = $workspaces->queueWorkspaceLoadData(
                 (int) $this->dataStorage->getWorkspaceId(),
                 [
                     'input' => $cloneInputs,
@@ -179,7 +179,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         // Step 1: Clean workspace if needed - MUST complete before other operations
         if (!$plan->preserve) {
             $this->logger->info('Cleaning workspace before loading tables.');
-            $cleanJobId = $workspaces->queueWorkspaceCloneInto($workspaceId, [
+            $cleanJobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
                 'input' => [], // workspace will be only cleaned
                 'preserve' => 0,
             ]);
@@ -204,7 +204,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $this->logger->info(
                 sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
             );
-            $jobId = $workspaces->queueWorkspaceCloneInto($workspaceId, [
+            $jobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
                 'input' => $cloneInputs,
                 'preserve' => 1,
             ]);
@@ -277,10 +277,10 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             'destination' => $table->getDestination(),
         ], $loadOptions);
 
-        // Views point to Table Storage, copies transfer data to Workspace
-        if ($loadType === WorkspaceLoadType::VIEW || $table->isUseView()) {
-            $copyInput['useView'] = true;
-        }
+        // Use loadType parameter for new unified API approach
+        // If user explicitly set use_view in configuration, override loadType to VIEW
+        $finalLoadType = $table->isUseView() ? WorkspaceLoadType::VIEW : $loadType;
+        $copyInput['loadType'] = $finalLoadType->value;
 
         return $copyInput;
     }
@@ -293,6 +293,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             'sourceBranchId' => $table->getSourceBranchId(),
             'overwrite' => $table->getOverwrite(),
             'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
+            'loadType' => WorkspaceLoadType::CLONE->value,
         ];
     }
 

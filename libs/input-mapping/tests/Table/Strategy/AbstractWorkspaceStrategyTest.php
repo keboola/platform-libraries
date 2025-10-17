@@ -222,7 +222,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $branchClient = $this->createMock(BranchAwareClient::class);
         $branchClient->expects($this->once())
             ->method('apiPostJson')
-            ->with('workspaces/456/load-clone', [
+            ->with('workspaces/456/load', [
                 'input' => [],
                 'preserve' => 0,
             ], false)
@@ -261,13 +261,13 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $branchClient = $this->createMock(BranchAwareClient::class);
 
         // Set up expected API calls in execution order:
-        // 1. Cleanup: workspaces/{id}/load-clone with empty input (preserve=false trigger)
-        // 2. Clone: workspaces/{id}/load-clone with clone instructions
+        // 1. Cleanup: workspaces/{id}/load with empty input (preserve=false trigger)
+        // 2. Clone: workspaces/{id}/load with clone instructions
         // 3. Load: workspaces/{id}/load with copy + view instructions batched together
         $expectedApiCalls = [
             [
                 // Step 1: Cleanup operation (executed synchronously, not returned in queue)
-                'endpoint' => 'workspaces/456/load-clone',
+                'endpoint' => 'workspaces/456/load',
                 'data' => [
                     'input' => [], // workspace will be only cleaned
                     'preserve' => 0,
@@ -277,7 +277,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ],
             [
                 // Step 2: Clone instruction group - both clone operations batched together
-                'endpoint' => 'workspaces/456/load-clone',
+                'endpoint' => 'workspaces/456/load',
                 'data' => [
                     'input' => [
                         [
@@ -286,6 +286,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'overwrite' => true,
                             'dropTimestampColumn' => true,
                             'sourceBranchId' => 123,
+                            'loadType' => 'clone',
                         ],
                         [
                             'source' => 'in.c-test-bucket.table2',
@@ -293,6 +294,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'overwrite' => false,
                             'dropTimestampColumn' => false,
                             'sourceBranchId' => 124,
+                            'loadType' => 'clone',
                         ],
                     ],
                     'preserve' => 1,
@@ -311,14 +313,15 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'destination' => 'table3',
                             'overwrite' => true,
                             'sourceBranchId' => 125,
+                            'loadType' => 'copy',
                         ],
                         [
-                            // View instruction (note: useView=true parameter)
+                            // View instruction
                             'source' => 'in.c-test-bucket.table4',
                             'destination' => 'table4',
                             'overwrite' => false,
                             'sourceBranchId' => 126,
-                            'useView' => true,
+                            'loadType' => 'view',
                         ],
                     ],
                     'preserve' => 1,
@@ -536,7 +539,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         // Mock API calls in sequence
         $expectedApiCalls = [
             [
-                'endpoint' => 'workspaces/456/load-clone',
+                'endpoint' => 'workspaces/456/load',
                 'data' => [
                     'input' => [
                         [
@@ -545,6 +548,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'overwrite' => false,
                             'dropTimestampColumn' => false,
                             'sourceBranchId' => 123,
+                            'loadType' => 'clone',
                         ],
                     ],
                     'preserve' => 1,
@@ -561,6 +565,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'destination' => 'table2',
                             'overwrite' => false,
                             'sourceBranchId' => 124,
+                            'loadType' => 'copy',
                         ],
                     ],
                     'preserve' => 1,
@@ -653,7 +658,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         // Expect clean operation followed by clone operation
         $expectedApiCalls = [
             [
-                'endpoint' => 'workspaces/456/load-clone',
+                'endpoint' => 'workspaces/456/load',
                 'data' => [
                     'input' => [], // clean operation
                     'preserve' => 0,
@@ -662,7 +667,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                 'returnValue' => ['id' => 100], // clean job
             ],
             [
-                'endpoint' => 'workspaces/456/load-clone',
+                'endpoint' => 'workspaces/456/load',
                 'data' => [
                     'input' => [
                         [
@@ -671,6 +676,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'overwrite' => false,
                             'dropTimestampColumn' => false,
                             'sourceBranchId' => 123,
+                            'loadType' => 'clone',
                         ],
                     ],
                     'preserve' => 1,

@@ -10,16 +10,10 @@ $dotEnv = new Dotenv();
 $dotEnv->usePutenv();
 $dotEnv->bootEnv(dirname(__DIR__) . '/.env', 'dev', []);
 
-$requiredVars = [
-    'STORAGE_API_TOKEN',
-    'QUERY_API_URL',
-    'STORAGE_API_URL',
-];
+$requiredEnvs = ['STORAGE_API_TOKEN', 'QUERY_API_URL', 'STORAGE_API_URL'];
 
-foreach ($requiredVars as $var) {
-    if (empty($_ENV[$var])) {
-        throw new RuntimeException(
-            sprintf('Environment variable %s is required for functional tests', $var),
-        );
+foreach ($requiredEnvs as $env) {
+    if (empty(getenv($env))) {
+        throw new Exception(sprintf('The "%s" environment variable is empty.', $env));
     }
 }

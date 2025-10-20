@@ -1,7 +1,8 @@
 jobs:
   - template: ../../azure-pipelines/jobs/run-tests.yml
     parameters:
-      displayName: Tests
+      jobName: query_service_api_client_tests
+      displayName: Query Service API Client Tests
       serviceName: dev-query-service-api-client
       testCommand: bash -c 'composer install && composer ci'
       variables:

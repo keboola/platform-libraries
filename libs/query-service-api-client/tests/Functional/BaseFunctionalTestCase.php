@@ -46,9 +46,9 @@ abstract class BaseFunctionalTestCase extends TestCase
 
     private function initializeClients(): void
     {
-        $storageApiToken = $_ENV['STORAGE_API_TOKEN'];
-        $queryApiUrl = $_ENV['QUERY_API_URL'];
-        $storageApiUrl = $_ENV['STORAGE_API_URL'];
+        $storageApiToken = (string) getenv('STORAGE_API_TOKEN');
+        $queryApiUrl = (string) getenv('QUERY_API_URL');
+        $storageApiUrl = (string) getenv('STORAGE_API_URL');
 
         $this->queryClient = new Client([
             'url' => $queryApiUrl,

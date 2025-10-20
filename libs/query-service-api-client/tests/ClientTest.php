@@ -243,8 +243,8 @@ class ClientTest extends TestCase
                 'Host' => ['query.test.keboola.com'],
                 'User-Agent' => ['Keboola Query API PHP Client'],
                 'Content-Type' => ['application/json'],
-                'X-KBC-RunId' => ['run-456'],
                 'X-StorageAPI-Token' => ['test-token'],
+                'X-KBC-RunId' => ['run-456'],
             ],
         ];
 

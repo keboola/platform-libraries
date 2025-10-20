@@ -104,8 +104,12 @@ class Client
     {
         $baseRequest = $request
             ->withHeader('User-Agent', $this->userAgent)
-            ->withHeader('Content-Type', 'application/json')
-            ->withHeader('X-StorageAPI-Token', $this->tokenString);
+            ->withHeader('Content-Type', 'application/json');
+
+        $isHealthCheck = str_contains((string) $request->getUri()->getPath(), '/health-check');
+        if (!$isHealthCheck) {
+            $baseRequest = $baseRequest->withHeader('X-StorageAPI-Token', $this->tokenString);
+        }
 
         if ($this->runId !== null) {
             $baseRequest = $baseRequest->withHeader('X-KBC-RunId', $this->runId);

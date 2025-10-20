@@ -160,6 +160,7 @@ services:
       - QUERY_API_URL
       - STORAGE_API_TOKEN
       - STORAGE_API_URL
+      - HOSTNAME_SUFFIX
 
   dev-sandboxes-service-api-client:
     <<: *dev82

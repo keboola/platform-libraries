@@ -12,17 +12,23 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use InvalidArgumentException;
 use JsonException;
+use Keboola\QueryApi\Response\ExecuteQueryResponse;
+use Keboola\QueryApi\Response\HealthCheckResponse;
+use Keboola\QueryApi\Response\JobResultsResponse;
+use Keboola\QueryApi\Response\JobStatusResponse;
+use Keboola\QueryApi\Response\QueryJobResponse;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Throwable;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class Client
 {
-    private const string DEFAULT_USER_AGENT = 'Keboola Query API PHP Client';
-    private const int DEFAULT_BACKOFF_RETRIES = 3;
-    private const int GUZZLE_CONNECT_TIMEOUT_SECONDS = 10;
-    private const int GUZZLE_TIMEOUT_SECONDS = 120;
-    private const int DEFAULT_MAX_WAIT_SECONDS = 30;
+    private const DEFAULT_USER_AGENT = 'Keboola Query API PHP Client';
+    private const DEFAULT_BACKOFF_RETRIES = 3;
+    private const GUZZLE_CONNECT_TIMEOUT_SECONDS = 10;
+    private const GUZZLE_TIMEOUT_SECONDS = 120;
+    private const DEFAULT_MAX_WAIT_SECONDS = 30;
 
     private string $apiUrl;
     private string $tokenString;
@@ -30,6 +36,7 @@ class Client
     private string $userAgent;
     private ?string $runId;
     private GuzzleClient $client;
+    private LoggerInterface $logger;
 
     /**
      * @param array{
@@ -39,6 +46,7 @@ class Client
      *     userAgent?: string,
      *     runId?: string,
      *     handler?: HandlerStack,
+     *     logger?: LoggerInterface,
      * } $config
      */
     public function __construct(array $config)
@@ -55,6 +63,7 @@ class Client
         $this->backoffMaxTries = $config['backoffMaxTries'] ?? self::DEFAULT_BACKOFF_RETRIES;
         $this->userAgent = self::DEFAULT_USER_AGENT;
         $this->runId = isset($config['runId']) ? (string) $config['runId'] : null;
+        $this->logger = $config['logger'] ?? new NullLogger();
 
         if (isset($config['userAgent'])) {
             $this->userAgent .= ' ' . $config['userAgent'];
@@ -69,9 +78,14 @@ class Client
     private function initClient(array $config): void
     {
         $handlerStack = $config['handler'] ?? HandlerStack::create();
-        $handlerStack->push(Middleware::retry($this->createRetryDecider(), $this->createRetryDelay()));
 
-        // Add request mapping middleware for headers
+        if ($this->backoffMaxTries < 1) {
+            throw new InvalidArgumentException('backoffMaxTries must be at least 1');
+        }
+
+        $retryDecider = new RetryDecider($this->backoffMaxTries, $this->logger);
+        $handlerStack->push(Middleware::retry($retryDecider));
+
         $handlerStack->push(Middleware::mapRequest(
             function (RequestInterface $request) {
                 return $this->addRequestHeaders($request);
@@ -86,194 +100,97 @@ class Client
         ]);
     }
 
-    private function createRetryDecider(): callable
-    {
-        return function (
-            int $retries,
-            RequestInterface $request,
-            ?ResponseInterface $response = null,
-            ?Throwable $exception = null,
-        ): bool {
-            if ($retries >= $this->backoffMaxTries) {
-                return false;
-            }
-
-            if ($exception instanceof ConnectException) {
-                return true;
-            }
-
-            if ($response && $response->getStatusCode() >= 500) {
-                return true;
-            }
-
-            return false;
-        };
-    }
-
-    private function createRetryDelay(): callable
-    {
-        return function (int $numberOfRetries): int {
-            return 1000 * (2 ** $numberOfRetries);
-        };
-    }
-
-    /**
-     * Add request headers with selective authentication
-     */
     private function addRequestHeaders(RequestInterface $request): RequestInterface
     {
-        $path = $request->getUri()->getPath();
-
-        // Start with base headers that all requests need
         $baseRequest = $request
             ->withHeader('User-Agent', $this->userAgent)
-            ->withHeader('Content-Type', 'application/json');
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('X-StorageAPI-Token', $this->tokenString);
 
-        // Skip authentication for health-check endpoints
-        if (str_contains($path, '/health-check')) {
-            return $baseRequest;
-        }
-
-        // Add runId header if configured
         if ($this->runId !== null) {
             $baseRequest = $baseRequest->withHeader('X-KBC-RunId', $this->runId);
         }
 
-        // Add Storage API token for all other endpoints that require authentication
-        return $baseRequest->withHeader('X-StorageAPI-Token', $this->tokenString);
+        return $baseRequest;
     }
 
     /**
-     * Submit a new query job
-     *
      * @param array{statements: string[], transactional?: bool} $requestBody
-     * @return array<string, mixed>
      */
-    public function submitQueryJob(string $branchId, string $workspaceId, array $requestBody): array
+    public function submitQueryJob(string $branchId, string $workspaceId, array $requestBody): QueryJobResponse
     {
         $url = sprintf('/api/v1/branches/%s/workspaces/%s/queries', $branchId, $workspaceId);
-        return $this->sendRequest('POST', $url, $requestBody);
+        $data = $this->sendRequest('POST', $url, $requestBody);
+        return QueryJobResponse::fromArray($data);
     }
 
-    /**
-     * Get job status
-     *
-     * @return array<string, mixed>
-     */
-    public function getJobStatus(string $queryJobId): array
+    public function getJobStatus(string $queryJobId): JobStatusResponse
     {
         $url = sprintf('/api/v1/queries/%s', $queryJobId);
-        return $this->sendRequest('GET', $url);
+        $data = $this->sendRequest('GET', $url);
+        return JobStatusResponse::fromArray($data);
     }
 
     /**
-     * Cancel a job
-     *
      * @param array{reason?: string} $requestBody
-     * @return array<string, mixed>
      */
-    public function cancelJob(string $queryJobId, array $requestBody = []): array
+    public function cancelJob(string $queryJobId, array $requestBody = []): JobStatusResponse
     {
         $url = sprintf('/api/v1/queries/%s/cancel', $queryJobId);
-        return $this->sendRequest('POST', $url, $requestBody);
+        $data = $this->sendRequest('POST', $url, $requestBody);
+        return JobStatusResponse::fromArray($data);
     }
 
-    /**
-     * Get job results
-     *
-     * @return array{
-     *      "columns": array<int, array{
-     *          "name": string,
-     *          "type": "text",
-     *      }>,
-     *      "data": array<array<int, string>>,
-     *      "status": string,
-     *      "rowsAffected": int
-     * }
-     */
-    public function getJobResults(string $queryJobId, string $statementId): array
+    public function getJobResults(string $queryJobId, string $statementId): JobResultsResponse
     {
         $url = sprintf('/api/v1/queries/%s/%s/results', $queryJobId, $statementId);
-        /** @phpstan-ignore-next-line */
-        return $this->sendRequest('GET', $url);
+        $data = $this->sendRequest('GET', $url);
+        return JobResultsResponse::fromArray($data);
     }
 
     /**
-     * Execute a workspace query and wait for results
-     *
      * @param array{statements: string[], transactional?: bool} $requestBody
-     * @return array{
-     *     queryJobId: string,
-     *     status: string,
-     *     statements: array<array<string, mixed>>,
-     *     results: array{
-     *          "columns": array<array{
-     *              "name": string,
-     *              "type": "text",
-     *          }>,
-     *          "data": array<array<int, string>>,
-     *          "status": string,
-     *          "rowsAffected": int
-     *     }[],
-     * }
      */
     public function executeWorkspaceQuery(
         string $branchId,
         string $workspaceId,
         array $requestBody,
         int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
-    ): array {
-        // Submit the query job
+    ): ExecuteQueryResponse {
         $response = $this->submitQueryJob($branchId, $workspaceId, $requestBody);
+        $queryJobId = $response->getQueryJobId();
 
-        if (!isset($response['queryJobId']) || !is_string($response['queryJobId'])) {
-            throw new ClientException('Invalid response from submitQueryJob: missing queryJobId');
-        }
-
-        $queryJobId = $response['queryJobId'];
-
-        // Wait for job completion
         $finalStatus = $this->waitForJobCompletion($queryJobId, $maxWaitSeconds);
 
-        if (!isset($finalStatus['status']) || $finalStatus['status'] !== 'completed') {
+        if (!$finalStatus->isCompleted()) {
+            $errorMessage = ResultHelper::extractAllStatementErrors($finalStatus->getRawData());
             throw new ClientException(
-                sprintf('Query job failed with error: %s', ResultHelper::extractAllStatementErrors($finalStatus)),
+                sprintf('Query job failed with error: %s', $errorMessage),
                 400,
             );
         }
 
-        // Get results for all completed statements
         $results = [];
-        if (isset($finalStatus['statements']) && is_array($finalStatus['statements'])) {
-            foreach ($finalStatus['statements'] as $statement) {
-                if (is_array($statement) && isset($statement['id']) && isset($statement['status'])) {
-                    if ($statement['status'] === 'completed') {
-                        $statementResults = $this->getJobResults($queryJobId, $statement['id']);
-                        $results[] = $statementResults;
-                    }
+        foreach ($finalStatus->getStatements() as $statement) {
+            if (is_array($statement) && isset($statement['id']) && isset($statement['status'])) {
+                if ($statement['status'] === 'completed' && is_string($statement['id'])) {
+                    $results[] = $this->getJobResults($queryJobId, $statement['id']);
                 }
             }
         }
 
-        /** @var array<array<string, mixed>> $statements */
-        $statements = $finalStatus['statements'] ?? [];
-
-        return [
-            'queryJobId' => $queryJobId,
-            'status' => $finalStatus['status'],
-            'statements' => $statements,
-            'results' => $results,
-        ];
+        return new ExecuteQueryResponse(
+            $queryJobId,
+            $finalStatus->getStatus(),
+            $finalStatus->getStatements(),
+            $results,
+        );
     }
 
-    /**
-     * Health check
-     *
-     * @return array<string, mixed>
-     */
-    public function healthCheck(): array
+    public function healthCheck(): HealthCheckResponse
     {
-        return $this->sendRequest('GET', '/health-check');
+        $data = $this->sendRequest('GET', '/health-check');
+        return HealthCheckResponse::fromArray($data);
     }
 
     /**
@@ -296,7 +213,6 @@ class Client
             $response = $this->client->request($method, $url, $options);
         } catch (GuzzleException $e) {
             $this->handleGuzzleException($e);
-            throw new ClientException('Request failed after exception handling');
         }
 
         return $this->parseResponse($response);
@@ -329,7 +245,7 @@ class Client
     /**
      * @throws ClientException
      */
-    private function handleGuzzleException(GuzzleException $e): void
+    private function handleGuzzleException(GuzzleException $e): never
     {
         if ($e instanceof GuzzleClientException && $e->hasResponse()) {
             $response = $e->getResponse();
@@ -345,7 +261,9 @@ class Client
             $message = is_array($errorData) && isset($errorData['exception']) && is_string($errorData['exception'])
                 ? $errorData['exception']
                 : $e->getMessage();
+
             $contextData = is_array($errorData) ? $errorData : null;
+
             throw new ClientException($message, $statusCode, $e, $contextData);
         }
 
@@ -356,13 +274,7 @@ class Client
         throw new ClientException('Query Service API request failed: ' . $e->getMessage(), 0, $e);
     }
 
-    /**
-     * Wait for job completion with timeout
-     *
-     * @param int $maxWaitSeconds Maximum time to wait in seconds
-     * @return array<string, mixed>
-     */
-    public function waitForJobCompletion(string $queryJobId, int $maxWaitSeconds = 30): array
+    public function waitForJobCompletion(string $queryJobId, int $maxWaitSeconds = 30): JobStatusResponse
     {
         $startTime = time();
 
@@ -370,11 +282,10 @@ class Client
         while (time() - $startTime < $maxWaitSeconds) {
             $status = $this->getJobStatus($queryJobId);
 
-            if (in_array($status['status'], ['completed', 'failed', 'canceled'], true)) {
+            if ($status->isCompleted() || $status->isFailed() || $status->isCanceled()) {
                 return $status;
             }
 
-            // 60, 70, 90, 130, 210, 370, 690, 1000ms (max)
             $waitMilliseconds = min(50+pow(2, $tries)*10, 1000);
             usleep($waitMilliseconds * 1000);
             $tries++;

@@ -22,19 +22,26 @@
         }
     },
     "require": {
-        "php": "^8.4",
+        "php": "^8.2",
         "ext-json": "*",
         "guzzlehttp/guzzle": "~7.0",
         "psr/log": "^1.0|^2.0|^3.0"
     },
     "require-dev": {
         "keboola/coding-standard": "^16.0",
-        "keboola/storage-api-client": "^18.0",
+        "keboola/storage-api-client": "^15.3|^16.0|^17.0|^18.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "phpstan/phpstan": "^1.8",
         "phpstan/phpstan-phpunit": "^1.1",
         "phpunit/phpunit": "^9.5",
         "squizlabs/php_codesniffer": "^3",
         "symfony/dotenv": "^6.0"
+    },
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
     },
     "scripts": {
         "phpcs": "phpcs -n src tests",

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi;
 
+use Exception;
 use Throwable;
 
 class ClientException extends Exception

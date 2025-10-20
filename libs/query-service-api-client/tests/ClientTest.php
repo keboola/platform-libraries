@@ -47,7 +47,7 @@ class ClientTest extends TestCase
             'transactional' => true,
         ]);
 
-        self::assertEquals(['queryJobId' => 'job-12345'], $result);
+        self::assertEquals('job-12345', $result->getQueryJobId());
     }
 
     public function testGetJobStatus(): void
@@ -64,21 +64,25 @@ class ClientTest extends TestCase
 
         $result = $client->getJobStatus('job-12345');
 
-        self::assertEquals('job-12345', $result['queryJobId']);
-        self::assertEquals('running', $result['status']);
+        self::assertEquals('job-12345', $result->getQueryJobId());
+        self::assertEquals('running', $result->getStatus());
     }
 
     public function testCancelJob(): void
     {
         $mockHandler = new MockHandler([
-            new Response(200, [], json_encode(['queryJobId' => 'job-12345']) ?: ''),
+            new Response(200, [], json_encode([
+                'queryJobId' => 'job-12345',
+                'status' => 'canceled',
+                'statements' => [],
+            ]) ?: ''),
         ]);
 
         $client = $this->createClientWithMockHandler($mockHandler);
 
         $result = $client->cancelJob('job-12345', ['reason' => 'User requested']);
 
-        self::assertEquals(['queryJobId' => 'job-12345'], $result);
+        self::assertEquals('job-12345', $result->getQueryJobId());
     }
 
     public function testGetJobResults(): void
@@ -88,6 +92,7 @@ class ClientTest extends TestCase
                 'data' => [['id' => 1, 'name' => 'test']],
                 'status' => 'completed',
                 'rowsAffected' => 1,
+                'columns' => [],
             ]) ?: ''),
         ]);
 
@@ -95,10 +100,9 @@ class ClientTest extends TestCase
 
         $result = $client->getJobResults('job-12345', 'stmt-67890');
 
-        self::assertEquals('completed', $result['status']);
-        self::assertEquals(1, $result['rowsAffected']);
-        assert(is_array($result['data']));
-        self::assertCount(1, $result['data']);
+        self::assertEquals('completed', $result->getStatus());
+        self::assertEquals(1, $result->getRowsAffected());
+        self::assertCount(1, $result->getData());
     }
 
     public function testHealthCheck(): void
@@ -116,8 +120,8 @@ class ClientTest extends TestCase
 
         $result = $client->healthCheck();
 
-        self::assertEquals('query', $result['service']);
-        self::assertEquals('ok', $result['status']);
+        self::assertEquals('ok', $result->getStatus());
+        self::assertTrue($result->isOk());
     }
 
     public function testHealthCheckWithInvalidToken(): void
@@ -143,8 +147,8 @@ class ClientTest extends TestCase
         // Health check should succeed because no token is sent
         $result = $client->healthCheck();
 
-        self::assertEquals('query', $result['service']);
-        self::assertEquals('ok', $result['status']);
+        self::assertEquals('ok', $result->getStatus());
+        self::assertTrue($result->isOk());
     }
 
     /**

@@ -10,7 +10,6 @@ class BasicQueryTest extends BaseFunctionalTestCase
 {
     public function testSubmitSimpleSelectQuery(): void
     {
-        // Test a simple SELECT query that doesn't require any tables
         $response = $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
@@ -20,51 +19,37 @@ class BasicQueryTest extends BaseFunctionalTestCase
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        self::assertIsString($queryJobId);
-        self::assertNotEmpty($queryJobId);
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus['status']);
-        self::assertEquals($queryJobId, $finalStatus['queryJobId']);
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        self::assertIsArray($statements);
-        self::assertCount(1, $statements);
+        self::assertTrue($finalStatus->isCompleted());
+        self::assertSame($queryJobId, $finalStatus->getQueryJobId());
+        self::assertCount(1, $finalStatus->getStatements());
 
-        $statement = $statements[0];
+        $statement = $finalStatus->getStatements()[0];
         self::assertIsArray($statement);
-        self::assertEquals('completed', $statement['status']);
+        self::assertSame('completed', $statement['status']);
 
-        // Get job results
         self::assertArrayHasKey('id', $statement);
+        self::assertIsString($statement['id']);
         $results = $this->queryClient->getJobResults($queryJobId, $statement['id']);
 
-        self::assertArrayHasKey('status', $results);
-        self::assertEquals('completed', $results['status']);
+        self::assertSame('completed', $results->getStatus());
 
-        // Verify we got a timestamp result
-        self::assertArrayHasKey('data', $results);
-        $data = $results['data'];
-        self::assertIsArray($data);
-        self::assertCount(1, $data);
-        $row = $data[0];
+        self::assertCount(1, $results->getData());
+        $row = $results->getData()[0];
         self::assertIsArray($row);
         self::assertCount(1, $row);
-        // Query API returns indexed arrays, not associative arrays with column names
         self::assertArrayHasKey(0, $row);
         self::assertIsString($row[0]);
         self::assertNotEmpty($row[0]);
-        // Verify it's a valid timestamp (numeric string)
         self::assertMatchesRegularExpression('/^\d+\.\d+$/', $row[0]);
     }
 
     public function testSubmitInformationSchemaQuery(): void
     {
-        // Test a query against information_schema to verify database connectivity
         $response = $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
@@ -77,41 +62,29 @@ class BasicQueryTest extends BaseFunctionalTestCase
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        self::assertIsString($queryJobId);
-        self::assertNotEmpty($queryJobId);
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus['status']);
-        self::assertEquals($queryJobId, $finalStatus['queryJobId']);
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        self::assertIsArray($statements);
-        self::assertCount(1, $statements);
+        self::assertTrue($finalStatus->isCompleted());
+        self::assertSame($queryJobId, $finalStatus->getQueryJobId());
+        self::assertCount(1, $finalStatus->getStatements());
 
-        $statement = $statements[0];
+        $statement = $finalStatus->getStatements()[0];
         self::assertIsArray($statement);
-        self::assertEquals('completed', $statement['status']);
+        self::assertSame('completed', $statement['status']);
 
-        // Get job results
         self::assertArrayHasKey('id', $statement);
+        self::assertIsString($statement['id']);
         $results = $this->queryClient->getJobResults($queryJobId, $statement['id']);
 
-        self::assertArrayHasKey('status', $results);
-        self::assertEquals('completed', $results['status']);
+        self::assertSame('completed', $results->getStatus());
 
-        // Verify we got a count result
-        self::assertArrayHasKey('data', $results);
-        $data = $results['data'];
-        self::assertIsArray($data);
-        self::assertCount(1, $data);
-        $row = $data[0];
+        self::assertCount(1, $results->getData());
+        $row = $results->getData()[0];
         self::assertIsArray($row);
         self::assertCount(1, $row);
-        // Query API returns indexed arrays, not associative arrays with column names
         self::assertArrayHasKey(0, $row);
         self::assertIsNumeric($row[0]);
         self::assertGreaterThanOrEqual(0, (int) $row[0]);
@@ -119,7 +92,6 @@ class BasicQueryTest extends BaseFunctionalTestCase
 
     public function testExecuteWorkspaceQuery(): void
     {
-        // Test the new executeWorkspaceQuery method with a simple query
         $response = $this->queryClient->executeWorkspaceQuery(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
@@ -129,55 +101,34 @@ class BasicQueryTest extends BaseFunctionalTestCase
             ],
         );
 
-        // Verify the response structure
-        self::assertArrayHasKey('queryJobId', $response);
-        self::assertArrayHasKey('status', $response);
-        self::assertArrayHasKey('statements', $response);
-        self::assertArrayHasKey('results', $response);
+        self::assertNotEmpty($response->getQueryJobId());
+        self::assertTrue($response->getStatus() === 'completed');
 
-        // Verify job completed successfully
-        self::assertEquals('completed', $response['status']);
-        self::assertNotEmpty($response['queryJobId']);
-
-        // Verify statements
-        $statements = $response['statements'];
-        self::assertIsArray($statements);
-        self::assertCount(1, $statements);
-
-        $statement = $statements[0];
+        self::assertCount(1, $response->getStatements());
+        $statement = $response->getStatements()[0];
         self::assertIsArray($statement);
-        self::assertEquals('completed', $statement['status']);
+        self::assertSame('completed', $statement['status']);
 
-        // Verify results
-        $results = $response['results'];
-        self::assertIsArray($results);
-        self::assertCount(1, $results);
+        self::assertCount(1, $response->getResults());
+        $result = $response->getResults()[0];
+        self::assertSame('completed', $result->getStatus());
 
-        $result = $results[0];
-        self::assertIsArray($result);
-        self::assertEquals('completed', $result['status']);
-
-        // Verify we got timestamp data
-        self::assertArrayHasKey('data', $result);
-        $data = $result['data'];
-        self::assertIsArray($data);
-        self::assertCount(1, $data);
-        $row = $data[0];
+        self::assertCount(1, $result->getData());
+        $row = $result->getData()[0];
         self::assertIsArray($row);
         self::assertCount(1, $row);
-        // Query API returns indexed arrays, not associative arrays with column names
         self::assertArrayHasKey(0, $row);
         self::assertIsString($row[0]);
         self::assertNotEmpty($row[0]);
-        // Verify it's a valid timestamp (numeric string)
         self::assertMatchesRegularExpression('/^\d+\.\d+$/', $row[0]);
     }
 
     public function testExecuteInvalidWorkspaceQuery(): void
     {
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('\'COOTIES\' does not exist or not authorized');
-        self::expectExceptionCode(400);
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('\'COOTIES\' does not exist or not authorized');
+        $this->expectExceptionCode(400);
+
         $this->queryClient->executeWorkspaceQuery(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),

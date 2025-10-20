@@ -13,111 +13,89 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     {
         $result = $this->queryClient->healthCheck();
 
-        self::assertArrayHasKey('status', $result);
-        self::assertEquals('ok', $result['status']);
+        self::assertTrue($result->isOk());
+        self::assertSame('ok', $result->getStatus());
     }
 
     public function testSubmitAndGetSimpleQuery(): void
     {
-        // Create test table with sample data
-        $tableName = $this->createTestTable();
-
-        // Submit a simple SELECT query
         $response = $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
             [
-                'statements' => [sprintf('SELECT COUNT(*) as row_count FROM %s', $tableName)],
+                'statements' => ['SELECT 1 as test_value'],
                 'transactional' => false,
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        assert(is_string($queryJobId));
-        self::assertNotEmpty($queryJobId);
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus['status']);
-        self::assertEquals($queryJobId, $finalStatus['queryJobId']);
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        assert(is_array($statements));
-        self::assertCount(1, $statements);
+        self::assertTrue($finalStatus->isCompleted());
+        self::assertSame($queryJobId, $finalStatus->getQueryJobId());
+        self::assertCount(1, $finalStatus->getStatements());
 
-        $statement = $statements[0];
-        assert(is_array($statement));
-        self::assertEquals('completed', $statement['status']);
+        $statement = $finalStatus->getStatements()[0];
+        self::assertIsArray($statement);
+        self::assertSame('completed', $statement['status']);
 
-        // Get job results
         self::assertArrayHasKey('id', $statement);
+        self::assertIsString($statement['id']);
         $results = $this->queryClient->getJobResults($queryJobId, $statement['id']);
 
-        self::assertArrayHasKey('data', $results);
-        self::assertArrayHasKey('status', $results);
-        self::assertEquals('completed', $results['status']);
-
-        // Verify the result contains our count
-        self::assertArrayHasKey('data', $results);
-        $data = $results['data'];
-        assert(is_array($data));
-        self::assertCount(1, $data);
-        $row = $data[0];
-        assert(is_array($row));
-        self::assertEquals(3, $row[0]); // We inserted 3 rows
+        self::assertSame('completed', $results->getStatus());
+        self::assertCount(1, $results->getData());
+        $row = $results->getData()[0];
+        self::assertIsArray($row);
+        self::assertSame('1', $row[0]);
     }
 
     public function testSubmitTransactionalQuery(): void
     {
-        // Create test table
-        $tableName = $this->createTestTable();
+        $tableName = 'test_table_' . time();
 
-        // Submit transactional queries (INSERT and SELECT)
         $response = $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
             [
                 'statements' => [
-                    sprintf('INSERT INTO %s (id, name, value) VALUES (4, \'test4\', 400)', $tableName),
+                    sprintf('CREATE OR REPLACE TABLE %s (id INTEGER, name STRING)', $tableName),
+                    sprintf('INSERT INTO %s (id, name) VALUES (1, \'test1\'), (2, \'test2\')', $tableName),
                     sprintf('SELECT COUNT(*) as row_count FROM %s', $tableName),
                 ],
                 'transactional' => true,
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        assert(is_string($queryJobId));
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Wait for completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus['status']);
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        assert(is_array($statements));
-        self::assertCount(2, $statements);
+        self::assertTrue($finalStatus->isCompleted());
+        self::assertCount(3, $finalStatus->getStatements());
 
-        // Check INSERT statement
-        $insertStatement = $statements[0];
-        assert(is_array($insertStatement));
-        self::assertEquals('completed', $insertStatement['status']);
+        $createStatement = $finalStatus->getStatements()[0];
+        self::assertIsArray($createStatement);
+        self::assertSame('completed', $createStatement['status']);
 
-        // Check SELECT statement and its results
-        $selectStatement = $statements[1];
-        assert(is_array($selectStatement));
-        self::assertEquals('completed', $selectStatement['status']);
+        $insertStatement = $finalStatus->getStatements()[1];
+        self::assertIsArray($insertStatement);
+        self::assertSame('completed', $insertStatement['status']);
+
+        $selectStatement = $finalStatus->getStatements()[2];
+        self::assertIsArray($selectStatement);
+        self::assertSame('completed', $selectStatement['status']);
 
         self::assertArrayHasKey('id', $selectStatement);
+        self::assertIsString($selectStatement['id']);
         $results = $this->queryClient->getJobResults($queryJobId, $selectStatement['id']);
-        self::assertArrayHasKey('data', $results);
-        $data = $results['data'];
-        assert(is_array($data));
-        $row = $data[0];
-        assert(is_array($row));
-        self::assertEquals(4, $row[0]); // Should be 4 rows now
+        self::assertCount(1, $results->getData());
+        $row = $results->getData()[0];
+        self::assertIsArray($row);
+        self::assertSame('2', $row[0]);
     }
 
     public function testCancelQueryJob(): void
@@ -127,98 +105,82 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
             $this->getTestWorkspaceId(),
             [
                 'statements' => [
-                    'CALL SYSTEM$WAIT(10);', // Wait for 10 seconds to allow time for cancellation
+                    'CALL SYSTEM$WAIT(10);',
                 ],
                 'transactional' => false,
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        assert(is_string($queryJobId));
-        self::assertNotEmpty($queryJobId);
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Cancel the job
         $cancelResponse = $this->queryClient->cancelJob($queryJobId, [
             'reason' => 'Test cancellation',
         ]);
 
-        self::assertEquals($queryJobId, $cancelResponse['queryJobId']);
+        self::assertSame($queryJobId, $cancelResponse->getQueryJobId());
 
-        // Wait for final status
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId, 15);
 
-        // Job should be canceled
-        self::assertEquals('canceled', $finalStatus['status']);
-        self::assertArrayHasKey('cancellationReason', $finalStatus);
-        self::assertEquals('Test cancellation', $finalStatus['cancellationReason']);
-        self::assertArrayHasKey('canceledAt', $finalStatus);
+        self::assertTrue($finalStatus->isCanceled());
+        self::assertSame('Test cancellation', $finalStatus->getCancellationReason());
+        self::assertNotNull($finalStatus->getCanceledAt());
 
-        // Verify job has statements but don't assert on their status
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        assert(is_array($statements));
-        self::assertCount(1, $statements);
+        self::assertCount(1, $finalStatus->getStatements());
     }
 
     public function testQueryJobWithInvalidSQL(): void
     {
-        // Submit query with invalid SQL
         $response = $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
             [
-            'statements' => ['SELECT * FROM non_existent_table_12345'],
-            'transactional' => false,
+                'statements' => ['SELECT * FROM non_existent_table_12345'],
+                'transactional' => false,
             ],
         );
 
-        self::assertArrayHasKey('queryJobId', $response);
-        $queryJobId = $response['queryJobId'];
-        assert(is_string($queryJobId));
+        self::assertNotEmpty($response->getQueryJobId());
+        $queryJobId = $response->getQueryJobId();
 
-        // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        // Job should fail due to invalid SQL
-        self::assertEquals('failed', $finalStatus['status']);
-        self::assertArrayHasKey('statements', $finalStatus);
-        $statements = $finalStatus['statements'];
-        assert(is_array($statements));
-        self::assertCount(1, $statements);
+        self::assertTrue($finalStatus->isFailed());
+        self::assertCount(1, $finalStatus->getStatements());
 
-        $statement = $statements[0];
-        assert(is_array($statement));
-        self::assertEquals('failed', $statement['status']);
-        assert(is_string($statement['query']));
-        self::assertEquals('SELECT * FROM non_existent_table_12345', $statement['query']);
+        $statement = $finalStatus->getStatements()[0];
+        self::assertIsArray($statement);
+        self::assertSame('failed', $statement['status']);
+        self::assertIsString($statement['query']);
+        self::assertSame('SELECT * FROM non_existent_table_12345', $statement['query']);
     }
 
     public function testQueryJobWithEmptyStatements(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessageMatches('/statements.*required|empty/i');
 
         $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),
             [
-            'statements' => [],
-            'transactional' => false,
+                'statements' => [],
+                'transactional' => false,
             ],
         );
     }
 
     public function testQueryJobWithInvalidBranch(): void
     {
-        // Submit job with an invalid branch ID
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('Failed to get workspace credentials');
-        $response = $this->queryClient->submitQueryJob(
+
+        $this->queryClient->submitQueryJob(
             '1234567890',
             $this->getTestWorkspaceId(),
             [
-            'statements' => ['SELECT 1'],
-            'transactional' => false,
+                'statements' => ['SELECT 1'],
+                'transactional' => false,
             ],
         );
     }
@@ -226,13 +188,14 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testQueryJobWithInvalidWorkspace(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessageMatches('/workspace.*not found|invalid/i');
 
         $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
             'non-existent-workspace-12345',
             [
-            'statements' => ['SELECT 1'],
-            'transactional' => false,
+                'statements' => ['SELECT 1'],
+                'transactional' => false,
             ],
         );
     }
@@ -240,6 +203,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testGetJobStatusForNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessageMatches('/not found|does not exist/i');
 
         $this->queryClient->getJobStatus('non-existent-job-12345');
     }
@@ -247,6 +211,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testGetJobResultsForNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessageMatches('/not found|does not exist/i');
 
         $this->queryClient->getJobResults('non-existent-job-12345', 'non-existent-statement-12345');
     }
@@ -254,13 +219,13 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testCancelNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
+        $this->expectExceptionMessageMatches('/not found|does not exist/i');
 
         $this->queryClient->cancelJob('non-existent-job-12345', ['reason' => 'Test']);
     }
 
     public function testInvalidStorageToken(): void
     {
-        // Create a client with an invalid storage token
         $invalidTokenClient = new Client([
             'url' => $_ENV['QUERY_API_URL'],
             'token' => 'invalid-token-12345',
@@ -269,7 +234,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('Authentication failed');
 
-        // Attempt to submit a query job with invalid token
         $invalidTokenClient->submitQueryJob(
             $this->getTestBranchId(),
             $this->getTestWorkspaceId(),

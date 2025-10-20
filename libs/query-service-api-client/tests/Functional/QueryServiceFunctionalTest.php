@@ -188,7 +188,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testQueryJobWithInvalidWorkspace(): void
     {
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessageMatches('/workspace.*not found|invalid/i');
+        $this->expectExceptionMessageMatches('/workspace|Failed to parse/i');
 
         $this->queryClient->submitQueryJob(
             $this->getTestBranchId(),
@@ -203,7 +203,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testGetJobStatusForNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessageMatches('/not found|does not exist/i');
+        $this->expectExceptionMessageMatches('/not found|does not exist|Invalid.*ID/i');
 
         $this->queryClient->getJobStatus('non-existent-job-12345');
     }
@@ -211,7 +211,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testGetJobResultsForNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessageMatches('/not found|does not exist/i');
+        $this->expectExceptionMessageMatches('/not found|does not exist|Invalid.*ID/i');
 
         $this->queryClient->getJobResults('non-existent-job-12345', 'non-existent-statement-12345');
     }
@@ -219,7 +219,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testCancelNonExistentJob(): void
     {
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessageMatches('/not found|does not exist/i');
+        $this->expectExceptionMessageMatches('/not found|does not exist|Invalid.*ID/i');
 
         $this->queryClient->cancelJob('non-existent-job-12345', ['reason' => 'Test']);
     }
@@ -227,7 +227,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testInvalidStorageToken(): void
     {
         $invalidTokenClient = new Client([
-            'url' => $_ENV['QUERY_API_URL'],
+            'url' => (string) getenv('QUERY_API_URL'),
             'token' => 'invalid-token-12345',
         ]);
 

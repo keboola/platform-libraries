@@ -170,7 +170,15 @@ class ClientTest extends TestCase
         array $expectedHeaders,
     ): void {
         $requestHeaders = [];
-        $mockHandler = new MockHandler([new Response(200, [], '{}')]);
+
+        // Create appropriate mock response based on method
+        $mockResponse = match ($method) {
+            'healthCheck' => json_encode(['status' => 'ok']) ?: '{}',
+            'getJobStatus' => json_encode(['queryJobId' => $jobId, 'status' => 'running', 'statements' => []]) ?: '{}',
+            default => '{}'
+        };
+
+        $mockHandler = new MockHandler([new Response(200, [], $mockResponse)]);
 
         // Create handler stack without custom middleware first
         $handlerStack = HandlerStack::create($mockHandler);

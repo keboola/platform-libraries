@@ -90,8 +90,8 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             }
         }
 
-        // If no tables to load, return empty results
-        if (empty($allInputs)) {
+        // If no tables to load and preserve mode, return empty results
+        if (empty($allInputs) && $preserve) {
             return [];
         }
 
@@ -197,8 +197,8 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $copyCount++;
         }
 
-        // If no tables to load, return empty queue
-        if (empty($allInputs)) {
+        // If no tables to load and preserve mode, return empty queue
+        if (empty($allInputs) && $plan->preserve) {
             return new WorkspaceLoadQueue([]);
         }
 

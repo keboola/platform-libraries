@@ -217,10 +217,18 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
     }
 
-    public function testExecuteTableLoadsToWorkspaceWithCleanAndPreserveFalse(): void
+    public function testExecuteTableLoadsToWorkspaceEmptyPlanWithPreserveFalse(): void
     {
         $branchClient = $this->createMock(BranchAwareClient::class);
-        $branchClient->expects(self::never())->method(self::anything());
+
+        // Empty plan with preserve=false should still trigger clean operation
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/789/load', [
+                'input' => [],
+                'preserve' => 0, // Clean workspace even with no tables
+            ], false)
+            ->willReturn(['id' => 999]);
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->expects($this->once())
@@ -228,17 +236,24 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->willReturn($branchClient);
 
         $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects(self::once())
+            ->method('getWorkspaceId')
+            ->willReturn('789');
 
         $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'snowflake', $dataStorage);
 
-        // Empty plan - no API calls should be made
+        // Empty plan with preserve=false should clean workspace
         $plan = new WorkspaceLoadPlan(
             [],
-            false, // preserve=false, but no tables to load
+            false, // preserve=false - should clean workspace even with no tables
         );
 
         $result = $strategy->executeTableLoadsToWorkspace($plan);
-        self::assertEmpty($result->jobs);
+        self::assertCount(1, $result->jobs);
+        self::assertSame('999', $result->jobs[0]->jobId);
+        self::assertEmpty($result->jobs[0]->tables);
+
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cleaning workspace and loading tables.'));
     }
 
     public function testExecuteTableLoadsToWorkspaceWithMixedOperations(): void

@@ -221,7 +221,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         // Return single job with all tables
         return new WorkspaceLoadQueue([
-            new WorkspaceLoadJob((string) $jobId, WorkspaceLoadType::COPY, $allTables),
+            new WorkspaceLoadJob((string) $jobId, $allTables),
         ]);
     }
 

@@ -504,18 +504,40 @@ class AbstractWorkspaceStrategyTest extends TestCase
         ClientWrapper $clientWrapper,
         string $workspaceType,
         WorkspaceStagingInterface $dataStorage,
+        ?FileStagingInterface $metadataStorage = null,
     ): TestWorkspaceStrategy {
         $strategy = new TestWorkspaceStrategy(
             $clientWrapper,
             $this->testLogger,
             $dataStorage,
-            $this->createMock(FileStagingInterface::class),
+            $metadataStorage ?? $this->createMock(FileStagingInterface::class),
             $this->createMock(InputTableStateList::class),
             'destination',
             FileFormat::Json,
         );
         $strategy->setWorkspaceType($workspaceType);
         return $strategy;
+    }
+
+    /**
+     * @param string[] $columns
+     * @return array<string, mixed>
+     */
+    private function createTableInfo(string $tableId, string $tableName, array $columns): array
+    {
+        return [
+            'id' => $tableId,
+            'uri' => 'https://connection.keboola.com/v2/storage/tables/' . $tableId,
+            'name' => $tableName,
+            'primaryKey' => [],
+            'distributionKey' => [],
+            'created' => '2022-06-03T01:31:43+0200',
+            'lastChangeDate' => '2022-06-03T02:31:43+0200',
+            'lastImportDate' => '2022-06-03T03:31:43+0200',
+            'columns' => $columns,
+            'metadata' => [],
+            'columnMetadata' => [],
+        ];
     }
 
     public function testPrepareAndExecuteTableLoadsEmpty(): void
@@ -740,5 +762,917 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertCount(1, $result->jobs);
         self::assertTrue($this->testHandler->hasInfoThatContains('Cleaning workspace before loading tables.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsOnlyClone(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load-clone', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                        'dropTimestampColumn' => false,
+                    ],
+                    [
+                        'source' => 'in.c-test-bucket.table2',
+                        'destination' => 'table2',
+                        'sourceBranchId' => 124,
+                        'overwrite' => true,
+                        'dropTimestampColumn' => true,
+                    ],
+                ],
+                'preserve' => 1,
+            ], false)
+            ->willReturn(['id' => 100]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([100])
+            ->willReturn([['id' => 100, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(2))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'keep_internal_timestamp_column' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1', 'col2']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table2',
+                'destination' => 'table2',
+                'overwrite' => true,
+                'keep_internal_timestamp_column' => false,
+            ],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col3']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'clone', 'table' => $table2],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+    }
+
+    public function testHandleExportsOnlyCopy(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                    ],
+                    [
+                        'source' => 'in.c-test-bucket.table2',
+                        'destination' => 'table2',
+                        'sourceBranchId' => 124,
+                        'overwrite' => true,
+                        'columns' => ['col1', 'col2'],
+                    ],
+                ],
+                'preserve' => 1,
+            ], false)
+            ->willReturn(['id' => 200]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([200])
+            ->willReturn([['id' => 200, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(2))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table2',
+                'destination' => 'table2',
+            ],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+        );
+
+        $exports = [
+            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
+            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true, 'columns' => ['col1', 'col2']]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+    }
+
+    public function testHandleExportsMixedCloneAndCopy(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        $expectedApiCalls = [
+            [
+                'endpoint' => 'workspaces/456/load-clone',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'sourceBranchId' => 123,
+                            'overwrite' => false,
+                            'dropTimestampColumn' => false,
+                        ],
+                    ],
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 100],
+            ],
+            [
+                'endpoint' => 'workspaces/456/load',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table2',
+                            'destination' => 'table2',
+                            'sourceBranchId' => 124,
+                            'overwrite' => true,
+                        ],
+                    ],
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 200],
+            ],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('apiPostJson')
+            ->willReturnCallback(function (string $endpoint, array $data, bool $async) use (&$expectedApiCalls) {
+                $expectedCall = array_shift($expectedApiCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['endpoint'], $endpoint);
+                self::assertEquals($expectedCall['data'], $data);
+                self::assertSame($expectedCall['async'], $async);
+                return $expectedCall['returnValue'];
+            });
+
+        $expectedAsyncCalls = [
+            ['jobIds' => [100], 'returnValue' => [['id' => 100, 'status' => 'success']]],
+            ['jobIds' => [200], 'returnValue' => [['id' => 200, 'status' => 'success']]],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('handleAsyncTasks')
+            ->willReturnCallback(function (array $jobIds) use (&$expectedAsyncCalls) {
+                $expectedCall = array_shift($expectedAsyncCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['jobIds'], $jobIds);
+                return $expectedCall['returnValue'];
+            });
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(3))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->exactly(2))
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(2))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'keep_internal_timestamp_column' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table2',
+                'destination' => 'table2',
+            ],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        self::assertCount(2, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+    }
+
+    public function testHandleExportsPreserveFalseWithClones(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load-clone', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                        'dropTimestampColumn' => false,
+                    ],
+                ],
+                'preserve' => 0, // preserve=false => clean workspace
+            ], false)
+            ->willReturn(['id' => 100]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([100])
+            ->willReturn([['id' => 100, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->once())
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'keep_internal_timestamp_column' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+        ];
+
+        $result = $strategy->handleExports($exports, false); // preserve=false
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsPreserveFalseWithClonesThenCopies(): void
+    {
+        // This is the CRITICAL test for the hasBeenCleaned logic (line 119 in AbstractWorkspaceStrategy)
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        $expectedApiCalls = [
+            [
+                'endpoint' => 'workspaces/456/load-clone',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'sourceBranchId' => 123,
+                            'overwrite' => false,
+                            'dropTimestampColumn' => false,
+                        ],
+                    ],
+                    'preserve' => 0, // Clone operation clears workspace (preserve=false, line 102)
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 100],
+            ],
+            [
+                'endpoint' => 'workspaces/456/load',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table2',
+                            'destination' => 'table2',
+                            'sourceBranchId' => 124,
+                            'overwrite' => true,
+                        ],
+                    ],
+                    // Line 119: preserve = !hasBeenCleaned && !preserve ? 0 : 1
+                    // !true && !false = false, so preserve = 1 (doesn't clean again!)
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 200],
+            ],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('apiPostJson')
+            ->willReturnCallback(function (string $endpoint, array $data, bool $async) use (&$expectedApiCalls) {
+                $expectedCall = array_shift($expectedApiCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['endpoint'], $endpoint);
+                self::assertEquals($expectedCall['data'], $data);
+                self::assertSame($expectedCall['async'], $async);
+                return $expectedCall['returnValue'];
+            });
+
+        $expectedAsyncCalls = [
+            ['jobIds' => [100], 'returnValue' => [['id' => 100, 'status' => 'success']]],
+            ['jobIds' => [200], 'returnValue' => [['id' => 200, 'status' => 'success']]],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('handleAsyncTasks')
+            ->willReturnCallback(function (array $jobIds) use (&$expectedAsyncCalls) {
+                $expectedCall = array_shift($expectedAsyncCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['jobIds'], $jobIds);
+                return $expectedCall['returnValue'];
+            });
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(3))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->exactly(2))
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(2))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'keep_internal_timestamp_column' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table2',
+                'destination' => 'table2',
+            ],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
+        ];
+
+        $result = $strategy->handleExports($exports, false); // preserve=false
+
+        self::assertCount(2, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsPreserveFalseWithCopiesOnly(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                    ],
+                ],
+                // Line 119: preserve = !hasBeenCleaned && !preserve ? 0 : 1
+                // !false && !false = true, so preserve = 0 (clean workspace!)
+                'preserve' => 0,
+            ], false)
+            ->willReturn(['id' => 200]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([200])
+            ->willReturn([['id' => 200, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->once())
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $exports = [
+            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
+        ];
+
+        $result = $strategy->handleExports($exports, false); // preserve=false
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsPreserveTrueWithCopies(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                    ],
+                ],
+                // Line 119: preserve = !hasBeenCleaned && !preserve ? 0 : 1
+                // !false && !true = false, so preserve = 1 (keep workspace!)
+                'preserve' => 1,
+            ], false)
+            ->willReturn(['id' => 200]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([200])
+            ->willReturn([['id' => 200, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->once())
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $exports = [
+            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true); // preserve=true
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsOnlyView(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with('workspaces/456/load', [
+                'input' => [
+                    [
+                        'source' => 'in.c-test-bucket.table1',
+                        'destination' => 'table1',
+                        'sourceBranchId' => 123,
+                        'overwrite' => false,
+                        'useView' => true, // VIEW type sets useView=true
+                    ],
+                ],
+                'preserve' => 1,
+            ], false)
+            ->willReturn(['id' => 300]);
+
+        $branchClient->expects($this->once())
+            ->method('handleAsyncTasks')
+            ->with([300])
+            ->willReturn([['id' => 300, 'status' => 'success']]);
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->once())
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'bigquery',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $exports = [
+            ['type' => 'view', 'table' => [$table1, ['overwrite' => false]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        self::assertCount(1, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
+    public function testHandleExportsMixedAllThreeTypes(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        $expectedApiCalls = [
+            [
+                'endpoint' => 'workspaces/456/load-clone',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'sourceBranchId' => 123,
+                            'overwrite' => false,
+                            'dropTimestampColumn' => false,
+                        ],
+                    ],
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 100],
+            ],
+            [
+                'endpoint' => 'workspaces/456/load',
+                'data' => [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table2',
+                            'destination' => 'table2',
+                            'sourceBranchId' => 124,
+                            'overwrite' => true,
+                        ],
+                        [
+                            'source' => 'in.c-test-bucket.table3',
+                            'destination' => 'table3',
+                            'sourceBranchId' => 125,
+                            'overwrite' => false,
+                            'useView' => true, // VIEW type includes useView
+                        ],
+                    ],
+                    'preserve' => 1,
+                ],
+                'async' => false,
+                'returnValue' => ['id' => 200],
+            ],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('apiPostJson')
+            ->willReturnCallback(function (string $endpoint, array $data, bool $async) use (&$expectedApiCalls) {
+                $expectedCall = array_shift($expectedApiCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['endpoint'], $endpoint);
+                self::assertEquals($expectedCall['data'], $data);
+                self::assertSame($expectedCall['async'], $async);
+                return $expectedCall['returnValue'];
+            });
+
+        $expectedAsyncCalls = [
+            ['jobIds' => [100], 'returnValue' => [['id' => 100, 'status' => 'success']]],
+            ['jobIds' => [200], 'returnValue' => [['id' => 200, 'status' => 'success']]],
+        ];
+
+        $branchClient->expects($this->exactly(2))
+            ->method('handleAsyncTasks')
+            ->willReturnCallback(function (array $jobIds) use (&$expectedAsyncCalls) {
+                $expectedCall = array_shift($expectedAsyncCalls);
+                self::assertNotNull($expectedCall);
+                self::assertSame($expectedCall['jobIds'], $jobIds);
+                return $expectedCall['returnValue'];
+            });
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(3))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->exactly(2))
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(3))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'keep_internal_timestamp_column' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table2',
+                'destination' => 'table2',
+            ],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+        );
+
+        $table3 = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table3',
+                'destination' => 'table3',
+            ],
+            'in.c-test-bucket.table3',
+            125,
+            $this->createTableInfo('in.c-test-bucket.table3', 'table3', ['col3']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
+            ['type' => 'view', 'table' => [$table3, ['overwrite' => false]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        self::assertCount(2, $result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+    }
+
+    public function testHandleExportsEmptyArray(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects($this->never())->method('apiPostJson');
+        $branchClient->expects($this->never())->method('handleAsyncTasks');
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->once())
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->never())
+            ->method('getWorkspaceId');
+
+        $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'snowflake', $dataStorage);
+
+        $result = $strategy->handleExports([], true);
+
+        self::assertEmpty($result);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 0 workspace exports.'));
+    }
+
+    public function testHandleExportsVerifiesJobResultsMerging(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        $branchClient->expects($this->exactly(2))
+            ->method('apiPostJson')
+            ->willReturnOnConsecutiveCalls(
+                ['id' => 100], // Clone job
+                ['id' => 200], // Copy job
+            );
+
+        $branchClient->expects($this->exactly(2))
+            ->method('handleAsyncTasks')
+            ->willReturnOnConsecutiveCalls(
+                [['id' => 100, 'status' => 'success', 'result' => 'clone_data']], // Clone result
+                [['id' => 200, 'status' => 'success', 'result' => 'copy_data']], // Copy result
+            );
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(3))
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects($this->exactly(2))
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $metadataStorage = $this->createMock(FileStagingInterface::class);
+        $metadataStorage->expects($this->exactly(2))
+            ->method('getPath')
+            ->willReturn('/tmp/data');
+
+        $strategy = $this->createTestStrategyWithDataStorage(
+            $clientWrapper,
+            'snowflake',
+            $dataStorage,
+            $metadataStorage,
+        );
+
+        $table1 = new RewrittenInputTableOptions(
+            ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
+            'in.c-test-bucket.table1',
+            123,
+            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+        );
+
+        $table2 = new RewrittenInputTableOptions(
+            ['source' => 'in.c-test-bucket.table2', 'destination' => 'table2'],
+            'in.c-test-bucket.table2',
+            124,
+            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+        );
+
+        $exports = [
+            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'copy', 'table' => [$table2, ['overwrite' => false]]],
+        ];
+
+        $result = $strategy->handleExports($exports, true);
+
+        // Verify job results are properly merged (line 124 in AbstractWorkspaceStrategy)
+        self::assertCount(2, $result);
+        self::assertSame('clone_data', $result[0]['result']);
+        self::assertSame('copy_data', $result[1]['result']);
     }
 }

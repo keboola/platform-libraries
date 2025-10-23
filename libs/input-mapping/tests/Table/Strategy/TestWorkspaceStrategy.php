@@ -19,9 +19,4 @@ class TestWorkspaceStrategy extends AbstractWorkspaceStrategy
     {
         return $this->workspaceType;
     }
-
-    public function handleExports(array $exports, bool $preserve): array
-    {
-        return [];
-    }
 }

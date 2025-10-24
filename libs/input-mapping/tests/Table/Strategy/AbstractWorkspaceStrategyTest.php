@@ -841,8 +841,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
-            ['type' => 'clone', 'table' => $table2],
+            ['type' => 'CLONE', 'table' => $table1],
+            ['type' => 'CLONE', 'table' => $table2],
         ];
 
         $result = $strategy->handleExports($exports, true);
@@ -925,8 +925,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
-            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true, 'columns' => ['col1', 'col2']]]],
+            ['type' => 'COPY', 'table' => [$table1, ['overwrite' => false]]],
+            ['type' => 'COPY', 'table' => [$table2, ['overwrite' => true, 'columns' => ['col1', 'col2']]]],
         ];
 
         $result = $strategy->handleExports($exports, true);
@@ -1045,8 +1045,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
-            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
+            ['type' => 'CLONE', 'table' => $table1],
+            ['type' => 'COPY', 'table' => [$table2, ['overwrite' => true]]],
         ];
 
         $result = $strategy->handleExports($exports, true);
@@ -1115,7 +1115,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
+            ['type' => 'CLONE', 'table' => $table1],
         ];
 
         $result = $strategy->handleExports($exports, false); // preserve=false
@@ -1236,8 +1236,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
-            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
+            ['type' => 'CLONE', 'table' => $table1],
+            ['type' => 'COPY', 'table' => [$table2, ['overwrite' => true]]],
         ];
 
         $result = $strategy->handleExports($exports, false); // preserve=false
@@ -1305,7 +1305,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
+            ['type' => 'COPY', 'table' => [$table1, ['overwrite' => false]]],
         ];
 
         $result = $strategy->handleExports($exports, false); // preserve=false
@@ -1372,7 +1372,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'copy', 'table' => [$table1, ['overwrite' => false]]],
+            ['type' => 'COPY', 'table' => [$table1, ['overwrite' => false]]],
         ];
 
         $result = $strategy->handleExports($exports, true); // preserve=true
@@ -1438,7 +1438,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'view', 'table' => [$table1, ['overwrite' => false]]],
+            ['type' => 'VIEW', 'table' => [$table1, ['overwrite' => false]]],
         ];
 
         $result = $strategy->handleExports($exports, true);
@@ -1573,9 +1573,9 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
-            ['type' => 'copy', 'table' => [$table2, ['overwrite' => true]]],
-            ['type' => 'view', 'table' => [$table3, ['overwrite' => false]]],
+            ['type' => 'CLONE', 'table' => $table1],
+            ['type' => 'COPY', 'table' => [$table2, ['overwrite' => true]]],
+            ['type' => 'VIEW', 'table' => [$table3, ['overwrite' => false]]],
         ];
 
         $result = $strategy->handleExports($exports, true);
@@ -1664,8 +1664,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
 
         $exports = [
-            ['type' => 'clone', 'table' => $table1],
-            ['type' => 'copy', 'table' => [$table2, ['overwrite' => false]]],
+            ['type' => 'CLONE', 'table' => $table1],
+            ['type' => 'COPY', 'table' => [$table2, ['overwrite' => false]]],
         ];
 
         $result = $strategy->handleExports($exports, true);

@@ -70,13 +70,13 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             if ($export['type'] === WorkspaceLoadType::CLONE->value) {
                 /** @var RewrittenInputTableOptions $table */
                 $table = $export['table'];
-                $cloneInputs[] = $this->buildCloneInput($table);
+                $cloneInputs[] = $this->buildCloneInputLegacy($table);
                 $workspaceTables[] = $table;
             }
             if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
                 [$table, $exportOptions] = $export['table'];
                 $loadType = WorkspaceLoadType::from($export['type']);
-                $copyInputs[] = $this->buildCopyInput($table, $exportOptions, $loadType);
+                $copyInputs[] = $this->buildCopyInputLegacy($table, $exportOptions, $loadType);
                 $workspaceTables[] = $table;
             }
         }
@@ -197,7 +197,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $cloneTables = [];
 
             foreach ($cloneInstructions as $instruction) {
-                $cloneInputs[] = $this->buildCloneInput($instruction->table);
+                $cloneInputs[] = $this->buildCloneInputLegacy($instruction->table);
                 $cloneTables[] = $instruction->table;
             }
 
@@ -218,7 +218,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $copyTables = [];
 
             foreach ($copyInstructions as $instruction) {
-                $copyInputs[] = $this->buildCopyInput(
+                $copyInputs[] = $this->buildCopyInputLegacy(
                     $instruction->table,
                     $instruction->loadOptions ?? [],
                     $instruction->loadType,
@@ -260,7 +260,10 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         return $this->executeTableLoadsToWorkspace($plan);
     }
 
-    private function buildCopyInput(
+    /**
+     * @deprecated Used only by handleExports to preserve legacy behavior
+     */
+    private function buildCopyInputLegacy(
         RewrittenInputTableOptions $table,
         array $loadOptions,
         WorkspaceLoadType $loadType,
@@ -285,7 +288,10 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         return $copyInput;
     }
 
-    private function buildCloneInput(RewrittenInputTableOptions $table): array
+    /**
+     * @deprecated Used only by handleExports to preserve legacy behavior
+     */
+    private function buildCloneInputLegacy(RewrittenInputTableOptions $table): array
     {
         return [
             'source' => $table->getSource(),

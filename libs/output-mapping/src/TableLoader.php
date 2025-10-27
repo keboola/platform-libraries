@@ -54,6 +54,7 @@ class TableLoader
         }
 
         $loadTableTasks = [];
+        $hasDirectGrant = false;
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
@@ -104,7 +105,11 @@ class TableLoader
                 continue;
             }
 
-            if (isset($processedConfig['unload_strategy']) && $processedConfig['unload_strategy'] === 'direct-grant') {
+            if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy &&
+                isset($processedConfig['unload_strategy']) &&
+                $processedConfig['unload_strategy'] === 'direct-grant'
+            ) {
+                $hasDirectGrant = true;
                 continue;
             }
 
@@ -158,7 +163,7 @@ class TableLoader
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
 
-        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy) {
+        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy && $hasDirectGrant) {
             $this->callWorkspaceUnload($strategy);
         }
 

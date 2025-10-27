@@ -35,6 +35,7 @@ abstract class BaseConfiguration extends Configuration
                 ->booleanNode('incremental')->defaultValue(false)->end()
                 ->enumNode('unload_strategy')
                     ->values(['direct-grant'])
+                    ->defaultNull()
                 ->end()
                 ->enumNode(self::FIELD_DEDUPLICATION_STRATEGY)
                     ->values([

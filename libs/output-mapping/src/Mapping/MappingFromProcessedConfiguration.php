@@ -235,4 +235,9 @@ class MappingFromProcessedConfiguration
             ? DeduplicationStrategy::from($value)
             : null;
     }
+
+    public function getUnloadStrategy(): ?string
+    {
+        return $this->mapping['unload_strategy'] ?? null;
+    }
 }

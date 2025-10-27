@@ -22,6 +22,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
+use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -103,6 +104,10 @@ class TableLoader
                 continue;
             }
 
+            if (isset($processedConfig['unload_strategy']) && $processedConfig['unload_strategy'] === 'direct-grant') {
+                continue;
+            }
+
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
@@ -152,6 +157,11 @@ class TableLoader
 
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
+
+        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy) {
+            $this->callWorkspaceUnload($strategy);
+        }
+
         return $tableQueue;
     }
 
@@ -182,5 +192,20 @@ class TableLoader
             $combinedSources,
             $physicalManifests,
         );
+    }
+
+    private function callWorkspaceUnload(Writer\Table\Strategy\SqlWorkspaceTableStrategy $strategy): void
+    {
+        try {
+            $workspaces = new Workspaces(
+                $this->clientWrapper->getBranchClient(),
+            );
+            $workspaces->queueUnload(
+                (int) $strategy->getDataStorage()->getWorkspaceId(),
+                ['only-direct-grants' => true],
+            );
+        } catch (Throwable $e) {
+            $this->logger->warning('Workspace unload failed: ' . $e->getMessage());
+        }
     }
 }
